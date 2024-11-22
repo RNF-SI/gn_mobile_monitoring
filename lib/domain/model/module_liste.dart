@@ -20,13 +20,12 @@ class ModuleListe with _$ModuleListe {
   ModuleListe updateModule(final Module newModule) {
     return copyWith(
         values: values
-            .map((module) =>
-                newModule.idModule == module.idModule ? newModule : module)
+            .map((module) => newModule.id == module.id ? newModule : module)
             .toList());
   }
 
-  ModuleListe removeModuleById(final int id) => copyWith(
-      values: values.where((module) => module.idModule != id).toList());
+  ModuleListe removeModuleById(final int id) =>
+      copyWith(values: values.where((module) => module.id != id).toList());
 
 // TODO: Change searching disp in phone db
   // ModuleList filterByDownloaded() => copyWith(

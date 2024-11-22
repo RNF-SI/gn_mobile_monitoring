@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -27,7 +29,8 @@ part 'database.g.dart';
 
 @DriftDatabase(
   tables: [
-    // Include table definitions as required
+    TModules,
+    TModuleComplements,
   ],
 )
 class AppDatabase extends _$AppDatabase {
