@@ -129,7 +129,7 @@ class ModuleItemCardWidget extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      moduleInfo.module.moduleLabel,
+                      moduleInfo.module.moduleLabel!,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: const Color(0xFF598979)), // Brand blue
                       overflow: TextOverflow.ellipsis,
