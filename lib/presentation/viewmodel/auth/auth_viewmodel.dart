@@ -7,6 +7,8 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as loadingState;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
@@ -21,6 +23,8 @@ final authenticationViewModelProvider =
   return AuthenticationViewModel(
     ref.watch(loginUseCaseProvider),
     ref.watch(setIsLoggedInFromLocalStorageUseCaseProvider),
+    ref.watch(setUserIdFromLocalStorageUseCaseProvider),
+    ref.watch(setUserNameFromLocalStorageUseCaseProvider),
   );
 });
 
@@ -33,12 +37,16 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   StreamController<User?> controller = StreamController<User?>();
 
   final LoginUseCase _loginUseCase;
+  final SetUserIdFromLocalStorageUseCase _setUserIdFromLocalStorageUseCase;
+  final SetUserNameFromLocalStorageUseCase _setUserNameFromLocalStorageUseCase;
   final SetIsLoggedInFromLocalStorageUseCase
       _setIsLoggedInFromLocalStorageUseCase;
 
   AuthenticationViewModel(
     this._loginUseCase,
     this._setIsLoggedInFromLocalStorageUseCase,
+    this._setUserIdFromLocalStorageUseCase,
+    this._setUserNameFromLocalStorageUseCase,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
@@ -57,7 +65,15 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         controller.add(user);
 
         try {
+          // Set logged in status using use case
           await _setIsLoggedInFromLocalStorageUseCase.execute(true);
+          print("isLoggedIn set to: true"); // Added for debugging purposes
+
+          // Save the user's ID and name using respective use cases
+          await _setUserIdFromLocalStorageUseCase.execute(user.id);
+          await _setUserNameFromLocalStorageUseCase.execute(identifiant);
+          print(
+              'Login state and user name saved'); // Added for debugging purposes
 
           // Refresh UI or state management solution
           ref.refresh(isLoggedInProvider);
