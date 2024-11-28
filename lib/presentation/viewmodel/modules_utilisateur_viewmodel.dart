@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
@@ -28,6 +29,7 @@ final userModuleListeViewModelStateNotifierProvider =
     const AsyncValue<ModuleInfoListe>.data(ModuleInfoListe(values: [])),
     ref.watch(initLocalMonitoringDataBaseUseCaseProvider),
     ref.watch(deleteLocalMonitoringDatabaseUseCaseProvider),
+    ref.watch(getUserIdFromLocalStorageUseCaseProvider),
   );
 });
 
@@ -36,11 +38,13 @@ class UserModulesViewModel
   final InitLocalMonitoringDataBaseUseCase _initLocalMonitoringDataBaseUseCase;
   final DeleteLocalMonitoringDatabaseUseCase
       _deleteLocalMonitoringDatabaseUseCase;
+  final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
 
   UserModulesViewModel(
     AsyncValue<ModuleInfoListe> userDispListe,
     this._initLocalMonitoringDataBaseUseCase,
     this._deleteLocalMonitoringDatabaseUseCase,
+    this._getUserIdFromLocalStorageUseCase,
   ) : super(const custom_async_state.State.init()) {
     _init();
     // Creates db tables and insert listee data (ex:essences, etc.)
