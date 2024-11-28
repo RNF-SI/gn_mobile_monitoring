@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
+import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
+import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module_utilisateur_liste.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stack_trace/stack_trace.dart' as stack_trace;
@@ -8,30 +11,17 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/',
-      builder: (context, state) => const ModuleUtilisateurListe(),
+      builder: (context, state) => const AuthChecker(),
     ),
-    // GoRoute(
-    //   path: '/login',
-    //   builder: (context, state) => LoginPage(),
-    // ),
-    // GoRoute(
-    //   name: 'dispositif',
-    //   path: '/dispositif/:dispositifId',
-    //   builder: (context, state) => DispositifPage(
-    //       dispInfo: state.queryParams['dispositifInfo']!,
-    //       dispositifId: int.parse(state.params['dispositifId']!),
-    //       dispositifName: state.queryParams['dispositifName']!),
-    // ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => LoginPage(),
+    ),
     GoRoute(
       name: 'modules_utilisateurs',
       path: '/modules_utilisateurs',
       builder: (context, state) => const ModuleUtilisateurListe(),
     ),
-    // GoRoute(
-    //   name: 'home',
-    //   path: '/home',
-    //   builder: (context, state) => const HomePage(),
-    // ),
   ],
 );
 
@@ -63,7 +53,7 @@ void main() async {
     return stack;
   };
   WidgetsFlutterBinding.ensureInitialized();
-  // await LocalStorageRepositoryImpl.init();
+  await LocalStorageRepositoryImpl.init();
   runApp(
     const ProviderScope(
       child: MainApp(),
