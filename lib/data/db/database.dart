@@ -2,8 +2,21 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_location.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_objects.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_observation_details.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_observations.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_observations_complements.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_permissions.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_permissions_available.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
@@ -31,6 +44,19 @@ part 'database.g.dart';
   tables: [
     TModules,
     TModuleComplements,
+    TSitesGroups,
+    TSiteComplements,
+    TVisitComplements,
+    TObservations,
+    TObservationComplements,
+    TObservationDetails,
+    BibTablesLocations,
+    TObjects,
+    TActions,
+    TPermissionsAvailable,
+    TPermissions,
+    CorSiteModules,
+    CorObjectModules,
   ],
 )
 class AppDatabase extends _$AppDatabase {
