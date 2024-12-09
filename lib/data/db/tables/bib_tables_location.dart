@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 @DataClassName('BibTablesLocation')
-class BibTablesLocation extends Table {
+class BibTablesLocations extends Table {
   IntColumn get idTableLocation => integer().autoIncrement()();
   TextColumn get tableDesc => text().nullable()();
   TextColumn get schemaName => text().nullable()();
