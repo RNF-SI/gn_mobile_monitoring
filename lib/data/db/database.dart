@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_location.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';

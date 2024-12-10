@@ -5,13 +5,13 @@ import '../database.dart'; // Replace with your database import
 Future<void> migration2(Migrator m, AppDatabase db) async {
   print("Executing migration2");
 
-  // Create the bib_tables_location table
+  // Create the bib_tables_locations table
   await db.customStatement('''
-    CREATE TABLE bib_tables_location (
+    CREATE TABLE bib_tables_locations (
       id_table_location INTEGER PRIMARY KEY AUTOINCREMENT,
       table_desc TEXT,
       schema_name TEXT,
-      table_name TEXT,
+      table_name_label TEXT,
       pk_field TEXT,
       uuid_field_name TEXT
     );
