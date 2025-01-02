@@ -45,10 +45,8 @@ class GlobalDatabaseRepositoryImpl implements GlobalDatabaseRepository {
       //     '/home/aschlegel/gn_mobile_monitoring/assets/tables_csv/cor_site_module.csv',
       // 't_actions':
       //     '/home/aschlegel/gn_mobile_monitoring/assets/tables_csv/t_actions.csv',
-      // 't_module_complements':
-      //     '/home/aschlegel/gn_mobile_monitoring/assets/tables_csv/t_module_complements.csv',
-      // 't_modules':
-      //     '/home/aschlegel/gn_mobile_monitoring/assets/tables_csv/t_modules.csv',
+      't_module_complements': 'assets/tables_csv/t_module_complements.csv',
+      't_modules': 'assets/tables_csv/t_modules.csv',
       // 't_objects':
       //     '/home/aschlegel/gn_mobile_monitoring/assets/tables_csv/t_objects.csv',
       // 't_observation_details':

@@ -49,6 +49,29 @@ class ModuleUtilisateurListe extends ConsumerWidget {
             },
             child: const Text("Initialize Database"),
           ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                final viewModel = ref.read(
+                    userModuleListeViewModelStateNotifierProvider.notifier);
+
+                // Example CSV details
+                const tableName = 't_modules';
+                const filePath = 'assets/t_modules.csv';
+
+                await viewModel.importCsv(tableName, filePath);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('CSV imported successfully')),
+                );
+              } catch (e) {
+                print('Error importing CSV: $e');
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error importing CSV: $e')),
+                );
+              }
+            },
+            child: const Text('Import CSV'),
+          ),
         ],
       ),
       body: userModuleListProv.when(

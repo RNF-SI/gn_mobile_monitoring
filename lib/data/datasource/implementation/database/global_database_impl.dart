@@ -131,6 +131,105 @@ class GlobalDatabaseImpl implements GlobalDatabase {
               );
               break;
 
+            case 't_modules':
+              batch.insert(
+                db.tModules,
+                TModulesCompanion(
+                  idModule: Value(
+                    row[headers.indexOf('id_module')] is int
+                        ? row[headers.indexOf('id_module')]
+                        : int.parse(row[headers.indexOf('id_module')]),
+                  ),
+                  moduleCode:
+                      Value(row[headers.indexOf('module_code')].toString()),
+                  moduleLabel:
+                      Value(row[headers.indexOf('module_label')].toString()),
+                  modulePicto:
+                      Value(row[headers.indexOf('module_picto')].toString()),
+                  moduleDesc:
+                      Value(row[headers.indexOf('module_desc')].toString()),
+                  moduleGroup:
+                      Value(row[headers.indexOf('module_group')].toString()),
+                  modulePath:
+                      Value(row[headers.indexOf('module_path')].toString()),
+                  moduleExternalUrl: Value(
+                      row[headers.indexOf('module_external_url')].toString()),
+                  moduleTarget:
+                      Value(row[headers.indexOf('module_target')].toString()),
+                  moduleComment:
+                      Value(row[headers.indexOf('module_comment')].toString()),
+                  activeFrontend: Value(
+                      row[headers.indexOf('active_frontend')].toString() ==
+                          't'),
+                  activeBackend: Value(
+                      row[headers.indexOf('active_backend')].toString() == 't'),
+                  moduleDocUrl:
+                      Value(row[headers.indexOf('module_doc_url')].toString()),
+                  moduleOrder: Value(
+                    row[headers.indexOf('module_order')].toString().isNotEmpty
+                        ? int.parse(row[headers.indexOf('module_order')])
+                        : null,
+                  ),
+                  ngModule: Value(row[headers.indexOf('ng_module')].toString()),
+                  metaCreateDate: Value(DateTime.tryParse(
+                      row[headers.indexOf('meta_create_date')])),
+                  metaUpdateDate: Value(DateTime.tryParse(
+                      row[headers.indexOf('meta_update_date')])),
+                ),
+              );
+              break;
+
+            case 't_module_complements':
+              batch.insert(
+                db.tModuleComplements,
+                TModuleComplementsCompanion(
+                  idModule: Value(
+                    row[headers.indexOf('id_module')] is int
+                        ? row[headers.indexOf('id_module')]
+                        : int.parse(row[headers.indexOf('id_module')]),
+                  ),
+                  uuidModuleComplement: Value(
+                    row[headers.indexOf('uuid_module_complement')].toString(),
+                  ),
+                  idListObserver: Value(
+                    row[headers.indexOf('id_list_observer')]
+                            .toString()
+                            .isNotEmpty
+                        ? int.tryParse(
+                            row[headers.indexOf('id_list_observer')].toString())
+                        : null,
+                  ),
+                  idListTaxonomy: Value(
+                    row[headers.indexOf('id_list_taxonomy')]
+                            .toString()
+                            .isNotEmpty
+                        ? int.tryParse(
+                            row[headers.indexOf('id_list_taxonomy')].toString())
+                        : null,
+                  ),
+                  bSynthese: Value(
+                    row[headers.indexOf('b_synthese')]
+                            .toString()
+                            .toLowerCase() ==
+                        't',
+                  ),
+                  taxonomyDisplayFieldName: Value(
+                    row[headers.indexOf('taxonomy_display_field_name')]
+                        .toString(),
+                  ),
+                  bDrawSitesGroup: Value(
+                    row[headers.indexOf('b_draw_sites_group')]
+                            .toString()
+                            .toLowerCase() ==
+                        't',
+                  ),
+                  data: Value(
+                    row[headers.indexOf('data')].toString(),
+                  ),
+                ),
+              );
+              break;
+
             default:
               print('Unknown table: $tableName. Skipping...');
           }

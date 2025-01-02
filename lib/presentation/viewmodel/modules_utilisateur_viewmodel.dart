@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/import_csv_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
@@ -30,6 +31,7 @@ final userModuleListeViewModelStateNotifierProvider =
     ref.watch(initLocalMonitoringDataBaseUseCaseProvider),
     ref.watch(deleteLocalMonitoringDatabaseUseCaseProvider),
     ref.watch(getUserIdFromLocalStorageUseCaseProvider),
+    ref.watch(importCsvUseCaseProvider),
   );
 });
 
@@ -39,12 +41,14 @@ class UserModulesViewModel
   final DeleteLocalMonitoringDatabaseUseCase
       _deleteLocalMonitoringDatabaseUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
+  final ImportCsvUseCase _importCsvUseCase;
 
   UserModulesViewModel(
     AsyncValue<ModuleInfoListe> userDispListe,
     this._initLocalMonitoringDataBaseUseCase,
     this._deleteLocalMonitoringDatabaseUseCase,
     this._getUserIdFromLocalStorageUseCase,
+    this._importCsvUseCase,
   ) : super(const custom_async_state.State.init()) {
     _init();
     // Creates db tables and insert listee data (ex:essences, etc.)
@@ -104,6 +108,15 @@ class UserModulesViewModel
       await _deleteLocalMonitoringDatabaseUseCase.execute();
     } catch (e) {
       print(e);
+    }
+  }
+
+  Future<void> importCsv(String tableName, String filePath) async {
+    try {
+      await _importCsvUseCase.execute(tableName, filePath);
+      print('CSV Import successful');
+    } catch (e) {
+      print('Error during CSV import: $e');
     }
   }
 }
