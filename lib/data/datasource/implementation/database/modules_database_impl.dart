@@ -16,4 +16,14 @@ class ModulesDatabaseImpl implements ModulesDatabase {
     // final result = await db.query('modules');
     // return result.map((json) => Module.fromJson(json)).toList();
   }
+
+  @override
+  Future<void> saveModules(List<Module> modules) async {
+    final db = await database;
+
+    // Map domain models to database entities and save
+    // final dbModules =
+    //     modules.map((module) => module.toDatabaseEntity()).toList();
+    // await db.tModuleDao.insertAllModules(dbModules);
+  }
 }
