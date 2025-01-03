@@ -6,12 +6,12 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_data
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/import_csv_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/import_csv_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
@@ -22,6 +22,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase_impl.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -67,6 +69,8 @@ final setUserNameFromLocalStorageUseCaseProvider =
 final deleteDatabaseUseCaseProvider = Provider<DeleteDatabaseUseCase>((ref) =>
     DeleteDatabaseUseCaseImpl(ref.watch(globalDatabaseRepositoryProvider)));
 
-final importCsvUseCaseProvider = Provider<ImportCsvUseCase>((ref) {
-  return ImportCsvUseCaseImpl(ref.watch(globalDatabaseRepositoryProvider));
-});
+final syncModulesUseCaseProvider = Provider<SyncModulesUseCase>(
+    (ref) => SyncModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+
+final getModulesUseCaseProvider = Provider<GetModulesUseCase>(
+    (ref) => GetModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
