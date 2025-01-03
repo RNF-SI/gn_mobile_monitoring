@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/import_csv_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
@@ -31,7 +31,7 @@ final userModuleListeViewModelStateNotifierProvider =
     ref.watch(initLocalMonitoringDataBaseUseCaseProvider),
     ref.watch(deleteLocalMonitoringDatabaseUseCaseProvider),
     ref.watch(getUserIdFromLocalStorageUseCaseProvider),
-    ref.watch(importCsvUseCaseProvider),
+    ref.watch(syncModulesUseCaseProvider),
   );
 });
 
@@ -41,14 +41,14 @@ class UserModulesViewModel
   final DeleteLocalMonitoringDatabaseUseCase
       _deleteLocalMonitoringDatabaseUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
-  final ImportCsvUseCase _importCsvUseCase;
+  final SyncModulesUseCase _syncModulesUseCase;
 
   UserModulesViewModel(
     AsyncValue<ModuleInfoListe> userDispListe,
     this._initLocalMonitoringDataBaseUseCase,
     this._deleteLocalMonitoringDatabaseUseCase,
     this._getUserIdFromLocalStorageUseCase,
-    this._importCsvUseCase,
+    this._syncModulesUseCase,
   ) : super(const custom_async_state.State.init()) {
     _init();
     // Creates db tables and insert listee data (ex:essences, etc.)
@@ -111,9 +111,9 @@ class UserModulesViewModel
     }
   }
 
-  Future<void> importCsv(String tableName, String filePath) async {
+  Future<void> syncModules() async {
     try {
-      await _importCsvUseCase.execute(tableName, filePath);
+      await _syncModulesUseCase.execute();
       print('CSV Import successful');
     } catch (e) {
       print('Error during CSV import: $e');

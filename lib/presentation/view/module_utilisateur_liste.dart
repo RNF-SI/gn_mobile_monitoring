@@ -55,22 +55,19 @@ class ModuleUtilisateurListe extends ConsumerWidget {
                 final viewModel = ref.read(
                     userModuleListeViewModelStateNotifierProvider.notifier);
 
-                // Example CSV details
-                const tableName = 't_modules';
-                const filePath = 'assets/t_modules.csv';
-
-                await viewModel.importCsv(tableName, filePath);
+                await viewModel.syncModules();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('CSV imported successfully')),
+                  const SnackBar(
+                      content: Text('Module synchronized successfully')),
                 );
               } catch (e) {
-                print('Error importing CSV: $e');
+                print('Error synchronizing modules: $e');
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error importing CSV: $e')),
+                  SnackBar(content: Text('Error synchronizing modules: $e')),
                 );
               }
             },
-            child: const Text('Import CSV'),
+            child: const Text('Sync Modules'),
           ),
         ],
       ),
