@@ -28,7 +28,7 @@ class AuthenticationApiImpl implements AuthenticationApi {
       if (response.statusCode == 200) {
         final data = response.data;
         if (data != null && data['user'] != null) {
-          return UserEntity.fromJson(data['user']);
+          return UserEntity.fromJson(data);
         } else {
           throw Exception("Invalid response data: ${response.data}");
         }
