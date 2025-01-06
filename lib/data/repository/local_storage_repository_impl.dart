@@ -62,4 +62,14 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   Future<bool> getIsLoggedIn() async {
     return _preferences?.getBool('isLoggedIn') ?? false;
   }
+
+  @override
+  Future<void> setToken(String token) async {
+    await _preferences?.setString('token', token);
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return _preferences?.getString('token');
+  }
 }

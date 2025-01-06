@@ -9,4 +9,6 @@ abstract class LocalStorageRepository {
   Future<String?> getTerminalName();
   Future<void> setIsLoggedIn(bool isLoggedIn);
   Future<bool> getIsLoggedIn();
+  Future<void> setToken(String token);
+  Future<String?> getToken();
 }
