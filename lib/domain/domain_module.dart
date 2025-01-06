@@ -8,6 +8,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
@@ -18,6 +20,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
@@ -74,3 +78,11 @@ final syncModulesUseCaseProvider = Provider<SyncModulesUseCase>(
 
 final getModulesUseCaseProvider = Provider<GetModulesUseCase>(
     (ref) => GetModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+
+final setTokenFromLocalStorageUseCaseProvider =
+    Provider<SetTokenFromLocalStorageUseCase>((ref) =>
+        SetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final getTokenFromLocalStorageUseCaseProvider =
+    Provider<GetTokenFromLocalStorageUseCase>((ref) =>
+        GetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
