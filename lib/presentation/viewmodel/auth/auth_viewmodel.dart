@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
@@ -25,6 +26,7 @@ final authenticationViewModelProvider =
     ref.watch(setIsLoggedInFromLocalStorageUseCaseProvider),
     ref.watch(setUserIdFromLocalStorageUseCaseProvider),
     ref.watch(setUserNameFromLocalStorageUseCaseProvider),
+    ref.watch(setTokenFromLocalStorageUseCaseProvider),
   );
 });
 
@@ -41,12 +43,14 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final SetUserNameFromLocalStorageUseCase _setUserNameFromLocalStorageUseCase;
   final SetIsLoggedInFromLocalStorageUseCase
       _setIsLoggedInFromLocalStorageUseCase;
+  final SetTokenFromLocalStorageUseCase _setTokenFromLocalStorageUseCase;
 
   AuthenticationViewModel(
     this._loginUseCase,
     this._setIsLoggedInFromLocalStorageUseCase,
     this._setUserIdFromLocalStorageUseCase,
     this._setUserNameFromLocalStorageUseCase,
+    this._setTokenFromLocalStorageUseCase,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
@@ -72,6 +76,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           // Save the user's ID and name using respective use cases
           await _setUserIdFromLocalStorageUseCase.execute(user.id);
           await _setUserNameFromLocalStorageUseCase.execute(identifiant);
+          await _setTokenFromLocalStorageUseCase.execute(user.token);
           print(
               'Login state and user name saved'); // Added for debugging purposes
 
