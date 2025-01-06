@@ -7,7 +7,7 @@ class UserMapper {
       id: entity.idRole,
       name: entity.nomComplet,
       email: entity.email ?? 'No email provided',
-      token: '',
+      token: entity.token,
     );
   }
 }

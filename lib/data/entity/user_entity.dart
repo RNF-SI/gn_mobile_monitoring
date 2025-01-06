@@ -12,6 +12,7 @@ class UserEntity {
   final String nomComplet;
   final String nomRole;
   final String prenomRole;
+  final String token;
 
   UserEntity({
     required this.active,
@@ -27,23 +28,27 @@ class UserEntity {
     required this.nomComplet,
     required this.nomRole,
     required this.prenomRole,
+    required this.token,
   });
 
   factory UserEntity.fromJson(Map<String, dynamic> json) {
+    final userJson = json['user'] as Map<String, dynamic>;
+    final token = json['token'] as String? ?? '';
     return UserEntity(
-      active: json['active'] as bool? ?? false,
-      dateInsert: json['date_insert'] as String? ?? '',
-      dateUpdate: json['date_update'] as String? ?? '',
-      descRole: json['desc_role'] as String?,
-      email: json['email'] as String?,
-      groupe: json['groupe'] as bool? ?? false,
-      idOrganisme: json['id_organisme'] as int? ?? -1,
-      idRole: json['id_role'] as int? ?? 0, // Correct unique identifier
-      identifiant: json['identifiant'] as String? ?? '',
-      maxLevelProfil: json['max_level_profil'] as int? ?? 0,
-      nomComplet: json['nom_complet'] as String? ?? '',
-      nomRole: json['nom_role'] as String? ?? '',
-      prenomRole: json['prenom_role'] as String? ?? '',
+      active: userJson['active'] as bool? ?? false,
+      dateInsert: userJson['date_insert'] as String? ?? '',
+      dateUpdate: userJson['date_update'] as String? ?? '',
+      descRole: userJson['desc_role'] as String?,
+      email: userJson['email'] as String?,
+      groupe: userJson['groupe'] as bool? ?? false,
+      idOrganisme: userJson['id_organisme'] as int? ?? -1,
+      idRole: userJson['id_role'] as int? ?? 0, // Correct unique identifier
+      identifiant: userJson['identifiant'] as String? ?? '',
+      maxLevelProfil: userJson['max_level_profil'] as int? ?? 0,
+      nomComplet: userJson['nom_complet'] as String? ?? '',
+      nomRole: userJson['nom_role'] as String? ?? '',
+      prenomRole: userJson['prenom_role'] as String? ?? '',
+      token: token as String? ?? '',
     );
   }
 }
