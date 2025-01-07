@@ -39,6 +39,11 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   }
 
   @override
+  Future<void> clearToken() async {
+    await _preferences?.remove('token');
+  }
+
+  @override
   Future<String?> getUserName() async {
     return _preferences?.getString('userName');
   }

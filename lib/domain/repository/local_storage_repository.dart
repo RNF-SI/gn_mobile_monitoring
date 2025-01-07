@@ -3,6 +3,7 @@ abstract class LocalStorageRepository {
   Future<void> setUserId(int userId);
   Future<void> clearUserId();
   Future<void> clearUserName();
+  Future<void> clearToken();
   Future<void> setUserName(String userName);
   Future<String?> getUserName();
   Future<void> setTerminalName(String terminalName);
