@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/delete_database_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/delete_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
@@ -69,9 +67,6 @@ final setUserNameFromLocalStorageUseCaseProvider =
     Provider<SetUserNameFromLocalStorageUseCase>((ref) =>
         SetUserNameFromLocalStorageUseCaseImpl(
             ref.watch(localStorageProvider)));
-
-final deleteDatabaseUseCaseProvider = Provider<DeleteDatabaseUseCase>((ref) =>
-    DeleteDatabaseUseCaseImpl(ref.watch(globalDatabaseRepositoryProvider)));
 
 final syncModulesUseCaseProvider = Provider<SyncModulesUseCase>(
     (ref) => SyncModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
