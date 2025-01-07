@@ -5,6 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -28,6 +31,9 @@ final authenticationViewModelProvider =
     ref.watch(setUserIdFromLocalStorageUseCaseProvider),
     ref.watch(setUserNameFromLocalStorageUseCaseProvider),
     ref.watch(setTokenFromLocalStorageUseCaseProvider),
+    ref.watch(clearUserIdFromLocalStorageUseCaseProvider),
+    ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
+    ref.watch(clearTokenFromLocalStorageUseCaseProvider),
   );
 });
 
@@ -45,6 +51,10 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final SetIsLoggedInFromLocalStorageUseCase
       _setIsLoggedInFromLocalStorageUseCase;
   final SetTokenFromLocalStorageUseCase _setTokenFromLocalStorageUseCase;
+  final ClearUserIdFromLocalStorageUseCase _clearUserIdFromLocalStorageUseCase;
+  final ClearUserNameFromLocalStorageUseCase
+      _clearUserNameFromLocalStorageUseCase;
+  final ClearTokenFromLocalStorageUseCase _clearTokenFromLocalStorageUseCase;
 
   AuthenticationViewModel(
     this._loginUseCase,
@@ -52,6 +62,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._setUserIdFromLocalStorageUseCase,
     this._setUserNameFromLocalStorageUseCase,
     this._setTokenFromLocalStorageUseCase,
+    this._clearUserIdFromLocalStorageUseCase,
+    this._clearUserNameFromLocalStorageUseCase,
+    this._clearTokenFromLocalStorageUseCase,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
@@ -164,6 +177,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
       // Update login state
       await _setIsLoggedInFromLocalStorageUseCase.execute(false);
+      await _clearUserNameFromLocalStorageUseCase.execute();
+      await _clearUserIdFromLocalStorageUseCase.execute();
+      await _clearTokenFromLocalStorageUseCase.execute();
 
       // Clear any cached user information
       ref.refresh(authStateProvider);
