@@ -18,7 +18,6 @@ final _router = GoRouter(
       builder: (context, state) => LoginPage(),
     ),
     GoRoute(
-      name: 'modules',
       path: '/home',
       builder: (context, state) => const HomePage(),
     ),

@@ -147,8 +147,11 @@ class HomePage extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmLogout(BuildContext context,
-      AuthenticationViewModel authViewModel, WidgetRef ref) async {
+  Future<void> _confirmLogout(
+    BuildContext context,
+    AuthenticationViewModel authViewModel,
+    WidgetRef ref,
+  ) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -169,7 +172,6 @@ class HomePage extends ConsumerWidget {
     );
 
     if (confirm == true) {
-      // Implement logout logic here
       await authViewModel.signOut(ref, context);
     }
   }

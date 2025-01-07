@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_sto
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as loadingState;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
+import 'package:go_router/go_router.dart';
 
 // Pour le Checker
 final authStateProvider = StreamProvider<User?>((ref) {
@@ -156,8 +157,24 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     }
   }
 
-  // Method to handle user logout
-  Future<void> signOut(ref, context) async {
-    await _setIsLoggedInFromLocalStorageUseCase.execute(false);
+  Future<void> signOut(WidgetRef ref, BuildContext context) async {
+    try {
+      // Clear user data
+      controller.add(null);
+
+      // Update login state
+      await _setIsLoggedInFromLocalStorageUseCase.execute(false);
+
+      // Clear any cached user information
+      ref.refresh(authStateProvider);
+
+      // Navigate to the login page
+      GoRouter.of(context).go('/login');
+
+      // Reset the state
+      state = const loadingState.State.init();
+    } catch (e) {
+      print('Error during logout: $e');
+    }
   }
 }
