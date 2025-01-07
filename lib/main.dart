@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
+import 'package:gn_mobile_monitoring/presentation/view/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module_utilisateur_liste.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stack_trace/stack_trace.dart' as stack_trace;
 
@@ -18,9 +18,9 @@ final _router = GoRouter(
       builder: (context, state) => LoginPage(),
     ),
     GoRoute(
-      name: 'modules_utilisateurs',
-      path: '/modules_utilisateurs',
-      builder: (context, state) => const ModuleUtilisateurListe(),
+      name: 'modules',
+      path: '/home',
+      builder: (context, state) => const HomePage(),
     ),
   ],
 );
