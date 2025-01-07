@@ -16,13 +16,11 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
-  Future<List<Module>> fetchAndSyncModulesFromApi(String token) async {
+  Future<void> fetchAndSyncModulesFromApi(String token) async {
     final apiModules = await api.getModules(token);
     final modules = apiModules.map((e) => e.toDomain()).toList();
 
     await dao.clearModules(); // Efface les anciens modules
     await dao.insertModules(modules); // Insère les nouveaux
-
-    return modules;
   }
 }
