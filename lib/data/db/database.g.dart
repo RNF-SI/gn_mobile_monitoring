@@ -30,47 +30,11 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
   late final GeneratedColumn<String> moduleLabel = GeneratedColumn<String>(
       'module_label', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _modulePictoMeta =
-      const VerificationMeta('modulePicto');
-  @override
-  late final GeneratedColumn<String> modulePicto = GeneratedColumn<String>(
-      'module_picto', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _moduleDescMeta =
       const VerificationMeta('moduleDesc');
   @override
   late final GeneratedColumn<String> moduleDesc = GeneratedColumn<String>(
       'module_desc', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _moduleGroupMeta =
-      const VerificationMeta('moduleGroup');
-  @override
-  late final GeneratedColumn<String> moduleGroup = GeneratedColumn<String>(
-      'module_group', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _modulePathMeta =
-      const VerificationMeta('modulePath');
-  @override
-  late final GeneratedColumn<String> modulePath = GeneratedColumn<String>(
-      'module_path', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _moduleExternalUrlMeta =
-      const VerificationMeta('moduleExternalUrl');
-  @override
-  late final GeneratedColumn<String> moduleExternalUrl =
-      GeneratedColumn<String>('module_external_url', aliasedName, true,
-          type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _moduleTargetMeta =
-      const VerificationMeta('moduleTarget');
-  @override
-  late final GeneratedColumn<String> moduleTarget = GeneratedColumn<String>(
-      'module_target', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _moduleCommentMeta =
-      const VerificationMeta('moduleComment');
-  @override
-  late final GeneratedColumn<String> moduleComment = GeneratedColumn<String>(
-      'module_comment', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _activeFrontendMeta =
       const VerificationMeta('activeFrontend');
@@ -90,55 +54,14 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("active_backend" IN (0, 1))'));
-  static const VerificationMeta _moduleDocUrlMeta =
-      const VerificationMeta('moduleDocUrl');
-  @override
-  late final GeneratedColumn<String> moduleDocUrl = GeneratedColumn<String>(
-      'module_doc_url', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _moduleOrderMeta =
-      const VerificationMeta('moduleOrder');
-  @override
-  late final GeneratedColumn<int> moduleOrder = GeneratedColumn<int>(
-      'module_order', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _ngModuleMeta =
-      const VerificationMeta('ngModule');
-  @override
-  late final GeneratedColumn<String> ngModule = GeneratedColumn<String>(
-      'ng_module', aliasedName, true,
-      type: DriftSqlType.string, requiredDuringInsert: false);
-  static const VerificationMeta _metaCreateDateMeta =
-      const VerificationMeta('metaCreateDate');
-  @override
-  late final GeneratedColumn<DateTime> metaCreateDate =
-      GeneratedColumn<DateTime>('meta_create_date', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
-  static const VerificationMeta _metaUpdateDateMeta =
-      const VerificationMeta('metaUpdateDate');
-  @override
-  late final GeneratedColumn<DateTime> metaUpdateDate =
-      GeneratedColumn<DateTime>('meta_update_date', aliasedName, true,
-          type: DriftSqlType.dateTime, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idModule,
         moduleCode,
         moduleLabel,
-        modulePicto,
         moduleDesc,
-        moduleGroup,
-        modulePath,
-        moduleExternalUrl,
-        moduleTarget,
-        moduleComment,
         activeFrontend,
-        activeBackend,
-        moduleDocUrl,
-        moduleOrder,
-        ngModule,
-        metaCreateDate,
-        metaUpdateDate
+        activeBackend
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -166,47 +89,11 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
           moduleLabel.isAcceptableOrUnknown(
               data['module_label']!, _moduleLabelMeta));
     }
-    if (data.containsKey('module_picto')) {
-      context.handle(
-          _modulePictoMeta,
-          modulePicto.isAcceptableOrUnknown(
-              data['module_picto']!, _modulePictoMeta));
-    }
     if (data.containsKey('module_desc')) {
       context.handle(
           _moduleDescMeta,
           moduleDesc.isAcceptableOrUnknown(
               data['module_desc']!, _moduleDescMeta));
-    }
-    if (data.containsKey('module_group')) {
-      context.handle(
-          _moduleGroupMeta,
-          moduleGroup.isAcceptableOrUnknown(
-              data['module_group']!, _moduleGroupMeta));
-    }
-    if (data.containsKey('module_path')) {
-      context.handle(
-          _modulePathMeta,
-          modulePath.isAcceptableOrUnknown(
-              data['module_path']!, _modulePathMeta));
-    }
-    if (data.containsKey('module_external_url')) {
-      context.handle(
-          _moduleExternalUrlMeta,
-          moduleExternalUrl.isAcceptableOrUnknown(
-              data['module_external_url']!, _moduleExternalUrlMeta));
-    }
-    if (data.containsKey('module_target')) {
-      context.handle(
-          _moduleTargetMeta,
-          moduleTarget.isAcceptableOrUnknown(
-              data['module_target']!, _moduleTargetMeta));
-    }
-    if (data.containsKey('module_comment')) {
-      context.handle(
-          _moduleCommentMeta,
-          moduleComment.isAcceptableOrUnknown(
-              data['module_comment']!, _moduleCommentMeta));
     }
     if (data.containsKey('active_frontend')) {
       context.handle(
@@ -219,34 +106,6 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
           _activeBackendMeta,
           activeBackend.isAcceptableOrUnknown(
               data['active_backend']!, _activeBackendMeta));
-    }
-    if (data.containsKey('module_doc_url')) {
-      context.handle(
-          _moduleDocUrlMeta,
-          moduleDocUrl.isAcceptableOrUnknown(
-              data['module_doc_url']!, _moduleDocUrlMeta));
-    }
-    if (data.containsKey('module_order')) {
-      context.handle(
-          _moduleOrderMeta,
-          moduleOrder.isAcceptableOrUnknown(
-              data['module_order']!, _moduleOrderMeta));
-    }
-    if (data.containsKey('ng_module')) {
-      context.handle(_ngModuleMeta,
-          ngModule.isAcceptableOrUnknown(data['ng_module']!, _ngModuleMeta));
-    }
-    if (data.containsKey('meta_create_date')) {
-      context.handle(
-          _metaCreateDateMeta,
-          metaCreateDate.isAcceptableOrUnknown(
-              data['meta_create_date']!, _metaCreateDateMeta));
-    }
-    if (data.containsKey('meta_update_date')) {
-      context.handle(
-          _metaUpdateDateMeta,
-          metaUpdateDate.isAcceptableOrUnknown(
-              data['meta_update_date']!, _metaUpdateDateMeta));
     }
     return context;
   }
@@ -263,34 +122,12 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
           .read(DriftSqlType.string, data['${effectivePrefix}module_code']),
       moduleLabel: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}module_label']),
-      modulePicto: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_picto']),
       moduleDesc: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}module_desc']),
-      moduleGroup: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_group']),
-      modulePath: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_path']),
-      moduleExternalUrl: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}module_external_url']),
-      moduleTarget: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_target']),
-      moduleComment: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_comment']),
       activeFrontend: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}active_frontend']),
       activeBackend: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}active_backend']),
-      moduleDocUrl: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}module_doc_url']),
-      moduleOrder: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}module_order']),
-      ngModule: attachedDatabase.typeMapping
-          .read(DriftSqlType.string, data['${effectivePrefix}ng_module']),
-      metaCreateDate: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}meta_create_date']),
-      metaUpdateDate: attachedDatabase.typeMapping.read(
-          DriftSqlType.dateTime, data['${effectivePrefix}meta_update_date']),
     );
   }
 
@@ -304,38 +141,16 @@ class TModule extends DataClass implements Insertable<TModule> {
   final int idModule;
   final String? moduleCode;
   final String? moduleLabel;
-  final String? modulePicto;
   final String? moduleDesc;
-  final String? moduleGroup;
-  final String? modulePath;
-  final String? moduleExternalUrl;
-  final String? moduleTarget;
-  final String? moduleComment;
   final bool? activeFrontend;
   final bool? activeBackend;
-  final String? moduleDocUrl;
-  final int? moduleOrder;
-  final String? ngModule;
-  final DateTime? metaCreateDate;
-  final DateTime? metaUpdateDate;
   const TModule(
       {required this.idModule,
       this.moduleCode,
       this.moduleLabel,
-      this.modulePicto,
       this.moduleDesc,
-      this.moduleGroup,
-      this.modulePath,
-      this.moduleExternalUrl,
-      this.moduleTarget,
-      this.moduleComment,
       this.activeFrontend,
-      this.activeBackend,
-      this.moduleDocUrl,
-      this.moduleOrder,
-      this.ngModule,
-      this.metaCreateDate,
-      this.metaUpdateDate});
+      this.activeBackend});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -346,47 +161,14 @@ class TModule extends DataClass implements Insertable<TModule> {
     if (!nullToAbsent || moduleLabel != null) {
       map['module_label'] = Variable<String>(moduleLabel);
     }
-    if (!nullToAbsent || modulePicto != null) {
-      map['module_picto'] = Variable<String>(modulePicto);
-    }
     if (!nullToAbsent || moduleDesc != null) {
       map['module_desc'] = Variable<String>(moduleDesc);
-    }
-    if (!nullToAbsent || moduleGroup != null) {
-      map['module_group'] = Variable<String>(moduleGroup);
-    }
-    if (!nullToAbsent || modulePath != null) {
-      map['module_path'] = Variable<String>(modulePath);
-    }
-    if (!nullToAbsent || moduleExternalUrl != null) {
-      map['module_external_url'] = Variable<String>(moduleExternalUrl);
-    }
-    if (!nullToAbsent || moduleTarget != null) {
-      map['module_target'] = Variable<String>(moduleTarget);
-    }
-    if (!nullToAbsent || moduleComment != null) {
-      map['module_comment'] = Variable<String>(moduleComment);
     }
     if (!nullToAbsent || activeFrontend != null) {
       map['active_frontend'] = Variable<bool>(activeFrontend);
     }
     if (!nullToAbsent || activeBackend != null) {
       map['active_backend'] = Variable<bool>(activeBackend);
-    }
-    if (!nullToAbsent || moduleDocUrl != null) {
-      map['module_doc_url'] = Variable<String>(moduleDocUrl);
-    }
-    if (!nullToAbsent || moduleOrder != null) {
-      map['module_order'] = Variable<int>(moduleOrder);
-    }
-    if (!nullToAbsent || ngModule != null) {
-      map['ng_module'] = Variable<String>(ngModule);
-    }
-    if (!nullToAbsent || metaCreateDate != null) {
-      map['meta_create_date'] = Variable<DateTime>(metaCreateDate);
-    }
-    if (!nullToAbsent || metaUpdateDate != null) {
-      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate);
     }
     return map;
   }
@@ -400,48 +182,15 @@ class TModule extends DataClass implements Insertable<TModule> {
       moduleLabel: moduleLabel == null && nullToAbsent
           ? const Value.absent()
           : Value(moduleLabel),
-      modulePicto: modulePicto == null && nullToAbsent
-          ? const Value.absent()
-          : Value(modulePicto),
       moduleDesc: moduleDesc == null && nullToAbsent
           ? const Value.absent()
           : Value(moduleDesc),
-      moduleGroup: moduleGroup == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleGroup),
-      modulePath: modulePath == null && nullToAbsent
-          ? const Value.absent()
-          : Value(modulePath),
-      moduleExternalUrl: moduleExternalUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleExternalUrl),
-      moduleTarget: moduleTarget == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleTarget),
-      moduleComment: moduleComment == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleComment),
       activeFrontend: activeFrontend == null && nullToAbsent
           ? const Value.absent()
           : Value(activeFrontend),
       activeBackend: activeBackend == null && nullToAbsent
           ? const Value.absent()
           : Value(activeBackend),
-      moduleDocUrl: moduleDocUrl == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleDocUrl),
-      moduleOrder: moduleOrder == null && nullToAbsent
-          ? const Value.absent()
-          : Value(moduleOrder),
-      ngModule: ngModule == null && nullToAbsent
-          ? const Value.absent()
-          : Value(ngModule),
-      metaCreateDate: metaCreateDate == null && nullToAbsent
-          ? const Value.absent()
-          : Value(metaCreateDate),
-      metaUpdateDate: metaUpdateDate == null && nullToAbsent
-          ? const Value.absent()
-          : Value(metaUpdateDate),
     );
   }
 
@@ -452,21 +201,9 @@ class TModule extends DataClass implements Insertable<TModule> {
       idModule: serializer.fromJson<int>(json['idModule']),
       moduleCode: serializer.fromJson<String?>(json['moduleCode']),
       moduleLabel: serializer.fromJson<String?>(json['moduleLabel']),
-      modulePicto: serializer.fromJson<String?>(json['modulePicto']),
       moduleDesc: serializer.fromJson<String?>(json['moduleDesc']),
-      moduleGroup: serializer.fromJson<String?>(json['moduleGroup']),
-      modulePath: serializer.fromJson<String?>(json['modulePath']),
-      moduleExternalUrl:
-          serializer.fromJson<String?>(json['moduleExternalUrl']),
-      moduleTarget: serializer.fromJson<String?>(json['moduleTarget']),
-      moduleComment: serializer.fromJson<String?>(json['moduleComment']),
       activeFrontend: serializer.fromJson<bool?>(json['activeFrontend']),
       activeBackend: serializer.fromJson<bool?>(json['activeBackend']),
-      moduleDocUrl: serializer.fromJson<String?>(json['moduleDocUrl']),
-      moduleOrder: serializer.fromJson<int?>(json['moduleOrder']),
-      ngModule: serializer.fromJson<String?>(json['ngModule']),
-      metaCreateDate: serializer.fromJson<DateTime?>(json['metaCreateDate']),
-      metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
     );
   }
   @override
@@ -476,20 +213,9 @@ class TModule extends DataClass implements Insertable<TModule> {
       'idModule': serializer.toJson<int>(idModule),
       'moduleCode': serializer.toJson<String?>(moduleCode),
       'moduleLabel': serializer.toJson<String?>(moduleLabel),
-      'modulePicto': serializer.toJson<String?>(modulePicto),
       'moduleDesc': serializer.toJson<String?>(moduleDesc),
-      'moduleGroup': serializer.toJson<String?>(moduleGroup),
-      'modulePath': serializer.toJson<String?>(modulePath),
-      'moduleExternalUrl': serializer.toJson<String?>(moduleExternalUrl),
-      'moduleTarget': serializer.toJson<String?>(moduleTarget),
-      'moduleComment': serializer.toJson<String?>(moduleComment),
       'activeFrontend': serializer.toJson<bool?>(activeFrontend),
       'activeBackend': serializer.toJson<bool?>(activeBackend),
-      'moduleDocUrl': serializer.toJson<String?>(moduleDocUrl),
-      'moduleOrder': serializer.toJson<int?>(moduleOrder),
-      'ngModule': serializer.toJson<String?>(ngModule),
-      'metaCreateDate': serializer.toJson<DateTime?>(metaCreateDate),
-      'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
     };
   }
 
@@ -497,47 +223,18 @@ class TModule extends DataClass implements Insertable<TModule> {
           {int? idModule,
           Value<String?> moduleCode = const Value.absent(),
           Value<String?> moduleLabel = const Value.absent(),
-          Value<String?> modulePicto = const Value.absent(),
           Value<String?> moduleDesc = const Value.absent(),
-          Value<String?> moduleGroup = const Value.absent(),
-          Value<String?> modulePath = const Value.absent(),
-          Value<String?> moduleExternalUrl = const Value.absent(),
-          Value<String?> moduleTarget = const Value.absent(),
-          Value<String?> moduleComment = const Value.absent(),
           Value<bool?> activeFrontend = const Value.absent(),
-          Value<bool?> activeBackend = const Value.absent(),
-          Value<String?> moduleDocUrl = const Value.absent(),
-          Value<int?> moduleOrder = const Value.absent(),
-          Value<String?> ngModule = const Value.absent(),
-          Value<DateTime?> metaCreateDate = const Value.absent(),
-          Value<DateTime?> metaUpdateDate = const Value.absent()}) =>
+          Value<bool?> activeBackend = const Value.absent()}) =>
       TModule(
         idModule: idModule ?? this.idModule,
         moduleCode: moduleCode.present ? moduleCode.value : this.moduleCode,
         moduleLabel: moduleLabel.present ? moduleLabel.value : this.moduleLabel,
-        modulePicto: modulePicto.present ? modulePicto.value : this.modulePicto,
         moduleDesc: moduleDesc.present ? moduleDesc.value : this.moduleDesc,
-        moduleGroup: moduleGroup.present ? moduleGroup.value : this.moduleGroup,
-        modulePath: modulePath.present ? modulePath.value : this.modulePath,
-        moduleExternalUrl: moduleExternalUrl.present
-            ? moduleExternalUrl.value
-            : this.moduleExternalUrl,
-        moduleTarget:
-            moduleTarget.present ? moduleTarget.value : this.moduleTarget,
-        moduleComment:
-            moduleComment.present ? moduleComment.value : this.moduleComment,
         activeFrontend:
             activeFrontend.present ? activeFrontend.value : this.activeFrontend,
         activeBackend:
             activeBackend.present ? activeBackend.value : this.activeBackend,
-        moduleDocUrl:
-            moduleDocUrl.present ? moduleDocUrl.value : this.moduleDocUrl,
-        moduleOrder: moduleOrder.present ? moduleOrder.value : this.moduleOrder,
-        ngModule: ngModule.present ? ngModule.value : this.ngModule,
-        metaCreateDate:
-            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
-        metaUpdateDate:
-            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
       );
   TModule copyWithCompanion(TModulesCompanion data) {
     return TModule(
@@ -546,41 +243,14 @@ class TModule extends DataClass implements Insertable<TModule> {
           data.moduleCode.present ? data.moduleCode.value : this.moduleCode,
       moduleLabel:
           data.moduleLabel.present ? data.moduleLabel.value : this.moduleLabel,
-      modulePicto:
-          data.modulePicto.present ? data.modulePicto.value : this.modulePicto,
       moduleDesc:
           data.moduleDesc.present ? data.moduleDesc.value : this.moduleDesc,
-      moduleGroup:
-          data.moduleGroup.present ? data.moduleGroup.value : this.moduleGroup,
-      modulePath:
-          data.modulePath.present ? data.modulePath.value : this.modulePath,
-      moduleExternalUrl: data.moduleExternalUrl.present
-          ? data.moduleExternalUrl.value
-          : this.moduleExternalUrl,
-      moduleTarget: data.moduleTarget.present
-          ? data.moduleTarget.value
-          : this.moduleTarget,
-      moduleComment: data.moduleComment.present
-          ? data.moduleComment.value
-          : this.moduleComment,
       activeFrontend: data.activeFrontend.present
           ? data.activeFrontend.value
           : this.activeFrontend,
       activeBackend: data.activeBackend.present
           ? data.activeBackend.value
           : this.activeBackend,
-      moduleDocUrl: data.moduleDocUrl.present
-          ? data.moduleDocUrl.value
-          : this.moduleDocUrl,
-      moduleOrder:
-          data.moduleOrder.present ? data.moduleOrder.value : this.moduleOrder,
-      ngModule: data.ngModule.present ? data.ngModule.value : this.ngModule,
-      metaCreateDate: data.metaCreateDate.present
-          ? data.metaCreateDate.value
-          : this.metaCreateDate,
-      metaUpdateDate: data.metaUpdateDate.present
-          ? data.metaUpdateDate.value
-          : this.metaUpdateDate,
     );
   }
 
@@ -590,43 +260,16 @@ class TModule extends DataClass implements Insertable<TModule> {
           ..write('idModule: $idModule, ')
           ..write('moduleCode: $moduleCode, ')
           ..write('moduleLabel: $moduleLabel, ')
-          ..write('modulePicto: $modulePicto, ')
           ..write('moduleDesc: $moduleDesc, ')
-          ..write('moduleGroup: $moduleGroup, ')
-          ..write('modulePath: $modulePath, ')
-          ..write('moduleExternalUrl: $moduleExternalUrl, ')
-          ..write('moduleTarget: $moduleTarget, ')
-          ..write('moduleComment: $moduleComment, ')
           ..write('activeFrontend: $activeFrontend, ')
-          ..write('activeBackend: $activeBackend, ')
-          ..write('moduleDocUrl: $moduleDocUrl, ')
-          ..write('moduleOrder: $moduleOrder, ')
-          ..write('ngModule: $ngModule, ')
-          ..write('metaCreateDate: $metaCreateDate, ')
-          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write('activeBackend: $activeBackend')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      idModule,
-      moduleCode,
-      moduleLabel,
-      modulePicto,
-      moduleDesc,
-      moduleGroup,
-      modulePath,
-      moduleExternalUrl,
-      moduleTarget,
-      moduleComment,
-      activeFrontend,
-      activeBackend,
-      moduleDocUrl,
-      moduleOrder,
-      ngModule,
-      metaCreateDate,
-      metaUpdateDate);
+  int get hashCode => Object.hash(idModule, moduleCode, moduleLabel, moduleDesc,
+      activeFrontend, activeBackend);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -634,115 +277,49 @@ class TModule extends DataClass implements Insertable<TModule> {
           other.idModule == this.idModule &&
           other.moduleCode == this.moduleCode &&
           other.moduleLabel == this.moduleLabel &&
-          other.modulePicto == this.modulePicto &&
           other.moduleDesc == this.moduleDesc &&
-          other.moduleGroup == this.moduleGroup &&
-          other.modulePath == this.modulePath &&
-          other.moduleExternalUrl == this.moduleExternalUrl &&
-          other.moduleTarget == this.moduleTarget &&
-          other.moduleComment == this.moduleComment &&
           other.activeFrontend == this.activeFrontend &&
-          other.activeBackend == this.activeBackend &&
-          other.moduleDocUrl == this.moduleDocUrl &&
-          other.moduleOrder == this.moduleOrder &&
-          other.ngModule == this.ngModule &&
-          other.metaCreateDate == this.metaCreateDate &&
-          other.metaUpdateDate == this.metaUpdateDate);
+          other.activeBackend == this.activeBackend);
 }
 
 class TModulesCompanion extends UpdateCompanion<TModule> {
   final Value<int> idModule;
   final Value<String?> moduleCode;
   final Value<String?> moduleLabel;
-  final Value<String?> modulePicto;
   final Value<String?> moduleDesc;
-  final Value<String?> moduleGroup;
-  final Value<String?> modulePath;
-  final Value<String?> moduleExternalUrl;
-  final Value<String?> moduleTarget;
-  final Value<String?> moduleComment;
   final Value<bool?> activeFrontend;
   final Value<bool?> activeBackend;
-  final Value<String?> moduleDocUrl;
-  final Value<int?> moduleOrder;
-  final Value<String?> ngModule;
-  final Value<DateTime?> metaCreateDate;
-  final Value<DateTime?> metaUpdateDate;
   const TModulesCompanion({
     this.idModule = const Value.absent(),
     this.moduleCode = const Value.absent(),
     this.moduleLabel = const Value.absent(),
-    this.modulePicto = const Value.absent(),
     this.moduleDesc = const Value.absent(),
-    this.moduleGroup = const Value.absent(),
-    this.modulePath = const Value.absent(),
-    this.moduleExternalUrl = const Value.absent(),
-    this.moduleTarget = const Value.absent(),
-    this.moduleComment = const Value.absent(),
     this.activeFrontend = const Value.absent(),
     this.activeBackend = const Value.absent(),
-    this.moduleDocUrl = const Value.absent(),
-    this.moduleOrder = const Value.absent(),
-    this.ngModule = const Value.absent(),
-    this.metaCreateDate = const Value.absent(),
-    this.metaUpdateDate = const Value.absent(),
   });
   TModulesCompanion.insert({
     this.idModule = const Value.absent(),
     this.moduleCode = const Value.absent(),
     this.moduleLabel = const Value.absent(),
-    this.modulePicto = const Value.absent(),
     this.moduleDesc = const Value.absent(),
-    this.moduleGroup = const Value.absent(),
-    this.modulePath = const Value.absent(),
-    this.moduleExternalUrl = const Value.absent(),
-    this.moduleTarget = const Value.absent(),
-    this.moduleComment = const Value.absent(),
     this.activeFrontend = const Value.absent(),
     this.activeBackend = const Value.absent(),
-    this.moduleDocUrl = const Value.absent(),
-    this.moduleOrder = const Value.absent(),
-    this.ngModule = const Value.absent(),
-    this.metaCreateDate = const Value.absent(),
-    this.metaUpdateDate = const Value.absent(),
   });
   static Insertable<TModule> custom({
     Expression<int>? idModule,
     Expression<String>? moduleCode,
     Expression<String>? moduleLabel,
-    Expression<String>? modulePicto,
     Expression<String>? moduleDesc,
-    Expression<String>? moduleGroup,
-    Expression<String>? modulePath,
-    Expression<String>? moduleExternalUrl,
-    Expression<String>? moduleTarget,
-    Expression<String>? moduleComment,
     Expression<bool>? activeFrontend,
     Expression<bool>? activeBackend,
-    Expression<String>? moduleDocUrl,
-    Expression<int>? moduleOrder,
-    Expression<String>? ngModule,
-    Expression<DateTime>? metaCreateDate,
-    Expression<DateTime>? metaUpdateDate,
   }) {
     return RawValuesInsertable({
       if (idModule != null) 'id_module': idModule,
       if (moduleCode != null) 'module_code': moduleCode,
       if (moduleLabel != null) 'module_label': moduleLabel,
-      if (modulePicto != null) 'module_picto': modulePicto,
       if (moduleDesc != null) 'module_desc': moduleDesc,
-      if (moduleGroup != null) 'module_group': moduleGroup,
-      if (modulePath != null) 'module_path': modulePath,
-      if (moduleExternalUrl != null) 'module_external_url': moduleExternalUrl,
-      if (moduleTarget != null) 'module_target': moduleTarget,
-      if (moduleComment != null) 'module_comment': moduleComment,
       if (activeFrontend != null) 'active_frontend': activeFrontend,
       if (activeBackend != null) 'active_backend': activeBackend,
-      if (moduleDocUrl != null) 'module_doc_url': moduleDocUrl,
-      if (moduleOrder != null) 'module_order': moduleOrder,
-      if (ngModule != null) 'ng_module': ngModule,
-      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
-      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
     });
   }
 
@@ -750,38 +327,16 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
       {Value<int>? idModule,
       Value<String?>? moduleCode,
       Value<String?>? moduleLabel,
-      Value<String?>? modulePicto,
       Value<String?>? moduleDesc,
-      Value<String?>? moduleGroup,
-      Value<String?>? modulePath,
-      Value<String?>? moduleExternalUrl,
-      Value<String?>? moduleTarget,
-      Value<String?>? moduleComment,
       Value<bool?>? activeFrontend,
-      Value<bool?>? activeBackend,
-      Value<String?>? moduleDocUrl,
-      Value<int?>? moduleOrder,
-      Value<String?>? ngModule,
-      Value<DateTime?>? metaCreateDate,
-      Value<DateTime?>? metaUpdateDate}) {
+      Value<bool?>? activeBackend}) {
     return TModulesCompanion(
       idModule: idModule ?? this.idModule,
       moduleCode: moduleCode ?? this.moduleCode,
       moduleLabel: moduleLabel ?? this.moduleLabel,
-      modulePicto: modulePicto ?? this.modulePicto,
       moduleDesc: moduleDesc ?? this.moduleDesc,
-      moduleGroup: moduleGroup ?? this.moduleGroup,
-      modulePath: modulePath ?? this.modulePath,
-      moduleExternalUrl: moduleExternalUrl ?? this.moduleExternalUrl,
-      moduleTarget: moduleTarget ?? this.moduleTarget,
-      moduleComment: moduleComment ?? this.moduleComment,
       activeFrontend: activeFrontend ?? this.activeFrontend,
       activeBackend: activeBackend ?? this.activeBackend,
-      moduleDocUrl: moduleDocUrl ?? this.moduleDocUrl,
-      moduleOrder: moduleOrder ?? this.moduleOrder,
-      ngModule: ngModule ?? this.ngModule,
-      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
-      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
     );
   }
 
@@ -797,47 +352,14 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
     if (moduleLabel.present) {
       map['module_label'] = Variable<String>(moduleLabel.value);
     }
-    if (modulePicto.present) {
-      map['module_picto'] = Variable<String>(modulePicto.value);
-    }
     if (moduleDesc.present) {
       map['module_desc'] = Variable<String>(moduleDesc.value);
-    }
-    if (moduleGroup.present) {
-      map['module_group'] = Variable<String>(moduleGroup.value);
-    }
-    if (modulePath.present) {
-      map['module_path'] = Variable<String>(modulePath.value);
-    }
-    if (moduleExternalUrl.present) {
-      map['module_external_url'] = Variable<String>(moduleExternalUrl.value);
-    }
-    if (moduleTarget.present) {
-      map['module_target'] = Variable<String>(moduleTarget.value);
-    }
-    if (moduleComment.present) {
-      map['module_comment'] = Variable<String>(moduleComment.value);
     }
     if (activeFrontend.present) {
       map['active_frontend'] = Variable<bool>(activeFrontend.value);
     }
     if (activeBackend.present) {
       map['active_backend'] = Variable<bool>(activeBackend.value);
-    }
-    if (moduleDocUrl.present) {
-      map['module_doc_url'] = Variable<String>(moduleDocUrl.value);
-    }
-    if (moduleOrder.present) {
-      map['module_order'] = Variable<int>(moduleOrder.value);
-    }
-    if (ngModule.present) {
-      map['ng_module'] = Variable<String>(ngModule.value);
-    }
-    if (metaCreateDate.present) {
-      map['meta_create_date'] = Variable<DateTime>(metaCreateDate.value);
-    }
-    if (metaUpdateDate.present) {
-      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate.value);
     }
     return map;
   }
@@ -848,20 +370,9 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
           ..write('idModule: $idModule, ')
           ..write('moduleCode: $moduleCode, ')
           ..write('moduleLabel: $moduleLabel, ')
-          ..write('modulePicto: $modulePicto, ')
           ..write('moduleDesc: $moduleDesc, ')
-          ..write('moduleGroup: $moduleGroup, ')
-          ..write('modulePath: $modulePath, ')
-          ..write('moduleExternalUrl: $moduleExternalUrl, ')
-          ..write('moduleTarget: $moduleTarget, ')
-          ..write('moduleComment: $moduleComment, ')
           ..write('activeFrontend: $activeFrontend, ')
-          ..write('activeBackend: $activeBackend, ')
-          ..write('moduleDocUrl: $moduleDocUrl, ')
-          ..write('moduleOrder: $moduleOrder, ')
-          ..write('ngModule: $ngModule, ')
-          ..write('metaCreateDate: $metaCreateDate, ')
-          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write('activeBackend: $activeBackend')
           ..write(')'))
         .toString();
   }
@@ -5294,6 +4805,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CorSiteModulesTable corSiteModules = $CorSiteModulesTable(this);
   late final $CorObjectModulesTable corObjectModules =
       $CorObjectModulesTable(this);
+  late final TModulesDao tModulesDao = TModulesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -5321,39 +4833,17 @@ typedef $$TModulesTableCreateCompanionBuilder = TModulesCompanion Function({
   Value<int> idModule,
   Value<String?> moduleCode,
   Value<String?> moduleLabel,
-  Value<String?> modulePicto,
   Value<String?> moduleDesc,
-  Value<String?> moduleGroup,
-  Value<String?> modulePath,
-  Value<String?> moduleExternalUrl,
-  Value<String?> moduleTarget,
-  Value<String?> moduleComment,
   Value<bool?> activeFrontend,
   Value<bool?> activeBackend,
-  Value<String?> moduleDocUrl,
-  Value<int?> moduleOrder,
-  Value<String?> ngModule,
-  Value<DateTime?> metaCreateDate,
-  Value<DateTime?> metaUpdateDate,
 });
 typedef $$TModulesTableUpdateCompanionBuilder = TModulesCompanion Function({
   Value<int> idModule,
   Value<String?> moduleCode,
   Value<String?> moduleLabel,
-  Value<String?> modulePicto,
   Value<String?> moduleDesc,
-  Value<String?> moduleGroup,
-  Value<String?> modulePath,
-  Value<String?> moduleExternalUrl,
-  Value<String?> moduleTarget,
-  Value<String?> moduleComment,
   Value<bool?> activeFrontend,
   Value<bool?> activeBackend,
-  Value<String?> moduleDocUrl,
-  Value<int?> moduleOrder,
-  Value<String?> ngModule,
-  Value<DateTime?> metaCreateDate,
-  Value<DateTime?> metaUpdateDate,
 });
 
 class $$TModulesTableFilterComposer
@@ -5374,27 +4864,8 @@ class $$TModulesTableFilterComposer
   ColumnFilters<String> get moduleLabel => $composableBuilder(
       column: $table.moduleLabel, builder: (column) => ColumnFilters(column));
 
-  ColumnFilters<String> get modulePicto => $composableBuilder(
-      column: $table.modulePicto, builder: (column) => ColumnFilters(column));
-
   ColumnFilters<String> get moduleDesc => $composableBuilder(
       column: $table.moduleDesc, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get moduleGroup => $composableBuilder(
-      column: $table.moduleGroup, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get modulePath => $composableBuilder(
-      column: $table.modulePath, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get moduleExternalUrl => $composableBuilder(
-      column: $table.moduleExternalUrl,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get moduleTarget => $composableBuilder(
-      column: $table.moduleTarget, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get moduleComment => $composableBuilder(
-      column: $table.moduleComment, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<bool> get activeFrontend => $composableBuilder(
       column: $table.activeFrontend,
@@ -5402,23 +4873,6 @@ class $$TModulesTableFilterComposer
 
   ColumnFilters<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get moduleDocUrl => $composableBuilder(
-      column: $table.moduleDocUrl, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<int> get moduleOrder => $composableBuilder(
-      column: $table.moduleOrder, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<String> get ngModule => $composableBuilder(
-      column: $table.ngModule, builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get metaCreateDate => $composableBuilder(
-      column: $table.metaCreateDate,
-      builder: (column) => ColumnFilters(column));
-
-  ColumnFilters<DateTime> get metaUpdateDate => $composableBuilder(
-      column: $table.metaUpdateDate,
-      builder: (column) => ColumnFilters(column));
 }
 
 class $$TModulesTableOrderingComposer
@@ -5439,29 +4893,8 @@ class $$TModulesTableOrderingComposer
   ColumnOrderings<String> get moduleLabel => $composableBuilder(
       column: $table.moduleLabel, builder: (column) => ColumnOrderings(column));
 
-  ColumnOrderings<String> get modulePicto => $composableBuilder(
-      column: $table.modulePicto, builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<String> get moduleDesc => $composableBuilder(
       column: $table.moduleDesc, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get moduleGroup => $composableBuilder(
-      column: $table.moduleGroup, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get modulePath => $composableBuilder(
-      column: $table.modulePath, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get moduleExternalUrl => $composableBuilder(
-      column: $table.moduleExternalUrl,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get moduleTarget => $composableBuilder(
-      column: $table.moduleTarget,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get moduleComment => $composableBuilder(
-      column: $table.moduleComment,
-      builder: (column) => ColumnOrderings(column));
 
   ColumnOrderings<bool> get activeFrontend => $composableBuilder(
       column: $table.activeFrontend,
@@ -5469,24 +4902,6 @@ class $$TModulesTableOrderingComposer
 
   ColumnOrderings<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get moduleDocUrl => $composableBuilder(
-      column: $table.moduleDocUrl,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<int> get moduleOrder => $composableBuilder(
-      column: $table.moduleOrder, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<String> get ngModule => $composableBuilder(
-      column: $table.ngModule, builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get metaCreateDate => $composableBuilder(
-      column: $table.metaCreateDate,
-      builder: (column) => ColumnOrderings(column));
-
-  ColumnOrderings<DateTime> get metaUpdateDate => $composableBuilder(
-      column: $table.metaUpdateDate,
       builder: (column) => ColumnOrderings(column));
 }
 
@@ -5508,47 +4923,14 @@ class $$TModulesTableAnnotationComposer
   GeneratedColumn<String> get moduleLabel => $composableBuilder(
       column: $table.moduleLabel, builder: (column) => column);
 
-  GeneratedColumn<String> get modulePicto => $composableBuilder(
-      column: $table.modulePicto, builder: (column) => column);
-
   GeneratedColumn<String> get moduleDesc => $composableBuilder(
       column: $table.moduleDesc, builder: (column) => column);
-
-  GeneratedColumn<String> get moduleGroup => $composableBuilder(
-      column: $table.moduleGroup, builder: (column) => column);
-
-  GeneratedColumn<String> get modulePath => $composableBuilder(
-      column: $table.modulePath, builder: (column) => column);
-
-  GeneratedColumn<String> get moduleExternalUrl => $composableBuilder(
-      column: $table.moduleExternalUrl, builder: (column) => column);
-
-  GeneratedColumn<String> get moduleTarget => $composableBuilder(
-      column: $table.moduleTarget, builder: (column) => column);
-
-  GeneratedColumn<String> get moduleComment => $composableBuilder(
-      column: $table.moduleComment, builder: (column) => column);
 
   GeneratedColumn<bool> get activeFrontend => $composableBuilder(
       column: $table.activeFrontend, builder: (column) => column);
 
   GeneratedColumn<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend, builder: (column) => column);
-
-  GeneratedColumn<String> get moduleDocUrl => $composableBuilder(
-      column: $table.moduleDocUrl, builder: (column) => column);
-
-  GeneratedColumn<int> get moduleOrder => $composableBuilder(
-      column: $table.moduleOrder, builder: (column) => column);
-
-  GeneratedColumn<String> get ngModule =>
-      $composableBuilder(column: $table.ngModule, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get metaCreateDate => $composableBuilder(
-      column: $table.metaCreateDate, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get metaUpdateDate => $composableBuilder(
-      column: $table.metaUpdateDate, builder: (column) => column);
 }
 
 class $$TModulesTableTableManager extends RootTableManager<
@@ -5577,77 +4959,33 @@ class $$TModulesTableTableManager extends RootTableManager<
             Value<int> idModule = const Value.absent(),
             Value<String?> moduleCode = const Value.absent(),
             Value<String?> moduleLabel = const Value.absent(),
-            Value<String?> modulePicto = const Value.absent(),
             Value<String?> moduleDesc = const Value.absent(),
-            Value<String?> moduleGroup = const Value.absent(),
-            Value<String?> modulePath = const Value.absent(),
-            Value<String?> moduleExternalUrl = const Value.absent(),
-            Value<String?> moduleTarget = const Value.absent(),
-            Value<String?> moduleComment = const Value.absent(),
             Value<bool?> activeFrontend = const Value.absent(),
             Value<bool?> activeBackend = const Value.absent(),
-            Value<String?> moduleDocUrl = const Value.absent(),
-            Value<int?> moduleOrder = const Value.absent(),
-            Value<String?> ngModule = const Value.absent(),
-            Value<DateTime?> metaCreateDate = const Value.absent(),
-            Value<DateTime?> metaUpdateDate = const Value.absent(),
           }) =>
               TModulesCompanion(
             idModule: idModule,
             moduleCode: moduleCode,
             moduleLabel: moduleLabel,
-            modulePicto: modulePicto,
             moduleDesc: moduleDesc,
-            moduleGroup: moduleGroup,
-            modulePath: modulePath,
-            moduleExternalUrl: moduleExternalUrl,
-            moduleTarget: moduleTarget,
-            moduleComment: moduleComment,
             activeFrontend: activeFrontend,
             activeBackend: activeBackend,
-            moduleDocUrl: moduleDocUrl,
-            moduleOrder: moduleOrder,
-            ngModule: ngModule,
-            metaCreateDate: metaCreateDate,
-            metaUpdateDate: metaUpdateDate,
           ),
           createCompanionCallback: ({
             Value<int> idModule = const Value.absent(),
             Value<String?> moduleCode = const Value.absent(),
             Value<String?> moduleLabel = const Value.absent(),
-            Value<String?> modulePicto = const Value.absent(),
             Value<String?> moduleDesc = const Value.absent(),
-            Value<String?> moduleGroup = const Value.absent(),
-            Value<String?> modulePath = const Value.absent(),
-            Value<String?> moduleExternalUrl = const Value.absent(),
-            Value<String?> moduleTarget = const Value.absent(),
-            Value<String?> moduleComment = const Value.absent(),
             Value<bool?> activeFrontend = const Value.absent(),
             Value<bool?> activeBackend = const Value.absent(),
-            Value<String?> moduleDocUrl = const Value.absent(),
-            Value<int?> moduleOrder = const Value.absent(),
-            Value<String?> ngModule = const Value.absent(),
-            Value<DateTime?> metaCreateDate = const Value.absent(),
-            Value<DateTime?> metaUpdateDate = const Value.absent(),
           }) =>
               TModulesCompanion.insert(
             idModule: idModule,
             moduleCode: moduleCode,
             moduleLabel: moduleLabel,
-            modulePicto: modulePicto,
             moduleDesc: moduleDesc,
-            moduleGroup: moduleGroup,
-            modulePath: modulePath,
-            moduleExternalUrl: moduleExternalUrl,
-            moduleTarget: moduleTarget,
-            moduleComment: moduleComment,
             activeFrontend: activeFrontend,
             activeBackend: activeBackend,
-            moduleDocUrl: moduleDocUrl,
-            moduleOrder: moduleOrder,
-            ngModule: ngModule,
-            metaCreateDate: metaCreateDate,
-            metaUpdateDate: metaUpdateDate,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

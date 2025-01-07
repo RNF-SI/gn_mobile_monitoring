@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/t_modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
@@ -40,25 +41,25 @@ import 'migrations/017_add_observation_details_entry_in_bib.dart';
 
 part 'database.g.dart';
 
-@DriftDatabase(
-  tables: [
-    TModules,
-    TModuleComplements,
-    TSitesGroups,
-    TSiteComplements,
-    TVisitComplements,
-    TObservations,
-    TObservationComplements,
-    TObservationDetails,
-    BibTablesLocations,
-    TObjects,
-    TActions,
-    TPermissionsAvailable,
-    TPermissions,
-    CorSiteModules,
-    CorObjectModules,
-  ],
-)
+@DriftDatabase(tables: [
+  TModules,
+  TModuleComplements,
+  TSitesGroups,
+  TSiteComplements,
+  TVisitComplements,
+  TObservations,
+  TObservationComplements,
+  TObservationDetails,
+  BibTablesLocations,
+  TObjects,
+  TActions,
+  TPermissionsAvailable,
+  TPermissions,
+  CorSiteModules,
+  CorObjectModules,
+], daos: [
+  TModulesDao,
+])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection()) {
     print("Database initialized");
