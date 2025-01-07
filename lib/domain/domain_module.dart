@@ -1,5 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
@@ -81,3 +87,17 @@ final setTokenFromLocalStorageUseCaseProvider =
 final getTokenFromLocalStorageUseCaseProvider =
     Provider<GetTokenFromLocalStorageUseCase>((ref) =>
         GetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final clearUserIdFromLocalStorageUseCaseProvider =
+    Provider<ClearUserIdFromLocalStorageUseCase>((ref) =>
+        ClearUserIdFromLocalStorageUseCaseImpl(
+            ref.watch(localStorageProvider)));
+
+final clearUserNameFromLocalStorageUseCaseProvider =
+    Provider<ClearUserNameFromLocalStorageUseCase>((ref) =>
+        ClearUserNameFromLocalStorageUseCaseImpl(
+            ref.watch(localStorageProvider)));
+
+final clearTokenFromLocalStorageUseCaseProvider =
+    Provider<ClearTokenFromLocalStorageUseCase>((ref) =>
+        ClearTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
