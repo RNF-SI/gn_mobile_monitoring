@@ -61,9 +61,12 @@ part 'database.g.dart';
   TModulesDao,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection()) {
-    print("Database initialized");
-  }
+  AppDatabase._internal() : super(_openConnection());
+
+  static final AppDatabase _instance = AppDatabase._internal();
+
+  // Public factory to access the instance
+  factory AppDatabase() => _instance;
 
   @override
   int get schemaVersion => 17; // Update schema version to 17
