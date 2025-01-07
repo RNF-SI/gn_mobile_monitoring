@@ -14,9 +14,18 @@ class ModulesApiImpl implements ModulesApi {
         ));
 
   @override
-  Future<List<ModuleEntity>> getModules() async {
+  Future<List<ModuleEntity>> getModules(String token) async {
     try {
-      final response = await _dio.get('/monitorings/modules');
+      // Ajouter le token dans les headers
+      final response = await _dio.get(
+        '/monitorings/modules',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is List) {

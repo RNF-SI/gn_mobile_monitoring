@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
@@ -32,6 +33,7 @@ final userModuleListeViewModelStateNotifierProvider =
     ref.watch(deleteLocalMonitoringDatabaseUseCaseProvider),
     ref.watch(getUserIdFromLocalStorageUseCaseProvider),
     ref.watch(syncModulesUseCaseProvider),
+    ref.watch(getTokenFromLocalStorageUseCaseProvider),
   );
 });
 
@@ -42,6 +44,7 @@ class UserModulesViewModel
       _deleteLocalMonitoringDatabaseUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
   final SyncModulesUseCase _syncModulesUseCase;
+  final GetTokenFromLocalStorageUseCase _getTokenFromLocalStorageUseCase;
 
   UserModulesViewModel(
     AsyncValue<ModuleInfoListe> userDispListe,
@@ -49,6 +52,7 @@ class UserModulesViewModel
     this._deleteLocalMonitoringDatabaseUseCase,
     this._getUserIdFromLocalStorageUseCase,
     this._syncModulesUseCase,
+    this._getTokenFromLocalStorageUseCase,
   ) : super(const custom_async_state.State.init()) {
     _init();
     // Creates db tables and insert listee data (ex:essences, etc.)
@@ -113,10 +117,16 @@ class UserModulesViewModel
 
   Future<void> syncModules() async {
     try {
-      await _syncModulesUseCase.execute();
-      print('CSV Import successful');
+      state = const custom_async_state.State.loading();
+      final token = await _getTokenFromLocalStorageUseCase.execute() as String;
+      await _syncModulesUseCase.execute(token);
+
+      // Recharger les modules après synchronisation
+      await _init();
     } catch (e) {
-      print('Error during CSV import: $e');
+      print('Error during module synchronization: $e');
+      state =
+          custom_async_state.State.error(Exception("Failed to sync modules"));
     }
   }
 }

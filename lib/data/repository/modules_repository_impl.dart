@@ -22,10 +22,10 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
-  Future<List<Module>> fetchAndSyncModulesFromApi() async {
+  Future<List<Module>> fetchAndSyncModulesFromApi(String token) async {
     try {
       // Fetch modules from the API
-      final apiModules = await api.getModules();
+      final apiModules = await api.getModules(token);
 
       // Map API response to domain models
       final modules = apiModules.map(ModuleMapper.toDomain).toList();

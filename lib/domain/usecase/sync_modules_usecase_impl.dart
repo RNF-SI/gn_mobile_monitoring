@@ -7,7 +7,7 @@ class SyncModulesUseCaseImpl implements SyncModulesUseCase {
   const SyncModulesUseCaseImpl(this._repository);
 
   @override
-  Future<void> execute() async {
-    await _repository.fetchAndSyncModulesFromApi();
+  Future<void> execute(String token) async {
+    await _repository.fetchAndSyncModulesFromApi(token);
   }
 }

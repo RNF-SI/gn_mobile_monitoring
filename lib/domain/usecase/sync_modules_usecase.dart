@@ -1,3 +1,3 @@
 abstract class SyncModulesUseCase {
-  Future<void> execute();
+  Future<void> execute(String token);
 }
