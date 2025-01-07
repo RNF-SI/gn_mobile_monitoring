@@ -96,6 +96,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
           // Refresh UI or state management solution
           ref.refresh(isLoggedInProvider);
+          GoRouter.of(context).go('/');
           state = loadingState.State.success(user);
         } catch (e) {
           print('Error saving login state and user name: $e');
