@@ -30,4 +30,12 @@ class ModulesRepositoryImpl implements ModulesRepository {
       throw Exception("Failed to sync modules: ${e.toString()}");
     }
   }
+
+  @override
+  Future<void> downloadModuleData(int moduleId) async {
+    // Fetch module data from API and save to database
+    // final apiModuleData = await api.getModuleData(moduleId);
+    // final moduleData = apiModuleData.toDomain();
+    // await database.insertModuleData(moduleData);
+  }
 }

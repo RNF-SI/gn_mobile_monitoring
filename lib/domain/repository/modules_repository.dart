@@ -6,4 +6,6 @@ abstract class ModulesRepository {
 
   /// Fetches modules from the API, updates the local database, and returns the updated list
   Future<void> fetchAndSyncModulesFromApi(String token);
+
+  Future<void> downloadModuleData(int moduleId);
 }
