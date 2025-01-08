@@ -5,25 +5,11 @@ class DB {
   DB._internal();
   static DB get instance => _instance;
 
-  AppDatabase? _database;
-
   Future<AppDatabase> get database async {
-    if (_database == null) {
-      print("Creating new AppDatabase instance...");
-      _database = AppDatabase();
-    } else {
-      print("Reusing existing AppDatabase instance...");
-      print("Database path: ${_database!}");
-    }
-    return _database!;
+    return await AppDatabase.getInstance();
   }
 
   Future<void> resetDatabase() async {
-    if (_database != null) {
-      print("Closing database...");
-      await _database!.close();
-      print("Database closed");
-    }
-    _database = null;
+    await AppDatabase.resetInstance();
   }
 }
