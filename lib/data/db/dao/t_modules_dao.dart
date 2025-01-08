@@ -29,5 +29,11 @@ class TModulesDao extends DatabaseAccessor<AppDatabase>
     });
   }
 
-  Future<void> clearModules() => delete(tModules).go();
+  Future<void> clearModules() async {
+    try {
+      await delete(tModules).go();
+    } catch (e) {
+      throw Exception("Failed to clear modules: ${e.toString()}");
+    }
+  }
 }
