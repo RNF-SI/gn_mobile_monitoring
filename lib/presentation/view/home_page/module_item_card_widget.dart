@@ -38,7 +38,10 @@ class ModuleItemCardWidget extends ConsumerWidget {
                 ],
               ),
             ),
-            ModuleDownloadButton(moduleInfo: moduleInfo),
+            SizedBox(
+              width: 96,
+              child: ModuleDownloadButton(moduleInfo: moduleInfo),
+            )
           ],
         ),
       ),
