@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/view/error_screen.dart';
-import 'package:gn_mobile_monitoring/presentation/view/home_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/loading_screen.dart';
 import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
 
