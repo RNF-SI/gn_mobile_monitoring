@@ -63,10 +63,21 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
 
-  static final AppDatabase _instance = AppDatabase._internal();
+  static AppDatabase? _instance;
 
-  // Public factory to access the instance
-  factory AppDatabase() => _instance;
+  // Singleton accessor
+  static Future<AppDatabase> getInstance() async {
+    _instance ??= AppDatabase._internal();
+    return _instance!;
+  }
+
+  // Reset method
+  static Future<void> resetInstance() async {
+    if (_instance != null) {
+      await _instance!.close();
+      _instance = null;
+    }
+  }
 
   @override
   int get schemaVersion => 17; // Update schema version to 17
@@ -176,16 +187,15 @@ LazyDatabase _openConnection() {
   return LazyDatabase(() async {
     final dbFolder = await getApplicationDocumentsDirectory();
     final dbPath = p.join(dbFolder.path, 'app.sqlite');
-    return NativeDatabase(File(dbPath));
-  });
-}
+    final file = File(dbPath);
 
-Future<void> deleteDatabaseFile() async {
-  final dbFolder = await getApplicationDocumentsDirectory();
-  final dbPath = p.join(dbFolder.path, 'app.sqlite');
-  final file = File(dbPath);
-  if (await file.exists()) {
-    await file.delete();
-    print("Database file deleted");
-  }
+    if (!(await file.exists())) {
+      await file.create(recursive: true);
+      print("Database file created at: $dbPath");
+    } else {
+      print("Database file already exists at: $dbPath");
+    }
+
+    return NativeDatabase(file, logStatements: true);
+  });
 }
