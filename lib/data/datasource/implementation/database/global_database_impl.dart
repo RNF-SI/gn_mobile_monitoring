@@ -2,38 +2,15 @@ import 'dart:io';
 
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 class GlobalDatabaseImpl implements GlobalDatabase {
-  AppDatabase? _appDatabase;
-
   @override
   Future<void> initDatabase() async {
-    try {
-      print("Initializing database...");
-      _appDatabase = await DB.instance.database;
-
-      if (_appDatabase != null) {
-        print("Database initialized successfully");
-
-        // Force database to open and verify it is operational
-        await _appDatabase!.customSelect('SELECT 1;').get();
-        print("Database connection verified");
-      } else {
-        print("Database initialization failed");
-      }
-    } catch (e) {
-      print("Error during database initialization: $e");
-    }
-  }
-
-  Future<AppDatabase?> get database async {
-    if (_appDatabase == null) {
-      await initDatabase();
-    }
-    return _appDatabase;
+    print("Initializing database...");
+    await DB.instance.database; // Initialize
+    print("Database initialized successfully.");
   }
 
   @override
@@ -42,13 +19,19 @@ class GlobalDatabaseImpl implements GlobalDatabase {
     final dbPath = p.join(dbFolder.path, 'app.sqlite');
     final file = File(dbPath);
 
+    // Reset database instance
+    await DB.instance.resetDatabase();
+
     if (await file.exists()) {
       await file.delete();
-      print("Database deleted at: $dbPath");
+      print("Database file deleted at: $dbPath");
     } else {
-      print("Database file not found at: $dbPath");
+      print("Database file not found.");
     }
+  }
 
-    _appDatabase = null; // Reset the database instance
+  @override
+  Future<void> resetDatabase() async {
+    await DB.instance.resetDatabase();
   }
 }
