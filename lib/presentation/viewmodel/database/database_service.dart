@@ -17,7 +17,6 @@ final databaseServiceProvider =
 
 class DatabaseService extends StateNotifier<custom_async_state.State<void>> {
   final InitLocalMonitoringDataBaseUseCase _initLocalMonitoringDataBaseUseCase;
-
   final DeleteLocalMonitoringDatabaseUseCase
       _deleteLocalMonitoringDatabaseUseCase;
 
@@ -34,10 +33,8 @@ class DatabaseService extends StateNotifier<custom_async_state.State<void>> {
   Future<void> _init() async {
     state = const custom_async_state.State.loading();
     try {
-      // Initialize database
       await _initLocalMonitoringDataBaseUseCase.execute();
     } catch (e, stackTrace) {
-      // Handle errors gracefully and display in the UI
       print("Error during initialization: $e");
       print(stackTrace);
       state = custom_async_state.State.error(
@@ -45,13 +42,16 @@ class DatabaseService extends StateNotifier<custom_async_state.State<void>> {
     }
   }
 
-  Future<void> deleteDatabase() async {
+  Future<void> deleteAndReinitializeDatabase() async {
     state = const custom_async_state.State.loading();
     try {
       await _deleteLocalMonitoringDatabaseUseCase.execute();
+      await _initLocalMonitoringDataBaseUseCase.execute();
+      print("Database successfully deleted and reinitialized");
       state = const custom_async_state.State.success(null);
-    } on Exception catch (e) {
-      state = custom_async_state.State.error(e);
+    } catch (e) {
+      print("Error during database reinitialization: $e");
+      state = custom_async_state.State.error(Exception(e));
     }
   }
 }
