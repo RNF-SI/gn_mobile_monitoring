@@ -8,8 +8,8 @@ extension TModuleMapper on TModule {
       moduleCode: moduleCode,
       moduleLabel: moduleLabel,
       moduleDesc: moduleDesc,
-      activeFrontend: activeFrontend,
-      activeBackend: activeBackend,
+      activeFrontend: activeFrontend ?? false, // Default value
+      activeBackend: activeBackend ?? false, // Default value
     );
   }
 }
@@ -18,11 +18,11 @@ extension ModuleMapper on Module {
   TModule toDatabaseEntity() {
     return TModule(
       idModule: id,
-      moduleCode: moduleCode,
-      moduleLabel: moduleLabel,
+      moduleCode: moduleCode ?? '', // Ensure a non-null value
+      moduleLabel: moduleLabel ?? '',
       moduleDesc: moduleDesc,
-      activeFrontend: activeFrontend,
-      activeBackend: activeBackend,
+      activeFrontend: activeFrontend ?? false,
+      activeBackend: activeBackend ?? false,
     );
   }
 }
