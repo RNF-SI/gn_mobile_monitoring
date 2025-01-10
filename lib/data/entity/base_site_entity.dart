@@ -1,4 +1,4 @@
-class SiteEntity {
+class BaseSiteEntity {
   final int idBaseSite;
   final String? baseSiteName;
   final String? baseSiteDescription;
@@ -11,7 +11,7 @@ class SiteEntity {
   final DateTime? metaCreateDate;
   final DateTime? metaUpdateDate;
 
-  SiteEntity({
+  BaseSiteEntity({
     required this.idBaseSite,
     this.baseSiteName,
     this.baseSiteDescription,
@@ -26,8 +26,8 @@ class SiteEntity {
   });
 
   // Factory method to convert JSON to entity
-  factory SiteEntity.fromJson(Map<String, dynamic> json) {
-    return SiteEntity(
+  factory BaseSiteEntity.fromJson(Map<String, dynamic> json) {
+    return BaseSiteEntity(
       idBaseSite: json['id_base_site'] as int,
       baseSiteName: json['base_site_name'] as String?,
       baseSiteDescription: json['base_site_description'] as String?,
