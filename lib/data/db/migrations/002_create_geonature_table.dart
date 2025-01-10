@@ -141,5 +141,30 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_base_sites (
+        id_base_site INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_inventor INTEGER,
+        id_digitiser INTEGER,
+        base_site_name TEXT,
+        base_site_description TEXT,
+        base_site_code TEXT,
+        first_use_date TIMESTAMP,
+        geom TEXT, -- Stockage de la géométrie en format GeoJSON
+        uuid_base_site TEXT,
+        meta_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        altitude_min INTEGER,
+        altitude_max INTEGER,
+        FOREIGN KEY (id_inventor) REFERENCES t_roles (id_role),
+        FOREIGN KEY (id_digitiser) REFERENCES t_roles (id_role)
+      );
+    ''');
+  } catch (e) {
+    print("Error creating t_base_sites table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }
