@@ -1,12 +1,12 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/database/module_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
   final ModulesApi api;
-  final ModuleDatabase database;
+  final ModulesDatabase database;
 
   ModulesRepositoryImpl(this.api, this.database);
 

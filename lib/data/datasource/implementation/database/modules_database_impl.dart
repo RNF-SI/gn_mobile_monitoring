@@ -1,9 +1,9 @@
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/database/module_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 
-class ModuleDatabaseImpl implements ModuleDatabase {
+class ModuleDatabaseImpl implements ModulesDatabase {
   Future<AppDatabase> get _database async => await DB.instance.database;
 
   @override
