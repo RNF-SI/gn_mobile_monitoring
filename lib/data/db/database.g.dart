@@ -378,6 +378,693 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
   }
 }
 
+class $TBaseSitesTable extends TBaseSites
+    with TableInfo<$TBaseSitesTable, TBaseSite> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TBaseSitesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idBaseSiteMeta =
+      const VerificationMeta('idBaseSite');
+  @override
+  late final GeneratedColumn<int> idBaseSite = GeneratedColumn<int>(
+      'id_base_site', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idInventorMeta =
+      const VerificationMeta('idInventor');
+  @override
+  late final GeneratedColumn<int> idInventor = GeneratedColumn<int>(
+      'id_inventor', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idDigitiserMeta =
+      const VerificationMeta('idDigitiser');
+  @override
+  late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
+      'id_digitiser', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _baseSiteNameMeta =
+      const VerificationMeta('baseSiteName');
+  @override
+  late final GeneratedColumn<String> baseSiteName = GeneratedColumn<String>(
+      'base_site_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _baseSiteDescriptionMeta =
+      const VerificationMeta('baseSiteDescription');
+  @override
+  late final GeneratedColumn<String> baseSiteDescription =
+      GeneratedColumn<String>('base_site_description', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _baseSiteCodeMeta =
+      const VerificationMeta('baseSiteCode');
+  @override
+  late final GeneratedColumn<String> baseSiteCode = GeneratedColumn<String>(
+      'base_site_code', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _firstUseDateMeta =
+      const VerificationMeta('firstUseDate');
+  @override
+  late final GeneratedColumn<DateTime> firstUseDate = GeneratedColumn<DateTime>(
+      'first_use_date', aliasedName, true,
+      type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _geomMeta = const VerificationMeta('geom');
+  @override
+  late final GeneratedColumn<String> geom = GeneratedColumn<String>(
+      'geom', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _uuidBaseSiteMeta =
+      const VerificationMeta('uuidBaseSite');
+  @override
+  late final GeneratedColumn<String> uuidBaseSite = GeneratedColumn<String>(
+      'uuid_base_site', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _metaCreateDateMeta =
+      const VerificationMeta('metaCreateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaCreateDate =
+      GeneratedColumn<DateTime>('meta_create_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metaUpdateDateMeta =
+      const VerificationMeta('metaUpdateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaUpdateDate =
+      GeneratedColumn<DateTime>('meta_update_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _altitudeMinMeta =
+      const VerificationMeta('altitudeMin');
+  @override
+  late final GeneratedColumn<int> altitudeMin = GeneratedColumn<int>(
+      'altitude_min', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _altitudeMaxMeta =
+      const VerificationMeta('altitudeMax');
+  @override
+  late final GeneratedColumn<int> altitudeMax = GeneratedColumn<int>(
+      'altitude_max', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idBaseSite,
+        idInventor,
+        idDigitiser,
+        baseSiteName,
+        baseSiteDescription,
+        baseSiteCode,
+        firstUseDate,
+        geom,
+        uuidBaseSite,
+        metaCreateDate,
+        metaUpdateDate,
+        altitudeMin,
+        altitudeMax
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_base_sites';
+  @override
+  VerificationContext validateIntegrity(Insertable<TBaseSite> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_base_site')) {
+      context.handle(
+          _idBaseSiteMeta,
+          idBaseSite.isAcceptableOrUnknown(
+              data['id_base_site']!, _idBaseSiteMeta));
+    }
+    if (data.containsKey('id_inventor')) {
+      context.handle(
+          _idInventorMeta,
+          idInventor.isAcceptableOrUnknown(
+              data['id_inventor']!, _idInventorMeta));
+    }
+    if (data.containsKey('id_digitiser')) {
+      context.handle(
+          _idDigitiserMeta,
+          idDigitiser.isAcceptableOrUnknown(
+              data['id_digitiser']!, _idDigitiserMeta));
+    }
+    if (data.containsKey('base_site_name')) {
+      context.handle(
+          _baseSiteNameMeta,
+          baseSiteName.isAcceptableOrUnknown(
+              data['base_site_name']!, _baseSiteNameMeta));
+    }
+    if (data.containsKey('base_site_description')) {
+      context.handle(
+          _baseSiteDescriptionMeta,
+          baseSiteDescription.isAcceptableOrUnknown(
+              data['base_site_description']!, _baseSiteDescriptionMeta));
+    }
+    if (data.containsKey('base_site_code')) {
+      context.handle(
+          _baseSiteCodeMeta,
+          baseSiteCode.isAcceptableOrUnknown(
+              data['base_site_code']!, _baseSiteCodeMeta));
+    }
+    if (data.containsKey('first_use_date')) {
+      context.handle(
+          _firstUseDateMeta,
+          firstUseDate.isAcceptableOrUnknown(
+              data['first_use_date']!, _firstUseDateMeta));
+    }
+    if (data.containsKey('geom')) {
+      context.handle(
+          _geomMeta, geom.isAcceptableOrUnknown(data['geom']!, _geomMeta));
+    }
+    if (data.containsKey('uuid_base_site')) {
+      context.handle(
+          _uuidBaseSiteMeta,
+          uuidBaseSite.isAcceptableOrUnknown(
+              data['uuid_base_site']!, _uuidBaseSiteMeta));
+    }
+    if (data.containsKey('meta_create_date')) {
+      context.handle(
+          _metaCreateDateMeta,
+          metaCreateDate.isAcceptableOrUnknown(
+              data['meta_create_date']!, _metaCreateDateMeta));
+    }
+    if (data.containsKey('meta_update_date')) {
+      context.handle(
+          _metaUpdateDateMeta,
+          metaUpdateDate.isAcceptableOrUnknown(
+              data['meta_update_date']!, _metaUpdateDateMeta));
+    }
+    if (data.containsKey('altitude_min')) {
+      context.handle(
+          _altitudeMinMeta,
+          altitudeMin.isAcceptableOrUnknown(
+              data['altitude_min']!, _altitudeMinMeta));
+    }
+    if (data.containsKey('altitude_max')) {
+      context.handle(
+          _altitudeMaxMeta,
+          altitudeMax.isAcceptableOrUnknown(
+              data['altitude_max']!, _altitudeMaxMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idBaseSite};
+  @override
+  TBaseSite map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TBaseSite(
+      idBaseSite: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_base_site'])!,
+      idInventor: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_inventor']),
+      idDigitiser: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
+      baseSiteName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}base_site_name']),
+      baseSiteDescription: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}base_site_description']),
+      baseSiteCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}base_site_code']),
+      firstUseDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}first_use_date']),
+      geom: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}geom']),
+      uuidBaseSite: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uuid_base_site']),
+      metaCreateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_create_date']),
+      metaUpdateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_update_date']),
+      altitudeMin: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}altitude_min']),
+      altitudeMax: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}altitude_max']),
+    );
+  }
+
+  @override
+  $TBaseSitesTable createAlias(String alias) {
+    return $TBaseSitesTable(attachedDatabase, alias);
+  }
+}
+
+class TBaseSite extends DataClass implements Insertable<TBaseSite> {
+  final int idBaseSite;
+  final int? idInventor;
+  final int? idDigitiser;
+  final String? baseSiteName;
+  final String? baseSiteDescription;
+  final String? baseSiteCode;
+  final DateTime? firstUseDate;
+  final String? geom;
+  final String? uuidBaseSite;
+  final DateTime? metaCreateDate;
+  final DateTime? metaUpdateDate;
+  final int? altitudeMin;
+  final int? altitudeMax;
+  const TBaseSite(
+      {required this.idBaseSite,
+      this.idInventor,
+      this.idDigitiser,
+      this.baseSiteName,
+      this.baseSiteDescription,
+      this.baseSiteCode,
+      this.firstUseDate,
+      this.geom,
+      this.uuidBaseSite,
+      this.metaCreateDate,
+      this.metaUpdateDate,
+      this.altitudeMin,
+      this.altitudeMax});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_base_site'] = Variable<int>(idBaseSite);
+    if (!nullToAbsent || idInventor != null) {
+      map['id_inventor'] = Variable<int>(idInventor);
+    }
+    if (!nullToAbsent || idDigitiser != null) {
+      map['id_digitiser'] = Variable<int>(idDigitiser);
+    }
+    if (!nullToAbsent || baseSiteName != null) {
+      map['base_site_name'] = Variable<String>(baseSiteName);
+    }
+    if (!nullToAbsent || baseSiteDescription != null) {
+      map['base_site_description'] = Variable<String>(baseSiteDescription);
+    }
+    if (!nullToAbsent || baseSiteCode != null) {
+      map['base_site_code'] = Variable<String>(baseSiteCode);
+    }
+    if (!nullToAbsent || firstUseDate != null) {
+      map['first_use_date'] = Variable<DateTime>(firstUseDate);
+    }
+    if (!nullToAbsent || geom != null) {
+      map['geom'] = Variable<String>(geom);
+    }
+    if (!nullToAbsent || uuidBaseSite != null) {
+      map['uuid_base_site'] = Variable<String>(uuidBaseSite);
+    }
+    if (!nullToAbsent || metaCreateDate != null) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate);
+    }
+    if (!nullToAbsent || metaUpdateDate != null) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate);
+    }
+    if (!nullToAbsent || altitudeMin != null) {
+      map['altitude_min'] = Variable<int>(altitudeMin);
+    }
+    if (!nullToAbsent || altitudeMax != null) {
+      map['altitude_max'] = Variable<int>(altitudeMax);
+    }
+    return map;
+  }
+
+  TBaseSitesCompanion toCompanion(bool nullToAbsent) {
+    return TBaseSitesCompanion(
+      idBaseSite: Value(idBaseSite),
+      idInventor: idInventor == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idInventor),
+      idDigitiser: idDigitiser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitiser),
+      baseSiteName: baseSiteName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(baseSiteName),
+      baseSiteDescription: baseSiteDescription == null && nullToAbsent
+          ? const Value.absent()
+          : Value(baseSiteDescription),
+      baseSiteCode: baseSiteCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(baseSiteCode),
+      firstUseDate: firstUseDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(firstUseDate),
+      geom: geom == null && nullToAbsent ? const Value.absent() : Value(geom),
+      uuidBaseSite: uuidBaseSite == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uuidBaseSite),
+      metaCreateDate: metaCreateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaCreateDate),
+      metaUpdateDate: metaUpdateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaUpdateDate),
+      altitudeMin: altitudeMin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(altitudeMin),
+      altitudeMax: altitudeMax == null && nullToAbsent
+          ? const Value.absent()
+          : Value(altitudeMax),
+    );
+  }
+
+  factory TBaseSite.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TBaseSite(
+      idBaseSite: serializer.fromJson<int>(json['idBaseSite']),
+      idInventor: serializer.fromJson<int?>(json['idInventor']),
+      idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
+      baseSiteName: serializer.fromJson<String?>(json['baseSiteName']),
+      baseSiteDescription:
+          serializer.fromJson<String?>(json['baseSiteDescription']),
+      baseSiteCode: serializer.fromJson<String?>(json['baseSiteCode']),
+      firstUseDate: serializer.fromJson<DateTime?>(json['firstUseDate']),
+      geom: serializer.fromJson<String?>(json['geom']),
+      uuidBaseSite: serializer.fromJson<String?>(json['uuidBaseSite']),
+      metaCreateDate: serializer.fromJson<DateTime?>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
+      altitudeMin: serializer.fromJson<int?>(json['altitudeMin']),
+      altitudeMax: serializer.fromJson<int?>(json['altitudeMax']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idBaseSite': serializer.toJson<int>(idBaseSite),
+      'idInventor': serializer.toJson<int?>(idInventor),
+      'idDigitiser': serializer.toJson<int?>(idDigitiser),
+      'baseSiteName': serializer.toJson<String?>(baseSiteName),
+      'baseSiteDescription': serializer.toJson<String?>(baseSiteDescription),
+      'baseSiteCode': serializer.toJson<String?>(baseSiteCode),
+      'firstUseDate': serializer.toJson<DateTime?>(firstUseDate),
+      'geom': serializer.toJson<String?>(geom),
+      'uuidBaseSite': serializer.toJson<String?>(uuidBaseSite),
+      'metaCreateDate': serializer.toJson<DateTime?>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
+      'altitudeMin': serializer.toJson<int?>(altitudeMin),
+      'altitudeMax': serializer.toJson<int?>(altitudeMax),
+    };
+  }
+
+  TBaseSite copyWith(
+          {int? idBaseSite,
+          Value<int?> idInventor = const Value.absent(),
+          Value<int?> idDigitiser = const Value.absent(),
+          Value<String?> baseSiteName = const Value.absent(),
+          Value<String?> baseSiteDescription = const Value.absent(),
+          Value<String?> baseSiteCode = const Value.absent(),
+          Value<DateTime?> firstUseDate = const Value.absent(),
+          Value<String?> geom = const Value.absent(),
+          Value<String?> uuidBaseSite = const Value.absent(),
+          Value<DateTime?> metaCreateDate = const Value.absent(),
+          Value<DateTime?> metaUpdateDate = const Value.absent(),
+          Value<int?> altitudeMin = const Value.absent(),
+          Value<int?> altitudeMax = const Value.absent()}) =>
+      TBaseSite(
+        idBaseSite: idBaseSite ?? this.idBaseSite,
+        idInventor: idInventor.present ? idInventor.value : this.idInventor,
+        idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
+        baseSiteName:
+            baseSiteName.present ? baseSiteName.value : this.baseSiteName,
+        baseSiteDescription: baseSiteDescription.present
+            ? baseSiteDescription.value
+            : this.baseSiteDescription,
+        baseSiteCode:
+            baseSiteCode.present ? baseSiteCode.value : this.baseSiteCode,
+        firstUseDate:
+            firstUseDate.present ? firstUseDate.value : this.firstUseDate,
+        geom: geom.present ? geom.value : this.geom,
+        uuidBaseSite:
+            uuidBaseSite.present ? uuidBaseSite.value : this.uuidBaseSite,
+        metaCreateDate:
+            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
+        metaUpdateDate:
+            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
+        altitudeMin: altitudeMin.present ? altitudeMin.value : this.altitudeMin,
+        altitudeMax: altitudeMax.present ? altitudeMax.value : this.altitudeMax,
+      );
+  TBaseSite copyWithCompanion(TBaseSitesCompanion data) {
+    return TBaseSite(
+      idBaseSite:
+          data.idBaseSite.present ? data.idBaseSite.value : this.idBaseSite,
+      idInventor:
+          data.idInventor.present ? data.idInventor.value : this.idInventor,
+      idDigitiser:
+          data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
+      baseSiteName: data.baseSiteName.present
+          ? data.baseSiteName.value
+          : this.baseSiteName,
+      baseSiteDescription: data.baseSiteDescription.present
+          ? data.baseSiteDescription.value
+          : this.baseSiteDescription,
+      baseSiteCode: data.baseSiteCode.present
+          ? data.baseSiteCode.value
+          : this.baseSiteCode,
+      firstUseDate: data.firstUseDate.present
+          ? data.firstUseDate.value
+          : this.firstUseDate,
+      geom: data.geom.present ? data.geom.value : this.geom,
+      uuidBaseSite: data.uuidBaseSite.present
+          ? data.uuidBaseSite.value
+          : this.uuidBaseSite,
+      metaCreateDate: data.metaCreateDate.present
+          ? data.metaCreateDate.value
+          : this.metaCreateDate,
+      metaUpdateDate: data.metaUpdateDate.present
+          ? data.metaUpdateDate.value
+          : this.metaUpdateDate,
+      altitudeMin:
+          data.altitudeMin.present ? data.altitudeMin.value : this.altitudeMin,
+      altitudeMax:
+          data.altitudeMax.present ? data.altitudeMax.value : this.altitudeMax,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TBaseSite(')
+          ..write('idBaseSite: $idBaseSite, ')
+          ..write('idInventor: $idInventor, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('baseSiteName: $baseSiteName, ')
+          ..write('baseSiteDescription: $baseSiteDescription, ')
+          ..write('baseSiteCode: $baseSiteCode, ')
+          ..write('firstUseDate: $firstUseDate, ')
+          ..write('geom: $geom, ')
+          ..write('uuidBaseSite: $uuidBaseSite, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate, ')
+          ..write('altitudeMin: $altitudeMin, ')
+          ..write('altitudeMax: $altitudeMax')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      idBaseSite,
+      idInventor,
+      idDigitiser,
+      baseSiteName,
+      baseSiteDescription,
+      baseSiteCode,
+      firstUseDate,
+      geom,
+      uuidBaseSite,
+      metaCreateDate,
+      metaUpdateDate,
+      altitudeMin,
+      altitudeMax);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TBaseSite &&
+          other.idBaseSite == this.idBaseSite &&
+          other.idInventor == this.idInventor &&
+          other.idDigitiser == this.idDigitiser &&
+          other.baseSiteName == this.baseSiteName &&
+          other.baseSiteDescription == this.baseSiteDescription &&
+          other.baseSiteCode == this.baseSiteCode &&
+          other.firstUseDate == this.firstUseDate &&
+          other.geom == this.geom &&
+          other.uuidBaseSite == this.uuidBaseSite &&
+          other.metaCreateDate == this.metaCreateDate &&
+          other.metaUpdateDate == this.metaUpdateDate &&
+          other.altitudeMin == this.altitudeMin &&
+          other.altitudeMax == this.altitudeMax);
+}
+
+class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
+  final Value<int> idBaseSite;
+  final Value<int?> idInventor;
+  final Value<int?> idDigitiser;
+  final Value<String?> baseSiteName;
+  final Value<String?> baseSiteDescription;
+  final Value<String?> baseSiteCode;
+  final Value<DateTime?> firstUseDate;
+  final Value<String?> geom;
+  final Value<String?> uuidBaseSite;
+  final Value<DateTime?> metaCreateDate;
+  final Value<DateTime?> metaUpdateDate;
+  final Value<int?> altitudeMin;
+  final Value<int?> altitudeMax;
+  const TBaseSitesCompanion({
+    this.idBaseSite = const Value.absent(),
+    this.idInventor = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
+    this.baseSiteName = const Value.absent(),
+    this.baseSiteDescription = const Value.absent(),
+    this.baseSiteCode = const Value.absent(),
+    this.firstUseDate = const Value.absent(),
+    this.geom = const Value.absent(),
+    this.uuidBaseSite = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+    this.altitudeMin = const Value.absent(),
+    this.altitudeMax = const Value.absent(),
+  });
+  TBaseSitesCompanion.insert({
+    this.idBaseSite = const Value.absent(),
+    this.idInventor = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
+    this.baseSiteName = const Value.absent(),
+    this.baseSiteDescription = const Value.absent(),
+    this.baseSiteCode = const Value.absent(),
+    this.firstUseDate = const Value.absent(),
+    this.geom = const Value.absent(),
+    this.uuidBaseSite = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+    this.altitudeMin = const Value.absent(),
+    this.altitudeMax = const Value.absent(),
+  });
+  static Insertable<TBaseSite> custom({
+    Expression<int>? idBaseSite,
+    Expression<int>? idInventor,
+    Expression<int>? idDigitiser,
+    Expression<String>? baseSiteName,
+    Expression<String>? baseSiteDescription,
+    Expression<String>? baseSiteCode,
+    Expression<DateTime>? firstUseDate,
+    Expression<String>? geom,
+    Expression<String>? uuidBaseSite,
+    Expression<DateTime>? metaCreateDate,
+    Expression<DateTime>? metaUpdateDate,
+    Expression<int>? altitudeMin,
+    Expression<int>? altitudeMax,
+  }) {
+    return RawValuesInsertable({
+      if (idBaseSite != null) 'id_base_site': idBaseSite,
+      if (idInventor != null) 'id_inventor': idInventor,
+      if (idDigitiser != null) 'id_digitiser': idDigitiser,
+      if (baseSiteName != null) 'base_site_name': baseSiteName,
+      if (baseSiteDescription != null)
+        'base_site_description': baseSiteDescription,
+      if (baseSiteCode != null) 'base_site_code': baseSiteCode,
+      if (firstUseDate != null) 'first_use_date': firstUseDate,
+      if (geom != null) 'geom': geom,
+      if (uuidBaseSite != null) 'uuid_base_site': uuidBaseSite,
+      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
+      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
+      if (altitudeMin != null) 'altitude_min': altitudeMin,
+      if (altitudeMax != null) 'altitude_max': altitudeMax,
+    });
+  }
+
+  TBaseSitesCompanion copyWith(
+      {Value<int>? idBaseSite,
+      Value<int?>? idInventor,
+      Value<int?>? idDigitiser,
+      Value<String?>? baseSiteName,
+      Value<String?>? baseSiteDescription,
+      Value<String?>? baseSiteCode,
+      Value<DateTime?>? firstUseDate,
+      Value<String?>? geom,
+      Value<String?>? uuidBaseSite,
+      Value<DateTime?>? metaCreateDate,
+      Value<DateTime?>? metaUpdateDate,
+      Value<int?>? altitudeMin,
+      Value<int?>? altitudeMax}) {
+    return TBaseSitesCompanion(
+      idBaseSite: idBaseSite ?? this.idBaseSite,
+      idInventor: idInventor ?? this.idInventor,
+      idDigitiser: idDigitiser ?? this.idDigitiser,
+      baseSiteName: baseSiteName ?? this.baseSiteName,
+      baseSiteDescription: baseSiteDescription ?? this.baseSiteDescription,
+      baseSiteCode: baseSiteCode ?? this.baseSiteCode,
+      firstUseDate: firstUseDate ?? this.firstUseDate,
+      geom: geom ?? this.geom,
+      uuidBaseSite: uuidBaseSite ?? this.uuidBaseSite,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+      altitudeMin: altitudeMin ?? this.altitudeMin,
+      altitudeMax: altitudeMax ?? this.altitudeMax,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idBaseSite.present) {
+      map['id_base_site'] = Variable<int>(idBaseSite.value);
+    }
+    if (idInventor.present) {
+      map['id_inventor'] = Variable<int>(idInventor.value);
+    }
+    if (idDigitiser.present) {
+      map['id_digitiser'] = Variable<int>(idDigitiser.value);
+    }
+    if (baseSiteName.present) {
+      map['base_site_name'] = Variable<String>(baseSiteName.value);
+    }
+    if (baseSiteDescription.present) {
+      map['base_site_description'] =
+          Variable<String>(baseSiteDescription.value);
+    }
+    if (baseSiteCode.present) {
+      map['base_site_code'] = Variable<String>(baseSiteCode.value);
+    }
+    if (firstUseDate.present) {
+      map['first_use_date'] = Variable<DateTime>(firstUseDate.value);
+    }
+    if (geom.present) {
+      map['geom'] = Variable<String>(geom.value);
+    }
+    if (uuidBaseSite.present) {
+      map['uuid_base_site'] = Variable<String>(uuidBaseSite.value);
+    }
+    if (metaCreateDate.present) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate.value);
+    }
+    if (metaUpdateDate.present) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate.value);
+    }
+    if (altitudeMin.present) {
+      map['altitude_min'] = Variable<int>(altitudeMin.value);
+    }
+    if (altitudeMax.present) {
+      map['altitude_max'] = Variable<int>(altitudeMax.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TBaseSitesCompanion(')
+          ..write('idBaseSite: $idBaseSite, ')
+          ..write('idInventor: $idInventor, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('baseSiteName: $baseSiteName, ')
+          ..write('baseSiteDescription: $baseSiteDescription, ')
+          ..write('baseSiteCode: $baseSiteCode, ')
+          ..write('firstUseDate: $firstUseDate, ')
+          ..write('geom: $geom, ')
+          ..write('uuidBaseSite: $uuidBaseSite, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate, ')
+          ..write('altitudeMin: $altitudeMin, ')
+          ..write('altitudeMax: $altitudeMax')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TModuleComplementsTable extends TModuleComplements
     with TableInfo<$TModuleComplementsTable, TModuleComplement> {
   @override
@@ -4783,6 +5470,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TModulesTable tModules = $TModulesTable(this);
+  late final $TBaseSitesTable tBaseSites = $TBaseSitesTable(this);
   late final $TModuleComplementsTable tModuleComplements =
       $TModuleComplementsTable(this);
   late final $TSitesGroupsTable tSitesGroups = $TSitesGroupsTable(this);
@@ -4806,12 +5494,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CorObjectModulesTable corObjectModules =
       $CorObjectModulesTable(this);
   late final TModulesDao tModulesDao = TModulesDao(this as AppDatabase);
+  late final SitesDao sitesDao = SitesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         tModules,
+        tBaseSites,
         tModuleComplements,
         tSitesGroups,
         tSiteComplements,
@@ -5005,6 +5695,295 @@ typedef $$TModulesTableProcessedTableManager = ProcessedTableManager<
     $$TModulesTableUpdateCompanionBuilder,
     (TModule, BaseReferences<_$AppDatabase, $TModulesTable, TModule>),
     TModule,
+    PrefetchHooks Function()>;
+typedef $$TBaseSitesTableCreateCompanionBuilder = TBaseSitesCompanion Function({
+  Value<int> idBaseSite,
+  Value<int?> idInventor,
+  Value<int?> idDigitiser,
+  Value<String?> baseSiteName,
+  Value<String?> baseSiteDescription,
+  Value<String?> baseSiteCode,
+  Value<DateTime?> firstUseDate,
+  Value<String?> geom,
+  Value<String?> uuidBaseSite,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+  Value<int?> altitudeMin,
+  Value<int?> altitudeMax,
+});
+typedef $$TBaseSitesTableUpdateCompanionBuilder = TBaseSitesCompanion Function({
+  Value<int> idBaseSite,
+  Value<int?> idInventor,
+  Value<int?> idDigitiser,
+  Value<String?> baseSiteName,
+  Value<String?> baseSiteDescription,
+  Value<String?> baseSiteCode,
+  Value<DateTime?> firstUseDate,
+  Value<String?> geom,
+  Value<String?> uuidBaseSite,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+  Value<int?> altitudeMin,
+  Value<int?> altitudeMax,
+});
+
+class $$TBaseSitesTableFilterComposer
+    extends Composer<_$AppDatabase, $TBaseSitesTable> {
+  $$TBaseSitesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idInventor => $composableBuilder(
+      column: $table.idInventor, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get baseSiteName => $composableBuilder(
+      column: $table.baseSiteName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get baseSiteDescription => $composableBuilder(
+      column: $table.baseSiteDescription,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get baseSiteCode => $composableBuilder(
+      column: $table.baseSiteCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get firstUseDate => $composableBuilder(
+      column: $table.firstUseDate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get geom => $composableBuilder(
+      column: $table.geom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uuidBaseSite => $composableBuilder(
+      column: $table.uuidBaseSite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get altitudeMin => $composableBuilder(
+      column: $table.altitudeMin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get altitudeMax => $composableBuilder(
+      column: $table.altitudeMax, builder: (column) => ColumnFilters(column));
+}
+
+class $$TBaseSitesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TBaseSitesTable> {
+  $$TBaseSitesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idInventor => $composableBuilder(
+      column: $table.idInventor, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get baseSiteName => $composableBuilder(
+      column: $table.baseSiteName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get baseSiteDescription => $composableBuilder(
+      column: $table.baseSiteDescription,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get baseSiteCode => $composableBuilder(
+      column: $table.baseSiteCode,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get firstUseDate => $composableBuilder(
+      column: $table.firstUseDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get geom => $composableBuilder(
+      column: $table.geom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uuidBaseSite => $composableBuilder(
+      column: $table.uuidBaseSite,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get altitudeMin => $composableBuilder(
+      column: $table.altitudeMin, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get altitudeMax => $composableBuilder(
+      column: $table.altitudeMax, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TBaseSitesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TBaseSitesTable> {
+  $$TBaseSitesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => column);
+
+  GeneratedColumn<int> get idInventor => $composableBuilder(
+      column: $table.idInventor, builder: (column) => column);
+
+  GeneratedColumn<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => column);
+
+  GeneratedColumn<String> get baseSiteName => $composableBuilder(
+      column: $table.baseSiteName, builder: (column) => column);
+
+  GeneratedColumn<String> get baseSiteDescription => $composableBuilder(
+      column: $table.baseSiteDescription, builder: (column) => column);
+
+  GeneratedColumn<String> get baseSiteCode => $composableBuilder(
+      column: $table.baseSiteCode, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get firstUseDate => $composableBuilder(
+      column: $table.firstUseDate, builder: (column) => column);
+
+  GeneratedColumn<String> get geom =>
+      $composableBuilder(column: $table.geom, builder: (column) => column);
+
+  GeneratedColumn<String> get uuidBaseSite => $composableBuilder(
+      column: $table.uuidBaseSite, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate, builder: (column) => column);
+
+  GeneratedColumn<int> get altitudeMin => $composableBuilder(
+      column: $table.altitudeMin, builder: (column) => column);
+
+  GeneratedColumn<int> get altitudeMax => $composableBuilder(
+      column: $table.altitudeMax, builder: (column) => column);
+}
+
+class $$TBaseSitesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TBaseSitesTable,
+    TBaseSite,
+    $$TBaseSitesTableFilterComposer,
+    $$TBaseSitesTableOrderingComposer,
+    $$TBaseSitesTableAnnotationComposer,
+    $$TBaseSitesTableCreateCompanionBuilder,
+    $$TBaseSitesTableUpdateCompanionBuilder,
+    (TBaseSite, BaseReferences<_$AppDatabase, $TBaseSitesTable, TBaseSite>),
+    TBaseSite,
+    PrefetchHooks Function()> {
+  $$TBaseSitesTableTableManager(_$AppDatabase db, $TBaseSitesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TBaseSitesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TBaseSitesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TBaseSitesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idBaseSite = const Value.absent(),
+            Value<int?> idInventor = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
+            Value<String?> baseSiteName = const Value.absent(),
+            Value<String?> baseSiteDescription = const Value.absent(),
+            Value<String?> baseSiteCode = const Value.absent(),
+            Value<DateTime?> firstUseDate = const Value.absent(),
+            Value<String?> geom = const Value.absent(),
+            Value<String?> uuidBaseSite = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+            Value<int?> altitudeMin = const Value.absent(),
+            Value<int?> altitudeMax = const Value.absent(),
+          }) =>
+              TBaseSitesCompanion(
+            idBaseSite: idBaseSite,
+            idInventor: idInventor,
+            idDigitiser: idDigitiser,
+            baseSiteName: baseSiteName,
+            baseSiteDescription: baseSiteDescription,
+            baseSiteCode: baseSiteCode,
+            firstUseDate: firstUseDate,
+            geom: geom,
+            uuidBaseSite: uuidBaseSite,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+            altitudeMin: altitudeMin,
+            altitudeMax: altitudeMax,
+          ),
+          createCompanionCallback: ({
+            Value<int> idBaseSite = const Value.absent(),
+            Value<int?> idInventor = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
+            Value<String?> baseSiteName = const Value.absent(),
+            Value<String?> baseSiteDescription = const Value.absent(),
+            Value<String?> baseSiteCode = const Value.absent(),
+            Value<DateTime?> firstUseDate = const Value.absent(),
+            Value<String?> geom = const Value.absent(),
+            Value<String?> uuidBaseSite = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+            Value<int?> altitudeMin = const Value.absent(),
+            Value<int?> altitudeMax = const Value.absent(),
+          }) =>
+              TBaseSitesCompanion.insert(
+            idBaseSite: idBaseSite,
+            idInventor: idInventor,
+            idDigitiser: idDigitiser,
+            baseSiteName: baseSiteName,
+            baseSiteDescription: baseSiteDescription,
+            baseSiteCode: baseSiteCode,
+            firstUseDate: firstUseDate,
+            geom: geom,
+            uuidBaseSite: uuidBaseSite,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+            altitudeMin: altitudeMin,
+            altitudeMax: altitudeMax,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TBaseSitesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TBaseSitesTable,
+    TBaseSite,
+    $$TBaseSitesTableFilterComposer,
+    $$TBaseSitesTableOrderingComposer,
+    $$TBaseSitesTableAnnotationComposer,
+    $$TBaseSitesTableCreateCompanionBuilder,
+    $$TBaseSitesTableUpdateCompanionBuilder,
+    (TBaseSite, BaseReferences<_$AppDatabase, $TBaseSitesTable, TBaseSite>),
+    TBaseSite,
     PrefetchHooks Function()>;
 typedef $$TModuleComplementsTableCreateCompanionBuilder
     = TModuleComplementsCompanion Function({
@@ -7378,6 +8357,8 @@ class $AppDatabaseManager {
   $AppDatabaseManager(this._db);
   $$TModulesTableTableManager get tModules =>
       $$TModulesTableTableManager(_db, _db.tModules);
+  $$TBaseSitesTableTableManager get tBaseSites =>
+      $$TBaseSitesTableTableManager(_db, _db.tBaseSites);
   $$TModuleComplementsTableTableManager get tModuleComplements =>
       $$TModuleComplementsTableTableManager(_db, _db.tModuleComplements);
   $$TSitesGroupsTableTableManager get tSitesGroups =>
