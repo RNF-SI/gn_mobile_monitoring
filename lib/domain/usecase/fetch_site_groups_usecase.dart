@@ -1,3 +1,3 @@
-abstract class FetchSiteGroupsUsecase {
+abstract class FetchSiteGroupsUseCase {
   Future<void> execute(String token);
 }
