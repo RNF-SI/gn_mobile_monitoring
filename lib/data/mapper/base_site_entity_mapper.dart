@@ -1,7 +1,7 @@
 import '../../domain/model/base_site.dart';
 import '../entity/base_site_entity.dart';
 
-extension SiteEntityMapper on BaseSiteEntity {
+extension BaseSiteEntityMapper on BaseSiteEntity {
   BaseSite toDomain() {
     return BaseSite(
       idBaseSite: idBaseSite,
@@ -19,7 +19,7 @@ extension SiteEntityMapper on BaseSiteEntity {
   }
 }
 
-extension SiteMapper on BaseSite {
+extension BaseSiteMapper on BaseSite {
   BaseSiteEntity toEntity() {
     return BaseSiteEntity(
       idBaseSite: idBaseSite,
