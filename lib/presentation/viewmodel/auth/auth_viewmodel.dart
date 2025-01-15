@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -34,6 +35,7 @@ final authenticationViewModelProvider =
     ref.watch(clearUserIdFromLocalStorageUseCaseProvider),
     ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
     ref.watch(clearTokenFromLocalStorageUseCaseProvider),
+    ref.watch(fetchSitesAndSiteGroupsUseCaseProvider),
   );
 });
 
@@ -55,6 +57,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final ClearUserNameFromLocalStorageUseCase
       _clearUserNameFromLocalStorageUseCase;
   final ClearTokenFromLocalStorageUseCase _clearTokenFromLocalStorageUseCase;
+  final FetchSitesAndSiteGroupsUseCase _fetchSitesAndSiteGroupsUseCase;
 
   AuthenticationViewModel(
     this._loginUseCase,
@@ -65,6 +68,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._clearUserIdFromLocalStorageUseCase,
     this._clearUserNameFromLocalStorageUseCase,
     this._clearTokenFromLocalStorageUseCase,
+    this._fetchSitesAndSiteGroupsUseCase,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
@@ -93,6 +97,8 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           await _setTokenFromLocalStorageUseCase.execute(user.token);
           print(
               'Login state and user name saved'); // Added for debugging purposes
+
+          await _fetchSitesAndSiteGroupsUseCase.execute(user.token);
 
           // Refresh UI or state management solution
           ref.refresh(isLoggedInProvider);
