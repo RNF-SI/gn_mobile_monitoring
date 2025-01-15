@@ -16,6 +16,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
@@ -113,3 +117,9 @@ final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
 final fetchSitesAndSiteGroupsUseCaseProvider =
     Provider<FetchSitesAndSiteGroupsUseCase>((ref) =>
         FetchSitesAndSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
+
+final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
+    (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
+
+final getSitesUseCaseProvider = Provider<GetSitesUseCase>(
+    (ref) => GetSitesUseCaseImpl(ref.watch(sitesRepositoryProvider)));
