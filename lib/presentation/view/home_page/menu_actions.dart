@@ -51,18 +51,10 @@ class MenuActions extends ConsumerWidget {
     databaseService,
   ) async {
     switch (value) {
-      case 'sync':
-        await ref
-            .read(userModuleListeViewModelStateNotifierProvider.notifier)
-            .syncModules();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Modules synchronized successfully')),
-        );
-        break;
       case 'refresh':
         await ref
             .read(userModuleListeViewModelStateNotifierProvider.notifier)
-            .refreshModules();
+            .loadModules(); // Updated function
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Liste des modules rafraîchie.')),
         );

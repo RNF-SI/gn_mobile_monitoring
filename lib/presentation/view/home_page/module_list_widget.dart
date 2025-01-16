@@ -10,6 +10,7 @@ class ModuleListWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Watch the state of the modules
     final userModuleListProv = ref.watch(userModuleListeProvider);
 
     return Column(
@@ -20,10 +21,11 @@ class ModuleListWidget extends ConsumerWidget {
             success: (data) => RefreshIndicator(
               color: const Color(0xFF8AAC3E),
               onRefresh: () async {
+                // Trigger the loading of modules when the user pulls to refresh
                 await ref
                     .read(
                         userModuleListeViewModelStateNotifierProvider.notifier)
-                    .refreshModules();
+                    .loadModules();
               },
               child: _buildModuleListWidget(context, data),
             ),
@@ -52,7 +54,9 @@ class ModuleListWidget extends ConsumerWidget {
               child: Text(
                 'Aucun module disponible.',
                 style: TextStyle(
-                    fontSize: 16, color: Color(0xFF598979)), // Brand color
+                  fontSize: 16,
+                  color: Color(0xFF598979), // Brand color
+                ),
               ),
             ),
           ),

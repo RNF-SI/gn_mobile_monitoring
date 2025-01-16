@@ -3,9 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
@@ -32,35 +29,23 @@ final userModuleListeViewModelStateNotifierProvider =
         custom_async_state.State<ModuleInfoListe>>((ref) {
   return UserModulesViewModel(
     const AsyncValue<ModuleInfoListe>.data(ModuleInfoListe(values: [])),
-    ref.watch(getUserIdFromLocalStorageUseCaseProvider),
-    ref.watch(syncModulesUseCaseProvider),
     ref.watch(getModulesUseCaseProvider),
-    ref.watch(getTokenFromLocalStorageUseCaseProvider),
     ref.watch(downloadModuleDataUseCaseProvider),
   );
 });
 
 class UserModulesViewModel
     extends StateNotifier<custom_async_state.State<ModuleInfoListe>> {
-  final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
-  final SyncModulesUseCase _syncModulesUseCase;
   final GetModulesUseCase _getModulesUseCase;
-  final GetTokenFromLocalStorageUseCase _getTokenFromLocalStorageUseCase;
   final DownloadModuleDataUseCase _downloadModuleDataUseCase;
 
   UserModulesViewModel(
     AsyncValue<ModuleInfoListe> userDispListe,
-    this._getUserIdFromLocalStorageUseCase,
-    this._syncModulesUseCase,
     this._getModulesUseCase,
-    this._getTokenFromLocalStorageUseCase,
     this._downloadModuleDataUseCase,
   ) : super(const custom_async_state.State.init()) {
-    state = const custom_async_state.State.success(ModuleInfoListe(values: []));
+    loadModules(); // Load modules on initialization
   }
-
-  Future<void> refreshModules() async {}
-
   Future<bool> hasInternetConnection() async {
     // var connectivityResult = await Connectivity().checkConnectivity();
     // if (connectivityResult == ConnectivityResult.mobile ||
@@ -72,27 +57,12 @@ class UserModulesViewModel
     return true;
   }
 
-  Future<void> syncModules() async {
-    try {
-      state = const custom_async_state.State.loading();
-      final token = await _getTokenFromLocalStorageUseCase.execute() as String;
-      await _syncModulesUseCase.execute(token);
-
-      // Recharger les modules après synchronisation
-      await loadModules();
-    } catch (e) {
-      print('Error during module synchronization: $e');
-      state =
-          custom_async_state.State.error(Exception("Failed to sync modules"));
-    }
-  }
-
   Future<void> loadModules() async {
     try {
-      // Fetch modules from the use case
+      // Fetch modules from the local database
       final modules = await _getModulesUseCase.execute();
 
-      // Map the modules to ModuleInfo objects
+      // Map modules to ModuleInfo objects
       final moduleInfos = modules
           .map((module) => ModuleInfo(
                 module: module,
@@ -100,7 +70,7 @@ class UserModulesViewModel
               ))
           .toList();
 
-      // Update the state with the ModuleInfoListe
+      // Update state
       state = custom_async_state.State.success(
           ModuleInfoListe(values: moduleInfos));
     } catch (e) {

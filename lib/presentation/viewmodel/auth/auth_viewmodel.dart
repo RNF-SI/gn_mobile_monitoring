@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
@@ -36,6 +37,7 @@ final authenticationViewModelProvider =
     ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
     ref.watch(clearTokenFromLocalStorageUseCaseProvider),
     ref.watch(fetchSitesAndSiteGroupsUseCaseProvider),
+    ref.watch(fetchAndSyncModulesUseCaseProvider),
   );
 });
 
@@ -58,6 +60,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       _clearUserNameFromLocalStorageUseCase;
   final ClearTokenFromLocalStorageUseCase _clearTokenFromLocalStorageUseCase;
   final FetchSitesAndSiteGroupsUseCase _fetchSitesAndSiteGroupsUseCase;
+  final FetchAndSyncModulesUseCase _fetchAndSyncModulesUseCase;
 
   AuthenticationViewModel(
     this._loginUseCase,
@@ -69,6 +72,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._clearUserNameFromLocalStorageUseCase,
     this._clearTokenFromLocalStorageUseCase,
     this._fetchSitesAndSiteGroupsUseCase,
+    this._fetchAndSyncModulesUseCase,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
@@ -87,25 +91,23 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         controller.add(user);
 
         try {
-          // Set logged in status using use case
+          // Save user login state
           await _setIsLoggedInFromLocalStorageUseCase.execute(true);
-          print("isLoggedIn set to: true"); // Added for debugging purposes
-
-          // Save the user's ID and name using respective use cases
           await _setUserIdFromLocalStorageUseCase.execute(user.id);
           await _setUserNameFromLocalStorageUseCase.execute(identifiant);
           await _setTokenFromLocalStorageUseCase.execute(user.token);
-          print(
-              'Login state and user name saved'); // Added for debugging purposes
 
+          // Fetch sites, site groups, and modules after login
           await _fetchSitesAndSiteGroupsUseCase.execute(user.token);
+          await _fetchAndSyncModulesUseCase
+              .execute(user.token); // Fetch modules here
 
-          // Refresh UI or state management solution
+          // Refresh state
           ref.refresh(isLoggedInProvider);
           GoRouter.of(context).go('/');
           state = loadingState.State.success(user);
         } catch (e) {
-          print('Error saving login state and user name: $e');
+          print('Error during post-login actions: $e');
         }
       });
     } on DioException catch (e) {
