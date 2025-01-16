@@ -4,16 +4,28 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 
 extension TBaseSiteMapper on TBaseSite {
   BaseSite toDomain() {
+    DateTime? parseDate(String? date) {
+      if (date == null) return null;
+      try {
+        return DateTime.parse(date); // ISO8601 format
+      } catch (e) {
+        print('Invalid date format: $date');
+        return null;
+      }
+    }
+
     return BaseSite(
       idBaseSite: idBaseSite,
       baseSiteName: baseSiteName,
       baseSiteDescription: baseSiteDescription,
       baseSiteCode: baseSiteCode,
-      firstUseDate: firstUseDate,
+      firstUseDate: parseDate(firstUseDate?.toIso8601String()),
       geom: geom,
       uuidBaseSite: uuidBaseSite,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      metaCreateDate: parseDate(metaCreateDate?.toIso8601String()),
+      metaUpdateDate: parseDate(metaUpdateDate?.toIso8601String()),
     );
   }
 }
