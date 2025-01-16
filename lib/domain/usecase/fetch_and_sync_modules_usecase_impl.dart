@@ -1,10 +1,10 @@
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase.dart';
 
-class SyncModulesUseCaseImpl implements SyncModulesUseCase {
+class FetchAndSyncModulesUseCaseImpl implements FetchAndSyncModulesUseCase {
   final ModulesRepository _repository;
 
-  const SyncModulesUseCaseImpl(this._repository);
+  const FetchAndSyncModulesUseCaseImpl(this._repository);
 
   @override
   Future<void> execute(String token) async {

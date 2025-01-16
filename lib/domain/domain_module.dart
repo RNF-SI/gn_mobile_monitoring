@@ -10,6 +10,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_data
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
@@ -38,8 +40,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/sync_modules_usecase_impl.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -82,8 +82,9 @@ final setUserNameFromLocalStorageUseCaseProvider =
         SetUserNameFromLocalStorageUseCaseImpl(
             ref.watch(localStorageProvider)));
 
-final syncModulesUseCaseProvider = Provider<SyncModulesUseCase>(
-    (ref) => SyncModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+final fetchAndSyncModulesUseCaseProvider = Provider<FetchAndSyncModulesUseCase>(
+    (ref) =>
+        FetchAndSyncModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
 
 final getModulesUseCaseProvider = Provider<GetModulesUseCase>(
     (ref) => GetModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
