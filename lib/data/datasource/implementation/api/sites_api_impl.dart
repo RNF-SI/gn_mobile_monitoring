@@ -1,5 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/data_parsing_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
@@ -16,37 +19,65 @@ class SitesApiImpl implements SitesApi {
 
   @override
   Future<List<BaseSiteEntity>> fetchSitesFromApi(String token) async {
-    try {
-      final response = await _dio.get(
-        '/monitorings/sites',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
+    List<BaseSiteEntity> allSites = [];
+    int page = 1;
+    const int limit = 50; // Adjust as needed
 
-      if (response.statusCode == 200) {
-        final jsonData = response.data;
-        return jsonData
-            .map(
-                (json) => BaseSiteEntity.fromJson(json as Map<String, dynamic>))
-            .toList();
-      } else {
-        throw Exception('Failed to fetch sites');
+    try {
+      while (true) {
+        final response = await _dio.get(
+          '/monitorings/sites',
+          queryParameters: {'page': page, 'limit': limit},
+          options: Options(
+            headers: {'Authorization': 'Bearer $token'},
+          ),
+        );
+
+        if (response.statusCode == 200) {
+          final data = response.data;
+
+          if (data == null || data['items'] == null) {
+            throw DataParsingException('Response data or items are null');
+          }
+
+          final items = data['items'] as List<dynamic>;
+          allSites.addAll(
+            items.map(
+              (json) => BaseSiteEntity.fromJson(json as Map<String, dynamic>),
+            ),
+          );
+
+          // Break the loop if we have fetched all pages
+          if (items.length < limit) break;
+
+          page++;
+        } else {
+          throw ApiException(
+            'Failed to fetch sites from API',
+            statusCode: response.statusCode,
+          );
+        }
       }
     } on DioException catch (e) {
-      throw Exception('Network error: ${e.message}');
+      // Handle Dio-specific exceptions
+      throw NetworkException(
+        'Network error occurred: ${e.message}',
+      );
+    } on DataParsingException {
+      rethrow; // Allow DataParsingException to propagate
     } catch (e) {
-      throw Exception('Error fetching sites: $e');
+      // Catch any other unexpected errors
+      throw ApiException('Unexpected error: $e');
     }
+
+    return allSites;
   }
 
   @override
   Future<List<SiteGroupEntity>> fetchSiteGroupsFromApi(String token) async {
     try {
       final response = await _dio.get(
-        '/monitorings/site-groups',
+        '/monitorings/sites_groups',
         options: Options(
           headers: {
             'Authorization': 'Bearer $token',
