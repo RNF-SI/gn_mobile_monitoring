@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
@@ -132,6 +133,8 @@ class AppDatabase extends _$AppDatabase {
           print("Migration 16 completed");
           await migration17(m, this);
           print("Migration 17 completed");
+          await migration18(m, this);
+          print("Migration 18 completed");
         },
         onUpgrade: (Migrator m, int from, int to) async {
           print("Upgrading database from $from to $to...");
@@ -185,6 +188,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 17:
                 await migration17(m, db);
+                break;
+              case 18:
+                await migration18(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");

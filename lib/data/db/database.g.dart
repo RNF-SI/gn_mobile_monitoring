@@ -54,6 +54,16 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways(
           'CHECK ("active_backend" IN (0, 1))'));
+  static const VerificationMeta _downloadedMeta =
+      const VerificationMeta('downloaded');
+  @override
+  late final GeneratedColumn<bool> downloaded = GeneratedColumn<bool>(
+      'downloaded', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("downloaded" IN (0, 1))'),
+      defaultValue: Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         idModule,
@@ -61,7 +71,8 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
         moduleLabel,
         moduleDesc,
         activeFrontend,
-        activeBackend
+        activeBackend,
+        downloaded
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -107,6 +118,12 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
           activeBackend.isAcceptableOrUnknown(
               data['active_backend']!, _activeBackendMeta));
     }
+    if (data.containsKey('downloaded')) {
+      context.handle(
+          _downloadedMeta,
+          downloaded.isAcceptableOrUnknown(
+              data['downloaded']!, _downloadedMeta));
+    }
     return context;
   }
 
@@ -128,6 +145,8 @@ class $TModulesTable extends TModules with TableInfo<$TModulesTable, TModule> {
           .read(DriftSqlType.bool, data['${effectivePrefix}active_frontend']),
       activeBackend: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}active_backend']),
+      downloaded: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}downloaded'])!,
     );
   }
 
@@ -144,13 +163,15 @@ class TModule extends DataClass implements Insertable<TModule> {
   final String? moduleDesc;
   final bool? activeFrontend;
   final bool? activeBackend;
+  final bool downloaded;
   const TModule(
       {required this.idModule,
       this.moduleCode,
       this.moduleLabel,
       this.moduleDesc,
       this.activeFrontend,
-      this.activeBackend});
+      this.activeBackend,
+      required this.downloaded});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -170,6 +191,7 @@ class TModule extends DataClass implements Insertable<TModule> {
     if (!nullToAbsent || activeBackend != null) {
       map['active_backend'] = Variable<bool>(activeBackend);
     }
+    map['downloaded'] = Variable<bool>(downloaded);
     return map;
   }
 
@@ -191,6 +213,7 @@ class TModule extends DataClass implements Insertable<TModule> {
       activeBackend: activeBackend == null && nullToAbsent
           ? const Value.absent()
           : Value(activeBackend),
+      downloaded: Value(downloaded),
     );
   }
 
@@ -204,6 +227,7 @@ class TModule extends DataClass implements Insertable<TModule> {
       moduleDesc: serializer.fromJson<String?>(json['moduleDesc']),
       activeFrontend: serializer.fromJson<bool?>(json['activeFrontend']),
       activeBackend: serializer.fromJson<bool?>(json['activeBackend']),
+      downloaded: serializer.fromJson<bool>(json['downloaded']),
     );
   }
   @override
@@ -216,6 +240,7 @@ class TModule extends DataClass implements Insertable<TModule> {
       'moduleDesc': serializer.toJson<String?>(moduleDesc),
       'activeFrontend': serializer.toJson<bool?>(activeFrontend),
       'activeBackend': serializer.toJson<bool?>(activeBackend),
+      'downloaded': serializer.toJson<bool>(downloaded),
     };
   }
 
@@ -225,7 +250,8 @@ class TModule extends DataClass implements Insertable<TModule> {
           Value<String?> moduleLabel = const Value.absent(),
           Value<String?> moduleDesc = const Value.absent(),
           Value<bool?> activeFrontend = const Value.absent(),
-          Value<bool?> activeBackend = const Value.absent()}) =>
+          Value<bool?> activeBackend = const Value.absent(),
+          bool? downloaded}) =>
       TModule(
         idModule: idModule ?? this.idModule,
         moduleCode: moduleCode.present ? moduleCode.value : this.moduleCode,
@@ -235,6 +261,7 @@ class TModule extends DataClass implements Insertable<TModule> {
             activeFrontend.present ? activeFrontend.value : this.activeFrontend,
         activeBackend:
             activeBackend.present ? activeBackend.value : this.activeBackend,
+        downloaded: downloaded ?? this.downloaded,
       );
   TModule copyWithCompanion(TModulesCompanion data) {
     return TModule(
@@ -251,6 +278,8 @@ class TModule extends DataClass implements Insertable<TModule> {
       activeBackend: data.activeBackend.present
           ? data.activeBackend.value
           : this.activeBackend,
+      downloaded:
+          data.downloaded.present ? data.downloaded.value : this.downloaded,
     );
   }
 
@@ -262,14 +291,15 @@ class TModule extends DataClass implements Insertable<TModule> {
           ..write('moduleLabel: $moduleLabel, ')
           ..write('moduleDesc: $moduleDesc, ')
           ..write('activeFrontend: $activeFrontend, ')
-          ..write('activeBackend: $activeBackend')
+          ..write('activeBackend: $activeBackend, ')
+          ..write('downloaded: $downloaded')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode => Object.hash(idModule, moduleCode, moduleLabel, moduleDesc,
-      activeFrontend, activeBackend);
+      activeFrontend, activeBackend, downloaded);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -279,7 +309,8 @@ class TModule extends DataClass implements Insertable<TModule> {
           other.moduleLabel == this.moduleLabel &&
           other.moduleDesc == this.moduleDesc &&
           other.activeFrontend == this.activeFrontend &&
-          other.activeBackend == this.activeBackend);
+          other.activeBackend == this.activeBackend &&
+          other.downloaded == this.downloaded);
 }
 
 class TModulesCompanion extends UpdateCompanion<TModule> {
@@ -289,6 +320,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
   final Value<String?> moduleDesc;
   final Value<bool?> activeFrontend;
   final Value<bool?> activeBackend;
+  final Value<bool> downloaded;
   const TModulesCompanion({
     this.idModule = const Value.absent(),
     this.moduleCode = const Value.absent(),
@@ -296,6 +328,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
     this.moduleDesc = const Value.absent(),
     this.activeFrontend = const Value.absent(),
     this.activeBackend = const Value.absent(),
+    this.downloaded = const Value.absent(),
   });
   TModulesCompanion.insert({
     this.idModule = const Value.absent(),
@@ -304,6 +337,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
     this.moduleDesc = const Value.absent(),
     this.activeFrontend = const Value.absent(),
     this.activeBackend = const Value.absent(),
+    this.downloaded = const Value.absent(),
   });
   static Insertable<TModule> custom({
     Expression<int>? idModule,
@@ -312,6 +346,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
     Expression<String>? moduleDesc,
     Expression<bool>? activeFrontend,
     Expression<bool>? activeBackend,
+    Expression<bool>? downloaded,
   }) {
     return RawValuesInsertable({
       if (idModule != null) 'id_module': idModule,
@@ -320,6 +355,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
       if (moduleDesc != null) 'module_desc': moduleDesc,
       if (activeFrontend != null) 'active_frontend': activeFrontend,
       if (activeBackend != null) 'active_backend': activeBackend,
+      if (downloaded != null) 'downloaded': downloaded,
     });
   }
 
@@ -329,7 +365,8 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
       Value<String?>? moduleLabel,
       Value<String?>? moduleDesc,
       Value<bool?>? activeFrontend,
-      Value<bool?>? activeBackend}) {
+      Value<bool?>? activeBackend,
+      Value<bool>? downloaded}) {
     return TModulesCompanion(
       idModule: idModule ?? this.idModule,
       moduleCode: moduleCode ?? this.moduleCode,
@@ -337,6 +374,7 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
       moduleDesc: moduleDesc ?? this.moduleDesc,
       activeFrontend: activeFrontend ?? this.activeFrontend,
       activeBackend: activeBackend ?? this.activeBackend,
+      downloaded: downloaded ?? this.downloaded,
     );
   }
 
@@ -361,6 +399,9 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
     if (activeBackend.present) {
       map['active_backend'] = Variable<bool>(activeBackend.value);
     }
+    if (downloaded.present) {
+      map['downloaded'] = Variable<bool>(downloaded.value);
+    }
     return map;
   }
 
@@ -372,7 +413,8 @@ class TModulesCompanion extends UpdateCompanion<TModule> {
           ..write('moduleLabel: $moduleLabel, ')
           ..write('moduleDesc: $moduleDesc, ')
           ..write('activeFrontend: $activeFrontend, ')
-          ..write('activeBackend: $activeBackend')
+          ..write('activeBackend: $activeBackend, ')
+          ..write('downloaded: $downloaded')
           ..write(')'))
         .toString();
   }
@@ -7863,6 +7905,7 @@ typedef $$TModulesTableCreateCompanionBuilder = TModulesCompanion Function({
   Value<String?> moduleDesc,
   Value<bool?> activeFrontend,
   Value<bool?> activeBackend,
+  Value<bool> downloaded,
 });
 typedef $$TModulesTableUpdateCompanionBuilder = TModulesCompanion Function({
   Value<int> idModule,
@@ -7871,6 +7914,7 @@ typedef $$TModulesTableUpdateCompanionBuilder = TModulesCompanion Function({
   Value<String?> moduleDesc,
   Value<bool?> activeFrontend,
   Value<bool?> activeBackend,
+  Value<bool> downloaded,
 });
 
 class $$TModulesTableFilterComposer
@@ -7900,6 +7944,9 @@ class $$TModulesTableFilterComposer
 
   ColumnFilters<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get downloaded => $composableBuilder(
+      column: $table.downloaded, builder: (column) => ColumnFilters(column));
 }
 
 class $$TModulesTableOrderingComposer
@@ -7930,6 +7977,9 @@ class $$TModulesTableOrderingComposer
   ColumnOrderings<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get downloaded => $composableBuilder(
+      column: $table.downloaded, builder: (column) => ColumnOrderings(column));
 }
 
 class $$TModulesTableAnnotationComposer
@@ -7958,6 +8008,9 @@ class $$TModulesTableAnnotationComposer
 
   GeneratedColumn<bool> get activeBackend => $composableBuilder(
       column: $table.activeBackend, builder: (column) => column);
+
+  GeneratedColumn<bool> get downloaded => $composableBuilder(
+      column: $table.downloaded, builder: (column) => column);
 }
 
 class $$TModulesTableTableManager extends RootTableManager<
@@ -7989,6 +8042,7 @@ class $$TModulesTableTableManager extends RootTableManager<
             Value<String?> moduleDesc = const Value.absent(),
             Value<bool?> activeFrontend = const Value.absent(),
             Value<bool?> activeBackend = const Value.absent(),
+            Value<bool> downloaded = const Value.absent(),
           }) =>
               TModulesCompanion(
             idModule: idModule,
@@ -7997,6 +8051,7 @@ class $$TModulesTableTableManager extends RootTableManager<
             moduleDesc: moduleDesc,
             activeFrontend: activeFrontend,
             activeBackend: activeBackend,
+            downloaded: downloaded,
           ),
           createCompanionCallback: ({
             Value<int> idModule = const Value.absent(),
@@ -8005,6 +8060,7 @@ class $$TModulesTableTableManager extends RootTableManager<
             Value<String?> moduleDesc = const Value.absent(),
             Value<bool?> activeFrontend = const Value.absent(),
             Value<bool?> activeBackend = const Value.absent(),
+            Value<bool> downloaded = const Value.absent(),
           }) =>
               TModulesCompanion.insert(
             idModule: idModule,
@@ -8013,6 +8069,7 @@ class $$TModulesTableTableManager extends RootTableManager<
             moduleDesc: moduleDesc,
             activeFrontend: activeFrontend,
             activeBackend: activeBackend,
+            downloaded: downloaded,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

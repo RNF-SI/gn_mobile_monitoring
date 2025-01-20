@@ -8,4 +8,5 @@ class TModules extends Table {
   TextColumn get moduleDesc => text().nullable()();
   BoolColumn get activeFrontend => boolean().nullable()();
   BoolColumn get activeBackend => boolean().nullable()();
+  BoolColumn get downloaded => boolean().withDefault(Constant(false))();
 }

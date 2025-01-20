@@ -8,8 +8,9 @@ extension ModuleEntityMapper on ModuleEntity {
       moduleCode: moduleCode,
       moduleLabel: moduleName,
       moduleDesc: moduleDesc,
-      activeFrontend: null, // Si l'API ne fournit pas cette info
-      activeBackend: null, // Si l'API ne fournit pas cette info
+      activeFrontend: null, // API may not provide this
+      activeBackend: null, // API may not provide this
+      downloaded: downloaded, // New property
     );
   }
 }
@@ -21,7 +22,8 @@ extension DomainModuleEntityMapper on Module {
       moduleCode: moduleCode ?? '',
       moduleName: moduleLabel ?? '',
       moduleDesc: moduleDesc,
-      cruved: {}, // Placeholder, selon vos besoins
+      downloaded: downloaded == true, // New property
+      cruved: {}, // Placeholder, depending on your needs
     );
   }
 }

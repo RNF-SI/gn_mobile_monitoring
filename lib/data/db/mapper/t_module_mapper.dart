@@ -10,6 +10,7 @@ extension TModuleMapper on TModule {
       moduleDesc: moduleDesc,
       activeFrontend: activeFrontend ?? false, // Default value
       activeBackend: activeBackend ?? false, // Default value
+      downloaded: downloaded ?? false, // New property, default to false
     );
   }
 }
@@ -23,6 +24,7 @@ extension ModuleMapper on Module {
       moduleDesc: moduleDesc,
       activeFrontend: activeFrontend ?? false,
       activeBackend: activeBackend ?? false,
+      downloaded: downloaded ?? false, // New property
     );
   }
 }

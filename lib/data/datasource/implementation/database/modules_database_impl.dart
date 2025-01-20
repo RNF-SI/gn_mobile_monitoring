@@ -30,4 +30,10 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final module = await db.tModulesDao.getModuleById(moduleId);
     return module.moduleCode ?? ''; // Ensure non-null string
   }
+
+  @override
+  Future<void> markModuleAsDownloaded(int moduleId) async {
+    final db = await _database;
+    await db.tModulesDao.markModuleAsDownloaded(moduleId);
+  }
 }

@@ -33,6 +33,7 @@ mixin _$Module {
   String? get ngModule => throw _privateConstructorUsedError;
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
+  bool? get downloaded => throw _privateConstructorUsedError;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.
@@ -62,7 +63,8 @@ abstract class $ModuleCopyWith<$Res> {
       int? moduleOrder,
       String? ngModule,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      bool? downloaded});
 }
 
 /// @nodoc
@@ -97,6 +99,7 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     Object? ngModule = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? downloaded = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -167,6 +170,10 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      downloaded: freezed == downloaded
+          ? _value.downloaded
+          : downloaded // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -195,7 +202,8 @@ abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
       int? moduleOrder,
       String? ngModule,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      bool? downloaded});
 }
 
 /// @nodoc
@@ -228,6 +236,7 @@ class __$$ModuleImplCopyWithImpl<$Res>
     Object? ngModule = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? downloaded = freezed,
   }) {
     return _then(_$ModuleImpl(
       id: null == id
@@ -298,6 +307,10 @@ class __$$ModuleImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      downloaded: freezed == downloaded
+          ? _value.downloaded
+          : downloaded // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -322,7 +335,8 @@ class _$ModuleImpl implements _Module {
       this.moduleOrder,
       this.ngModule,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      this.downloaded});
 
   @override
   final int id;
@@ -358,10 +372,12 @@ class _$ModuleImpl implements _Module {
   final DateTime? metaCreateDate;
   @override
   final DateTime? metaUpdateDate;
+  @override
+  final bool? downloaded;
 
   @override
   String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded)';
   }
 
   @override
@@ -401,7 +417,9 @@ class _$ModuleImpl implements _Module {
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            (identical(other.downloaded, downloaded) ||
+                other.downloaded == downloaded));
   }
 
   @override
@@ -423,7 +441,8 @@ class _$ModuleImpl implements _Module {
       moduleOrder,
       ngModule,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      downloaded);
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.
@@ -452,7 +471,8 @@ abstract class _Module implements Module {
       final int? moduleOrder,
       final String? ngModule,
       final DateTime? metaCreateDate,
-      final DateTime? metaUpdateDate}) = _$ModuleImpl;
+      final DateTime? metaUpdateDate,
+      final bool? downloaded}) = _$ModuleImpl;
 
   @override
   int get id;
@@ -488,6 +508,8 @@ abstract class _Module implements Module {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
+  @override
+  bool? get downloaded;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.

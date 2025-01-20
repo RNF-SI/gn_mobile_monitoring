@@ -5,6 +5,7 @@ class ModuleEntity {
   final String? moduleDesc;
   final String? modulePath;
   final String? modulePicto;
+  final bool downloaded; // New property
   final Map<String, dynamic> cruved;
 
   ModuleEntity({
@@ -14,6 +15,7 @@ class ModuleEntity {
     this.moduleDesc,
     this.modulePath,
     this.modulePicto,
+    required this.downloaded, // New property
     required this.cruved,
   });
 
@@ -25,6 +27,7 @@ class ModuleEntity {
       moduleDesc: json['module_desc'] as String?,
       modulePath: json['module_path'] as String?,
       modulePicto: json['module_picto'] as String?,
+      downloaded: json['downloaded'] as bool? ?? false, // Default to false
       cruved: json['cruved'] as Map<String, dynamic>,
     );
   }
@@ -37,6 +40,7 @@ class ModuleEntity {
       'module_desc': moduleDesc,
       'module_path': modulePath,
       'module_picto': modulePicto,
+      'downloaded': downloaded, // New property
       'cruved': cruved,
     };
   }

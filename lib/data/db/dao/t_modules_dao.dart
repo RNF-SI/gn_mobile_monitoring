@@ -49,4 +49,18 @@ class TModulesDao extends DatabaseAccessor<AppDatabase>
 
     return result;
   }
+
+  Future<void> markModuleAsDownloaded(int moduleId) async {
+    await (update(tModules)..where((tbl) => tbl.idModule.equals(moduleId)))
+        .write(TModulesCompanion(
+      downloaded: Value(true),
+    ));
+  }
+
+  Future<List<Module>> getDownloadedModules() async {
+    final dbModules = await (select(tModules)
+          ..where((tbl) => tbl.downloaded.equals(true)))
+        .get();
+    return dbModules.map((e) => e.toDomain()).toList();
+  }
 }

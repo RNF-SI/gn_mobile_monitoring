@@ -5,4 +5,5 @@ abstract class ModulesDatabase {
   Future<void> insertModules(List<Module> modules);
   Future<List<Module>> getAllModules();
   Future<String> getModuleCodeFromIdModule(int moduleId);
+  Future<void> markModuleAsDownloaded(int moduleId);
 }

@@ -22,5 +22,6 @@ class Module with _$Module {
     String? ngModule,
     DateTime? metaCreateDate,
     DateTime? metaUpdateDate,
+    bool? downloaded,
   }) = _Module;
 }
