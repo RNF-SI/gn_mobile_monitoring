@@ -1,14 +1,21 @@
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
+  final GlobalApi globalApi;
   final ModulesApi api;
   final ModulesDatabase database;
+  final NomenclaturesDatabase nomenclaturesDatabase;
 
-  ModulesRepositoryImpl(this.api, this.database);
+  ModulesRepositoryImpl(
+      this.globalApi, this.api, this.database, this.nomenclaturesDatabase);
 
   @override
   Future<List<Module>> getModulesFromLocal() async {
@@ -33,9 +40,24 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
   @override
   Future<void> downloadModuleData(int moduleId) async {
-    // Fetch module data from API and save to database
-    // final apiModuleData = await api.getModuleData(moduleId);
-    // final moduleData = apiModuleData.toDomain();
-    // await database.insertModuleData(moduleData);
+    try {
+      final data = await globalApi.getNomenclaturesAndDatasets();
+
+      final nomenclatures = (data['nomenclatures'] as List<NomenclatureEntity>)
+          .map((e) => e.toDomain())
+          .toList();
+
+      // final datasets = (data['datasets'] as List<DatasetEntity>)
+      //     .map((e) => e.toDomain())
+      //     .toList();
+
+      await nomenclaturesDatabase.clearNomenclatures();
+      await nomenclaturesDatabase.insertNomenclatures(nomenclatures);
+
+      // await _datasetsDatabase.clearDatasets();
+      // await _datasetsDatabase.insertDatasets(datasets);
+    } catch (e) {
+      throw Exception('Failed to download module data: $e');
+    }
   }
 }

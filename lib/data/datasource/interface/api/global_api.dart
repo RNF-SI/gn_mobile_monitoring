@@ -1,1 +1,3 @@
-abstract class GlobalApi {}
+abstract class GlobalApi {
+  Future<Map<String, dynamic>> getNomenclaturesAndDatasets();
+}

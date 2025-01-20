@@ -5,12 +5,14 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/modules_
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/global_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/modules_database_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/database/nomenclatures_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/sites_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/repository/authentication_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/global_database_repository_impl.dart';
@@ -30,6 +32,9 @@ final globalDatabaseRepositoryProvider = Provider<GlobalDatabaseRepository>(
     (ref) => GlobalDatabaseRepositoryImpl(
         ref.watch(globalDatabaseProvider), ref.watch(globalApiProvider)));
 
+final nomenclatureDatabaseProvider =
+    Provider<NomenclaturesDatabase>((_) => NomenclaturesDatabaseImpl());
+
 final localStorageProvider =
     Provider<LocalStorageRepository>((ref) => LocalStorageRepositoryImpl());
 
@@ -45,8 +50,10 @@ final moduleDatabaseProvider =
 
 final modulesRepositoryProvider =
     Provider<ModulesRepository>((ref) => ModulesRepositoryImpl(
+          ref.watch(globalApiProvider),
           ref.watch(modulesApiProvider),
           ref.watch(moduleDatabaseProvider),
+          ref.watch(nomenclatureDatabaseProvider),
         ));
 
 final sitesApiProvider = Provider<SitesApi>((_) => SitesApiImpl());
