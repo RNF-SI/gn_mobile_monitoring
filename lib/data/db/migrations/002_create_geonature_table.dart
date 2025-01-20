@@ -201,5 +201,41 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  try {
+    await db.customStatement('''
+    CREATE TABLE t_datasets (
+      id_dataset INTEGER PRIMARY KEY AUTOINCREMENT,
+      unique_dataset_id TEXT NOT NULL, -- UUID stored as TEXT
+      id_acquisition_framework INTEGER NOT NULL,
+      dataset_name TEXT NOT NULL,
+      dataset_shortname TEXT NOT NULL,
+      dataset_desc TEXT NOT NULL,
+      id_nomenclature_data_type INTEGER NOT NULL,
+      keywords TEXT,
+      marine_domain BOOLEAN NOT NULL,
+      terrestrial_domain BOOLEAN NOT NULL,
+      id_nomenclature_dataset_objectif INTEGER NOT NULL,
+      bbox_west REAL,
+      bbox_east REAL,
+      bbox_south REAL,
+      bbox_north REAL,
+      id_nomenclature_collecting_method INTEGER NOT NULL,
+      id_nomenclature_data_origin INTEGER NOT NULL,
+      id_nomenclature_source_status INTEGER NOT NULL,
+      id_nomenclature_resource_type INTEGER NOT NULL,
+      active BOOLEAN DEFAULT TRUE,
+      validable BOOLEAN DEFAULT TRUE,
+      id_digitizer INTEGER,
+      id_taxa_list INTEGER,
+      meta_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      meta_update_date TIMESTAMP
+    );
+  ''');
+    print("t_datasets table created successfully.");
+  } catch (e) {
+    print("Error creating t_datasets table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }

@@ -2151,6 +2151,1250 @@ class TNomenclaturesCompanion extends UpdateCompanion<TNomenclature> {
   }
 }
 
+class $TDatasetsTable extends TDatasets
+    with TableInfo<$TDatasetsTable, TDataset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TDatasetsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idDatasetMeta =
+      const VerificationMeta('idDataset');
+  @override
+  late final GeneratedColumn<int> idDataset = GeneratedColumn<int>(
+      'id_dataset', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _uniqueDatasetIdMeta =
+      const VerificationMeta('uniqueDatasetId');
+  @override
+  late final GeneratedColumn<String> uniqueDatasetId = GeneratedColumn<String>(
+      'unique_dataset_id', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _idAcquisitionFrameworkMeta =
+      const VerificationMeta('idAcquisitionFramework');
+  @override
+  late final GeneratedColumn<int> idAcquisitionFramework = GeneratedColumn<int>(
+      'id_acquisition_framework', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _datasetNameMeta =
+      const VerificationMeta('datasetName');
+  @override
+  late final GeneratedColumn<String> datasetName = GeneratedColumn<String>(
+      'dataset_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _datasetShortnameMeta =
+      const VerificationMeta('datasetShortname');
+  @override
+  late final GeneratedColumn<String> datasetShortname = GeneratedColumn<String>(
+      'dataset_shortname', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _datasetDescMeta =
+      const VerificationMeta('datasetDesc');
+  @override
+  late final GeneratedColumn<String> datasetDesc = GeneratedColumn<String>(
+      'dataset_desc', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _idNomenclatureDataTypeMeta =
+      const VerificationMeta('idNomenclatureDataType');
+  @override
+  late final GeneratedColumn<int> idNomenclatureDataType = GeneratedColumn<int>(
+      'id_nomenclature_data_type', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _keywordsMeta =
+      const VerificationMeta('keywords');
+  @override
+  late final GeneratedColumn<String> keywords = GeneratedColumn<String>(
+      'keywords', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _marineDomainMeta =
+      const VerificationMeta('marineDomain');
+  @override
+  late final GeneratedColumn<bool> marineDomain = GeneratedColumn<bool>(
+      'marine_domain', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("marine_domain" IN (0, 1))'));
+  static const VerificationMeta _terrestrialDomainMeta =
+      const VerificationMeta('terrestrialDomain');
+  @override
+  late final GeneratedColumn<bool> terrestrialDomain = GeneratedColumn<bool>(
+      'terrestrial_domain', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("terrestrial_domain" IN (0, 1))'));
+  static const VerificationMeta _idNomenclatureDatasetObjectifMeta =
+      const VerificationMeta('idNomenclatureDatasetObjectif');
+  @override
+  late final GeneratedColumn<int> idNomenclatureDatasetObjectif =
+      GeneratedColumn<int>(
+          'id_nomenclature_dataset_objectif', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _bboxWestMeta =
+      const VerificationMeta('bboxWest');
+  @override
+  late final GeneratedColumn<double> bboxWest = GeneratedColumn<double>(
+      'bbox_west', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _bboxEastMeta =
+      const VerificationMeta('bboxEast');
+  @override
+  late final GeneratedColumn<double> bboxEast = GeneratedColumn<double>(
+      'bbox_east', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _bboxSouthMeta =
+      const VerificationMeta('bboxSouth');
+  @override
+  late final GeneratedColumn<double> bboxSouth = GeneratedColumn<double>(
+      'bbox_south', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _bboxNorthMeta =
+      const VerificationMeta('bboxNorth');
+  @override
+  late final GeneratedColumn<double> bboxNorth = GeneratedColumn<double>(
+      'bbox_north', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _idNomenclatureCollectingMethodMeta =
+      const VerificationMeta('idNomenclatureCollectingMethod');
+  @override
+  late final GeneratedColumn<int> idNomenclatureCollectingMethod =
+      GeneratedColumn<int>(
+          'id_nomenclature_collecting_method', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idNomenclatureDataOriginMeta =
+      const VerificationMeta('idNomenclatureDataOrigin');
+  @override
+  late final GeneratedColumn<int> idNomenclatureDataOrigin =
+      GeneratedColumn<int>('id_nomenclature_data_origin', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idNomenclatureSourceStatusMeta =
+      const VerificationMeta('idNomenclatureSourceStatus');
+  @override
+  late final GeneratedColumn<int> idNomenclatureSourceStatus =
+      GeneratedColumn<int>('id_nomenclature_source_status', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idNomenclatureResourceTypeMeta =
+      const VerificationMeta('idNomenclatureResourceType');
+  @override
+  late final GeneratedColumn<int> idNomenclatureResourceType =
+      GeneratedColumn<int>('id_nomenclature_resource_type', aliasedName, false,
+          type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+      'active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
+      defaultValue: Constant(true));
+  static const VerificationMeta _validableMeta =
+      const VerificationMeta('validable');
+  @override
+  late final GeneratedColumn<bool> validable = GeneratedColumn<bool>(
+      'validable', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("validable" IN (0, 1))'),
+      defaultValue: Constant(true));
+  static const VerificationMeta _idDigitizerMeta =
+      const VerificationMeta('idDigitizer');
+  @override
+  late final GeneratedColumn<int> idDigitizer = GeneratedColumn<int>(
+      'id_digitizer', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idTaxaListMeta =
+      const VerificationMeta('idTaxaList');
+  @override
+  late final GeneratedColumn<int> idTaxaList = GeneratedColumn<int>(
+      'id_taxa_list', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _metaCreateDateMeta =
+      const VerificationMeta('metaCreateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaCreateDate =
+      GeneratedColumn<DateTime>('meta_create_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metaUpdateDateMeta =
+      const VerificationMeta('metaUpdateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaUpdateDate =
+      GeneratedColumn<DateTime>('meta_update_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idDataset,
+        uniqueDatasetId,
+        idAcquisitionFramework,
+        datasetName,
+        datasetShortname,
+        datasetDesc,
+        idNomenclatureDataType,
+        keywords,
+        marineDomain,
+        terrestrialDomain,
+        idNomenclatureDatasetObjectif,
+        bboxWest,
+        bboxEast,
+        bboxSouth,
+        bboxNorth,
+        idNomenclatureCollectingMethod,
+        idNomenclatureDataOrigin,
+        idNomenclatureSourceStatus,
+        idNomenclatureResourceType,
+        active,
+        validable,
+        idDigitizer,
+        idTaxaList,
+        metaCreateDate,
+        metaUpdateDate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_datasets';
+  @override
+  VerificationContext validateIntegrity(Insertable<TDataset> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_dataset')) {
+      context.handle(_idDatasetMeta,
+          idDataset.isAcceptableOrUnknown(data['id_dataset']!, _idDatasetMeta));
+    }
+    if (data.containsKey('unique_dataset_id')) {
+      context.handle(
+          _uniqueDatasetIdMeta,
+          uniqueDatasetId.isAcceptableOrUnknown(
+              data['unique_dataset_id']!, _uniqueDatasetIdMeta));
+    } else if (isInserting) {
+      context.missing(_uniqueDatasetIdMeta);
+    }
+    if (data.containsKey('id_acquisition_framework')) {
+      context.handle(
+          _idAcquisitionFrameworkMeta,
+          idAcquisitionFramework.isAcceptableOrUnknown(
+              data['id_acquisition_framework']!, _idAcquisitionFrameworkMeta));
+    } else if (isInserting) {
+      context.missing(_idAcquisitionFrameworkMeta);
+    }
+    if (data.containsKey('dataset_name')) {
+      context.handle(
+          _datasetNameMeta,
+          datasetName.isAcceptableOrUnknown(
+              data['dataset_name']!, _datasetNameMeta));
+    } else if (isInserting) {
+      context.missing(_datasetNameMeta);
+    }
+    if (data.containsKey('dataset_shortname')) {
+      context.handle(
+          _datasetShortnameMeta,
+          datasetShortname.isAcceptableOrUnknown(
+              data['dataset_shortname']!, _datasetShortnameMeta));
+    } else if (isInserting) {
+      context.missing(_datasetShortnameMeta);
+    }
+    if (data.containsKey('dataset_desc')) {
+      context.handle(
+          _datasetDescMeta,
+          datasetDesc.isAcceptableOrUnknown(
+              data['dataset_desc']!, _datasetDescMeta));
+    } else if (isInserting) {
+      context.missing(_datasetDescMeta);
+    }
+    if (data.containsKey('id_nomenclature_data_type')) {
+      context.handle(
+          _idNomenclatureDataTypeMeta,
+          idNomenclatureDataType.isAcceptableOrUnknown(
+              data['id_nomenclature_data_type']!, _idNomenclatureDataTypeMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureDataTypeMeta);
+    }
+    if (data.containsKey('keywords')) {
+      context.handle(_keywordsMeta,
+          keywords.isAcceptableOrUnknown(data['keywords']!, _keywordsMeta));
+    }
+    if (data.containsKey('marine_domain')) {
+      context.handle(
+          _marineDomainMeta,
+          marineDomain.isAcceptableOrUnknown(
+              data['marine_domain']!, _marineDomainMeta));
+    } else if (isInserting) {
+      context.missing(_marineDomainMeta);
+    }
+    if (data.containsKey('terrestrial_domain')) {
+      context.handle(
+          _terrestrialDomainMeta,
+          terrestrialDomain.isAcceptableOrUnknown(
+              data['terrestrial_domain']!, _terrestrialDomainMeta));
+    } else if (isInserting) {
+      context.missing(_terrestrialDomainMeta);
+    }
+    if (data.containsKey('id_nomenclature_dataset_objectif')) {
+      context.handle(
+          _idNomenclatureDatasetObjectifMeta,
+          idNomenclatureDatasetObjectif.isAcceptableOrUnknown(
+              data['id_nomenclature_dataset_objectif']!,
+              _idNomenclatureDatasetObjectifMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureDatasetObjectifMeta);
+    }
+    if (data.containsKey('bbox_west')) {
+      context.handle(_bboxWestMeta,
+          bboxWest.isAcceptableOrUnknown(data['bbox_west']!, _bboxWestMeta));
+    }
+    if (data.containsKey('bbox_east')) {
+      context.handle(_bboxEastMeta,
+          bboxEast.isAcceptableOrUnknown(data['bbox_east']!, _bboxEastMeta));
+    }
+    if (data.containsKey('bbox_south')) {
+      context.handle(_bboxSouthMeta,
+          bboxSouth.isAcceptableOrUnknown(data['bbox_south']!, _bboxSouthMeta));
+    }
+    if (data.containsKey('bbox_north')) {
+      context.handle(_bboxNorthMeta,
+          bboxNorth.isAcceptableOrUnknown(data['bbox_north']!, _bboxNorthMeta));
+    }
+    if (data.containsKey('id_nomenclature_collecting_method')) {
+      context.handle(
+          _idNomenclatureCollectingMethodMeta,
+          idNomenclatureCollectingMethod.isAcceptableOrUnknown(
+              data['id_nomenclature_collecting_method']!,
+              _idNomenclatureCollectingMethodMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureCollectingMethodMeta);
+    }
+    if (data.containsKey('id_nomenclature_data_origin')) {
+      context.handle(
+          _idNomenclatureDataOriginMeta,
+          idNomenclatureDataOrigin.isAcceptableOrUnknown(
+              data['id_nomenclature_data_origin']!,
+              _idNomenclatureDataOriginMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureDataOriginMeta);
+    }
+    if (data.containsKey('id_nomenclature_source_status')) {
+      context.handle(
+          _idNomenclatureSourceStatusMeta,
+          idNomenclatureSourceStatus.isAcceptableOrUnknown(
+              data['id_nomenclature_source_status']!,
+              _idNomenclatureSourceStatusMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureSourceStatusMeta);
+    }
+    if (data.containsKey('id_nomenclature_resource_type')) {
+      context.handle(
+          _idNomenclatureResourceTypeMeta,
+          idNomenclatureResourceType.isAcceptableOrUnknown(
+              data['id_nomenclature_resource_type']!,
+              _idNomenclatureResourceTypeMeta));
+    } else if (isInserting) {
+      context.missing(_idNomenclatureResourceTypeMeta);
+    }
+    if (data.containsKey('active')) {
+      context.handle(_activeMeta,
+          active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('validable')) {
+      context.handle(_validableMeta,
+          validable.isAcceptableOrUnknown(data['validable']!, _validableMeta));
+    }
+    if (data.containsKey('id_digitizer')) {
+      context.handle(
+          _idDigitizerMeta,
+          idDigitizer.isAcceptableOrUnknown(
+              data['id_digitizer']!, _idDigitizerMeta));
+    }
+    if (data.containsKey('id_taxa_list')) {
+      context.handle(
+          _idTaxaListMeta,
+          idTaxaList.isAcceptableOrUnknown(
+              data['id_taxa_list']!, _idTaxaListMeta));
+    }
+    if (data.containsKey('meta_create_date')) {
+      context.handle(
+          _metaCreateDateMeta,
+          metaCreateDate.isAcceptableOrUnknown(
+              data['meta_create_date']!, _metaCreateDateMeta));
+    }
+    if (data.containsKey('meta_update_date')) {
+      context.handle(
+          _metaUpdateDateMeta,
+          metaUpdateDate.isAcceptableOrUnknown(
+              data['meta_update_date']!, _metaUpdateDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idDataset};
+  @override
+  TDataset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TDataset(
+      idDataset: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_dataset'])!,
+      uniqueDatasetId: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}unique_dataset_id'])!,
+      idAcquisitionFramework: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_acquisition_framework'])!,
+      datasetName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dataset_name'])!,
+      datasetShortname: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}dataset_shortname'])!,
+      datasetDesc: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}dataset_desc'])!,
+      idNomenclatureDataType: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_data_type'])!,
+      keywords: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}keywords']),
+      marineDomain: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}marine_domain'])!,
+      terrestrialDomain: attachedDatabase.typeMapping.read(
+          DriftSqlType.bool, data['${effectivePrefix}terrestrial_domain'])!,
+      idNomenclatureDatasetObjectif: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_dataset_objectif'])!,
+      bboxWest: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}bbox_west']),
+      bboxEast: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}bbox_east']),
+      bboxSouth: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}bbox_south']),
+      bboxNorth: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}bbox_north']),
+      idNomenclatureCollectingMethod: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_collecting_method'])!,
+      idNomenclatureDataOrigin: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_data_origin'])!,
+      idNomenclatureSourceStatus: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_source_status'])!,
+      idNomenclatureResourceType: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_resource_type'])!,
+      active: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      validable: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}validable']),
+      idDigitizer: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitizer']),
+      idTaxaList: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_taxa_list']),
+      metaCreateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_create_date']),
+      metaUpdateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_update_date']),
+    );
+  }
+
+  @override
+  $TDatasetsTable createAlias(String alias) {
+    return $TDatasetsTable(attachedDatabase, alias);
+  }
+}
+
+class TDataset extends DataClass implements Insertable<TDataset> {
+  final int idDataset;
+  final String uniqueDatasetId;
+  final int idAcquisitionFramework;
+  final String datasetName;
+  final String datasetShortname;
+  final String datasetDesc;
+  final int idNomenclatureDataType;
+  final String? keywords;
+  final bool marineDomain;
+  final bool terrestrialDomain;
+  final int idNomenclatureDatasetObjectif;
+  final double? bboxWest;
+  final double? bboxEast;
+  final double? bboxSouth;
+  final double? bboxNorth;
+  final int idNomenclatureCollectingMethod;
+  final int idNomenclatureDataOrigin;
+  final int idNomenclatureSourceStatus;
+  final int idNomenclatureResourceType;
+  final bool active;
+  final bool? validable;
+  final int? idDigitizer;
+  final int? idTaxaList;
+  final DateTime? metaCreateDate;
+  final DateTime? metaUpdateDate;
+  const TDataset(
+      {required this.idDataset,
+      required this.uniqueDatasetId,
+      required this.idAcquisitionFramework,
+      required this.datasetName,
+      required this.datasetShortname,
+      required this.datasetDesc,
+      required this.idNomenclatureDataType,
+      this.keywords,
+      required this.marineDomain,
+      required this.terrestrialDomain,
+      required this.idNomenclatureDatasetObjectif,
+      this.bboxWest,
+      this.bboxEast,
+      this.bboxSouth,
+      this.bboxNorth,
+      required this.idNomenclatureCollectingMethod,
+      required this.idNomenclatureDataOrigin,
+      required this.idNomenclatureSourceStatus,
+      required this.idNomenclatureResourceType,
+      required this.active,
+      this.validable,
+      this.idDigitizer,
+      this.idTaxaList,
+      this.metaCreateDate,
+      this.metaUpdateDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_dataset'] = Variable<int>(idDataset);
+    map['unique_dataset_id'] = Variable<String>(uniqueDatasetId);
+    map['id_acquisition_framework'] = Variable<int>(idAcquisitionFramework);
+    map['dataset_name'] = Variable<String>(datasetName);
+    map['dataset_shortname'] = Variable<String>(datasetShortname);
+    map['dataset_desc'] = Variable<String>(datasetDesc);
+    map['id_nomenclature_data_type'] = Variable<int>(idNomenclatureDataType);
+    if (!nullToAbsent || keywords != null) {
+      map['keywords'] = Variable<String>(keywords);
+    }
+    map['marine_domain'] = Variable<bool>(marineDomain);
+    map['terrestrial_domain'] = Variable<bool>(terrestrialDomain);
+    map['id_nomenclature_dataset_objectif'] =
+        Variable<int>(idNomenclatureDatasetObjectif);
+    if (!nullToAbsent || bboxWest != null) {
+      map['bbox_west'] = Variable<double>(bboxWest);
+    }
+    if (!nullToAbsent || bboxEast != null) {
+      map['bbox_east'] = Variable<double>(bboxEast);
+    }
+    if (!nullToAbsent || bboxSouth != null) {
+      map['bbox_south'] = Variable<double>(bboxSouth);
+    }
+    if (!nullToAbsent || bboxNorth != null) {
+      map['bbox_north'] = Variable<double>(bboxNorth);
+    }
+    map['id_nomenclature_collecting_method'] =
+        Variable<int>(idNomenclatureCollectingMethod);
+    map['id_nomenclature_data_origin'] =
+        Variable<int>(idNomenclatureDataOrigin);
+    map['id_nomenclature_source_status'] =
+        Variable<int>(idNomenclatureSourceStatus);
+    map['id_nomenclature_resource_type'] =
+        Variable<int>(idNomenclatureResourceType);
+    map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || validable != null) {
+      map['validable'] = Variable<bool>(validable);
+    }
+    if (!nullToAbsent || idDigitizer != null) {
+      map['id_digitizer'] = Variable<int>(idDigitizer);
+    }
+    if (!nullToAbsent || idTaxaList != null) {
+      map['id_taxa_list'] = Variable<int>(idTaxaList);
+    }
+    if (!nullToAbsent || metaCreateDate != null) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate);
+    }
+    if (!nullToAbsent || metaUpdateDate != null) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate);
+    }
+    return map;
+  }
+
+  TDatasetsCompanion toCompanion(bool nullToAbsent) {
+    return TDatasetsCompanion(
+      idDataset: Value(idDataset),
+      uniqueDatasetId: Value(uniqueDatasetId),
+      idAcquisitionFramework: Value(idAcquisitionFramework),
+      datasetName: Value(datasetName),
+      datasetShortname: Value(datasetShortname),
+      datasetDesc: Value(datasetDesc),
+      idNomenclatureDataType: Value(idNomenclatureDataType),
+      keywords: keywords == null && nullToAbsent
+          ? const Value.absent()
+          : Value(keywords),
+      marineDomain: Value(marineDomain),
+      terrestrialDomain: Value(terrestrialDomain),
+      idNomenclatureDatasetObjectif: Value(idNomenclatureDatasetObjectif),
+      bboxWest: bboxWest == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bboxWest),
+      bboxEast: bboxEast == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bboxEast),
+      bboxSouth: bboxSouth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bboxSouth),
+      bboxNorth: bboxNorth == null && nullToAbsent
+          ? const Value.absent()
+          : Value(bboxNorth),
+      idNomenclatureCollectingMethod: Value(idNomenclatureCollectingMethod),
+      idNomenclatureDataOrigin: Value(idNomenclatureDataOrigin),
+      idNomenclatureSourceStatus: Value(idNomenclatureSourceStatus),
+      idNomenclatureResourceType: Value(idNomenclatureResourceType),
+      active: Value(active),
+      validable: validable == null && nullToAbsent
+          ? const Value.absent()
+          : Value(validable),
+      idDigitizer: idDigitizer == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitizer),
+      idTaxaList: idTaxaList == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idTaxaList),
+      metaCreateDate: metaCreateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaCreateDate),
+      metaUpdateDate: metaUpdateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaUpdateDate),
+    );
+  }
+
+  factory TDataset.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TDataset(
+      idDataset: serializer.fromJson<int>(json['idDataset']),
+      uniqueDatasetId: serializer.fromJson<String>(json['uniqueDatasetId']),
+      idAcquisitionFramework:
+          serializer.fromJson<int>(json['idAcquisitionFramework']),
+      datasetName: serializer.fromJson<String>(json['datasetName']),
+      datasetShortname: serializer.fromJson<String>(json['datasetShortname']),
+      datasetDesc: serializer.fromJson<String>(json['datasetDesc']),
+      idNomenclatureDataType:
+          serializer.fromJson<int>(json['idNomenclatureDataType']),
+      keywords: serializer.fromJson<String?>(json['keywords']),
+      marineDomain: serializer.fromJson<bool>(json['marineDomain']),
+      terrestrialDomain: serializer.fromJson<bool>(json['terrestrialDomain']),
+      idNomenclatureDatasetObjectif:
+          serializer.fromJson<int>(json['idNomenclatureDatasetObjectif']),
+      bboxWest: serializer.fromJson<double?>(json['bboxWest']),
+      bboxEast: serializer.fromJson<double?>(json['bboxEast']),
+      bboxSouth: serializer.fromJson<double?>(json['bboxSouth']),
+      bboxNorth: serializer.fromJson<double?>(json['bboxNorth']),
+      idNomenclatureCollectingMethod:
+          serializer.fromJson<int>(json['idNomenclatureCollectingMethod']),
+      idNomenclatureDataOrigin:
+          serializer.fromJson<int>(json['idNomenclatureDataOrigin']),
+      idNomenclatureSourceStatus:
+          serializer.fromJson<int>(json['idNomenclatureSourceStatus']),
+      idNomenclatureResourceType:
+          serializer.fromJson<int>(json['idNomenclatureResourceType']),
+      active: serializer.fromJson<bool>(json['active']),
+      validable: serializer.fromJson<bool?>(json['validable']),
+      idDigitizer: serializer.fromJson<int?>(json['idDigitizer']),
+      idTaxaList: serializer.fromJson<int?>(json['idTaxaList']),
+      metaCreateDate: serializer.fromJson<DateTime?>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idDataset': serializer.toJson<int>(idDataset),
+      'uniqueDatasetId': serializer.toJson<String>(uniqueDatasetId),
+      'idAcquisitionFramework': serializer.toJson<int>(idAcquisitionFramework),
+      'datasetName': serializer.toJson<String>(datasetName),
+      'datasetShortname': serializer.toJson<String>(datasetShortname),
+      'datasetDesc': serializer.toJson<String>(datasetDesc),
+      'idNomenclatureDataType': serializer.toJson<int>(idNomenclatureDataType),
+      'keywords': serializer.toJson<String?>(keywords),
+      'marineDomain': serializer.toJson<bool>(marineDomain),
+      'terrestrialDomain': serializer.toJson<bool>(terrestrialDomain),
+      'idNomenclatureDatasetObjectif':
+          serializer.toJson<int>(idNomenclatureDatasetObjectif),
+      'bboxWest': serializer.toJson<double?>(bboxWest),
+      'bboxEast': serializer.toJson<double?>(bboxEast),
+      'bboxSouth': serializer.toJson<double?>(bboxSouth),
+      'bboxNorth': serializer.toJson<double?>(bboxNorth),
+      'idNomenclatureCollectingMethod':
+          serializer.toJson<int>(idNomenclatureCollectingMethod),
+      'idNomenclatureDataOrigin':
+          serializer.toJson<int>(idNomenclatureDataOrigin),
+      'idNomenclatureSourceStatus':
+          serializer.toJson<int>(idNomenclatureSourceStatus),
+      'idNomenclatureResourceType':
+          serializer.toJson<int>(idNomenclatureResourceType),
+      'active': serializer.toJson<bool>(active),
+      'validable': serializer.toJson<bool?>(validable),
+      'idDigitizer': serializer.toJson<int?>(idDigitizer),
+      'idTaxaList': serializer.toJson<int?>(idTaxaList),
+      'metaCreateDate': serializer.toJson<DateTime?>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
+    };
+  }
+
+  TDataset copyWith(
+          {int? idDataset,
+          String? uniqueDatasetId,
+          int? idAcquisitionFramework,
+          String? datasetName,
+          String? datasetShortname,
+          String? datasetDesc,
+          int? idNomenclatureDataType,
+          Value<String?> keywords = const Value.absent(),
+          bool? marineDomain,
+          bool? terrestrialDomain,
+          int? idNomenclatureDatasetObjectif,
+          Value<double?> bboxWest = const Value.absent(),
+          Value<double?> bboxEast = const Value.absent(),
+          Value<double?> bboxSouth = const Value.absent(),
+          Value<double?> bboxNorth = const Value.absent(),
+          int? idNomenclatureCollectingMethod,
+          int? idNomenclatureDataOrigin,
+          int? idNomenclatureSourceStatus,
+          int? idNomenclatureResourceType,
+          bool? active,
+          Value<bool?> validable = const Value.absent(),
+          Value<int?> idDigitizer = const Value.absent(),
+          Value<int?> idTaxaList = const Value.absent(),
+          Value<DateTime?> metaCreateDate = const Value.absent(),
+          Value<DateTime?> metaUpdateDate = const Value.absent()}) =>
+      TDataset(
+        idDataset: idDataset ?? this.idDataset,
+        uniqueDatasetId: uniqueDatasetId ?? this.uniqueDatasetId,
+        idAcquisitionFramework:
+            idAcquisitionFramework ?? this.idAcquisitionFramework,
+        datasetName: datasetName ?? this.datasetName,
+        datasetShortname: datasetShortname ?? this.datasetShortname,
+        datasetDesc: datasetDesc ?? this.datasetDesc,
+        idNomenclatureDataType:
+            idNomenclatureDataType ?? this.idNomenclatureDataType,
+        keywords: keywords.present ? keywords.value : this.keywords,
+        marineDomain: marineDomain ?? this.marineDomain,
+        terrestrialDomain: terrestrialDomain ?? this.terrestrialDomain,
+        idNomenclatureDatasetObjectif:
+            idNomenclatureDatasetObjectif ?? this.idNomenclatureDatasetObjectif,
+        bboxWest: bboxWest.present ? bboxWest.value : this.bboxWest,
+        bboxEast: bboxEast.present ? bboxEast.value : this.bboxEast,
+        bboxSouth: bboxSouth.present ? bboxSouth.value : this.bboxSouth,
+        bboxNorth: bboxNorth.present ? bboxNorth.value : this.bboxNorth,
+        idNomenclatureCollectingMethod: idNomenclatureCollectingMethod ??
+            this.idNomenclatureCollectingMethod,
+        idNomenclatureDataOrigin:
+            idNomenclatureDataOrigin ?? this.idNomenclatureDataOrigin,
+        idNomenclatureSourceStatus:
+            idNomenclatureSourceStatus ?? this.idNomenclatureSourceStatus,
+        idNomenclatureResourceType:
+            idNomenclatureResourceType ?? this.idNomenclatureResourceType,
+        active: active ?? this.active,
+        validable: validable.present ? validable.value : this.validable,
+        idDigitizer: idDigitizer.present ? idDigitizer.value : this.idDigitizer,
+        idTaxaList: idTaxaList.present ? idTaxaList.value : this.idTaxaList,
+        metaCreateDate:
+            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
+        metaUpdateDate:
+            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
+      );
+  TDataset copyWithCompanion(TDatasetsCompanion data) {
+    return TDataset(
+      idDataset: data.idDataset.present ? data.idDataset.value : this.idDataset,
+      uniqueDatasetId: data.uniqueDatasetId.present
+          ? data.uniqueDatasetId.value
+          : this.uniqueDatasetId,
+      idAcquisitionFramework: data.idAcquisitionFramework.present
+          ? data.idAcquisitionFramework.value
+          : this.idAcquisitionFramework,
+      datasetName:
+          data.datasetName.present ? data.datasetName.value : this.datasetName,
+      datasetShortname: data.datasetShortname.present
+          ? data.datasetShortname.value
+          : this.datasetShortname,
+      datasetDesc:
+          data.datasetDesc.present ? data.datasetDesc.value : this.datasetDesc,
+      idNomenclatureDataType: data.idNomenclatureDataType.present
+          ? data.idNomenclatureDataType.value
+          : this.idNomenclatureDataType,
+      keywords: data.keywords.present ? data.keywords.value : this.keywords,
+      marineDomain: data.marineDomain.present
+          ? data.marineDomain.value
+          : this.marineDomain,
+      terrestrialDomain: data.terrestrialDomain.present
+          ? data.terrestrialDomain.value
+          : this.terrestrialDomain,
+      idNomenclatureDatasetObjectif: data.idNomenclatureDatasetObjectif.present
+          ? data.idNomenclatureDatasetObjectif.value
+          : this.idNomenclatureDatasetObjectif,
+      bboxWest: data.bboxWest.present ? data.bboxWest.value : this.bboxWest,
+      bboxEast: data.bboxEast.present ? data.bboxEast.value : this.bboxEast,
+      bboxSouth: data.bboxSouth.present ? data.bboxSouth.value : this.bboxSouth,
+      bboxNorth: data.bboxNorth.present ? data.bboxNorth.value : this.bboxNorth,
+      idNomenclatureCollectingMethod:
+          data.idNomenclatureCollectingMethod.present
+              ? data.idNomenclatureCollectingMethod.value
+              : this.idNomenclatureCollectingMethod,
+      idNomenclatureDataOrigin: data.idNomenclatureDataOrigin.present
+          ? data.idNomenclatureDataOrigin.value
+          : this.idNomenclatureDataOrigin,
+      idNomenclatureSourceStatus: data.idNomenclatureSourceStatus.present
+          ? data.idNomenclatureSourceStatus.value
+          : this.idNomenclatureSourceStatus,
+      idNomenclatureResourceType: data.idNomenclatureResourceType.present
+          ? data.idNomenclatureResourceType.value
+          : this.idNomenclatureResourceType,
+      active: data.active.present ? data.active.value : this.active,
+      validable: data.validable.present ? data.validable.value : this.validable,
+      idDigitizer:
+          data.idDigitizer.present ? data.idDigitizer.value : this.idDigitizer,
+      idTaxaList:
+          data.idTaxaList.present ? data.idTaxaList.value : this.idTaxaList,
+      metaCreateDate: data.metaCreateDate.present
+          ? data.metaCreateDate.value
+          : this.metaCreateDate,
+      metaUpdateDate: data.metaUpdateDate.present
+          ? data.metaUpdateDate.value
+          : this.metaUpdateDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TDataset(')
+          ..write('idDataset: $idDataset, ')
+          ..write('uniqueDatasetId: $uniqueDatasetId, ')
+          ..write('idAcquisitionFramework: $idAcquisitionFramework, ')
+          ..write('datasetName: $datasetName, ')
+          ..write('datasetShortname: $datasetShortname, ')
+          ..write('datasetDesc: $datasetDesc, ')
+          ..write('idNomenclatureDataType: $idNomenclatureDataType, ')
+          ..write('keywords: $keywords, ')
+          ..write('marineDomain: $marineDomain, ')
+          ..write('terrestrialDomain: $terrestrialDomain, ')
+          ..write(
+              'idNomenclatureDatasetObjectif: $idNomenclatureDatasetObjectif, ')
+          ..write('bboxWest: $bboxWest, ')
+          ..write('bboxEast: $bboxEast, ')
+          ..write('bboxSouth: $bboxSouth, ')
+          ..write('bboxNorth: $bboxNorth, ')
+          ..write(
+              'idNomenclatureCollectingMethod: $idNomenclatureCollectingMethod, ')
+          ..write('idNomenclatureDataOrigin: $idNomenclatureDataOrigin, ')
+          ..write('idNomenclatureSourceStatus: $idNomenclatureSourceStatus, ')
+          ..write('idNomenclatureResourceType: $idNomenclatureResourceType, ')
+          ..write('active: $active, ')
+          ..write('validable: $validable, ')
+          ..write('idDigitizer: $idDigitizer, ')
+          ..write('idTaxaList: $idTaxaList, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        idDataset,
+        uniqueDatasetId,
+        idAcquisitionFramework,
+        datasetName,
+        datasetShortname,
+        datasetDesc,
+        idNomenclatureDataType,
+        keywords,
+        marineDomain,
+        terrestrialDomain,
+        idNomenclatureDatasetObjectif,
+        bboxWest,
+        bboxEast,
+        bboxSouth,
+        bboxNorth,
+        idNomenclatureCollectingMethod,
+        idNomenclatureDataOrigin,
+        idNomenclatureSourceStatus,
+        idNomenclatureResourceType,
+        active,
+        validable,
+        idDigitizer,
+        idTaxaList,
+        metaCreateDate,
+        metaUpdateDate
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TDataset &&
+          other.idDataset == this.idDataset &&
+          other.uniqueDatasetId == this.uniqueDatasetId &&
+          other.idAcquisitionFramework == this.idAcquisitionFramework &&
+          other.datasetName == this.datasetName &&
+          other.datasetShortname == this.datasetShortname &&
+          other.datasetDesc == this.datasetDesc &&
+          other.idNomenclatureDataType == this.idNomenclatureDataType &&
+          other.keywords == this.keywords &&
+          other.marineDomain == this.marineDomain &&
+          other.terrestrialDomain == this.terrestrialDomain &&
+          other.idNomenclatureDatasetObjectif ==
+              this.idNomenclatureDatasetObjectif &&
+          other.bboxWest == this.bboxWest &&
+          other.bboxEast == this.bboxEast &&
+          other.bboxSouth == this.bboxSouth &&
+          other.bboxNorth == this.bboxNorth &&
+          other.idNomenclatureCollectingMethod ==
+              this.idNomenclatureCollectingMethod &&
+          other.idNomenclatureDataOrigin == this.idNomenclatureDataOrigin &&
+          other.idNomenclatureSourceStatus == this.idNomenclatureSourceStatus &&
+          other.idNomenclatureResourceType == this.idNomenclatureResourceType &&
+          other.active == this.active &&
+          other.validable == this.validable &&
+          other.idDigitizer == this.idDigitizer &&
+          other.idTaxaList == this.idTaxaList &&
+          other.metaCreateDate == this.metaCreateDate &&
+          other.metaUpdateDate == this.metaUpdateDate);
+}
+
+class TDatasetsCompanion extends UpdateCompanion<TDataset> {
+  final Value<int> idDataset;
+  final Value<String> uniqueDatasetId;
+  final Value<int> idAcquisitionFramework;
+  final Value<String> datasetName;
+  final Value<String> datasetShortname;
+  final Value<String> datasetDesc;
+  final Value<int> idNomenclatureDataType;
+  final Value<String?> keywords;
+  final Value<bool> marineDomain;
+  final Value<bool> terrestrialDomain;
+  final Value<int> idNomenclatureDatasetObjectif;
+  final Value<double?> bboxWest;
+  final Value<double?> bboxEast;
+  final Value<double?> bboxSouth;
+  final Value<double?> bboxNorth;
+  final Value<int> idNomenclatureCollectingMethod;
+  final Value<int> idNomenclatureDataOrigin;
+  final Value<int> idNomenclatureSourceStatus;
+  final Value<int> idNomenclatureResourceType;
+  final Value<bool> active;
+  final Value<bool?> validable;
+  final Value<int?> idDigitizer;
+  final Value<int?> idTaxaList;
+  final Value<DateTime?> metaCreateDate;
+  final Value<DateTime?> metaUpdateDate;
+  const TDatasetsCompanion({
+    this.idDataset = const Value.absent(),
+    this.uniqueDatasetId = const Value.absent(),
+    this.idAcquisitionFramework = const Value.absent(),
+    this.datasetName = const Value.absent(),
+    this.datasetShortname = const Value.absent(),
+    this.datasetDesc = const Value.absent(),
+    this.idNomenclatureDataType = const Value.absent(),
+    this.keywords = const Value.absent(),
+    this.marineDomain = const Value.absent(),
+    this.terrestrialDomain = const Value.absent(),
+    this.idNomenclatureDatasetObjectif = const Value.absent(),
+    this.bboxWest = const Value.absent(),
+    this.bboxEast = const Value.absent(),
+    this.bboxSouth = const Value.absent(),
+    this.bboxNorth = const Value.absent(),
+    this.idNomenclatureCollectingMethod = const Value.absent(),
+    this.idNomenclatureDataOrigin = const Value.absent(),
+    this.idNomenclatureSourceStatus = const Value.absent(),
+    this.idNomenclatureResourceType = const Value.absent(),
+    this.active = const Value.absent(),
+    this.validable = const Value.absent(),
+    this.idDigitizer = const Value.absent(),
+    this.idTaxaList = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  });
+  TDatasetsCompanion.insert({
+    this.idDataset = const Value.absent(),
+    required String uniqueDatasetId,
+    required int idAcquisitionFramework,
+    required String datasetName,
+    required String datasetShortname,
+    required String datasetDesc,
+    required int idNomenclatureDataType,
+    this.keywords = const Value.absent(),
+    required bool marineDomain,
+    required bool terrestrialDomain,
+    required int idNomenclatureDatasetObjectif,
+    this.bboxWest = const Value.absent(),
+    this.bboxEast = const Value.absent(),
+    this.bboxSouth = const Value.absent(),
+    this.bboxNorth = const Value.absent(),
+    required int idNomenclatureCollectingMethod,
+    required int idNomenclatureDataOrigin,
+    required int idNomenclatureSourceStatus,
+    required int idNomenclatureResourceType,
+    this.active = const Value.absent(),
+    this.validable = const Value.absent(),
+    this.idDigitizer = const Value.absent(),
+    this.idTaxaList = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  })  : uniqueDatasetId = Value(uniqueDatasetId),
+        idAcquisitionFramework = Value(idAcquisitionFramework),
+        datasetName = Value(datasetName),
+        datasetShortname = Value(datasetShortname),
+        datasetDesc = Value(datasetDesc),
+        idNomenclatureDataType = Value(idNomenclatureDataType),
+        marineDomain = Value(marineDomain),
+        terrestrialDomain = Value(terrestrialDomain),
+        idNomenclatureDatasetObjectif = Value(idNomenclatureDatasetObjectif),
+        idNomenclatureCollectingMethod = Value(idNomenclatureCollectingMethod),
+        idNomenclatureDataOrigin = Value(idNomenclatureDataOrigin),
+        idNomenclatureSourceStatus = Value(idNomenclatureSourceStatus),
+        idNomenclatureResourceType = Value(idNomenclatureResourceType);
+  static Insertable<TDataset> custom({
+    Expression<int>? idDataset,
+    Expression<String>? uniqueDatasetId,
+    Expression<int>? idAcquisitionFramework,
+    Expression<String>? datasetName,
+    Expression<String>? datasetShortname,
+    Expression<String>? datasetDesc,
+    Expression<int>? idNomenclatureDataType,
+    Expression<String>? keywords,
+    Expression<bool>? marineDomain,
+    Expression<bool>? terrestrialDomain,
+    Expression<int>? idNomenclatureDatasetObjectif,
+    Expression<double>? bboxWest,
+    Expression<double>? bboxEast,
+    Expression<double>? bboxSouth,
+    Expression<double>? bboxNorth,
+    Expression<int>? idNomenclatureCollectingMethod,
+    Expression<int>? idNomenclatureDataOrigin,
+    Expression<int>? idNomenclatureSourceStatus,
+    Expression<int>? idNomenclatureResourceType,
+    Expression<bool>? active,
+    Expression<bool>? validable,
+    Expression<int>? idDigitizer,
+    Expression<int>? idTaxaList,
+    Expression<DateTime>? metaCreateDate,
+    Expression<DateTime>? metaUpdateDate,
+  }) {
+    return RawValuesInsertable({
+      if (idDataset != null) 'id_dataset': idDataset,
+      if (uniqueDatasetId != null) 'unique_dataset_id': uniqueDatasetId,
+      if (idAcquisitionFramework != null)
+        'id_acquisition_framework': idAcquisitionFramework,
+      if (datasetName != null) 'dataset_name': datasetName,
+      if (datasetShortname != null) 'dataset_shortname': datasetShortname,
+      if (datasetDesc != null) 'dataset_desc': datasetDesc,
+      if (idNomenclatureDataType != null)
+        'id_nomenclature_data_type': idNomenclatureDataType,
+      if (keywords != null) 'keywords': keywords,
+      if (marineDomain != null) 'marine_domain': marineDomain,
+      if (terrestrialDomain != null) 'terrestrial_domain': terrestrialDomain,
+      if (idNomenclatureDatasetObjectif != null)
+        'id_nomenclature_dataset_objectif': idNomenclatureDatasetObjectif,
+      if (bboxWest != null) 'bbox_west': bboxWest,
+      if (bboxEast != null) 'bbox_east': bboxEast,
+      if (bboxSouth != null) 'bbox_south': bboxSouth,
+      if (bboxNorth != null) 'bbox_north': bboxNorth,
+      if (idNomenclatureCollectingMethod != null)
+        'id_nomenclature_collecting_method': idNomenclatureCollectingMethod,
+      if (idNomenclatureDataOrigin != null)
+        'id_nomenclature_data_origin': idNomenclatureDataOrigin,
+      if (idNomenclatureSourceStatus != null)
+        'id_nomenclature_source_status': idNomenclatureSourceStatus,
+      if (idNomenclatureResourceType != null)
+        'id_nomenclature_resource_type': idNomenclatureResourceType,
+      if (active != null) 'active': active,
+      if (validable != null) 'validable': validable,
+      if (idDigitizer != null) 'id_digitizer': idDigitizer,
+      if (idTaxaList != null) 'id_taxa_list': idTaxaList,
+      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
+      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
+    });
+  }
+
+  TDatasetsCompanion copyWith(
+      {Value<int>? idDataset,
+      Value<String>? uniqueDatasetId,
+      Value<int>? idAcquisitionFramework,
+      Value<String>? datasetName,
+      Value<String>? datasetShortname,
+      Value<String>? datasetDesc,
+      Value<int>? idNomenclatureDataType,
+      Value<String?>? keywords,
+      Value<bool>? marineDomain,
+      Value<bool>? terrestrialDomain,
+      Value<int>? idNomenclatureDatasetObjectif,
+      Value<double?>? bboxWest,
+      Value<double?>? bboxEast,
+      Value<double?>? bboxSouth,
+      Value<double?>? bboxNorth,
+      Value<int>? idNomenclatureCollectingMethod,
+      Value<int>? idNomenclatureDataOrigin,
+      Value<int>? idNomenclatureSourceStatus,
+      Value<int>? idNomenclatureResourceType,
+      Value<bool>? active,
+      Value<bool?>? validable,
+      Value<int?>? idDigitizer,
+      Value<int?>? idTaxaList,
+      Value<DateTime?>? metaCreateDate,
+      Value<DateTime?>? metaUpdateDate}) {
+    return TDatasetsCompanion(
+      idDataset: idDataset ?? this.idDataset,
+      uniqueDatasetId: uniqueDatasetId ?? this.uniqueDatasetId,
+      idAcquisitionFramework:
+          idAcquisitionFramework ?? this.idAcquisitionFramework,
+      datasetName: datasetName ?? this.datasetName,
+      datasetShortname: datasetShortname ?? this.datasetShortname,
+      datasetDesc: datasetDesc ?? this.datasetDesc,
+      idNomenclatureDataType:
+          idNomenclatureDataType ?? this.idNomenclatureDataType,
+      keywords: keywords ?? this.keywords,
+      marineDomain: marineDomain ?? this.marineDomain,
+      terrestrialDomain: terrestrialDomain ?? this.terrestrialDomain,
+      idNomenclatureDatasetObjectif:
+          idNomenclatureDatasetObjectif ?? this.idNomenclatureDatasetObjectif,
+      bboxWest: bboxWest ?? this.bboxWest,
+      bboxEast: bboxEast ?? this.bboxEast,
+      bboxSouth: bboxSouth ?? this.bboxSouth,
+      bboxNorth: bboxNorth ?? this.bboxNorth,
+      idNomenclatureCollectingMethod:
+          idNomenclatureCollectingMethod ?? this.idNomenclatureCollectingMethod,
+      idNomenclatureDataOrigin:
+          idNomenclatureDataOrigin ?? this.idNomenclatureDataOrigin,
+      idNomenclatureSourceStatus:
+          idNomenclatureSourceStatus ?? this.idNomenclatureSourceStatus,
+      idNomenclatureResourceType:
+          idNomenclatureResourceType ?? this.idNomenclatureResourceType,
+      active: active ?? this.active,
+      validable: validable ?? this.validable,
+      idDigitizer: idDigitizer ?? this.idDigitizer,
+      idTaxaList: idTaxaList ?? this.idTaxaList,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idDataset.present) {
+      map['id_dataset'] = Variable<int>(idDataset.value);
+    }
+    if (uniqueDatasetId.present) {
+      map['unique_dataset_id'] = Variable<String>(uniqueDatasetId.value);
+    }
+    if (idAcquisitionFramework.present) {
+      map['id_acquisition_framework'] =
+          Variable<int>(idAcquisitionFramework.value);
+    }
+    if (datasetName.present) {
+      map['dataset_name'] = Variable<String>(datasetName.value);
+    }
+    if (datasetShortname.present) {
+      map['dataset_shortname'] = Variable<String>(datasetShortname.value);
+    }
+    if (datasetDesc.present) {
+      map['dataset_desc'] = Variable<String>(datasetDesc.value);
+    }
+    if (idNomenclatureDataType.present) {
+      map['id_nomenclature_data_type'] =
+          Variable<int>(idNomenclatureDataType.value);
+    }
+    if (keywords.present) {
+      map['keywords'] = Variable<String>(keywords.value);
+    }
+    if (marineDomain.present) {
+      map['marine_domain'] = Variable<bool>(marineDomain.value);
+    }
+    if (terrestrialDomain.present) {
+      map['terrestrial_domain'] = Variable<bool>(terrestrialDomain.value);
+    }
+    if (idNomenclatureDatasetObjectif.present) {
+      map['id_nomenclature_dataset_objectif'] =
+          Variable<int>(idNomenclatureDatasetObjectif.value);
+    }
+    if (bboxWest.present) {
+      map['bbox_west'] = Variable<double>(bboxWest.value);
+    }
+    if (bboxEast.present) {
+      map['bbox_east'] = Variable<double>(bboxEast.value);
+    }
+    if (bboxSouth.present) {
+      map['bbox_south'] = Variable<double>(bboxSouth.value);
+    }
+    if (bboxNorth.present) {
+      map['bbox_north'] = Variable<double>(bboxNorth.value);
+    }
+    if (idNomenclatureCollectingMethod.present) {
+      map['id_nomenclature_collecting_method'] =
+          Variable<int>(idNomenclatureCollectingMethod.value);
+    }
+    if (idNomenclatureDataOrigin.present) {
+      map['id_nomenclature_data_origin'] =
+          Variable<int>(idNomenclatureDataOrigin.value);
+    }
+    if (idNomenclatureSourceStatus.present) {
+      map['id_nomenclature_source_status'] =
+          Variable<int>(idNomenclatureSourceStatus.value);
+    }
+    if (idNomenclatureResourceType.present) {
+      map['id_nomenclature_resource_type'] =
+          Variable<int>(idNomenclatureResourceType.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (validable.present) {
+      map['validable'] = Variable<bool>(validable.value);
+    }
+    if (idDigitizer.present) {
+      map['id_digitizer'] = Variable<int>(idDigitizer.value);
+    }
+    if (idTaxaList.present) {
+      map['id_taxa_list'] = Variable<int>(idTaxaList.value);
+    }
+    if (metaCreateDate.present) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate.value);
+    }
+    if (metaUpdateDate.present) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TDatasetsCompanion(')
+          ..write('idDataset: $idDataset, ')
+          ..write('uniqueDatasetId: $uniqueDatasetId, ')
+          ..write('idAcquisitionFramework: $idAcquisitionFramework, ')
+          ..write('datasetName: $datasetName, ')
+          ..write('datasetShortname: $datasetShortname, ')
+          ..write('datasetDesc: $datasetDesc, ')
+          ..write('idNomenclatureDataType: $idNomenclatureDataType, ')
+          ..write('keywords: $keywords, ')
+          ..write('marineDomain: $marineDomain, ')
+          ..write('terrestrialDomain: $terrestrialDomain, ')
+          ..write(
+              'idNomenclatureDatasetObjectif: $idNomenclatureDatasetObjectif, ')
+          ..write('bboxWest: $bboxWest, ')
+          ..write('bboxEast: $bboxEast, ')
+          ..write('bboxSouth: $bboxSouth, ')
+          ..write('bboxNorth: $bboxNorth, ')
+          ..write(
+              'idNomenclatureCollectingMethod: $idNomenclatureCollectingMethod, ')
+          ..write('idNomenclatureDataOrigin: $idNomenclatureDataOrigin, ')
+          ..write('idNomenclatureSourceStatus: $idNomenclatureSourceStatus, ')
+          ..write('idNomenclatureResourceType: $idNomenclatureResourceType, ')
+          ..write('active: $active, ')
+          ..write('validable: $validable, ')
+          ..write('idDigitizer: $idDigitizer, ')
+          ..write('idTaxaList: $idTaxaList, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TModuleComplementsTable extends TModuleComplements
     with TableInfo<$TModuleComplementsTable, TModuleComplement> {
   @override
@@ -6558,6 +7802,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TModulesTable tModules = $TModulesTable(this);
   late final $TBaseSitesTable tBaseSites = $TBaseSitesTable(this);
   late final $TNomenclaturesTable tNomenclatures = $TNomenclaturesTable(this);
+  late final $TDatasetsTable tDatasets = $TDatasetsTable(this);
   late final $TModuleComplementsTable tModuleComplements =
       $TModuleComplementsTable(this);
   late final $TSitesGroupsTable tSitesGroups = $TSitesGroupsTable(this);
@@ -6584,6 +7829,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
   late final SitesDao sitesDao = SitesDao(this as AppDatabase);
+  late final TDatasetsDao tDatasetsDao = TDatasetsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -6592,6 +7838,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tModules,
         tBaseSites,
         tNomenclatures,
+        tDatasets,
         tModuleComplements,
         tSitesGroups,
         tSiteComplements,
@@ -7528,6 +8775,492 @@ typedef $$TNomenclaturesTableProcessedTableManager = ProcessedTableManager<
       BaseReferences<_$AppDatabase, $TNomenclaturesTable, TNomenclature>
     ),
     TNomenclature,
+    PrefetchHooks Function()>;
+typedef $$TDatasetsTableCreateCompanionBuilder = TDatasetsCompanion Function({
+  Value<int> idDataset,
+  required String uniqueDatasetId,
+  required int idAcquisitionFramework,
+  required String datasetName,
+  required String datasetShortname,
+  required String datasetDesc,
+  required int idNomenclatureDataType,
+  Value<String?> keywords,
+  required bool marineDomain,
+  required bool terrestrialDomain,
+  required int idNomenclatureDatasetObjectif,
+  Value<double?> bboxWest,
+  Value<double?> bboxEast,
+  Value<double?> bboxSouth,
+  Value<double?> bboxNorth,
+  required int idNomenclatureCollectingMethod,
+  required int idNomenclatureDataOrigin,
+  required int idNomenclatureSourceStatus,
+  required int idNomenclatureResourceType,
+  Value<bool> active,
+  Value<bool?> validable,
+  Value<int?> idDigitizer,
+  Value<int?> idTaxaList,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+typedef $$TDatasetsTableUpdateCompanionBuilder = TDatasetsCompanion Function({
+  Value<int> idDataset,
+  Value<String> uniqueDatasetId,
+  Value<int> idAcquisitionFramework,
+  Value<String> datasetName,
+  Value<String> datasetShortname,
+  Value<String> datasetDesc,
+  Value<int> idNomenclatureDataType,
+  Value<String?> keywords,
+  Value<bool> marineDomain,
+  Value<bool> terrestrialDomain,
+  Value<int> idNomenclatureDatasetObjectif,
+  Value<double?> bboxWest,
+  Value<double?> bboxEast,
+  Value<double?> bboxSouth,
+  Value<double?> bboxNorth,
+  Value<int> idNomenclatureCollectingMethod,
+  Value<int> idNomenclatureDataOrigin,
+  Value<int> idNomenclatureSourceStatus,
+  Value<int> idNomenclatureResourceType,
+  Value<bool> active,
+  Value<bool?> validable,
+  Value<int?> idDigitizer,
+  Value<int?> idTaxaList,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+
+class $$TDatasetsTableFilterComposer
+    extends Composer<_$AppDatabase, $TDatasetsTable> {
+  $$TDatasetsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uniqueDatasetId => $composableBuilder(
+      column: $table.uniqueDatasetId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idAcquisitionFramework => $composableBuilder(
+      column: $table.idAcquisitionFramework,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get datasetName => $composableBuilder(
+      column: $table.datasetName, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get datasetShortname => $composableBuilder(
+      column: $table.datasetShortname,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get datasetDesc => $composableBuilder(
+      column: $table.datasetDesc, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureDataType => $composableBuilder(
+      column: $table.idNomenclatureDataType,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get keywords => $composableBuilder(
+      column: $table.keywords, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get marineDomain => $composableBuilder(
+      column: $table.marineDomain, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get terrestrialDomain => $composableBuilder(
+      column: $table.terrestrialDomain,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureDatasetObjectif => $composableBuilder(
+      column: $table.idNomenclatureDatasetObjectif,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get bboxWest => $composableBuilder(
+      column: $table.bboxWest, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get bboxEast => $composableBuilder(
+      column: $table.bboxEast, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get bboxSouth => $composableBuilder(
+      column: $table.bboxSouth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<double> get bboxNorth => $composableBuilder(
+      column: $table.bboxNorth, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureCollectingMethod => $composableBuilder(
+      column: $table.idNomenclatureCollectingMethod,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureDataOrigin => $composableBuilder(
+      column: $table.idNomenclatureDataOrigin,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureSourceStatus => $composableBuilder(
+      column: $table.idNomenclatureSourceStatus,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureResourceType => $composableBuilder(
+      column: $table.idNomenclatureResourceType,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get validable => $composableBuilder(
+      column: $table.validable, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDigitizer => $composableBuilder(
+      column: $table.idDigitizer, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idTaxaList => $composableBuilder(
+      column: $table.idTaxaList, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$TDatasetsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TDatasetsTable> {
+  $$TDatasetsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uniqueDatasetId => $composableBuilder(
+      column: $table.uniqueDatasetId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idAcquisitionFramework => $composableBuilder(
+      column: $table.idAcquisitionFramework,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get datasetName => $composableBuilder(
+      column: $table.datasetName, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get datasetShortname => $composableBuilder(
+      column: $table.datasetShortname,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get datasetDesc => $composableBuilder(
+      column: $table.datasetDesc, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureDataType => $composableBuilder(
+      column: $table.idNomenclatureDataType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get keywords => $composableBuilder(
+      column: $table.keywords, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get marineDomain => $composableBuilder(
+      column: $table.marineDomain,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get terrestrialDomain => $composableBuilder(
+      column: $table.terrestrialDomain,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureDatasetObjectif => $composableBuilder(
+      column: $table.idNomenclatureDatasetObjectif,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get bboxWest => $composableBuilder(
+      column: $table.bboxWest, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get bboxEast => $composableBuilder(
+      column: $table.bboxEast, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get bboxSouth => $composableBuilder(
+      column: $table.bboxSouth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<double> get bboxNorth => $composableBuilder(
+      column: $table.bboxNorth, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureCollectingMethod => $composableBuilder(
+      column: $table.idNomenclatureCollectingMethod,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureDataOrigin => $composableBuilder(
+      column: $table.idNomenclatureDataOrigin,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureSourceStatus => $composableBuilder(
+      column: $table.idNomenclatureSourceStatus,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureResourceType => $composableBuilder(
+      column: $table.idNomenclatureResourceType,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get validable => $composableBuilder(
+      column: $table.validable, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDigitizer => $composableBuilder(
+      column: $table.idDigitizer, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idTaxaList => $composableBuilder(
+      column: $table.idTaxaList, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$TDatasetsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TDatasetsTable> {
+  $$TDatasetsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idDataset =>
+      $composableBuilder(column: $table.idDataset, builder: (column) => column);
+
+  GeneratedColumn<String> get uniqueDatasetId => $composableBuilder(
+      column: $table.uniqueDatasetId, builder: (column) => column);
+
+  GeneratedColumn<int> get idAcquisitionFramework => $composableBuilder(
+      column: $table.idAcquisitionFramework, builder: (column) => column);
+
+  GeneratedColumn<String> get datasetName => $composableBuilder(
+      column: $table.datasetName, builder: (column) => column);
+
+  GeneratedColumn<String> get datasetShortname => $composableBuilder(
+      column: $table.datasetShortname, builder: (column) => column);
+
+  GeneratedColumn<String> get datasetDesc => $composableBuilder(
+      column: $table.datasetDesc, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureDataType => $composableBuilder(
+      column: $table.idNomenclatureDataType, builder: (column) => column);
+
+  GeneratedColumn<String> get keywords =>
+      $composableBuilder(column: $table.keywords, builder: (column) => column);
+
+  GeneratedColumn<bool> get marineDomain => $composableBuilder(
+      column: $table.marineDomain, builder: (column) => column);
+
+  GeneratedColumn<bool> get terrestrialDomain => $composableBuilder(
+      column: $table.terrestrialDomain, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureDatasetObjectif => $composableBuilder(
+      column: $table.idNomenclatureDatasetObjectif,
+      builder: (column) => column);
+
+  GeneratedColumn<double> get bboxWest =>
+      $composableBuilder(column: $table.bboxWest, builder: (column) => column);
+
+  GeneratedColumn<double> get bboxEast =>
+      $composableBuilder(column: $table.bboxEast, builder: (column) => column);
+
+  GeneratedColumn<double> get bboxSouth =>
+      $composableBuilder(column: $table.bboxSouth, builder: (column) => column);
+
+  GeneratedColumn<double> get bboxNorth =>
+      $composableBuilder(column: $table.bboxNorth, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureCollectingMethod => $composableBuilder(
+      column: $table.idNomenclatureCollectingMethod,
+      builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureDataOrigin => $composableBuilder(
+      column: $table.idNomenclatureDataOrigin, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureSourceStatus => $composableBuilder(
+      column: $table.idNomenclatureSourceStatus, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureResourceType => $composableBuilder(
+      column: $table.idNomenclatureResourceType, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<bool> get validable =>
+      $composableBuilder(column: $table.validable, builder: (column) => column);
+
+  GeneratedColumn<int> get idDigitizer => $composableBuilder(
+      column: $table.idDigitizer, builder: (column) => column);
+
+  GeneratedColumn<int> get idTaxaList => $composableBuilder(
+      column: $table.idTaxaList, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate, builder: (column) => column);
+}
+
+class $$TDatasetsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TDatasetsTable,
+    TDataset,
+    $$TDatasetsTableFilterComposer,
+    $$TDatasetsTableOrderingComposer,
+    $$TDatasetsTableAnnotationComposer,
+    $$TDatasetsTableCreateCompanionBuilder,
+    $$TDatasetsTableUpdateCompanionBuilder,
+    (TDataset, BaseReferences<_$AppDatabase, $TDatasetsTable, TDataset>),
+    TDataset,
+    PrefetchHooks Function()> {
+  $$TDatasetsTableTableManager(_$AppDatabase db, $TDatasetsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TDatasetsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TDatasetsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TDatasetsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idDataset = const Value.absent(),
+            Value<String> uniqueDatasetId = const Value.absent(),
+            Value<int> idAcquisitionFramework = const Value.absent(),
+            Value<String> datasetName = const Value.absent(),
+            Value<String> datasetShortname = const Value.absent(),
+            Value<String> datasetDesc = const Value.absent(),
+            Value<int> idNomenclatureDataType = const Value.absent(),
+            Value<String?> keywords = const Value.absent(),
+            Value<bool> marineDomain = const Value.absent(),
+            Value<bool> terrestrialDomain = const Value.absent(),
+            Value<int> idNomenclatureDatasetObjectif = const Value.absent(),
+            Value<double?> bboxWest = const Value.absent(),
+            Value<double?> bboxEast = const Value.absent(),
+            Value<double?> bboxSouth = const Value.absent(),
+            Value<double?> bboxNorth = const Value.absent(),
+            Value<int> idNomenclatureCollectingMethod = const Value.absent(),
+            Value<int> idNomenclatureDataOrigin = const Value.absent(),
+            Value<int> idNomenclatureSourceStatus = const Value.absent(),
+            Value<int> idNomenclatureResourceType = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<bool?> validable = const Value.absent(),
+            Value<int?> idDigitizer = const Value.absent(),
+            Value<int?> idTaxaList = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TDatasetsCompanion(
+            idDataset: idDataset,
+            uniqueDatasetId: uniqueDatasetId,
+            idAcquisitionFramework: idAcquisitionFramework,
+            datasetName: datasetName,
+            datasetShortname: datasetShortname,
+            datasetDesc: datasetDesc,
+            idNomenclatureDataType: idNomenclatureDataType,
+            keywords: keywords,
+            marineDomain: marineDomain,
+            terrestrialDomain: terrestrialDomain,
+            idNomenclatureDatasetObjectif: idNomenclatureDatasetObjectif,
+            bboxWest: bboxWest,
+            bboxEast: bboxEast,
+            bboxSouth: bboxSouth,
+            bboxNorth: bboxNorth,
+            idNomenclatureCollectingMethod: idNomenclatureCollectingMethod,
+            idNomenclatureDataOrigin: idNomenclatureDataOrigin,
+            idNomenclatureSourceStatus: idNomenclatureSourceStatus,
+            idNomenclatureResourceType: idNomenclatureResourceType,
+            active: active,
+            validable: validable,
+            idDigitizer: idDigitizer,
+            idTaxaList: idTaxaList,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          createCompanionCallback: ({
+            Value<int> idDataset = const Value.absent(),
+            required String uniqueDatasetId,
+            required int idAcquisitionFramework,
+            required String datasetName,
+            required String datasetShortname,
+            required String datasetDesc,
+            required int idNomenclatureDataType,
+            Value<String?> keywords = const Value.absent(),
+            required bool marineDomain,
+            required bool terrestrialDomain,
+            required int idNomenclatureDatasetObjectif,
+            Value<double?> bboxWest = const Value.absent(),
+            Value<double?> bboxEast = const Value.absent(),
+            Value<double?> bboxSouth = const Value.absent(),
+            Value<double?> bboxNorth = const Value.absent(),
+            required int idNomenclatureCollectingMethod,
+            required int idNomenclatureDataOrigin,
+            required int idNomenclatureSourceStatus,
+            required int idNomenclatureResourceType,
+            Value<bool> active = const Value.absent(),
+            Value<bool?> validable = const Value.absent(),
+            Value<int?> idDigitizer = const Value.absent(),
+            Value<int?> idTaxaList = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TDatasetsCompanion.insert(
+            idDataset: idDataset,
+            uniqueDatasetId: uniqueDatasetId,
+            idAcquisitionFramework: idAcquisitionFramework,
+            datasetName: datasetName,
+            datasetShortname: datasetShortname,
+            datasetDesc: datasetDesc,
+            idNomenclatureDataType: idNomenclatureDataType,
+            keywords: keywords,
+            marineDomain: marineDomain,
+            terrestrialDomain: terrestrialDomain,
+            idNomenclatureDatasetObjectif: idNomenclatureDatasetObjectif,
+            bboxWest: bboxWest,
+            bboxEast: bboxEast,
+            bboxSouth: bboxSouth,
+            bboxNorth: bboxNorth,
+            idNomenclatureCollectingMethod: idNomenclatureCollectingMethod,
+            idNomenclatureDataOrigin: idNomenclatureDataOrigin,
+            idNomenclatureSourceStatus: idNomenclatureSourceStatus,
+            idNomenclatureResourceType: idNomenclatureResourceType,
+            active: active,
+            validable: validable,
+            idDigitizer: idDigitizer,
+            idTaxaList: idTaxaList,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TDatasetsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TDatasetsTable,
+    TDataset,
+    $$TDatasetsTableFilterComposer,
+    $$TDatasetsTableOrderingComposer,
+    $$TDatasetsTableAnnotationComposer,
+    $$TDatasetsTableCreateCompanionBuilder,
+    $$TDatasetsTableUpdateCompanionBuilder,
+    (TDataset, BaseReferences<_$AppDatabase, $TDatasetsTable, TDataset>),
+    TDataset,
     PrefetchHooks Function()>;
 typedef $$TModuleComplementsTableCreateCompanionBuilder
     = TModuleComplementsCompanion Function({
@@ -9905,6 +11638,8 @@ class $AppDatabaseManager {
       $$TBaseSitesTableTableManager(_db, _db.tBaseSites);
   $$TNomenclaturesTableTableManager get tNomenclatures =>
       $$TNomenclaturesTableTableManager(_db, _db.tNomenclatures);
+  $$TDatasetsTableTableManager get tDatasets =>
+      $$TDatasetsTableTableManager(_db, _db.tDatasets);
   $$TModuleComplementsTableTableManager get tModuleComplements =>
       $$TModuleComplementsTableTableManager(_db, _db.tModuleComplements);
   $$TSitesGroupsTableTableManager get tSitesGroups =>

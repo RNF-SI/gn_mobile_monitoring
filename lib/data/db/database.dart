@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
@@ -10,6 +11,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_datasets.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_nomenclatures.dart';
@@ -49,6 +51,7 @@ part 'database.g.dart';
   TModules,
   TBaseSites,
   TNomenclatures,
+  TDatasets,
   TModuleComplements,
   TSitesGroups,
   TSiteComplements,
@@ -67,6 +70,7 @@ part 'database.g.dart';
   TModulesDao,
   TNomenclaturesDao,
   SitesDao,
+  TDatasetsDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
