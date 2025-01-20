@@ -72,7 +72,9 @@ class NomenclatureEntity {
       idBroader: json['id_broader'],
       hierarchy: json['hierarchy'],
       active: json['active'] ?? true,
-      metaCreateDate: DateTime.parse(json['meta_create_date']),
+      metaCreateDate: json['meta_create_date'] != null
+          ? DateTime.parse(json['meta_create_date'])
+          : null,
       metaUpdateDate: json['meta_update_date'] != null
           ? DateTime.parse(json['meta_update_date'])
           : null,
