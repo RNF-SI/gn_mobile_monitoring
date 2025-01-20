@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
+import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 
 class GlobalApiImpl implements GlobalApi {
@@ -25,13 +26,13 @@ class GlobalApiImpl implements GlobalApi {
             .map((json) => NomenclatureEntity.fromJson(json))
             .toList();
 
-        // final datasets = (response.data['dataset'] as List<dynamic>)
-        //     .map((json) => DatasetEntity.fromJson(json))
-        //     .toList();
+        final datasets = (response.data['dataset'] as List<dynamic>)
+            .map((json) => DatasetEntity.fromJson(json))
+            .toList();
 
         return {
           'nomenclatures': nomenclatures,
-          // 'datasets': datasets,
+          'datasets': datasets,
         };
       } else {
         throw Exception(
