@@ -166,5 +166,40 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  // Create the t_nomenclatures table
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_nomenclatures (
+        id_nomenclature INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_type INTEGER NOT NULL,
+        cd_nomenclature TEXT NOT NULL,
+        mnemonique TEXT,
+        label_default TEXT,
+        definition_default TEXT,
+        label_fr TEXT,
+        definition_fr TEXT,
+        label_en TEXT,
+        definition_en TEXT,
+        label_es TEXT,
+        definition_es TEXT,
+        label_de TEXT,
+        definition_de TEXT,
+        label_it TEXT,
+        definition_it TEXT,
+        source TEXT,
+        statut TEXT,
+        id_broader INTEGER,
+        hierarchy TEXT,
+        active BOOLEAN DEFAULT TRUE,
+        meta_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TIMESTAMP
+      );
+    ''');
+    print("t_nomenclatures table created successfully.");
+  } catch (e) {
+    print("Error creating t_nomenclatures table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }

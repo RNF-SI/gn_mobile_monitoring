@@ -1065,6 +1065,1092 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
   }
 }
 
+class $TNomenclaturesTable extends TNomenclatures
+    with TableInfo<$TNomenclaturesTable, TNomenclature> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TNomenclaturesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idNomenclatureMeta =
+      const VerificationMeta('idNomenclature');
+  @override
+  late final GeneratedColumn<int> idNomenclature = GeneratedColumn<int>(
+      'id_nomenclature', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idTypeMeta = const VerificationMeta('idType');
+  @override
+  late final GeneratedColumn<int> idType = GeneratedColumn<int>(
+      'id_type', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _cdNomenclatureMeta =
+      const VerificationMeta('cdNomenclature');
+  @override
+  late final GeneratedColumn<String> cdNomenclature = GeneratedColumn<String>(
+      'cd_nomenclature', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _mnemoniqueMeta =
+      const VerificationMeta('mnemonique');
+  @override
+  late final GeneratedColumn<String> mnemonique = GeneratedColumn<String>(
+      'mnemonique', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelDefaultMeta =
+      const VerificationMeta('labelDefault');
+  @override
+  late final GeneratedColumn<String> labelDefault = GeneratedColumn<String>(
+      'label_default', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionDefaultMeta =
+      const VerificationMeta('definitionDefault');
+  @override
+  late final GeneratedColumn<String> definitionDefault =
+      GeneratedColumn<String>('definition_default', aliasedName, true,
+          type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelFrMeta =
+      const VerificationMeta('labelFr');
+  @override
+  late final GeneratedColumn<String> labelFr = GeneratedColumn<String>(
+      'label_fr', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionFrMeta =
+      const VerificationMeta('definitionFr');
+  @override
+  late final GeneratedColumn<String> definitionFr = GeneratedColumn<String>(
+      'definition_fr', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelEnMeta =
+      const VerificationMeta('labelEn');
+  @override
+  late final GeneratedColumn<String> labelEn = GeneratedColumn<String>(
+      'label_en', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionEnMeta =
+      const VerificationMeta('definitionEn');
+  @override
+  late final GeneratedColumn<String> definitionEn = GeneratedColumn<String>(
+      'definition_en', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelEsMeta =
+      const VerificationMeta('labelEs');
+  @override
+  late final GeneratedColumn<String> labelEs = GeneratedColumn<String>(
+      'label_es', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionEsMeta =
+      const VerificationMeta('definitionEs');
+  @override
+  late final GeneratedColumn<String> definitionEs = GeneratedColumn<String>(
+      'definition_es', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelDeMeta =
+      const VerificationMeta('labelDe');
+  @override
+  late final GeneratedColumn<String> labelDe = GeneratedColumn<String>(
+      'label_de', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionDeMeta =
+      const VerificationMeta('definitionDe');
+  @override
+  late final GeneratedColumn<String> definitionDe = GeneratedColumn<String>(
+      'definition_de', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _labelItMeta =
+      const VerificationMeta('labelIt');
+  @override
+  late final GeneratedColumn<String> labelIt = GeneratedColumn<String>(
+      'label_it', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _definitionItMeta =
+      const VerificationMeta('definitionIt');
+  @override
+  late final GeneratedColumn<String> definitionIt = GeneratedColumn<String>(
+      'definition_it', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sourceMeta = const VerificationMeta('source');
+  @override
+  late final GeneratedColumn<String> source = GeneratedColumn<String>(
+      'source', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _statutMeta = const VerificationMeta('statut');
+  @override
+  late final GeneratedColumn<String> statut = GeneratedColumn<String>(
+      'statut', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _idBroaderMeta =
+      const VerificationMeta('idBroader');
+  @override
+  late final GeneratedColumn<int> idBroader = GeneratedColumn<int>(
+      'id_broader', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _hierarchyMeta =
+      const VerificationMeta('hierarchy');
+  @override
+  late final GeneratedColumn<String> hierarchy = GeneratedColumn<String>(
+      'hierarchy', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+      'active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
+      defaultValue: Constant(true));
+  static const VerificationMeta _metaCreateDateMeta =
+      const VerificationMeta('metaCreateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaCreateDate =
+      GeneratedColumn<DateTime>('meta_create_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metaUpdateDateMeta =
+      const VerificationMeta('metaUpdateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaUpdateDate =
+      GeneratedColumn<DateTime>('meta_update_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idNomenclature,
+        idType,
+        cdNomenclature,
+        mnemonique,
+        labelDefault,
+        definitionDefault,
+        labelFr,
+        definitionFr,
+        labelEn,
+        definitionEn,
+        labelEs,
+        definitionEs,
+        labelDe,
+        definitionDe,
+        labelIt,
+        definitionIt,
+        source,
+        statut,
+        idBroader,
+        hierarchy,
+        active,
+        metaCreateDate,
+        metaUpdateDate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_nomenclatures';
+  @override
+  VerificationContext validateIntegrity(Insertable<TNomenclature> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_nomenclature')) {
+      context.handle(
+          _idNomenclatureMeta,
+          idNomenclature.isAcceptableOrUnknown(
+              data['id_nomenclature']!, _idNomenclatureMeta));
+    }
+    if (data.containsKey('id_type')) {
+      context.handle(_idTypeMeta,
+          idType.isAcceptableOrUnknown(data['id_type']!, _idTypeMeta));
+    } else if (isInserting) {
+      context.missing(_idTypeMeta);
+    }
+    if (data.containsKey('cd_nomenclature')) {
+      context.handle(
+          _cdNomenclatureMeta,
+          cdNomenclature.isAcceptableOrUnknown(
+              data['cd_nomenclature']!, _cdNomenclatureMeta));
+    } else if (isInserting) {
+      context.missing(_cdNomenclatureMeta);
+    }
+    if (data.containsKey('mnemonique')) {
+      context.handle(
+          _mnemoniqueMeta,
+          mnemonique.isAcceptableOrUnknown(
+              data['mnemonique']!, _mnemoniqueMeta));
+    }
+    if (data.containsKey('label_default')) {
+      context.handle(
+          _labelDefaultMeta,
+          labelDefault.isAcceptableOrUnknown(
+              data['label_default']!, _labelDefaultMeta));
+    }
+    if (data.containsKey('definition_default')) {
+      context.handle(
+          _definitionDefaultMeta,
+          definitionDefault.isAcceptableOrUnknown(
+              data['definition_default']!, _definitionDefaultMeta));
+    }
+    if (data.containsKey('label_fr')) {
+      context.handle(_labelFrMeta,
+          labelFr.isAcceptableOrUnknown(data['label_fr']!, _labelFrMeta));
+    }
+    if (data.containsKey('definition_fr')) {
+      context.handle(
+          _definitionFrMeta,
+          definitionFr.isAcceptableOrUnknown(
+              data['definition_fr']!, _definitionFrMeta));
+    }
+    if (data.containsKey('label_en')) {
+      context.handle(_labelEnMeta,
+          labelEn.isAcceptableOrUnknown(data['label_en']!, _labelEnMeta));
+    }
+    if (data.containsKey('definition_en')) {
+      context.handle(
+          _definitionEnMeta,
+          definitionEn.isAcceptableOrUnknown(
+              data['definition_en']!, _definitionEnMeta));
+    }
+    if (data.containsKey('label_es')) {
+      context.handle(_labelEsMeta,
+          labelEs.isAcceptableOrUnknown(data['label_es']!, _labelEsMeta));
+    }
+    if (data.containsKey('definition_es')) {
+      context.handle(
+          _definitionEsMeta,
+          definitionEs.isAcceptableOrUnknown(
+              data['definition_es']!, _definitionEsMeta));
+    }
+    if (data.containsKey('label_de')) {
+      context.handle(_labelDeMeta,
+          labelDe.isAcceptableOrUnknown(data['label_de']!, _labelDeMeta));
+    }
+    if (data.containsKey('definition_de')) {
+      context.handle(
+          _definitionDeMeta,
+          definitionDe.isAcceptableOrUnknown(
+              data['definition_de']!, _definitionDeMeta));
+    }
+    if (data.containsKey('label_it')) {
+      context.handle(_labelItMeta,
+          labelIt.isAcceptableOrUnknown(data['label_it']!, _labelItMeta));
+    }
+    if (data.containsKey('definition_it')) {
+      context.handle(
+          _definitionItMeta,
+          definitionIt.isAcceptableOrUnknown(
+              data['definition_it']!, _definitionItMeta));
+    }
+    if (data.containsKey('source')) {
+      context.handle(_sourceMeta,
+          source.isAcceptableOrUnknown(data['source']!, _sourceMeta));
+    }
+    if (data.containsKey('statut')) {
+      context.handle(_statutMeta,
+          statut.isAcceptableOrUnknown(data['statut']!, _statutMeta));
+    }
+    if (data.containsKey('id_broader')) {
+      context.handle(_idBroaderMeta,
+          idBroader.isAcceptableOrUnknown(data['id_broader']!, _idBroaderMeta));
+    }
+    if (data.containsKey('hierarchy')) {
+      context.handle(_hierarchyMeta,
+          hierarchy.isAcceptableOrUnknown(data['hierarchy']!, _hierarchyMeta));
+    }
+    if (data.containsKey('active')) {
+      context.handle(_activeMeta,
+          active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('meta_create_date')) {
+      context.handle(
+          _metaCreateDateMeta,
+          metaCreateDate.isAcceptableOrUnknown(
+              data['meta_create_date']!, _metaCreateDateMeta));
+    }
+    if (data.containsKey('meta_update_date')) {
+      context.handle(
+          _metaUpdateDateMeta,
+          metaUpdateDate.isAcceptableOrUnknown(
+              data['meta_update_date']!, _metaUpdateDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idNomenclature};
+  @override
+  TNomenclature map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TNomenclature(
+      idNomenclature: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_nomenclature'])!,
+      idType: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_type'])!,
+      cdNomenclature: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}cd_nomenclature'])!,
+      mnemonique: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}mnemonique']),
+      labelDefault: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_default']),
+      definitionDefault: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}definition_default']),
+      labelFr: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_fr']),
+      definitionFr: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}definition_fr']),
+      labelEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_en']),
+      definitionEn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}definition_en']),
+      labelEs: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_es']),
+      definitionEs: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}definition_es']),
+      labelDe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_de']),
+      definitionDe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}definition_de']),
+      labelIt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}label_it']),
+      definitionIt: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}definition_it']),
+      source: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}source']),
+      statut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}statut']),
+      idBroader: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_broader']),
+      hierarchy: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}hierarchy']),
+      active: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      metaCreateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_create_date']),
+      metaUpdateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_update_date']),
+    );
+  }
+
+  @override
+  $TNomenclaturesTable createAlias(String alias) {
+    return $TNomenclaturesTable(attachedDatabase, alias);
+  }
+}
+
+class TNomenclature extends DataClass implements Insertable<TNomenclature> {
+  final int idNomenclature;
+  final int idType;
+  final String cdNomenclature;
+  final String? mnemonique;
+  final String? labelDefault;
+  final String? definitionDefault;
+  final String? labelFr;
+  final String? definitionFr;
+  final String? labelEn;
+  final String? definitionEn;
+  final String? labelEs;
+  final String? definitionEs;
+  final String? labelDe;
+  final String? definitionDe;
+  final String? labelIt;
+  final String? definitionIt;
+  final String? source;
+  final String? statut;
+  final int? idBroader;
+  final String? hierarchy;
+  final bool active;
+  final DateTime? metaCreateDate;
+  final DateTime? metaUpdateDate;
+  const TNomenclature(
+      {required this.idNomenclature,
+      required this.idType,
+      required this.cdNomenclature,
+      this.mnemonique,
+      this.labelDefault,
+      this.definitionDefault,
+      this.labelFr,
+      this.definitionFr,
+      this.labelEn,
+      this.definitionEn,
+      this.labelEs,
+      this.definitionEs,
+      this.labelDe,
+      this.definitionDe,
+      this.labelIt,
+      this.definitionIt,
+      this.source,
+      this.statut,
+      this.idBroader,
+      this.hierarchy,
+      required this.active,
+      this.metaCreateDate,
+      this.metaUpdateDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_nomenclature'] = Variable<int>(idNomenclature);
+    map['id_type'] = Variable<int>(idType);
+    map['cd_nomenclature'] = Variable<String>(cdNomenclature);
+    if (!nullToAbsent || mnemonique != null) {
+      map['mnemonique'] = Variable<String>(mnemonique);
+    }
+    if (!nullToAbsent || labelDefault != null) {
+      map['label_default'] = Variable<String>(labelDefault);
+    }
+    if (!nullToAbsent || definitionDefault != null) {
+      map['definition_default'] = Variable<String>(definitionDefault);
+    }
+    if (!nullToAbsent || labelFr != null) {
+      map['label_fr'] = Variable<String>(labelFr);
+    }
+    if (!nullToAbsent || definitionFr != null) {
+      map['definition_fr'] = Variable<String>(definitionFr);
+    }
+    if (!nullToAbsent || labelEn != null) {
+      map['label_en'] = Variable<String>(labelEn);
+    }
+    if (!nullToAbsent || definitionEn != null) {
+      map['definition_en'] = Variable<String>(definitionEn);
+    }
+    if (!nullToAbsent || labelEs != null) {
+      map['label_es'] = Variable<String>(labelEs);
+    }
+    if (!nullToAbsent || definitionEs != null) {
+      map['definition_es'] = Variable<String>(definitionEs);
+    }
+    if (!nullToAbsent || labelDe != null) {
+      map['label_de'] = Variable<String>(labelDe);
+    }
+    if (!nullToAbsent || definitionDe != null) {
+      map['definition_de'] = Variable<String>(definitionDe);
+    }
+    if (!nullToAbsent || labelIt != null) {
+      map['label_it'] = Variable<String>(labelIt);
+    }
+    if (!nullToAbsent || definitionIt != null) {
+      map['definition_it'] = Variable<String>(definitionIt);
+    }
+    if (!nullToAbsent || source != null) {
+      map['source'] = Variable<String>(source);
+    }
+    if (!nullToAbsent || statut != null) {
+      map['statut'] = Variable<String>(statut);
+    }
+    if (!nullToAbsent || idBroader != null) {
+      map['id_broader'] = Variable<int>(idBroader);
+    }
+    if (!nullToAbsent || hierarchy != null) {
+      map['hierarchy'] = Variable<String>(hierarchy);
+    }
+    map['active'] = Variable<bool>(active);
+    if (!nullToAbsent || metaCreateDate != null) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate);
+    }
+    if (!nullToAbsent || metaUpdateDate != null) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate);
+    }
+    return map;
+  }
+
+  TNomenclaturesCompanion toCompanion(bool nullToAbsent) {
+    return TNomenclaturesCompanion(
+      idNomenclature: Value(idNomenclature),
+      idType: Value(idType),
+      cdNomenclature: Value(cdNomenclature),
+      mnemonique: mnemonique == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mnemonique),
+      labelDefault: labelDefault == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelDefault),
+      definitionDefault: definitionDefault == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionDefault),
+      labelFr: labelFr == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelFr),
+      definitionFr: definitionFr == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionFr),
+      labelEn: labelEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelEn),
+      definitionEn: definitionEn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionEn),
+      labelEs: labelEs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelEs),
+      definitionEs: definitionEs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionEs),
+      labelDe: labelDe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelDe),
+      definitionDe: definitionDe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionDe),
+      labelIt: labelIt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(labelIt),
+      definitionIt: definitionIt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(definitionIt),
+      source:
+          source == null && nullToAbsent ? const Value.absent() : Value(source),
+      statut:
+          statut == null && nullToAbsent ? const Value.absent() : Value(statut),
+      idBroader: idBroader == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idBroader),
+      hierarchy: hierarchy == null && nullToAbsent
+          ? const Value.absent()
+          : Value(hierarchy),
+      active: Value(active),
+      metaCreateDate: metaCreateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaCreateDate),
+      metaUpdateDate: metaUpdateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaUpdateDate),
+    );
+  }
+
+  factory TNomenclature.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TNomenclature(
+      idNomenclature: serializer.fromJson<int>(json['idNomenclature']),
+      idType: serializer.fromJson<int>(json['idType']),
+      cdNomenclature: serializer.fromJson<String>(json['cdNomenclature']),
+      mnemonique: serializer.fromJson<String?>(json['mnemonique']),
+      labelDefault: serializer.fromJson<String?>(json['labelDefault']),
+      definitionDefault:
+          serializer.fromJson<String?>(json['definitionDefault']),
+      labelFr: serializer.fromJson<String?>(json['labelFr']),
+      definitionFr: serializer.fromJson<String?>(json['definitionFr']),
+      labelEn: serializer.fromJson<String?>(json['labelEn']),
+      definitionEn: serializer.fromJson<String?>(json['definitionEn']),
+      labelEs: serializer.fromJson<String?>(json['labelEs']),
+      definitionEs: serializer.fromJson<String?>(json['definitionEs']),
+      labelDe: serializer.fromJson<String?>(json['labelDe']),
+      definitionDe: serializer.fromJson<String?>(json['definitionDe']),
+      labelIt: serializer.fromJson<String?>(json['labelIt']),
+      definitionIt: serializer.fromJson<String?>(json['definitionIt']),
+      source: serializer.fromJson<String?>(json['source']),
+      statut: serializer.fromJson<String?>(json['statut']),
+      idBroader: serializer.fromJson<int?>(json['idBroader']),
+      hierarchy: serializer.fromJson<String?>(json['hierarchy']),
+      active: serializer.fromJson<bool>(json['active']),
+      metaCreateDate: serializer.fromJson<DateTime?>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idNomenclature': serializer.toJson<int>(idNomenclature),
+      'idType': serializer.toJson<int>(idType),
+      'cdNomenclature': serializer.toJson<String>(cdNomenclature),
+      'mnemonique': serializer.toJson<String?>(mnemonique),
+      'labelDefault': serializer.toJson<String?>(labelDefault),
+      'definitionDefault': serializer.toJson<String?>(definitionDefault),
+      'labelFr': serializer.toJson<String?>(labelFr),
+      'definitionFr': serializer.toJson<String?>(definitionFr),
+      'labelEn': serializer.toJson<String?>(labelEn),
+      'definitionEn': serializer.toJson<String?>(definitionEn),
+      'labelEs': serializer.toJson<String?>(labelEs),
+      'definitionEs': serializer.toJson<String?>(definitionEs),
+      'labelDe': serializer.toJson<String?>(labelDe),
+      'definitionDe': serializer.toJson<String?>(definitionDe),
+      'labelIt': serializer.toJson<String?>(labelIt),
+      'definitionIt': serializer.toJson<String?>(definitionIt),
+      'source': serializer.toJson<String?>(source),
+      'statut': serializer.toJson<String?>(statut),
+      'idBroader': serializer.toJson<int?>(idBroader),
+      'hierarchy': serializer.toJson<String?>(hierarchy),
+      'active': serializer.toJson<bool>(active),
+      'metaCreateDate': serializer.toJson<DateTime?>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
+    };
+  }
+
+  TNomenclature copyWith(
+          {int? idNomenclature,
+          int? idType,
+          String? cdNomenclature,
+          Value<String?> mnemonique = const Value.absent(),
+          Value<String?> labelDefault = const Value.absent(),
+          Value<String?> definitionDefault = const Value.absent(),
+          Value<String?> labelFr = const Value.absent(),
+          Value<String?> definitionFr = const Value.absent(),
+          Value<String?> labelEn = const Value.absent(),
+          Value<String?> definitionEn = const Value.absent(),
+          Value<String?> labelEs = const Value.absent(),
+          Value<String?> definitionEs = const Value.absent(),
+          Value<String?> labelDe = const Value.absent(),
+          Value<String?> definitionDe = const Value.absent(),
+          Value<String?> labelIt = const Value.absent(),
+          Value<String?> definitionIt = const Value.absent(),
+          Value<String?> source = const Value.absent(),
+          Value<String?> statut = const Value.absent(),
+          Value<int?> idBroader = const Value.absent(),
+          Value<String?> hierarchy = const Value.absent(),
+          bool? active,
+          Value<DateTime?> metaCreateDate = const Value.absent(),
+          Value<DateTime?> metaUpdateDate = const Value.absent()}) =>
+      TNomenclature(
+        idNomenclature: idNomenclature ?? this.idNomenclature,
+        idType: idType ?? this.idType,
+        cdNomenclature: cdNomenclature ?? this.cdNomenclature,
+        mnemonique: mnemonique.present ? mnemonique.value : this.mnemonique,
+        labelDefault:
+            labelDefault.present ? labelDefault.value : this.labelDefault,
+        definitionDefault: definitionDefault.present
+            ? definitionDefault.value
+            : this.definitionDefault,
+        labelFr: labelFr.present ? labelFr.value : this.labelFr,
+        definitionFr:
+            definitionFr.present ? definitionFr.value : this.definitionFr,
+        labelEn: labelEn.present ? labelEn.value : this.labelEn,
+        definitionEn:
+            definitionEn.present ? definitionEn.value : this.definitionEn,
+        labelEs: labelEs.present ? labelEs.value : this.labelEs,
+        definitionEs:
+            definitionEs.present ? definitionEs.value : this.definitionEs,
+        labelDe: labelDe.present ? labelDe.value : this.labelDe,
+        definitionDe:
+            definitionDe.present ? definitionDe.value : this.definitionDe,
+        labelIt: labelIt.present ? labelIt.value : this.labelIt,
+        definitionIt:
+            definitionIt.present ? definitionIt.value : this.definitionIt,
+        source: source.present ? source.value : this.source,
+        statut: statut.present ? statut.value : this.statut,
+        idBroader: idBroader.present ? idBroader.value : this.idBroader,
+        hierarchy: hierarchy.present ? hierarchy.value : this.hierarchy,
+        active: active ?? this.active,
+        metaCreateDate:
+            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
+        metaUpdateDate:
+            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
+      );
+  TNomenclature copyWithCompanion(TNomenclaturesCompanion data) {
+    return TNomenclature(
+      idNomenclature: data.idNomenclature.present
+          ? data.idNomenclature.value
+          : this.idNomenclature,
+      idType: data.idType.present ? data.idType.value : this.idType,
+      cdNomenclature: data.cdNomenclature.present
+          ? data.cdNomenclature.value
+          : this.cdNomenclature,
+      mnemonique:
+          data.mnemonique.present ? data.mnemonique.value : this.mnemonique,
+      labelDefault: data.labelDefault.present
+          ? data.labelDefault.value
+          : this.labelDefault,
+      definitionDefault: data.definitionDefault.present
+          ? data.definitionDefault.value
+          : this.definitionDefault,
+      labelFr: data.labelFr.present ? data.labelFr.value : this.labelFr,
+      definitionFr: data.definitionFr.present
+          ? data.definitionFr.value
+          : this.definitionFr,
+      labelEn: data.labelEn.present ? data.labelEn.value : this.labelEn,
+      definitionEn: data.definitionEn.present
+          ? data.definitionEn.value
+          : this.definitionEn,
+      labelEs: data.labelEs.present ? data.labelEs.value : this.labelEs,
+      definitionEs: data.definitionEs.present
+          ? data.definitionEs.value
+          : this.definitionEs,
+      labelDe: data.labelDe.present ? data.labelDe.value : this.labelDe,
+      definitionDe: data.definitionDe.present
+          ? data.definitionDe.value
+          : this.definitionDe,
+      labelIt: data.labelIt.present ? data.labelIt.value : this.labelIt,
+      definitionIt: data.definitionIt.present
+          ? data.definitionIt.value
+          : this.definitionIt,
+      source: data.source.present ? data.source.value : this.source,
+      statut: data.statut.present ? data.statut.value : this.statut,
+      idBroader: data.idBroader.present ? data.idBroader.value : this.idBroader,
+      hierarchy: data.hierarchy.present ? data.hierarchy.value : this.hierarchy,
+      active: data.active.present ? data.active.value : this.active,
+      metaCreateDate: data.metaCreateDate.present
+          ? data.metaCreateDate.value
+          : this.metaCreateDate,
+      metaUpdateDate: data.metaUpdateDate.present
+          ? data.metaUpdateDate.value
+          : this.metaUpdateDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TNomenclature(')
+          ..write('idNomenclature: $idNomenclature, ')
+          ..write('idType: $idType, ')
+          ..write('cdNomenclature: $cdNomenclature, ')
+          ..write('mnemonique: $mnemonique, ')
+          ..write('labelDefault: $labelDefault, ')
+          ..write('definitionDefault: $definitionDefault, ')
+          ..write('labelFr: $labelFr, ')
+          ..write('definitionFr: $definitionFr, ')
+          ..write('labelEn: $labelEn, ')
+          ..write('definitionEn: $definitionEn, ')
+          ..write('labelEs: $labelEs, ')
+          ..write('definitionEs: $definitionEs, ')
+          ..write('labelDe: $labelDe, ')
+          ..write('definitionDe: $definitionDe, ')
+          ..write('labelIt: $labelIt, ')
+          ..write('definitionIt: $definitionIt, ')
+          ..write('source: $source, ')
+          ..write('statut: $statut, ')
+          ..write('idBroader: $idBroader, ')
+          ..write('hierarchy: $hierarchy, ')
+          ..write('active: $active, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        idNomenclature,
+        idType,
+        cdNomenclature,
+        mnemonique,
+        labelDefault,
+        definitionDefault,
+        labelFr,
+        definitionFr,
+        labelEn,
+        definitionEn,
+        labelEs,
+        definitionEs,
+        labelDe,
+        definitionDe,
+        labelIt,
+        definitionIt,
+        source,
+        statut,
+        idBroader,
+        hierarchy,
+        active,
+        metaCreateDate,
+        metaUpdateDate
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TNomenclature &&
+          other.idNomenclature == this.idNomenclature &&
+          other.idType == this.idType &&
+          other.cdNomenclature == this.cdNomenclature &&
+          other.mnemonique == this.mnemonique &&
+          other.labelDefault == this.labelDefault &&
+          other.definitionDefault == this.definitionDefault &&
+          other.labelFr == this.labelFr &&
+          other.definitionFr == this.definitionFr &&
+          other.labelEn == this.labelEn &&
+          other.definitionEn == this.definitionEn &&
+          other.labelEs == this.labelEs &&
+          other.definitionEs == this.definitionEs &&
+          other.labelDe == this.labelDe &&
+          other.definitionDe == this.definitionDe &&
+          other.labelIt == this.labelIt &&
+          other.definitionIt == this.definitionIt &&
+          other.source == this.source &&
+          other.statut == this.statut &&
+          other.idBroader == this.idBroader &&
+          other.hierarchy == this.hierarchy &&
+          other.active == this.active &&
+          other.metaCreateDate == this.metaCreateDate &&
+          other.metaUpdateDate == this.metaUpdateDate);
+}
+
+class TNomenclaturesCompanion extends UpdateCompanion<TNomenclature> {
+  final Value<int> idNomenclature;
+  final Value<int> idType;
+  final Value<String> cdNomenclature;
+  final Value<String?> mnemonique;
+  final Value<String?> labelDefault;
+  final Value<String?> definitionDefault;
+  final Value<String?> labelFr;
+  final Value<String?> definitionFr;
+  final Value<String?> labelEn;
+  final Value<String?> definitionEn;
+  final Value<String?> labelEs;
+  final Value<String?> definitionEs;
+  final Value<String?> labelDe;
+  final Value<String?> definitionDe;
+  final Value<String?> labelIt;
+  final Value<String?> definitionIt;
+  final Value<String?> source;
+  final Value<String?> statut;
+  final Value<int?> idBroader;
+  final Value<String?> hierarchy;
+  final Value<bool> active;
+  final Value<DateTime?> metaCreateDate;
+  final Value<DateTime?> metaUpdateDate;
+  const TNomenclaturesCompanion({
+    this.idNomenclature = const Value.absent(),
+    this.idType = const Value.absent(),
+    this.cdNomenclature = const Value.absent(),
+    this.mnemonique = const Value.absent(),
+    this.labelDefault = const Value.absent(),
+    this.definitionDefault = const Value.absent(),
+    this.labelFr = const Value.absent(),
+    this.definitionFr = const Value.absent(),
+    this.labelEn = const Value.absent(),
+    this.definitionEn = const Value.absent(),
+    this.labelEs = const Value.absent(),
+    this.definitionEs = const Value.absent(),
+    this.labelDe = const Value.absent(),
+    this.definitionDe = const Value.absent(),
+    this.labelIt = const Value.absent(),
+    this.definitionIt = const Value.absent(),
+    this.source = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.idBroader = const Value.absent(),
+    this.hierarchy = const Value.absent(),
+    this.active = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  });
+  TNomenclaturesCompanion.insert({
+    this.idNomenclature = const Value.absent(),
+    required int idType,
+    required String cdNomenclature,
+    this.mnemonique = const Value.absent(),
+    this.labelDefault = const Value.absent(),
+    this.definitionDefault = const Value.absent(),
+    this.labelFr = const Value.absent(),
+    this.definitionFr = const Value.absent(),
+    this.labelEn = const Value.absent(),
+    this.definitionEn = const Value.absent(),
+    this.labelEs = const Value.absent(),
+    this.definitionEs = const Value.absent(),
+    this.labelDe = const Value.absent(),
+    this.definitionDe = const Value.absent(),
+    this.labelIt = const Value.absent(),
+    this.definitionIt = const Value.absent(),
+    this.source = const Value.absent(),
+    this.statut = const Value.absent(),
+    this.idBroader = const Value.absent(),
+    this.hierarchy = const Value.absent(),
+    this.active = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  })  : idType = Value(idType),
+        cdNomenclature = Value(cdNomenclature);
+  static Insertable<TNomenclature> custom({
+    Expression<int>? idNomenclature,
+    Expression<int>? idType,
+    Expression<String>? cdNomenclature,
+    Expression<String>? mnemonique,
+    Expression<String>? labelDefault,
+    Expression<String>? definitionDefault,
+    Expression<String>? labelFr,
+    Expression<String>? definitionFr,
+    Expression<String>? labelEn,
+    Expression<String>? definitionEn,
+    Expression<String>? labelEs,
+    Expression<String>? definitionEs,
+    Expression<String>? labelDe,
+    Expression<String>? definitionDe,
+    Expression<String>? labelIt,
+    Expression<String>? definitionIt,
+    Expression<String>? source,
+    Expression<String>? statut,
+    Expression<int>? idBroader,
+    Expression<String>? hierarchy,
+    Expression<bool>? active,
+    Expression<DateTime>? metaCreateDate,
+    Expression<DateTime>? metaUpdateDate,
+  }) {
+    return RawValuesInsertable({
+      if (idNomenclature != null) 'id_nomenclature': idNomenclature,
+      if (idType != null) 'id_type': idType,
+      if (cdNomenclature != null) 'cd_nomenclature': cdNomenclature,
+      if (mnemonique != null) 'mnemonique': mnemonique,
+      if (labelDefault != null) 'label_default': labelDefault,
+      if (definitionDefault != null) 'definition_default': definitionDefault,
+      if (labelFr != null) 'label_fr': labelFr,
+      if (definitionFr != null) 'definition_fr': definitionFr,
+      if (labelEn != null) 'label_en': labelEn,
+      if (definitionEn != null) 'definition_en': definitionEn,
+      if (labelEs != null) 'label_es': labelEs,
+      if (definitionEs != null) 'definition_es': definitionEs,
+      if (labelDe != null) 'label_de': labelDe,
+      if (definitionDe != null) 'definition_de': definitionDe,
+      if (labelIt != null) 'label_it': labelIt,
+      if (definitionIt != null) 'definition_it': definitionIt,
+      if (source != null) 'source': source,
+      if (statut != null) 'statut': statut,
+      if (idBroader != null) 'id_broader': idBroader,
+      if (hierarchy != null) 'hierarchy': hierarchy,
+      if (active != null) 'active': active,
+      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
+      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
+    });
+  }
+
+  TNomenclaturesCompanion copyWith(
+      {Value<int>? idNomenclature,
+      Value<int>? idType,
+      Value<String>? cdNomenclature,
+      Value<String?>? mnemonique,
+      Value<String?>? labelDefault,
+      Value<String?>? definitionDefault,
+      Value<String?>? labelFr,
+      Value<String?>? definitionFr,
+      Value<String?>? labelEn,
+      Value<String?>? definitionEn,
+      Value<String?>? labelEs,
+      Value<String?>? definitionEs,
+      Value<String?>? labelDe,
+      Value<String?>? definitionDe,
+      Value<String?>? labelIt,
+      Value<String?>? definitionIt,
+      Value<String?>? source,
+      Value<String?>? statut,
+      Value<int?>? idBroader,
+      Value<String?>? hierarchy,
+      Value<bool>? active,
+      Value<DateTime?>? metaCreateDate,
+      Value<DateTime?>? metaUpdateDate}) {
+    return TNomenclaturesCompanion(
+      idNomenclature: idNomenclature ?? this.idNomenclature,
+      idType: idType ?? this.idType,
+      cdNomenclature: cdNomenclature ?? this.cdNomenclature,
+      mnemonique: mnemonique ?? this.mnemonique,
+      labelDefault: labelDefault ?? this.labelDefault,
+      definitionDefault: definitionDefault ?? this.definitionDefault,
+      labelFr: labelFr ?? this.labelFr,
+      definitionFr: definitionFr ?? this.definitionFr,
+      labelEn: labelEn ?? this.labelEn,
+      definitionEn: definitionEn ?? this.definitionEn,
+      labelEs: labelEs ?? this.labelEs,
+      definitionEs: definitionEs ?? this.definitionEs,
+      labelDe: labelDe ?? this.labelDe,
+      definitionDe: definitionDe ?? this.definitionDe,
+      labelIt: labelIt ?? this.labelIt,
+      definitionIt: definitionIt ?? this.definitionIt,
+      source: source ?? this.source,
+      statut: statut ?? this.statut,
+      idBroader: idBroader ?? this.idBroader,
+      hierarchy: hierarchy ?? this.hierarchy,
+      active: active ?? this.active,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idNomenclature.present) {
+      map['id_nomenclature'] = Variable<int>(idNomenclature.value);
+    }
+    if (idType.present) {
+      map['id_type'] = Variable<int>(idType.value);
+    }
+    if (cdNomenclature.present) {
+      map['cd_nomenclature'] = Variable<String>(cdNomenclature.value);
+    }
+    if (mnemonique.present) {
+      map['mnemonique'] = Variable<String>(mnemonique.value);
+    }
+    if (labelDefault.present) {
+      map['label_default'] = Variable<String>(labelDefault.value);
+    }
+    if (definitionDefault.present) {
+      map['definition_default'] = Variable<String>(definitionDefault.value);
+    }
+    if (labelFr.present) {
+      map['label_fr'] = Variable<String>(labelFr.value);
+    }
+    if (definitionFr.present) {
+      map['definition_fr'] = Variable<String>(definitionFr.value);
+    }
+    if (labelEn.present) {
+      map['label_en'] = Variable<String>(labelEn.value);
+    }
+    if (definitionEn.present) {
+      map['definition_en'] = Variable<String>(definitionEn.value);
+    }
+    if (labelEs.present) {
+      map['label_es'] = Variable<String>(labelEs.value);
+    }
+    if (definitionEs.present) {
+      map['definition_es'] = Variable<String>(definitionEs.value);
+    }
+    if (labelDe.present) {
+      map['label_de'] = Variable<String>(labelDe.value);
+    }
+    if (definitionDe.present) {
+      map['definition_de'] = Variable<String>(definitionDe.value);
+    }
+    if (labelIt.present) {
+      map['label_it'] = Variable<String>(labelIt.value);
+    }
+    if (definitionIt.present) {
+      map['definition_it'] = Variable<String>(definitionIt.value);
+    }
+    if (source.present) {
+      map['source'] = Variable<String>(source.value);
+    }
+    if (statut.present) {
+      map['statut'] = Variable<String>(statut.value);
+    }
+    if (idBroader.present) {
+      map['id_broader'] = Variable<int>(idBroader.value);
+    }
+    if (hierarchy.present) {
+      map['hierarchy'] = Variable<String>(hierarchy.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (metaCreateDate.present) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate.value);
+    }
+    if (metaUpdateDate.present) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TNomenclaturesCompanion(')
+          ..write('idNomenclature: $idNomenclature, ')
+          ..write('idType: $idType, ')
+          ..write('cdNomenclature: $cdNomenclature, ')
+          ..write('mnemonique: $mnemonique, ')
+          ..write('labelDefault: $labelDefault, ')
+          ..write('definitionDefault: $definitionDefault, ')
+          ..write('labelFr: $labelFr, ')
+          ..write('definitionFr: $definitionFr, ')
+          ..write('labelEn: $labelEn, ')
+          ..write('definitionEn: $definitionEn, ')
+          ..write('labelEs: $labelEs, ')
+          ..write('definitionEs: $definitionEs, ')
+          ..write('labelDe: $labelDe, ')
+          ..write('definitionDe: $definitionDe, ')
+          ..write('labelIt: $labelIt, ')
+          ..write('definitionIt: $definitionIt, ')
+          ..write('source: $source, ')
+          ..write('statut: $statut, ')
+          ..write('idBroader: $idBroader, ')
+          ..write('hierarchy: $hierarchy, ')
+          ..write('active: $active, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TModuleComplementsTable extends TModuleComplements
     with TableInfo<$TModuleComplementsTable, TModuleComplement> {
   @override
@@ -5471,6 +6557,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $TModulesTable tModules = $TModulesTable(this);
   late final $TBaseSitesTable tBaseSites = $TBaseSitesTable(this);
+  late final $TNomenclaturesTable tNomenclatures = $TNomenclaturesTable(this);
   late final $TModuleComplementsTable tModuleComplements =
       $TModuleComplementsTable(this);
   late final $TSitesGroupsTable tSitesGroups = $TSitesGroupsTable(this);
@@ -5494,6 +6581,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CorObjectModulesTable corObjectModules =
       $CorObjectModulesTable(this);
   late final TModulesDao tModulesDao = TModulesDao(this as AppDatabase);
+  late final TNomenclaturesDao tNomenclaturesDao =
+      TNomenclaturesDao(this as AppDatabase);
   late final SitesDao sitesDao = SitesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
@@ -5502,6 +6591,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
         tModules,
         tBaseSites,
+        tNomenclatures,
         tModuleComplements,
         tSitesGroups,
         tSiteComplements,
@@ -5984,6 +7074,460 @@ typedef $$TBaseSitesTableProcessedTableManager = ProcessedTableManager<
     $$TBaseSitesTableUpdateCompanionBuilder,
     (TBaseSite, BaseReferences<_$AppDatabase, $TBaseSitesTable, TBaseSite>),
     TBaseSite,
+    PrefetchHooks Function()>;
+typedef $$TNomenclaturesTableCreateCompanionBuilder = TNomenclaturesCompanion
+    Function({
+  Value<int> idNomenclature,
+  required int idType,
+  required String cdNomenclature,
+  Value<String?> mnemonique,
+  Value<String?> labelDefault,
+  Value<String?> definitionDefault,
+  Value<String?> labelFr,
+  Value<String?> definitionFr,
+  Value<String?> labelEn,
+  Value<String?> definitionEn,
+  Value<String?> labelEs,
+  Value<String?> definitionEs,
+  Value<String?> labelDe,
+  Value<String?> definitionDe,
+  Value<String?> labelIt,
+  Value<String?> definitionIt,
+  Value<String?> source,
+  Value<String?> statut,
+  Value<int?> idBroader,
+  Value<String?> hierarchy,
+  Value<bool> active,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+typedef $$TNomenclaturesTableUpdateCompanionBuilder = TNomenclaturesCompanion
+    Function({
+  Value<int> idNomenclature,
+  Value<int> idType,
+  Value<String> cdNomenclature,
+  Value<String?> mnemonique,
+  Value<String?> labelDefault,
+  Value<String?> definitionDefault,
+  Value<String?> labelFr,
+  Value<String?> definitionFr,
+  Value<String?> labelEn,
+  Value<String?> definitionEn,
+  Value<String?> labelEs,
+  Value<String?> definitionEs,
+  Value<String?> labelDe,
+  Value<String?> definitionDe,
+  Value<String?> labelIt,
+  Value<String?> definitionIt,
+  Value<String?> source,
+  Value<String?> statut,
+  Value<int?> idBroader,
+  Value<String?> hierarchy,
+  Value<bool> active,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+
+class $$TNomenclaturesTableFilterComposer
+    extends Composer<_$AppDatabase, $TNomenclaturesTable> {
+  $$TNomenclaturesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idNomenclature => $composableBuilder(
+      column: $table.idNomenclature,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idType => $composableBuilder(
+      column: $table.idType, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get cdNomenclature => $composableBuilder(
+      column: $table.cdNomenclature,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get mnemonique => $composableBuilder(
+      column: $table.mnemonique, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelDefault => $composableBuilder(
+      column: $table.labelDefault, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionDefault => $composableBuilder(
+      column: $table.definitionDefault,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelFr => $composableBuilder(
+      column: $table.labelFr, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionFr => $composableBuilder(
+      column: $table.definitionFr, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelEn => $composableBuilder(
+      column: $table.labelEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionEn => $composableBuilder(
+      column: $table.definitionEn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelEs => $composableBuilder(
+      column: $table.labelEs, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionEs => $composableBuilder(
+      column: $table.definitionEs, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelDe => $composableBuilder(
+      column: $table.labelDe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionDe => $composableBuilder(
+      column: $table.definitionDe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get labelIt => $composableBuilder(
+      column: $table.labelIt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get definitionIt => $composableBuilder(
+      column: $table.definitionIt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idBroader => $composableBuilder(
+      column: $table.idBroader, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get hierarchy => $composableBuilder(
+      column: $table.hierarchy, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$TNomenclaturesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TNomenclaturesTable> {
+  $$TNomenclaturesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idNomenclature => $composableBuilder(
+      column: $table.idNomenclature,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idType => $composableBuilder(
+      column: $table.idType, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get cdNomenclature => $composableBuilder(
+      column: $table.cdNomenclature,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get mnemonique => $composableBuilder(
+      column: $table.mnemonique, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelDefault => $composableBuilder(
+      column: $table.labelDefault,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionDefault => $composableBuilder(
+      column: $table.definitionDefault,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelFr => $composableBuilder(
+      column: $table.labelFr, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionFr => $composableBuilder(
+      column: $table.definitionFr,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelEn => $composableBuilder(
+      column: $table.labelEn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionEn => $composableBuilder(
+      column: $table.definitionEn,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelEs => $composableBuilder(
+      column: $table.labelEs, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionEs => $composableBuilder(
+      column: $table.definitionEs,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelDe => $composableBuilder(
+      column: $table.labelDe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionDe => $composableBuilder(
+      column: $table.definitionDe,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get labelIt => $composableBuilder(
+      column: $table.labelIt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get definitionIt => $composableBuilder(
+      column: $table.definitionIt,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get source => $composableBuilder(
+      column: $table.source, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get statut => $composableBuilder(
+      column: $table.statut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idBroader => $composableBuilder(
+      column: $table.idBroader, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get hierarchy => $composableBuilder(
+      column: $table.hierarchy, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$TNomenclaturesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TNomenclaturesTable> {
+  $$TNomenclaturesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idNomenclature => $composableBuilder(
+      column: $table.idNomenclature, builder: (column) => column);
+
+  GeneratedColumn<int> get idType =>
+      $composableBuilder(column: $table.idType, builder: (column) => column);
+
+  GeneratedColumn<String> get cdNomenclature => $composableBuilder(
+      column: $table.cdNomenclature, builder: (column) => column);
+
+  GeneratedColumn<String> get mnemonique => $composableBuilder(
+      column: $table.mnemonique, builder: (column) => column);
+
+  GeneratedColumn<String> get labelDefault => $composableBuilder(
+      column: $table.labelDefault, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionDefault => $composableBuilder(
+      column: $table.definitionDefault, builder: (column) => column);
+
+  GeneratedColumn<String> get labelFr =>
+      $composableBuilder(column: $table.labelFr, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionFr => $composableBuilder(
+      column: $table.definitionFr, builder: (column) => column);
+
+  GeneratedColumn<String> get labelEn =>
+      $composableBuilder(column: $table.labelEn, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionEn => $composableBuilder(
+      column: $table.definitionEn, builder: (column) => column);
+
+  GeneratedColumn<String> get labelEs =>
+      $composableBuilder(column: $table.labelEs, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionEs => $composableBuilder(
+      column: $table.definitionEs, builder: (column) => column);
+
+  GeneratedColumn<String> get labelDe =>
+      $composableBuilder(column: $table.labelDe, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionDe => $composableBuilder(
+      column: $table.definitionDe, builder: (column) => column);
+
+  GeneratedColumn<String> get labelIt =>
+      $composableBuilder(column: $table.labelIt, builder: (column) => column);
+
+  GeneratedColumn<String> get definitionIt => $composableBuilder(
+      column: $table.definitionIt, builder: (column) => column);
+
+  GeneratedColumn<String> get source =>
+      $composableBuilder(column: $table.source, builder: (column) => column);
+
+  GeneratedColumn<String> get statut =>
+      $composableBuilder(column: $table.statut, builder: (column) => column);
+
+  GeneratedColumn<int> get idBroader =>
+      $composableBuilder(column: $table.idBroader, builder: (column) => column);
+
+  GeneratedColumn<String> get hierarchy =>
+      $composableBuilder(column: $table.hierarchy, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate, builder: (column) => column);
+}
+
+class $$TNomenclaturesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TNomenclaturesTable,
+    TNomenclature,
+    $$TNomenclaturesTableFilterComposer,
+    $$TNomenclaturesTableOrderingComposer,
+    $$TNomenclaturesTableAnnotationComposer,
+    $$TNomenclaturesTableCreateCompanionBuilder,
+    $$TNomenclaturesTableUpdateCompanionBuilder,
+    (
+      TNomenclature,
+      BaseReferences<_$AppDatabase, $TNomenclaturesTable, TNomenclature>
+    ),
+    TNomenclature,
+    PrefetchHooks Function()> {
+  $$TNomenclaturesTableTableManager(
+      _$AppDatabase db, $TNomenclaturesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TNomenclaturesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TNomenclaturesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TNomenclaturesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idNomenclature = const Value.absent(),
+            Value<int> idType = const Value.absent(),
+            Value<String> cdNomenclature = const Value.absent(),
+            Value<String?> mnemonique = const Value.absent(),
+            Value<String?> labelDefault = const Value.absent(),
+            Value<String?> definitionDefault = const Value.absent(),
+            Value<String?> labelFr = const Value.absent(),
+            Value<String?> definitionFr = const Value.absent(),
+            Value<String?> labelEn = const Value.absent(),
+            Value<String?> definitionEn = const Value.absent(),
+            Value<String?> labelEs = const Value.absent(),
+            Value<String?> definitionEs = const Value.absent(),
+            Value<String?> labelDe = const Value.absent(),
+            Value<String?> definitionDe = const Value.absent(),
+            Value<String?> labelIt = const Value.absent(),
+            Value<String?> definitionIt = const Value.absent(),
+            Value<String?> source = const Value.absent(),
+            Value<String?> statut = const Value.absent(),
+            Value<int?> idBroader = const Value.absent(),
+            Value<String?> hierarchy = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TNomenclaturesCompanion(
+            idNomenclature: idNomenclature,
+            idType: idType,
+            cdNomenclature: cdNomenclature,
+            mnemonique: mnemonique,
+            labelDefault: labelDefault,
+            definitionDefault: definitionDefault,
+            labelFr: labelFr,
+            definitionFr: definitionFr,
+            labelEn: labelEn,
+            definitionEn: definitionEn,
+            labelEs: labelEs,
+            definitionEs: definitionEs,
+            labelDe: labelDe,
+            definitionDe: definitionDe,
+            labelIt: labelIt,
+            definitionIt: definitionIt,
+            source: source,
+            statut: statut,
+            idBroader: idBroader,
+            hierarchy: hierarchy,
+            active: active,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          createCompanionCallback: ({
+            Value<int> idNomenclature = const Value.absent(),
+            required int idType,
+            required String cdNomenclature,
+            Value<String?> mnemonique = const Value.absent(),
+            Value<String?> labelDefault = const Value.absent(),
+            Value<String?> definitionDefault = const Value.absent(),
+            Value<String?> labelFr = const Value.absent(),
+            Value<String?> definitionFr = const Value.absent(),
+            Value<String?> labelEn = const Value.absent(),
+            Value<String?> definitionEn = const Value.absent(),
+            Value<String?> labelEs = const Value.absent(),
+            Value<String?> definitionEs = const Value.absent(),
+            Value<String?> labelDe = const Value.absent(),
+            Value<String?> definitionDe = const Value.absent(),
+            Value<String?> labelIt = const Value.absent(),
+            Value<String?> definitionIt = const Value.absent(),
+            Value<String?> source = const Value.absent(),
+            Value<String?> statut = const Value.absent(),
+            Value<int?> idBroader = const Value.absent(),
+            Value<String?> hierarchy = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TNomenclaturesCompanion.insert(
+            idNomenclature: idNomenclature,
+            idType: idType,
+            cdNomenclature: cdNomenclature,
+            mnemonique: mnemonique,
+            labelDefault: labelDefault,
+            definitionDefault: definitionDefault,
+            labelFr: labelFr,
+            definitionFr: definitionFr,
+            labelEn: labelEn,
+            definitionEn: definitionEn,
+            labelEs: labelEs,
+            definitionEs: definitionEs,
+            labelDe: labelDe,
+            definitionDe: definitionDe,
+            labelIt: labelIt,
+            definitionIt: definitionIt,
+            source: source,
+            statut: statut,
+            idBroader: idBroader,
+            hierarchy: hierarchy,
+            active: active,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TNomenclaturesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TNomenclaturesTable,
+    TNomenclature,
+    $$TNomenclaturesTableFilterComposer,
+    $$TNomenclaturesTableOrderingComposer,
+    $$TNomenclaturesTableAnnotationComposer,
+    $$TNomenclaturesTableCreateCompanionBuilder,
+    $$TNomenclaturesTableUpdateCompanionBuilder,
+    (
+      TNomenclature,
+      BaseReferences<_$AppDatabase, $TNomenclaturesTable, TNomenclature>
+    ),
+    TNomenclature,
     PrefetchHooks Function()>;
 typedef $$TModuleComplementsTableCreateCompanionBuilder
     = TModuleComplementsCompanion Function({
@@ -8359,6 +9903,8 @@ class $AppDatabaseManager {
       $$TModulesTableTableManager(_db, _db.tModules);
   $$TBaseSitesTableTableManager get tBaseSites =>
       $$TBaseSitesTableTableManager(_db, _db.tBaseSites);
+  $$TNomenclaturesTableTableManager get tNomenclatures =>
+      $$TNomenclaturesTableTableManager(_db, _db.tNomenclatures);
   $$TModuleComplementsTableTableManager get tModuleComplements =>
       $$TModuleComplementsTableTableManager(_db, _db.tModuleComplements);
   $$TSitesGroupsTableTableManager get tSitesGroups =>
