@@ -16,10 +16,12 @@ class GlobalApiImpl implements GlobalApi {
         ));
 
   @override
-  Future<Map<String, dynamic>> getNomenclaturesAndDatasets() async {
+  Future<Map<String, dynamic>> getNomenclaturesAndDatasets(
+      String moduleName) async {
     try {
+      // Use the moduleName parameter in the API URL
       final response =
-          await _dio.get('$apiBase/monitorings/util/init_data/chiro');
+          await _dio.get('$apiBase/monitorings/util/init_data/$moduleName');
 
       if (response.statusCode == 200) {
         final nomenclatures = (response.data['nomenclature'] as List<dynamic>)
@@ -36,10 +38,10 @@ class GlobalApiImpl implements GlobalApi {
         };
       } else {
         throw Exception(
-            'Failed to fetch data. Status code: ${response.statusCode}');
+            'Failed to fetch data for module $moduleName. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching data: $e');
+      throw Exception('Error fetching data for module $moduleName: $e');
     }
   }
 }

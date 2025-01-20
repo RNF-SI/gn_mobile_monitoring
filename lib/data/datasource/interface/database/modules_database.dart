@@ -4,4 +4,5 @@ abstract class ModulesDatabase {
   Future<void> clearModules();
   Future<void> insertModules(List<Module> modules);
   Future<List<Module>> getAllModules();
+  Future<String> getModuleCodeFromIdModule(int moduleId);
 }

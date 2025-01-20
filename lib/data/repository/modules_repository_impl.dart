@@ -45,7 +45,10 @@ class ModulesRepositoryImpl implements ModulesRepository {
   @override
   Future<void> downloadModuleData(int moduleId) async {
     try {
-      final data = await globalApi.getNomenclaturesAndDatasets();
+      // Fetch the module code using the provided module ID
+      final moduleCode = await database.getModuleCodeFromIdModule(moduleId);
+
+      final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
       // Process nomenclatures
       final nomenclatures = (data['nomenclatures'] as List<NomenclatureEntity>)

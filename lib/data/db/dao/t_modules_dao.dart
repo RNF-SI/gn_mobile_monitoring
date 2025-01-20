@@ -36,4 +36,17 @@ class TModulesDao extends DatabaseAccessor<AppDatabase>
       throw Exception("Failed to clear modules: ${e.toString()}");
     }
   }
+
+  // New method to fetch a module by its ID
+  Future<TModule> getModuleById(int moduleId) async {
+    final query = select(tModules)
+      ..where((tbl) => tbl.idModule.equals(moduleId));
+    final result = await query.getSingleOrNull();
+
+    if (result == null) {
+      throw Exception("Module with ID $moduleId not found");
+    }
+
+    return result;
+  }
 }
