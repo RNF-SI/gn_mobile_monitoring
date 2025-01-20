@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
@@ -52,16 +53,10 @@ class ModuleDownloadButton extends HookConsumerWidget {
               .stopDownloadModule(moduleInfo);
           break;
         case ModuleDownloadStatus.moduleDownloaded:
-          // ref
-          //     .read(corCyclePlacetteLocalStorageStatusStateNotifierProvider
-          //         .notifier)
-          //     .reinitializeList();
+          // Navigate to the ModuleDetailPage
           Navigator.push(context, MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return Container();
-              // return DispositifPage(
-              //   moduleInfo: moduleInfo,
-              // );
+              return ModuleDetailPage(moduleInfo: moduleInfo);
             },
           ));
           break;
@@ -71,7 +66,7 @@ class ModuleDownloadButton extends HookConsumerWidget {
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Download failed: No internet connection."),
+        content: Text("An error occurred: ${e.toString()}"),
       ));
     }
   }
