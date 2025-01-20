@@ -59,18 +59,19 @@ class UserModulesViewModel
 
   Future<void> loadModules() async {
     try {
-      // Fetch modules from the local database
       final modules = await _getModulesUseCase.execute();
 
-      // Map modules to ModuleInfo objects
-      final moduleInfos = modules
-          .map((module) => ModuleInfo(
-                module: module,
-                downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
-              ))
-          .toList();
+      // Fetch downloaded status for each module
+      final moduleInfos = modules.map((module) {
+        final downloaded = module.downloaded ?? false;
+        return ModuleInfo(
+          module: module,
+          downloadStatus: downloaded
+              ? ModuleDownloadStatus.moduleDownloaded
+              : ModuleDownloadStatus.moduleNotDownloaded,
+        );
+      }).toList();
 
-      // Update state
       state = custom_async_state.State.success(
           ModuleInfoListe(values: moduleInfos));
     } catch (e) {
