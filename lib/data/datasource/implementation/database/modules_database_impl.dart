@@ -61,6 +61,14 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     await db.modulesDao.updateModuleComplement(moduleComplement);
   }
 
+  @override
+  Future<void> updateModuleComplementConfiguration(
+      int moduleId, String configuration) async {
+    final db = await _database;
+    await db.modulesDao
+        .updateModuleComplementConfiguration(moduleId, configuration);
+  }
+
   // Combined operations
   @override
   Future<void> clearAllData() async {

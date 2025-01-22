@@ -84,6 +84,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
         .write(moduleComplement.toDatabaseEntity().toCompanion(true));
   }
 
+  Future<void> updateModuleComplementConfiguration(
+      int moduleId, String configuration) async {
+    await (update(tModuleComplements)
+          ..where((tbl) => tbl.idModule.equals(moduleId)))
+        .write(TModuleComplementsCompanion(
+      configuration: Value(configuration),
+    ));
+  }
+
   Future<void> deleteModuleComplement(int moduleId) async {
     await (delete(tModuleComplements)
           ..where((tbl) => tbl.idModule.equals(moduleId)))

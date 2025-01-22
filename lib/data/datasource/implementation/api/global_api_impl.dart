@@ -44,4 +44,22 @@ class GlobalApiImpl implements GlobalApi {
       throw Exception('Error fetching data for module $moduleName: $e');
     }
   }
+
+  @override
+  Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode) async {
+    try {
+      final response =
+          await _dio.get('$apiBase/monitorings/config/$moduleCode');
+
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception(
+            'Failed to fetch configuration for module $moduleCode. Status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception(
+          'Error fetching configuration for module $moduleCode: $e');
+    }
+  }
 }

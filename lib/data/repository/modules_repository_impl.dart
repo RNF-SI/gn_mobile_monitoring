@@ -53,9 +53,11 @@ class ModulesRepositoryImpl implements ModulesRepository {
   @override
   Future<void> downloadModuleData(int moduleId) async {
     try {
-      final moduleName = await database
+      final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
-      final data = await globalApi.getNomenclaturesAndDatasets(moduleName);
+
+      // Fetch nomenclatures and datasets
+      final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
       // Process nomenclatures
       final nomenclatures = (data['nomenclatures'] as List<NomenclatureEntity>)
@@ -72,6 +74,11 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       await datasetsDatabase.clearDatasets();
       await datasetsDatabase.insertDatasets(datasets);
+
+      // Fetch and store module configuration
+      final config = await globalApi.getModuleConfiguration(moduleCode);
+      await database.updateModuleComplementConfiguration(
+          moduleId, config.toString());
 
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);

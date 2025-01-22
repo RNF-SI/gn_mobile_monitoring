@@ -14,6 +14,8 @@ abstract class ModulesDatabase {
       List<ModuleComplement> moduleComplements);
   Future<ModuleComplement?> getModuleComplementById(int moduleId);
   Future<void> updateModuleComplement(ModuleComplement moduleComplement);
+  Future<void> updateModuleComplementConfiguration(
+      int moduleId, String configuration);
 
   // Combined operations
   Future<void> clearAllData();
