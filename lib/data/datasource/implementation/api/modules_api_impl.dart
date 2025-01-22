@@ -71,6 +71,7 @@ class ModulesApiImpl implements ModulesApi {
                   json['taxonomy_display_field_name'],
               'b_draw_sites_group': json['b_draw_sites_group'],
               'data': json['data'],
+              'configuration': json['configuration'],
             };
             moduleComplements
                 .add(ModuleComplementEntity.fromJson(complementJson));

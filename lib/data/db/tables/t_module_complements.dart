@@ -14,4 +14,5 @@ class TModuleComplements extends Table {
       text().withDefault(const Constant('nom_vern,lb_nom'))();
   BoolColumn get bDrawSitesGroup => boolean().nullable()();
   TextColumn get data => text().nullable()();
+  TextColumn get configuration => text().nullable()();
 }

@@ -7,6 +7,7 @@ class ModuleComplementEntity {
   final String taxonomyDisplayFieldName;
   final bool? bDrawSitesGroup;
   final String? data;
+  final String? configuration;
 
   ModuleComplementEntity({
     required this.idModule,
@@ -17,6 +18,7 @@ class ModuleComplementEntity {
     required this.taxonomyDisplayFieldName,
     this.bDrawSitesGroup,
     this.data,
+    this.configuration,
   });
 
   factory ModuleComplementEntity.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,7 @@ class ModuleComplementEntity {
       data: json['data'] is Map
           ? json['data'].toString()
           : json['data'] as String?,
+      configuration: json['configuration'] as String?,
     );
   }
 
@@ -45,6 +48,7 @@ class ModuleComplementEntity {
       'taxonomy_display_field_name': taxonomyDisplayFieldName,
       'b_draw_sites_group': bDrawSitesGroup,
       'data': data,
+      'configuration': configuration,
     };
   }
 }

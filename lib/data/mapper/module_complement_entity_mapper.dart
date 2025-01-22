@@ -12,6 +12,7 @@ extension ModuleComplementEntityMapper on ModuleComplementEntity {
       taxonomyDisplayFieldName: taxonomyDisplayFieldName,
       bDrawSitesGroup: bDrawSitesGroup,
       data: data,
+      configuration: configuration,
     );
   }
 }
@@ -23,10 +24,11 @@ extension DomainModuleComplementEntityMapper on ModuleComplement {
       uuidModuleComplement: uuidModuleComplement,
       idListObserver: idListObserver,
       idListTaxonomy: idListTaxonomy,
-      bSynthese: bSynthese ?? false,
-      taxonomyDisplayFieldName: taxonomyDisplayFieldName ?? '',
+      bSynthese: bSynthese,
+      taxonomyDisplayFieldName: taxonomyDisplayFieldName,
       bDrawSitesGroup: bDrawSitesGroup,
       data: data,
+      configuration: configuration,
     );
   }
 }

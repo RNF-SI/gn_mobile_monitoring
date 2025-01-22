@@ -3506,6 +3506,12 @@ class $TModuleComplementsTable extends TModuleComplements
   late final GeneratedColumn<String> data = GeneratedColumn<String>(
       'data', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _configurationMeta =
+      const VerificationMeta('configuration');
+  @override
+  late final GeneratedColumn<String> configuration = GeneratedColumn<String>(
+      'configuration', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idModule,
@@ -3515,7 +3521,8 @@ class $TModuleComplementsTable extends TModuleComplements
         bSynthese,
         taxonomyDisplayFieldName,
         bDrawSitesGroup,
-        data
+        data,
+        configuration
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3570,6 +3577,12 @@ class $TModuleComplementsTable extends TModuleComplements
       context.handle(
           _dataMeta, this.data.isAcceptableOrUnknown(data['data']!, _dataMeta));
     }
+    if (data.containsKey('configuration')) {
+      context.handle(
+          _configurationMeta,
+          configuration.isAcceptableOrUnknown(
+              data['configuration']!, _configurationMeta));
+    }
     return context;
   }
 
@@ -3597,6 +3610,8 @@ class $TModuleComplementsTable extends TModuleComplements
           DriftSqlType.bool, data['${effectivePrefix}b_draw_sites_group']),
       data: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}data']),
+      configuration: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}configuration']),
     );
   }
 
@@ -3616,6 +3631,7 @@ class TModuleComplement extends DataClass
   final String taxonomyDisplayFieldName;
   final bool? bDrawSitesGroup;
   final String? data;
+  final String? configuration;
   const TModuleComplement(
       {required this.idModule,
       this.uuidModuleComplement,
@@ -3624,7 +3640,8 @@ class TModuleComplement extends DataClass
       required this.bSynthese,
       required this.taxonomyDisplayFieldName,
       this.bDrawSitesGroup,
-      this.data});
+      this.data,
+      this.configuration});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3647,6 +3664,9 @@ class TModuleComplement extends DataClass
     if (!nullToAbsent || data != null) {
       map['data'] = Variable<String>(data);
     }
+    if (!nullToAbsent || configuration != null) {
+      map['configuration'] = Variable<String>(configuration);
+    }
     return map;
   }
 
@@ -3668,6 +3688,9 @@ class TModuleComplement extends DataClass
           ? const Value.absent()
           : Value(bDrawSitesGroup),
       data: data == null && nullToAbsent ? const Value.absent() : Value(data),
+      configuration: configuration == null && nullToAbsent
+          ? const Value.absent()
+          : Value(configuration),
     );
   }
 
@@ -3685,6 +3708,7 @@ class TModuleComplement extends DataClass
           serializer.fromJson<String>(json['taxonomyDisplayFieldName']),
       bDrawSitesGroup: serializer.fromJson<bool?>(json['bDrawSitesGroup']),
       data: serializer.fromJson<String?>(json['data']),
+      configuration: serializer.fromJson<String?>(json['configuration']),
     );
   }
   @override
@@ -3700,6 +3724,7 @@ class TModuleComplement extends DataClass
           serializer.toJson<String>(taxonomyDisplayFieldName),
       'bDrawSitesGroup': serializer.toJson<bool?>(bDrawSitesGroup),
       'data': serializer.toJson<String?>(data),
+      'configuration': serializer.toJson<String?>(configuration),
     };
   }
 
@@ -3711,7 +3736,8 @@ class TModuleComplement extends DataClass
           bool? bSynthese,
           String? taxonomyDisplayFieldName,
           Value<bool?> bDrawSitesGroup = const Value.absent(),
-          Value<String?> data = const Value.absent()}) =>
+          Value<String?> data = const Value.absent(),
+          Value<String?> configuration = const Value.absent()}) =>
       TModuleComplement(
         idModule: idModule ?? this.idModule,
         uuidModuleComplement: uuidModuleComplement.present
@@ -3728,6 +3754,8 @@ class TModuleComplement extends DataClass
             ? bDrawSitesGroup.value
             : this.bDrawSitesGroup,
         data: data.present ? data.value : this.data,
+        configuration:
+            configuration.present ? configuration.value : this.configuration,
       );
   TModuleComplement copyWithCompanion(TModuleComplementsCompanion data) {
     return TModuleComplement(
@@ -3749,6 +3777,9 @@ class TModuleComplement extends DataClass
           ? data.bDrawSitesGroup.value
           : this.bDrawSitesGroup,
       data: data.data.present ? data.data.value : this.data,
+      configuration: data.configuration.present
+          ? data.configuration.value
+          : this.configuration,
     );
   }
 
@@ -3762,7 +3793,8 @@ class TModuleComplement extends DataClass
           ..write('bSynthese: $bSynthese, ')
           ..write('taxonomyDisplayFieldName: $taxonomyDisplayFieldName, ')
           ..write('bDrawSitesGroup: $bDrawSitesGroup, ')
-          ..write('data: $data')
+          ..write('data: $data, ')
+          ..write('configuration: $configuration')
           ..write(')'))
         .toString();
   }
@@ -3776,7 +3808,8 @@ class TModuleComplement extends DataClass
       bSynthese,
       taxonomyDisplayFieldName,
       bDrawSitesGroup,
-      data);
+      data,
+      configuration);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3788,7 +3821,8 @@ class TModuleComplement extends DataClass
           other.bSynthese == this.bSynthese &&
           other.taxonomyDisplayFieldName == this.taxonomyDisplayFieldName &&
           other.bDrawSitesGroup == this.bDrawSitesGroup &&
-          other.data == this.data);
+          other.data == this.data &&
+          other.configuration == this.configuration);
 }
 
 class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
@@ -3800,6 +3834,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
   final Value<String> taxonomyDisplayFieldName;
   final Value<bool?> bDrawSitesGroup;
   final Value<String?> data;
+  final Value<String?> configuration;
   const TModuleComplementsCompanion({
     this.idModule = const Value.absent(),
     this.uuidModuleComplement = const Value.absent(),
@@ -3809,6 +3844,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
     this.taxonomyDisplayFieldName = const Value.absent(),
     this.bDrawSitesGroup = const Value.absent(),
     this.data = const Value.absent(),
+    this.configuration = const Value.absent(),
   });
   TModuleComplementsCompanion.insert({
     this.idModule = const Value.absent(),
@@ -3819,6 +3855,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
     this.taxonomyDisplayFieldName = const Value.absent(),
     this.bDrawSitesGroup = const Value.absent(),
     this.data = const Value.absent(),
+    this.configuration = const Value.absent(),
   });
   static Insertable<TModuleComplement> custom({
     Expression<int>? idModule,
@@ -3829,6 +3866,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
     Expression<String>? taxonomyDisplayFieldName,
     Expression<bool>? bDrawSitesGroup,
     Expression<String>? data,
+    Expression<String>? configuration,
   }) {
     return RawValuesInsertable({
       if (idModule != null) 'id_module': idModule,
@@ -3841,6 +3879,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
         'taxonomy_display_field_name': taxonomyDisplayFieldName,
       if (bDrawSitesGroup != null) 'b_draw_sites_group': bDrawSitesGroup,
       if (data != null) 'data': data,
+      if (configuration != null) 'configuration': configuration,
     });
   }
 
@@ -3852,7 +3891,8 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
       Value<bool>? bSynthese,
       Value<String>? taxonomyDisplayFieldName,
       Value<bool?>? bDrawSitesGroup,
-      Value<String?>? data}) {
+      Value<String?>? data,
+      Value<String?>? configuration}) {
     return TModuleComplementsCompanion(
       idModule: idModule ?? this.idModule,
       uuidModuleComplement: uuidModuleComplement ?? this.uuidModuleComplement,
@@ -3863,6 +3903,7 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
           taxonomyDisplayFieldName ?? this.taxonomyDisplayFieldName,
       bDrawSitesGroup: bDrawSitesGroup ?? this.bDrawSitesGroup,
       data: data ?? this.data,
+      configuration: configuration ?? this.configuration,
     );
   }
 
@@ -3895,6 +3936,9 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
     if (data.present) {
       map['data'] = Variable<String>(data.value);
     }
+    if (configuration.present) {
+      map['configuration'] = Variable<String>(configuration.value);
+    }
     return map;
   }
 
@@ -3908,7 +3952,8 @@ class TModuleComplementsCompanion extends UpdateCompanion<TModuleComplement> {
           ..write('bSynthese: $bSynthese, ')
           ..write('taxonomyDisplayFieldName: $taxonomyDisplayFieldName, ')
           ..write('bDrawSitesGroup: $bDrawSitesGroup, ')
-          ..write('data: $data')
+          ..write('data: $data, ')
+          ..write('configuration: $configuration')
           ..write(')'))
         .toString();
   }
@@ -9329,6 +9374,7 @@ typedef $$TModuleComplementsTableCreateCompanionBuilder
   Value<String> taxonomyDisplayFieldName,
   Value<bool?> bDrawSitesGroup,
   Value<String?> data,
+  Value<String?> configuration,
 });
 typedef $$TModuleComplementsTableUpdateCompanionBuilder
     = TModuleComplementsCompanion Function({
@@ -9340,6 +9386,7 @@ typedef $$TModuleComplementsTableUpdateCompanionBuilder
   Value<String> taxonomyDisplayFieldName,
   Value<bool?> bDrawSitesGroup,
   Value<String?> data,
+  Value<String?> configuration,
 });
 
 class $$TModuleComplementsTableFilterComposer
@@ -9379,6 +9426,9 @@ class $$TModuleComplementsTableFilterComposer
 
   ColumnFilters<String> get data => $composableBuilder(
       column: $table.data, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get configuration => $composableBuilder(
+      column: $table.configuration, builder: (column) => ColumnFilters(column));
 }
 
 class $$TModuleComplementsTableOrderingComposer
@@ -9418,6 +9468,10 @@ class $$TModuleComplementsTableOrderingComposer
 
   ColumnOrderings<String> get data => $composableBuilder(
       column: $table.data, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get configuration => $composableBuilder(
+      column: $table.configuration,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TModuleComplementsTableAnnotationComposer
@@ -9452,6 +9506,9 @@ class $$TModuleComplementsTableAnnotationComposer
 
   GeneratedColumn<String> get data =>
       $composableBuilder(column: $table.data, builder: (column) => column);
+
+  GeneratedColumn<String> get configuration => $composableBuilder(
+      column: $table.configuration, builder: (column) => column);
 }
 
 class $$TModuleComplementsTableTableManager extends RootTableManager<
@@ -9490,6 +9547,7 @@ class $$TModuleComplementsTableTableManager extends RootTableManager<
             Value<String> taxonomyDisplayFieldName = const Value.absent(),
             Value<bool?> bDrawSitesGroup = const Value.absent(),
             Value<String?> data = const Value.absent(),
+            Value<String?> configuration = const Value.absent(),
           }) =>
               TModuleComplementsCompanion(
             idModule: idModule,
@@ -9500,6 +9558,7 @@ class $$TModuleComplementsTableTableManager extends RootTableManager<
             taxonomyDisplayFieldName: taxonomyDisplayFieldName,
             bDrawSitesGroup: bDrawSitesGroup,
             data: data,
+            configuration: configuration,
           ),
           createCompanionCallback: ({
             Value<int> idModule = const Value.absent(),
@@ -9510,6 +9569,7 @@ class $$TModuleComplementsTableTableManager extends RootTableManager<
             Value<String> taxonomyDisplayFieldName = const Value.absent(),
             Value<bool?> bDrawSitesGroup = const Value.absent(),
             Value<String?> data = const Value.absent(),
+            Value<String?> configuration = const Value.absent(),
           }) =>
               TModuleComplementsCompanion.insert(
             idModule: idModule,
@@ -9520,6 +9580,7 @@ class $$TModuleComplementsTableTableManager extends RootTableManager<
             taxonomyDisplayFieldName: taxonomyDisplayFieldName,
             bDrawSitesGroup: bDrawSitesGroup,
             data: data,
+            configuration: configuration,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

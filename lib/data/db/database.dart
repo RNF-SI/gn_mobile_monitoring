@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
@@ -135,6 +136,8 @@ class AppDatabase extends _$AppDatabase {
           print("Migration 17 completed");
           await migration18(m, this);
           print("Migration 18 completed");
+          await migration19(m, this);
+          print("Migration 19 completed");
         },
         onUpgrade: (Migrator m, int from, int to) async {
           print("Upgrading database from $from to $to...");

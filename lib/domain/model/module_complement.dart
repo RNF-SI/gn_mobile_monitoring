@@ -13,5 +13,6 @@ class ModuleComplement with _$ModuleComplement {
     @Default('nom_vern,lb_nom') String taxonomyDisplayFieldName,
     bool? bDrawSitesGroup,
     String? data,
+    String? configuration,
   }) = _ModuleComplement;
 }

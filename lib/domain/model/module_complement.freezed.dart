@@ -24,6 +24,7 @@ mixin _$ModuleComplement {
   String get taxonomyDisplayFieldName => throw _privateConstructorUsedError;
   bool? get bDrawSitesGroup => throw _privateConstructorUsedError;
   String? get data => throw _privateConstructorUsedError;
+  String? get configuration => throw _privateConstructorUsedError;
 
   /// Create a copy of ModuleComplement
   /// with the given fields replaced by the non-null parameter values.
@@ -46,7 +47,8 @@ abstract class $ModuleComplementCopyWith<$Res> {
       bool bSynthese,
       String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
-      String? data});
+      String? data,
+      String? configuration});
 }
 
 /// @nodoc
@@ -72,6 +74,7 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
     Object? taxonomyDisplayFieldName = null,
     Object? bDrawSitesGroup = freezed,
     Object? data = freezed,
+    Object? configuration = freezed,
   }) {
     return _then(_value.copyWith(
       idModule: null == idModule
@@ -106,6 +109,10 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as String?,
+      configuration: freezed == configuration
+          ? _value.configuration
+          : configuration // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -126,7 +133,8 @@ abstract class _$$ModuleComplementImplCopyWith<$Res>
       bool bSynthese,
       String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
-      String? data});
+      String? data,
+      String? configuration});
 }
 
 /// @nodoc
@@ -150,6 +158,7 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
     Object? taxonomyDisplayFieldName = null,
     Object? bDrawSitesGroup = freezed,
     Object? data = freezed,
+    Object? configuration = freezed,
   }) {
     return _then(_$ModuleComplementImpl(
       idModule: null == idModule
@@ -184,6 +193,10 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as String?,
+      configuration: freezed == configuration
+          ? _value.configuration
+          : configuration // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -199,7 +212,8 @@ class _$ModuleComplementImpl implements _ModuleComplement {
       this.bSynthese = true,
       this.taxonomyDisplayFieldName = 'nom_vern,lb_nom',
       this.bDrawSitesGroup,
-      this.data});
+      this.data,
+      this.configuration});
 
   @override
   final int idModule;
@@ -219,10 +233,12 @@ class _$ModuleComplementImpl implements _ModuleComplement {
   final bool? bDrawSitesGroup;
   @override
   final String? data;
+  @override
+  final String? configuration;
 
   @override
   String toString() {
-    return 'ModuleComplement(idModule: $idModule, uuidModuleComplement: $uuidModuleComplement, idListObserver: $idListObserver, idListTaxonomy: $idListTaxonomy, bSynthese: $bSynthese, taxonomyDisplayFieldName: $taxonomyDisplayFieldName, bDrawSitesGroup: $bDrawSitesGroup, data: $data)';
+    return 'ModuleComplement(idModule: $idModule, uuidModuleComplement: $uuidModuleComplement, idListObserver: $idListObserver, idListTaxonomy: $idListTaxonomy, bSynthese: $bSynthese, taxonomyDisplayFieldName: $taxonomyDisplayFieldName, bDrawSitesGroup: $bDrawSitesGroup, data: $data, configuration: $configuration)';
   }
 
   @override
@@ -245,7 +261,9 @@ class _$ModuleComplementImpl implements _ModuleComplement {
                 other.taxonomyDisplayFieldName == taxonomyDisplayFieldName) &&
             (identical(other.bDrawSitesGroup, bDrawSitesGroup) ||
                 other.bDrawSitesGroup == bDrawSitesGroup) &&
-            (identical(other.data, data) || other.data == data));
+            (identical(other.data, data) || other.data == data) &&
+            (identical(other.configuration, configuration) ||
+                other.configuration == configuration));
   }
 
   @override
@@ -258,7 +276,8 @@ class _$ModuleComplementImpl implements _ModuleComplement {
       bSynthese,
       taxonomyDisplayFieldName,
       bDrawSitesGroup,
-      data);
+      data,
+      configuration);
 
   /// Create a copy of ModuleComplement
   /// with the given fields replaced by the non-null parameter values.
@@ -279,7 +298,8 @@ abstract class _ModuleComplement implements ModuleComplement {
       final bool bSynthese,
       final String taxonomyDisplayFieldName,
       final bool? bDrawSitesGroup,
-      final String? data}) = _$ModuleComplementImpl;
+      final String? data,
+      final String? configuration}) = _$ModuleComplementImpl;
 
   @override
   int get idModule;
@@ -297,6 +317,8 @@ abstract class _ModuleComplement implements ModuleComplement {
   bool? get bDrawSitesGroup;
   @override
   String? get data;
+  @override
+  String? get configuration;
 
   /// Create a copy of ModuleComplement
   /// with the given fields replaced by the non-null parameter values.
