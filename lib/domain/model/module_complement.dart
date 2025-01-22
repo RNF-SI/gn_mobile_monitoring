@@ -5,12 +5,12 @@ part 'module_complement.freezed.dart';
 @freezed
 class ModuleComplement with _$ModuleComplement {
   const factory ModuleComplement({
-    required int id,
+    required int idModule,
     String? uuidModuleComplement,
     int? idListObserver,
     int? idListTaxonomy,
-    bool? bSynthese,
-    String? taxonomyDisplayFieldName,
+    @Default(true) bool bSynthese,
+    @Default('nom_vern,lb_nom') String taxonomyDisplayFieldName,
     bool? bDrawSitesGroup,
     String? data,
   }) = _ModuleComplement;

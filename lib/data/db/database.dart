@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
-import 'package:gn_mobile_monitoring/data/db/dao/t_modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
@@ -68,7 +68,7 @@ part 'database.g.dart';
   CorSiteModules,
   CorObjectModules,
 ], daos: [
-  TModulesDao,
+  ModulesDao,
   TNomenclaturesDao,
   SitesDao,
   TDatasetsDao,

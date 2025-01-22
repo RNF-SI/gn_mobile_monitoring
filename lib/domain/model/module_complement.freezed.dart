@@ -16,12 +16,12 @@ final _privateConstructorUsedError = UnsupportedError(
 
 /// @nodoc
 mixin _$ModuleComplement {
-  int get id => throw _privateConstructorUsedError;
+  int get idModule => throw _privateConstructorUsedError;
   String? get uuidModuleComplement => throw _privateConstructorUsedError;
   int? get idListObserver => throw _privateConstructorUsedError;
   int? get idListTaxonomy => throw _privateConstructorUsedError;
-  bool? get bSynthese => throw _privateConstructorUsedError;
-  String? get taxonomyDisplayFieldName => throw _privateConstructorUsedError;
+  bool get bSynthese => throw _privateConstructorUsedError;
+  String get taxonomyDisplayFieldName => throw _privateConstructorUsedError;
   bool? get bDrawSitesGroup => throw _privateConstructorUsedError;
   String? get data => throw _privateConstructorUsedError;
 
@@ -39,12 +39,12 @@ abstract class $ModuleComplementCopyWith<$Res> {
       _$ModuleComplementCopyWithImpl<$Res, ModuleComplement>;
   @useResult
   $Res call(
-      {int id,
+      {int idModule,
       String? uuidModuleComplement,
       int? idListObserver,
       int? idListTaxonomy,
-      bool? bSynthese,
-      String? taxonomyDisplayFieldName,
+      bool bSynthese,
+      String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
       String? data});
 }
@@ -64,19 +64,19 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? idModule = null,
     Object? uuidModuleComplement = freezed,
     Object? idListObserver = freezed,
     Object? idListTaxonomy = freezed,
-    Object? bSynthese = freezed,
-    Object? taxonomyDisplayFieldName = freezed,
+    Object? bSynthese = null,
+    Object? taxonomyDisplayFieldName = null,
     Object? bDrawSitesGroup = freezed,
     Object? data = freezed,
   }) {
     return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
+      idModule: null == idModule
+          ? _value.idModule
+          : idModule // ignore: cast_nullable_to_non_nullable
               as int,
       uuidModuleComplement: freezed == uuidModuleComplement
           ? _value.uuidModuleComplement
@@ -90,14 +90,14 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
           ? _value.idListTaxonomy
           : idListTaxonomy // ignore: cast_nullable_to_non_nullable
               as int?,
-      bSynthese: freezed == bSynthese
+      bSynthese: null == bSynthese
           ? _value.bSynthese
           : bSynthese // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      taxonomyDisplayFieldName: freezed == taxonomyDisplayFieldName
+              as bool,
+      taxonomyDisplayFieldName: null == taxonomyDisplayFieldName
           ? _value.taxonomyDisplayFieldName
           : taxonomyDisplayFieldName // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
       bDrawSitesGroup: freezed == bDrawSitesGroup
           ? _value.bDrawSitesGroup
           : bDrawSitesGroup // ignore: cast_nullable_to_non_nullable
@@ -119,12 +119,12 @@ abstract class _$$ModuleComplementImplCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {int id,
+      {int idModule,
       String? uuidModuleComplement,
       int? idListObserver,
       int? idListTaxonomy,
-      bool? bSynthese,
-      String? taxonomyDisplayFieldName,
+      bool bSynthese,
+      String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
       String? data});
 }
@@ -142,19 +142,19 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
   @pragma('vm:prefer-inline')
   @override
   $Res call({
-    Object? id = null,
+    Object? idModule = null,
     Object? uuidModuleComplement = freezed,
     Object? idListObserver = freezed,
     Object? idListTaxonomy = freezed,
-    Object? bSynthese = freezed,
-    Object? taxonomyDisplayFieldName = freezed,
+    Object? bSynthese = null,
+    Object? taxonomyDisplayFieldName = null,
     Object? bDrawSitesGroup = freezed,
     Object? data = freezed,
   }) {
     return _then(_$ModuleComplementImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
+      idModule: null == idModule
+          ? _value.idModule
+          : idModule // ignore: cast_nullable_to_non_nullable
               as int,
       uuidModuleComplement: freezed == uuidModuleComplement
           ? _value.uuidModuleComplement
@@ -168,14 +168,14 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
           ? _value.idListTaxonomy
           : idListTaxonomy // ignore: cast_nullable_to_non_nullable
               as int?,
-      bSynthese: freezed == bSynthese
+      bSynthese: null == bSynthese
           ? _value.bSynthese
           : bSynthese // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      taxonomyDisplayFieldName: freezed == taxonomyDisplayFieldName
+              as bool,
+      taxonomyDisplayFieldName: null == taxonomyDisplayFieldName
           ? _value.taxonomyDisplayFieldName
           : taxonomyDisplayFieldName // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as String,
       bDrawSitesGroup: freezed == bDrawSitesGroup
           ? _value.bDrawSitesGroup
           : bDrawSitesGroup // ignore: cast_nullable_to_non_nullable
@@ -192,17 +192,17 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
 
 class _$ModuleComplementImpl implements _ModuleComplement {
   const _$ModuleComplementImpl(
-      {required this.id,
+      {required this.idModule,
       this.uuidModuleComplement,
       this.idListObserver,
       this.idListTaxonomy,
-      this.bSynthese,
-      this.taxonomyDisplayFieldName,
+      this.bSynthese = true,
+      this.taxonomyDisplayFieldName = 'nom_vern,lb_nom',
       this.bDrawSitesGroup,
       this.data});
 
   @override
-  final int id;
+  final int idModule;
   @override
   final String? uuidModuleComplement;
   @override
@@ -210,9 +210,11 @@ class _$ModuleComplementImpl implements _ModuleComplement {
   @override
   final int? idListTaxonomy;
   @override
-  final bool? bSynthese;
+  @JsonKey()
+  final bool bSynthese;
   @override
-  final String? taxonomyDisplayFieldName;
+  @JsonKey()
+  final String taxonomyDisplayFieldName;
   @override
   final bool? bDrawSitesGroup;
   @override
@@ -220,7 +222,7 @@ class _$ModuleComplementImpl implements _ModuleComplement {
 
   @override
   String toString() {
-    return 'ModuleComplement(id: $id, uuidModuleComplement: $uuidModuleComplement, idListObserver: $idListObserver, idListTaxonomy: $idListTaxonomy, bSynthese: $bSynthese, taxonomyDisplayFieldName: $taxonomyDisplayFieldName, bDrawSitesGroup: $bDrawSitesGroup, data: $data)';
+    return 'ModuleComplement(idModule: $idModule, uuidModuleComplement: $uuidModuleComplement, idListObserver: $idListObserver, idListTaxonomy: $idListTaxonomy, bSynthese: $bSynthese, taxonomyDisplayFieldName: $taxonomyDisplayFieldName, bDrawSitesGroup: $bDrawSitesGroup, data: $data)';
   }
 
   @override
@@ -228,7 +230,8 @@ class _$ModuleComplementImpl implements _ModuleComplement {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$ModuleComplementImpl &&
-            (identical(other.id, id) || other.id == id) &&
+            (identical(other.idModule, idModule) ||
+                other.idModule == idModule) &&
             (identical(other.uuidModuleComplement, uuidModuleComplement) ||
                 other.uuidModuleComplement == uuidModuleComplement) &&
             (identical(other.idListObserver, idListObserver) ||
@@ -248,7 +251,7 @@ class _$ModuleComplementImpl implements _ModuleComplement {
   @override
   int get hashCode => Object.hash(
       runtimeType,
-      id,
+      idModule,
       uuidModuleComplement,
       idListObserver,
       idListTaxonomy,
@@ -269,17 +272,17 @@ class _$ModuleComplementImpl implements _ModuleComplement {
 
 abstract class _ModuleComplement implements ModuleComplement {
   const factory _ModuleComplement(
-      {required final int id,
+      {required final int idModule,
       final String? uuidModuleComplement,
       final int? idListObserver,
       final int? idListTaxonomy,
-      final bool? bSynthese,
-      final String? taxonomyDisplayFieldName,
+      final bool bSynthese,
+      final String taxonomyDisplayFieldName,
       final bool? bDrawSitesGroup,
       final String? data}) = _$ModuleComplementImpl;
 
   @override
-  int get id;
+  int get idModule;
   @override
   String? get uuidModuleComplement;
   @override
@@ -287,9 +290,9 @@ abstract class _ModuleComplement implements ModuleComplement {
   @override
   int? get idListTaxonomy;
   @override
-  bool? get bSynthese;
+  bool get bSynthese;
   @override
-  String? get taxonomyDisplayFieldName;
+  String get taxonomyDisplayFieldName;
   @override
   bool? get bDrawSitesGroup;
   @override

@@ -7867,7 +7867,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CorSiteModulesTable corSiteModules = $CorSiteModulesTable(this);
   late final $CorObjectModulesTable corObjectModules =
       $CorObjectModulesTable(this);
-  late final TModulesDao tModulesDao = TModulesDao(this as AppDatabase);
+  late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
   late final SitesDao sitesDao = SitesDao(this as AppDatabase);

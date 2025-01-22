@@ -9,31 +9,31 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   @override
   Future<void> clearModules() async {
     final db = await _database;
-    await db.tModulesDao.clearModules();
+    await db.modulesDao.clearModules();
   }
 
   @override
   Future<void> insertModules(List<Module> modules) async {
     final db = await _database;
-    await db.tModulesDao.insertModules(modules);
+    await db.modulesDao.insertModules(modules);
   }
 
   @override
   Future<List<Module>> getAllModules() async {
     final db = await _database;
-    return await db.tModulesDao.getAllModules();
+    return await db.modulesDao.getAllModules();
   }
 
   @override
   Future<String> getModuleCodeFromIdModule(int moduleId) async {
     final db = await _database;
-    final module = await db.tModulesDao.getModuleById(moduleId);
+    final module = await db.modulesDao.getModuleById(moduleId);
     return module.moduleCode ?? ''; // Ensure non-null string
   }
 
   @override
   Future<void> markModuleAsDownloaded(int moduleId) async {
     final db = await _database;
-    await db.tModulesDao.markModuleAsDownloaded(moduleId);
+    await db.modulesDao.markModuleAsDownloaded(moduleId);
   }
 }

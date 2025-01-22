@@ -1,15 +1,17 @@
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/data/db/mapper/t_module_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 
-part 't_modules_dao.g.dart'; // Updated file name
+part 'modules_dao.g.dart'; // Updated file name
 
-@DriftAccessor(tables: [TModules])
-class TModulesDao extends DatabaseAccessor<AppDatabase>
-    with _$TModulesDaoMixin {
-  TModulesDao(super.db);
+@DriftAccessor(tables: [TModules, TModuleComplements])
+class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
+  ModulesDao(super.db);
 
   Future<List<Module>> getAllModules() async {
     final dbModules = await select(tModules).get();
@@ -62,5 +64,45 @@ class TModulesDao extends DatabaseAccessor<AppDatabase>
           ..where((tbl) => tbl.downloaded.equals(true)))
         .get();
     return dbModules.map((e) => e.toDomain()).toList();
+  }
+
+  // Module Complement operations
+  Future<ModuleComplement?> getModuleComplementById(int moduleId) async {
+    final query = select(tModuleComplements)
+      ..where((tbl) => tbl.idModule.equals(moduleId));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
+  }
+
+  Future<void> insertModuleComplement(ModuleComplement moduleComplement) async {
+    await into(tModuleComplements).insert(moduleComplement.toDatabaseEntity());
+  }
+
+  Future<void> updateModuleComplement(ModuleComplement moduleComplement) async {
+    await (update(tModuleComplements)
+          ..where((tbl) => tbl.idModule.equals(moduleComplement.idModule)))
+        .write(moduleComplement.toDatabaseEntity().toCompanion(true));
+  }
+
+  Future<void> deleteModuleComplement(int moduleId) async {
+    await (delete(tModuleComplements)
+          ..where((tbl) => tbl.idModule.equals(moduleId)))
+        .go();
+  }
+
+  // Combined operations
+  Future<void> deleteModuleWithComplement(int moduleId) async {
+    await transaction(() async {
+      await deleteModuleComplement(moduleId);
+      await (delete(tModules)..where((tbl) => tbl.idModule.equals(moduleId)))
+          .go();
+    });
+  }
+
+  Future<void> clearAllData() async {
+    await transaction(() async {
+      await delete(tModuleComplements).go();
+      await delete(tModules).go();
+    });
   }
 }
