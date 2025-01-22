@@ -29,7 +29,9 @@ class ModuleComplementEntity {
       taxonomyDisplayFieldName:
           json['taxonomy_display_field_name'] as String? ?? 'nom_vern,lb_nom',
       bDrawSitesGroup: json['b_draw_sites_group'] as bool?,
-      data: json['data'] as String?,
+      data: json['data'] is Map
+          ? json['data'].toString()
+          : json['data'] as String?,
     );
   }
 

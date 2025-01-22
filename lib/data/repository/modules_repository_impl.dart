@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomencla
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/data/mapper/module_complement_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
@@ -30,13 +31,20 @@ class ModulesRepositoryImpl implements ModulesRepository {
   @override
   Future<void> fetchAndSyncModulesFromApi(String token) async {
     try {
-      // Fetch from API, map to domain models
-      final apiModules = await api.getModules(token);
-      final modules = apiModules.map((e) => e.toDomain()).toList();
+      // Fetch both modules and complements from API
+      final (apiModules, apiModuleComplements) = await api.getModules(token);
 
-      // Clear existing database entries and insert new data
-      await database.clearModules();
+      // Map to domain models
+      final modules = apiModules.map((e) => e.toDomain()).toList();
+      final moduleComplements =
+          apiModuleComplements.map((e) => e.toDomain()).toList();
+
+      // Clear existing database entries
+      await database.clearAllData();
+
+      // Insert new data
       await database.insertModules(modules);
+      await database.insertModuleComplements(moduleComplements);
     } catch (e) {
       throw Exception("Failed to sync modules: ${e.toString()}");
     }

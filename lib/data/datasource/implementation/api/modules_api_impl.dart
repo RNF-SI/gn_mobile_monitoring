@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
+import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 
 class ModulesApiImpl implements ModulesApi {
@@ -14,7 +15,8 @@ class ModulesApiImpl implements ModulesApi {
         ));
 
   @override
-  Future<List<ModuleEntity>> getModules(String token) async {
+  Future<(List<ModuleEntity>, List<ModuleComplementEntity>)> getModules(
+      String token) async {
     try {
       // Ajouter le token dans les headers
       final response = await _dio.get(
@@ -29,10 +31,52 @@ class ModulesApiImpl implements ModulesApi {
       if (response.statusCode == 200) {
         final data = response.data;
         if (data is List) {
-          return data
-              .map(
-                  (json) => ModuleEntity.fromJson(json as Map<String, dynamic>))
-              .toList();
+          final modules = <ModuleEntity>[];
+          final moduleComplements = <ModuleComplementEntity>[];
+
+          for (var item in data) {
+            final json = item as Map<String, dynamic>;
+
+            // Extract module data
+            final moduleJson = {
+              'id_module': json['id_module'],
+              'module_code': json['module_code'],
+              'module_label': json['module_label'],
+              'module_picto': json['module_picto'],
+              'module_desc': json['module_desc'],
+              'module_group': json['module_group'],
+              'module_path': json['module_path'],
+              'module_external_url': json['module_external_url'],
+              'module_target': json['module_target'],
+              'module_comment': json['module_comment'],
+              'active_frontend': json['active_frontend'],
+              'active_backend': json['active_backend'],
+              'module_doc_url': json['module_doc_url'],
+              'module_order': json['module_order'],
+              'ng_module': json['ng_module'],
+              'meta_create_date': json['meta_create_date'],
+              'meta_update_date': json['meta_update_date'],
+              'cruved': json['cruved'],
+            };
+            modules.add(ModuleEntity.fromJson(moduleJson));
+
+            // Extract module complement data
+            final complementJson = {
+              'id_module': json['id_module'],
+              'uuid_module_complement': json['uuid_module_complement'],
+              'id_list_observer': json['id_list_observer'],
+              'id_list_taxonomy': json['id_list_taxonomy'],
+              'b_synthese': json['b_synthese'],
+              'taxonomy_display_field_name':
+                  json['taxonomy_display_field_name'],
+              'b_draw_sites_group': json['b_draw_sites_group'],
+              'data': json['data'],
+            };
+            moduleComplements
+                .add(ModuleComplementEntity.fromJson(complementJson));
+          }
+
+          return (modules, moduleComplements);
         } else {
           throw Exception('Unexpected response format: not a List');
         }
