@@ -81,4 +81,41 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     await db.modulesDao.deleteModuleWithComplement(moduleId);
   }
+
+  @override
+  Future<void> clearCorSiteModules(int moduleId) async {
+    final db = await _database;
+    await db.modulesDao.clearCorSiteModule(moduleId);
+  }
+
+  @override
+  Future<void> insertCorSiteModules(List<CorSiteModule> sites) async {
+    final db = await _database;
+    await db.modulesDao.insertCorSiteModule(sites);
+  }
+
+  @override
+  Future<void> clearCorSitesGroupModules(int moduleId) async {
+    final db = await _database;
+    await db.modulesDao.clearCorSitesGroupModules(moduleId);
+  }
+
+  @override
+  Future<void> insertCorSitesGroupModules(
+      List<CorSitesGroupModule> siteGroups) async {
+    final db = await _database;
+    await db.modulesDao.insertCorSitesGroupModules(siteGroups);
+  }
+
+  @override
+  Future<Module?> getModuleById(int moduleId) {
+    // TODO: implement getModuleById
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<Module>> getModules() {
+    // TODO: implement getModules
+    throw UnimplementedError();
+  }
 }

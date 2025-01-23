@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 
@@ -20,4 +21,15 @@ abstract class ModulesDatabase {
   // Combined operations
   Future<void> clearAllData();
   Future<void> deleteModuleWithComplement(int moduleId);
+
+  // CorSiteModule operations
+  Future<void> clearCorSiteModules(int moduleId);
+  Future<void> insertCorSiteModules(List<CorSiteModule> sites);
+
+  // CorSitesGroupModule operations
+  Future<void> clearCorSitesGroupModules(int moduleId);
+  Future<void> insertCorSitesGroupModules(List<CorSitesGroupModule> siteGroups);
+
+  Future<List<Module>> getModules();
+  Future<Module?> getModuleById(int moduleId);
 }
