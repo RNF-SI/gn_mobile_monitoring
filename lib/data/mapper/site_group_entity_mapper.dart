@@ -12,7 +12,7 @@ extension SiteGroupEntityMapper on SiteGroupEntity {
       sitesGroupDescription: sitesGroupDescription,
       uuidSitesGroup: uuidSitesGroup,
       comments: comments,
-      data: data != null ? jsonEncode(data) : null, // Convert Map to String
+      data: data != null ? jsonEncode(data) : null,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       idDigitiser: idDigitiser,
@@ -23,7 +23,7 @@ extension SiteGroupEntityMapper on SiteGroupEntity {
   }
 }
 
-extension SiteGroupMapper on SiteGroup {
+extension DomainSiteGroupEntityMapper on SiteGroup {
   SiteGroupEntity toEntity() {
     return SiteGroupEntity(
       idSitesGroup: idSitesGroup,
@@ -32,9 +32,7 @@ extension SiteGroupMapper on SiteGroup {
       sitesGroupDescription: sitesGroupDescription,
       uuidSitesGroup: uuidSitesGroup,
       comments: comments,
-      data: data != null
-          ? jsonDecode(data!) as Map<String, dynamic>
-          : null, // Convert String to Map
+      data: data != null ? jsonDecode(data!) as Map<String, dynamic> : null,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       idDigitiser: idDigitiser,
