@@ -7655,6 +7655,207 @@ class CorSiteModulesCompanion extends UpdateCompanion<CorSiteModule> {
   }
 }
 
+class $CorSitesGroupModulesTable extends CorSitesGroupModules
+    with TableInfo<$CorSitesGroupModulesTable, CorSitesGroupModule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorSitesGroupModulesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idSitesGroupMeta =
+      const VerificationMeta('idSitesGroup');
+  @override
+  late final GeneratedColumn<int> idSitesGroup = GeneratedColumn<int>(
+      'id_sites_group', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idModuleMeta =
+      const VerificationMeta('idModule');
+  @override
+  late final GeneratedColumn<int> idModule = GeneratedColumn<int>(
+      'id_module', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [idSitesGroup, idModule];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cor_sites_group_modules';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CorSitesGroupModule> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_sites_group')) {
+      context.handle(
+          _idSitesGroupMeta,
+          idSitesGroup.isAcceptableOrUnknown(
+              data['id_sites_group']!, _idSitesGroupMeta));
+    } else if (isInserting) {
+      context.missing(_idSitesGroupMeta);
+    }
+    if (data.containsKey('id_module')) {
+      context.handle(_idModuleMeta,
+          idModule.isAcceptableOrUnknown(data['id_module']!, _idModuleMeta));
+    } else if (isInserting) {
+      context.missing(_idModuleMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idSitesGroup, idModule};
+  @override
+  CorSitesGroupModule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorSitesGroupModule(
+      idSitesGroup: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_sites_group'])!,
+      idModule: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_module'])!,
+    );
+  }
+
+  @override
+  $CorSitesGroupModulesTable createAlias(String alias) {
+    return $CorSitesGroupModulesTable(attachedDatabase, alias);
+  }
+}
+
+class CorSitesGroupModule extends DataClass
+    implements Insertable<CorSitesGroupModule> {
+  final int idSitesGroup;
+  final int idModule;
+  const CorSitesGroupModule(
+      {required this.idSitesGroup, required this.idModule});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_sites_group'] = Variable<int>(idSitesGroup);
+    map['id_module'] = Variable<int>(idModule);
+    return map;
+  }
+
+  CorSitesGroupModulesCompanion toCompanion(bool nullToAbsent) {
+    return CorSitesGroupModulesCompanion(
+      idSitesGroup: Value(idSitesGroup),
+      idModule: Value(idModule),
+    );
+  }
+
+  factory CorSitesGroupModule.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorSitesGroupModule(
+      idSitesGroup: serializer.fromJson<int>(json['idSitesGroup']),
+      idModule: serializer.fromJson<int>(json['idModule']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idSitesGroup': serializer.toJson<int>(idSitesGroup),
+      'idModule': serializer.toJson<int>(idModule),
+    };
+  }
+
+  CorSitesGroupModule copyWith({int? idSitesGroup, int? idModule}) =>
+      CorSitesGroupModule(
+        idSitesGroup: idSitesGroup ?? this.idSitesGroup,
+        idModule: idModule ?? this.idModule,
+      );
+  CorSitesGroupModule copyWithCompanion(CorSitesGroupModulesCompanion data) {
+    return CorSitesGroupModule(
+      idSitesGroup: data.idSitesGroup.present
+          ? data.idSitesGroup.value
+          : this.idSitesGroup,
+      idModule: data.idModule.present ? data.idModule.value : this.idModule,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorSitesGroupModule(')
+          ..write('idSitesGroup: $idSitesGroup, ')
+          ..write('idModule: $idModule')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(idSitesGroup, idModule);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorSitesGroupModule &&
+          other.idSitesGroup == this.idSitesGroup &&
+          other.idModule == this.idModule);
+}
+
+class CorSitesGroupModulesCompanion
+    extends UpdateCompanion<CorSitesGroupModule> {
+  final Value<int> idSitesGroup;
+  final Value<int> idModule;
+  final Value<int> rowid;
+  const CorSitesGroupModulesCompanion({
+    this.idSitesGroup = const Value.absent(),
+    this.idModule = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorSitesGroupModulesCompanion.insert({
+    required int idSitesGroup,
+    required int idModule,
+    this.rowid = const Value.absent(),
+  })  : idSitesGroup = Value(idSitesGroup),
+        idModule = Value(idModule);
+  static Insertable<CorSitesGroupModule> custom({
+    Expression<int>? idSitesGroup,
+    Expression<int>? idModule,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (idSitesGroup != null) 'id_sites_group': idSitesGroup,
+      if (idModule != null) 'id_module': idModule,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorSitesGroupModulesCompanion copyWith(
+      {Value<int>? idSitesGroup, Value<int>? idModule, Value<int>? rowid}) {
+    return CorSitesGroupModulesCompanion(
+      idSitesGroup: idSitesGroup ?? this.idSitesGroup,
+      idModule: idModule ?? this.idModule,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idSitesGroup.present) {
+      map['id_sites_group'] = Variable<int>(idSitesGroup.value);
+    }
+    if (idModule.present) {
+      map['id_module'] = Variable<int>(idModule.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorSitesGroupModulesCompanion(')
+          ..write('idSitesGroup: $idSitesGroup, ')
+          ..write('idModule: $idModule, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CorObjectModulesTable extends CorObjectModules
     with TableInfo<$CorObjectModulesTable, CorObjectModule> {
   @override
@@ -7910,6 +8111,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $TPermissionsAvailableTable(this);
   late final $TPermissionsTable tPermissions = $TPermissionsTable(this);
   late final $CorSiteModulesTable corSiteModules = $CorSiteModulesTable(this);
+  late final $CorSitesGroupModulesTable corSitesGroupModules =
+      $CorSitesGroupModulesTable(this);
   late final $CorObjectModulesTable corObjectModules =
       $CorObjectModulesTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
@@ -7939,6 +8142,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tPermissionsAvailable,
         tPermissions,
         corSiteModules,
+        corSitesGroupModules,
         corObjectModules
       ];
 }
@@ -11606,6 +11810,141 @@ typedef $$CorSiteModulesTableProcessedTableManager = ProcessedTableManager<
     ),
     CorSiteModule,
     PrefetchHooks Function()>;
+typedef $$CorSitesGroupModulesTableCreateCompanionBuilder
+    = CorSitesGroupModulesCompanion Function({
+  required int idSitesGroup,
+  required int idModule,
+  Value<int> rowid,
+});
+typedef $$CorSitesGroupModulesTableUpdateCompanionBuilder
+    = CorSitesGroupModulesCompanion Function({
+  Value<int> idSitesGroup,
+  Value<int> idModule,
+  Value<int> rowid,
+});
+
+class $$CorSitesGroupModulesTableFilterComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
+  $$CorSitesGroupModulesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idSitesGroup => $composableBuilder(
+      column: $table.idSitesGroup, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnFilters(column));
+}
+
+class $$CorSitesGroupModulesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
+  $$CorSitesGroupModulesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idSitesGroup => $composableBuilder(
+      column: $table.idSitesGroup,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CorSitesGroupModulesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
+  $$CorSitesGroupModulesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idSitesGroup => $composableBuilder(
+      column: $table.idSitesGroup, builder: (column) => column);
+
+  GeneratedColumn<int> get idModule =>
+      $composableBuilder(column: $table.idModule, builder: (column) => column);
+}
+
+class $$CorSitesGroupModulesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CorSitesGroupModulesTable,
+    CorSitesGroupModule,
+    $$CorSitesGroupModulesTableFilterComposer,
+    $$CorSitesGroupModulesTableOrderingComposer,
+    $$CorSitesGroupModulesTableAnnotationComposer,
+    $$CorSitesGroupModulesTableCreateCompanionBuilder,
+    $$CorSitesGroupModulesTableUpdateCompanionBuilder,
+    (
+      CorSitesGroupModule,
+      BaseReferences<_$AppDatabase, $CorSitesGroupModulesTable,
+          CorSitesGroupModule>
+    ),
+    CorSitesGroupModule,
+    PrefetchHooks Function()> {
+  $$CorSitesGroupModulesTableTableManager(
+      _$AppDatabase db, $CorSitesGroupModulesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorSitesGroupModulesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorSitesGroupModulesTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorSitesGroupModulesTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idSitesGroup = const Value.absent(),
+            Value<int> idModule = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorSitesGroupModulesCompanion(
+            idSitesGroup: idSitesGroup,
+            idModule: idModule,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int idSitesGroup,
+            required int idModule,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorSitesGroupModulesCompanion.insert(
+            idSitesGroup: idSitesGroup,
+            idModule: idModule,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CorSitesGroupModulesTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CorSitesGroupModulesTable,
+        CorSitesGroupModule,
+        $$CorSitesGroupModulesTableFilterComposer,
+        $$CorSitesGroupModulesTableOrderingComposer,
+        $$CorSitesGroupModulesTableAnnotationComposer,
+        $$CorSitesGroupModulesTableCreateCompanionBuilder,
+        $$CorSitesGroupModulesTableUpdateCompanionBuilder,
+        (
+          CorSitesGroupModule,
+          BaseReferences<_$AppDatabase, $CorSitesGroupModulesTable,
+              CorSitesGroupModule>
+        ),
+        CorSitesGroupModule,
+        PrefetchHooks Function()>;
 typedef $$CorObjectModulesTableCreateCompanionBuilder
     = CorObjectModulesCompanion Function({
   Value<int> idCorObjectModule,
@@ -11785,6 +12124,8 @@ class $AppDatabaseManager {
       $$TPermissionsTableTableManager(_db, _db.tPermissions);
   $$CorSiteModulesTableTableManager get corSiteModules =>
       $$CorSiteModulesTableTableManager(_db, _db.corSiteModules);
+  $$CorSitesGroupModulesTableTableManager get corSitesGroupModules =>
+      $$CorSitesGroupModulesTableTableManager(_db, _db.corSitesGroupModules);
   $$CorObjectModulesTableTableManager get corObjectModules =>
       $$CorObjectModulesTableTableManager(_db, _db.corObjectModules);
 }
