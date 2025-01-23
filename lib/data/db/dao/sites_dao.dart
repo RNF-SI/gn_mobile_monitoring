@@ -7,7 +7,6 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
-import 'package:gn_mobile_monitoring/domain/model/site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
@@ -92,7 +91,7 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     }
   }
 
-  Future<List<Site>> getSitesForModule(int moduleId) async {
+  Future<List<BaseSite>> getSitesForModule(int moduleId) async {
     // TODO: Implement this
     return [];
   }
