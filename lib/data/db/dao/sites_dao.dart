@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
@@ -89,5 +90,16 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     } catch (e) {
       throw Exception("Failed to clear site groups: ${e.toString()}");
     }
+  }
+
+  Future<List<Site>> getSitesForModule(int moduleId) async {
+    // TODO: Implement this
+    return [];
+  }
+
+  // Fetch all site groups for a specific module
+  Future<List<SiteGroup>> getGroupsForModule(int moduleId) async {
+    // TODO: Implement this
+    return [];
   }
 }

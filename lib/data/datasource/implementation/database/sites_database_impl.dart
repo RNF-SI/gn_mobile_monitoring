@@ -2,6 +2,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
@@ -63,5 +64,17 @@ class SitesDatabaseImpl implements SitesDatabase {
   Future<List<SiteGroup>> getAllSiteGroups() async {
     final db = await _database;
     return await db.sitesDao.getAllGroups();
+  }
+
+  @override
+  Future<List<Site>> getSitesForModule(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getSitesForModule(moduleId);
+  }
+
+  @override
+  Future<List<SiteGroup>> getSiteGroupsForModule(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getGroupsForModule(moduleId);
   }
 }
