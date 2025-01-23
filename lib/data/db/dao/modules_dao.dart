@@ -2,6 +2,8 @@ import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
@@ -9,7 +11,12 @@ import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 
 part 'modules_dao.g.dart'; // Updated file name
 
-@DriftAccessor(tables: [TModules, TModuleComplements])
+@DriftAccessor(tables: [
+  TModules,
+  TModuleComplements,
+  CorSiteModules,
+  CorSitesGroupModules
+])
 class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   ModulesDao(super.db);
 
@@ -112,6 +119,56 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     await transaction(() async {
       await delete(tModuleComplements).go();
       await delete(tModules).go();
+    });
+  }
+
+  // Clear CorSiteModule
+  Future<void> clearCorSiteModule(int moduleId) async {
+    try {
+      await (delete(corSiteModules)..where((t) => t.idModule.equals(moduleId)))
+          .go();
+    } catch (e) {
+      throw Exception("Failed to clear module sites: ${e.toString()}");
+    }
+  }
+
+  // Insert CorSiteModule
+  Future<void> insertCorSiteModule(List<CorSiteModule> sites) async {
+    final dbEntities = sites
+        .map((e) => CorSiteModulesCompanion(
+              idBaseSite: Value(e.idBaseSite),
+              idModule: Value(e.idModule),
+            ))
+        .toList();
+
+    await batch((batch) {
+      batch.insertAll(corSiteModules, dbEntities);
+    });
+  }
+
+  // Clear module site groups
+  Future<void> clearCorSitesGroupModules(int moduleId) async {
+    try {
+      await (delete(corSitesGroupModules)
+            ..where((t) => t.idModule.equals(moduleId)))
+          .go();
+    } catch (e) {
+      throw Exception("Failed to clear module site groups: ${e.toString()}");
+    }
+  }
+
+  // Insert module site groups
+  Future<void> insertCorSitesGroupModules(
+      List<CorSitesGroupModule> siteGroups) async {
+    final dbEntities = siteGroups
+        .map((e) => CorSitesGroupModulesCompanion(
+              idSitesGroup: Value(e.idSitesGroup),
+              idModule: Value(e.idModule),
+            ))
+        .toList();
+
+    await batch((batch) {
+      batch.insertAll(corSitesGroupModules, dbEntities);
     });
   }
 }
