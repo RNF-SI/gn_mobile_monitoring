@@ -50,15 +50,14 @@ class SitesRepositoryImpl implements SitesRepository {
       // Get Module Id from moduleLabel using modules_database and create CorSitesGroupModule objects
       final corSitesGroupModules = await Future.wait(result.map(
         (e) async {
-          final module =
-              await modulesDatabase.getModuleIdByLabel(e.moduleLabel);
-          if (module != null) {
-            return SitesGroupModule(
-              idSitesGroup: e.siteGroup.idSitesGroup,
-              idModule: module.id,
-            );
-          }
-          return null;
+          // For each module label in moduleLabelList, get the module id and create SitesGroupModule objects
+          final modules = await Future.wait(e.moduleLabelList
+              .map((label) => modulesDatabase.getModuleIdByLabel(label)));
+
+          return modules.map((module) => SitesGroupModule(
+                idSitesGroup: e.siteGroup.idSitesGroup,
+                idModule: module!.id,
+              ));
         },
       )).then((list) => list.whereType<SitesGroupModule>().toList());
 
