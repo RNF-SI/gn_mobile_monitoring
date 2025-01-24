@@ -15,8 +15,12 @@ import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 part 'sites_dao.g.dart';
 
-@DriftAccessor(
-    tables: [TBaseSites, TSiteComplements, TSitesGroups, CorSitesGroupModules])
+@DriftAccessor(tables: [
+  TBaseSites,
+  TSiteComplements,
+  TSitesGroups,
+  CorSitesGroupModuleTable
+])
 class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   SitesDao(super.db);
 
@@ -109,13 +113,13 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   Future<void> insertSitesGroupModules(List<SitesGroupModule> modules) async {
     final dbEntities = modules.map((e) => e.toDatabaseEntity()).toList();
     await batch((batch) {
-      batch.insertAll(corSitesGroupModules, dbEntities);
+      batch.insertAll(corSitesGroupModuleTable, dbEntities);
     });
   }
 
   Future<void> clearSitesGroupModules() async {
     try {
-      await delete(corSitesGroupModules).go();
+      await delete(corSitesGroupModuleTable).go();
     } catch (e) {
       throw Exception("Failed to clear site group modules: ${e.toString()}");
     }

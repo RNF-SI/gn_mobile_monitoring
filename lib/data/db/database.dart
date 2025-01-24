@@ -67,9 +67,9 @@ part 'database.g.dart';
   TActions,
   TPermissionsAvailable,
   TPermissions,
-  CorSiteModules,
-  CorSitesGroupModules,
-  CorObjectModules,
+  CorSiteModuleTable,
+  CorSitesGroupModuleTable,
+  CorObjectModuleTable,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,

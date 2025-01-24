@@ -8,14 +8,15 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 part 'modules_dao.g.dart'; // Updated file name
 
 @DriftAccessor(tables: [
   TModules,
   TModuleComplements,
-  CorSiteModules,
-  CorSitesGroupModules
+  CorSiteModuleTable,
+  CorSitesGroupModuleTable
 ])
 class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   ModulesDao(super.db);
@@ -125,7 +126,8 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   // Clear CorSiteModule
   Future<void> clearCorSiteModule(int moduleId) async {
     try {
-      await (delete(corSiteModules)..where((t) => t.idModule.equals(moduleId)))
+      await (delete(corSiteModuleTable)
+            ..where((t) => t.idModule.equals(moduleId)))
           .go();
     } catch (e) {
       throw Exception("Failed to clear module sites: ${e.toString()}");
@@ -135,21 +137,21 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   // Insert CorSiteModule
   Future<void> insertCorSiteModule(List<CorSiteModule> sites) async {
     final dbEntities = sites
-        .map((e) => CorSiteModulesCompanion(
+        .map((e) => CorSiteModuleTableCompanion(
               idBaseSite: Value(e.idBaseSite),
               idModule: Value(e.idModule),
             ))
         .toList();
 
     await batch((batch) {
-      batch.insertAll(corSiteModules, dbEntities);
+      batch.insertAll(corSiteModuleTable, dbEntities);
     });
   }
 
   // Clear module site groups
-  Future<void> clearCorSitesGroupModules(int moduleId) async {
+  Future<void> clearSitesGroupModules(int moduleId) async {
     try {
-      await (delete(corSitesGroupModules)
+      await (delete(corSitesGroupModuleTable)
             ..where((t) => t.idModule.equals(moduleId)))
           .go();
     } catch (e) {
@@ -158,17 +160,17 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   }
 
   // Insert module site groups
-  Future<void> insertCorSitesGroupModules(
-      List<CorSitesGroupModule> siteGroups) async {
+  Future<void> insertSitesGroupModules(
+      List<SitesGroupModule> siteGroups) async {
     final dbEntities = siteGroups
-        .map((e) => CorSitesGroupModulesCompanion(
+        .map((e) => CorSitesGroupModuleTableCompanion(
               idSitesGroup: Value(e.idSitesGroup),
               idModule: Value(e.idModule),
             ))
         .toList();
 
     await batch((batch) {
-      batch.insertAll(corSitesGroupModules, dbEntities);
+      batch.insertAll(corSitesGroupModuleTable, dbEntities);
     });
   }
 

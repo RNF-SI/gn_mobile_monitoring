@@ -7,7 +7,8 @@ mixin _$ModulesDaoMixin on DatabaseAccessor<AppDatabase> {
   $TModulesTable get tModules => attachedDatabase.tModules;
   $TModuleComplementsTable get tModuleComplements =>
       attachedDatabase.tModuleComplements;
-  $CorSiteModulesTable get corSiteModules => attachedDatabase.corSiteModules;
-  $CorSitesGroupModulesTable get corSitesGroupModules =>
-      attachedDatabase.corSitesGroupModules;
+  $CorSiteModuleTableTable get corSiteModuleTable =>
+      attachedDatabase.corSiteModuleTable;
+  $CorSitesGroupModuleTableTable get corSitesGroupModuleTable =>
+      attachedDatabase.corSitesGroupModuleTable;
 }

@@ -7460,12 +7460,12 @@ class TPermissionsCompanion extends UpdateCompanion<TPermission> {
   }
 }
 
-class $CorSiteModulesTable extends CorSiteModules
-    with TableInfo<$CorSiteModulesTable, CorSiteModule> {
+class $CorSiteModuleTableTable extends CorSiteModuleTable
+    with TableInfo<$CorSiteModuleTableTable, CorSiteModule> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CorSiteModulesTable(this.attachedDatabase, [this._alias]);
+  $CorSiteModuleTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idBaseSiteMeta =
       const VerificationMeta('idBaseSite');
   @override
@@ -7484,7 +7484,7 @@ class $CorSiteModulesTable extends CorSiteModules
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'cor_site_modules';
+  static const String $name = 'cor_site_module_table';
   @override
   VerificationContext validateIntegrity(Insertable<CorSiteModule> instance,
       {bool isInserting = false}) {
@@ -7521,8 +7521,8 @@ class $CorSiteModulesTable extends CorSiteModules
   }
 
   @override
-  $CorSiteModulesTable createAlias(String alias) {
-    return $CorSiteModulesTable(attachedDatabase, alias);
+  $CorSiteModuleTableTable createAlias(String alias) {
+    return $CorSiteModuleTableTable(attachedDatabase, alias);
   }
 }
 
@@ -7538,8 +7538,8 @@ class CorSiteModule extends DataClass implements Insertable<CorSiteModule> {
     return map;
   }
 
-  CorSiteModulesCompanion toCompanion(bool nullToAbsent) {
-    return CorSiteModulesCompanion(
+  CorSiteModuleTableCompanion toCompanion(bool nullToAbsent) {
+    return CorSiteModuleTableCompanion(
       idBaseSite: Value(idBaseSite),
       idModule: Value(idModule),
     );
@@ -7566,7 +7566,7 @@ class CorSiteModule extends DataClass implements Insertable<CorSiteModule> {
         idBaseSite: idBaseSite ?? this.idBaseSite,
         idModule: idModule ?? this.idModule,
       );
-  CorSiteModule copyWithCompanion(CorSiteModulesCompanion data) {
+  CorSiteModule copyWithCompanion(CorSiteModuleTableCompanion data) {
     return CorSiteModule(
       idBaseSite:
           data.idBaseSite.present ? data.idBaseSite.value : this.idBaseSite,
@@ -7593,16 +7593,16 @@ class CorSiteModule extends DataClass implements Insertable<CorSiteModule> {
           other.idModule == this.idModule);
 }
 
-class CorSiteModulesCompanion extends UpdateCompanion<CorSiteModule> {
+class CorSiteModuleTableCompanion extends UpdateCompanion<CorSiteModule> {
   final Value<int> idBaseSite;
   final Value<int> idModule;
   final Value<int> rowid;
-  const CorSiteModulesCompanion({
+  const CorSiteModuleTableCompanion({
     this.idBaseSite = const Value.absent(),
     this.idModule = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  CorSiteModulesCompanion.insert({
+  CorSiteModuleTableCompanion.insert({
     required int idBaseSite,
     required int idModule,
     this.rowid = const Value.absent(),
@@ -7620,9 +7620,9 @@ class CorSiteModulesCompanion extends UpdateCompanion<CorSiteModule> {
     });
   }
 
-  CorSiteModulesCompanion copyWith(
+  CorSiteModuleTableCompanion copyWith(
       {Value<int>? idBaseSite, Value<int>? idModule, Value<int>? rowid}) {
-    return CorSiteModulesCompanion(
+    return CorSiteModuleTableCompanion(
       idBaseSite: idBaseSite ?? this.idBaseSite,
       idModule: idModule ?? this.idModule,
       rowid: rowid ?? this.rowid,
@@ -7646,7 +7646,7 @@ class CorSiteModulesCompanion extends UpdateCompanion<CorSiteModule> {
 
   @override
   String toString() {
-    return (StringBuffer('CorSiteModulesCompanion(')
+    return (StringBuffer('CorSiteModuleTableCompanion(')
           ..write('idBaseSite: $idBaseSite, ')
           ..write('idModule: $idModule, ')
           ..write('rowid: $rowid')
@@ -7655,12 +7655,12 @@ class CorSiteModulesCompanion extends UpdateCompanion<CorSiteModule> {
   }
 }
 
-class $CorSitesGroupModulesTable extends CorSitesGroupModules
-    with TableInfo<$CorSitesGroupModulesTable, CorSitesGroupModule> {
+class $CorSitesGroupModuleTableTable extends CorSitesGroupModuleTable
+    with TableInfo<$CorSitesGroupModuleTableTable, CorSitesGroupModule> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CorSitesGroupModulesTable(this.attachedDatabase, [this._alias]);
+  $CorSitesGroupModuleTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idSitesGroupMeta =
       const VerificationMeta('idSitesGroup');
   @override
@@ -7679,7 +7679,7 @@ class $CorSitesGroupModulesTable extends CorSitesGroupModules
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'cor_sites_group_modules';
+  static const String $name = 'cor_sites_group_module_table';
   @override
   VerificationContext validateIntegrity(
       Insertable<CorSitesGroupModule> instance,
@@ -7717,8 +7717,8 @@ class $CorSitesGroupModulesTable extends CorSitesGroupModules
   }
 
   @override
-  $CorSitesGroupModulesTable createAlias(String alias) {
-    return $CorSitesGroupModulesTable(attachedDatabase, alias);
+  $CorSitesGroupModuleTableTable createAlias(String alias) {
+    return $CorSitesGroupModuleTableTable(attachedDatabase, alias);
   }
 }
 
@@ -7736,8 +7736,8 @@ class CorSitesGroupModule extends DataClass
     return map;
   }
 
-  CorSitesGroupModulesCompanion toCompanion(bool nullToAbsent) {
-    return CorSitesGroupModulesCompanion(
+  CorSitesGroupModuleTableCompanion toCompanion(bool nullToAbsent) {
+    return CorSitesGroupModuleTableCompanion(
       idSitesGroup: Value(idSitesGroup),
       idModule: Value(idModule),
     );
@@ -7765,7 +7765,8 @@ class CorSitesGroupModule extends DataClass
         idSitesGroup: idSitesGroup ?? this.idSitesGroup,
         idModule: idModule ?? this.idModule,
       );
-  CorSitesGroupModule copyWithCompanion(CorSitesGroupModulesCompanion data) {
+  CorSitesGroupModule copyWithCompanion(
+      CorSitesGroupModuleTableCompanion data) {
     return CorSitesGroupModule(
       idSitesGroup: data.idSitesGroup.present
           ? data.idSitesGroup.value
@@ -7793,17 +7794,17 @@ class CorSitesGroupModule extends DataClass
           other.idModule == this.idModule);
 }
 
-class CorSitesGroupModulesCompanion
+class CorSitesGroupModuleTableCompanion
     extends UpdateCompanion<CorSitesGroupModule> {
   final Value<int> idSitesGroup;
   final Value<int> idModule;
   final Value<int> rowid;
-  const CorSitesGroupModulesCompanion({
+  const CorSitesGroupModuleTableCompanion({
     this.idSitesGroup = const Value.absent(),
     this.idModule = const Value.absent(),
     this.rowid = const Value.absent(),
   });
-  CorSitesGroupModulesCompanion.insert({
+  CorSitesGroupModuleTableCompanion.insert({
     required int idSitesGroup,
     required int idModule,
     this.rowid = const Value.absent(),
@@ -7821,9 +7822,9 @@ class CorSitesGroupModulesCompanion
     });
   }
 
-  CorSitesGroupModulesCompanion copyWith(
+  CorSitesGroupModuleTableCompanion copyWith(
       {Value<int>? idSitesGroup, Value<int>? idModule, Value<int>? rowid}) {
-    return CorSitesGroupModulesCompanion(
+    return CorSitesGroupModuleTableCompanion(
       idSitesGroup: idSitesGroup ?? this.idSitesGroup,
       idModule: idModule ?? this.idModule,
       rowid: rowid ?? this.rowid,
@@ -7847,7 +7848,7 @@ class CorSitesGroupModulesCompanion
 
   @override
   String toString() {
-    return (StringBuffer('CorSitesGroupModulesCompanion(')
+    return (StringBuffer('CorSitesGroupModuleTableCompanion(')
           ..write('idSitesGroup: $idSitesGroup, ')
           ..write('idModule: $idModule, ')
           ..write('rowid: $rowid')
@@ -7856,12 +7857,12 @@ class CorSitesGroupModulesCompanion
   }
 }
 
-class $CorObjectModulesTable extends CorObjectModules
-    with TableInfo<$CorObjectModulesTable, CorObjectModule> {
+class $CorObjectModuleTableTable extends CorObjectModuleTable
+    with TableInfo<$CorObjectModuleTableTable, CorObjectModule> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $CorObjectModulesTable(this.attachedDatabase, [this._alias]);
+  $CorObjectModuleTableTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idCorObjectModuleMeta =
       const VerificationMeta('idCorObjectModule');
   @override
@@ -7890,7 +7891,7 @@ class $CorObjectModulesTable extends CorObjectModules
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'cor_object_modules';
+  static const String $name = 'cor_object_module_table';
   @override
   VerificationContext validateIntegrity(Insertable<CorObjectModule> instance,
       {bool isInserting = false}) {
@@ -7933,8 +7934,8 @@ class $CorObjectModulesTable extends CorObjectModules
   }
 
   @override
-  $CorObjectModulesTable createAlias(String alias) {
-    return $CorObjectModulesTable(attachedDatabase, alias);
+  $CorObjectModuleTableTable createAlias(String alias) {
+    return $CorObjectModuleTableTable(attachedDatabase, alias);
   }
 }
 
@@ -7955,8 +7956,8 @@ class CorObjectModule extends DataClass implements Insertable<CorObjectModule> {
     return map;
   }
 
-  CorObjectModulesCompanion toCompanion(bool nullToAbsent) {
-    return CorObjectModulesCompanion(
+  CorObjectModuleTableCompanion toCompanion(bool nullToAbsent) {
+    return CorObjectModuleTableCompanion(
       idCorObjectModule: Value(idCorObjectModule),
       idObject: Value(idObject),
       idModule: Value(idModule),
@@ -7989,7 +7990,7 @@ class CorObjectModule extends DataClass implements Insertable<CorObjectModule> {
         idObject: idObject ?? this.idObject,
         idModule: idModule ?? this.idModule,
       );
-  CorObjectModule copyWithCompanion(CorObjectModulesCompanion data) {
+  CorObjectModule copyWithCompanion(CorObjectModuleTableCompanion data) {
     return CorObjectModule(
       idCorObjectModule: data.idCorObjectModule.present
           ? data.idCorObjectModule.value
@@ -8020,16 +8021,16 @@ class CorObjectModule extends DataClass implements Insertable<CorObjectModule> {
           other.idModule == this.idModule);
 }
 
-class CorObjectModulesCompanion extends UpdateCompanion<CorObjectModule> {
+class CorObjectModuleTableCompanion extends UpdateCompanion<CorObjectModule> {
   final Value<int> idCorObjectModule;
   final Value<int> idObject;
   final Value<int> idModule;
-  const CorObjectModulesCompanion({
+  const CorObjectModuleTableCompanion({
     this.idCorObjectModule = const Value.absent(),
     this.idObject = const Value.absent(),
     this.idModule = const Value.absent(),
   });
-  CorObjectModulesCompanion.insert({
+  CorObjectModuleTableCompanion.insert({
     this.idCorObjectModule = const Value.absent(),
     required int idObject,
     required int idModule,
@@ -8047,11 +8048,11 @@ class CorObjectModulesCompanion extends UpdateCompanion<CorObjectModule> {
     });
   }
 
-  CorObjectModulesCompanion copyWith(
+  CorObjectModuleTableCompanion copyWith(
       {Value<int>? idCorObjectModule,
       Value<int>? idObject,
       Value<int>? idModule}) {
-    return CorObjectModulesCompanion(
+    return CorObjectModuleTableCompanion(
       idCorObjectModule: idCorObjectModule ?? this.idCorObjectModule,
       idObject: idObject ?? this.idObject,
       idModule: idModule ?? this.idModule,
@@ -8075,7 +8076,7 @@ class CorObjectModulesCompanion extends UpdateCompanion<CorObjectModule> {
 
   @override
   String toString() {
-    return (StringBuffer('CorObjectModulesCompanion(')
+    return (StringBuffer('CorObjectModuleTableCompanion(')
           ..write('idCorObjectModule: $idCorObjectModule, ')
           ..write('idObject: $idObject, ')
           ..write('idModule: $idModule')
@@ -8110,11 +8111,12 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TPermissionsAvailableTable tPermissionsAvailable =
       $TPermissionsAvailableTable(this);
   late final $TPermissionsTable tPermissions = $TPermissionsTable(this);
-  late final $CorSiteModulesTable corSiteModules = $CorSiteModulesTable(this);
-  late final $CorSitesGroupModulesTable corSitesGroupModules =
-      $CorSitesGroupModulesTable(this);
-  late final $CorObjectModulesTable corObjectModules =
-      $CorObjectModulesTable(this);
+  late final $CorSiteModuleTableTable corSiteModuleTable =
+      $CorSiteModuleTableTable(this);
+  late final $CorSitesGroupModuleTableTable corSitesGroupModuleTable =
+      $CorSitesGroupModuleTableTable(this);
+  late final $CorObjectModuleTableTable corObjectModuleTable =
+      $CorObjectModuleTableTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
@@ -8141,9 +8143,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tActions,
         tPermissionsAvailable,
         tPermissions,
-        corSiteModules,
-        corSitesGroupModules,
-        corObjectModules
+        corSiteModuleTable,
+        corSitesGroupModuleTable,
+        corObjectModuleTable
       ];
 }
 
@@ -11681,22 +11683,22 @@ typedef $$TPermissionsTableProcessedTableManager = ProcessedTableManager<
     ),
     TPermission,
     PrefetchHooks Function()>;
-typedef $$CorSiteModulesTableCreateCompanionBuilder = CorSiteModulesCompanion
-    Function({
+typedef $$CorSiteModuleTableTableCreateCompanionBuilder
+    = CorSiteModuleTableCompanion Function({
   required int idBaseSite,
   required int idModule,
   Value<int> rowid,
 });
-typedef $$CorSiteModulesTableUpdateCompanionBuilder = CorSiteModulesCompanion
-    Function({
+typedef $$CorSiteModuleTableTableUpdateCompanionBuilder
+    = CorSiteModuleTableCompanion Function({
   Value<int> idBaseSite,
   Value<int> idModule,
   Value<int> rowid,
 });
 
-class $$CorSiteModulesTableFilterComposer
-    extends Composer<_$AppDatabase, $CorSiteModulesTable> {
-  $$CorSiteModulesTableFilterComposer({
+class $$CorSiteModuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorSiteModuleTableTable> {
+  $$CorSiteModuleTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11710,9 +11712,9 @@ class $$CorSiteModulesTableFilterComposer
       column: $table.idModule, builder: (column) => ColumnFilters(column));
 }
 
-class $$CorSiteModulesTableOrderingComposer
-    extends Composer<_$AppDatabase, $CorSiteModulesTable> {
-  $$CorSiteModulesTableOrderingComposer({
+class $$CorSiteModuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorSiteModuleTableTable> {
+  $$CorSiteModuleTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11726,9 +11728,9 @@ class $$CorSiteModulesTableOrderingComposer
       column: $table.idModule, builder: (column) => ColumnOrderings(column));
 }
 
-class $$CorSiteModulesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CorSiteModulesTable> {
-  $$CorSiteModulesTableAnnotationComposer({
+class $$CorSiteModuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorSiteModuleTableTable> {
+  $$CorSiteModuleTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11742,38 +11744,39 @@ class $$CorSiteModulesTableAnnotationComposer
       $composableBuilder(column: $table.idModule, builder: (column) => column);
 }
 
-class $$CorSiteModulesTableTableManager extends RootTableManager<
+class $$CorSiteModuleTableTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CorSiteModulesTable,
+    $CorSiteModuleTableTable,
     CorSiteModule,
-    $$CorSiteModulesTableFilterComposer,
-    $$CorSiteModulesTableOrderingComposer,
-    $$CorSiteModulesTableAnnotationComposer,
-    $$CorSiteModulesTableCreateCompanionBuilder,
-    $$CorSiteModulesTableUpdateCompanionBuilder,
+    $$CorSiteModuleTableTableFilterComposer,
+    $$CorSiteModuleTableTableOrderingComposer,
+    $$CorSiteModuleTableTableAnnotationComposer,
+    $$CorSiteModuleTableTableCreateCompanionBuilder,
+    $$CorSiteModuleTableTableUpdateCompanionBuilder,
     (
       CorSiteModule,
-      BaseReferences<_$AppDatabase, $CorSiteModulesTable, CorSiteModule>
+      BaseReferences<_$AppDatabase, $CorSiteModuleTableTable, CorSiteModule>
     ),
     CorSiteModule,
     PrefetchHooks Function()> {
-  $$CorSiteModulesTableTableManager(
-      _$AppDatabase db, $CorSiteModulesTable table)
+  $$CorSiteModuleTableTableTableManager(
+      _$AppDatabase db, $CorSiteModuleTableTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CorSiteModulesTableFilterComposer($db: db, $table: table),
+              $$CorSiteModuleTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$CorSiteModulesTableOrderingComposer($db: db, $table: table),
+              $$CorSiteModuleTableTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CorSiteModulesTableAnnotationComposer($db: db, $table: table),
+              $$CorSiteModuleTableTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> idBaseSite = const Value.absent(),
             Value<int> idModule = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              CorSiteModulesCompanion(
+              CorSiteModuleTableCompanion(
             idBaseSite: idBaseSite,
             idModule: idModule,
             rowid: rowid,
@@ -11783,7 +11786,7 @@ class $$CorSiteModulesTableTableManager extends RootTableManager<
             required int idModule,
             Value<int> rowid = const Value.absent(),
           }) =>
-              CorSiteModulesCompanion.insert(
+              CorSiteModuleTableCompanion.insert(
             idBaseSite: idBaseSite,
             idModule: idModule,
             rowid: rowid,
@@ -11795,37 +11798,37 @@ class $$CorSiteModulesTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$CorSiteModulesTableProcessedTableManager = ProcessedTableManager<
+typedef $$CorSiteModuleTableTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
-    $CorSiteModulesTable,
+    $CorSiteModuleTableTable,
     CorSiteModule,
-    $$CorSiteModulesTableFilterComposer,
-    $$CorSiteModulesTableOrderingComposer,
-    $$CorSiteModulesTableAnnotationComposer,
-    $$CorSiteModulesTableCreateCompanionBuilder,
-    $$CorSiteModulesTableUpdateCompanionBuilder,
+    $$CorSiteModuleTableTableFilterComposer,
+    $$CorSiteModuleTableTableOrderingComposer,
+    $$CorSiteModuleTableTableAnnotationComposer,
+    $$CorSiteModuleTableTableCreateCompanionBuilder,
+    $$CorSiteModuleTableTableUpdateCompanionBuilder,
     (
       CorSiteModule,
-      BaseReferences<_$AppDatabase, $CorSiteModulesTable, CorSiteModule>
+      BaseReferences<_$AppDatabase, $CorSiteModuleTableTable, CorSiteModule>
     ),
     CorSiteModule,
     PrefetchHooks Function()>;
-typedef $$CorSitesGroupModulesTableCreateCompanionBuilder
-    = CorSitesGroupModulesCompanion Function({
+typedef $$CorSitesGroupModuleTableTableCreateCompanionBuilder
+    = CorSitesGroupModuleTableCompanion Function({
   required int idSitesGroup,
   required int idModule,
   Value<int> rowid,
 });
-typedef $$CorSitesGroupModulesTableUpdateCompanionBuilder
-    = CorSitesGroupModulesCompanion Function({
+typedef $$CorSitesGroupModuleTableTableUpdateCompanionBuilder
+    = CorSitesGroupModuleTableCompanion Function({
   Value<int> idSitesGroup,
   Value<int> idModule,
   Value<int> rowid,
 });
 
-class $$CorSitesGroupModulesTableFilterComposer
-    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
-  $$CorSitesGroupModulesTableFilterComposer({
+class $$CorSitesGroupModuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModuleTableTable> {
+  $$CorSitesGroupModuleTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11839,9 +11842,9 @@ class $$CorSitesGroupModulesTableFilterComposer
       column: $table.idModule, builder: (column) => ColumnFilters(column));
 }
 
-class $$CorSitesGroupModulesTableOrderingComposer
-    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
-  $$CorSitesGroupModulesTableOrderingComposer({
+class $$CorSitesGroupModuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModuleTableTable> {
+  $$CorSitesGroupModuleTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11856,9 +11859,9 @@ class $$CorSitesGroupModulesTableOrderingComposer
       column: $table.idModule, builder: (column) => ColumnOrderings(column));
 }
 
-class $$CorSitesGroupModulesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CorSitesGroupModulesTable> {
-  $$CorSitesGroupModulesTableAnnotationComposer({
+class $$CorSitesGroupModuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorSitesGroupModuleTableTable> {
+  $$CorSitesGroupModuleTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11872,41 +11875,42 @@ class $$CorSitesGroupModulesTableAnnotationComposer
       $composableBuilder(column: $table.idModule, builder: (column) => column);
 }
 
-class $$CorSitesGroupModulesTableTableManager extends RootTableManager<
+class $$CorSitesGroupModuleTableTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CorSitesGroupModulesTable,
+    $CorSitesGroupModuleTableTable,
     CorSitesGroupModule,
-    $$CorSitesGroupModulesTableFilterComposer,
-    $$CorSitesGroupModulesTableOrderingComposer,
-    $$CorSitesGroupModulesTableAnnotationComposer,
-    $$CorSitesGroupModulesTableCreateCompanionBuilder,
-    $$CorSitesGroupModulesTableUpdateCompanionBuilder,
+    $$CorSitesGroupModuleTableTableFilterComposer,
+    $$CorSitesGroupModuleTableTableOrderingComposer,
+    $$CorSitesGroupModuleTableTableAnnotationComposer,
+    $$CorSitesGroupModuleTableTableCreateCompanionBuilder,
+    $$CorSitesGroupModuleTableTableUpdateCompanionBuilder,
     (
       CorSitesGroupModule,
-      BaseReferences<_$AppDatabase, $CorSitesGroupModulesTable,
+      BaseReferences<_$AppDatabase, $CorSitesGroupModuleTableTable,
           CorSitesGroupModule>
     ),
     CorSitesGroupModule,
     PrefetchHooks Function()> {
-  $$CorSitesGroupModulesTableTableManager(
-      _$AppDatabase db, $CorSitesGroupModulesTable table)
+  $$CorSitesGroupModuleTableTableTableManager(
+      _$AppDatabase db, $CorSitesGroupModuleTableTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CorSitesGroupModulesTableFilterComposer($db: db, $table: table),
+              $$CorSitesGroupModuleTableTableFilterComposer(
+                  $db: db, $table: table),
           createOrderingComposer: () =>
-              $$CorSitesGroupModulesTableOrderingComposer(
+              $$CorSitesGroupModuleTableTableOrderingComposer(
                   $db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CorSitesGroupModulesTableAnnotationComposer(
+              $$CorSitesGroupModuleTableTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> idSitesGroup = const Value.absent(),
             Value<int> idModule = const Value.absent(),
             Value<int> rowid = const Value.absent(),
           }) =>
-              CorSitesGroupModulesCompanion(
+              CorSitesGroupModuleTableCompanion(
             idSitesGroup: idSitesGroup,
             idModule: idModule,
             rowid: rowid,
@@ -11916,7 +11920,7 @@ class $$CorSitesGroupModulesTableTableManager extends RootTableManager<
             required int idModule,
             Value<int> rowid = const Value.absent(),
           }) =>
-              CorSitesGroupModulesCompanion.insert(
+              CorSitesGroupModuleTableCompanion.insert(
             idSitesGroup: idSitesGroup,
             idModule: idModule,
             rowid: rowid,
@@ -11928,39 +11932,39 @@ class $$CorSitesGroupModulesTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$CorSitesGroupModulesTableProcessedTableManager
+typedef $$CorSitesGroupModuleTableTableProcessedTableManager
     = ProcessedTableManager<
         _$AppDatabase,
-        $CorSitesGroupModulesTable,
+        $CorSitesGroupModuleTableTable,
         CorSitesGroupModule,
-        $$CorSitesGroupModulesTableFilterComposer,
-        $$CorSitesGroupModulesTableOrderingComposer,
-        $$CorSitesGroupModulesTableAnnotationComposer,
-        $$CorSitesGroupModulesTableCreateCompanionBuilder,
-        $$CorSitesGroupModulesTableUpdateCompanionBuilder,
+        $$CorSitesGroupModuleTableTableFilterComposer,
+        $$CorSitesGroupModuleTableTableOrderingComposer,
+        $$CorSitesGroupModuleTableTableAnnotationComposer,
+        $$CorSitesGroupModuleTableTableCreateCompanionBuilder,
+        $$CorSitesGroupModuleTableTableUpdateCompanionBuilder,
         (
           CorSitesGroupModule,
-          BaseReferences<_$AppDatabase, $CorSitesGroupModulesTable,
+          BaseReferences<_$AppDatabase, $CorSitesGroupModuleTableTable,
               CorSitesGroupModule>
         ),
         CorSitesGroupModule,
         PrefetchHooks Function()>;
-typedef $$CorObjectModulesTableCreateCompanionBuilder
-    = CorObjectModulesCompanion Function({
+typedef $$CorObjectModuleTableTableCreateCompanionBuilder
+    = CorObjectModuleTableCompanion Function({
   Value<int> idCorObjectModule,
   required int idObject,
   required int idModule,
 });
-typedef $$CorObjectModulesTableUpdateCompanionBuilder
-    = CorObjectModulesCompanion Function({
+typedef $$CorObjectModuleTableTableUpdateCompanionBuilder
+    = CorObjectModuleTableCompanion Function({
   Value<int> idCorObjectModule,
   Value<int> idObject,
   Value<int> idModule,
 });
 
-class $$CorObjectModulesTableFilterComposer
-    extends Composer<_$AppDatabase, $CorObjectModulesTable> {
-  $$CorObjectModulesTableFilterComposer({
+class $$CorObjectModuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorObjectModuleTableTable> {
+  $$CorObjectModuleTableTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11978,9 +11982,9 @@ class $$CorObjectModulesTableFilterComposer
       column: $table.idModule, builder: (column) => ColumnFilters(column));
 }
 
-class $$CorObjectModulesTableOrderingComposer
-    extends Composer<_$AppDatabase, $CorObjectModulesTable> {
-  $$CorObjectModulesTableOrderingComposer({
+class $$CorObjectModuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorObjectModuleTableTable> {
+  $$CorObjectModuleTableTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -11998,9 +12002,9 @@ class $$CorObjectModulesTableOrderingComposer
       column: $table.idModule, builder: (column) => ColumnOrderings(column));
 }
 
-class $$CorObjectModulesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $CorObjectModulesTable> {
-  $$CorObjectModulesTableAnnotationComposer({
+class $$CorObjectModuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorObjectModuleTableTable> {
+  $$CorObjectModuleTableTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -12017,38 +12021,40 @@ class $$CorObjectModulesTableAnnotationComposer
       $composableBuilder(column: $table.idModule, builder: (column) => column);
 }
 
-class $$CorObjectModulesTableTableManager extends RootTableManager<
+class $$CorObjectModuleTableTableTableManager extends RootTableManager<
     _$AppDatabase,
-    $CorObjectModulesTable,
+    $CorObjectModuleTableTable,
     CorObjectModule,
-    $$CorObjectModulesTableFilterComposer,
-    $$CorObjectModulesTableOrderingComposer,
-    $$CorObjectModulesTableAnnotationComposer,
-    $$CorObjectModulesTableCreateCompanionBuilder,
-    $$CorObjectModulesTableUpdateCompanionBuilder,
+    $$CorObjectModuleTableTableFilterComposer,
+    $$CorObjectModuleTableTableOrderingComposer,
+    $$CorObjectModuleTableTableAnnotationComposer,
+    $$CorObjectModuleTableTableCreateCompanionBuilder,
+    $$CorObjectModuleTableTableUpdateCompanionBuilder,
     (
       CorObjectModule,
-      BaseReferences<_$AppDatabase, $CorObjectModulesTable, CorObjectModule>
+      BaseReferences<_$AppDatabase, $CorObjectModuleTableTable, CorObjectModule>
     ),
     CorObjectModule,
     PrefetchHooks Function()> {
-  $$CorObjectModulesTableTableManager(
-      _$AppDatabase db, $CorObjectModulesTable table)
+  $$CorObjectModuleTableTableTableManager(
+      _$AppDatabase db, $CorObjectModuleTableTable table)
       : super(TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$CorObjectModulesTableFilterComposer($db: db, $table: table),
+              $$CorObjectModuleTableTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$CorObjectModulesTableOrderingComposer($db: db, $table: table),
+              $$CorObjectModuleTableTableOrderingComposer(
+                  $db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$CorObjectModulesTableAnnotationComposer($db: db, $table: table),
+              $$CorObjectModuleTableTableAnnotationComposer(
+                  $db: db, $table: table),
           updateCompanionCallback: ({
             Value<int> idCorObjectModule = const Value.absent(),
             Value<int> idObject = const Value.absent(),
             Value<int> idModule = const Value.absent(),
           }) =>
-              CorObjectModulesCompanion(
+              CorObjectModuleTableCompanion(
             idCorObjectModule: idCorObjectModule,
             idObject: idObject,
             idModule: idModule,
@@ -12058,7 +12064,7 @@ class $$CorObjectModulesTableTableManager extends RootTableManager<
             required int idObject,
             required int idModule,
           }) =>
-              CorObjectModulesCompanion.insert(
+              CorObjectModuleTableCompanion.insert(
             idCorObjectModule: idCorObjectModule,
             idObject: idObject,
             idModule: idModule,
@@ -12070,21 +12076,23 @@ class $$CorObjectModulesTableTableManager extends RootTableManager<
         ));
 }
 
-typedef $$CorObjectModulesTableProcessedTableManager = ProcessedTableManager<
-    _$AppDatabase,
-    $CorObjectModulesTable,
-    CorObjectModule,
-    $$CorObjectModulesTableFilterComposer,
-    $$CorObjectModulesTableOrderingComposer,
-    $$CorObjectModulesTableAnnotationComposer,
-    $$CorObjectModulesTableCreateCompanionBuilder,
-    $$CorObjectModulesTableUpdateCompanionBuilder,
-    (
-      CorObjectModule,
-      BaseReferences<_$AppDatabase, $CorObjectModulesTable, CorObjectModule>
-    ),
-    CorObjectModule,
-    PrefetchHooks Function()>;
+typedef $$CorObjectModuleTableTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CorObjectModuleTableTable,
+        CorObjectModule,
+        $$CorObjectModuleTableTableFilterComposer,
+        $$CorObjectModuleTableTableOrderingComposer,
+        $$CorObjectModuleTableTableAnnotationComposer,
+        $$CorObjectModuleTableTableCreateCompanionBuilder,
+        $$CorObjectModuleTableTableUpdateCompanionBuilder,
+        (
+          CorObjectModule,
+          BaseReferences<_$AppDatabase, $CorObjectModuleTableTable,
+              CorObjectModule>
+        ),
+        CorObjectModule,
+        PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12122,10 +12130,11 @@ class $AppDatabaseManager {
       $$TPermissionsAvailableTableTableManager(_db, _db.tPermissionsAvailable);
   $$TPermissionsTableTableManager get tPermissions =>
       $$TPermissionsTableTableManager(_db, _db.tPermissions);
-  $$CorSiteModulesTableTableManager get corSiteModules =>
-      $$CorSiteModulesTableTableManager(_db, _db.corSiteModules);
-  $$CorSitesGroupModulesTableTableManager get corSitesGroupModules =>
-      $$CorSitesGroupModulesTableTableManager(_db, _db.corSitesGroupModules);
-  $$CorObjectModulesTableTableManager get corObjectModules =>
-      $$CorObjectModulesTableTableManager(_db, _db.corObjectModules);
+  $$CorSiteModuleTableTableTableManager get corSiteModuleTable =>
+      $$CorSiteModuleTableTableTableManager(_db, _db.corSiteModuleTable);
+  $$CorSitesGroupModuleTableTableTableManager get corSitesGroupModuleTable =>
+      $$CorSitesGroupModuleTableTableTableManager(
+          _db, _db.corSitesGroupModuleTable);
+  $$CorObjectModuleTableTableTableManager get corObjectModuleTable =>
+      $$CorObjectModuleTableTableTableManager(_db, _db.corObjectModuleTable);
 }

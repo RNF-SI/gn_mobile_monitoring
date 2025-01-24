@@ -8,6 +8,6 @@ mixin _$SitesDaoMixin on DatabaseAccessor<AppDatabase> {
   $TSiteComplementsTable get tSiteComplements =>
       attachedDatabase.tSiteComplements;
   $TSitesGroupsTable get tSitesGroups => attachedDatabase.tSitesGroups;
-  $CorSitesGroupModulesTable get corSitesGroupModules =>
-      attachedDatabase.corSitesGroupModules;
+  $CorSitesGroupModuleTableTable get corSitesGroupModuleTable =>
+      attachedDatabase.corSitesGroupModuleTable;
 }
