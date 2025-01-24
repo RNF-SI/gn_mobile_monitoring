@@ -171,4 +171,11 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       batch.insertAll(corSitesGroupModules, dbEntities);
     });
   }
+
+  Future<Module?> getModuleIdByLabel(String moduleLabel) async {
+    final query = select(tModules)
+      ..where((tbl) => tbl.moduleLabel.equals(moduleLabel));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
+  }
 }

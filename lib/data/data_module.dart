@@ -70,4 +70,5 @@ final sitesRepositoryProvider =
     Provider<SitesRepository>((ref) => SitesRepositoryImpl(
           ref.watch(sitesApiProvider),
           ref.watch(siteDatabaseProvider),
+          ref.watch(moduleDatabaseProvider),
         ));

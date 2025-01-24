@@ -32,4 +32,5 @@ abstract class ModulesDatabase {
 
   Future<List<Module>> getModules();
   Future<Module?> getModuleById(int moduleId);
+  Future<Module?> getModuleIdByLabel(String moduleLabel);
 }

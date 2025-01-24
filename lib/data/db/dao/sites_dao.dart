@@ -1,18 +1,22 @@
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/data/db/mapper/cor_sites_group_module_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_base_site_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_site_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_sites_group_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 part 'sites_dao.g.dart';
 
-@DriftAccessor(tables: [TBaseSites, TSiteComplements, TSitesGroups])
+@DriftAccessor(
+    tables: [TBaseSites, TSiteComplements, TSitesGroups, CorSitesGroupModules])
 class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   SitesDao(super.db);
 
@@ -100,5 +104,20 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   Future<List<SiteGroup>> getGroupsForModule(int moduleId) async {
     // TODO: Implement this
     return [];
+  }
+
+  Future<void> insertSitesGroupModules(List<SitesGroupModule> modules) async {
+    final dbEntities = modules.map((e) => e.toDatabaseEntity()).toList();
+    await batch((batch) {
+      batch.insertAll(corSitesGroupModules, dbEntities);
+    });
+  }
+
+  Future<void> clearSitesGroupModules() async {
+    try {
+      await delete(corSitesGroupModules).go();
+    } catch (e) {
+      throw Exception("Failed to clear site group modules: ${e.toString()}");
+    }
   }
 }

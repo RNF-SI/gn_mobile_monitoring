@@ -1,5 +1,8 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_group_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
@@ -9,8 +12,9 @@ import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 class SitesRepositoryImpl implements SitesRepository {
   final SitesApi api;
   final SitesDatabase database;
+  final ModulesDatabase modulesDatabase;
 
-  SitesRepositoryImpl(this.api, this.database);
+  SitesRepositoryImpl(this.api, this.database, this.modulesDatabase);
 
   @override
   Future<void> fetchSites(String token) async {
@@ -33,13 +37,33 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<void> fetchSiteGroups(String token) async {
     try {
-      // Fetch BaseSite groups from API
-      final groups = await api.fetchSiteGroupsFromApi(token);
+      // Fetch BaseSite groups and their modules from API
+      final List<SiteGroupsWithModulesLabel> result =
+          await api.fetchSiteGroupsFromApi(token);
 
-      // Map and cache
-      final domainGroups = groups.map((e) => e.toDomain()).toList();
+      // Map and cache site groups
+      final domainGroups = result.map((e) => e.siteGroup.toDomain()).toList();
       await database.clearSiteGroups();
       await database.insertSiteGroups(domainGroups);
+
+      // Map and cache module labels
+      // Get Module Id from moduleLabel using modules_database and create CorSitesGroupModule objects
+      final corSitesGroupModules = await Future.wait(result.map(
+        (e) async {
+          final module =
+              await modulesDatabase.getModuleIdByLabel(e.moduleLabel);
+          if (module != null) {
+            return CorSitesGroupModule(
+              idSitesGroup: e.siteGroup.idSitesGroup,
+              idModule: module.id,
+            );
+          }
+          return null;
+        },
+      )).then((list) => list.whereType<CorSitesGroupModule>().toList());
+
+      await database.clearAllSiteGroupModules();
+      await database.insertSiteGroupModules(corSitesGroupModules);
     } catch (error) {
       // Exception handling
       print('Error fetching site groups: $error');

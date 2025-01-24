@@ -1,6 +1,7 @@
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 abstract class SitesDatabase {
   /// Methods for handling `TBaseSites`.
@@ -20,4 +21,8 @@ abstract class SitesDatabase {
 
   Future<List<BaseSite>> getSitesForModule(int moduleId);
   Future<List<SiteGroup>> getSiteGroupsForModule(int moduleId);
+
+  /// Methods for handling CorSitesGroupModules
+  Future<void> clearAllSiteGroupModules();
+  Future<void> insertSiteGroupModules(List<SitesGroupModule> modules);
 }

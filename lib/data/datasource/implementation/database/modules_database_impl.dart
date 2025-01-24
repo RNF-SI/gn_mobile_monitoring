@@ -118,4 +118,10 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     // TODO: implement getModules
     throw UnimplementedError();
   }
+
+  @override
+  Future<Module?> getModuleIdByLabel(String moduleLabel) async {
+    final db = await _database;
+    return await db.modulesDao.getModuleIdByLabel(moduleLabel);
+  }
 }

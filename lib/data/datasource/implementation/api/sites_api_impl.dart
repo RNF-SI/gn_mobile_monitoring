@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/core/errors/exceptions/data_parsing_excepti
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
-import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 
 class SitesApiImpl implements SitesApi {
   final Dio _dio;
@@ -74,7 +74,8 @@ class SitesApiImpl implements SitesApi {
   }
 
   @override
-  Future<List<SiteGroupEntity>> fetchSiteGroupsFromApi(String token) async {
+  Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsFromApi(
+      String token) async {
     try {
       final response = await _dio.get(
         '/monitorings/sites_groups',
@@ -88,16 +89,13 @@ class SitesApiImpl implements SitesApi {
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = response.data['items'];
         return jsonData
-            .map((json) =>
-                SiteGroupEntity.fromJson(json as Map<String, dynamic>))
+            .map((item) => SiteGroupsWithModulesLabel.fromJson(item))
             .toList();
-      } else {
-        throw Exception('Failed to fetch site groups');
       }
-    } on DioException catch (e) {
-      throw Exception('Network error: ${e.message}');
+      throw ApiException('Failed to fetch site groups',
+          statusCode: response.statusCode);
     } catch (e) {
-      throw Exception('Error fetching site groups: $e');
+      throw ApiException('Failed to fetch site groups from API: $e');
     }
   }
 }
