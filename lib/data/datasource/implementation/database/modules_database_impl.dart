@@ -3,6 +3,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 class ModuleDatabaseImpl implements ModulesDatabase {
   Future<AppDatabase> get _database async => await DB.instance.database;
@@ -88,23 +89,23 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     await db.modulesDao.clearCorSiteModule(moduleId);
   }
 
+  // @override
+  // Future<void> insertCorSiteModules(List<CorSiteModule> sites) async {
+  //   final db = await _database;
+  //   await db.modulesDao.insertCorSiteModule(sites);
+  // }
+
   @override
-  Future<void> insertCorSiteModules(List<CorSiteModule> sites) async {
+  Future<void> clearSitesGroupModules(int moduleId) async {
     final db = await _database;
-    await db.modulesDao.insertCorSiteModule(sites);
+    await db.modulesDao.clearSitesGroupModules(moduleId);
   }
 
   @override
-  Future<void> clearCorSitesGroupModules(int moduleId) async {
+  Future<void> insertSitesGroupModules(
+      List<SitesGroupModule> siteGroups) async {
     final db = await _database;
-    await db.modulesDao.clearCorSitesGroupModules(moduleId);
-  }
-
-  @override
-  Future<void> insertCorSitesGroupModules(
-      List<CorSitesGroupModule> siteGroups) async {
-    final db = await _database;
-    await db.modulesDao.insertCorSitesGroupModules(siteGroups);
+    await db.modulesDao.insertSitesGroupModules(siteGroups);
   }
 
   @override

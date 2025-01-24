@@ -1,6 +1,6 @@
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 abstract class ModulesDatabase {
   // Module operations
@@ -24,11 +24,11 @@ abstract class ModulesDatabase {
 
   // CorSiteModule operations
   Future<void> clearCorSiteModules(int moduleId);
-  Future<void> insertCorSiteModules(List<CorSiteModule> sites);
+  // Future<void> insertCorSiteModules(List<CorSiteModules> sites);
 
   // CorSitesGroupModule operations
-  Future<void> clearCorSitesGroupModules(int moduleId);
-  Future<void> insertCorSitesGroupModules(List<CorSitesGroupModule> siteGroups);
+  Future<void> clearSitesGroupModules(int moduleId);
+  Future<void> insertSitesGroupModules(List<SitesGroupModule> siteGroups);
 
   Future<List<Module>> getModules();
   Future<Module?> getModuleById(int moduleId);
