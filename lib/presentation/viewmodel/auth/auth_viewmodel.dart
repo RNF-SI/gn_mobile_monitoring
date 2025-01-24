@@ -97,10 +97,10 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           await _setUserNameFromLocalStorageUseCase.execute(identifiant);
           await _setTokenFromLocalStorageUseCase.execute(user.token);
 
-          // Fetch sites, site groups, and modules after login
-          await _fetchSitesAndSiteGroupsUseCase.execute(user.token);
           await _fetchAndSyncModulesUseCase
               .execute(user.token); // Fetch modules here
+          // Fetch sites, site groups, and modules after login
+          await _fetchSitesAndSiteGroupsUseCase.execute(user.token);
 
           // Refresh state
           ref.refresh(isLoggedInProvider);

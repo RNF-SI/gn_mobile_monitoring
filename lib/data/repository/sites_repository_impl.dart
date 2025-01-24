@@ -46,20 +46,19 @@ class SitesRepositoryImpl implements SitesRepository {
       await database.clearSiteGroups();
       await database.insertSiteGroups(domainGroups);
 
-      // Map and cache module labels
-      // Get Module Id from moduleLabel using modules_database and create CorSitesGroupModule objects
-      final corSitesGroupModules = await Future.wait(result.map(
-        (e) async {
-          // For each module label in moduleLabelList, get the module id and create SitesGroupModule objects
-          final modules = await Future.wait(e.moduleLabelList
-              .map((label) => modulesDatabase.getModuleIdByLabel(label)));
-
-          return modules.map((module) => SitesGroupModule(
-                idSitesGroup: e.siteGroup.idSitesGroup,
-                idModule: module!.id,
-              ));
-        },
-      )).then((list) => list.whereType<SitesGroupModule>().toList());
+      // For each SiteGroupsWithModulesLabel and for each moduleLabel, get the module id and create SitesGroupModule objects
+      List<SitesGroupModule> corSitesGroupModules = [];
+      for (var siteGroup in result) {
+        for (var label in siteGroup.moduleLabelList) {
+          final module = await modulesDatabase.getModuleIdByLabel(label);
+          if (module != null) {
+            corSitesGroupModules.add(SitesGroupModule(
+              idSitesGroup: siteGroup.siteGroup.idSitesGroup,
+              idModule: module.id,
+            ));
+          }
+        }
+      }
 
       await database.clearAllSiteGroupModules();
       await database.insertSiteGroupModules(corSitesGroupModules);
