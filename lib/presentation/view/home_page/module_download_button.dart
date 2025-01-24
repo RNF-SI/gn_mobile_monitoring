@@ -156,14 +156,14 @@ class ButtonShapeWidget extends StatelessWidget {
     }
 
     // Update button text based on the state
-    String buttonText = isDownloaded ? 'OPEN' : 'GET';
+    String buttonText = isDownloaded ? 'Ouvrir' : 'Télécharger';
     if (isDownloading) {
       if (downloadProgress == 1.0) {
         buttonText = '${(downloadProgress * 99).toInt()}%';
       } else
         buttonText = '${(downloadProgress * 100).toInt()}%';
     } else if (isRemoving) {
-      buttonText = 'REMOVING...'; // New text for the removing state
+      buttonText = 'Supression...'; // New text for the removing state
     }
 
     return AnimatedContainer(
