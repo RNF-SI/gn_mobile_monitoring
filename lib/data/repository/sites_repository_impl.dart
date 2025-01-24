@@ -1,12 +1,12 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_group_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 
 class SitesRepositoryImpl implements SitesRepository {
@@ -53,14 +53,14 @@ class SitesRepositoryImpl implements SitesRepository {
           final module =
               await modulesDatabase.getModuleIdByLabel(e.moduleLabel);
           if (module != null) {
-            return CorSitesGroupModule(
+            return SitesGroupModule(
               idSitesGroup: e.siteGroup.idSitesGroup,
               idModule: module.id,
             );
           }
           return null;
         },
-      )).then((list) => list.whereType<CorSitesGroupModule>().toList());
+      )).then((list) => list.whereType<SitesGroupModule>().toList());
 
       await database.clearAllSiteGroupModules();
       await database.insertSiteGroupModules(corSitesGroupModules);
