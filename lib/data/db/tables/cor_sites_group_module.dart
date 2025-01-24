@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 @DataClassName('CorSitesGroupModule')
-class CorSitesGroupModules extends Table {
+class CorSitesGroupModuleTable extends Table {
   IntColumn get idSitesGroup => integer()();
   IntColumn get idModule => integer()();
 
