@@ -5,7 +5,7 @@ Future<void> migration5(Migrator m, GeneratedDatabase db) async {
 
   // Step 1: Create the new table `cor_sites_group_module`
   await db.customStatement('''
-    CREATE TABLE cor_sites_group_module (
+    CREATE TABLE cor_sites_group_module_table (
       id_sites_group INTEGER NOT NULL,
       id_module INTEGER NOT NULL,
       PRIMARY KEY (id_sites_group, id_module),
@@ -16,7 +16,7 @@ Future<void> migration5(Migrator m, GeneratedDatabase db) async {
 
   // Step 2: Transfer data from `t_sites_groups` to `cor_sites_group_module`
   await db.customStatement('''
-    INSERT INTO cor_sites_group_module (id_sites_group, id_module)
+    INSERT INTO cor_sites_group_module_table (id_sites_group, id_module)
     SELECT id_sites_group, id_module
     FROM t_sites_groups;
   ''');
@@ -72,7 +72,7 @@ Future<void> downgrade5(Migrator m, GeneratedDatabase db) async {
     INSERT INTO t_sites_groups_new (id_sites_group, id_module, sites_group_name, sites_group_code, sites_group_description, uuid_sites_group, comments, data, meta_create_date, meta_update_date)
     WITH sgm AS (
       SELECT id_sites_group, MIN(id_module) AS first_id_module
-      FROM cor_sites_group_module
+      FROM cor_sites_group_module_table
       GROUP BY id_sites_group
     )
     SELECT tsg.id_sites_group, sgm.first_id_module, tsg.sites_group_name, tsg.sites_group_code, tsg.sites_group_description, tsg.uuid_sites_group, tsg.comments, tsg.data, tsg.meta_create_date, tsg.meta_update_date
@@ -84,6 +84,6 @@ Future<void> downgrade5(Migrator m, GeneratedDatabase db) async {
   await db.customStatement(
       'ALTER TABLE t_sites_groups_new RENAME TO t_sites_groups;');
 
-  // Step 2: Drop the `cor_sites_group_module` table
-  await db.customStatement('DROP TABLE cor_sites_group_module;');
+  // Step 2: Drop the `cor_sites_group_module_table` table
+  await db.customStatement('DROP TABLE cor_sites_group_module_table;');
 }

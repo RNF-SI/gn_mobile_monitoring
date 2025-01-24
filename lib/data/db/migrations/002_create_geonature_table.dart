@@ -18,7 +18,7 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
   ''');
 
   await db.customStatement('''
-  CREATE TABLE IF NOT EXISTS cor_module_dataset (
+  CREATE TABLE IF NOT EXISTS cor_module_dataset_table (
     id_module INTEGER NOT NULL,
     id_dataset INTEGER NOT NULL,
     PRIMARY KEY (id_module, id_dataset),
@@ -51,7 +51,7 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
   ''');
 
   await db.customStatement('''
-    CREATE TABLE cor_site_module (
+    CREATE TABLE cor_site_module_table (
     id_base_site integer NOT NULL,
     id_module integer NOT NULL
     );
@@ -116,7 +116,7 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
   ''');
 
   await db.customStatement('''
-  CREATE TABLE cor_object_module
+  CREATE TABLE cor_object_module_table
 (
     id_cor_object_module serial NOT NULL,
     id_object integer NOT NULL,

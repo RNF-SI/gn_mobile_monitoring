@@ -3,10 +3,10 @@ import 'package:drift/drift.dart';
 Future<void> migration4(Migrator m, GeneratedDatabase db) async {
   // Transfer data to core_site_module table
   await db.customStatement('''
-    INSERT INTO cor_site_module (id_module, id_base_site)
+    INSERT INTO cor_site_module_table (id_module, id_base_site)
     SELECT tsc.id_module, tsc.id_base_site
     FROM t_site_complements AS tsc
-    LEFT JOIN cor_site_module AS csm
+    LEFT JOIN cor_site_module_table AS csm
     ON tsc.id_base_site = csm.id_base_site
     WHERE csm.id_base_site IS NULL;
   ''');
@@ -31,7 +31,7 @@ Future<void> downgrade4(Migrator m, GeneratedDatabase db) async {
   await db.customStatement('''
     WITH sm AS (
         SELECT min(id_module) AS first_id_module, id_base_site
-        FROM cor_site_module AS csm
+        FROM cor_site_module_table AS csm
         GROUP BY id_base_site
     )
     UPDATE t_site_complements sc
