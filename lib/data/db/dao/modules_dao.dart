@@ -31,7 +31,9 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       final sites = await db.sitesDao.getSitesByModuleId(dbModule.idModule);
       final siteGroups = await db.sitesDao
           .getGroupsByModuleId(dbModule.idModule); // Access SitesDao
-      final module = dbModule.toDomainWithSitesAndSiteGroups(sites, siteGroups);
+      final complement = await getModuleComplementById(dbModule.idModule);
+      final module = dbModule.toDomainWithComplementSitesAndSiteGroups(
+          complement, sites, siteGroups);
       modules.add(module);
     }
 
@@ -66,8 +68,9 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final sites = await db.sitesDao.getSitesByModuleId(moduleId);
     final siteGroups =
         await db.sitesDao.getGroupsByModuleId(moduleId); // Access SitesDao
-
-    return dbModule.toDomainWithSitesAndSiteGroups(sites, siteGroups);
+    final complement = await getModuleComplementById(moduleId);
+    return dbModule.toDomainWithComplementSitesAndSiteGroups(
+        complement, sites, siteGroups);
   }
 
   Future<void> markModuleAsDownloaded(int moduleId) async {

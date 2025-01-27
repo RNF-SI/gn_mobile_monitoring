@@ -1,5 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
 part 'module.freezed.dart';
@@ -25,6 +26,7 @@ class Module with _$Module {
     DateTime? metaCreateDate,
     DateTime? metaUpdateDate,
     bool? downloaded,
+    ModuleComplement? complement,
     List<SiteGroup>? sitesGroup,
     List<BaseSite>? sites,
   }) = _Module;

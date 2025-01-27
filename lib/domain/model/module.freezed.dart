@@ -34,6 +34,7 @@ mixin _$Module {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
   bool? get downloaded => throw _privateConstructorUsedError;
+  ModuleComplement? get complement => throw _privateConstructorUsedError;
   List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
   List<BaseSite>? get sites => throw _privateConstructorUsedError;
 
@@ -67,8 +68,11 @@ abstract class $ModuleCopyWith<$Res> {
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       bool? downloaded,
+      ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
       List<BaseSite>? sites});
+
+  $ModuleComplementCopyWith<$Res>? get complement;
 }
 
 /// @nodoc
@@ -104,6 +108,7 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? downloaded = freezed,
+    Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
   }) {
@@ -180,6 +185,10 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           ? _value.downloaded
           : downloaded // ignore: cast_nullable_to_non_nullable
               as bool?,
+      complement: freezed == complement
+          ? _value.complement
+          : complement // ignore: cast_nullable_to_non_nullable
+              as ModuleComplement?,
       sitesGroup: freezed == sitesGroup
           ? _value.sitesGroup
           : sitesGroup // ignore: cast_nullable_to_non_nullable
@@ -189,6 +198,20 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           : sites // ignore: cast_nullable_to_non_nullable
               as List<BaseSite>?,
     ) as $Val);
+  }
+
+  /// Create a copy of Module
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ModuleComplementCopyWith<$Res>? get complement {
+    if (_value.complement == null) {
+      return null;
+    }
+
+    return $ModuleComplementCopyWith<$Res>(_value.complement!, (value) {
+      return _then(_value.copyWith(complement: value) as $Val);
+    });
   }
 }
 
@@ -218,8 +241,12 @@ abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       bool? downloaded,
+      ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
       List<BaseSite>? sites});
+
+  @override
+  $ModuleComplementCopyWith<$Res>? get complement;
 }
 
 /// @nodoc
@@ -253,6 +280,7 @@ class __$$ModuleImplCopyWithImpl<$Res>
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? downloaded = freezed,
+    Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
   }) {
@@ -329,6 +357,10 @@ class __$$ModuleImplCopyWithImpl<$Res>
           ? _value.downloaded
           : downloaded // ignore: cast_nullable_to_non_nullable
               as bool?,
+      complement: freezed == complement
+          ? _value.complement
+          : complement // ignore: cast_nullable_to_non_nullable
+              as ModuleComplement?,
       sitesGroup: freezed == sitesGroup
           ? _value._sitesGroup
           : sitesGroup // ignore: cast_nullable_to_non_nullable
@@ -363,6 +395,7 @@ class _$ModuleImpl implements _Module {
       this.metaCreateDate,
       this.metaUpdateDate,
       this.downloaded,
+      this.complement,
       final List<SiteGroup>? sitesGroup,
       final List<BaseSite>? sites})
       : _sitesGroup = sitesGroup,
@@ -404,6 +437,8 @@ class _$ModuleImpl implements _Module {
   final DateTime? metaUpdateDate;
   @override
   final bool? downloaded;
+  @override
+  final ModuleComplement? complement;
   final List<SiteGroup>? _sitesGroup;
   @override
   List<SiteGroup>? get sitesGroup {
@@ -426,7 +461,7 @@ class _$ModuleImpl implements _Module {
 
   @override
   String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, sitesGroup: $sitesGroup, sites: $sites)';
+    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
   }
 
   @override
@@ -469,6 +504,8 @@ class _$ModuleImpl implements _Module {
                 other.metaUpdateDate == metaUpdateDate) &&
             (identical(other.downloaded, downloaded) ||
                 other.downloaded == downloaded) &&
+            (identical(other.complement, complement) ||
+                other.complement == complement) &&
             const DeepCollectionEquality()
                 .equals(other._sitesGroup, _sitesGroup) &&
             const DeepCollectionEquality().equals(other._sites, _sites));
@@ -495,6 +532,7 @@ class _$ModuleImpl implements _Module {
         metaCreateDate,
         metaUpdateDate,
         downloaded,
+        complement,
         const DeepCollectionEquality().hash(_sitesGroup),
         const DeepCollectionEquality().hash(_sites)
       ]);
@@ -528,6 +566,7 @@ abstract class _Module implements Module {
       final DateTime? metaCreateDate,
       final DateTime? metaUpdateDate,
       final bool? downloaded,
+      final ModuleComplement? complement,
       final List<SiteGroup>? sitesGroup,
       final List<BaseSite>? sites}) = _$ModuleImpl;
 
@@ -567,6 +606,8 @@ abstract class _Module implements Module {
   DateTime? get metaUpdateDate;
   @override
   bool? get downloaded;
+  @override
+  ModuleComplement? get complement;
   @override
   List<SiteGroup>? get sitesGroup;
   @override
