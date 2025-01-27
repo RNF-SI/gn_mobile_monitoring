@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_group_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 
@@ -17,7 +18,7 @@ class SitesRepositoryImpl implements SitesRepository {
   SitesRepositoryImpl(this.api, this.database, this.modulesDatabase);
 
   @override
-  Future<void> fetchSites(String token) async {
+  Future<void> fetchSitesAndSiteModules(String token) async {
     try {
       // Fetch sites from API
       final sites = await api.fetchSitesFromApi(token);
@@ -26,6 +27,23 @@ class SitesRepositoryImpl implements SitesRepository {
       final domainSites = sites.map((e) => e.toDomain()).toList();
       await database.clearSites();
       await database.insertSites(domainSites);
+
+      List<SiteModule> siteModules = [];
+      // Fetch modules for each site calling siteApi.fetchModulesFromIdSite
+      for (var site in domainSites) {
+        final modules =
+            await api.fetchModulesFromIdSite(site.idBaseSite, token);
+
+        // create and insert corSiteModules for each module
+        for (var module in modules) {
+          siteModules.add(SiteModule(
+            idSite: site.idBaseSite,
+            idModule: module.idModule,
+          ));
+        }
+      }
+      await database.clearAllSiteModules();
+      await database.insertSiteModules(siteModules);
     } catch (error) {
       // Exception handling
       print('Error fetching sites: $error');
@@ -35,7 +53,7 @@ class SitesRepositoryImpl implements SitesRepository {
   }
 
   @override
-  Future<void> fetchSiteGroups(String token) async {
+  Future<void> fetchSiteGroupsAndSitesGroupModules(String token) async {
     try {
       // Fetch BaseSite groups and their modules from API
       final List<SiteGroupsWithModulesLabel> result =
