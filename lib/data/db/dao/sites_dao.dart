@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/data/db/mapper/cor_site_module_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/cor_sites_group_module_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_base_site_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_site_complement_mapper.dart';
@@ -12,6 +13,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 part 'sites_dao.g.dart';
@@ -147,5 +149,20 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     query.where(corSiteModuleTable.idModule.equals(moduleId));
     final results = await query.map((row) => row.readTable(tBaseSites)).get();
     return results.map((e) => e.toDomain()).toList();
+  }
+
+  Future<void> insertSitesModules(List<SiteModule> modules) async {
+    final dbEntities = modules.map((e) => e.toDatabaseEntity()).toList();
+    await batch((batch) {
+      batch.insertAll(corSiteModuleTable, dbEntities);
+    });
+  }
+
+  Future<void> clearSitesModules() async {
+    try {
+      await delete(corSiteModuleTable).go();
+    } catch (e) {
+      throw Exception("Failed to clear site modules: ${e.toString()}");
+    }
   }
 }

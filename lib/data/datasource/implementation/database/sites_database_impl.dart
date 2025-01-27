@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 class SitesDatabaseImpl implements SitesDatabase {
@@ -94,5 +95,24 @@ class SitesDatabaseImpl implements SitesDatabase {
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId) async {
     final db = await _database;
     return await db.sitesDao.getGroupsByModuleId(moduleId);
+  }
+
+  /// CorSitesModules
+  @override
+  Future<void> clearAllSiteModules() async {
+    final db = await _database;
+    await db.sitesDao.clearSitesModules();
+  }
+
+  @override
+  Future<void> insertSiteModules(List<SiteModule> modules) async {
+    final db = await _database;
+    await db.sitesDao.insertSitesModules(modules);
+  }
+
+  @override
+  Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getSitesByModuleId(moduleId);
   }
 }
