@@ -25,4 +25,6 @@ abstract class SitesDatabase {
   /// Methods for handling CorSitesGroupModules
   Future<void> clearAllSiteGroupModules();
   Future<void> insertSiteGroupModules(List<SitesGroupModule> modules);
+
+  Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId);
 }

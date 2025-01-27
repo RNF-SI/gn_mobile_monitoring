@@ -124,4 +124,16 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
       throw Exception("Failed to clear site group modules: ${e.toString()}");
     }
   }
+
+  Future<List<SiteGroup>> getGroupsByModuleId(int moduleId) async {
+    final query = select(corSitesGroupModuleTable).join([
+      leftOuterJoin(
+          tSitesGroups,
+          tSitesGroups.idSitesGroup
+              .equalsExp(corSitesGroupModuleTable.idSitesGroup))
+    ]);
+    query.where(corSitesGroupModuleTable.idModule.equals(moduleId));
+    final results = await query.map((row) => row.readTable(tSitesGroups)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
 }

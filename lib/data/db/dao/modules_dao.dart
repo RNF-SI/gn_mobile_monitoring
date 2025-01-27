@@ -23,7 +23,16 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
 
   Future<List<Module>> getAllModules() async {
     final dbModules = await select(tModules).get();
-    return dbModules.map((e) => e.toDomain()).toList(); // Use mapper
+
+    // Fetch and attach site groups for each module
+    final modules = <Module>[];
+    for (var dbModule in dbModules) {
+      final siteGroups = await db.sitesDao
+          .getGroupsByModuleId(dbModule.idModule); // Access SitesDao
+      modules.add(await dbModule.toDomainWithSiteGroups(siteGroups));
+    }
+
+    return modules;
   }
 
   Future<void> insertModules(List<Module> modules) async {
@@ -47,17 +56,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     }
   }
 
-  // New method to fetch a module by its ID
-  Future<TModule> getModuleById(int moduleId) async {
-    final query = select(tModules)
-      ..where((tbl) => tbl.idModule.equals(moduleId));
-    final result = await query.getSingleOrNull();
+  Future<Module> getModuleById(int moduleId) async {
+    final dbModule = await (select(tModules)
+          ..where((tbl) => tbl.idModule.equals(moduleId)))
+        .getSingle();
 
-    if (result == null) {
-      throw Exception("Module with ID $moduleId not found");
-    }
+    final siteGroups =
+        await db.sitesDao.getGroupsByModuleId(moduleId); // Access SitesDao
 
-    return result;
+    return dbModule.toDomainWithSiteGroups(siteGroups);
   }
 
   Future<void> markModuleAsDownloaded(int moduleId) async {
