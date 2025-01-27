@@ -35,6 +35,7 @@ mixin _$Module {
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
   bool? get downloaded => throw _privateConstructorUsedError;
   List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
+  List<BaseSite>? get sites => throw _privateConstructorUsedError;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.
@@ -66,7 +67,8 @@ abstract class $ModuleCopyWith<$Res> {
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       bool? downloaded,
-      List<SiteGroup>? sitesGroup});
+      List<SiteGroup>? sitesGroup,
+      List<BaseSite>? sites});
 }
 
 /// @nodoc
@@ -103,6 +105,7 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     Object? metaUpdateDate = freezed,
     Object? downloaded = freezed,
     Object? sitesGroup = freezed,
+    Object? sites = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -181,6 +184,10 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           ? _value.sitesGroup
           : sitesGroup // ignore: cast_nullable_to_non_nullable
               as List<SiteGroup>?,
+      sites: freezed == sites
+          ? _value.sites
+          : sites // ignore: cast_nullable_to_non_nullable
+              as List<BaseSite>?,
     ) as $Val);
   }
 }
@@ -211,7 +218,8 @@ abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       bool? downloaded,
-      List<SiteGroup>? sitesGroup});
+      List<SiteGroup>? sitesGroup,
+      List<BaseSite>? sites});
 }
 
 /// @nodoc
@@ -246,6 +254,7 @@ class __$$ModuleImplCopyWithImpl<$Res>
     Object? metaUpdateDate = freezed,
     Object? downloaded = freezed,
     Object? sitesGroup = freezed,
+    Object? sites = freezed,
   }) {
     return _then(_$ModuleImpl(
       id: null == id
@@ -324,6 +333,10 @@ class __$$ModuleImplCopyWithImpl<$Res>
           ? _value._sitesGroup
           : sitesGroup // ignore: cast_nullable_to_non_nullable
               as List<SiteGroup>?,
+      sites: freezed == sites
+          ? _value._sites
+          : sites // ignore: cast_nullable_to_non_nullable
+              as List<BaseSite>?,
     ));
   }
 }
@@ -350,8 +363,10 @@ class _$ModuleImpl implements _Module {
       this.metaCreateDate,
       this.metaUpdateDate,
       this.downloaded,
-      final List<SiteGroup>? sitesGroup})
-      : _sitesGroup = sitesGroup;
+      final List<SiteGroup>? sitesGroup,
+      final List<BaseSite>? sites})
+      : _sitesGroup = sitesGroup,
+        _sites = sites;
 
   @override
   final int id;
@@ -399,9 +414,19 @@ class _$ModuleImpl implements _Module {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<BaseSite>? _sites;
+  @override
+  List<BaseSite>? get sites {
+    final value = _sites;
+    if (value == null) return null;
+    if (_sites is EqualUnmodifiableListView) return _sites;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, sitesGroup: $sitesGroup)';
+    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, sitesGroup: $sitesGroup, sites: $sites)';
   }
 
   @override
@@ -445,7 +470,8 @@ class _$ModuleImpl implements _Module {
             (identical(other.downloaded, downloaded) ||
                 other.downloaded == downloaded) &&
             const DeepCollectionEquality()
-                .equals(other._sitesGroup, _sitesGroup));
+                .equals(other._sitesGroup, _sitesGroup) &&
+            const DeepCollectionEquality().equals(other._sites, _sites));
   }
 
   @override
@@ -469,7 +495,8 @@ class _$ModuleImpl implements _Module {
         metaCreateDate,
         metaUpdateDate,
         downloaded,
-        const DeepCollectionEquality().hash(_sitesGroup)
+        const DeepCollectionEquality().hash(_sitesGroup),
+        const DeepCollectionEquality().hash(_sites)
       ]);
 
   /// Create a copy of Module
@@ -501,7 +528,8 @@ abstract class _Module implements Module {
       final DateTime? metaCreateDate,
       final DateTime? metaUpdateDate,
       final bool? downloaded,
-      final List<SiteGroup>? sitesGroup}) = _$ModuleImpl;
+      final List<SiteGroup>? sitesGroup,
+      final List<BaseSite>? sites}) = _$ModuleImpl;
 
   @override
   int get id;
@@ -541,6 +569,8 @@ abstract class _Module implements Module {
   bool? get downloaded;
   @override
   List<SiteGroup>? get sitesGroup;
+  @override
+  List<BaseSite>? get sites;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.

@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
@@ -15,7 +16,8 @@ extension TModuleMapper on TModule {
     );
   }
 
-  Module toDomainWithSiteGroups(List<SiteGroup> siteGroups) {
+  Module toDomainWithSitesAndSiteGroups(
+      List<BaseSite> sites, List<SiteGroup> siteGroups) {
     return Module(
       id: idModule,
       moduleCode: moduleCode,
@@ -24,6 +26,7 @@ extension TModuleMapper on TModule {
       activeFrontend: activeFrontend ?? false,
       activeBackend: activeBackend ?? false,
       downloaded: downloaded ?? false,
+      sites: sites,
       sitesGroup: siteGroups, // Attach the fetched site groups
     );
   }

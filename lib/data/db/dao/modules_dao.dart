@@ -24,12 +24,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   Future<List<Module>> getAllModules() async {
     final dbModules = await select(tModules).get();
 
+    // Fetch and attach sites for each module
     // Fetch and attach site groups for each module
     final modules = <Module>[];
     for (var dbModule in dbModules) {
+      final sites = await db.sitesDao.getSitesByModuleId(dbModule.idModule);
       final siteGroups = await db.sitesDao
           .getGroupsByModuleId(dbModule.idModule); // Access SitesDao
-      modules.add(await dbModule.toDomainWithSiteGroups(siteGroups));
+      final module = dbModule.toDomainWithSitesAndSiteGroups(sites, siteGroups);
+      modules.add(module);
     }
 
     return modules;
@@ -60,11 +63,11 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final dbModule = await (select(tModules)
           ..where((tbl) => tbl.idModule.equals(moduleId)))
         .getSingle();
-
+    final sites = await db.sitesDao.getSitesByModuleId(moduleId);
     final siteGroups =
         await db.sitesDao.getGroupsByModuleId(moduleId); // Access SitesDao
 
-    return dbModule.toDomainWithSiteGroups(siteGroups);
+    return dbModule.toDomainWithSitesAndSiteGroups(sites, siteGroups);
   }
 
   Future<void> markModuleAsDownloaded(int moduleId) async {
