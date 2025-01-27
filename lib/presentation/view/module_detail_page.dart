@@ -183,8 +183,88 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildSitesTab() {
-    return const Center(
-      child: Text('Sites implementation coming soon'),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SingleChildScrollView(
+        child: Table(
+          columnWidths: const {
+            0: FixedColumnWidth(80), // Action column
+            1: FlexColumnWidth(2), // Name column
+            2: FixedColumnWidth(100), // Code column
+            3: FixedColumnWidth(80), // Altitude column
+          },
+          children: [
+            const TableRow(
+              children: [
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  child: Text('Action',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Nom',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Code',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Altitude',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+            if (widget.moduleInfo.module.sites != null)
+              ...widget.moduleInfo.module.sites!.map((site) => TableRow(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: IconButton(
+                          icon: const Icon(Icons.visibility, size: 20),
+                          onPressed: () {},
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(site.baseSiteName ?? ''),
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(site.baseSiteCode ?? ''),
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(
+                          site.altitudeMin != null && site.altitudeMax != null
+                              ? '${site.altitudeMin}-${site.altitudeMax}m'
+                              : site.altitudeMin?.toString() ??
+                                  site.altitudeMax?.toString() ??
+                                  '',
+                        ),
+                      ),
+                    ],
+                  )),
+          ],
+        ),
+      ),
     );
   }
 }
