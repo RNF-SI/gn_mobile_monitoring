@@ -9,7 +9,7 @@ class FetchSitesAndSiteGroupsUseCaseImpl
 
   @override
   Future<void> execute(String token) async {
-    await _sitesRepository.fetchSites(token);
-    await _sitesRepository.fetchSiteGroups(token);
+    await _sitesRepository.fetchSitesAndSiteModules(token);
+    await _sitesRepository.fetchSiteGroupsAndSitesGroupModules(token);
   }
 }
