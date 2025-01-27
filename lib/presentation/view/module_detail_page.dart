@@ -1,158 +1,229 @@
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
-import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:intl/intl.dart';
 
-class ModuleDetailPage extends StatelessWidget {
+class ModuleDetailPage extends StatefulWidget {
   final ModuleInfo moduleInfo;
 
   const ModuleDetailPage({super.key, required this.moduleInfo});
 
   @override
+  State<ModuleDetailPage> createState() => _ModuleDetailPageState();
+}
+
+class _ModuleDetailPageState extends State<ModuleDetailPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(moduleInfo.module.moduleLabel ?? 'Module Details'),
+        title: Text(
+            'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Module Details'}'),
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                moduleInfo.module.moduleLabel ?? 'No Label',
-                style: Theme.of(context).textTheme.headlineMedium,
-              ),
-              const SizedBox(height: 16),
-              // Description Card
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Description',
-                        style:
-                            Theme.of(context).textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: const Color(0xFF598979),
-                                ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        moduleInfo.module.moduleDesc ?? 'No Description',
-                        style: Theme.of(context).textTheme.bodyLarge,
-                      ),
-                    ],
-                  ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Properties Card
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Propriétés',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _buildPropertyRow(
+                        'Nom', widget.moduleInfo.module.moduleLabel ?? ''),
+                    _buildPropertyRow('Description',
+                        widget.moduleInfo.module.moduleDesc ?? ''),
+                    _buildPropertyRow('Jeu de données',
+                        'Contact aléatoire tous règnes confondus'),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 1.5,
-                  crossAxisSpacing: 8,
-                  mainAxisSpacing: 8,
-                ),
-                itemCount: _buildInfoItems().length,
-                itemBuilder: (context, index) {
-                  final item = _buildInfoItems()[index];
-                  return _buildInfoSection(context, item.title, item.content);
-                },
-              ),
+            ),
+          ),
+          // Tab Bar
+          TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(
+                  text:
+                      'Groupes de ${widget.moduleInfo.module.moduleLabel ?? ''} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
+              const Tab(text: 'Sites'),
             ],
           ),
-        ),
+          // Tab Views
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildGroupsTab(),
+                _buildSitesTab(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildInfoSection(BuildContext context, String title, String content) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12.0),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildPropertyRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildGroupsTab() {
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: SingleChildScrollView(
+        child: Table(
+          columnWidths: const {
+            0: FixedColumnWidth(80), // Reduced width for single icon
+            1: FlexColumnWidth(2), // Name column
+            2: FixedColumnWidth(80), // Sites count
+            3: FixedColumnWidth(80), // Visits count
+          },
           children: [
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF598979), // Brand color
-                  ),
-            ),
-            const SizedBox(height: 4),
-            Expanded(
-              child: SingleChildScrollView(
-                child: Text(
-                  content,
-                  style: Theme.of(context).textTheme.bodyLarge,
+            const TableRow(
+              children: [
+                Padding(
+                  padding:
+                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+                  child: Text('Action',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-              ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Nom du groupe',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Sites',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+                Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text('Visites',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
             ),
+            if (widget.moduleInfo.module.sitesGroup != null)
+              ...widget.moduleInfo.module.sitesGroup!.map((group) => TableRow(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        height: 48,
+                        alignment: Alignment.center,
+                        child: IconButton(
+                          icon: const Icon(Icons.visibility, size: 20),
+                          onPressed: () {},
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: Text(group.sitesGroupName ?? ''),
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: const Text('0'), // TODO: Implement actual count
+                      ),
+                      Container(
+                        height: 48,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                        child: const Text('0'), // TODO: Implement actual count
+                      ),
+                    ],
+                  )),
           ],
         ),
       ),
     );
   }
 
-  List<_InfoItem> _buildInfoItems() {
-    final items = <_InfoItem>[
-      _InfoItem('Module Code', moduleInfo.module.moduleCode ?? 'N/A'),
-      _InfoItem('Module Group', moduleInfo.module.moduleGroup ?? 'N/A'),
-      _InfoItem('Module Path', moduleInfo.module.modulePath ?? 'N/A'),
-      _InfoItem('Module ID', moduleInfo.module.id.toString()),
-      _InfoItem(
-          'Download Status',
-          moduleInfo.downloadStatus == ModuleDownloadStatus.moduleDownloaded
-              ? 'Downloaded'
-              : 'Not Downloaded'),
-    ];
-
-    // Add optional items
-    if (moduleInfo.module.moduleExternalUrl != null) {
-      items
-          .add(_InfoItem('External URL', moduleInfo.module.moduleExternalUrl!));
-    }
-    if (moduleInfo.module.moduleTarget != null) {
-      items.add(_InfoItem('Target', moduleInfo.module.moduleTarget!));
-    }
-    if (moduleInfo.module.moduleComment != null) {
-      items.add(_InfoItem('Comments', moduleInfo.module.moduleComment!));
-    }
-    if (moduleInfo.module.moduleDocUrl != null) {
-      items
-          .add(_InfoItem('Documentation URL', moduleInfo.module.moduleDocUrl!));
-    }
-    if (moduleInfo.module.ngModule != null) {
-      items.add(_InfoItem('NG Module', moduleInfo.module.ngModule!));
-    }
-    if (moduleInfo.module.metaCreateDate != null) {
-      items.add(_InfoItem(
-          'Created',
-          DateFormat('dd/MM/yyyy HH:mm')
-              .format(moduleInfo.module.metaCreateDate!)));
-    }
-    if (moduleInfo.module.metaUpdateDate != null) {
-      items.add(_InfoItem(
-          'Last Updated',
-          DateFormat('dd/MM/yyyy HH:mm')
-              .format(moduleInfo.module.metaUpdateDate!)));
-    }
-
-    return items;
+  Widget _buildSitesTab() {
+    return const Center(
+      child: Text('Sites implementation coming soon'),
+    );
   }
 }
 
-class _InfoItem {
-  final String title;
-  final String content;
+class ModuleSiteGroupsPage extends StatelessWidget {
+  final ModuleInfo moduleInfo;
 
-  _InfoItem(this.title, this.content);
+  const ModuleSiteGroupsPage({super.key, required this.moduleInfo});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Site Groups'),
+      ),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16.0),
+        itemCount: moduleInfo.module.sitesGroup!.length,
+        itemBuilder: (context, index) {
+          final siteGroup = moduleInfo.module.sitesGroup![index];
+          return Card(
+            margin: const EdgeInsets.only(bottom: 8.0),
+            child: ListTile(
+              title: Text(
+                siteGroup.sitesGroupName ?? 'Unnamed Group',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Code: ${siteGroup.sitesGroupCode ?? 'N/A'}'),
+                  if (siteGroup.sitesGroupDescription != null)
+                    Text('Description: ${siteGroup.sitesGroupDescription}'),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
