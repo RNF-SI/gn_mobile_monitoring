@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/core/errors/exceptions/data_parsing_excepti
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 
 class SitesApiImpl implements SitesApi {
@@ -97,5 +98,24 @@ class SitesApiImpl implements SitesApi {
     } catch (e) {
       throw ApiException('Failed to fetch site groups from API: $e');
     }
+  }
+
+  @override
+  Future<List<ModuleEntity>> fetchModulesFromIdSite(
+      int idSite, String token) async {
+    final response = await _dio.get(
+      '/monitorings/sites/$idSite/modules',
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+    if (response.statusCode == 200) {
+      final List<dynamic> jsonData = response.data;
+      return jsonData.map((item) => ModuleEntity.fromJson(item)).toList();
+    }
+    throw ApiException('Failed to fetch modules from API',
+        statusCode: response.statusCode);
   }
 }
