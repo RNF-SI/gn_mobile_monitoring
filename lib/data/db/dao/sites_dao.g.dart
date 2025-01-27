@@ -10,4 +10,6 @@ mixin _$SitesDaoMixin on DatabaseAccessor<AppDatabase> {
   $TSitesGroupsTable get tSitesGroups => attachedDatabase.tSitesGroups;
   $CorSitesGroupModuleTableTable get corSitesGroupModuleTable =>
       attachedDatabase.corSitesGroupModuleTable;
+  $CorSiteModuleTableTable get corSiteModuleTable =>
+      attachedDatabase.corSiteModuleTable;
 }

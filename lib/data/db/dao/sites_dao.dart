@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/data/db/mapper/cor_sites_group_module_mappe
 import 'package:gn_mobile_monitoring/data/db/mapper/t_base_site_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_site_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_sites_group_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
@@ -19,7 +20,8 @@ part 'sites_dao.g.dart';
   TBaseSites,
   TSiteComplements,
   TSitesGroups,
-  CorSitesGroupModuleTable
+  CorSitesGroupModuleTable,
+  CorSiteModuleTable
 ])
 class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   SitesDao(super.db);
@@ -134,6 +136,16 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     ]);
     query.where(corSitesGroupModuleTable.idModule.equals(moduleId));
     final results = await query.map((row) => row.readTable(tSitesGroups)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
+
+  Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
+    final query = select(corSiteModuleTable).join([
+      leftOuterJoin(tBaseSites,
+          tBaseSites.idBaseSite.equalsExp(corSiteModuleTable.idBaseSite))
+    ]);
+    query.where(corSiteModuleTable.idModule.equals(moduleId));
+    final results = await query.map((row) => row.readTable(tBaseSites)).get();
     return results.map((e) => e.toDomain()).toList();
   }
 }
