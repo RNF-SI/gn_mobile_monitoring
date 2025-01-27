@@ -6,7 +6,7 @@ class ModuleEntity {
   final String? modulePath;
   final String? modulePicto;
   final bool downloaded; // New property
-  final Map<String, dynamic> cruved;
+  final Map<String, dynamic>? cruved;
 
   ModuleEntity({
     required this.idModule,
@@ -16,7 +16,7 @@ class ModuleEntity {
     this.modulePath,
     this.modulePicto,
     required this.downloaded, // New property
-    required this.cruved,
+    this.cruved,
   });
 
   factory ModuleEntity.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,7 @@ class ModuleEntity {
       modulePath: json['module_path'] as String?,
       modulePicto: json['module_picto'] as String?,
       downloaded: json['downloaded'] as bool? ?? false, // Default to false
-      cruved: json['cruved'] as Map<String, dynamic>,
+      cruved: json['cruved'] as Map<String, dynamic>?,
     );
   }
 
