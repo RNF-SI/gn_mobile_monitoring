@@ -1,4 +1,4 @@
-# Changements concernant les Snippets (VS Code)
+# Snippets (VS Code)
 
 Nous avons introduit de nouveaux **snippets** pour faciliter la création rapide de code Flutter/Dart.  
 Leur utilisation est facultative, c'est pour cela que le fichier `.vscode/dart.code-snippets` est mis dans le gitignore.
