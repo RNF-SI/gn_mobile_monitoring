@@ -179,23 +179,24 @@ main.dart
 
 ```
 
-## Principales Modifications
+## Principaux Points Couverts
 
 1. **Règles Riverpod**
 
-   - Séparer les providers par fonctionnalité (ex: `auth_provider`, `modules_provider`).
-   - Utiliser `StateNotifier` ou `AsyncNotifier` pour la logique complexe.
-   - Gérer les erreurs de façon propre, via des classes de Failure si besoin.
+   - Séparation des providers par fonctionnalité (ex: `auth_provider`, `modules_provider`).
+   - Usage de `StateNotifier` ou `AsyncNotifier` pour la logique complexe.
+   - Gestion élégante des erreurs (par ex., classes de Failure).
 
 2. **Organisation du Code**
 
-   - Rappeler les 3 couches : `data/`, `domain/`, `presentation/`.
-   - Fichier `.cursorrules` soulignant qu’il faut garder les classes et fichiers petits et cohérents.
-   - Encourager l’usage de `@freezed` dans les entités immuables.
+   - Maintien des trois couches : `data/`, `domain/`, `presentation/`.
+   - Mise en avant de classes et fichiers **concis** et **cohérents**.
+   - Recommandation d’utiliser `@freezed` pour créer des entités immuables.
 
 3. **Performance et Tests**
-   - Rappeler l’utilisation de const constructors où possible.
-   - Recommander l’écriture de tests unitaires pour chaque usecase ou repository.
+   - Adoption des `const constructors` quand c’est possible, pour réduire les rebuilds.
+   - Encouragement à l’écriture de tests unitaires pour chaque use case, repository, etc.
+   - Suivi des bonnes pratiques pour éviter les ralentissements et faciliter la maintenance.
 
 ## Pourquoi .cursorrules est Important
 
