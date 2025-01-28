@@ -1,0 +1,71 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      // 1) Existing Create Use Case task
+      "label": "Create Use Case",
+      "type": "shell",
+      "command": "dart",
+      "args": ["run", "scripts/create_usecase.dart", "${input:useCaseName}"],
+      "problemMatcher": []
+    },
+    {
+      // 2) Create Data Source (API)
+      "label": "Create Data Source (API)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "scripts/create_data_source_api.dart",
+        "${input:datasourceApiName}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      // 3) Create Data Source (Database)
+      "label": "Create Data Source (Database)",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "scripts/create_data_source_database.dart",
+        "${input:datasourceDbName}"
+      ],
+      "problemMatcher": []
+    },
+    {
+      // 4) Create Repository
+      "label": "Create Repository",
+      "type": "shell",
+      "command": "dart",
+      "args": [
+        "run",
+        "scripts/create_repository.dart",
+        "${input:repositoryName}"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "useCaseName",
+      "type": "promptString",
+      "description": "Enter the Use Case class name (e.g. ClearTokenFromLocalStorage)"
+    },
+    {
+      "id": "datasourceApiName",
+      "type": "promptString",
+      "description": "Enter the Data Source API name (e.g. Authentication)"
+    },
+    {
+      "id": "datasourceDbName",
+      "type": "promptString",
+      "description": "Enter the Data Source Database name (e.g. Authentication)"
+    },
+    {
+      "id": "repositoryName",
+      "type": "promptString",
+      "description": "Enter the Repository name (e.g. SitesRepository)"
+    }
+  ]
+}
