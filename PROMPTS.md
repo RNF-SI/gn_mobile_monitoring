@@ -1,4 +1,4 @@
-# Changements concernant les Fichiers de Prompts (.cursor-prompts)
+# Fichiers de Prompts
 
 Afin d’optimiser davantage notre flux de travail avec **Cursor**, nous avons ajouté des fichiers
 dans le dossier **`prompts/`**. Chacun contient un “prompt” détaillant comment générer
