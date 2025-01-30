@@ -24,7 +24,7 @@ mixin _$ModuleComplement {
   String get taxonomyDisplayFieldName => throw _privateConstructorUsedError;
   bool? get bDrawSitesGroup => throw _privateConstructorUsedError;
   String? get data => throw _privateConstructorUsedError;
-  String? get configuration => throw _privateConstructorUsedError;
+  ModuleConfiguration? get configuration => throw _privateConstructorUsedError;
 
   /// Create a copy of ModuleComplement
   /// with the given fields replaced by the non-null parameter values.
@@ -48,7 +48,7 @@ abstract class $ModuleComplementCopyWith<$Res> {
       String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
       String? data,
-      String? configuration});
+      ModuleConfiguration? configuration});
 }
 
 /// @nodoc
@@ -112,7 +112,7 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
       configuration: freezed == configuration
           ? _value.configuration
           : configuration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as ModuleConfiguration?,
     ) as $Val);
   }
 }
@@ -134,7 +134,7 @@ abstract class _$$ModuleComplementImplCopyWith<$Res>
       String taxonomyDisplayFieldName,
       bool? bDrawSitesGroup,
       String? data,
-      String? configuration});
+      ModuleConfiguration? configuration});
 }
 
 /// @nodoc
@@ -196,7 +196,7 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
       configuration: freezed == configuration
           ? _value.configuration
           : configuration // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as ModuleConfiguration?,
     ));
   }
 }
@@ -234,7 +234,7 @@ class _$ModuleComplementImpl implements _ModuleComplement {
   @override
   final String? data;
   @override
-  final String? configuration;
+  final ModuleConfiguration? configuration;
 
   @override
   String toString() {
@@ -299,7 +299,7 @@ abstract class _ModuleComplement implements ModuleComplement {
       final String taxonomyDisplayFieldName,
       final bool? bDrawSitesGroup,
       final String? data,
-      final String? configuration}) = _$ModuleComplementImpl;
+      final ModuleConfiguration? configuration}) = _$ModuleComplementImpl;
 
   @override
   int get idModule;
@@ -318,7 +318,7 @@ abstract class _ModuleComplement implements ModuleComplement {
   @override
   String? get data;
   @override
-  String? get configuration;
+  ModuleConfiguration? get configuration;
 
   /// Create a copy of ModuleComplement
   /// with the given fields replaced by the non-null parameter values.

@@ -91,8 +91,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   Future<ModuleComplement?> getModuleComplementById(int moduleId) async {
     final query = select(tModuleComplements)
       ..where((tbl) => tbl.idModule.equals(moduleId));
-    final result = await query.getSingleOrNull();
-    return result?.toDomain();
+    var result = await query.getSingleOrNull();
+    if (result == null) return null;
+
+    // Handle null configuration by providing empty map
+    if (result.configuration == null) {
+      result = result.copyWith(configuration: const Value('{}'));
+    }
+
+    return result.toDomain();
   }
 
   Future<void> insertModuleComplement(ModuleComplement moduleComplement) async {

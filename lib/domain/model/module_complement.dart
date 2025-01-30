@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 
 part 'module_complement.freezed.dart';
 
@@ -13,6 +14,6 @@ class ModuleComplement with _$ModuleComplement {
     @Default('nom_vern,lb_nom') String taxonomyDisplayFieldName,
     bool? bDrawSitesGroup,
     String? data,
-    String? configuration,
+    ModuleConfiguration? configuration,
   }) = _ModuleComplement;
 }

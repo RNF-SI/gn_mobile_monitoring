@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
@@ -74,11 +76,14 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       await datasetsDatabase.clearDatasets();
       await datasetsDatabase.insertDatasets(datasets);
-
       // Fetch and store module configuration
       final config = await globalApi.getModuleConfiguration(moduleCode);
-      await database.updateModuleComplementConfiguration(
-          moduleId, config.toString());
+
+      // Convert the Map to a properly formatted JSON string
+      final jsonConfig = json.encode(config);
+
+      // Store the JSON string in the database
+      await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
 
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);
