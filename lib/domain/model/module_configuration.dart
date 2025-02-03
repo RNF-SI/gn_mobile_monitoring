@@ -9,8 +9,8 @@ class ModuleConfiguration with _$ModuleConfiguration {
   const factory ModuleConfiguration({
     CustomConfig? custom,
     DataConfig? data,
-    Map<String, String>? defaultDisplayFieldNames,
-    Map<String, String>? displayFieldNames,
+    Map<String, String?>? defaultDisplayFieldNames,
+    Map<String, String?>? displayFieldNames,
     ModuleConfig? module,
     ObjectConfig? observation,
     ObjectConfig? site,
@@ -29,11 +29,14 @@ class ModuleConfiguration with _$ModuleConfiguration {
           : DataConfig.fromJson(json['data'] as Map<String, dynamic>),
       defaultDisplayFieldNames: json['default_display_field_names'] == null
           ? null
-          : Map<String, String>.from(
-              json['default_display_field_names'] as Map),
+          : (json['default_display_field_names'] as Map<String, dynamic>).map(
+              (k, v) => MapEntry(k, v?.toString()),
+            ),
       displayFieldNames: json['display_field_names'] == null
           ? null
-          : Map<String, String>.from(json['display_field_names'] as Map),
+          : (json['display_field_names'] as Map<String, dynamic>).map(
+              (k, v) => MapEntry(k, v?.toString()),
+            ),
       module: json['module'] == null
           ? null
           : ModuleConfig.fromJson(json['module'] as Map<String, dynamic>),

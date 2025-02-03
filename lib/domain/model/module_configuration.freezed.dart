@@ -18,9 +18,9 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ModuleConfiguration {
   CustomConfig? get custom => throw _privateConstructorUsedError;
   DataConfig? get data => throw _privateConstructorUsedError;
-  Map<String, String>? get defaultDisplayFieldNames =>
+  Map<String, String?>? get defaultDisplayFieldNames =>
       throw _privateConstructorUsedError;
-  Map<String, String>? get displayFieldNames =>
+  Map<String, String?>? get displayFieldNames =>
       throw _privateConstructorUsedError;
   ModuleConfig? get module => throw _privateConstructorUsedError;
   ObjectConfig? get observation => throw _privateConstructorUsedError;
@@ -45,8 +45,8 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
   $Res call(
       {CustomConfig? custom,
       DataConfig? data,
-      Map<String, String>? defaultDisplayFieldNames,
-      Map<String, String>? displayFieldNames,
+      Map<String, String?>? defaultDisplayFieldNames,
+      Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
       ObjectConfig? site,
@@ -101,11 +101,11 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
       defaultDisplayFieldNames: freezed == defaultDisplayFieldNames
           ? _value.defaultDisplayFieldNames
           : defaultDisplayFieldNames // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
+              as Map<String, String?>?,
       displayFieldNames: freezed == displayFieldNames
           ? _value.displayFieldNames
           : displayFieldNames // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
+              as Map<String, String?>?,
       module: freezed == module
           ? _value.module
           : module // ignore: cast_nullable_to_non_nullable
@@ -243,8 +243,8 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
   $Res call(
       {CustomConfig? custom,
       DataConfig? data,
-      Map<String, String>? defaultDisplayFieldNames,
-      Map<String, String>? displayFieldNames,
+      Map<String, String?>? defaultDisplayFieldNames,
+      Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
       ObjectConfig? site,
@@ -304,11 +304,11 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
       defaultDisplayFieldNames: freezed == defaultDisplayFieldNames
           ? _value._defaultDisplayFieldNames
           : defaultDisplayFieldNames // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
+              as Map<String, String?>?,
       displayFieldNames: freezed == displayFieldNames
           ? _value._displayFieldNames
           : displayFieldNames // ignore: cast_nullable_to_non_nullable
-              as Map<String, String>?,
+              as Map<String, String?>?,
       module: freezed == module
           ? _value.module
           : module // ignore: cast_nullable_to_non_nullable
@@ -343,8 +343,8 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
   const _$ModuleConfigurationImpl(
       {this.custom,
       this.data,
-      final Map<String, String>? defaultDisplayFieldNames,
-      final Map<String, String>? displayFieldNames,
+      final Map<String, String?>? defaultDisplayFieldNames,
+      final Map<String, String?>? displayFieldNames,
       this.module,
       this.observation,
       this.site,
@@ -358,9 +358,9 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
   final CustomConfig? custom;
   @override
   final DataConfig? data;
-  final Map<String, String>? _defaultDisplayFieldNames;
+  final Map<String, String?>? _defaultDisplayFieldNames;
   @override
-  Map<String, String>? get defaultDisplayFieldNames {
+  Map<String, String?>? get defaultDisplayFieldNames {
     final value = _defaultDisplayFieldNames;
     if (value == null) return null;
     if (_defaultDisplayFieldNames is EqualUnmodifiableMapView)
@@ -369,9 +369,9 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
     return EqualUnmodifiableMapView(value);
   }
 
-  final Map<String, String>? _displayFieldNames;
+  final Map<String, String?>? _displayFieldNames;
   @override
-  Map<String, String>? get displayFieldNames {
+  Map<String, String?>? get displayFieldNames {
     final value = _displayFieldNames;
     if (value == null) return null;
     if (_displayFieldNames is EqualUnmodifiableMapView)
@@ -446,8 +446,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   const factory _ModuleConfiguration(
       {final CustomConfig? custom,
       final DataConfig? data,
-      final Map<String, String>? defaultDisplayFieldNames,
-      final Map<String, String>? displayFieldNames,
+      final Map<String, String?>? defaultDisplayFieldNames,
+      final Map<String, String?>? displayFieldNames,
       final ModuleConfig? module,
       final ObjectConfig? observation,
       final ObjectConfig? site,
@@ -460,9 +460,9 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   @override
   DataConfig? get data;
   @override
-  Map<String, String>? get defaultDisplayFieldNames;
+  Map<String, String?>? get defaultDisplayFieldNames;
   @override
-  Map<String, String>? get displayFieldNames;
+  Map<String, String?>? get displayFieldNames;
   @override
   ModuleConfig? get module;
   @override
