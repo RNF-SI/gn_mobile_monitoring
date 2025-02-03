@@ -13,11 +13,15 @@ class ModuleDetailPage extends StatefulWidget {
 class _ModuleDetailPageState extends State<ModuleDetailPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late List<String> _childrenTypes;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _childrenTypes = widget.moduleInfo.module.complement!.configuration?.module
+            ?.childrenTypes ??
+        [];
+    _tabController = TabController(length: _childrenTypes.length, vsync: this);
   }
 
   @override
@@ -60,26 +64,29 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
               ),
             ),
           ),
-          // Tab Bar
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(
-                  text:
-                      'Groupes de ${widget.moduleInfo.module.moduleLabel ?? ''} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
-              const Tab(text: 'Sites'),
-            ],
-          ),
-          // Tab Views
-          Expanded(
-            child: TabBarView(
+          if (_childrenTypes.isNotEmpty) ...[
+            // Tab Bar
+            TabBar(
               controller: _tabController,
-              children: [
-                _buildGroupsTab(),
-                _buildSitesTab(),
+              tabs: [
+                if (_childrenTypes.contains('sites_group'))
+                  Tab(
+                      text:
+                          'Groupes de ${widget.moduleInfo.module.moduleLabel ?? ''} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
+                if (_childrenTypes.contains('site')) const Tab(text: 'Sites'),
               ],
             ),
-          ),
+            // Tab Views
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
+                  if (_childrenTypes.contains('site')) _buildSitesTab(),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
