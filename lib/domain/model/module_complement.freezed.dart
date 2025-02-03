@@ -49,6 +49,8 @@ abstract class $ModuleComplementCopyWith<$Res> {
       bool? bDrawSitesGroup,
       String? data,
       ModuleConfiguration? configuration});
+
+  $ModuleConfigurationCopyWith<$Res>? get configuration;
 }
 
 /// @nodoc
@@ -115,6 +117,20 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
               as ModuleConfiguration?,
     ) as $Val);
   }
+
+  /// Create a copy of ModuleComplement
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ModuleConfigurationCopyWith<$Res>? get configuration {
+    if (_value.configuration == null) {
+      return null;
+    }
+
+    return $ModuleConfigurationCopyWith<$Res>(_value.configuration!, (value) {
+      return _then(_value.copyWith(configuration: value) as $Val);
+    });
+  }
 }
 
 /// @nodoc
@@ -135,6 +151,9 @@ abstract class _$$ModuleComplementImplCopyWith<$Res>
       bool? bDrawSitesGroup,
       String? data,
       ModuleConfiguration? configuration});
+
+  @override
+  $ModuleConfigurationCopyWith<$Res>? get configuration;
 }
 
 /// @nodoc
