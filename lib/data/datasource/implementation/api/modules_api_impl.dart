@@ -15,11 +15,19 @@ class ModulesApiImpl implements ModulesApi {
           receiveTimeout: const Duration(milliseconds: 3000),
         ));
 
+  /// Checks if a module has sufficient CRUVED permissions
+  /// Returns true if any of the CRUVED values is greater than 0
+  bool _hasModulePermissions(Map<String, dynamic> cruved) {
+    if (cruved == null) return false;
+
+    // Check if any of the CRUVED values is greater than 0
+    return cruved.values.any((value) => value is num && value > 0);
+  }
+
   @override
   Future<(List<ModuleEntity>, List<ModuleComplementEntity>)> getModules(
       String token) async {
     try {
-      // Ajouter le token dans les headers
       final response = await _dio.get(
         '/monitorings/modules',
         options: Options(
@@ -37,6 +45,12 @@ class ModulesApiImpl implements ModulesApi {
 
           for (var item in data) {
             final json = item as Map<String, dynamic>;
+
+            // Check CRUVED permissions
+            final cruved = json['cruved'] as Map<String, dynamic>?;
+            if (!_hasModulePermissions(cruved ?? {})) {
+              continue; // Skip this module if no permissions
+            }
 
             // Extract module data
             final moduleJson = {
@@ -87,10 +101,8 @@ class ModulesApiImpl implements ModulesApi {
             'Failed to load modules with status code: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      // Gestion des erreurs réseau
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      // Gestion des autres types d'erreurs
       throw Exception('Error fetching modules: $e');
     }
   }
