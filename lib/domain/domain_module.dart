@@ -10,10 +10,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_data
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_and_site_groups_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_and_sites_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_and_sites_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -82,10 +80,6 @@ final setUserNameFromLocalStorageUseCaseProvider =
         SetUserNameFromLocalStorageUseCaseImpl(
             ref.watch(localStorageProvider)));
 
-final fetchAndSyncModulesUseCaseProvider = Provider<FetchAndSyncModulesUseCase>(
-    (ref) =>
-        FetchAndSyncModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
-
 final getModulesUseCaseProvider = Provider<GetModulesUseCase>(
     (ref) => GetModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
 
@@ -115,12 +109,16 @@ final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
     (ref) =>
         DownloadModuleDataUseCaseImpl(ref.watch(modulesRepositoryProvider)));
 
-final fetchSitesAndSiteGroupsUseCaseProvider =
-    Provider<FetchSitesAndSiteGroupsUseCase>((ref) =>
-        FetchSitesAndSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
-
 final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
     (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
 
 final getSitesUseCaseProvider = Provider<GetSitesUseCase>(
     (ref) => GetSitesUseCaseImpl(ref.watch(sitesRepositoryProvider)));
+
+final fetchAndSyncModulesAndSitesUseCaseProvider =
+    Provider<FetchAndSyncModulesAndSitesUseCase>(
+  (ref) => FetchAndSyncModulesAndSitesUseCaseImpl(
+    ref.watch(modulesRepositoryProvider),
+    ref.watch(sitesRepositoryProvider),
+  ),
+);

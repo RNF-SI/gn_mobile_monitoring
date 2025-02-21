@@ -32,6 +32,10 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
 
   @override
   Widget build(BuildContext context) {
+    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
+    final sitesGroupConfig =
+        widget.moduleInfo.module.complement?.configuration?.site;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -72,8 +76,9 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                 if (_childrenTypes.contains('sites_group'))
                   Tab(
                       text:
-                          'Groupes de ${widget.moduleInfo.module.moduleLabel ?? ''} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
-                if (_childrenTypes.contains('site')) const Tab(text: 'Sites'),
+                          '${sitesGroupConfig?.labelList ?? 'Groupes'} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
+                if (_childrenTypes.contains('site'))
+                  Tab(text: siteConfig?.labelList ?? 'Sites'),
               ],
             ),
             // Tab Views
@@ -190,6 +195,10 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildSitesTab() {
+    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
+    final baseSiteNameConfig = siteConfig?.generic?['base_site_name'];
+    final baseSiteNameLabel = baseSiteNameConfig?.attributLabel ?? 'Nom';
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SingleChildScrollView(
@@ -201,25 +210,25 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
             3: FixedColumnWidth(80), // Altitude column
           },
           children: [
-            const TableRow(
+            TableRow(
               children: [
-                Padding(
+                const Padding(
                   padding:
                       EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: Text('Action',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Nom',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(baseSiteNameLabel,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Text('Code',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Text('Altitude',
                       style: TextStyle(fontWeight: FontWeight.bold)),
