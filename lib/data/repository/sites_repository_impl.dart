@@ -20,34 +20,48 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<void> fetchSitesAndSiteModules(String token) async {
     try {
-      // Fetch sites from API
-      final sites = await api.fetchSitesFromApi(token);
+      // First get all modules from the database
+      final modules = await modulesDatabase.getAllModules();
 
-      // Map and cache
-      final domainSites = sites.map((e) => e.toDomain()).toList();
-      await database.clearSites();
-      await database.insertSites(domainSites);
+      // Map to store unique sites based on their ID
+      final Map<int, BaseSite> uniqueSites = {};
+      final List<SiteModule> siteModules = [];
 
-      List<SiteModule> siteModules = [];
-      // Fetch modules for each site calling siteApi.fetchModulesFromIdSite
-      for (var site in domainSites) {
-        final modules =
-            await api.fetchModulesFromIdSite(site.idBaseSite, token);
+      // For each module, fetch its sites
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
 
-        // create and insert corSiteModules for each module
-        for (var module in modules) {
-          siteModules.add(SiteModule(
-            idSite: site.idBaseSite,
-            idModule: module.idModule,
-          ));
+        try {
+          // Fetch sites for this module
+          final sites =
+              await api.fetchSitesForModule(module.moduleCode!, token);
+
+          // Add sites to our map and create site-module relationships
+          for (final site in sites) {
+            final domainSite = site.toDomain();
+            uniqueSites[domainSite.idBaseSite] = domainSite;
+
+            // Create site-module relationship
+            siteModules.add(SiteModule(
+              idSite: domainSite.idBaseSite,
+              idModule: module.id,
+            ));
+          }
+        } catch (e) {
+          print('Error fetching sites for module ${module.moduleCode}: $e');
+          continue;
         }
       }
+
+      // Save unique sites to database
+      await database.clearSites();
+      await database.insertSites(uniqueSites.values.toList());
+
+      // Save site-module relationships
       await database.clearAllSiteModules();
       await database.insertSiteModules(siteModules);
     } catch (error) {
-      // Exception handling
       print('Error fetching sites: $error');
-      // Optionally, rethrow the error or handle it as needed
       throw Exception('Failed to fetch sites');
     }
   }
@@ -81,9 +95,7 @@ class SitesRepositoryImpl implements SitesRepository {
       await database.clearAllSiteGroupModules();
       await database.insertSiteGroupModules(corSitesGroupModules);
     } catch (error) {
-      // Exception handling
       print('Error fetching site groups: $error');
-      // Optionally, rethrow the error or handle it as needed
       throw Exception('Failed to fetch site groups');
     }
   }
@@ -91,13 +103,10 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<List<BaseSite>> getSites() async {
     try {
-      // Get sites from database
       final sites = await database.getAllSites();
       return sites;
     } catch (error) {
-      // Exception handling
       print('Error getting sites: $error');
-      // Optionally, rethrow the error or handle it as needed
       throw Exception('Failed to get sites');
     }
   }
@@ -105,14 +114,10 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<List<SiteGroup>> getSiteGroups() async {
     try {
-      // Get site groups from database
       final groups = await database.getAllSiteGroups();
-
       return groups;
     } catch (error) {
-      // Exception handling
       print('Error getting site groups: $error');
-      // Optionally, rethrow the error or handle it as needed
       throw Exception('Failed to get site groups');
     }
   }

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
-import 'package:gn_mobile_monitoring/core/errors/exceptions/data_parsing_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
@@ -14,64 +13,68 @@ class SitesApiImpl implements SitesApi {
   SitesApiImpl()
       : _dio = Dio(BaseOptions(
           baseUrl: Config.apiBase,
-          connectTimeout: const Duration(milliseconds: 5000),
-          receiveTimeout: const Duration(milliseconds: 3000),
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
         ));
 
-  @override
-  Future<List<BaseSiteEntity>> fetchSitesFromApi(String token) async {
-    List<BaseSiteEntity> allSites = [];
-    int page = 1;
-    const int limit = 50; // Adjust as needed
-
+  /// Fetches all monitoring modules from the API
+  Future<List<Map<String, dynamic>>> _fetchMonitoringModules(
+      String token) async {
     try {
-      while (true) {
-        final response = await _dio.get(
-          '/monitorings/sites',
-          queryParameters: {'page': page, 'limit': limit},
-          options: Options(
-            headers: {'Authorization': 'Bearer $token'},
-          ),
+      final response = await _dio.get(
+        '/gn_commons/modules',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> modules = response.data;
+        return modules
+            .where((module) => module['type'] == 'monitoring_module')
+            .cast<Map<String, dynamic>>()
+            .toList();
+      } else {
+        throw ApiException(
+          'Failed to fetch modules',
+          statusCode: response.statusCode,
         );
-
-        if (response.statusCode == 200) {
-          final data = response.data;
-
-          if (data == null || data['items'] == null) {
-            throw DataParsingException('Response data or items are null');
-          }
-
-          final items = data['items'] as List<dynamic>;
-          allSites.addAll(
-            items.map(
-              (json) => BaseSiteEntity.fromJson(json as Map<String, dynamic>),
-            ),
-          );
-
-          // Break the loop if we have fetched all pages
-          if (items.length < limit) break;
-
-          page++;
-        } else {
-          throw ApiException(
-            'Failed to fetch sites from API',
-            statusCode: response.statusCode,
-          );
-        }
       }
     } on DioException catch (e) {
-      // Handle Dio-specific exceptions
       throw NetworkException(
-        'Network error occurred: ${e.message}',
-      );
-    } on DataParsingException {
-      rethrow; // Allow DataParsingException to propagate
+          'Network error while fetching modules: ${e.message}');
     } catch (e) {
-      // Catch any other unexpected errors
-      throw ApiException('Unexpected error: $e');
+      throw ApiException('Unexpected error while fetching modules: $e');
     }
+  }
 
-    return allSites;
+  @override
+  Future<List<BaseSiteEntity>> fetchSitesForModule(
+      String moduleCode, String token) async {
+    try {
+      final response = await _dio.get(
+        '/monitorings/list/$moduleCode/site',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final List<dynamic> sites = response.data;
+        return sites.map((site) => BaseSiteEntity.fromJson(site)).toList();
+      }
+
+      throw ApiException(
+        'Failed to fetch sites for module $moduleCode',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      throw NetworkException(
+          'Network error while fetching sites: ${e.message}');
+    } catch (e) {
+      throw ApiException('Failed to fetch sites: $e');
+    }
   }
 
   @override
