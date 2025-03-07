@@ -14,11 +14,17 @@ class FetchAndSyncModulesAndSitesUseCaseImpl
 
   @override
   Future<void> execute(String token) async {
-    // First fetch and sync modules as sites depend on them
-    await _modulesRepository.fetchAndSyncModulesFromApi(token);
+    try {
+      // First fetch and sync modules as sites depend on them
+      await _modulesRepository.fetchAndSyncModulesFromApi(token);
 
-    // Then fetch sites and site groups
-    await _sitesRepository.fetchSitesAndSiteModules(token);
-    await _sitesRepository.fetchSiteGroupsAndSitesGroupModules(token);
+      // Then fetch sites and site groups using the new approach
+      // These methods now use the /monitorings/object/{module_code}/module endpoint
+      await _sitesRepository.fetchSitesAndSiteModules(token);
+      await _sitesRepository.fetchSiteGroupsAndSitesGroupModules(token);
+    } catch (e) {
+      print('Error in FetchAndSyncModulesAndSitesUseCase: $e');
+      rethrow;
+    }
   }
 }

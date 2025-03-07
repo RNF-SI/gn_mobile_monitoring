@@ -69,31 +69,47 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<void> fetchSiteGroupsAndSitesGroupModules(String token) async {
     try {
-      // Fetch BaseSite groups and their modules from API
-      final List<SiteGroupsWithModulesLabel> result =
-          await api.fetchSiteGroupsFromApi(token);
+      // First get all modules from the database
+      final modules = await modulesDatabase.getAllModules();
+      
+      // Maps to store unique site groups and the relationships to modules
+      final Map<int, SiteGroup> uniqueSiteGroups = {};
+      final List<SitesGroupModule> sitesGroupModules = [];
 
-      // Map and cache site groups
-      final domainGroups = result.map((e) => e.siteGroup.toDomain()).toList();
-      await database.clearSiteGroups();
-      await database.insertSiteGroups(domainGroups);
+      // For each module, fetch its site groups
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
 
-      // For each SiteGroupsWithModulesLabel and for each moduleLabel, get the module id and create SitesGroupModule objects
-      List<SitesGroupModule> corSitesGroupModules = [];
-      for (var siteGroup in result) {
-        for (var label in siteGroup.moduleLabelList) {
-          final module = await modulesDatabase.getModuleIdByLabel(label);
-          if (module != null) {
-            corSitesGroupModules.add(SitesGroupModule(
-              idSitesGroup: siteGroup.siteGroup.idSitesGroup,
+        try {
+          // Fetch site groups for this module using the new method
+          final siteGroups = await api.fetchSiteGroupsForModule(
+              module.moduleCode!, token);
+
+          // Add site groups to our map and create site-group-module relationships
+          for (final siteGroup in siteGroups) {
+            final domainSiteGroup = siteGroup.siteGroup.toDomain();
+            uniqueSiteGroups[domainSiteGroup.idSitesGroup] = domainSiteGroup;
+
+            // Create site-group-module relationship
+            sitesGroupModules.add(SitesGroupModule(
+              idSitesGroup: domainSiteGroup.idSitesGroup,
               idModule: module.id,
             ));
           }
+        } catch (e) {
+          print('Error fetching site groups for module ${module.moduleCode}: $e');
+          // Continue with next module instead of failing completely
+          continue;
         }
       }
 
+      // Save unique site groups to database
+      await database.clearSiteGroups();
+      await database.insertSiteGroups(uniqueSiteGroups.values.toList());
+
+      // Save site-group-module relationships
       await database.clearAllSiteGroupModules();
-      await database.insertSiteGroupModules(corSitesGroupModules);
+      await database.insertSiteGroupModules(sitesGroupModules);
     } catch (error) {
       print('Error fetching site groups: $error');
       throw Exception('Failed to fetch site groups');

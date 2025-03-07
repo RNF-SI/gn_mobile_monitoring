@@ -7,6 +7,8 @@ abstract class SitesApi {
   Future<List<BaseSiteEntity>> fetchSitesForModule(
       String moduleCode, String token);
 
-  Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsFromApi(String token);
+  /// Fetches site groups for a specific module using its module code
+  Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsForModule(
+      String moduleCode, String token);
   Future<List<ModuleEntity>> fetchModulesFromIdSite(int idSite, String token);
 }

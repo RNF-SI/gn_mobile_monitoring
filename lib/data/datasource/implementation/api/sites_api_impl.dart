@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.da
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 
 class SitesApiImpl implements SitesApi {
@@ -78,28 +79,52 @@ class SitesApiImpl implements SitesApi {
   }
 
   @override
-  Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsFromApi(
-      String token) async {
+  Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsForModule(
+      String moduleCode, String token) async {
     try {
       final response = await _dio.get(
-        '/monitorings/sites_groups',
+        '/monitorings/list/$moduleCode/sites_group',
         options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
+          headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonData = response.data['items'];
-        return jsonData
-            .map((item) => SiteGroupsWithModulesLabel.fromJson(item))
-            .toList();
+        final List<dynamic> siteGroups = response.data;
+
+        return siteGroups.map((siteGroup) {
+          // Convert the site group to the format our app expects
+          final Map<String, dynamic> groupData = {
+            'id_sites_group': siteGroup['id_sites_group'],
+            'sites_group_name': siteGroup['sites_group_name'] ?? '',
+            'sites_group_code': siteGroup['sites_group_code'] ?? '',
+            'comments': siteGroup['comments'],
+            'nb_sites': siteGroup['nb_sites'],
+            'nb_visits': siteGroup['nb_visits'],
+            // Add any other fields needed by SiteGroupEntity
+            'modules': [
+              moduleCode
+            ], // We know this site group belongs to this module
+          };
+
+          return SiteGroupsWithModulesLabel(
+            siteGroup: SiteGroupEntity.fromJson(groupData),
+            moduleLabelList: [
+              moduleCode
+            ], // We know this site group belongs to this module
+          );
+        }).toList();
       }
-      throw ApiException('Failed to fetch site groups',
-          statusCode: response.statusCode);
+
+      throw ApiException(
+        'Failed to fetch site groups for module $moduleCode',
+        statusCode: response.statusCode,
+      );
+    } on DioException catch (e) {
+      throw NetworkException(
+          'Network error while fetching site groups: ${e.message}');
     } catch (e) {
-      throw ApiException('Failed to fetch site groups from API: $e');
+      throw ApiException('Failed to fetch site groups: $e');
     }
   }
 
