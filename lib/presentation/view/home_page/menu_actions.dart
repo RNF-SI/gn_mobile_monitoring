@@ -13,7 +13,7 @@ class MenuActions extends ConsumerWidget {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final databaseService = ref.read(databaseServiceProvider.notifier);
     final syncService = ref.read(syncServiceProvider);
-    
+
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncStatusProvider);
     final isSyncing = syncStatus.isInProgress;
@@ -31,7 +31,6 @@ class MenuActions extends ConsumerWidget {
       ),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
-        _buildMenuItem(Icons.refresh, 'Rafraîchir la liste', 'refresh'),
         _buildMenuItem(Icons.delete, 'Supprimer la base de données', 'delete'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
@@ -62,14 +61,6 @@ class MenuActions extends ConsumerWidget {
     switch (value) {
       case 'sync':
         await _startSync(context, syncService, ref);
-        break;
-      case 'refresh':
-        await ref
-            .read(userModuleListeViewModelStateNotifierProvider.notifier)
-            .loadModules(); // Updated function
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Liste des modules rafraîchie.')),
-        );
         break;
       case 'delete':
         await _confirmDelete(context, databaseService);
@@ -160,8 +151,9 @@ class MenuActions extends ConsumerWidget {
       },
     );
   }
-  
-  Future<void> _startSync(BuildContext context, SyncService syncService, WidgetRef ref) async {
+
+  Future<void> _startSync(
+      BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
     final currentStatus = ref.read(syncStatusProvider);
     if (currentStatus.isInProgress) {
@@ -173,7 +165,7 @@ class MenuActions extends ConsumerWidget {
 
     // Démarrer la synchronisation
     final success = await syncService.syncAll();
-    
+
     // Rafraîchir la liste des modules après la synchronisation
     if (success) {
       await ref
