@@ -8,12 +8,15 @@ import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_and_sites_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as loadingState;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
@@ -22,6 +25,11 @@ import 'package:go_router/go_router.dart';
 // Pour le Checker
 final authStateProvider = StreamProvider<User?>((ref) {
   return ref.read(authenticationViewModelProvider).authStateChange;
+});
+
+// Pour suivre le statut de connexion
+final loginStatusProvider = StateProvider<LoginStatusInfo>((ref) {
+  return LoginStatusInfo.initial;
 });
 
 final authenticationViewModelProvider =
@@ -35,7 +43,10 @@ final authenticationViewModelProvider =
     ref.watch(clearUserIdFromLocalStorageUseCaseProvider),
     ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
     ref.watch(clearTokenFromLocalStorageUseCaseProvider),
-    ref.watch(fetchAndSyncModulesAndSitesUseCaseProvider),
+    ref.watch(fetchModulesUseCaseProvider),
+    ref.watch(fetchSitesUseCaseProvider),
+    ref.watch(fetchSiteGroupsUseCaseProvider),
+    ref,
   );
 });
 
@@ -57,7 +68,10 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final ClearUserNameFromLocalStorageUseCase
       _clearUserNameFromLocalStorageUseCase;
   final ClearTokenFromLocalStorageUseCase _clearTokenFromLocalStorageUseCase;
-  final FetchAndSyncModulesAndSitesUseCase _fetchAndSyncModulesAndSitesUseCase;
+  final FetchModulesUseCase _fetchModulesUseCase;
+  final FetchSitesUseCase _fetchSitesUseCase;
+  final FetchSiteGroupsUseCase _fetchSiteGroupsUseCase;
+  final Ref _ref;
 
   AuthenticationViewModel(
     this._loginUseCase,
@@ -68,12 +82,19 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._clearUserIdFromLocalStorageUseCase,
     this._clearUserNameFromLocalStorageUseCase,
     this._clearTokenFromLocalStorageUseCase,
-    this._fetchAndSyncModulesAndSitesUseCase,
+    this._fetchModulesUseCase,
+    this._fetchSitesUseCase,
+    this._fetchSiteGroupsUseCase,
+    this._ref,
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
 
   Stream<User?> get authStateChange => controller.stream;
+
+  void _updateLoginStatus(LoginStatusInfo status) {
+    _ref.read(loginStatusProvider.notifier).state = status;
+  }
 
   Future<void> signInWithEmailAndPassword(
     final String identifiant,
@@ -83,18 +104,39 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   ) async {
     try {
       state = const loadingState.State.loading();
+      _updateLoginStatus(LoginStatusInfo.authenticating);
+
       await _loginUseCase.execute(identifiant, password).then((user) async {
         controller.add(user);
 
         try {
           // Save user login state
+          _updateLoginStatus(LoginStatusInfo.savingUserData);
           await _setIsLoggedInFromLocalStorageUseCase.execute(true);
           await _setUserIdFromLocalStorageUseCase.execute(user.id);
           await _setUserNameFromLocalStorageUseCase.execute(identifiant);
           await _setTokenFromLocalStorageUseCase.execute(user.token);
 
-          // Fetch and sync all data in the correct order
-          await _fetchAndSyncModulesAndSitesUseCase.execute(user.token);
+          // Fetch modules and sites data
+          try {
+            // First fetch and sync modules
+            _updateLoginStatus(LoginStatusInfo.fetchingModules);
+            await _fetchModulesUseCase.execute(user.token);
+            
+            // Then fetch sites
+            _updateLoginStatus(LoginStatusInfo.fetchingSites);
+            await _fetchSitesUseCase.execute(user.token);
+            
+            // Then fetch site groups
+            _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
+            await _fetchSiteGroupsUseCase.execute(user.token);
+          } catch (e) {
+            print('Error during data sync: $e');
+            // We still continue to the home page even if some data fetching failed
+          }
+
+          // Set status to complete
+          _updateLoginStatus(LoginStatusInfo.complete);
 
           // Refresh state
           ref.refresh(isLoggedInProvider);
@@ -102,6 +144,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           state = loadingState.State.success(user);
         } catch (e) {
           print('Error during post-login actions: $e');
+          _updateLoginStatus(LoginStatusInfo.error(e.toString()));
         }
       });
     } on DioException catch (e) {
@@ -119,6 +162,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         errorText =
             "${e.error}: La requète n'a pas pu être mise en place ou envoyée";
       }
+
+      _updateLoginStatus(LoginStatusInfo.error(errorText));
+
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -155,6 +201,8 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       );
     } on Exception catch (e) {
       state = loadingState.State.error(e);
+      _updateLoginStatus(LoginStatusInfo.error(e.toString()));
+
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -172,6 +220,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       // state = State.error(e);
     }
   }
+
 
   Future<void> signOut(WidgetRef ref, BuildContext context) async {
     try {

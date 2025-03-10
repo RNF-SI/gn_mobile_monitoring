@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
+import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 
 enum Status {
@@ -143,10 +144,41 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 20), // Space at the bottom
-                  if (_isLoading)
+                  if (_isLoading) ...[
                     const CircularProgressIndicator(
                         valueColor:
                             AlwaysStoppedAnimation<Color>(Color(0xFF8AAC3E))),
+                    const SizedBox(height: 16),
+                    Consumer(
+                      builder: (context, ref, _) {
+                        final loginStatus = ref.watch(loginStatusProvider);
+                        return Column(
+                          children: [
+                            Text(
+                              loginStatus.message,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            if (loginStatus.errorDetails != null)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8.0, left: 20, right: 20),
+                                child: Text(
+                                  loginStatus.errorDetails!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
                   const SizedBox(
                       height: 20), // Additional space at the bottom if loading
                 ],
