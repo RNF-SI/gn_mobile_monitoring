@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 // Custom Colors
@@ -79,43 +80,53 @@ class ModuleDownloadButton extends HookConsumerWidget {
         controller.reverse();
       }
     });
+    
+    // Observer le statut de synchronisation pour désactiver le bouton pendant la synchronisation
+    final syncStatus = ref.watch(syncStatusProvider);
+    final isSyncing = syncStatus.isInProgress;
 
     return AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
           return GestureDetector(
-            onTap: () {
-              _onPressed(context, ref);
-            },
-            child: Stack(
-              children: [
-                ButtonShapeWidget(
-                  transitionDuration: transitionDuration,
-                  isDownloaded: _isDownloaded,
-                  isDownloading: _isDownloading,
-                  isFetching: _isFetching,
-                  isRemoving: _isRemoving,
-                  downloadProgress: moduleInfo.downloadProgress,
-                ),
-                if (_isDownloading || _isFetching)
-                  Positioned.fill(
-                    child: AnimatedOpacity(
-                      duration: transitionDuration,
-                      opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
-                      curve: Curves.ease,
-                      child: Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          ProgressIndicatorWidget(
-                            isDownloading: _isDownloading,
-                            isFetching: _isFetching,
-                            progress: moduleInfo.downloadProgress,
-                          ),
-                        ],
+            onTap: isSyncing 
+              ? null  // Désactiver le tap pendant la synchronisation
+              : () {
+                  _onPressed(context, ref);
+                },
+            child: Opacity(
+              opacity: isSyncing ? 0.5 : 1.0,  // Réduire l'opacité pendant la synchronisation
+              child: Stack(
+                children: [
+                  ButtonShapeWidget(
+                    transitionDuration: transitionDuration,
+                    isDownloaded: _isDownloaded,
+                    isDownloading: _isDownloading,
+                    isFetching: _isFetching,
+                    isRemoving: _isRemoving,
+                    downloadProgress: moduleInfo.downloadProgress,
+                    isDisabled: isSyncing,  // Passer l'état de désactivation
+                  ),
+                  if (_isDownloading || _isFetching)
+                    Positioned.fill(
+                      child: AnimatedOpacity(
+                        duration: transitionDuration,
+                        opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
+                        curve: Curves.ease,
+                        child: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            ProgressIndicatorWidget(
+                              isDownloading: _isDownloading,
+                              isFetching: _isFetching,
+                              progress: moduleInfo.downloadProgress,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         });
@@ -132,6 +143,7 @@ class ButtonShapeWidget extends StatelessWidget {
     required this.isRemoving,
     required this.transitionDuration,
     this.downloadProgress = 0.0,
+    this.isDisabled = false,
   });
 
   final bool isDownloading;
@@ -140,6 +152,7 @@ class ButtonShapeWidget extends StatelessWidget {
   final double downloadProgress;
   final Duration transitionDuration;
   final bool isRemoving;
+  final bool isDisabled;
 
   @override
   Widget build(BuildContext context) {
