@@ -22,6 +22,18 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     await db.sitesDao.insertSites(sites);
   }
+  
+  @override
+  Future<void> updateSite(BaseSite site) async {
+    final db = await _database;
+    await db.sitesDao.updateSite(site);
+  }
+  
+  @override
+  Future<void> deleteSite(int siteId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSite(siteId);
+  }
 
   @override
   Future<List<BaseSite>> getAllSites() async {
@@ -60,6 +72,18 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     await db.sitesDao.insertGroups(siteGroups);
   }
+  
+  @override
+  Future<void> updateSiteGroup(SiteGroup siteGroup) async {
+    final db = await _database;
+    await db.sitesDao.updateSiteGroup(siteGroup);
+  }
+  
+  @override
+  Future<void> deleteSiteGroup(int siteGroupId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSiteGroup(siteGroupId);
+  }
 
   @override
   Future<List<SiteGroup>> getAllSiteGroups() async {
@@ -90,6 +114,18 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     await db.sitesDao.insertSitesGroupModules(modules);
   }
+  
+  @override
+  Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSiteGroupModule(siteGroupId, moduleId);
+  }
+  
+  @override
+  Future<List<SitesGroupModule>> getAllSiteGroupModules() async {
+    final db = await _database;
+    return await db.sitesDao.getAllSiteGroupModules();
+  }
 
   @override
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId) async {
@@ -109,7 +145,19 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     await db.sitesDao.insertSitesModules(modules);
   }
+  
+  @override
+  Future<void> deleteSiteModule(int siteId, int moduleId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSiteModule(siteId, moduleId);
+  }
 
+  @override
+  Future<List<SiteModule>> getAllSiteModules() async {
+    final db = await _database;
+    return await db.sitesDao.getAllSiteModules();
+  }
+  
   @override
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
     final db = await _database;
