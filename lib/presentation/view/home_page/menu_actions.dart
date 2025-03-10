@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 class MenuActions extends ConsumerWidget {
   const MenuActions({super.key});
@@ -11,6 +12,7 @@ class MenuActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final databaseService = ref.read(databaseServiceProvider.notifier);
+    final syncService = ref.read(syncServiceProvider);
 
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu), // Menu icon
@@ -20,9 +22,10 @@ class MenuActions extends ConsumerWidget {
         context,
         authViewModel,
         databaseService,
+        syncService,
       ),
       itemBuilder: (BuildContext context) => [
-        _buildMenuItem(Icons.sync, 'Synchroniser les modules', 'sync'),
+        _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
         _buildMenuItem(Icons.refresh, 'Rafraîchir la liste', 'refresh'),
         _buildMenuItem(Icons.delete, 'Supprimer la base de données', 'delete'),
         _buildMenuItem(
@@ -49,8 +52,12 @@ class MenuActions extends ConsumerWidget {
     BuildContext context,
     authViewModel,
     databaseService,
+    syncService,
   ) async {
     switch (value) {
+      case 'sync':
+        await _startSync(context, syncService, ref);
+        break;
       case 'refresh':
         await ref
             .read(userModuleListeViewModelStateNotifierProvider.notifier)
@@ -147,5 +154,26 @@ class MenuActions extends ConsumerWidget {
         );
       },
     );
+  }
+  
+  Future<void> _startSync(BuildContext context, SyncService syncService, WidgetRef ref) async {
+    // Vérifier si une synchronisation est déjà en cours
+    final currentStatus = ref.read(syncStatusProvider);
+    if (currentStatus.isInProgress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Une synchronisation est déjà en cours.')),
+      );
+      return;
+    }
+
+    // Démarrer la synchronisation
+    final success = await syncService.syncAll();
+    
+    // Rafraîchir la liste des modules après la synchronisation
+    if (success) {
+      await ref
+          .read(userModuleListeViewModelStateNotifierProvider.notifier)
+          .loadModules();
+    }
   }
 }

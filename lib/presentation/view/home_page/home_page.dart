@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.da
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_list_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -27,11 +28,18 @@ class HomePage extends ConsumerWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: Column(
           children: [
-            ModuleListWidget(),
-            SiteGroupListWidget(),
-            SiteListWidget(),
+            const SyncStatusWidget(), // Ajout du widget de statut de synchronisation
+            const Expanded(
+              child: TabBarView(
+                children: [
+                  ModuleListWidget(),
+                  SiteGroupListWidget(),
+                  SiteListWidget(),
+                ],
+              ),
+            ),
           ],
         ),
       ),
