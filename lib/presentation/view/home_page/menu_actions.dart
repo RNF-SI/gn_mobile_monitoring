@@ -81,14 +81,14 @@ class MenuActions extends ConsumerWidget {
       builder: (context) => AlertDialog(
         title: const Text('Confirmation'),
         content: const Text(
-            'Êtes-vous sûr de vouloir supprimer et réinitialiser la base de données ?'),
+            'Êtes-vous sûr de vouloir supprimer et réinitialiser la base de données ? Une synchronisation complète sera effectuée après la réinitialisation.'),
         actions: [
           TextButton(
             child: const Text('Annuler'),
             onPressed: () => Navigator.of(context).pop(false),
           ),
           TextButton(
-            child: const Text('Supprimer'),
+            child: const Text('Supprimer & Synchroniser'),
             onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
@@ -96,11 +96,17 @@ class MenuActions extends ConsumerWidget {
     );
 
     if (confirm == true) {
-      await databaseService.deleteAndReinitializeDatabase();
+      // Afficher un message de chargement
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Base de données réinitialisée avec succès.')),
+            content: Text('Réinitialisation de la base de données en cours...')),
       );
+      
+      // Supprimer et réinitialiser la base de données
+      await databaseService.deleteAndReinitializeDatabase();
+      
+      // Lancer la synchronisation après la réinitialisation
+      await _startSync(context, ref.read(syncServiceProvider), ref);
     }
   }
 
