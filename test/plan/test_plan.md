@@ -10,20 +10,20 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | `SitesRepository` | ✅ Testé | - |
 | `AuthenticationRepository` | ✅ Testé | - |
 | `GlobalDatabaseRepository` | ❌ Non testé | 2 - Moyenne |
-| `LocalStorageRepository` | ❌ Non testé | 1 - Haute |
+| `LocalStorageRepository` | ✅ Testé | - |
 
 ## 2. Couche Domain (UseCases)
 
 | UseCase | Status | Priorité |
 |---------|--------|----------|
 | `GetModulesUseCase` | ✅ Testé | - |
-| `FetchModulesUseCase` | ❌ Non testé | 1 - Haute |
+| `FetchModulesUseCase` | ✅ Testé | - |
 | `GetSitesUseCase` | ✅ Testé | - |
-| `FetchSitesUseCase` | ❌ Non testé | 1 - Haute |
+| `FetchSitesUseCase` | ✅ Testé | - |
 | `GetSiteGroupsUseCase` | ✅ Testé | - |
-| `FetchSiteGroupsUseCase` | ❌ Non testé | 1 - Haute |
+| `FetchSiteGroupsUseCase` | ✅ Testé | - |
 | `LoginUseCase` | ✅ Testé | - |
-| `DownloadModuleDataUseCase` | ❌ Non testé | 1 - Haute |
+| `DownloadModuleDataUseCase` | ✅ Testé | - |
 | `InitLocalMonitoringDatabaseUseCase` | ❌ Non testé | 2 - Moyenne |
 | `DeleteLocalMonitoringDatabaseUseCase` | ❌ Non testé | 2 - Moyenne |
 | `IncrementalSyncAllUseCase` | ❌ Non testé | 2 - Moyenne |
@@ -34,8 +34,8 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | ViewModel | Status | Priorité |
 |-----------|--------|----------|
 | `UserModulesViewModel` | ✅ Testé partiellement | 2 - Ajouter tests manquants |
-| `SitesUtilisateurViewModel` | ❌ Non testé | 1 - Haute |
-| `SiteGroupsUtilisateurViewModel` | ❌ Non testé | 1 - Haute |
+| `SitesUtilisateurViewModel` | ✅ Testé | - |
+| `SiteGroupsUtilisateurViewModel` | ✅ Testé | - |
 | `AuthViewModel` | ❌ Non testé | 1 - Haute |
 | `DatabaseService` | ❌ Non testé | 2 - Moyenne |
 | `SyncService` | ❌ Non testé | 2 - Moyenne |
@@ -72,12 +72,26 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 
 ## Plan d'implémentation
 
-### Phase 1 : Tests critiques (Priorité 1)
-1. Repositories d'accès aux données principales (Sites, Auth)
-2. UseCases clés (Login, Sites, SiteGroups)
-3. ViewModels principaux (Auth, Sites, SiteGroups)
-4. Widgets essentiels (LoginPage, HomePage, AuthChecker)
-5. Tests d'intégration des flux principaux
+### Progression actuelle (état au 10/03/2024)
+✅ Tous les UseCases prioritaires ont été testés (8 UseCases)
+✅ Le `LocalStorageRepository` a été testé
+✅ Le `SitesUtilisateurViewModel` a été testé
+❌ Prochaines étapes à effectuer :
+
+### Phase 1 : Tests critiques (Priorité 1) - Suite
+1. ViewModels restants de priorité 1 :
+   - `SiteGroupsUtilisateurViewModel`
+   - `AuthViewModel`
+2. Widgets essentiels :
+   - `SiteListWidget`
+   - `SiteGroupListWidget`
+   - `LoginPage`
+   - `HomePage`
+   - `AuthChecker`
+3. Tests d'intégration des flux principaux :
+   - `Repository -> ViewModel (Sites)`
+   - `Repository -> ViewModel (SiteGroups)`
+   - `AuthRepository -> AuthViewModel`
 
 ### Phase 2 : Tests importants (Priorité 2)
 1. Repositories secondaires
