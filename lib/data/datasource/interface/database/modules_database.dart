@@ -6,6 +6,7 @@ abstract class ModulesDatabase {
   // Module operations
   Future<void> clearModules();
   Future<void> insertModules(List<Module> modules);
+  Future<void> updateModule(Module module);
   Future<List<Module>> getAllModules();
   Future<String> getModuleCodeFromIdModule(int moduleId);
   Future<void> markModuleAsDownloaded(int moduleId);
@@ -14,6 +15,7 @@ abstract class ModulesDatabase {
   Future<void> insertModuleComplements(
       List<ModuleComplement> moduleComplements);
   Future<ModuleComplement?> getModuleComplementById(int moduleId);
+  Future<List<ModuleComplement>> getAllModuleComplements();
   Future<void> updateModuleComplement(ModuleComplement moduleComplement);
   Future<void> updateModuleComplementConfiguration(
       int moduleId, String configuration);

@@ -20,6 +20,12 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     await db.modulesDao.insertModules(modules);
   }
+  
+  @override
+  Future<void> updateModule(Module module) async {
+    final db = await _database;
+    await db.modulesDao.updateModule(module);
+  }
 
   @override
   Future<List<Module>> getAllModules() async {
@@ -54,6 +60,12 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   Future<ModuleComplement?> getModuleComplementById(int moduleId) async {
     final db = await _database;
     return await db.modulesDao.getModuleComplementById(moduleId);
+  }
+  
+  @override
+  Future<List<ModuleComplement>> getAllModuleComplements() async {
+    final db = await _database;
+    return await db.modulesDao.getAllModuleComplements();
   }
 
   @override
