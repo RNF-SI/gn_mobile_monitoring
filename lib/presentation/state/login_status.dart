@@ -2,9 +2,14 @@ enum LoginStatus {
   initial,
   authenticating,
   savingUserData,
+  // Full replacement sync
   fetchingModules,
   fetchingSites,
   fetchingSiteGroups,
+  // Incremental sync
+  incrementalSyncModules,
+  incrementalSyncSites,
+  incrementalSyncSiteGroups,
   complete,
   error
 }
@@ -37,17 +42,32 @@ class LoginStatusInfo {
 
   static const fetchingModules = LoginStatusInfo(
     status: LoginStatus.fetchingModules,
-    message: 'Chargement des modules...',
+    message: 'Chargement initial des modules...',
   );
 
   static const fetchingSites = LoginStatusInfo(
     status: LoginStatus.fetchingSites,
-    message: 'Chargement des sites...',
+    message: 'Chargement initial des sites...',
   );
 
   static const fetchingSiteGroups = LoginStatusInfo(
     status: LoginStatus.fetchingSiteGroups,
-    message: 'Chargement des groupes de sites...',
+    message: 'Chargement initial des groupes de sites...',
+  );
+  
+  static const incrementalSyncModules = LoginStatusInfo(
+    status: LoginStatus.incrementalSyncModules,
+    message: 'Synchronisation des modules...',
+  );
+  
+  static const incrementalSyncSites = LoginStatusInfo(
+    status: LoginStatus.incrementalSyncSites,
+    message: 'Synchronisation des sites...',
+  );
+  
+  static const incrementalSyncSiteGroups = LoginStatusInfo(
+    status: LoginStatus.incrementalSyncSiteGroups,
+    message: 'Synchronisation des groupes de sites...',
   );
 
   static const complete = LoginStatusInfo(

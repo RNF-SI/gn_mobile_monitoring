@@ -11,6 +11,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_s
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -89,6 +93,19 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   ) : super(const loadingState.State.init()) {
     controller.add(user);
   }
+  
+  // For convenience, access to incremental sync use cases through ref
+  IncrementalSyncModulesUseCase get _incrementalSyncModulesUseCase => 
+      _ref.read(incrementalSyncModulesUseCaseProvider);
+  
+  IncrementalSyncSitesUseCase get _incrementalSyncSitesUseCase => 
+      _ref.read(incrementalSyncSitesUseCaseProvider);
+  
+  IncrementalSyncSiteGroupsUseCase get _incrementalSyncSiteGroupsUseCase => 
+      _ref.read(incrementalSyncSiteGroupsUseCaseProvider);
+      
+  GetModulesUseCase get _getModulesUseCase =>
+      _ref.read(getModulesUseCaseProvider);
 
   Stream<User?> get authStateChange => controller.stream;
 
@@ -117,19 +134,40 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           await _setUserNameFromLocalStorageUseCase.execute(identifiant);
           await _setTokenFromLocalStorageUseCase.execute(user.token);
 
-          // Fetch modules and sites data
+          // Check if database already has data to determine if we need full sync or incremental
+          final existingModules = await _getModulesUseCase.execute();
+          final hasDatabaseData = existingModules.isNotEmpty;
+          
           try {
-            // First fetch and sync modules
-            _updateLoginStatus(LoginStatusInfo.fetchingModules);
-            await _fetchModulesUseCase.execute(user.token);
-            
-            // Then fetch sites
-            _updateLoginStatus(LoginStatusInfo.fetchingSites);
-            await _fetchSitesUseCase.execute(user.token);
-            
-            // Then fetch site groups
-            _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
-            await _fetchSiteGroupsUseCase.execute(user.token);
+            if (hasDatabaseData) {
+              print("Database already contains data. Performing incremental sync...");
+              
+              // Perform incremental sync of modules
+              _updateLoginStatus(LoginStatusInfo.incrementalSyncModules);
+              await _incrementalSyncModulesUseCase.execute(user.token);
+              
+              // Then incremental sync sites
+              _updateLoginStatus(LoginStatusInfo.incrementalSyncSites);
+              await _incrementalSyncSitesUseCase.execute(user.token);
+              
+              // Then incremental sync site groups
+              _updateLoginStatus(LoginStatusInfo.incrementalSyncSiteGroups);
+              await _incrementalSyncSiteGroupsUseCase.execute(user.token);
+            } else {
+              print("Empty database. Performing full initial sync...");
+              
+              // First fetch and sync modules
+              _updateLoginStatus(LoginStatusInfo.fetchingModules);
+              await _fetchModulesUseCase.execute(user.token);
+              
+              // Then fetch sites
+              _updateLoginStatus(LoginStatusInfo.fetchingSites);
+              await _fetchSitesUseCase.execute(user.token);
+              
+              // Then fetch site groups
+              _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
+              await _fetchSiteGroupsUseCase.execute(user.token);
+            }
           } catch (e) {
             print('Error during data sync: $e');
             // We still continue to the home page even if some data fetching failed
