@@ -10,8 +10,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_data
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_and_sites_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_and_sync_modules_and_sites_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
@@ -120,14 +118,6 @@ final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
 
 final getSitesUseCaseProvider = Provider<GetSitesUseCase>(
     (ref) => GetSitesUseCaseImpl(ref.watch(sitesRepositoryProvider)));
-
-final fetchAndSyncModulesAndSitesUseCaseProvider =
-    Provider<FetchAndSyncModulesAndSitesUseCase>(
-  (ref) => FetchAndSyncModulesAndSitesUseCaseImpl(
-    ref.watch(modulesRepositoryProvider),
-    ref.watch(sitesRepositoryProvider),
-  ),
-);
 
 final fetchModulesUseCaseProvider = Provider<FetchModulesUseCase>(
   (ref) => FetchModulesUseCaseImpl(
