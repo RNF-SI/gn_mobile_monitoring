@@ -46,6 +46,12 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       batch.insertAll(tModules, dbEntities);
     });
   }
+  
+  Future<void> updateModule(Module module) async {
+    final dbEntity = module.toDatabaseEntity();
+    await (update(tModules)..where((tbl) => tbl.idModule.equals(module.id)))
+        .write(dbEntity.toCompanion(true));
+  }
 
   Future<void> insertAllModules(List<TModule> modules) async {
     await batch((batch) {
@@ -100,6 +106,18 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     }
 
     return result.toDomain();
+  }
+  
+  Future<List<ModuleComplement>> getAllModuleComplements() async {
+    final complements = await select(tModuleComplements).get();
+    
+    // Handle null configurations by providing empty maps
+    return complements.map((result) {
+      if (result.configuration == null) {
+        result = result.copyWith(configuration: const Value('{}'));
+      }
+      return result.toDomain();
+    }).toList();
   }
 
   Future<void> insertModuleComplement(ModuleComplement moduleComplement) async {

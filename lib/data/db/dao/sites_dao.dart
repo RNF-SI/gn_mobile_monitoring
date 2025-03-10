@@ -44,6 +44,18 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     });
   }
 
+  // Update a single site
+  Future<void> updateSite(BaseSite site) async {
+    final dbEntity = site.toDatabaseEntity();
+    await update(tBaseSites).replace(dbEntity);
+  }
+
+  // Delete a single site
+  Future<void> deleteSite(int siteId) async {
+    await (delete(tBaseSites)..where((tbl) => tbl.idBaseSite.equals(siteId)))
+        .go();
+  }
+
   // Clear all sites
   Future<void> clearSites() async {
     try {
@@ -94,6 +106,19 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     });
   }
 
+  // Update a single site group
+  Future<void> updateSiteGroup(SiteGroup siteGroup) async {
+    final dbEntity = siteGroup.toDatabaseEntity();
+    await update(tSitesGroups).replace(dbEntity);
+  }
+
+  // Delete a single site group
+  Future<void> deleteSiteGroup(int siteGroupId) async {
+    await (delete(tSitesGroups)
+          ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
+        .go();
+  }
+
   // Clear all site groups
   Future<void> clearGroups() async {
     try {
@@ -119,6 +144,24 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     await batch((batch) {
       batch.insertAll(corSitesGroupModuleTable, dbEntities);
     });
+  }
+
+  Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId) async {
+    await (delete(corSitesGroupModuleTable)
+          ..where((tbl) =>
+              tbl.idSitesGroup.equals(siteGroupId) &
+              tbl.idModule.equals(moduleId)))
+        .go();
+  }
+
+  Future<List<SitesGroupModule>> getAllSiteGroupModules() async {
+    final results = await select(corSitesGroupModuleTable).get();
+    return results
+        .map((e) => SitesGroupModule(
+              idSitesGroup: e.idSitesGroup,
+              idModule: e.idModule,
+            ))
+        .toList();
   }
 
   Future<void> clearSitesGroupModules() async {
@@ -151,11 +194,28 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     return results.map((e) => e.toDomain()).toList();
   }
 
+  Future<List<SiteModule>> getAllSiteModules() async {
+    final results = await select(corSiteModuleTable).get();
+    return results
+        .map((e) => SiteModule(
+              idSite: e.idBaseSite,
+              idModule: e.idModule,
+            ))
+        .toList();
+  }
+
   Future<void> insertSitesModules(List<SiteModule> modules) async {
     final dbEntities = modules.map((e) => e.toDatabaseEntity()).toList();
     await batch((batch) {
       batch.insertAll(corSiteModuleTable, dbEntities);
     });
+  }
+
+  Future<void> deleteSiteModule(int siteId, int moduleId) async {
+    await (delete(corSiteModuleTable)
+          ..where((tbl) =>
+              tbl.idBaseSite.equals(siteId) & tbl.idModule.equals(moduleId)))
+        .go();
   }
 
   Future<void> clearSitesModules() async {
