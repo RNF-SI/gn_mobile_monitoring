@@ -63,7 +63,7 @@ class MenuActions extends ConsumerWidget {
         await _startSync(context, syncService, ref);
         break;
       case 'delete':
-        await _confirmDelete(context, databaseService);
+        await _confirmDelete(context, databaseService, ref);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -74,8 +74,8 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(
-      BuildContext context, DatabaseService databaseService) async {
+  Future<void> _confirmDelete(BuildContext context,
+      DatabaseService databaseService, WidgetRef ref) async {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -99,12 +99,13 @@ class MenuActions extends ConsumerWidget {
       // Afficher un message de chargement
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Réinitialisation de la base de données en cours...')),
+            content:
+                Text('Réinitialisation de la base de données en cours...')),
       );
-      
+
       // Supprimer et réinitialiser la base de données
       await databaseService.deleteAndReinitializeDatabase();
-      
+
       // Lancer la synchronisation après la réinitialisation
       await _startSync(context, ref.read(syncServiceProvider), ref);
     }
