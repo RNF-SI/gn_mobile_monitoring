@@ -51,6 +51,91 @@ class ModulesRepositoryImpl implements ModulesRepository {
       throw Exception("Failed to sync modules: ${e.toString()}");
     }
   }
+  
+  @override
+  Future<void> incrementalSyncModulesFromApi(String token) async {
+    try {
+      // Fetch data from API
+      final (apiModules, apiModuleComplements) = await api.getModules(token);
+      
+      // Map to domain models
+      final remoteModules = apiModules.map((e) => e.toDomain()).toList();
+      final remoteModuleComplements = apiModuleComplements.map((e) => e.toDomain()).toList();
+      
+      // Get existing modules from local database
+      final existingModules = await database.getAllModules();
+      final existingModuleIds = existingModules.map((m) => m.id).toSet();
+      final remoteModuleIds = remoteModules.map((m) => m.id).toSet();
+      
+      // 1. Identify modules to ADD (exist remotely but not locally)
+      final modulesToAdd = remoteModules.where((m) => !existingModuleIds.contains(m.id)).toList();
+      
+      // 2. Identify modules to DELETE (exist locally but not remotely)
+      final modulesToRemove = existingModules.where((m) => !remoteModuleIds.contains(m.id)).toList();
+      
+      // 3. Identify modules to UPDATE (exist both locally and remotely)
+      final remoteModulesMap = {for (var m in remoteModules) m.id: m};
+      final modulesToUpdate = existingModules
+          .where((m) => remoteModuleIds.contains(m.id))
+          .map((existingModule) => remoteModulesMap[existingModule.id]!)
+          .toList();
+      
+      // 4. Process module complements similarly
+      final existingComplements = await database.getAllModuleComplements();
+      final existingComplementModuleIds = existingComplements.map((c) => c.idModule).toSet();
+      final remoteComplementModuleIds = remoteModuleComplements.map((c) => c.idModule).toSet();
+      
+      final complementsToAdd = remoteModuleComplements
+          .where((c) => !existingComplementModuleIds.contains(c.idModule))
+          .toList();
+          
+      final complementsToRemove = existingComplements
+          .where((c) => !remoteComplementModuleIds.contains(c.idModule))
+          .toList();
+          
+      final remoteComplementsMap = {for (var c in remoteModuleComplements) c.idModule: c};
+      final complementsToUpdate = existingComplements
+          .where((c) => remoteComplementModuleIds.contains(c.idModule))
+          .map((existingComplement) => remoteComplementsMap[existingComplement.idModule]!)
+          .toList();
+      
+      // 5. Perform database operations
+      
+      // Remove modules and complements that are no longer available to the user
+      for (final moduleToRemove in modulesToRemove) {
+        await database.deleteModuleWithComplement(moduleToRemove.id);
+      }
+      
+      // Add new modules
+      if (modulesToAdd.isNotEmpty) {
+        await database.insertModules(modulesToAdd);
+        print('Added ${modulesToAdd.length} new modules to the database');
+      }
+      
+      // Update existing modules
+      for (final moduleToUpdate in modulesToUpdate) {
+        await database.updateModule(moduleToUpdate);
+      }
+      
+      // Add new module complements
+      if (complementsToAdd.isNotEmpty) {
+        await database.insertModuleComplements(complementsToAdd);
+        print('Added ${complementsToAdd.length} new module complements to the database');
+      }
+      
+      // Update existing module complements
+      for (final complementToUpdate in complementsToUpdate) {
+        await database.updateModuleComplement(complementToUpdate);
+      }
+      
+      print('Removed ${modulesToRemove.length} modules no longer available');
+      print('Updated ${modulesToUpdate.length} existing modules');
+      print('Updated ${complementsToUpdate.length} existing module complements');
+      
+    } catch (e) {
+      throw Exception("Failed to incrementally sync modules: ${e.toString()}");
+    }
+  }
 
   @override
   Future<void> downloadModuleData(int moduleId) async {

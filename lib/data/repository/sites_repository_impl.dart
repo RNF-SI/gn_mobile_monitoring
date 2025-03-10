@@ -65,6 +65,122 @@ class SitesRepositoryImpl implements SitesRepository {
       throw Exception('Failed to fetch sites');
     }
   }
+  
+  @override
+  Future<void> incrementalSyncSitesAndSiteModules(String token) async {
+    try {
+      // First get all modules from the database
+      final modules = await modulesDatabase.getAllModules();
+      
+      // Get existing sites to determine what's new
+      final existingSites = await database.getAllSites();
+      final existingSiteIds = existingSites.map((s) => s.idBaseSite).toSet();
+      
+      // Get existing site modules to determine what relationships are new
+      final existingSiteModules = await database.getAllSiteModules();
+      final existingSiteModuleKeys = existingSiteModules
+          .map((sm) => '${sm.idSite}_${sm.idModule}')
+          .toSet();
+
+      // Maps to store sites data
+      final Map<int, BaseSite> remoteSites = {};
+      final Map<String, SiteModule> remoteSiteModuleMap = {};
+      final Set<int> remotelyAccessibleSiteIds = {};
+
+      // For each module, fetch its sites
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
+
+        try {
+          // Fetch sites for this module
+          final sites = await api.fetchSitesForModule(module.moduleCode!, token);
+
+          // Process all sites from remote API
+          for (final site in sites) {
+            final domainSite = site.toDomain();
+            remoteSites[domainSite.idBaseSite] = domainSite;
+            remotelyAccessibleSiteIds.add(domainSite.idBaseSite);
+            
+            // Create site-module relationship key
+            final relationshipKey = '${domainSite.idBaseSite}_${module.id}';
+            remoteSiteModuleMap[relationshipKey] = SiteModule(
+              idSite: domainSite.idBaseSite,
+              idModule: module.id,
+            );
+          }
+        } catch (e) {
+          print('Error incrementally fetching sites for module ${module.moduleCode}: $e');
+          continue;
+        }
+      }
+      
+      // 1. Identify sites to ADD (exist remotely but not locally)
+      final sitesToAdd = remoteSites.values
+          .where((s) => !existingSiteIds.contains(s.idBaseSite))
+          .toList();
+          
+      // 2. Identify sites to DELETE (exist locally but no longer accessible)
+      final sitesToDelete = existingSites
+          .where((s) => !remotelyAccessibleSiteIds.contains(s.idBaseSite))
+          .toList();
+          
+      // 3. Identify sites to UPDATE (exist both locally and remotely)
+      final sitesToUpdate = remoteSites.values
+          .where((s) => existingSiteIds.contains(s.idBaseSite))
+          .toList();
+          
+      // 4. Identify site-module relationships to ADD and DELETE
+      final siteModulesToAdd = remoteSiteModuleMap.values
+          .where((sm) {
+            final key = '${sm.idSite}_${sm.idModule}';
+            return !existingSiteModuleKeys.contains(key);
+          })
+          .toList();
+          
+      final siteModulesToDelete = existingSiteModules
+          .where((sm) {
+            final key = '${sm.idSite}_${sm.idModule}';
+            return !remoteSiteModuleMap.containsKey(key);
+          })
+          .toList();
+      
+      // 5. Perform database operations
+      
+      // Delete sites and site-module relationships first
+      for (final siteToDelete in sitesToDelete) {
+        await database.deleteSite(siteToDelete.idBaseSite);
+      }
+      
+      for (final siteModuleToDelete in siteModulesToDelete) {
+        await database.deleteSiteModule(siteModuleToDelete.idSite, siteModuleToDelete.idModule);
+      }
+      
+      // Add new sites
+      if (sitesToAdd.isNotEmpty) {
+        await database.insertSites(sitesToAdd);
+        print('Added ${sitesToAdd.length} new sites to the database');
+      }
+      
+      // Update existing sites
+      for (final siteToUpdate in sitesToUpdate) {
+        await database.updateSite(siteToUpdate);
+      }
+      
+      // Add new site-module relationships
+      if (siteModulesToAdd.isNotEmpty) {
+        await database.insertSiteModules(siteModulesToAdd);
+        print('Added ${siteModulesToAdd.length} new site-module relationships to the database');
+      }
+      
+      print('Removed ${sitesToDelete.length} sites no longer accessible');
+      print('Removed ${siteModulesToDelete.length} site-module relationships no longer valid');
+      print('Updated ${sitesToUpdate.length} existing sites');
+      
+    } catch (error) {
+      print('Error incrementally syncing sites: $error');
+      throw Exception('Failed to incrementally sync sites');
+    }
+  }
 
   @override
   Future<void> fetchSiteGroupsAndSitesGroupModules(String token) async {
@@ -113,6 +229,125 @@ class SitesRepositoryImpl implements SitesRepository {
     } catch (error) {
       print('Error fetching site groups: $error');
       throw Exception('Failed to fetch site groups');
+    }
+  }
+  
+  @override
+  Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(String token) async {
+    try {
+      // First get all modules from the database
+      final modules = await modulesDatabase.getAllModules();
+      
+      // Get existing site groups to determine what's new
+      final existingSiteGroups = await database.getAllSiteGroups();
+      final existingSiteGroupIds = existingSiteGroups.map((g) => g.idSitesGroup).toSet();
+      
+      // Get existing site group modules to determine what relationships are new
+      final existingSiteGroupModules = await database.getAllSiteGroupModules();
+      final existingSiteGroupModuleKeys = existingSiteGroupModules
+          .map((sgm) => '${sgm.idSitesGroup}_${sgm.idModule}')
+          .toSet();
+      
+      // Maps to store site groups data
+      final Map<int, SiteGroup> remoteSiteGroups = {};
+      final Map<String, SitesGroupModule> remoteSiteGroupModuleMap = {};
+      final Set<int> remotelyAccessibleSiteGroupIds = {};
+      
+      // For each module, fetch its site groups
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
+        
+        try {
+          // Fetch site groups for this module
+          final siteGroups = await api.fetchSiteGroupsForModule(module.moduleCode!, token);
+          
+          // Process all site groups from remote API
+          for (final siteGroup in siteGroups) {
+            final domainSiteGroup = siteGroup.siteGroup.toDomain();
+            remoteSiteGroups[domainSiteGroup.idSitesGroup] = domainSiteGroup;
+            remotelyAccessibleSiteGroupIds.add(domainSiteGroup.idSitesGroup);
+            
+            // Create site-group-module relationship key
+            final relationshipKey = '${domainSiteGroup.idSitesGroup}_${module.id}';
+            remoteSiteGroupModuleMap[relationshipKey] = SitesGroupModule(
+              idSitesGroup: domainSiteGroup.idSitesGroup,
+              idModule: module.id,
+            );
+          }
+        } catch (e) {
+          print('Error incrementally fetching site groups for module ${module.moduleCode}: $e');
+          continue;
+        }
+      }
+      
+      // 1. Identify site groups to ADD (exist remotely but not locally)
+      final siteGroupsToAdd = remoteSiteGroups.values
+          .where((sg) => !existingSiteGroupIds.contains(sg.idSitesGroup))
+          .toList();
+          
+      // 2. Identify site groups to DELETE (exist locally but no longer accessible)
+      final siteGroupsToDelete = existingSiteGroups
+          .where((sg) => !remotelyAccessibleSiteGroupIds.contains(sg.idSitesGroup))
+          .toList();
+          
+      // 3. Identify site groups to UPDATE (exist both locally and remotely)
+      final siteGroupsToUpdate = remoteSiteGroups.values
+          .where((sg) => existingSiteGroupIds.contains(sg.idSitesGroup))
+          .toList();
+          
+      // 4. Identify site group-module relationships to ADD and DELETE
+      final siteGroupModulesToAdd = remoteSiteGroupModuleMap.values
+          .where((sgm) {
+            final key = '${sgm.idSitesGroup}_${sgm.idModule}';
+            return !existingSiteGroupModuleKeys.contains(key);
+          })
+          .toList();
+          
+      final siteGroupModulesToDelete = existingSiteGroupModules
+          .where((sgm) {
+            final key = '${sgm.idSitesGroup}_${sgm.idModule}';
+            return !remoteSiteGroupModuleMap.containsKey(key);
+          })
+          .toList();
+      
+      // 5. Perform database operations
+      
+      // Delete site groups and site group-module relationships first
+      for (final siteGroupToDelete in siteGroupsToDelete) {
+        await database.deleteSiteGroup(siteGroupToDelete.idSitesGroup);
+      }
+      
+      for (final siteGroupModuleToDelete in siteGroupModulesToDelete) {
+        await database.deleteSiteGroupModule(
+          siteGroupModuleToDelete.idSitesGroup, 
+          siteGroupModuleToDelete.idModule
+        );
+      }
+      
+      // Add new site groups
+      if (siteGroupsToAdd.isNotEmpty) {
+        await database.insertSiteGroups(siteGroupsToAdd);
+        print('Added ${siteGroupsToAdd.length} new site groups to the database');
+      }
+      
+      // Update existing site groups
+      for (final siteGroupToUpdate in siteGroupsToUpdate) {
+        await database.updateSiteGroup(siteGroupToUpdate);
+      }
+      
+      // Add new site group-module relationships
+      if (siteGroupModulesToAdd.isNotEmpty) {
+        await database.insertSiteGroupModules(siteGroupModulesToAdd);
+        print('Added ${siteGroupModulesToAdd.length} new site group-module relationships to the database');
+      }
+      
+      print('Removed ${siteGroupsToDelete.length} site groups no longer accessible');
+      print('Removed ${siteGroupModulesToDelete.length} site group-module relationships no longer valid');
+      print('Updated ${siteGroupsToUpdate.length} existing site groups');
+      
+    } catch (error) {
+      print('Error incrementally syncing site groups: $error');
+      throw Exception('Failed to incrementally sync site groups');
     }
   }
 
