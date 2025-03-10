@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.da
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_list_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
 class HomePage extends ConsumerWidget {
@@ -14,7 +15,7 @@ class HomePage extends ConsumerWidget {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncStatusProvider);
     final isSyncing = syncStatus.isInProgress;
-    
+
     return DefaultTabController(
       length: 3,
       child: Stack(
@@ -32,7 +33,9 @@ class HomePage extends ConsumerWidget {
                   Tab(icon: Icon(Icons.list), text: "Groupes de Sites"),
                   Tab(icon: Icon(Icons.map), text: "Sites"),
                 ],
-                onTap: isSyncing ? (_) => false : null, // Désactiver les onglets pendant la synchronisation
+                onTap: isSyncing
+                    ? (_) => false
+                    : null, // Désactiver les onglets pendant la synchronisation
               ),
             ),
             body: Column(

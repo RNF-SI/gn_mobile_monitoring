@@ -13,9 +13,14 @@ class MenuActions extends ConsumerWidget {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final databaseService = ref.read(databaseServiceProvider.notifier);
     final syncService = ref.read(syncServiceProvider);
+    
+    // Observer le statut de synchronisation
+    final syncStatus = ref.watch(syncStatusProvider);
+    final isSyncing = syncStatus.isInProgress;
 
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu), // Menu icon
+      enabled: !isSyncing, // Désactiver le menu pendant la synchronisation
       onSelected: (value) => _handleMenuSelection(
         value,
         ref,
