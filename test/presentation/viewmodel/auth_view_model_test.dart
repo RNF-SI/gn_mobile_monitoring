@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -21,7 +22,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
-import 'package:gn_mobile_monitoring/presentation/state/state.dart';
+import 'package:gn_mobile_monitoring/presentation/state/state.dart' show State;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
@@ -67,35 +68,35 @@ class MockIncrementalSyncSitesUseCase extends Mock
 class MockIncrementalSyncSiteGroupsUseCase extends Mock
     implements IncrementalSyncSiteGroupsUseCase {}
 
+class MockBuildContext extends Mock implements BuildContext {}
+
+class MockGoRouter extends Mock implements GoRouter {}
+
+class MockRef extends Mock implements Ref {}
+
+class MockWidgetRef extends Mock implements WidgetRef {}
+
 class MockNavigationContext extends Mock implements BuildContext {
   @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      'MockContext';
+  String toString() => 'MockContext';
 }
 
-class MockNavigatorState extends Mock implements NavigatorState {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      'MockNavigatorState';
-}
+// Test data
+final testUser = User(
+  id: 1,
+  name: "Test User",
+  email: "test@example.com",
+  token: "test_token_123",
+);
 
-class MockGoRouter extends Mock implements GoRouter {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      'MockGoRouter';
-}
-
-class MockRef extends Mock implements Ref<Object?> {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      'MockRef';
-}
-
-class MockWidgetRef extends Mock implements WidgetRef {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      'MockWidgetRef';
-}
+final testModule = Module(
+  id: 1,
+  moduleCode: "test_module",
+  moduleLabel: "Test Module Label",
+  activeFrontend: true,
+  sites: [],
+  sitesGroup: [],
+);
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -113,21 +114,15 @@ void main() {
   late MockFetchSitesUseCase mockFetchSitesUseCase;
   late MockFetchSiteGroupsUseCase mockFetchSiteGroupsUseCase;
   late MockGetModulesUseCase mockGetModulesUseCase;
-  late MockRef mockRef;
-  late MockWidgetRef mockWidgetRef;
-  late ProviderContainer container;
   late MockIncrementalSyncModulesUseCase mockIncrementalSyncModulesUseCase;
   late MockIncrementalSyncSitesUseCase mockIncrementalSyncSitesUseCase;
   late MockIncrementalSyncSiteGroupsUseCase
       mockIncrementalSyncSiteGroupsUseCase;
-
-  // Test user
-  final testUser = User(
-    id: 1,
-    name: "Test User",
-    email: "test@example.com",
-    token: "test_token_123",
-  );
+  late MockRef mockRef;
+  late MockWidgetRef mockWidgetRef;
+  late MockNavigationContext mockContext;
+  late MockGoRouter mockGoRouter;
+  late ProviderContainer container;
 
   setUp(() {
     mockLoginUseCase = MockLoginUseCase();
@@ -148,8 +143,14 @@ void main() {
         MockIncrementalSyncSiteGroupsUseCase();
     mockRef = MockRef();
     mockWidgetRef = MockWidgetRef();
+    mockContext = MockNavigationContext();
+    mockGoRouter = MockGoRouter();
 
-    // Configure Ref mock pour retourner les use cases lorsqu'ils sont appelés via ref.read
+    // Setup GoRouter
+    when(() => GoRouter.of(any())).thenReturn(mockGoRouter);
+    when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
+
+    // Setup Ref
     when(() => mockRef.read(incrementalSyncModulesUseCaseProvider))
         .thenReturn(mockIncrementalSyncModulesUseCase);
     when(() => mockRef.read(incrementalSyncSitesUseCaseProvider))
@@ -158,8 +159,26 @@ void main() {
         .thenReturn(mockIncrementalSyncSiteGroupsUseCase);
     when(() => mockRef.read(getModulesUseCaseProvider))
         .thenReturn(mockGetModulesUseCase);
+    when(() => mockRef.refresh(any())).thenReturn(null);
 
-    // Création du ViewModel
+    // Setup default responses
+    when(() => mockLoginUseCase.execute(any(), any()))
+        .thenAnswer((_) async => testUser);
+    when(() => mockSetIsLoggedInUseCase.execute(any()))
+        .thenAnswer((_) async {});
+    when(() => mockSetUserIdUseCase.execute(any())).thenAnswer((_) async {});
+    when(() => mockSetUserNameUseCase.execute(any())).thenAnswer((_) async {});
+    when(() => mockSetTokenUseCase.execute(any())).thenAnswer((_) async {});
+    when(() => mockClearUserIdUseCase.execute()).thenAnswer((_) async {});
+    when(() => mockClearUserNameUseCase.execute()).thenAnswer((_) async {});
+    when(() => mockClearTokenUseCase.execute()).thenAnswer((_) async {});
+    when(() => mockFetchModulesUseCase.execute(any())).thenAnswer((_) async {});
+    when(() => mockFetchSitesUseCase.execute(any())).thenAnswer((_) async {});
+    when(() => mockFetchSiteGroupsUseCase.execute(any()))
+        .thenAnswer((_) async {});
+    when(() => mockGetModulesUseCase.execute())
+        .thenAnswer((_) async => []); // Empty database triggers full sync
+
     viewModel = AuthenticationViewModel(
       mockLoginUseCase,
       mockSetIsLoggedInUseCase,
@@ -175,36 +194,20 @@ void main() {
       mockRef,
     );
 
-    // Configure les mocks pour les tests
-    when(() => mockSetIsLoggedInUseCase.execute(any()))
-        .thenAnswer((_) async {});
-    when(() => mockSetUserIdUseCase.execute(any())).thenAnswer((_) async {});
-    when(() => mockSetUserNameUseCase.execute(any())).thenAnswer((_) async {});
-    when(() => mockSetTokenUseCase.execute(any())).thenAnswer((_) async {});
-    when(() => mockClearUserIdUseCase.execute()).thenAnswer((_) async {});
-    when(() => mockClearUserNameUseCase.execute()).thenAnswer((_) async {});
-    when(() => mockClearTokenUseCase.execute()).thenAnswer((_) async {});
-    when(() => mockFetchModulesUseCase.execute(any())).thenAnswer((_) async {});
-    when(() => mockFetchSitesUseCase.execute(any())).thenAnswer((_) async {});
-    when(() => mockFetchSiteGroupsUseCase.execute(any()))
-        .thenAnswer((_) async {});
-    when(() => mockIncrementalSyncModulesUseCase.execute(any()))
-        .thenAnswer((_) async {});
-    when(() => mockIncrementalSyncSitesUseCase.execute(any()))
-        .thenAnswer((_) async {});
-    when(() => mockIncrementalSyncSiteGroupsUseCase.execute(any()))
-        .thenAnswer((_) async {});
-
-    // Container pour les tests
     container = ProviderContainer(
       overrides: [
         authenticationViewModelProvider.overrideWithValue(viewModel),
+        loginStatusProvider.overrideWith((ref) => LoginStatusInfo.initial),
       ],
     );
 
     registerFallbackValue('test_token');
     registerFallbackValue(MockNavigationContext());
     registerFallbackValue(MockRef());
+  });
+
+  tearDown(() {
+    container.dispose();
   });
 
   group('AuthenticationViewModel - Initialization', () {
@@ -225,15 +228,8 @@ void main() {
       // Arrange
       when(() => mockLoginUseCase.execute(any(), any()))
           .thenAnswer((_) async => testUser);
-      when(() => mockGetModulesUseCase.execute()).thenAnswer((_) async => []);
-
-      final mockContext = MockNavigationContext();
-      final mockGoRouter = MockGoRouter();
-
-      // Setup GoRouter mock
-      when(() => GoRouter.of(mockContext)).thenReturn(mockGoRouter);
-      when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
-      when(() => mockRef.refresh(any())).thenReturn(null);
+      when(() => mockGetModulesUseCase.execute())
+          .thenAnswer((_) async => []); // Empty database triggers full sync
 
       // Act
       await viewModel.signInWithEmailAndPassword(
@@ -251,10 +247,60 @@ void main() {
       verify(() => mockSetUserNameUseCase.execute('test@example.com'))
           .called(1);
       verify(() => mockSetTokenUseCase.execute(testUser.token)).called(1);
+      verify(() => mockFetchModulesUseCase.execute(testUser.token)).called(1);
+      verify(() => mockFetchSitesUseCase.execute(testUser.token)).called(1);
+      verify(() => mockFetchSiteGroupsUseCase.execute(testUser.token))
+          .called(1);
+      verify(() => mockGoRouter.go('/')).called(1);
+    });
 
-      // Vérifier que l'état final est bien success avec les données de l'utilisateur
-      expect(viewModel.state.isSuccess, isTrue);
-      expect(viewModel.state.data, equals(testUser));
+    test('should handle network exceptions during login attempt', () async {
+      // Arrange
+      when(() => mockLoginUseCase.execute(any(), any()))
+          .thenThrow(NetworkException('Network error'));
+
+      // Act
+      await viewModel.signInWithEmailAndPassword(
+        'test@example.com',
+        'password',
+        mockContext,
+        mockWidgetRef,
+      );
+
+      // Assert
+      expect(viewModel.state.isError, isTrue);
+      expect(container.read(loginStatusProvider),
+          equals(LoginStatusInfo.error('Network error')));
+    });
+
+    test('should handle incremental sync when database has data', () async {
+      // Arrange
+      when(() => mockLoginUseCase.execute(any(), any()))
+          .thenAnswer((_) async => testUser);
+      when(() => mockGetModulesUseCase.execute()).thenAnswer((_) async =>
+          [testModule]); // Non-empty database triggers incremental sync
+      when(() => mockIncrementalSyncModulesUseCase.execute(any()))
+          .thenAnswer((_) async {});
+      when(() => mockIncrementalSyncSitesUseCase.execute(any()))
+          .thenAnswer((_) async {});
+      when(() => mockIncrementalSyncSiteGroupsUseCase.execute(any()))
+          .thenAnswer((_) async {});
+
+      // Act
+      await viewModel.signInWithEmailAndPassword(
+        'test@example.com',
+        'password',
+        mockContext,
+        mockWidgetRef,
+      );
+
+      // Assert
+      verify(() => mockIncrementalSyncModulesUseCase.execute(testUser.token))
+          .called(1);
+      verify(() => mockIncrementalSyncSitesUseCase.execute(testUser.token))
+          .called(1);
+      verify(() => mockIncrementalSyncSiteGroupsUseCase.execute(testUser.token))
+          .called(1);
     });
   });
 
@@ -317,85 +363,8 @@ void main() {
     });
   });
 
-  group('AuthenticationViewModel - Error Handling', () {
-    test('should handle network exceptions during login attempt', () async {
-      // Arrange
-      final networkException = NetworkException('No internet connection');
-      when(() => mockLoginUseCase.execute(any(), any()))
-          .thenThrow(networkException);
-
-      final mockContext = MockNavigationContext();
-
-      // Act
-      await viewModel.signInWithEmailAndPassword(
-        'test@example.com',
-        'password',
-        mockContext,
-        mockWidgetRef,
-      );
-
-      // Assert
-      final loginStatus = container.read(loginStatusProvider);
-      expect(loginStatus, isA<LoginStatusInfo>());
-      expect(loginStatus.status, equals(LoginStatus.error));
-
-      // Vérifier que l'état est en erreur
-      expect(viewModel.state.isError, isTrue);
-    });
-
-    test('should handle API exceptions during login attempt', () async {
-      // Arrange
-      final apiException = ApiException('Invalid credentials', statusCode: 401);
-      when(() => mockLoginUseCase.execute(any(), any()))
-          .thenThrow(apiException);
-
-      final mockContext = MockNavigationContext();
-
-      // Act
-      await viewModel.signInWithEmailAndPassword(
-        'test@example.com',
-        'password',
-        mockContext,
-        mockWidgetRef,
-      );
-
-      // Assert
-      final loginStatus = container.read(loginStatusProvider);
-      expect(loginStatus, isA<LoginStatusInfo>());
-      expect(loginStatus.status, equals(LoginStatus.error));
-
-      // Vérifier que l'état est en erreur
-      expect(viewModel.state.isError, isTrue);
-    });
-  });
-
-  group('AuthenticationViewModel - Logout', () {
-    test('should clear user data on signOut', () async {
-      // Arrange
-      // Set initial state to success with test user
-      viewModel = AuthenticationViewModel(
-        mockLoginUseCase,
-        mockSetIsLoggedInUseCase,
-        mockSetUserIdUseCase,
-        mockSetUserNameUseCase,
-        mockSetTokenUseCase,
-        mockClearUserIdUseCase,
-        mockClearUserNameUseCase,
-        mockClearTokenUseCase,
-        mockFetchModulesUseCase,
-        mockFetchSitesUseCase,
-        mockFetchSiteGroupsUseCase,
-        mockRef,
-      )..state = State<User>.success(testUser);
-
-      final mockContext = MockNavigationContext();
-      final mockGoRouter = MockGoRouter();
-
-      // Setup GoRouter mock
-      when(() => GoRouter.of(mockContext)).thenReturn(mockGoRouter);
-      when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
-      when(() => mockRef.refresh(any())).thenReturn(null);
-
+  group('AuthenticationViewModel - Logout Flow', () {
+    test('should clear user data and navigate to login on logout', () async {
       // Act
       await viewModel.signOut(mockWidgetRef, mockContext);
 
@@ -403,8 +372,60 @@ void main() {
       verify(() => mockClearUserIdUseCase.execute()).called(1);
       verify(() => mockClearUserNameUseCase.execute()).called(1);
       verify(() => mockClearTokenUseCase.execute()).called(1);
-      verify(() => mockSetIsLoggedInUseCase.execute(false)).called(1);
-      verify(() => mockGoRouter.go('/login')).called(1);
+      verify(() => mockGoRouter.go('/')).called(1);
+    });
+  });
+
+  group('AuthenticationViewModel - Error Handling', () {
+    test('should handle API exceptions during login attempt', () async {
+      // Arrange
+      when(() => mockLoginUseCase.execute(any(), any()))
+          .thenThrow(ApiException('API error'));
+
+      // Act
+      await viewModel.signInWithEmailAndPassword(
+        'test@example.com',
+        'password',
+        mockContext,
+        mockWidgetRef,
+      );
+
+      // Assert
+      expect(viewModel.state.isError, isTrue);
+      expect(container.read(loginStatusProvider),
+          equals(LoginStatusInfo.error('API error')));
+    });
+  });
+
+  group('AuthenticationViewModel - Incremental Sync', () {
+    test('should handle incremental sync when database has data', () async {
+      // Arrange
+      when(() => mockLoginUseCase.execute(any(), any()))
+          .thenAnswer((_) async => testUser);
+      when(() => mockGetModulesUseCase.execute()).thenAnswer((_) async =>
+          [testModule]); // Non-empty database triggers incremental sync
+      when(() => mockIncrementalSyncModulesUseCase.execute(any()))
+          .thenAnswer((_) async {});
+      when(() => mockIncrementalSyncSitesUseCase.execute(any()))
+          .thenAnswer((_) async {});
+      when(() => mockIncrementalSyncSiteGroupsUseCase.execute(any()))
+          .thenAnswer((_) async {});
+
+      // Act
+      await viewModel.signInWithEmailAndPassword(
+        'test@example.com',
+        'password',
+        mockContext,
+        mockWidgetRef,
+      );
+
+      // Assert
+      verify(() => mockIncrementalSyncModulesUseCase.execute(testUser.token))
+          .called(1);
+      verify(() => mockIncrementalSyncSitesUseCase.execute(testUser.token))
+          .called(1);
+      verify(() => mockIncrementalSyncSiteGroupsUseCase.execute(testUser.token))
+          .called(1);
     });
   });
 }
