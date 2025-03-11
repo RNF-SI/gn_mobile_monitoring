@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
@@ -43,18 +43,19 @@ void main() {
     container.dispose();
   });
 
-  test('UserModulesViewModel should initialize with init state and trigger loading', () {
+  test(
+      'UserModulesViewModel should initialize with init state and trigger loading',
+      () {
     // Arrange
     when(() => mockGetModulesUseCase.execute())
         .thenAnswer((_) async => []); // Retourne une liste vide de modules
 
     // Act - Créez un nouveau ViewModel (cela va déclencher loadModules)
-    final userModulesViewModel =
-        UserModulesViewModel(
-          const AsyncValue<ModuleInfoListe>.data(ModuleInfoListe(values: [])),
-          mockGetModulesUseCase,
-          mockDownloadModuleDataUseCase,
-        );
+    final userModulesViewModel = UserModulesViewModel(
+      mockGetModulesUseCase,
+      mockDownloadModuleDataUseCase,
+      const AsyncValue<ModuleInfoList>.data(ModuleInfoList(values: [])),
+    );
 
     // Verifiez que loadModules a été appelé
     verify(() => mockGetModulesUseCase.execute()).called(1);
@@ -64,7 +65,7 @@ void main() {
       () async {
     // Arrange
     final mockModules = [
-      Module(
+      const Module(
         id: 1,
         moduleCode: 'code1',
         moduleLabel: 'Module 1',
@@ -77,7 +78,7 @@ void main() {
         moduleGroup: 'group1',
         downloaded: true,
       ),
-      Module(
+      const Module(
         id: 2,
         moduleCode: 'code2',
         moduleLabel: 'Module 2',
@@ -102,19 +103,19 @@ void main() {
 
     // Assert
     final state = container.read(userModuleListeViewModelStateNotifierProvider);
-    expect(state, isA<custom_async_state.State<ModuleInfoListe>>());
+    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
 
-    final moduleInfoListe = state.data!;
-    expect(moduleInfoListe.values.length, equals(2));
+    final moduleInfoList = state.data!;
+    expect(moduleInfoList.values.length, equals(2));
 
     // Premier module (téléchargé)
-    expect(moduleInfoListe.values[0].module.id, equals(1));
-    expect(moduleInfoListe.values[0].downloadStatus,
+    expect(moduleInfoList.values[0].module.id, equals(1));
+    expect(moduleInfoList.values[0].downloadStatus,
         equals(ModuleDownloadStatus.moduleDownloaded));
 
     // Deuxième module (non téléchargé)
-    expect(moduleInfoListe.values[1].module.id, equals(2));
-    expect(moduleInfoListe.values[1].downloadStatus,
+    expect(moduleInfoList.values[1].module.id, equals(2));
+    expect(moduleInfoList.values[1].downloadStatus,
         equals(ModuleDownloadStatus.moduleNotDownloaded));
   });
 
@@ -122,7 +123,7 @@ void main() {
       'startDownloadModule should update module state during and after download',
       () async {
     // Arrange
-    final mockModule = Module(
+    final mockModule = const Module(
       id: 1,
       moduleCode: 'code1',
       moduleLabel: 'Module 1',
@@ -141,7 +142,7 @@ void main() {
       downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
     );
 
-    final moduleInfoListe = ModuleInfoListe(values: [moduleInfo]);
+    final moduleInfoList = ModuleInfoList(values: [moduleInfo]);
 
     // Set initial state
     final userModulesViewModel =
@@ -168,7 +169,7 @@ void main() {
 
     // Assert
     final state = container.read(userModuleListeViewModelStateNotifierProvider);
-    expect(state, isA<custom_async_state.State<ModuleInfoListe>>());
+    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
 
     final updatedModuleInfo = state.data!.values[0];
     expect(updatedModuleInfo.downloadStatus,

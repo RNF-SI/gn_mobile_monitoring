@@ -103,13 +103,13 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final siteGroups = [
-      SiteGroup(
+      const SiteGroup(
         idSitesGroup: 1,
         sitesGroupName: 'Groupe de sites 1',
         sitesGroupDescription: 'Description du groupe 1',
         uuidSitesGroup: 'UUID-1',
       ),
-      SiteGroup(
+      const SiteGroup(
         idSitesGroup: 2,
         sitesGroupName: 'Groupe de sites 2',
         sitesGroupDescription: 'Description du groupe 2',
