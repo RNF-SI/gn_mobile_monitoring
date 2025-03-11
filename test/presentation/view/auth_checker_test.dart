@@ -44,6 +44,11 @@ void main() {
     );
 
     expect(find.byType(LoadingScreen), findsOneWidget);
+
+    // Wait for the Future to complete
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomePage), findsOneWidget);
   });
 
   testWidgets('AuthChecker should navigate to HomePage when user is logged in',

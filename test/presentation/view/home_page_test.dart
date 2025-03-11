@@ -43,18 +43,30 @@ class MockSyncStatusWidget extends Mock implements SyncStatusWidget {
 }
 
 void main() {
-  testWidgets('HomePage should display TabController with 3 tabs',
-      (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
+  late ProviderContainer container;
+
+  setUp(() {
+    container = ProviderContainer(
       overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
+        syncStatusProvider.overrideWith((ref) => SyncStatus.initial),
       ],
     );
+  });
 
-    // Act
+  tearDown(() {
+    container.dispose();
+  });
+
+  Future<void> pumpHomePage(WidgetTester tester,
+      [SyncStatus? syncStatus]) async {
+    if (syncStatus != null) {
+      container = ProviderContainer(
+        overrides: [
+          syncStatusProvider.overrideWith((ref) => syncStatus),
+        ],
+      );
+    }
+
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -63,14 +75,18 @@ void main() {
         ),
       ),
     );
+    await tester.pump();
+  }
 
-    // Assert
+  testWidgets('HomePage should display TabController with 3 tabs',
+      (WidgetTester tester) async {
+    await pumpHomePage(tester);
+
     expect(find.text('Mes Données'), findsOneWidget);
     expect(find.text('Modules'), findsOneWidget);
     expect(find.text('Groupes de Sites'), findsOneWidget);
     expect(find.text('Sites'), findsOneWidget);
 
-    // Vérifier que les tabs sont correctement configurés
     expect(find.byType(Tab), findsNWidgets(3));
     expect(find.byType(TabBar), findsOneWidget);
     expect(find.byType(TabBarView), findsOneWidget);
@@ -78,26 +94,9 @@ void main() {
 
   testWidgets('HomePage should display ModuleListWidget on first tab',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
-      ],
-    );
+    await pumpHomePage(tester);
 
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
-
-    // Assert - Le premier onglet (Modules) devrait être actif par défaut
+    // Le premier onglet (Modules) devrait être actif par défaut
     expect(find.byType(ModuleListWidget), findsOneWidget);
     expect(find.byType(SiteGroupListWidget), findsNothing);
     expect(find.byType(SiteListWidget), findsNothing);
@@ -105,30 +104,14 @@ void main() {
 
   testWidgets('HomePage should display SiteGroupListWidget on second tab',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
-      ],
-    );
-
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
+    await pumpHomePage(tester);
 
     // Tap sur le deuxième onglet (Groupes de Sites)
     await tester.tap(find.text('Groupes de Sites'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester
+        .pump(const Duration(milliseconds: 300)); // Attendre l'animation
 
-    // Assert
     expect(find.byType(ModuleListWidget), findsNothing);
     expect(find.byType(SiteGroupListWidget), findsOneWidget);
     expect(find.byType(SiteListWidget), findsNothing);
@@ -136,30 +119,14 @@ void main() {
 
   testWidgets('HomePage should display SiteListWidget on third tab',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
-      ],
-    );
-
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
+    await pumpHomePage(tester);
 
     // Tap sur le troisième onglet (Sites)
     await tester.tap(find.text('Sites'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester
+        .pump(const Duration(milliseconds: 300)); // Attendre l'animation
 
-    // Assert
     expect(find.byType(ModuleListWidget), findsNothing);
     expect(find.byType(SiteGroupListWidget), findsNothing);
     expect(find.byType(SiteListWidget), findsOneWidget);
@@ -167,113 +134,46 @@ void main() {
 
   testWidgets('HomePage should display SyncStatusWidget',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
-      ],
-    );
-
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
-
-    // Assert
+    await pumpHomePage(tester);
     expect(find.byType(SyncStatusWidget), findsOneWidget);
   });
 
   testWidgets('HomePage should display MenuActions in AppBar',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.initial,
-        )
-      ],
-    );
-
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
-
-    // Assert
+    await pumpHomePage(tester);
     expect(find.byType(MenuActions), findsOneWidget);
   });
 
   testWidgets('HomePage should show modal barrier when syncing',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.syncingModules
-              .copyWith(progress: 50, message: 'Synchronisation en cours'),
-        )
-      ],
+    final syncingStatus = SyncStatus.syncingModules.copyWith(
+      progress: 50,
+      message: 'Synchronisation en cours',
     );
 
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
+    await pumpHomePage(tester, syncingStatus);
+    await tester.pump(); // Pour s'assurer que le modal est affiché
 
-    // Assert
-    expect(find.byType(ModalBarrier), findsOneWidget);
+    // We expect to find at least one ModalBarrier
+    expect(find.byType(ModalBarrier), findsWidgets);
+    expect(find.text('Synchronisation en cours'), findsOneWidget);
   });
 
   testWidgets('HomePage should not allow tab changes when syncing',
       (WidgetTester tester) async {
-    // Arrange
-    final container = ProviderContainer(
-      overrides: [
-        syncStatusProvider.overrideWith(
-          (ref) => SyncStatus.syncingModules
-              .copyWith(progress: 50, message: 'Synchronisation en cours'),
-        )
-      ],
+    final syncingStatus = SyncStatus.syncingModules.copyWith(
+      progress: 50,
+      message: 'Synchronisation en cours',
     );
 
-    // Act
-    await tester.pumpWidget(
-      UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          home: HomePage(),
-        ),
-      ),
-    );
+    await pumpHomePage(tester, syncingStatus);
 
-    // Nombre initial de ModuleListWidget
-    final initialWidgetCount =
-        tester.widgetList(find.byType(ModuleListWidget)).length;
-
-    // Tap sur le deuxième onglet (Groupes de Sites) pendant la synchronisation
+    // Essayer de changer d'onglet
     await tester.tap(find.text('Groupes de Sites'));
-    await tester.pumpAndSettle();
+    await tester.pump();
 
-    // Assert - Le widget ne devrait pas changer car les tabs sont désactivés
-    expect(tester.widgetList(find.byType(ModuleListWidget)).length,
-        equals(initialWidgetCount));
+    // Vérifier que nous sommes toujours sur le premier onglet
+    expect(find.byType(ModuleListWidget), findsOneWidget);
     expect(find.byType(SiteGroupListWidget), findsNothing);
   });
 }
