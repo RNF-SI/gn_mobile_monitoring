@@ -50,9 +50,6 @@ void main() {
     // Configuration des use cases avec les mocks
     getSitesUseCase = GetSitesUseCaseImpl(mockSitesRepo);
 
-    // Définit des valeurs par défaut pour les mocks
-    when(() => mockSitesRepo.getSites()).thenAnswer((_) async => testSites);
-
     // Configuration des use cases via les providers
     container = ProviderContainer(
       overrides: [
@@ -67,7 +64,17 @@ void main() {
     );
   });
 
+  tearDown(() {
+    container.dispose();
+    resetMocktailState();
+  });
+
   group('Sites Repository with ViewModel Integration', () {
+    setUp(() {
+      // Reset the mock before each test
+      reset(mockSitesRepo);
+    });
+
     test('getSites should correctly integrate from Repository to ViewModel',
         () async {
       // Arrange
@@ -88,7 +95,7 @@ void main() {
 
     test('ViewModel should handle repository errors correctly', () async {
       // Arrange
-      final testException = Exception('Failed to fetch sites');
+      final testException = Exception('Failed to load sites');
       when(() => mockSitesRepo.getSites()).thenThrow(testException);
 
       // Act
@@ -107,7 +114,7 @@ void main() {
             success: (_) => '',
             error: (e) => e.toString(),
           ),
-          contains('Failed to fetch sites'));
+          contains('Failed to load sites'));
     });
 
     test('ViewModel should handle empty site list correctly', () async {

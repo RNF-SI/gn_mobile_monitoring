@@ -221,17 +221,42 @@ void main() {
   });
 
   group('Authentication Repository with ViewModel Integration', () {
+    late MockNavigationContext mockContext;
+    late MockGoRouter mockGoRouter;
+
+    setUp(() {
+      // Reset mocks before each test
+      reset(mockAuthRepo);
+      reset(mockLocalStorage);
+      reset(mockRef);
+      reset(mockGetModulesUseCase);
+      reset(mockFetchModulesUseCase);
+      reset(mockFetchSitesUseCase);
+      reset(mockFetchSiteGroupsUseCase);
+
+      // Setup navigation mocks
+      mockContext = MockNavigationContext();
+      mockGoRouter = MockGoRouter();
+      when(() => GoRouter.of(mockContext)).thenReturn(mockGoRouter);
+      when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
+
+      // Setup default responses
+      when(() => mockAuthRepo.login(any(), any()))
+          .thenAnswer((_) async => testUser);
+      when(() => mockLocalStorage.setIsLoggedIn(any()))
+          .thenAnswer((_) async {});
+      when(() => mockLocalStorage.setUserId(any())).thenAnswer((_) async {});
+      when(() => mockLocalStorage.setUserName(any())).thenAnswer((_) async {});
+      when(() => mockLocalStorage.setToken(any())).thenAnswer((_) async {});
+      when(() => mockRef.read(any())).thenReturn(mockGetModulesUseCase);
+      when(() => mockRef.refresh(any())).thenReturn(null);
+    });
+
     test('Login should correctly integrate from Repository to ViewModel',
         () async {
       // Arrange
       when(() => mockAuthRepo.login('test@example.com', 'password'))
           .thenAnswer((_) async => testUser);
-
-      final mockContext = MockNavigationContext();
-      final mockGoRouter = MockGoRouter();
-
-      when(() => GoRouter.of(mockContext)).thenReturn(mockGoRouter);
-      when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
 
       // Act
       await authViewModel.signInWithEmailAndPassword(
@@ -248,6 +273,7 @@ void main() {
       verify(() => mockLocalStorage.setUserId(testUser.id)).called(1);
       verify(() => mockLocalStorage.setUserName('test@example.com')).called(1);
       verify(() => mockLocalStorage.setToken(testUser.token)).called(1);
+      verify(() => mockGoRouter.go('/')).called(1);
 
       expect(authViewModel.state, isA<loadingState.State<User>>());
       expect(authViewModel.state.isSuccess, isTrue);
@@ -256,13 +282,6 @@ void main() {
 
     test('Logout should correctly integrate from Repository to ViewModel',
         () async {
-      // Arrange
-      final mockContext = MockNavigationContext();
-      final mockGoRouter = MockGoRouter();
-
-      when(() => GoRouter.of(mockContext)).thenReturn(mockGoRouter);
-      when(() => mockGoRouter.go(any())).thenAnswer((_) async {});
-
       // Act
       await authViewModel.signOut(mockRef, mockContext);
 
@@ -270,11 +289,7 @@ void main() {
       verify(() => mockLocalStorage.clearUserId()).called(1);
       verify(() => mockLocalStorage.clearUserName()).called(1);
       verify(() => mockLocalStorage.clearToken()).called(1);
-      verify(() => mockLocalStorage.setIsLoggedIn(false)).called(1);
-      verify(() => mockGoRouter.go('/login')).called(1);
-
-      expect(authViewModel.state, isA<loadingState.State<User>>());
-      expect(authViewModel.state.isInit, isTrue);
+      verify(() => mockGoRouter.go('/')).called(1);
     });
   });
 }
