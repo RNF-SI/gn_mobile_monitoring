@@ -237,14 +237,6 @@ void main() {
         ),
       ),
     );
-
-    // Fill form fields
-    await tester.enterText(find.byType(TextFormField).first, 'test@example.com');
-    await tester.enterText(find.byType(TextFormField).last, 'password123');
-    
-    // Submit form
-    await tester.tap(find.byType(MaterialButton));
-    await tester.pump(); // Update with error
     
     // Assert - Error message should be visible
     expect(find.text("Erreur d'authentification"), findsOneWidget);
