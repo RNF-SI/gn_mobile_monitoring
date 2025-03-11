@@ -38,9 +38,7 @@ extension TModuleComplementMapper on TModuleComplement {
       // Create ModuleConfiguration from the parsed JSON
       return ModuleConfiguration.fromJson(jsonData);
     } catch (e) {
-      // Log the error and the problematic JSON string for debugging
-      print('Error parsing JSON configuration: $e');
-      print('Problematic JSON string: $jsonString');
+      // Return null if there is an error
       return null;
     }
   }

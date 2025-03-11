@@ -96,8 +96,9 @@ class MenuActions extends ConsumerWidget {
     );
 
     if (confirm == true) {
+      final scaffoldMessenger = ScaffoldMessenger.of(context);
       // Afficher un message de chargement
-      ScaffoldMessenger.of(context).showSnackBar(
+      scaffoldMessenger.showSnackBar(
         const SnackBar(
             content:
                 Text('Réinitialisation de la base de données en cours...')),
@@ -107,7 +108,9 @@ class MenuActions extends ConsumerWidget {
       await databaseService.deleteAndReinitializeDatabase();
 
       // Lancer la synchronisation après la réinitialisation
-      await _startSync(context, ref.read(syncServiceProvider), ref);
+      if (context.mounted) {
+        await _startSync(context, ref.read(syncServiceProvider), ref);
+      }
     }
   }
 

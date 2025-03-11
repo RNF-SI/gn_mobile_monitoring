@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 
 class ModuleDetailPage extends StatefulWidget {
   final ModuleInfo moduleInfo;

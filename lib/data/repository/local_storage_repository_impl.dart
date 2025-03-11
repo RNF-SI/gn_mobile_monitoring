@@ -5,7 +5,6 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   static SharedPreferences? _preferences;
   static const String inProgressCorCyclePlacetteKey =
       'inProgressCorCyclePlacetteIdList';
-  static const String _lastSyncPrefix = 'lastSyncTime_';
 
   static Future init() async {
     _preferences = await SharedPreferences.getInstance();

@@ -36,7 +36,7 @@ class AuthenticationApiImpl implements AuthenticationApi {
         throw Exception("Failed to login: ${response.statusCode}");
       }
     } catch (e) {
-      print("Login error: $e");
+      // Error is thrown to be handled by calling code
       rethrow;
     }
   }

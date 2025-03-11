@@ -81,7 +81,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
 
   Future<void> markModuleAsDownloaded(int moduleId) async {
     await (update(tModules)..where((tbl) => tbl.idModule.equals(moduleId)))
-        .write(TModulesCompanion(
+        .write(const TModulesCompanion(
       downloaded: Value(true),
     ));
   }

@@ -18,8 +18,6 @@ class ModulesApiImpl implements ModulesApi {
   /// Checks if a module has sufficient CRUVED permissions
   /// Returns true if any of the CRUVED values is greater than 0
   bool _hasModulePermissions(Map<String, dynamic> cruved) {
-    if (cruved == null) return false;
-
     // Check if any of the CRUVED values is greater than 0
     return cruved.values.any((value) => value is num && value > 0);
   }

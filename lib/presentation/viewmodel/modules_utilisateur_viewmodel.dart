@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
 
 final userModuleListeProvider =
-    Provider.autoDispose<custom_async_state.State<ModuleInfoListe>>((ref) {
+    Provider.autoDispose<custom_async_state.State<ModuleInfoList>>((ref) {
   final userModuleListeState =
       ref.watch(userModuleListeViewModelStateNotifierProvider);
 
@@ -26,26 +26,27 @@ final userModuleListeProvider =
 
 final userModuleListeViewModelStateNotifierProvider =
     StateNotifierProvider.autoDispose<UserModulesViewModel,
-        custom_async_state.State<ModuleInfoListe>>((ref) {
+        custom_async_state.State<ModuleInfoList>>((ref) {
   return UserModulesViewModel(
-    const AsyncValue<ModuleInfoListe>.data(ModuleInfoListe(values: [])),
     ref.watch(getModulesUseCaseProvider),
     ref.watch(downloadModuleDataUseCaseProvider),
+    const AsyncValue<ModuleInfoList>.data(ModuleInfoList(values: [])),
   );
 });
 
 class UserModulesViewModel
-    extends StateNotifier<custom_async_state.State<ModuleInfoListe>> {
+    extends StateNotifier<custom_async_state.State<ModuleInfoList>> {
   final GetModulesUseCase _getModulesUseCase;
   final DownloadModuleDataUseCase _downloadModuleDataUseCase;
 
   UserModulesViewModel(
-    AsyncValue<ModuleInfoListe> userDispListe,
     this._getModulesUseCase,
     this._downloadModuleDataUseCase,
-  ) : super(const custom_async_state.State.init()) {
-    loadModules(); // Load modules on initialization
+    AsyncValue<ModuleInfoList> userDispListe,
+  ) : super(custom_async_state.State.loading()) {
+    loadModules();
   }
+
   Future<bool> hasInternetConnection() async {
     // var connectivityResult = await Connectivity().checkConnectivity();
     // if (connectivityResult == ConnectivityResult.mobile ||
@@ -72,8 +73,8 @@ class UserModulesViewModel
         );
       }).toList();
 
-      state = custom_async_state.State.success(
-          ModuleInfoListe(values: moduleInfos));
+      state =
+          custom_async_state.State.success(ModuleInfoList(values: moduleInfos));
     } catch (e) {
       state =
           custom_async_state.State.error(Exception("Failed to load modules"));

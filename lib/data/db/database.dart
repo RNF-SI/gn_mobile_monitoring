@@ -101,48 +101,27 @@ class AppDatabase extends _$AppDatabase {
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
-          print("Executing onCreate migrations...");
           await migration1(m, this);
-          print("Migration 1 completed");
           await migration2(m, this);
-          print("Migration 2 completed");
           await migration3(m, this);
-          print("Migration 3 completed");
           await migration4(m, this);
-          print("Migration 4 completed");
           await migration5(m, this);
-          print("Migration 5 completed");
           await migration6(m, this);
-          print("Migration 6 completed");
           await migration7(m, this);
-          print("Migration 7 completed");
           await migration8(m, this);
-          print("Migration 8 completed");
           await migration9(m, this);
-          print("Migration 9 completed");
           await migration10(m, this);
-          print("Migration 10 completed");
           await migration11(m, this);
-          print("Migration 11 completed");
           await migration12(m, this);
-          print("Migration 12 completed");
           await migration13(m, this);
-          print("Migration 13 completed");
           await migration14(m, this);
-          print("Migration 14 completed");
           await migration15(m, this);
-          print("Migration 15 completed");
           await migration16(m, this);
-          print("Migration 16 completed");
           await migration17(m, this);
-          print("Migration 17 completed");
           await migration18(m, this);
-          print("Migration 18 completed");
           await migration19(m, this);
-          print("Migration 19 completed");
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          print("Upgrading database from $from to $to...");
           final db = this; // Access the database instance
           for (int i = from + 1; i <= to; i++) {
             switch (i) {
@@ -200,7 +179,6 @@ class AppDatabase extends _$AppDatabase {
               default:
                 throw Exception("Unexpected schema version: $i");
             }
-            print("Migration $i applied");
           }
         },
       );
@@ -214,9 +192,6 @@ LazyDatabase _openConnection() {
 
     if (!(await file.exists())) {
       await file.create(recursive: true);
-      print("Database file created at: $dbPath");
-    } else {
-      print("Database file already exists at: $dbPath");
     }
 
     return NativeDatabase(file, logStatements: true);

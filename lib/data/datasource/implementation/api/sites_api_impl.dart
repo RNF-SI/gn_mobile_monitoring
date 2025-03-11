@@ -19,36 +19,6 @@ class SitesApiImpl implements SitesApi {
           sendTimeout: const Duration(seconds: 30),
         ));
 
-  /// Fetches all monitoring modules from the API
-  Future<List<Map<String, dynamic>>> _fetchMonitoringModules(
-      String token) async {
-    try {
-      final response = await _dio.get(
-        '/gn_commons/modules',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> modules = response.data;
-        return modules
-            .where((module) => module['type'] == 'monitoring_module')
-            .cast<Map<String, dynamic>>()
-            .toList();
-      } else {
-        throw ApiException(
-          'Failed to fetch modules',
-          statusCode: response.statusCode,
-        );
-      }
-    } on DioException catch (e) {
-      throw NetworkException(
-          'Network error while fetching modules: ${e.message}');
-    } catch (e) {
-      throw ApiException('Unexpected error while fetching modules: $e');
-    }
-  }
 
   @override
   Future<List<BaseSiteEntity>> fetchSitesForModule(

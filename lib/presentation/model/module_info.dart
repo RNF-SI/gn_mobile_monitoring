@@ -1,9 +1,8 @@
-// import 'package:dendro3/domain/model/placette_list.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 
-part 'moduleInfo.freezed.dart';
+part 'module_info.freezed.dart';
 
 @freezed
 class ModuleInfo with _$ModuleInfo {

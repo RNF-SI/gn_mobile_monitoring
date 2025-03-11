@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_download_button.dart';
 
 class ModuleItemCardWidget extends ConsumerWidget {
