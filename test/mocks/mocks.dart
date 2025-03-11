@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
@@ -168,3 +170,16 @@ class MockSyncService extends Mock implements SyncService {}
 class MockBuildContext extends Mock implements BuildContext {}
 
 class MockNavigatorObserver extends Mock implements NavigatorObserver {}
+
+/// Execute [callback] tout en redirigeant les sorties de print vers nulle part.
+/// Utile pour les tests où des erreurs sont imprimées mais ne devraient pas apparaître dans les résultats.
+Future<T> suppressOutput<T>(Future<T> Function() callback) async {
+  return await runZoned(
+    callback,
+    zoneSpecification: ZoneSpecification(
+      print: (Zone self, ZoneDelegate parent, Zone zone, String line) {
+        // Ignorer délibérément les sorties de print
+      },
+    ),
+  );
+}
