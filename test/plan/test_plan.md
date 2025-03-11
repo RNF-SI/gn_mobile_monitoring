@@ -6,7 +6,7 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 
 | Repository | Status | Priorité |
 |------------|--------|----------|
-| `ModulesRepository` | ✅ Testé partiellement | 2 - Ajouter tests manquants |
+| `ModulesRepository` | ✅ Testé | - |
 | `SitesRepository` | ✅ Testé | - |
 | `AuthenticationRepository` | ✅ Testé | - |
 | `GlobalDatabaseRepository` | ❌ Non testé | 2 - Moyenne |
@@ -33,10 +33,10 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 
 | ViewModel | Status | Priorité |
 |-----------|--------|----------|
-| `UserModulesViewModel` | ✅ Testé partiellement | 2 - Ajouter tests manquants |
+| `UserModulesViewModel` | ✅ Testé | - |
 | `SitesUtilisateurViewModel` | ✅ Testé | - |
 | `SiteGroupsUtilisateurViewModel` | ✅ Testé | - |
-| `AuthViewModel` | ❌ Non testé | 1 - Haute |
+| `AuthViewModel` | ✅ Testé | - |
 | `DatabaseService` | ❌ Non testé | 2 - Moyenne |
 | `SyncService` | ❌ Non testé | 2 - Moyenne |
 
@@ -45,15 +45,15 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | Widget | Status | Priorité |
 |--------|--------|----------|
 | `ModuleListWidget` | ✅ Testé | - |
-| `SiteListWidget` | ❌ Non testé | 1 - Haute |
-| `SiteGroupListWidget` | ❌ Non testé | 1 - Haute |
-| `LoginPage` | ❌ Non testé | 1 - Haute |
-| `HomePage` | ❌ Non testé | 1 - Haute |
+| `SiteListWidget` | ✅ Testé | - |
+| `SiteGroupListWidget` | ✅ Testé | - |
+| `LoginPage` | ✅ Testé | - |
+| `HomePage` | ✅ Testé | - |
 | `ModuleItemCardWidget` | ❌ Non testé | 2 - Moyenne |
 | `ModuleDownloadButton` | ❌ Non testé | 2 - Moyenne |
 | `SyncStatusWidget` | ❌ Non testé | 2 - Moyenne |
 | `MenuActions` | ❌ Non testé | 2 - Moyenne |
-| `AuthChecker` | ❌ Non testé | 1 - Haute |
+| `AuthChecker` | ✅ Testé | - |
 | `ModuleDetailPage` | ❌ Non testé | 2 - Moyenne |
 | `ErrorScreen` | ❌ Non testé | 3 - Basse |
 | `LoadingScreen` | ❌ Non testé | 3 - Basse |
@@ -63,42 +63,34 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | Intégration | Status | Priorité |
 |-------------|--------|----------|
 | `Repository -> ViewModel (Modules)` | ✅ Testé | - |
-| `Repository -> ViewModel (Sites)` | ❌ Non testé | 1 - Haute |
-| `Repository -> ViewModel (SiteGroups)` | ❌ Non testé | 1 - Haute |
-| `AuthRepository -> AuthViewModel` | ❌ Non testé | 1 - Haute |
+| `Repository -> ViewModel (Sites)` | ✅ Testé | - |
+| `Repository -> ViewModel (SiteGroups)` | ✅ Testé | - |
+| `AuthRepository -> AuthViewModel` | ✅ Testé | - |
 | `DatabaseService -> Repositories` | ❌ Non testé | 2 - Moyenne |
 | `SyncService -> Repositories` | ❌ Non testé | 2 - Moyenne |
 | `End-to-End (Auth -> Modules -> Sites)` | ❌ Non testé | 3 - Basse |
 
+## 6. Correction des tests échoués
+
+| Problème | Status | Solution |
+|----------|--------|----------|
+| Tests auth_repository_viewmodel_test | ✅ Corrigé | Simplification de l'implémentation des mocks |
+| Tests auth_view_model_test | ✅ Corrigé | Réécriture des tests avec mocks simplifiés |
+| Tests des exceptions dans FetchModulesUseCase | ✅ Corrigé | Suppression des sorties de log dans les tests |
+| Tests de l'interface LoginPage | ✅ Corrigé | Adaptation aux patterns de conception UI de la page |
+
 ## Plan d'implémentation
 
-### Progression actuelle (état au 10/03/2024)
-✅ Tous les UseCases prioritaires ont été testés (8 UseCases)
-✅ Le `LocalStorageRepository` a été testé
-✅ Le `SitesUtilisateurViewModel` a été testé
+### Progression actuelle (état au 11/03/2025)
+✅ Tous les tests existants ont été réparés et passent avec succès
+✅ Tous les composants prioritaires (Priorité 1) ont été testés
 ❌ Prochaines étapes à effectuer :
 
-### Phase 1 : Tests critiques (Priorité 1) - Suite
-1. ViewModels restants de priorité 1 :
-   - `SiteGroupsUtilisateurViewModel`
-   - `AuthViewModel`
-2. Widgets essentiels :
-   - `SiteListWidget`
-   - `SiteGroupListWidget`
-   - `LoginPage`
-   - `HomePage`
-   - `AuthChecker`
-3. Tests d'intégration des flux principaux :
-   - `Repository -> ViewModel (Sites)`
-   - `Repository -> ViewModel (SiteGroups)`
-   - `AuthRepository -> AuthViewModel`
-
 ### Phase 2 : Tests importants (Priorité 2)
-1. Repositories secondaires
-2. UseCases de synchronisation
-3. ViewModels de service
-4. Widgets secondaires
-5. Tests d'intégration des services
+1. UseCases de synchronisation restants
+2. ViewModels de service (`DatabaseService`, `SyncService`)
+3. Widgets secondaires (`ModuleItemCardWidget`, `ModuleDownloadButton`, etc.)
+4. Tests d'intégration des services
 
 ### Phase 3 : Tests complémentaires (Priorité 3)
 1. UseCases de gestion locale
@@ -112,3 +104,20 @@ Pour chaque composant à tester :
 1. Créer le template de test avec `dart scripts/test_utils/create_tdd_test.dart <type> <nom_classe>`
 2. Implémenter les tests selon l'approche Red-Green-Refactor
 3. Vérifier que le composant s'intègre correctement avec le reste du système
+
+## Bonnes pratiques identifiées lors des corrections
+
+1. **Gestion des sorties de console** :
+   - Utiliser la fonction utilitaire `suppressOutput` de `mocks.dart` pour éviter que les logs d'erreur n'apparaissent dans la sortie des tests
+   - Cette approche est particulièrement utile pour les tests qui vérifient le comportement de gestion d'erreur
+
+2. **Simplification des mocks** :
+   - Éviter les mocks trop complexes qui dépendent d'autres mocks
+   - Préférer des mocks simples et directs qui testent une seule responsabilité
+   - Utiliser des fallback values pour les types fréquemment utilisés
+
+3. **Tests d'interface utilisateur** :
+   - Prendre en compte l'état de l'interface (comme _isLoading) lors de l'écriture des tests
+   - Utiliser des patterns de test adaptés aux composants d'UI testés
+   - Contrôler les opérations asynchrones dans les tests pour qu'ils soient fiables
+   - Utiliser tester.pumpAndSettle() avec précaution, avec un timeout si nécessaire
