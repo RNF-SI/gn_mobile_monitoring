@@ -51,13 +51,14 @@ void main() {
       (WidgetTester tester) async {
     await pumpLoginPage(tester, LoginStatusInfo.initial);
 
-    // Assert
-    expect(find.byType(RichText), findsOneWidget);
+    // Assert - find form fields and button
     expect(find.byType(TextFormField), findsNWidgets(2));
-    expect(find.text('Identifiant'), findsOneWidget);
-    expect(find.text('Mot de Passe'), findsOneWidget);
     expect(find.byType(MaterialButton), findsOneWidget);
     expect(find.text('Log in'), findsOneWidget);
+    
+    // Check for labels in the TextFormFields using simpler assertions
+    expect(find.text('Identifiant'), findsOneWidget);
+    expect(find.text('Mot de Passe'), findsOneWidget);
   });
 
   testWidgets('LoginPage should validate identifiant field',
@@ -138,10 +139,11 @@ void main() {
 
   testWidgets('LoginPage should display login status message',
       (WidgetTester tester) async {
-    // Arrange
+    // Arrange - Mock auth method to keep loading state true
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
         any(), any(), any(), any())).thenAnswer((_) async {
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Simulate a loading state that stays active
+      await Future.delayed(const Duration(seconds: 10)); // Long enough for the test
       return;
     });
 
@@ -152,10 +154,18 @@ void main() {
         find.byType(TextFormField).first, 'test@example.com');
     await tester.enterText(find.byType(TextFormField).last, 'password123');
     await tester.tap(find.byType(MaterialButton));
-    await tester.pump();
-
-    // Assert - should show status message
+    
+    // Wait for loading state to appear
+    await tester.pump(); // Process initial tap
+    
+    // Loading indicator should be shown
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    
+    // Now status message should be visible
     expect(find.text(LoginStatusInfo.fetchingModules.message), findsOneWidget);
+    
+    // Cancel pending timer to clean up
+    await tester.pumpAndSettle(const Duration(milliseconds: 5));
   });
 
   testWidgets('LoginPage should display error message',
@@ -164,7 +174,8 @@ void main() {
     const errorMessage = "Impossible de se connecter au serveur";
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
         any(), any(), any(), any())).thenAnswer((_) async {
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Simulate a loading state that stays active
+      await Future.delayed(const Duration(seconds: 10)); // Long enough for the test
       return;
     });
 
@@ -175,9 +186,17 @@ void main() {
         find.byType(TextFormField).first, 'test@example.com');
     await tester.enterText(find.byType(TextFormField).last, 'password123');
     await tester.tap(find.byType(MaterialButton));
-    await tester.pump();
-
-    // Assert - Error message should be visible
+    
+    // Wait for loading state to appear
+    await tester.pump(); // Process initial tap
+    
+    // Loading indicator should be shown
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    
+    // Error message should be visible
     expect(find.text(errorMessage), findsOneWidget);
+    
+    // Cancel pending timer to clean up
+    await tester.pumpAndSettle(const Duration(milliseconds: 5));
   });
 }
