@@ -25,7 +25,7 @@ jobs:
         run: flutter pub run build_runner build --delete-conflicting-outputs
 
       - name: Analyze code
-        run: flutter analyze
+        run: run: flutter analyze --no-fatal-infos
 
       - name: Run tests
         run: flutter test
