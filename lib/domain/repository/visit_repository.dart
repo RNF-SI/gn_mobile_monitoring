@@ -3,6 +3,9 @@ import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 abstract class VisitRepository {
   /// Get all visits
   Future<List<BaseVisitEntity>> getAllVisits();
+  
+  /// Get all visits for a specific site
+  Future<List<BaseVisitEntity>> getVisitsBySiteId(int siteId);
 
   /// Get a specific visit by ID
   Future<BaseVisitEntity> getVisitById(int id);

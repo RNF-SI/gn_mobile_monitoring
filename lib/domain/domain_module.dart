@@ -30,6 +30,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
@@ -145,19 +147,22 @@ final fetchSiteGroupsUseCaseProvider = Provider<FetchSiteGroupsUseCase>(
   ),
 );
 
-final incrementalSyncModulesUseCaseProvider = Provider<IncrementalSyncModulesUseCase>(
+final incrementalSyncModulesUseCaseProvider =
+    Provider<IncrementalSyncModulesUseCase>(
   (ref) => IncrementalSyncModulesUseCaseImpl(
     ref.watch(modulesRepositoryProvider),
   ),
 );
 
-final incrementalSyncSitesUseCaseProvider = Provider<IncrementalSyncSitesUseCase>(
+final incrementalSyncSitesUseCaseProvider =
+    Provider<IncrementalSyncSitesUseCase>(
   (ref) => IncrementalSyncSitesUseCaseImpl(
     ref.watch(sitesRepositoryProvider),
   ),
 );
 
-final incrementalSyncSiteGroupsUseCaseProvider = Provider<IncrementalSyncSiteGroupsUseCase>(
+final incrementalSyncSiteGroupsUseCaseProvider =
+    Provider<IncrementalSyncSiteGroupsUseCase>(
   (ref) => IncrementalSyncSiteGroupsUseCaseImpl(
     ref.watch(sitesRepositoryProvider),
   ),
@@ -169,4 +174,8 @@ final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
     ref.watch(incrementalSyncSitesUseCaseProvider),
     ref.watch(incrementalSyncSiteGroupsUseCaseProvider),
   ),
+);
+
+final getVisitsBySiteIdUseCaseProvider = Provider<GetVisitsBySiteIdUseCase>(
+  (ref) => GetVisitsBySiteIdUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
