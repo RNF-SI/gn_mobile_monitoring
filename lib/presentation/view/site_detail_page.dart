@@ -3,19 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 class SiteDetailPage extends ConsumerWidget {
   final BaseSite site;
+  final ModuleInfo? moduleInfo;
 
   const SiteDetailPage({
     super.key,
     required this.site,
+    this.moduleInfo,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visitsState = ref.watch(siteVisitsViewModelProvider(site.idBaseSite));
+    
+    // Récupérer la configuration des visites depuis le module
+    final ObjectConfig? visitConfig = moduleInfo?.module.complement?.configuration?.visit;
 
     return Scaffold(
       appBar: AppBar(
@@ -62,13 +70,32 @@ class SiteDetailPage extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Visites',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                Text(
+                  visitConfig?.label ?? 'Visites',
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Implement add visit
+                    if (visitConfig != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VisitFormPage(
+                            site: site,
+                            visitConfig: visitConfig,
+                          ),
+                        ),
+                      ).then((_) {
+                        // Rafraîchir la liste des visites après ajout
+                        ref.read(siteVisitsViewModelProvider(site.idBaseSite).notifier).loadVisits();
+                      });
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Configuration de visite non disponible'),
+                        ),
+                      );
+                    }
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Ajouter une visite'),
@@ -80,7 +107,7 @@ class SiteDetailPage extends ConsumerWidget {
           // Visits Table
           Expanded(
             child: visitsState.when(
-              data: (visits) => _buildVisitsTable(visits),
+              data: (visits) => _buildVisitsTable(visits, visitConfig, context),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stackTrace) => Center(
                 child: Text(
@@ -95,7 +122,7 @@ class SiteDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildVisitsTable(List<BaseVisit> visits) {
+  Widget _buildVisitsTable(List<BaseVisit> visits, ObjectConfig? visitConfig, BuildContext context) {
     if (visits.isEmpty) {
       return const Center(
         child: Text('Aucune visite pour ce site'),
@@ -151,7 +178,24 @@ class SiteDetailPage extends ConsumerWidget {
                       IconButton(
                         icon: const Icon(Icons.edit, size: 20),
                         onPressed: () {
-                          // TODO: Implement edit visit
+                          if (visitConfig != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => VisitFormPage(
+                                  site: site,
+                                  visitConfig: visitConfig,
+                                  visit: visit, // Passer la visite à éditer
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Configuration de visite non disponible'),
+                              ),
+                            );
+                          }
                         },
                         padding: EdgeInsets.zero,
                         constraints: const BoxConstraints(

@@ -327,6 +327,7 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                                   MaterialPageRoute(
                                     builder: (context) => SiteDetailPage(
                                       site: site,
+                                      moduleInfo: widget.moduleInfo,
                                     ),
                                   ),
                                 );
