@@ -10,6 +10,12 @@ class VisitesDatabaseImpl implements VisitesDatabase {
     final db = await _db;
     return db.visitesDao.getAllVisits();
   }
+  
+  @override
+  Future<List<TBaseVisit>> getVisitsBySiteId(int siteId) async {
+    final db = await _db;
+    return db.visitesDao.getVisitsBySiteId(siteId);
+  }
 
   @override
   Future<TBaseVisit> getVisitById(int id) async {

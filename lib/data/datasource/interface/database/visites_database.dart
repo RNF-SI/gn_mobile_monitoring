@@ -3,6 +3,9 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 abstract class VisitesDatabase {
   /// Get all visits
   Future<List<TBaseVisit>> getAllVisits();
+  
+  /// Get all visits for a specific site
+  Future<List<TBaseVisit>> getVisitsBySiteId(int siteId);
 
   /// Get a specific visit by ID
   Future<TBaseVisit> getVisitById(int id);
