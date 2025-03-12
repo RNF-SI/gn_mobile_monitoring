@@ -100,7 +100,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 17; // Update schema version to 17
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -179,6 +179,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 18:
                 await migration18(m, db);
+                break;
+              case 19:
+                await migration19(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");
