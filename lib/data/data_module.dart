@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/database/glo
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/modules_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/nomenclatures_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/sites_database_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/database/visites_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
@@ -16,6 +17,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/repository/authentication_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/global_database_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
@@ -72,3 +74,6 @@ final sitesRepositoryProvider =
           ref.watch(siteDatabaseProvider),
           ref.watch(moduleDatabaseProvider),
         ));
+
+final visitDatabaseProvider =
+    Provider<VisitesDatabase>((_) => VisitesDatabaseImpl());
