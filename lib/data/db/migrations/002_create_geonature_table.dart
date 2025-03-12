@@ -237,5 +237,33 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_base_visits (
+        id_base_visit INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_base_site INTEGER,
+        id_dataset INTEGER NOT NULL,
+        id_module INTEGER NOT NULL,
+        id_digitiser INTEGER,
+        visit_date_min TEXT NOT NULL,
+        visit_date_max TEXT,
+        id_nomenclature_tech_collect_campanule INTEGER,
+        id_nomenclature_grp_typ INTEGER,
+        comments TEXT,
+        uuid_base_visit TEXT,
+        meta_create_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_base_site) REFERENCES t_base_sites (id_base_site),
+        FOREIGN KEY (id_dataset) REFERENCES t_datasets (id_dataset),
+        FOREIGN KEY (id_module) REFERENCES t_modules (id_module),
+        FOREIGN KEY (id_digitiser) REFERENCES t_roles (id_role)
+      );
+    ''');
+    print("t_base_visits table created successfully.");
+  } catch (e) {
+    print("Error creating t_base_visits table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }

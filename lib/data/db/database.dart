@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_datasets.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
@@ -70,6 +71,7 @@ part 'database.g.dart';
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
   CorObjectModuleTable,
+  TBaseVisits,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,

@@ -8085,6 +8085,696 @@ class CorObjectModuleTableCompanion extends UpdateCompanion<CorObjectModule> {
   }
 }
 
+class $TBaseVisitsTable extends TBaseVisits
+    with TableInfo<$TBaseVisitsTable, TBaseVisit> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TBaseVisitsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idBaseVisitMeta =
+      const VerificationMeta('idBaseVisit');
+  @override
+  late final GeneratedColumn<int> idBaseVisit = GeneratedColumn<int>(
+      'id_base_visit', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idBaseSiteMeta =
+      const VerificationMeta('idBaseSite');
+  @override
+  late final GeneratedColumn<int> idBaseSite = GeneratedColumn<int>(
+      'id_base_site', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idDatasetMeta =
+      const VerificationMeta('idDataset');
+  @override
+  late final GeneratedColumn<int> idDataset = GeneratedColumn<int>(
+      'id_dataset', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idModuleMeta =
+      const VerificationMeta('idModule');
+  @override
+  late final GeneratedColumn<int> idModule = GeneratedColumn<int>(
+      'id_module', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idDigitiserMeta =
+      const VerificationMeta('idDigitiser');
+  @override
+  late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
+      'id_digitiser', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _visitDateMinMeta =
+      const VerificationMeta('visitDateMin');
+  @override
+  late final GeneratedColumn<String> visitDateMin = GeneratedColumn<String>(
+      'visit_date_min', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _visitDateMaxMeta =
+      const VerificationMeta('visitDateMax');
+  @override
+  late final GeneratedColumn<String> visitDateMax = GeneratedColumn<String>(
+      'visit_date_max', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _idNomenclatureTechCollectCampanuleMeta =
+      const VerificationMeta('idNomenclatureTechCollectCampanule');
+  @override
+  late final GeneratedColumn<int> idNomenclatureTechCollectCampanule =
+      GeneratedColumn<int>(
+          'id_nomenclature_tech_collect_campanule', aliasedName, true,
+          type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idNomenclatureGrpTypMeta =
+      const VerificationMeta('idNomenclatureGrpTyp');
+  @override
+  late final GeneratedColumn<int> idNomenclatureGrpTyp = GeneratedColumn<int>(
+      'id_nomenclature_grp_typ', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _commentsMeta =
+      const VerificationMeta('comments');
+  @override
+  late final GeneratedColumn<String> comments = GeneratedColumn<String>(
+      'comments', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _uuidBaseVisitMeta =
+      const VerificationMeta('uuidBaseVisit');
+  @override
+  late final GeneratedColumn<String> uuidBaseVisit = GeneratedColumn<String>(
+      'uuid_base_visit', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _metaCreateDateMeta =
+      const VerificationMeta('metaCreateDate');
+  @override
+  late final GeneratedColumn<String> metaCreateDate = GeneratedColumn<String>(
+      'meta_create_date', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('CURRENT_TIMESTAMP'));
+  static const VerificationMeta _metaUpdateDateMeta =
+      const VerificationMeta('metaUpdateDate');
+  @override
+  late final GeneratedColumn<String> metaUpdateDate = GeneratedColumn<String>(
+      'meta_update_date', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const Constant('CURRENT_TIMESTAMP'));
+  @override
+  List<GeneratedColumn> get $columns => [
+        idBaseVisit,
+        idBaseSite,
+        idDataset,
+        idModule,
+        idDigitiser,
+        visitDateMin,
+        visitDateMax,
+        idNomenclatureTechCollectCampanule,
+        idNomenclatureGrpTyp,
+        comments,
+        uuidBaseVisit,
+        metaCreateDate,
+        metaUpdateDate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_base_visits';
+  @override
+  VerificationContext validateIntegrity(Insertable<TBaseVisit> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_base_visit')) {
+      context.handle(
+          _idBaseVisitMeta,
+          idBaseVisit.isAcceptableOrUnknown(
+              data['id_base_visit']!, _idBaseVisitMeta));
+    }
+    if (data.containsKey('id_base_site')) {
+      context.handle(
+          _idBaseSiteMeta,
+          idBaseSite.isAcceptableOrUnknown(
+              data['id_base_site']!, _idBaseSiteMeta));
+    }
+    if (data.containsKey('id_dataset')) {
+      context.handle(_idDatasetMeta,
+          idDataset.isAcceptableOrUnknown(data['id_dataset']!, _idDatasetMeta));
+    } else if (isInserting) {
+      context.missing(_idDatasetMeta);
+    }
+    if (data.containsKey('id_module')) {
+      context.handle(_idModuleMeta,
+          idModule.isAcceptableOrUnknown(data['id_module']!, _idModuleMeta));
+    } else if (isInserting) {
+      context.missing(_idModuleMeta);
+    }
+    if (data.containsKey('id_digitiser')) {
+      context.handle(
+          _idDigitiserMeta,
+          idDigitiser.isAcceptableOrUnknown(
+              data['id_digitiser']!, _idDigitiserMeta));
+    }
+    if (data.containsKey('visit_date_min')) {
+      context.handle(
+          _visitDateMinMeta,
+          visitDateMin.isAcceptableOrUnknown(
+              data['visit_date_min']!, _visitDateMinMeta));
+    } else if (isInserting) {
+      context.missing(_visitDateMinMeta);
+    }
+    if (data.containsKey('visit_date_max')) {
+      context.handle(
+          _visitDateMaxMeta,
+          visitDateMax.isAcceptableOrUnknown(
+              data['visit_date_max']!, _visitDateMaxMeta));
+    }
+    if (data.containsKey('id_nomenclature_tech_collect_campanule')) {
+      context.handle(
+          _idNomenclatureTechCollectCampanuleMeta,
+          idNomenclatureTechCollectCampanule.isAcceptableOrUnknown(
+              data['id_nomenclature_tech_collect_campanule']!,
+              _idNomenclatureTechCollectCampanuleMeta));
+    }
+    if (data.containsKey('id_nomenclature_grp_typ')) {
+      context.handle(
+          _idNomenclatureGrpTypMeta,
+          idNomenclatureGrpTyp.isAcceptableOrUnknown(
+              data['id_nomenclature_grp_typ']!, _idNomenclatureGrpTypMeta));
+    }
+    if (data.containsKey('comments')) {
+      context.handle(_commentsMeta,
+          comments.isAcceptableOrUnknown(data['comments']!, _commentsMeta));
+    }
+    if (data.containsKey('uuid_base_visit')) {
+      context.handle(
+          _uuidBaseVisitMeta,
+          uuidBaseVisit.isAcceptableOrUnknown(
+              data['uuid_base_visit']!, _uuidBaseVisitMeta));
+    }
+    if (data.containsKey('meta_create_date')) {
+      context.handle(
+          _metaCreateDateMeta,
+          metaCreateDate.isAcceptableOrUnknown(
+              data['meta_create_date']!, _metaCreateDateMeta));
+    }
+    if (data.containsKey('meta_update_date')) {
+      context.handle(
+          _metaUpdateDateMeta,
+          metaUpdateDate.isAcceptableOrUnknown(
+              data['meta_update_date']!, _metaUpdateDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idBaseVisit};
+  @override
+  TBaseVisit map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TBaseVisit(
+      idBaseVisit: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_base_visit'])!,
+      idBaseSite: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_base_site']),
+      idDataset: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_dataset'])!,
+      idModule: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_module'])!,
+      idDigitiser: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
+      visitDateMin: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}visit_date_min'])!,
+      visitDateMax: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}visit_date_max']),
+      idNomenclatureTechCollectCampanule: attachedDatabase.typeMapping.read(
+          DriftSqlType.int,
+          data['${effectivePrefix}id_nomenclature_tech_collect_campanule']),
+      idNomenclatureGrpTyp: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}id_nomenclature_grp_typ']),
+      comments: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}comments']),
+      uuidBaseVisit: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uuid_base_visit']),
+      metaCreateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}meta_create_date'])!,
+      metaUpdateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}meta_update_date'])!,
+    );
+  }
+
+  @override
+  $TBaseVisitsTable createAlias(String alias) {
+    return $TBaseVisitsTable(attachedDatabase, alias);
+  }
+}
+
+class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
+  final int idBaseVisit;
+  final int? idBaseSite;
+  final int idDataset;
+  final int idModule;
+  final int? idDigitiser;
+  final String visitDateMin;
+  final String? visitDateMax;
+  final int? idNomenclatureTechCollectCampanule;
+  final int? idNomenclatureGrpTyp;
+  final String? comments;
+  final String? uuidBaseVisit;
+  final String metaCreateDate;
+  final String metaUpdateDate;
+  const TBaseVisit(
+      {required this.idBaseVisit,
+      this.idBaseSite,
+      required this.idDataset,
+      required this.idModule,
+      this.idDigitiser,
+      required this.visitDateMin,
+      this.visitDateMax,
+      this.idNomenclatureTechCollectCampanule,
+      this.idNomenclatureGrpTyp,
+      this.comments,
+      this.uuidBaseVisit,
+      required this.metaCreateDate,
+      required this.metaUpdateDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_base_visit'] = Variable<int>(idBaseVisit);
+    if (!nullToAbsent || idBaseSite != null) {
+      map['id_base_site'] = Variable<int>(idBaseSite);
+    }
+    map['id_dataset'] = Variable<int>(idDataset);
+    map['id_module'] = Variable<int>(idModule);
+    if (!nullToAbsent || idDigitiser != null) {
+      map['id_digitiser'] = Variable<int>(idDigitiser);
+    }
+    map['visit_date_min'] = Variable<String>(visitDateMin);
+    if (!nullToAbsent || visitDateMax != null) {
+      map['visit_date_max'] = Variable<String>(visitDateMax);
+    }
+    if (!nullToAbsent || idNomenclatureTechCollectCampanule != null) {
+      map['id_nomenclature_tech_collect_campanule'] =
+          Variable<int>(idNomenclatureTechCollectCampanule);
+    }
+    if (!nullToAbsent || idNomenclatureGrpTyp != null) {
+      map['id_nomenclature_grp_typ'] = Variable<int>(idNomenclatureGrpTyp);
+    }
+    if (!nullToAbsent || comments != null) {
+      map['comments'] = Variable<String>(comments);
+    }
+    if (!nullToAbsent || uuidBaseVisit != null) {
+      map['uuid_base_visit'] = Variable<String>(uuidBaseVisit);
+    }
+    map['meta_create_date'] = Variable<String>(metaCreateDate);
+    map['meta_update_date'] = Variable<String>(metaUpdateDate);
+    return map;
+  }
+
+  TBaseVisitsCompanion toCompanion(bool nullToAbsent) {
+    return TBaseVisitsCompanion(
+      idBaseVisit: Value(idBaseVisit),
+      idBaseSite: idBaseSite == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idBaseSite),
+      idDataset: Value(idDataset),
+      idModule: Value(idModule),
+      idDigitiser: idDigitiser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitiser),
+      visitDateMin: Value(visitDateMin),
+      visitDateMax: visitDateMax == null && nullToAbsent
+          ? const Value.absent()
+          : Value(visitDateMax),
+      idNomenclatureTechCollectCampanule:
+          idNomenclatureTechCollectCampanule == null && nullToAbsent
+              ? const Value.absent()
+              : Value(idNomenclatureTechCollectCampanule),
+      idNomenclatureGrpTyp: idNomenclatureGrpTyp == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idNomenclatureGrpTyp),
+      comments: comments == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comments),
+      uuidBaseVisit: uuidBaseVisit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uuidBaseVisit),
+      metaCreateDate: Value(metaCreateDate),
+      metaUpdateDate: Value(metaUpdateDate),
+    );
+  }
+
+  factory TBaseVisit.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TBaseVisit(
+      idBaseVisit: serializer.fromJson<int>(json['idBaseVisit']),
+      idBaseSite: serializer.fromJson<int?>(json['idBaseSite']),
+      idDataset: serializer.fromJson<int>(json['idDataset']),
+      idModule: serializer.fromJson<int>(json['idModule']),
+      idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
+      visitDateMin: serializer.fromJson<String>(json['visitDateMin']),
+      visitDateMax: serializer.fromJson<String?>(json['visitDateMax']),
+      idNomenclatureTechCollectCampanule:
+          serializer.fromJson<int?>(json['idNomenclatureTechCollectCampanule']),
+      idNomenclatureGrpTyp:
+          serializer.fromJson<int?>(json['idNomenclatureGrpTyp']),
+      comments: serializer.fromJson<String?>(json['comments']),
+      uuidBaseVisit: serializer.fromJson<String?>(json['uuidBaseVisit']),
+      metaCreateDate: serializer.fromJson<String>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<String>(json['metaUpdateDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idBaseVisit': serializer.toJson<int>(idBaseVisit),
+      'idBaseSite': serializer.toJson<int?>(idBaseSite),
+      'idDataset': serializer.toJson<int>(idDataset),
+      'idModule': serializer.toJson<int>(idModule),
+      'idDigitiser': serializer.toJson<int?>(idDigitiser),
+      'visitDateMin': serializer.toJson<String>(visitDateMin),
+      'visitDateMax': serializer.toJson<String?>(visitDateMax),
+      'idNomenclatureTechCollectCampanule':
+          serializer.toJson<int?>(idNomenclatureTechCollectCampanule),
+      'idNomenclatureGrpTyp': serializer.toJson<int?>(idNomenclatureGrpTyp),
+      'comments': serializer.toJson<String?>(comments),
+      'uuidBaseVisit': serializer.toJson<String?>(uuidBaseVisit),
+      'metaCreateDate': serializer.toJson<String>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<String>(metaUpdateDate),
+    };
+  }
+
+  TBaseVisit copyWith(
+          {int? idBaseVisit,
+          Value<int?> idBaseSite = const Value.absent(),
+          int? idDataset,
+          int? idModule,
+          Value<int?> idDigitiser = const Value.absent(),
+          String? visitDateMin,
+          Value<String?> visitDateMax = const Value.absent(),
+          Value<int?> idNomenclatureTechCollectCampanule = const Value.absent(),
+          Value<int?> idNomenclatureGrpTyp = const Value.absent(),
+          Value<String?> comments = const Value.absent(),
+          Value<String?> uuidBaseVisit = const Value.absent(),
+          String? metaCreateDate,
+          String? metaUpdateDate}) =>
+      TBaseVisit(
+        idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+        idBaseSite: idBaseSite.present ? idBaseSite.value : this.idBaseSite,
+        idDataset: idDataset ?? this.idDataset,
+        idModule: idModule ?? this.idModule,
+        idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
+        visitDateMin: visitDateMin ?? this.visitDateMin,
+        visitDateMax:
+            visitDateMax.present ? visitDateMax.value : this.visitDateMax,
+        idNomenclatureTechCollectCampanule:
+            idNomenclatureTechCollectCampanule.present
+                ? idNomenclatureTechCollectCampanule.value
+                : this.idNomenclatureTechCollectCampanule,
+        idNomenclatureGrpTyp: idNomenclatureGrpTyp.present
+            ? idNomenclatureGrpTyp.value
+            : this.idNomenclatureGrpTyp,
+        comments: comments.present ? comments.value : this.comments,
+        uuidBaseVisit:
+            uuidBaseVisit.present ? uuidBaseVisit.value : this.uuidBaseVisit,
+        metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+        metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+      );
+  TBaseVisit copyWithCompanion(TBaseVisitsCompanion data) {
+    return TBaseVisit(
+      idBaseVisit:
+          data.idBaseVisit.present ? data.idBaseVisit.value : this.idBaseVisit,
+      idBaseSite:
+          data.idBaseSite.present ? data.idBaseSite.value : this.idBaseSite,
+      idDataset: data.idDataset.present ? data.idDataset.value : this.idDataset,
+      idModule: data.idModule.present ? data.idModule.value : this.idModule,
+      idDigitiser:
+          data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
+      visitDateMin: data.visitDateMin.present
+          ? data.visitDateMin.value
+          : this.visitDateMin,
+      visitDateMax: data.visitDateMax.present
+          ? data.visitDateMax.value
+          : this.visitDateMax,
+      idNomenclatureTechCollectCampanule:
+          data.idNomenclatureTechCollectCampanule.present
+              ? data.idNomenclatureTechCollectCampanule.value
+              : this.idNomenclatureTechCollectCampanule,
+      idNomenclatureGrpTyp: data.idNomenclatureGrpTyp.present
+          ? data.idNomenclatureGrpTyp.value
+          : this.idNomenclatureGrpTyp,
+      comments: data.comments.present ? data.comments.value : this.comments,
+      uuidBaseVisit: data.uuidBaseVisit.present
+          ? data.uuidBaseVisit.value
+          : this.uuidBaseVisit,
+      metaCreateDate: data.metaCreateDate.present
+          ? data.metaCreateDate.value
+          : this.metaCreateDate,
+      metaUpdateDate: data.metaUpdateDate.present
+          ? data.metaUpdateDate.value
+          : this.metaUpdateDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TBaseVisit(')
+          ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idBaseSite: $idBaseSite, ')
+          ..write('idDataset: $idDataset, ')
+          ..write('idModule: $idModule, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('visitDateMin: $visitDateMin, ')
+          ..write('visitDateMax: $visitDateMax, ')
+          ..write(
+              'idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, ')
+          ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
+          ..write('comments: $comments, ')
+          ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      idBaseVisit,
+      idBaseSite,
+      idDataset,
+      idModule,
+      idDigitiser,
+      visitDateMin,
+      visitDateMax,
+      idNomenclatureTechCollectCampanule,
+      idNomenclatureGrpTyp,
+      comments,
+      uuidBaseVisit,
+      metaCreateDate,
+      metaUpdateDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TBaseVisit &&
+          other.idBaseVisit == this.idBaseVisit &&
+          other.idBaseSite == this.idBaseSite &&
+          other.idDataset == this.idDataset &&
+          other.idModule == this.idModule &&
+          other.idDigitiser == this.idDigitiser &&
+          other.visitDateMin == this.visitDateMin &&
+          other.visitDateMax == this.visitDateMax &&
+          other.idNomenclatureTechCollectCampanule ==
+              this.idNomenclatureTechCollectCampanule &&
+          other.idNomenclatureGrpTyp == this.idNomenclatureGrpTyp &&
+          other.comments == this.comments &&
+          other.uuidBaseVisit == this.uuidBaseVisit &&
+          other.metaCreateDate == this.metaCreateDate &&
+          other.metaUpdateDate == this.metaUpdateDate);
+}
+
+class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
+  final Value<int> idBaseVisit;
+  final Value<int?> idBaseSite;
+  final Value<int> idDataset;
+  final Value<int> idModule;
+  final Value<int?> idDigitiser;
+  final Value<String> visitDateMin;
+  final Value<String?> visitDateMax;
+  final Value<int?> idNomenclatureTechCollectCampanule;
+  final Value<int?> idNomenclatureGrpTyp;
+  final Value<String?> comments;
+  final Value<String?> uuidBaseVisit;
+  final Value<String> metaCreateDate;
+  final Value<String> metaUpdateDate;
+  const TBaseVisitsCompanion({
+    this.idBaseVisit = const Value.absent(),
+    this.idBaseSite = const Value.absent(),
+    this.idDataset = const Value.absent(),
+    this.idModule = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
+    this.visitDateMin = const Value.absent(),
+    this.visitDateMax = const Value.absent(),
+    this.idNomenclatureTechCollectCampanule = const Value.absent(),
+    this.idNomenclatureGrpTyp = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.uuidBaseVisit = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  });
+  TBaseVisitsCompanion.insert({
+    this.idBaseVisit = const Value.absent(),
+    this.idBaseSite = const Value.absent(),
+    required int idDataset,
+    required int idModule,
+    this.idDigitiser = const Value.absent(),
+    required String visitDateMin,
+    this.visitDateMax = const Value.absent(),
+    this.idNomenclatureTechCollectCampanule = const Value.absent(),
+    this.idNomenclatureGrpTyp = const Value.absent(),
+    this.comments = const Value.absent(),
+    this.uuidBaseVisit = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  })  : idDataset = Value(idDataset),
+        idModule = Value(idModule),
+        visitDateMin = Value(visitDateMin);
+  static Insertable<TBaseVisit> custom({
+    Expression<int>? idBaseVisit,
+    Expression<int>? idBaseSite,
+    Expression<int>? idDataset,
+    Expression<int>? idModule,
+    Expression<int>? idDigitiser,
+    Expression<String>? visitDateMin,
+    Expression<String>? visitDateMax,
+    Expression<int>? idNomenclatureTechCollectCampanule,
+    Expression<int>? idNomenclatureGrpTyp,
+    Expression<String>? comments,
+    Expression<String>? uuidBaseVisit,
+    Expression<String>? metaCreateDate,
+    Expression<String>? metaUpdateDate,
+  }) {
+    return RawValuesInsertable({
+      if (idBaseVisit != null) 'id_base_visit': idBaseVisit,
+      if (idBaseSite != null) 'id_base_site': idBaseSite,
+      if (idDataset != null) 'id_dataset': idDataset,
+      if (idModule != null) 'id_module': idModule,
+      if (idDigitiser != null) 'id_digitiser': idDigitiser,
+      if (visitDateMin != null) 'visit_date_min': visitDateMin,
+      if (visitDateMax != null) 'visit_date_max': visitDateMax,
+      if (idNomenclatureTechCollectCampanule != null)
+        'id_nomenclature_tech_collect_campanule':
+            idNomenclatureTechCollectCampanule,
+      if (idNomenclatureGrpTyp != null)
+        'id_nomenclature_grp_typ': idNomenclatureGrpTyp,
+      if (comments != null) 'comments': comments,
+      if (uuidBaseVisit != null) 'uuid_base_visit': uuidBaseVisit,
+      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
+      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
+    });
+  }
+
+  TBaseVisitsCompanion copyWith(
+      {Value<int>? idBaseVisit,
+      Value<int?>? idBaseSite,
+      Value<int>? idDataset,
+      Value<int>? idModule,
+      Value<int?>? idDigitiser,
+      Value<String>? visitDateMin,
+      Value<String?>? visitDateMax,
+      Value<int?>? idNomenclatureTechCollectCampanule,
+      Value<int?>? idNomenclatureGrpTyp,
+      Value<String?>? comments,
+      Value<String?>? uuidBaseVisit,
+      Value<String>? metaCreateDate,
+      Value<String>? metaUpdateDate}) {
+    return TBaseVisitsCompanion(
+      idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+      idBaseSite: idBaseSite ?? this.idBaseSite,
+      idDataset: idDataset ?? this.idDataset,
+      idModule: idModule ?? this.idModule,
+      idDigitiser: idDigitiser ?? this.idDigitiser,
+      visitDateMin: visitDateMin ?? this.visitDateMin,
+      visitDateMax: visitDateMax ?? this.visitDateMax,
+      idNomenclatureTechCollectCampanule: idNomenclatureTechCollectCampanule ??
+          this.idNomenclatureTechCollectCampanule,
+      idNomenclatureGrpTyp: idNomenclatureGrpTyp ?? this.idNomenclatureGrpTyp,
+      comments: comments ?? this.comments,
+      uuidBaseVisit: uuidBaseVisit ?? this.uuidBaseVisit,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idBaseVisit.present) {
+      map['id_base_visit'] = Variable<int>(idBaseVisit.value);
+    }
+    if (idBaseSite.present) {
+      map['id_base_site'] = Variable<int>(idBaseSite.value);
+    }
+    if (idDataset.present) {
+      map['id_dataset'] = Variable<int>(idDataset.value);
+    }
+    if (idModule.present) {
+      map['id_module'] = Variable<int>(idModule.value);
+    }
+    if (idDigitiser.present) {
+      map['id_digitiser'] = Variable<int>(idDigitiser.value);
+    }
+    if (visitDateMin.present) {
+      map['visit_date_min'] = Variable<String>(visitDateMin.value);
+    }
+    if (visitDateMax.present) {
+      map['visit_date_max'] = Variable<String>(visitDateMax.value);
+    }
+    if (idNomenclatureTechCollectCampanule.present) {
+      map['id_nomenclature_tech_collect_campanule'] =
+          Variable<int>(idNomenclatureTechCollectCampanule.value);
+    }
+    if (idNomenclatureGrpTyp.present) {
+      map['id_nomenclature_grp_typ'] =
+          Variable<int>(idNomenclatureGrpTyp.value);
+    }
+    if (comments.present) {
+      map['comments'] = Variable<String>(comments.value);
+    }
+    if (uuidBaseVisit.present) {
+      map['uuid_base_visit'] = Variable<String>(uuidBaseVisit.value);
+    }
+    if (metaCreateDate.present) {
+      map['meta_create_date'] = Variable<String>(metaCreateDate.value);
+    }
+    if (metaUpdateDate.present) {
+      map['meta_update_date'] = Variable<String>(metaUpdateDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TBaseVisitsCompanion(')
+          ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idBaseSite: $idBaseSite, ')
+          ..write('idDataset: $idDataset, ')
+          ..write('idModule: $idModule, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('visitDateMin: $visitDateMin, ')
+          ..write('visitDateMax: $visitDateMax, ')
+          ..write(
+              'idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, ')
+          ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
+          ..write('comments: $comments, ')
+          ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8117,6 +8807,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CorSitesGroupModuleTableTable(this);
   late final $CorObjectModuleTableTable corObjectModuleTable =
       $CorObjectModuleTableTable(this);
+  late final $TBaseVisitsTable tBaseVisits = $TBaseVisitsTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
@@ -8145,7 +8836,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tPermissions,
         corSiteModuleTable,
         corSitesGroupModuleTable,
-        corObjectModuleTable
+        corObjectModuleTable,
+        tBaseVisits
       ];
 }
 
@@ -12093,6 +12785,306 @@ typedef $$CorObjectModuleTableTableProcessedTableManager
         ),
         CorObjectModule,
         PrefetchHooks Function()>;
+typedef $$TBaseVisitsTableCreateCompanionBuilder = TBaseVisitsCompanion
+    Function({
+  Value<int> idBaseVisit,
+  Value<int?> idBaseSite,
+  required int idDataset,
+  required int idModule,
+  Value<int?> idDigitiser,
+  required String visitDateMin,
+  Value<String?> visitDateMax,
+  Value<int?> idNomenclatureTechCollectCampanule,
+  Value<int?> idNomenclatureGrpTyp,
+  Value<String?> comments,
+  Value<String?> uuidBaseVisit,
+  Value<String> metaCreateDate,
+  Value<String> metaUpdateDate,
+});
+typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
+    Function({
+  Value<int> idBaseVisit,
+  Value<int?> idBaseSite,
+  Value<int> idDataset,
+  Value<int> idModule,
+  Value<int?> idDigitiser,
+  Value<String> visitDateMin,
+  Value<String?> visitDateMax,
+  Value<int?> idNomenclatureTechCollectCampanule,
+  Value<int?> idNomenclatureGrpTyp,
+  Value<String?> comments,
+  Value<String?> uuidBaseVisit,
+  Value<String> metaCreateDate,
+  Value<String> metaUpdateDate,
+});
+
+class $$TBaseVisitsTableFilterComposer
+    extends Composer<_$AppDatabase, $TBaseVisitsTable> {
+  $$TBaseVisitsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idBaseVisit => $composableBuilder(
+      column: $table.idBaseVisit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get visitDateMin => $composableBuilder(
+      column: $table.visitDateMin, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get visitDateMax => $composableBuilder(
+      column: $table.visitDateMax, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureTechCollectCampanule =>
+      $composableBuilder(
+          column: $table.idNomenclatureTechCollectCampanule,
+          builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureGrpTyp => $composableBuilder(
+      column: $table.idNomenclatureGrpTyp,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get comments => $composableBuilder(
+      column: $table.comments, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uuidBaseVisit => $composableBuilder(
+      column: $table.uuidBaseVisit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$TBaseVisitsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TBaseVisitsTable> {
+  $$TBaseVisitsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idBaseVisit => $composableBuilder(
+      column: $table.idBaseVisit, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get visitDateMin => $composableBuilder(
+      column: $table.visitDateMin,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get visitDateMax => $composableBuilder(
+      column: $table.visitDateMax,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureTechCollectCampanule =>
+      $composableBuilder(
+          column: $table.idNomenclatureTechCollectCampanule,
+          builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureGrpTyp => $composableBuilder(
+      column: $table.idNomenclatureGrpTyp,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get comments => $composableBuilder(
+      column: $table.comments, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uuidBaseVisit => $composableBuilder(
+      column: $table.uuidBaseVisit,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$TBaseVisitsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TBaseVisitsTable> {
+  $$TBaseVisitsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idBaseVisit => $composableBuilder(
+      column: $table.idBaseVisit, builder: (column) => column);
+
+  GeneratedColumn<int> get idBaseSite => $composableBuilder(
+      column: $table.idBaseSite, builder: (column) => column);
+
+  GeneratedColumn<int> get idDataset =>
+      $composableBuilder(column: $table.idDataset, builder: (column) => column);
+
+  GeneratedColumn<int> get idModule =>
+      $composableBuilder(column: $table.idModule, builder: (column) => column);
+
+  GeneratedColumn<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => column);
+
+  GeneratedColumn<String> get visitDateMin => $composableBuilder(
+      column: $table.visitDateMin, builder: (column) => column);
+
+  GeneratedColumn<String> get visitDateMax => $composableBuilder(
+      column: $table.visitDateMax, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureTechCollectCampanule =>
+      $composableBuilder(
+          column: $table.idNomenclatureTechCollectCampanule,
+          builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureGrpTyp => $composableBuilder(
+      column: $table.idNomenclatureGrpTyp, builder: (column) => column);
+
+  GeneratedColumn<String> get comments =>
+      $composableBuilder(column: $table.comments, builder: (column) => column);
+
+  GeneratedColumn<String> get uuidBaseVisit => $composableBuilder(
+      column: $table.uuidBaseVisit, builder: (column) => column);
+
+  GeneratedColumn<String> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate, builder: (column) => column);
+
+  GeneratedColumn<String> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate, builder: (column) => column);
+}
+
+class $$TBaseVisitsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TBaseVisitsTable,
+    TBaseVisit,
+    $$TBaseVisitsTableFilterComposer,
+    $$TBaseVisitsTableOrderingComposer,
+    $$TBaseVisitsTableAnnotationComposer,
+    $$TBaseVisitsTableCreateCompanionBuilder,
+    $$TBaseVisitsTableUpdateCompanionBuilder,
+    (TBaseVisit, BaseReferences<_$AppDatabase, $TBaseVisitsTable, TBaseVisit>),
+    TBaseVisit,
+    PrefetchHooks Function()> {
+  $$TBaseVisitsTableTableManager(_$AppDatabase db, $TBaseVisitsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TBaseVisitsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TBaseVisitsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TBaseVisitsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idBaseVisit = const Value.absent(),
+            Value<int?> idBaseSite = const Value.absent(),
+            Value<int> idDataset = const Value.absent(),
+            Value<int> idModule = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
+            Value<String> visitDateMin = const Value.absent(),
+            Value<String?> visitDateMax = const Value.absent(),
+            Value<int?> idNomenclatureTechCollectCampanule =
+                const Value.absent(),
+            Value<int?> idNomenclatureGrpTyp = const Value.absent(),
+            Value<String?> comments = const Value.absent(),
+            Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<String> metaCreateDate = const Value.absent(),
+            Value<String> metaUpdateDate = const Value.absent(),
+          }) =>
+              TBaseVisitsCompanion(
+            idBaseVisit: idBaseVisit,
+            idBaseSite: idBaseSite,
+            idDataset: idDataset,
+            idModule: idModule,
+            idDigitiser: idDigitiser,
+            visitDateMin: visitDateMin,
+            visitDateMax: visitDateMax,
+            idNomenclatureTechCollectCampanule:
+                idNomenclatureTechCollectCampanule,
+            idNomenclatureGrpTyp: idNomenclatureGrpTyp,
+            comments: comments,
+            uuidBaseVisit: uuidBaseVisit,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          createCompanionCallback: ({
+            Value<int> idBaseVisit = const Value.absent(),
+            Value<int?> idBaseSite = const Value.absent(),
+            required int idDataset,
+            required int idModule,
+            Value<int?> idDigitiser = const Value.absent(),
+            required String visitDateMin,
+            Value<String?> visitDateMax = const Value.absent(),
+            Value<int?> idNomenclatureTechCollectCampanule =
+                const Value.absent(),
+            Value<int?> idNomenclatureGrpTyp = const Value.absent(),
+            Value<String?> comments = const Value.absent(),
+            Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<String> metaCreateDate = const Value.absent(),
+            Value<String> metaUpdateDate = const Value.absent(),
+          }) =>
+              TBaseVisitsCompanion.insert(
+            idBaseVisit: idBaseVisit,
+            idBaseSite: idBaseSite,
+            idDataset: idDataset,
+            idModule: idModule,
+            idDigitiser: idDigitiser,
+            visitDateMin: visitDateMin,
+            visitDateMax: visitDateMax,
+            idNomenclatureTechCollectCampanule:
+                idNomenclatureTechCollectCampanule,
+            idNomenclatureGrpTyp: idNomenclatureGrpTyp,
+            comments: comments,
+            uuidBaseVisit: uuidBaseVisit,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TBaseVisitsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TBaseVisitsTable,
+    TBaseVisit,
+    $$TBaseVisitsTableFilterComposer,
+    $$TBaseVisitsTableOrderingComposer,
+    $$TBaseVisitsTableAnnotationComposer,
+    $$TBaseVisitsTableCreateCompanionBuilder,
+    $$TBaseVisitsTableUpdateCompanionBuilder,
+    (TBaseVisit, BaseReferences<_$AppDatabase, $TBaseVisitsTable, TBaseVisit>),
+    TBaseVisit,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -12137,4 +13129,6 @@ class $AppDatabaseManager {
           _db, _db.corSitesGroupModuleTable);
   $$CorObjectModuleTableTableTableManager get corObjectModuleTable =>
       $$CorObjectModuleTableTableTableManager(_db, _db.corObjectModuleTable);
+  $$TBaseVisitsTableTableManager get tBaseVisits =>
+      $$TBaseVisitsTableTableManager(_db, _db.tBaseVisits);
 }
