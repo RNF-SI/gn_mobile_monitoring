@@ -77,3 +77,8 @@ final sitesRepositoryProvider =
 
 final visitDatabaseProvider =
     Provider<VisitesDatabase>((_) => VisitesDatabaseImpl());
+
+final visitRepositoryProvider =
+    Provider<VisitRepository>((ref) => VisitRepositoryImpl(
+          ref.watch(visitDatabaseProvider),
+        ));
