@@ -23,11 +23,13 @@ import 'package:gn_mobile_monitoring/data/repository/global_database_repository_
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/modules_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/sites_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
 final globalApiProvider = Provider<GlobalApi>((_) => GlobalApiImpl());
 final globalDatabaseProvider =
