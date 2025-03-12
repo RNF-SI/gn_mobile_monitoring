@@ -8813,6 +8813,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       TNomenclaturesDao(this as AppDatabase);
   late final SitesDao sitesDao = SitesDao(this as AppDatabase);
   late final TDatasetsDao tDatasetsDao = TDatasetsDao(this as AppDatabase);
+  late final VisitesDao visitesDao = VisitesDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
