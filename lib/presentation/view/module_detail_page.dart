@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 
 class ModuleDetailPage extends StatefulWidget {
   final ModuleInfo moduleInfo;
@@ -320,7 +321,16 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                             alignment: Alignment.center,
                             child: IconButton(
                               icon: const Icon(Icons.visibility, size: 20),
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SiteDetailPage(
+                                      site: site,
+                                    ),
+                                  ),
+                                );
+                              },
                               padding: EdgeInsets.zero,
                               constraints: const BoxConstraints(
                                 minWidth: 36,

@@ -1,18 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 
 void main() {
-  final testSite = {
-    'id_base_site': 1,
-    'base_site_name': 'Test Site',
-    'base_site_code': 'TST1',
-    'base_site_description': 'Test site description',
-    'altitude_min': 100,
-    'altitude_max': 200,
-    'meta_create_date': '2024-03-21',
-    'meta_update_date': '2024-03-21',
-  };
+  final testSite = BaseSite(
+    idBaseSite: 1,
+    baseSiteName: 'Test Site',
+    baseSiteCode: 'TST1',
+    baseSiteDescription: 'Test site description',
+    altitudeMin: 100,
+    altitudeMax: 200,
+    metaCreateDate: DateTime.parse('2024-03-21'),
+    metaUpdateDate: DateTime.parse('2024-03-21'),
+  );
 
   testWidgets('SiteDetailPage displays site properties correctly',
       (WidgetTester tester) async {
