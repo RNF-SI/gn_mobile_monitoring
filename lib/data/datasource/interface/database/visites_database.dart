@@ -33,4 +33,16 @@ abstract class VisitesDatabase {
 
   /// Delete both visit and its complement in a single transaction
   Future<void> deleteVisitWithComplement(int visitId);
+  
+  /// Get observers for a visit
+  Future<List<CorVisitObserverData>> getVisitObservers(int visitId);
+  
+  /// Insert a new visit observer
+  Future<int> insertVisitObserver(CorVisitObserverCompanion observer);
+  
+  /// Delete all observers for a visit
+  Future<int> deleteVisitObservers(int visitId);
+  
+  /// Replace all observers for a visit
+  Future<void> replaceVisitObservers(int visitId, List<CorVisitObserverCompanion> observers);
 }

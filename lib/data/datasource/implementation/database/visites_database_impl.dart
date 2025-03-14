@@ -72,4 +72,28 @@ class VisitesDatabaseImpl implements VisitesDatabase {
     final db = await _db;
     return db.visitesDao.deleteVisitWithComplement(visitId);
   }
+  
+  @override
+  Future<List<CorVisitObserverData>> getVisitObservers(int visitId) async {
+    final db = await _db;
+    return db.visitesDao.getVisitObservers(visitId);
+  }
+  
+  @override
+  Future<int> insertVisitObserver(CorVisitObserverCompanion observer) async {
+    final db = await _db;
+    return db.visitesDao.insertVisitObserver(observer);
+  }
+  
+  @override
+  Future<int> deleteVisitObservers(int visitId) async {
+    final db = await _db;
+    return db.visitesDao.deleteVisitObservers(visitId);
+  }
+  
+  @override
+  Future<void> replaceVisitObservers(int visitId, List<CorVisitObserverCompanion> observers) async {
+    final db = await _db;
+    return db.visitesDao.replaceVisitObservers(visitId, observers);
+  }
 }
