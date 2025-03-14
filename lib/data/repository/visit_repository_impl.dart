@@ -2,7 +2,9 @@ import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/base_visit_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/mapper/cor_visit_observer_mapper.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
 class VisitRepositoryImpl implements VisitRepository {
@@ -72,5 +74,32 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<void> deleteVisitComplementData(int visitId) async {
     await _visitesDatabase.deleteVisitComplement(visitId);
+  }
+  
+  @override
+  Future<List<CorVisitObserverEntity>> getVisitObservers(int visitId) async {
+    final observers = await _visitesDatabase.getVisitObservers(visitId);
+    return observers.map((observer) => CorVisitObserverMapper.toEntity(observer)).toList();
+  }
+  
+  @override
+  Future<void> saveVisitObservers(int visitId, List<CorVisitObserverEntity> observers) async {
+    final observerCompanions = observers.map((entity) => CorVisitObserverMapper.toCompanion(entity)).toList();
+    await _visitesDatabase.replaceVisitObservers(visitId, observerCompanions);
+  }
+  
+  @override
+  Future<int> addVisitObserver(int visitId, int observerId) async {
+    final entity = CorVisitObserverEntity(
+      idBaseVisit: visitId,
+      idRole: observerId,
+      uniqueIdCoreVisitObserver: '', // L'ID sera généré automatiquement par la base de données
+    );
+    return _visitesDatabase.insertVisitObserver(CorVisitObserverMapper.toCompanion(entity));
+  }
+  
+  @override
+  Future<void> clearVisitObservers(int visitId) async {
+    await _visitesDatabase.deleteVisitObservers(visitId);
   }
 }

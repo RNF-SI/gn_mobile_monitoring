@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
 
 abstract class VisitRepository {
   /// Get all visits
@@ -32,4 +33,16 @@ abstract class VisitRepository {
 
   /// Delete visit complement data
   Future<void> deleteVisitComplementData(int visitId);
+  
+  /// Get observers for a visit
+  Future<List<CorVisitObserverEntity>> getVisitObservers(int visitId);
+  
+  /// Save observers for a visit (replaces all existing observers)
+  Future<void> saveVisitObservers(int visitId, List<CorVisitObserverEntity> observers);
+  
+  /// Add a single observer to a visit
+  Future<int> addVisitObserver(int visitId, int observerId);
+  
+  /// Remove all observers from a visit
+  Future<void> clearVisitObservers(int visitId);
 }
