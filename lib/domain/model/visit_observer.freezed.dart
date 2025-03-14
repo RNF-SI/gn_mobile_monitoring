@@ -14,18 +14,11 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-VisitObserver _$VisitObserverFromJson(Map<String, dynamic> json) {
-  return _VisitObserver.fromJson(json);
-}
-
 /// @nodoc
 mixin _$VisitObserver {
   int get idBaseVisit => throw _privateConstructorUsedError;
   int get idRole => throw _privateConstructorUsedError;
   String get uniqueId => throw _privateConstructorUsedError;
-
-  /// Serializes this VisitObserver to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of VisitObserver
   /// with the given fields replaced by the non-null parameter values.
@@ -125,15 +118,12 @@ class __$$VisitObserverImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$VisitObserverImpl implements _VisitObserver {
   const _$VisitObserverImpl(
       {required this.idBaseVisit,
       required this.idRole,
       required this.uniqueId});
-
-  factory _$VisitObserverImpl.fromJson(Map<String, dynamic> json) =>
-      _$$VisitObserverImplFromJson(json);
 
   @override
   final int idBaseVisit;
@@ -159,7 +149,6 @@ class _$VisitObserverImpl implements _VisitObserver {
                 other.uniqueId == uniqueId));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, idBaseVisit, idRole, uniqueId);
 
@@ -170,13 +159,6 @@ class _$VisitObserverImpl implements _VisitObserver {
   @pragma('vm:prefer-inline')
   _$$VisitObserverImplCopyWith<_$VisitObserverImpl> get copyWith =>
       __$$VisitObserverImplCopyWithImpl<_$VisitObserverImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$VisitObserverImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _VisitObserver implements VisitObserver {
@@ -184,9 +166,6 @@ abstract class _VisitObserver implements VisitObserver {
       {required final int idBaseVisit,
       required final int idRole,
       required final String uniqueId}) = _$VisitObserverImpl;
-
-  factory _VisitObserver.fromJson(Map<String, dynamic> json) =
-      _$VisitObserverImpl.fromJson;
 
   @override
   int get idBaseVisit;
