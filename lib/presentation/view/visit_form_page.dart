@@ -7,7 +7,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 class VisitFormPage extends ConsumerStatefulWidget {
   final BaseSite site;
   final ObjectConfig visitConfig;
-  final BaseVisit? visit; // Optional: existing visit for edit mode
+  final BaseVisit? visit; // En mode édition, visite existante
 
   const VisitFormPage({
     super.key,
@@ -26,49 +26,131 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   final Map<String, TextEditingController> _textControllers = {};
   late bool _isEditMode;
   bool _isLoading = false;
+  bool _chainInput = false; // pour "enchaîner les saisies"
 
   @override
   void initState() {
     super.initState();
     _isEditMode = widget.visit != null;
+    // Si la config indique que l'enchaînement est possible, on initialise la bascule
+    _chainInput = widget.visitConfig.chained ?? false;
 
-    // Pré-remplir le formulaire en mode édition
+    // En mode édition, pré-remplir le formulaire
     if (_isEditMode && widget.visit != null) {
       _initFormValuesFromVisit(widget.visit!);
     }
   }
 
   void _initFormValuesFromVisit(BaseVisit visit) {
-    // Initialiser les valeurs de base
     _formValues['visit_date_min'] = visit.visitDateMin;
     _textControllers['visit_date_min'] = TextEditingController(
       text: visit.visitDateMin != null
           ? DateTime.parse(visit.visitDateMin).toIso8601String().split('T')[0]
           : '',
     );
-
     _formValues['comments'] = visit.comments;
     _textControllers['comments'] =
         TextEditingController(text: visit.comments ?? '');
-
-    // Ajouter d'autres champs si nécessaire basés sur la configuration
+    // Initialiser d'autres champs si nécessaire en fonction de la config
   }
 
   @override
   void dispose() {
-    // Libérer les controllers
     for (final controller in _textControllers.values) {
       controller.dispose();
     }
     super.dispose();
   }
 
+  // Réinitialiser le formulaire en cas d'enchaînement
+  void _resetForm() {
+    _formKey.currentState?.reset();
+    _formValues.clear();
+    _textControllers.forEach((key, controller) {
+      controller.clear();
+    });
+    // Vous pouvez ici conserver certaines valeurs (par exemple, la sélection du site) si besoin.
+  }
+
+  // Simulation d'une suppression avec confirmation
+  Future<void> _deleteVisit() async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content:
+            const Text("Êtes-vous sûr de vouloir supprimer cette visite ?"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annuler')),
+          ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Supprimer')),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      setState(() {
+        _isLoading = true;
+      });
+      // Simuler la suppression (remplacer par votre appel API)
+      await Future.delayed(const Duration(seconds: 2));
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visite supprimée avec succès (Simulation)'),
+          ),
+        );
+      }
+    }
+  }
+
+  // Sauvegarde (création ou mise à jour)
+  Future<void> _saveForm() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+      // Préparer les données du formulaire depuis _formValues, par exemple :
+      // final dataToSend = {..._formValues, ...autresChamps};
+      await Future.delayed(
+          const Duration(seconds: 2)); // Simulation d'appel asynchrone
+
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        // Si enchaînement et création, réinitialiser le formulaire
+        if (_chainInput && !_isEditMode) {
+          _resetForm();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Visite enregistrée. Vous pouvez saisir la suivante.'),
+            ),
+          );
+        } else {
+          Navigator.pop(context);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(_isEditMode
+                  ? 'Visite mise à jour avec succès (Simulation)'
+                  : 'Visite créée avec succès (Simulation)'),
+            ),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Récupérer les champs spécifiques du formulaire
-    final Map<String, dynamic> specificFields =
-        widget.visitConfig.specific ?? {};
-    // Récupérer les champs génériques du formulaire
     final Map<String, GenericFieldConfig> genericFields =
         widget.visitConfig.generic ?? {};
 
@@ -77,221 +159,218 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         title: Text(_isEditMode
             ? 'Modifier la visite'
             : widget.visitConfig.label ?? 'Nouvelle visite'),
+        actions: [
+          if (_isEditMode)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: 'Supprimer la visite',
+              onPressed: _deleteVisit,
+            ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _buildForm(specificFields, genericFields),
-    );
-  }
+          : Form(
+              key: _formKey,
+              child: ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: [
+                  // Option de bascule pour enchaîner les saisies
+                  if (widget.visitConfig.chained == true)
+                    Row(
+                      children: [
+                        const Text('Enchaîner les saisies'),
+                        Switch(
+                          value: _chainInput,
+                          onChanged: (val) {
+                            setState(() {
+                              _chainInput = val;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
 
-  Widget _buildForm(Map<String, dynamic> specificFields,
-      Map<String, GenericFieldConfig> genericFields) {
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Informations de base
+                  // Informations générales
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Informations générales',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildDateField(
+                              'visit_date_min', 'Date de la visite', true),
+                          _buildTextField('comments', 'Commentaires',
+                              maxLines: 3),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Champs spécifiques (dynamiques)
+                  if (widget.visitConfig.specific != null)
                     Card(
-                      margin: const EdgeInsets.only(bottom: 16.0),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Informations générales',
+                              'Informations spécifiques',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 16),
-
-                            // Champ de date
-                            _buildDateField(
-                                'visit_date_min', 'Date de la visite', true),
-
-                            // Champ de commentaire
-                            _buildTextField('comments', 'Commentaires',
-                                maxLines: 3),
+                            _buildSpecificFieldsList(
+                                [widget.visitConfig.specific]),
                           ],
                         ),
                       ),
                     ),
+                  const SizedBox(height: 16),
 
-                    // Champs spécifiques du formulaire
-                    if (specificFields.isNotEmpty)
-                      ..._buildSpecificFormSections(specificFields),
-
-                    // Champs génériques du formulaire
-                    if (genericFields.isNotEmpty)
-                      Card(
-                        margin: const EdgeInsets.only(bottom: 16.0),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Champs complémentaires',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 16),
-                              ...genericFields.entries.map((entry) {
-                                final fieldKey = entry.key;
-                                final fieldConfig = entry.value;
-                                return _buildGenericField(
-                                    fieldKey, fieldConfig);
-                              }).toList(),
-                            ],
-                          ),
+                  // Boutons d'action
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Annuler'),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            // Boutons d'action
-            Padding(
-              padding: const EdgeInsets.only(top: 16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Annuler'),
-                  ),
-                  const SizedBox(width: 16),
-                  ElevatedButton(
-                    onPressed: _saveForm,
-                    child: Text(_isEditMode ? 'Mettre à jour' : 'Enregistrer'),
+                        const SizedBox(width: 16),
+                        ElevatedButton(
+                          onPressed: _saveForm,
+                          child: Text(
+                              _isEditMode ? 'Mettre à jour' : 'Enregistrer'),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-          ],
-        ),
-      ),
     );
   }
 
-  List<Widget> _buildSpecificFormSections(Map<String, dynamic> specificFields) {
-    final List<Widget> sections = [];
+  // Nouvelle fonction pour itérer directement sur une liste de définitions "specific"
+  Widget _buildSpecificFieldsList(List<dynamic> fieldDefinitions) {
+    // Si le premier élément est une Map, on traite comme une Map de configurations
+    if (fieldDefinitions.length == 1 &&
+        fieldDefinitions[0] is Map<String, dynamic>) {
+      final Map<String, dynamic> fieldsMap = fieldDefinitions[0];
+      return Column(
+        children: fieldsMap.entries.map<Widget>((entry) {
+          final String fieldKey = entry.key;
+          final Map<String, dynamic> fieldConfig = entry.value;
+          final String fieldLabel = fieldConfig['attribut_label'] ?? fieldKey;
+          final bool isRequired = fieldConfig['required'] == true;
+          final String typeWidget = fieldConfig['type_widget'] ?? 'text';
 
-    // Traiter chaque section du formulaire spécifique
-    specificFields.forEach((sectionKey, sectionData) {
-      if (sectionData is Map<String, dynamic>) {
-        // Créer une carte pour chaque section
-        sections.add(
-          Card(
-            margin: const EdgeInsets.only(bottom: 16.0),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Titre de la section
-                  Text(
-                    sectionData['title'] ?? sectionKey,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
+          switch (typeWidget) {
+            case 'date':
+              return _buildDateField(fieldKey, fieldLabel, isRequired);
+            case 'text':
+              return _buildTextField(fieldKey, fieldLabel,
+                  required: isRequired);
+            case 'textarea':
+              return _buildTextField(fieldKey, fieldLabel,
+                  required: isRequired, maxLines: 3);
+            case 'number':
+              return _buildNumberField(fieldKey, fieldLabel, isRequired);
+            case 'select':
+              if (fieldConfig['values'] is List) {
+                final List<MapEntry<String, String>> options =
+                    (fieldConfig['values'] as List)
+                        .map<MapEntry<String, String>>((value) =>
+                            MapEntry(value.toString(), value.toString()))
+                        .toList();
+                return _buildSelectField(
+                    fieldKey, fieldLabel, isRequired, options);
+              }
+              break;
+            case 'time':
+              return _buildTextField(fieldKey, fieldLabel,
+                  required: isRequired); // TODO: Implement proper time picker
+            case 'checkbox':
+              return _buildCheckboxField(fieldKey, fieldLabel);
+            default:
+              return _buildTextField(fieldKey, fieldLabel,
+                  required: isRequired);
+          }
+          return Container();
+        }).toList(),
+      );
+    }
 
-                  // Récupérer les champs de la section
-                  if (sectionData['fields'] is Map<String, dynamic>)
-                    ...(_buildSpecificFields(
-                        sectionData['fields'] as Map<String, dynamic>)),
-                ],
-              ),
-            ),
-          ),
-        );
-      }
-    });
+    // Fallback pour l'ancien format (si nécessaire)
+    return Column(
+      children: fieldDefinitions.map<Widget>((fieldDefinition) {
+        if (fieldDefinition is! Map<String, dynamic>) return Container();
 
-    return sections;
-  }
+        final String fieldKey =
+            fieldDefinition['name'] ?? fieldDefinition['attribut_label'] ?? '';
+        final String fieldLabel = fieldDefinition['attribut_label'] ?? fieldKey;
+        final bool isRequired = fieldDefinition['required'] == true;
 
-  List<Widget> _buildSpecificFields(Map<String, dynamic> fields) {
-    final List<Widget> fieldWidgets = [];
-
-    fields.forEach((fieldKey, fieldData) {
-      if (fieldData is Map<String, dynamic>) {
-        final String fieldType = fieldData['type'] ?? 'text';
-        final String fieldLabel = fieldData['label'] ?? fieldKey;
-        final bool isRequired = fieldData['required'] == true;
-
-        switch (fieldType) {
+        switch (fieldDefinition['type_widget']) {
           case 'date':
-            fieldWidgets.add(_buildDateField(fieldKey, fieldLabel, isRequired));
-            break;
+            return _buildDateField(fieldKey, fieldLabel, isRequired);
           case 'text':
-            fieldWidgets.add(
-                _buildTextField(fieldKey, fieldLabel, required: isRequired));
-            break;
+            return _buildTextField(fieldKey, fieldLabel, required: isRequired);
           case 'textarea':
-            fieldWidgets.add(_buildTextField(fieldKey, fieldLabel,
-                required: isRequired, maxLines: 3));
-            break;
+            return _buildTextField(fieldKey, fieldLabel,
+                required: isRequired, maxLines: 3);
           case 'number':
-            fieldWidgets
-                .add(_buildNumberField(fieldKey, fieldLabel, isRequired));
-            break;
+            return _buildNumberField(fieldKey, fieldLabel, isRequired);
           case 'select':
-            if (fieldData['options'] is List) {
-              fieldWidgets.add(_buildSelectField(
+            if (fieldDefinition['options'] is List) {
+              return _buildSelectField(
                 fieldKey,
                 fieldLabel,
                 isRequired,
-                (fieldData['options'] as List)
+                (fieldDefinition['options'] as List)
                     .map<MapEntry<String, String>>((option) {
                   if (option is Map<String, dynamic>) {
                     return MapEntry(
-                        option['value']?.toString() ?? '',
-                        option['label']?.toString() ??
-                            option['value']?.toString() ??
-                            '');
+                      option['value']?.toString() ?? '',
+                      option['label']?.toString() ??
+                          option['value']?.toString() ??
+                          '',
+                    );
                   }
                   return MapEntry(option.toString(), option.toString());
                 }).toList(),
-              ));
+              );
             }
             break;
           case 'checkbox':
-            fieldWidgets.add(_buildCheckboxField(fieldKey, fieldLabel));
-            break;
-          default:
-            fieldWidgets.add(
-                _buildTextField(fieldKey, fieldLabel, required: isRequired));
+            return _buildCheckboxField(fieldKey, fieldLabel);
         }
-      }
-    });
-
-    return fieldWidgets;
+        return Container();
+      }).toList(),
+    );
   }
+
+  // Les fonctions _buildGenericField, _buildDateField, _buildTextField, _buildNumberField,
+  // _buildSelectField et _buildCheckboxField restent inchangées.
 
   Widget _buildGenericField(String fieldKey, GenericFieldConfig config) {
     final String fieldLabel = config.attributLabel ?? fieldKey;
     final bool isRequired = config.required ?? false;
-
-    // Initialiser le controller si nécessaire
     _textControllers[fieldKey] ??= TextEditingController();
-
     switch (config.typeWidget) {
       case 'date':
         return _buildDateField(fieldKey, fieldLabel, isRequired);
@@ -302,16 +381,12 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             required: isRequired, maxLines: 3);
       case 'number':
         return _buildNumberField(fieldKey, fieldLabel, isRequired);
-      case 'nomenclature':
-        // Pour les nomenclatures, il faudrait idéalement récupérer les valeurs depuis la base
+      case 'select':
         return _buildSelectField(
           fieldKey,
           fieldLabel,
           isRequired,
-          [
-            const MapEntry(
-                'placeholder', 'Option de nomenclature (placeholder)')
-          ],
+          [const MapEntry('placeholder', 'Option (placeholder)')],
         );
       case 'checkbox':
         return _buildCheckboxField(fieldKey, fieldLabel);
@@ -322,7 +397,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
   Widget _buildDateField(String fieldKey, String label, bool required) {
     _textControllers[fieldKey] ??= TextEditingController();
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -353,7 +427,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
               );
-
               if (date != null) {
                 setState(() {
                   _textControllers[fieldKey]!.text =
@@ -370,9 +443,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
   Widget _buildTextField(String fieldKey, String label,
       {bool required = false, int maxLines = 1}) {
-    _textControllers[fieldKey] ??=
-        TextEditingController(text: _formValues[fieldKey]?.toString() ?? '');
-
+    _textControllers[fieldKey] ??= TextEditingController(
+      text: _formValues[fieldKey]?.toString() ?? '',
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -404,9 +477,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   }
 
   Widget _buildNumberField(String fieldKey, String label, bool required) {
-    _textControllers[fieldKey] ??=
-        TextEditingController(text: _formValues[fieldKey]?.toString() ?? '');
-
+    _textControllers[fieldKey] ??= TextEditingController(
+      text: _formValues[fieldKey]?.toString() ?? '',
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -482,7 +555,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
   Widget _buildCheckboxField(String fieldKey, String label) {
     bool isChecked = _formValues[fieldKey] == true;
-
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Row(
@@ -501,49 +573,5 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         ],
       ),
     );
-  }
-
-  void _saveForm() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      try {
-        // TODO: Implémenter la sauvegarde de la visite
-        // Soit mise à jour d'une visite existante, soit création d'une nouvelle
-        await Future.delayed(
-            const Duration(seconds: 2)); // Simuler une opération asynchrone
-
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-
-          Navigator.pop(context);
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(_isEditMode
-                  ? 'Visite mise à jour avec succès (Simulation)'
-                  : 'Visite créée avec succès (Simulation)'),
-            ),
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Erreur lors de la sauvegarde: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
-      }
-    }
   }
 }
