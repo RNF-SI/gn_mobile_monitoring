@@ -170,4 +170,57 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i2.CorVisitObserverData>> getVisitObservers(int? visitId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getVisitObservers,
+          [visitId],
+        ),
+        returnValue: _i4.Future<List<_i2.CorVisitObserverData>>.value(
+            <_i2.CorVisitObserverData>[]),
+        returnValueForMissingStub:
+            _i4.Future<List<_i2.CorVisitObserverData>>.value(
+                <_i2.CorVisitObserverData>[]),
+      ) as _i4.Future<List<_i2.CorVisitObserverData>>);
+
+  @override
+  _i4.Future<int> insertVisitObserver(
+          _i2.CorVisitObserverCompanion? observer) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertVisitObserver,
+          [observer],
+        ),
+        returnValue: _i4.Future<int>.value(0),
+        returnValueForMissingStub: _i4.Future<int>.value(0),
+      ) as _i4.Future<int>);
+
+  @override
+  _i4.Future<int> deleteVisitObservers(int? visitId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteVisitObservers,
+          [visitId],
+        ),
+        returnValue: _i4.Future<int>.value(0),
+        returnValueForMissingStub: _i4.Future<int>.value(0),
+      ) as _i4.Future<int>);
+
+  @override
+  _i4.Future<void> replaceVisitObservers(
+    int? visitId,
+    List<_i2.CorVisitObserverCompanion>? observers,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #replaceVisitObservers,
+          [
+            visitId,
+            observers,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
