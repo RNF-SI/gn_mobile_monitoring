@@ -34,6 +34,9 @@ mixin _$BaseVisitEntity {
   String? get uuidBaseVisit => throw _privateConstructorUsedError;
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
+  List<int>? get observers =>
+      throw _privateConstructorUsedError; // Liste des ID des observateurs
+  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
   /// Serializes this BaseVisitEntity to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -64,7 +67,9 @@ abstract class $BaseVisitEntityCopyWith<$Res> {
       String? comments,
       String? uuidBaseVisit,
       String? metaCreateDate,
-      String? metaUpdateDate});
+      String? metaUpdateDate,
+      List<int>? observers,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -95,6 +100,8 @@ class _$BaseVisitEntityCopyWithImpl<$Res, $Val extends BaseVisitEntity>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? observers = freezed,
+    Object? data = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseVisit: null == idBaseVisit
@@ -150,6 +157,14 @@ class _$BaseVisitEntityCopyWithImpl<$Res, $Val extends BaseVisitEntity>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      observers: freezed == observers
+          ? _value.observers
+          : observers // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -175,7 +190,9 @@ abstract class _$$BaseVisitEntityImplCopyWith<$Res>
       String? comments,
       String? uuidBaseVisit,
       String? metaCreateDate,
-      String? metaUpdateDate});
+      String? metaUpdateDate,
+      List<int>? observers,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -204,6 +221,8 @@ class __$$BaseVisitEntityImplCopyWithImpl<$Res>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? observers = freezed,
+    Object? data = freezed,
   }) {
     return _then(_$BaseVisitEntityImpl(
       idBaseVisit: null == idBaseVisit
@@ -259,6 +278,14 @@ class __$$BaseVisitEntityImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      observers: freezed == observers
+          ? _value._observers
+          : observers // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      data: freezed == data
+          ? _value._data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -279,7 +306,11 @@ class _$BaseVisitEntityImpl implements _BaseVisitEntity {
       this.comments,
       this.uuidBaseVisit,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      final List<int>? observers,
+      final Map<String, dynamic>? data})
+      : _observers = observers,
+        _data = data;
 
   factory _$BaseVisitEntityImpl.fromJson(Map<String, dynamic> json) =>
       _$$BaseVisitEntityImplFromJson(json);
@@ -310,10 +341,31 @@ class _$BaseVisitEntityImpl implements _BaseVisitEntity {
   final String? metaCreateDate;
   @override
   final String? metaUpdateDate;
+  final List<int>? _observers;
+  @override
+  List<int>? get observers {
+    final value = _observers;
+    if (value == null) return null;
+    if (_observers is EqualUnmodifiableListView) return _observers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+// Liste des ID des observateurs
+  final Map<String, dynamic>? _data;
+// Liste des ID des observateurs
+  @override
+  Map<String, dynamic>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'BaseVisitEntity(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'BaseVisitEntity(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, observers: $observers, data: $data)';
   }
 
   @override
@@ -348,7 +400,10 @@ class _$BaseVisitEntityImpl implements _BaseVisitEntity {
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            const DeepCollectionEquality()
+                .equals(other._observers, _observers) &&
+            const DeepCollectionEquality().equals(other._data, _data));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -367,7 +422,9 @@ class _$BaseVisitEntityImpl implements _BaseVisitEntity {
       comments,
       uuidBaseVisit,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      const DeepCollectionEquality().hash(_observers),
+      const DeepCollectionEquality().hash(_data));
 
   /// Create a copy of BaseVisitEntity
   /// with the given fields replaced by the non-null parameter values.
@@ -400,7 +457,9 @@ abstract class _BaseVisitEntity implements BaseVisitEntity {
       final String? comments,
       final String? uuidBaseVisit,
       final String? metaCreateDate,
-      final String? metaUpdateDate}) = _$BaseVisitEntityImpl;
+      final String? metaUpdateDate,
+      final List<int>? observers,
+      final Map<String, dynamic>? data}) = _$BaseVisitEntityImpl;
 
   factory _BaseVisitEntity.fromJson(Map<String, dynamic> json) =
       _$BaseVisitEntityImpl.fromJson;
@@ -431,6 +490,10 @@ abstract class _BaseVisitEntity implements BaseVisitEntity {
   String? get metaCreateDate;
   @override
   String? get metaUpdateDate;
+  @override
+  List<int>? get observers; // Liste des ID des observateurs
+  @override
+  Map<String, dynamic>? get data;
 
   /// Create a copy of BaseVisitEntity
   /// with the given fields replaced by the non-null parameter values.

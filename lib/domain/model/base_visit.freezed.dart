@@ -34,6 +34,9 @@ mixin _$BaseVisit {
   String? get uuidBaseVisit => throw _privateConstructorUsedError;
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
+  List<int>? get observers =>
+      throw _privateConstructorUsedError; // Liste des ID des observateurs
+  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
   /// Serializes this BaseVisit to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -63,7 +66,9 @@ abstract class $BaseVisitCopyWith<$Res> {
       String? comments,
       String? uuidBaseVisit,
       String? metaCreateDate,
-      String? metaUpdateDate});
+      String? metaUpdateDate,
+      List<int>? observers,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -94,6 +99,8 @@ class _$BaseVisitCopyWithImpl<$Res, $Val extends BaseVisit>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? observers = freezed,
+    Object? data = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseVisit: null == idBaseVisit
@@ -149,6 +156,14 @@ class _$BaseVisitCopyWithImpl<$Res, $Val extends BaseVisit>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      observers: freezed == observers
+          ? _value.observers
+          : observers // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -174,7 +189,9 @@ abstract class _$$BaseVisitImplCopyWith<$Res>
       String? comments,
       String? uuidBaseVisit,
       String? metaCreateDate,
-      String? metaUpdateDate});
+      String? metaUpdateDate,
+      List<int>? observers,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -203,6 +220,8 @@ class __$$BaseVisitImplCopyWithImpl<$Res>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? observers = freezed,
+    Object? data = freezed,
   }) {
     return _then(_$BaseVisitImpl(
       idBaseVisit: null == idBaseVisit
@@ -258,6 +277,14 @@ class __$$BaseVisitImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      observers: freezed == observers
+          ? _value._observers
+          : observers // ignore: cast_nullable_to_non_nullable
+              as List<int>?,
+      data: freezed == data
+          ? _value._data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -278,7 +305,11 @@ class _$BaseVisitImpl implements _BaseVisit {
       this.comments,
       this.uuidBaseVisit,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      final List<int>? observers,
+      final Map<String, dynamic>? data})
+      : _observers = observers,
+        _data = data;
 
   factory _$BaseVisitImpl.fromJson(Map<String, dynamic> json) =>
       _$$BaseVisitImplFromJson(json);
@@ -309,10 +340,31 @@ class _$BaseVisitImpl implements _BaseVisit {
   final String? metaCreateDate;
   @override
   final String? metaUpdateDate;
+  final List<int>? _observers;
+  @override
+  List<int>? get observers {
+    final value = _observers;
+    if (value == null) return null;
+    if (_observers is EqualUnmodifiableListView) return _observers;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
+// Liste des ID des observateurs
+  final Map<String, dynamic>? _data;
+// Liste des ID des observateurs
+  @override
+  Map<String, dynamic>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'BaseVisit(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'BaseVisit(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, observers: $observers, data: $data)';
   }
 
   @override
@@ -347,7 +399,10 @@ class _$BaseVisitImpl implements _BaseVisit {
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            const DeepCollectionEquality()
+                .equals(other._observers, _observers) &&
+            const DeepCollectionEquality().equals(other._data, _data));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -366,7 +421,9 @@ class _$BaseVisitImpl implements _BaseVisit {
       comments,
       uuidBaseVisit,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      const DeepCollectionEquality().hash(_observers),
+      const DeepCollectionEquality().hash(_data));
 
   /// Create a copy of BaseVisit
   /// with the given fields replaced by the non-null parameter values.
@@ -398,7 +455,9 @@ abstract class _BaseVisit implements BaseVisit {
       final String? comments,
       final String? uuidBaseVisit,
       final String? metaCreateDate,
-      final String? metaUpdateDate}) = _$BaseVisitImpl;
+      final String? metaUpdateDate,
+      final List<int>? observers,
+      final Map<String, dynamic>? data}) = _$BaseVisitImpl;
 
   factory _BaseVisit.fromJson(Map<String, dynamic> json) =
       _$BaseVisitImpl.fromJson;
@@ -429,6 +488,10 @@ abstract class _BaseVisit implements BaseVisit {
   String? get metaCreateDate;
   @override
   String? get metaUpdateDate;
+  @override
+  List<int>? get observers; // Liste des ID des observateurs
+  @override
+  Map<String, dynamic>? get data;
 
   /// Create a copy of BaseVisit
   /// with the given fields replaced by the non-null parameter values.

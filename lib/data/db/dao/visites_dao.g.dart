@@ -7,4 +7,6 @@ mixin _$VisitesDaoMixin on DatabaseAccessor<AppDatabase> {
   $TBaseVisitsTable get tBaseVisits => attachedDatabase.tBaseVisits;
   $TVisitComplementsTable get tVisitComplements =>
       attachedDatabase.tVisitComplements;
+  $CorVisitObserverTable get corVisitObserver =>
+      attachedDatabase.corVisitObserver;
 }

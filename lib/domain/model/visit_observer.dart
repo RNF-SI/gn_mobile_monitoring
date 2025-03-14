@@ -1,7 +1,6 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'visit_observer.freezed.dart';
-part 'visit_observer.g.dart';
 
 @freezed
 class VisitObserver with _$VisitObserver {
@@ -10,7 +9,4 @@ class VisitObserver with _$VisitObserver {
     required int idRole,
     required String uniqueId,
   }) = _VisitObserver;
-
-  factory VisitObserver.fromJson(Map<String, dynamic> json) =>
-      _$VisitObserverFromJson(json);
 }

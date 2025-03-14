@@ -23,6 +23,10 @@ _$BaseVisitEntityImpl _$$BaseVisitEntityImplFromJson(
       uuidBaseVisit: json['uuidBaseVisit'] as String?,
       metaCreateDate: json['metaCreateDate'] as String?,
       metaUpdateDate: json['metaUpdateDate'] as String?,
+      observers: (json['observers'] as List<dynamic>?)
+          ?.map((e) => (e as num).toInt())
+          .toList(),
+      data: json['data'] as Map<String, dynamic>?,
     );
 
 Map<String, dynamic> _$$BaseVisitEntityImplToJson(
@@ -42,4 +46,6 @@ Map<String, dynamic> _$$BaseVisitEntityImplToJson(
       'uuidBaseVisit': instance.uuidBaseVisit,
       'metaCreateDate': instance.metaCreateDate,
       'metaUpdateDate': instance.metaUpdateDate,
+      'observers': instance.observers,
+      'data': instance.data,
     };

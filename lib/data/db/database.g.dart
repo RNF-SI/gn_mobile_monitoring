@@ -8775,6 +8775,263 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
   }
 }
 
+class $CorVisitObserverTable extends CorVisitObserver
+    with TableInfo<$CorVisitObserverTable, CorVisitObserverData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorVisitObserverTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idBaseVisitMeta =
+      const VerificationMeta('idBaseVisit');
+  @override
+  late final GeneratedColumn<int> idBaseVisit = GeneratedColumn<int>(
+      'id_base_visit', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES t_base_visits (id_base_visit)'));
+  static const VerificationMeta _idRoleMeta = const VerificationMeta('idRole');
+  @override
+  late final GeneratedColumn<int> idRole = GeneratedColumn<int>(
+      'id_role', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _uniqueIdCoreVisitObserverMeta =
+      const VerificationMeta('uniqueIdCoreVisitObserver');
+  @override
+  late final GeneratedColumn<
+      String> uniqueIdCoreVisitObserver = GeneratedColumn<
+          String>('unique_id_core_visit_observer', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultValue: const CustomExpression(
+          "lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || substr(lower(hex(randomblob(2))),2) || '-' || substr('89ab',abs(random()) % 4 + 1, 1) || substr(lower(hex(randomblob(2))),2) || '-' || lower(hex(randomblob(6)))"));
+  @override
+  List<GeneratedColumn> get $columns =>
+      [idBaseVisit, idRole, uniqueIdCoreVisitObserver];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cor_visit_observer';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CorVisitObserverData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_base_visit')) {
+      context.handle(
+          _idBaseVisitMeta,
+          idBaseVisit.isAcceptableOrUnknown(
+              data['id_base_visit']!, _idBaseVisitMeta));
+    } else if (isInserting) {
+      context.missing(_idBaseVisitMeta);
+    }
+    if (data.containsKey('id_role')) {
+      context.handle(_idRoleMeta,
+          idRole.isAcceptableOrUnknown(data['id_role']!, _idRoleMeta));
+    } else if (isInserting) {
+      context.missing(_idRoleMeta);
+    }
+    if (data.containsKey('unique_id_core_visit_observer')) {
+      context.handle(
+          _uniqueIdCoreVisitObserverMeta,
+          uniqueIdCoreVisitObserver.isAcceptableOrUnknown(
+              data['unique_id_core_visit_observer']!,
+              _uniqueIdCoreVisitObserverMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idBaseVisit, idRole};
+  @override
+  CorVisitObserverData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorVisitObserverData(
+      idBaseVisit: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_base_visit'])!,
+      idRole: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_role'])!,
+      uniqueIdCoreVisitObserver: attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}unique_id_core_visit_observer'])!,
+    );
+  }
+
+  @override
+  $CorVisitObserverTable createAlias(String alias) {
+    return $CorVisitObserverTable(attachedDatabase, alias);
+  }
+}
+
+class CorVisitObserverData extends DataClass
+    implements Insertable<CorVisitObserverData> {
+  final int idBaseVisit;
+  final int idRole;
+  final String uniqueIdCoreVisitObserver;
+  const CorVisitObserverData(
+      {required this.idBaseVisit,
+      required this.idRole,
+      required this.uniqueIdCoreVisitObserver});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_base_visit'] = Variable<int>(idBaseVisit);
+    map['id_role'] = Variable<int>(idRole);
+    map['unique_id_core_visit_observer'] =
+        Variable<String>(uniqueIdCoreVisitObserver);
+    return map;
+  }
+
+  CorVisitObserverCompanion toCompanion(bool nullToAbsent) {
+    return CorVisitObserverCompanion(
+      idBaseVisit: Value(idBaseVisit),
+      idRole: Value(idRole),
+      uniqueIdCoreVisitObserver: Value(uniqueIdCoreVisitObserver),
+    );
+  }
+
+  factory CorVisitObserverData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorVisitObserverData(
+      idBaseVisit: serializer.fromJson<int>(json['idBaseVisit']),
+      idRole: serializer.fromJson<int>(json['idRole']),
+      uniqueIdCoreVisitObserver:
+          serializer.fromJson<String>(json['uniqueIdCoreVisitObserver']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idBaseVisit': serializer.toJson<int>(idBaseVisit),
+      'idRole': serializer.toJson<int>(idRole),
+      'uniqueIdCoreVisitObserver':
+          serializer.toJson<String>(uniqueIdCoreVisitObserver),
+    };
+  }
+
+  CorVisitObserverData copyWith(
+          {int? idBaseVisit, int? idRole, String? uniqueIdCoreVisitObserver}) =>
+      CorVisitObserverData(
+        idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+        idRole: idRole ?? this.idRole,
+        uniqueIdCoreVisitObserver:
+            uniqueIdCoreVisitObserver ?? this.uniqueIdCoreVisitObserver,
+      );
+  CorVisitObserverData copyWithCompanion(CorVisitObserverCompanion data) {
+    return CorVisitObserverData(
+      idBaseVisit:
+          data.idBaseVisit.present ? data.idBaseVisit.value : this.idBaseVisit,
+      idRole: data.idRole.present ? data.idRole.value : this.idRole,
+      uniqueIdCoreVisitObserver: data.uniqueIdCoreVisitObserver.present
+          ? data.uniqueIdCoreVisitObserver.value
+          : this.uniqueIdCoreVisitObserver,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorVisitObserverData(')
+          ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idRole: $idRole, ')
+          ..write('uniqueIdCoreVisitObserver: $uniqueIdCoreVisitObserver')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(idBaseVisit, idRole, uniqueIdCoreVisitObserver);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorVisitObserverData &&
+          other.idBaseVisit == this.idBaseVisit &&
+          other.idRole == this.idRole &&
+          other.uniqueIdCoreVisitObserver == this.uniqueIdCoreVisitObserver);
+}
+
+class CorVisitObserverCompanion extends UpdateCompanion<CorVisitObserverData> {
+  final Value<int> idBaseVisit;
+  final Value<int> idRole;
+  final Value<String> uniqueIdCoreVisitObserver;
+  final Value<int> rowid;
+  const CorVisitObserverCompanion({
+    this.idBaseVisit = const Value.absent(),
+    this.idRole = const Value.absent(),
+    this.uniqueIdCoreVisitObserver = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorVisitObserverCompanion.insert({
+    required int idBaseVisit,
+    required int idRole,
+    this.uniqueIdCoreVisitObserver = const Value.absent(),
+    this.rowid = const Value.absent(),
+  })  : idBaseVisit = Value(idBaseVisit),
+        idRole = Value(idRole);
+  static Insertable<CorVisitObserverData> custom({
+    Expression<int>? idBaseVisit,
+    Expression<int>? idRole,
+    Expression<String>? uniqueIdCoreVisitObserver,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (idBaseVisit != null) 'id_base_visit': idBaseVisit,
+      if (idRole != null) 'id_role': idRole,
+      if (uniqueIdCoreVisitObserver != null)
+        'unique_id_core_visit_observer': uniqueIdCoreVisitObserver,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorVisitObserverCompanion copyWith(
+      {Value<int>? idBaseVisit,
+      Value<int>? idRole,
+      Value<String>? uniqueIdCoreVisitObserver,
+      Value<int>? rowid}) {
+    return CorVisitObserverCompanion(
+      idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+      idRole: idRole ?? this.idRole,
+      uniqueIdCoreVisitObserver:
+          uniqueIdCoreVisitObserver ?? this.uniqueIdCoreVisitObserver,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idBaseVisit.present) {
+      map['id_base_visit'] = Variable<int>(idBaseVisit.value);
+    }
+    if (idRole.present) {
+      map['id_role'] = Variable<int>(idRole.value);
+    }
+    if (uniqueIdCoreVisitObserver.present) {
+      map['unique_id_core_visit_observer'] =
+          Variable<String>(uniqueIdCoreVisitObserver.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorVisitObserverCompanion(')
+          ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idRole: $idRole, ')
+          ..write('uniqueIdCoreVisitObserver: $uniqueIdCoreVisitObserver, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -8808,6 +9065,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $CorObjectModuleTableTable corObjectModuleTable =
       $CorObjectModuleTableTable(this);
   late final $TBaseVisitsTable tBaseVisits = $TBaseVisitsTable(this);
+  late final $CorVisitObserverTable corVisitObserver =
+      $CorVisitObserverTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
@@ -8838,7 +9097,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         corSiteModuleTable,
         corSitesGroupModuleTable,
         corObjectModuleTable,
-        tBaseVisits
+        tBaseVisits,
+        corVisitObserver
       ];
 }
 
@@ -12819,6 +13079,28 @@ typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
   Value<String> metaUpdateDate,
 });
 
+final class $$TBaseVisitsTableReferences
+    extends BaseReferences<_$AppDatabase, $TBaseVisitsTable, TBaseVisit> {
+  $$TBaseVisitsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CorVisitObserverTable, List<CorVisitObserverData>>
+      _corVisitObserverRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.corVisitObserver,
+              aliasName: $_aliasNameGenerator(
+                  db.tBaseVisits.idBaseVisit, db.corVisitObserver.idBaseVisit));
+
+  $$CorVisitObserverTableProcessedTableManager get corVisitObserverRefs {
+    final manager =
+        $$CorVisitObserverTableTableManager($_db, $_db.corVisitObserver)
+            .filter((f) => f.idBaseVisit.idBaseVisit($_item.idBaseVisit));
+
+    final cache =
+        $_typedResult.readTableOrNull(_corVisitObserverRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
 class $$TBaseVisitsTableFilterComposer
     extends Composer<_$AppDatabase, $TBaseVisitsTable> {
   $$TBaseVisitsTableFilterComposer({
@@ -12871,6 +13153,27 @@ class $$TBaseVisitsTableFilterComposer
   ColumnFilters<String> get metaUpdateDate => $composableBuilder(
       column: $table.metaUpdateDate,
       builder: (column) => ColumnFilters(column));
+
+  Expression<bool> corVisitObserverRefs(
+      Expression<bool> Function($$CorVisitObserverTableFilterComposer f) f) {
+    final $$CorVisitObserverTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idBaseVisit,
+        referencedTable: $db.corVisitObserver,
+        getReferencedColumn: (t) => t.idBaseVisit,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CorVisitObserverTableFilterComposer(
+              $db: $db,
+              $table: $db.corVisitObserver,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$TBaseVisitsTableOrderingComposer
@@ -12979,6 +13282,27 @@ class $$TBaseVisitsTableAnnotationComposer
 
   GeneratedColumn<String> get metaUpdateDate => $composableBuilder(
       column: $table.metaUpdateDate, builder: (column) => column);
+
+  Expression<T> corVisitObserverRefs<T extends Object>(
+      Expression<T> Function($$CorVisitObserverTableAnnotationComposer a) f) {
+    final $$CorVisitObserverTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idBaseVisit,
+        referencedTable: $db.corVisitObserver,
+        getReferencedColumn: (t) => t.idBaseVisit,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CorVisitObserverTableAnnotationComposer(
+              $db: $db,
+              $table: $db.corVisitObserver,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
 }
 
 class $$TBaseVisitsTableTableManager extends RootTableManager<
@@ -12990,9 +13314,9 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
     $$TBaseVisitsTableAnnotationComposer,
     $$TBaseVisitsTableCreateCompanionBuilder,
     $$TBaseVisitsTableUpdateCompanionBuilder,
-    (TBaseVisit, BaseReferences<_$AppDatabase, $TBaseVisitsTable, TBaseVisit>),
+    (TBaseVisit, $$TBaseVisitsTableReferences),
     TBaseVisit,
-    PrefetchHooks Function()> {
+    PrefetchHooks Function({bool corVisitObserverRefs})> {
   $$TBaseVisitsTableTableManager(_$AppDatabase db, $TBaseVisitsTable table)
       : super(TableManagerState(
           db: db,
@@ -13068,9 +13392,36 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             metaUpdateDate: metaUpdateDate,
           ),
           withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .map((e) => (
+                    e.readTable(table),
+                    $$TBaseVisitsTableReferences(db, table, e)
+                  ))
               .toList(),
-          prefetchHooksCallback: null,
+          prefetchHooksCallback: ({corVisitObserverRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (corVisitObserverRefs) db.corVisitObserver
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (corVisitObserverRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$TBaseVisitsTableReferences
+                            ._corVisitObserverRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TBaseVisitsTableReferences(db, table, p0)
+                                .corVisitObserverRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems.where(
+                                (e) => e.idBaseVisit == item.idBaseVisit),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
         ));
 }
 
@@ -13083,9 +13434,257 @@ typedef $$TBaseVisitsTableProcessedTableManager = ProcessedTableManager<
     $$TBaseVisitsTableAnnotationComposer,
     $$TBaseVisitsTableCreateCompanionBuilder,
     $$TBaseVisitsTableUpdateCompanionBuilder,
-    (TBaseVisit, BaseReferences<_$AppDatabase, $TBaseVisitsTable, TBaseVisit>),
+    (TBaseVisit, $$TBaseVisitsTableReferences),
     TBaseVisit,
-    PrefetchHooks Function()>;
+    PrefetchHooks Function({bool corVisitObserverRefs})>;
+typedef $$CorVisitObserverTableCreateCompanionBuilder
+    = CorVisitObserverCompanion Function({
+  required int idBaseVisit,
+  required int idRole,
+  Value<String> uniqueIdCoreVisitObserver,
+  Value<int> rowid,
+});
+typedef $$CorVisitObserverTableUpdateCompanionBuilder
+    = CorVisitObserverCompanion Function({
+  Value<int> idBaseVisit,
+  Value<int> idRole,
+  Value<String> uniqueIdCoreVisitObserver,
+  Value<int> rowid,
+});
+
+final class $$CorVisitObserverTableReferences extends BaseReferences<
+    _$AppDatabase, $CorVisitObserverTable, CorVisitObserverData> {
+  $$CorVisitObserverTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $TBaseVisitsTable _idBaseVisitTable(_$AppDatabase db) =>
+      db.tBaseVisits.createAlias($_aliasNameGenerator(
+          db.corVisitObserver.idBaseVisit, db.tBaseVisits.idBaseVisit));
+
+  $$TBaseVisitsTableProcessedTableManager get idBaseVisit {
+    final manager = $$TBaseVisitsTableTableManager($_db, $_db.tBaseVisits)
+        .filter((f) => f.idBaseVisit($_item.idBaseVisit));
+    final item = $_typedResult.readTableOrNull(_idBaseVisitTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$CorVisitObserverTableFilterComposer
+    extends Composer<_$AppDatabase, $CorVisitObserverTable> {
+  $$CorVisitObserverTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idRole => $composableBuilder(
+      column: $table.idRole, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uniqueIdCoreVisitObserver => $composableBuilder(
+      column: $table.uniqueIdCoreVisitObserver,
+      builder: (column) => ColumnFilters(column));
+
+  $$TBaseVisitsTableFilterComposer get idBaseVisit {
+    final $$TBaseVisitsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idBaseVisit,
+        referencedTable: $db.tBaseVisits,
+        getReferencedColumn: (t) => t.idBaseVisit,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TBaseVisitsTableFilterComposer(
+              $db: $db,
+              $table: $db.tBaseVisits,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorVisitObserverTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorVisitObserverTable> {
+  $$CorVisitObserverTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idRole => $composableBuilder(
+      column: $table.idRole, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uniqueIdCoreVisitObserver => $composableBuilder(
+      column: $table.uniqueIdCoreVisitObserver,
+      builder: (column) => ColumnOrderings(column));
+
+  $$TBaseVisitsTableOrderingComposer get idBaseVisit {
+    final $$TBaseVisitsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idBaseVisit,
+        referencedTable: $db.tBaseVisits,
+        getReferencedColumn: (t) => t.idBaseVisit,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TBaseVisitsTableOrderingComposer(
+              $db: $db,
+              $table: $db.tBaseVisits,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorVisitObserverTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorVisitObserverTable> {
+  $$CorVisitObserverTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idRole =>
+      $composableBuilder(column: $table.idRole, builder: (column) => column);
+
+  GeneratedColumn<String> get uniqueIdCoreVisitObserver => $composableBuilder(
+      column: $table.uniqueIdCoreVisitObserver, builder: (column) => column);
+
+  $$TBaseVisitsTableAnnotationComposer get idBaseVisit {
+    final $$TBaseVisitsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idBaseVisit,
+        referencedTable: $db.tBaseVisits,
+        getReferencedColumn: (t) => t.idBaseVisit,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TBaseVisitsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.tBaseVisits,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorVisitObserverTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CorVisitObserverTable,
+    CorVisitObserverData,
+    $$CorVisitObserverTableFilterComposer,
+    $$CorVisitObserverTableOrderingComposer,
+    $$CorVisitObserverTableAnnotationComposer,
+    $$CorVisitObserverTableCreateCompanionBuilder,
+    $$CorVisitObserverTableUpdateCompanionBuilder,
+    (CorVisitObserverData, $$CorVisitObserverTableReferences),
+    CorVisitObserverData,
+    PrefetchHooks Function({bool idBaseVisit})> {
+  $$CorVisitObserverTableTableManager(
+      _$AppDatabase db, $CorVisitObserverTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorVisitObserverTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorVisitObserverTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorVisitObserverTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idBaseVisit = const Value.absent(),
+            Value<int> idRole = const Value.absent(),
+            Value<String> uniqueIdCoreVisitObserver = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorVisitObserverCompanion(
+            idBaseVisit: idBaseVisit,
+            idRole: idRole,
+            uniqueIdCoreVisitObserver: uniqueIdCoreVisitObserver,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int idBaseVisit,
+            required int idRole,
+            Value<String> uniqueIdCoreVisitObserver = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorVisitObserverCompanion.insert(
+            idBaseVisit: idBaseVisit,
+            idRole: idRole,
+            uniqueIdCoreVisitObserver: uniqueIdCoreVisitObserver,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$CorVisitObserverTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({idBaseVisit = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (idBaseVisit) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idBaseVisit,
+                    referencedTable:
+                        $$CorVisitObserverTableReferences._idBaseVisitTable(db),
+                    referencedColumn: $$CorVisitObserverTableReferences
+                        ._idBaseVisitTable(db)
+                        .idBaseVisit,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$CorVisitObserverTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CorVisitObserverTable,
+    CorVisitObserverData,
+    $$CorVisitObserverTableFilterComposer,
+    $$CorVisitObserverTableOrderingComposer,
+    $$CorVisitObserverTableAnnotationComposer,
+    $$CorVisitObserverTableCreateCompanionBuilder,
+    $$CorVisitObserverTableUpdateCompanionBuilder,
+    (CorVisitObserverData, $$CorVisitObserverTableReferences),
+    CorVisitObserverData,
+    PrefetchHooks Function({bool idBaseVisit})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -13132,4 +13731,6 @@ class $AppDatabaseManager {
       $$CorObjectModuleTableTableTableManager(_db, _db.corObjectModuleTable);
   $$TBaseVisitsTableTableManager get tBaseVisits =>
       $$TBaseVisitsTableTableManager(_db, _db.tBaseVisits);
+  $$CorVisitObserverTableTableManager get corVisitObserver =>
+      $$CorVisitObserverTableTableManager(_db, _db.corVisitObserver);
 }

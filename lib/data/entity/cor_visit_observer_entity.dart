@@ -1,16 +1,29 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class CorVisitObserverEntity {
+  final int idBaseVisit;
+  final int idRole;
+  final String uniqueIdCoreVisitObserver;
 
-part 'cor_visit_observer_entity.freezed.dart';
-part 'cor_visit_observer_entity.g.dart';
+  CorVisitObserverEntity({
+    required this.idBaseVisit,
+    required this.idRole,
+    required this.uniqueIdCoreVisitObserver,
+  });
 
-@freezed
-class CorVisitObserverEntity with _$CorVisitObserverEntity {
-  const factory CorVisitObserverEntity({
-    required int idBaseVisit,
-    required int idRole,
-    required String uniqueIdCoreVisitObserver,
-  }) = _CorVisitObserverEntity;
+  // Factory method to convert JSON to entity
+  factory CorVisitObserverEntity.fromJson(Map<String, dynamic> json) {
+    return CorVisitObserverEntity(
+      idBaseVisit: json['id_base_visit'] as int,
+      idRole: json['id_role'] as int,
+      uniqueIdCoreVisitObserver: json['unique_id_core_visit_observer'] as String,
+    );
+  }
 
-  factory CorVisitObserverEntity.fromJson(Map<String, dynamic> json) =>
-      _$CorVisitObserverEntityFromJson(json);
+  // Method to convert entity to JSON
+  Map<String, dynamic> toJson() {
+    return {
+      'id_base_visit': idBaseVisit,
+      'id_role': idRole,
+      'unique_id_core_visit_observer': uniqueIdCoreVisitObserver,
+    };
+  }
 }
