@@ -19,6 +19,8 @@ extension VisiteEntityMapper on BaseVisitEntity {
       uuidBaseVisit: uuidBaseVisit,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
+      observers: observers,
+      data: data,
     );
   }
 
@@ -65,6 +67,8 @@ extension BaseVisitMapper on BaseVisit {
       uuidBaseVisit: uuidBaseVisit,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
+      observers: observers,
+      data: data,
     );
   }
 }
@@ -85,6 +89,7 @@ extension TBaseVisitMapper on TBaseVisit {
       uuidBaseVisit: uuidBaseVisit,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
+      // Note: observers and data need to be loaded separately
     );
   }
 }

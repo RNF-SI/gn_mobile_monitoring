@@ -19,6 +19,8 @@ class BaseVisitEntity with _$BaseVisitEntity {
     String? uuidBaseVisit,
     String? metaCreateDate,
     String? metaUpdateDate,
+    List<int>? observers, // Liste des ID des observateurs
+    Map<String, dynamic>? data, // Données spécifiques au module
   }) = _BaseVisitEntity;
 
   factory BaseVisitEntity.fromJson(Map<String, dynamic> json) =>
