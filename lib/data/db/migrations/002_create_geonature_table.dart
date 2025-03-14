@@ -265,5 +265,27 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  // Création de la table cor_visit_observer pour lier les visites et les observateurs
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_visit_observer
+      (
+        id_base_visit integer NOT NULL,
+        id_role integer NOT NULL,
+        unique_id_core_visit_observer TEXT NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || 
+          substr(lower(hex(randomblob(2))),2) || '-' || 
+          substr('89ab',abs(random()) % 4 + 1, 1) || 
+          substr(lower(hex(randomblob(2))),2) || '-' || 
+          lower(hex(randomblob(6)))),
+        PRIMARY KEY (id_base_visit, id_role),
+        FOREIGN KEY (id_base_visit) REFERENCES t_base_visits (id_base_visit) ON DELETE CASCADE
+      );
+    ''');
+    print("cor_visit_observer table created successfully.");
+  } catch (e) {
+    print("Error creating cor_visit_observer table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }
