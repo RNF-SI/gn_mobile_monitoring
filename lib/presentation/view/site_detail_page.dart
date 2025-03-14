@@ -83,6 +83,7 @@ class SiteDetailPage extends ConsumerWidget {
                           builder: (context) => VisitFormPage(
                             site: site,
                             visitConfig: visitConfig,
+                            customConfig: moduleInfo?.module.complement?.configuration?.custom,
                           ),
                         ),
                       ).then((_) {
@@ -185,6 +186,7 @@ class SiteDetailPage extends ConsumerWidget {
                                 builder: (context) => VisitFormPage(
                                   site: site,
                                   visitConfig: visitConfig,
+                                  customConfig: moduleInfo?.module.complement?.configuration?.custom,
                                   visit: visit, // Passer la visite à éditer
                                 ),
                               ),
