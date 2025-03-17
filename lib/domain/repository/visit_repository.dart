@@ -1,5 +1,7 @@
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/visit_complement_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/visit_complement.dart';
 
 abstract class VisitRepository {
   /// Get all visits
@@ -10,6 +12,9 @@ abstract class VisitRepository {
 
   /// Get a specific visit by ID
   Future<BaseVisitEntity> getVisitById(int id);
+  
+  /// Get a visit with complete details (including observers and complement data)
+  Future<BaseVisitEntity> getVisitWithFullDetails(int id);
 
   /// Create a new visit
   /// Returns the ID of the created visit
@@ -23,13 +28,29 @@ abstract class VisitRepository {
   /// Returns true if the deletion was successful
   Future<bool> deleteVisit(int id);
 
-  /// Get visit complement data
+  /// Get visit complement data as raw string
   /// Returns null if no complement exists
   Future<String?> getVisitComplementData(int visitId);
+  
+  /// Get visit complement entity
+  /// Returns null if no complement exists
+  Future<VisitComplementEntity?> getVisitComplement(int visitId);
+  
+  /// Get visit complement as domain model
+  /// Returns null if no complement exists
+  Future<VisitComplement?> getVisitComplementDomain(int visitId);
 
-  /// Save visit complement data
+  /// Save visit complement data as raw JSON string
   /// Creates new or updates existing complement
   Future<void> saveVisitComplementData(int visitId, String data);
+  
+  /// Save visit complement entity
+  /// Creates new or updates existing complement
+  Future<void> saveVisitComplement(VisitComplementEntity complement);
+  
+  /// Save visit complement domain model
+  /// Creates new or updates existing complement
+  Future<void> saveVisitComplementDomain(VisitComplement complement);
 
   /// Delete visit complement data
   Future<void> deleteVisitComplementData(int visitId);
