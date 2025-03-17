@@ -6,8 +6,12 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_sto
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
@@ -52,6 +56,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case_impl.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -176,6 +182,19 @@ final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
   ),
 );
 
+// Visites use cases
 final getVisitsBySiteIdUseCaseProvider = Provider<GetVisitsBySiteIdUseCase>(
   (ref) => GetVisitsBySiteIdUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
+final createVisitUseCaseProvider = Provider<CreateVisitUseCase>(
+  (ref) => CreateVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
+final updateVisitUseCaseProvider = Provider<UpdateVisitUseCase>(
+  (ref) => UpdateVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
+final deleteVisitUseCaseProvider = Provider<DeleteVisitUseCase>(
+  (ref) => DeleteVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
