@@ -25,7 +25,8 @@ extension BaseVisitMapper on TBaseVisit {
 extension BaseVisitEntityMapper on BaseVisitEntity {
   TBaseVisitsCompanion toCompanion() {
     return TBaseVisitsCompanion(
-      idBaseVisit: Value(idBaseVisit),
+      // Pour les nouvelles visites (ID=0), utiliser Value.absent() pour laisser SQLite générer un ID
+      idBaseVisit: idBaseVisit == 0 ? const Value.absent() : Value(idBaseVisit),
       idBaseSite: idBaseSite == null ? const Value.absent() : Value(idBaseSite),
       idDataset: Value(idDataset),
       idModule: Value(idModule),
