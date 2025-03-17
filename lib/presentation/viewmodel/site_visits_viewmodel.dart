@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
@@ -216,6 +217,16 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     // Récupérer l'ID de l'utilisateur connecté
     final userId = await _getUserIdUseCase.execute();
 
+    // Prétraiter les données du formulaire pour normaliser les champs d'heure
+    final Map<String, dynamic> processedFormData = Map.from(formData);
+    processedFormData.forEach((key, value) {
+      if (key.toLowerCase().contains('time') && 
+          !key.toLowerCase().contains('date') && 
+          value is String) {
+        processedFormData[key] = normalizeTimeFormat(value);
+      }
+    });
+
     // Créer une structure JSON qui suit le format attendu par BaseVisit.fromJson()
     final Map<String, dynamic> jsonData = {
       // Champs obligatoires avec valeurs par défaut
@@ -224,15 +235,15 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       'idDataset':
           1, // Valeur par défaut ou à récupérer depuis la configuration
       'idModule': moduleId,
-      'visitDateMin': _formatDateValue(formData['visit_date_min']) ??
+      'visitDateMin': _formatDateValue(processedFormData['visit_date_min']) ??
           DateTime.now().toIso8601String(),
 
       // Champs optionnels
-      'visitDateMax': _formatDateValue(formData['visit_date_max']),
-      'comments': formData['comments']?.toString(),
+      'visitDateMax': _formatDateValue(processedFormData['visit_date_max']),
+      'comments': processedFormData['comments']?.toString(),
 
       // Données spécifiques au module (exclure les champs standard)
-      'data': _extractModuleSpecificData(formData),
+      'data': _extractModuleSpecificData(processedFormData),
     };
 
     // Gestion des observateurs - ils seront traités séparément par le use case
@@ -310,6 +321,11 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
         } else if (value is DateTime) {
           // Convertir les dates en chaînes ISO
           moduleData[key] = value.toIso8601String();
+        } else if (key.toLowerCase().contains('time') && 
+                 !key.toLowerCase().contains('date') && 
+                 value is String) {
+          // Normaliser les valeurs d'heure pour éviter les problèmes de format
+          moduleData[key] = normalizeTimeFormat(value);
         } else {
           moduleData[key] = value;
         }
