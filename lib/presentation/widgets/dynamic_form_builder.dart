@@ -659,8 +659,33 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
   // Pour les champs de type "observers"
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
-    // Initialiser la valeur si elle n'existe pas
-    _formValues[fieldName] ??= <int>[];
+    // Initialiser la valeur si elle n'existe pas ou n'est pas une liste
+    if (_formValues[fieldName] == null || !(_formValues[fieldName] is List)) {
+      _formValues[fieldName] = <int>[];
+    }
+
+    // S'assurer que tous les éléments de la liste sont des entiers
+    if (_formValues[fieldName] is List) {
+      final List originalList = _formValues[fieldName] as List;
+      final List<int> safeList = [];
+
+      for (final item in originalList) {
+        if (item is int) {
+          safeList.add(item);
+        } else if (item is String) {
+          // Tenter de convertir les chaînes en entiers
+          final intValue = int.tryParse(item);
+          if (intValue != null) {
+            safeList.add(intValue);
+          }
+        } else if (item is num) {
+          // Convertir les nombres en entiers
+          safeList.add(item.toInt());
+        }
+      }
+
+      _formValues[fieldName] = safeList;
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -691,7 +716,7 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
               spacing: 8.0,
               runSpacing: 4.0,
               children:
-                  (_formValues[fieldName] as List).map<Widget>((observer) {
+                  (_formValues[fieldName] as List<int>).map<Widget>((observer) {
                 return Chip(
                   label: Text('Observateur #$observer'),
                   backgroundColor:
