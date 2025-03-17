@@ -1,18 +1,27 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/visit_complement.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
     SiteVisitsViewModel, AsyncValue<List<BaseVisit>>, int>((ref, siteId) {
   final getVisitsBySiteIdUseCase = ref.watch(getVisitsBySiteIdUseCaseProvider);
+  final getVisitWithDetailsUseCase = ref.watch(getVisitWithDetailsUseCaseProvider);
+  final getVisitComplementUseCase = ref.watch(getVisitComplementUseCaseProvider);
+  final saveVisitComplementUseCase = ref.watch(saveVisitComplementUseCaseProvider);
   final createVisitUseCase = ref.watch(createVisitUseCaseProvider);
   final updateVisitUseCase = ref.watch(updateVisitUseCaseProvider);
   final deleteVisitUseCase = ref.watch(deleteVisitUseCaseProvider);
@@ -22,6 +31,9 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
 
   return SiteVisitsViewModel(
     getVisitsBySiteIdUseCase,
+    getVisitWithDetailsUseCase,
+    getVisitComplementUseCase,
+    saveVisitComplementUseCase,
     createVisitUseCase,
     updateVisitUseCase,
     deleteVisitUseCase,
@@ -33,6 +45,9 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
 
 class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final GetVisitsBySiteIdUseCase _getVisitsBySiteIdUseCase;
+  final GetVisitWithDetailsUseCase _getVisitWithDetailsUseCase;
+  final GetVisitComplementUseCase _getVisitComplementUseCase;
+  final SaveVisitComplementUseCase _saveVisitComplementUseCase;
   final CreateVisitUseCase _createVisitUseCase;
   final UpdateVisitUseCase _updateVisitUseCase;
   final DeleteVisitUseCase _deleteVisitUseCase;
@@ -43,6 +58,9 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
   SiteVisitsViewModel(
     this._getVisitsBySiteIdUseCase,
+    this._getVisitWithDetailsUseCase,
+    this._getVisitComplementUseCase,
+    this._saveVisitComplementUseCase,
     this._createVisitUseCase,
     this._updateVisitUseCase,
     this._deleteVisitUseCase,
@@ -143,6 +161,50 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       return success;
     } catch (e) {
       debugPrint('Erreur lors de la suppression de la visite: $e');
+      rethrow;
+    }
+  }
+  
+  /// Récupère une visite avec tous ses détails (observateurs et données complémentaires)
+  Future<BaseVisit> getVisitWithFullDetails(int visitId) async {
+    try {
+      return await _getVisitWithDetailsUseCase.execute(visitId);
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des détails de la visite: $e');
+      rethrow;
+    }
+  }
+  
+  /// Récupère les données complémentaires d'une visite
+  Future<VisitComplement?> getVisitComplement(int visitId) async {
+    try {
+      return await _getVisitComplementUseCase.execute(visitId);
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des données complémentaires: $e');
+      rethrow;
+    }
+  }
+  
+  /// Sauvegarde des données complémentaires pour une visite
+  Future<void> saveVisitComplement(VisitComplement complement) async {
+    try {
+      await _saveVisitComplementUseCase.execute(complement);
+    } catch (e) {
+      debugPrint('Erreur lors de la sauvegarde des données complémentaires: $e');
+      rethrow;
+    }
+  }
+  
+  /// Sauvegarde les données complémentaires d'une visite à partir d'un Map
+  Future<void> saveVisitComplementFromData(int visitId, Map<String, dynamic> data) async {
+    try {
+      final complement = VisitComplement(
+        idBaseVisit: visitId,
+        data: data.isEmpty ? null : jsonEncode(data),
+      );
+      await _saveVisitComplementUseCase.execute(complement);
+    } catch (e) {
+      debugPrint('Erreur lors de la sauvegarde des données complémentaires: $e');
       rethrow;
     }
   }
