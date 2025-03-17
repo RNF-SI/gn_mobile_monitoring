@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -150,6 +151,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
       });
 
       try {
+        // Récupérer l'ID de l'utilisateur connecté
+        final userId = await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
+        
         // Récupérer les valeurs du formulaire
         final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
 
@@ -157,7 +161,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         final Map<String, dynamic> mainData = {
           'id_base_site': widget.site.idBaseSite,
           'id_module':
-              widget.moduleId ?? 0, // Utiliser moduleId passé en paramètre
+              widget.moduleId ?? widget.site.idModule, // Utiliser moduleId passé en paramètre ou l'ID du module du site
           'id_dataset': 1, // TODO: Récupérer le dataset depuis la configuration
         };
 
@@ -172,10 +176,21 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
           mainData['comments'] = formValues.remove('comments');
         }
 
-        // Extraire les observateurs
-        List<int>? observers;
+        // Gérer les observateurs
+        List<int> observers = [];
+        
+        // Si des observateurs sont déjà sélectionnés dans le formulaire, les utiliser
         if (formValues.containsKey('observers')) {
           observers = List<int>.from(formValues.remove('observers'));
+        }
+        
+        // Si l'utilisateur connecté n'est pas déjà dans la liste des observateurs, l'ajouter
+        if (userId != null && userId > 0 && !observers.contains(userId)) {
+          observers.add(userId);
+        }
+        
+        // Si la liste des observateurs n'est pas vide, l'ajouter aux données principales
+        if (observers.isNotEmpty) {
           mainData['observers'] = observers;
         }
 
