@@ -203,6 +203,12 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
     final bool isRequired = fieldConfig['validations']['required'] == true;
     final String? description = fieldConfig['description'];
 
+    // Vérifier si c'est le champ des observateurs par son nom
+    if (fieldName == 'observers') {
+      return _buildObserverField(fieldName, label, isRequired,
+          description: description);
+    }
+
     switch (widgetType) {
       case 'TextField':
         return _buildTextField(fieldName, label, isRequired,
@@ -229,6 +235,9 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
       case 'AutocompleteField':
         return _buildAutocompleteField(
             fieldName, label, isRequired, fieldConfig,
+            description: description);
+      case 'ObserverField':
+        return _buildObserverField(fieldName, label, isRequired,
             description: description);
       default:
         return _buildTextField(fieldName, label, isRequired,
@@ -641,6 +650,95 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
                 _formValues[fieldName] = value;
               });
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Pour les champs de type "observers"
+  Widget _buildObserverField(String fieldName, String label, bool required,
+      {String? description}) {
+    // Initialiser la valeur si elle n'existe pas
+    _formValues[fieldName] ??= <int>[];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          // Afficher les observateurs sélectionnés
+          if (_formValues[fieldName] is List &&
+              (_formValues[fieldName] as List).isNotEmpty)
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children:
+                  (_formValues[fieldName] as List).map<Widget>((observer) {
+                return Chip(
+                  label: Text('Observateur #$observer'),
+                  backgroundColor:
+                      Theme.of(context).colorScheme.primaryContainer,
+                  labelStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  deleteIcon: Icon(Icons.close,
+                      size: 18,
+                      color: Theme.of(context).colorScheme.onPrimaryContainer),
+                  onDeleted: () {
+                    setState(() {
+                      (_formValues[fieldName] as List).remove(observer);
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          const SizedBox(height: 8),
+          // Champ désactivé pour indiquer que les observateurs sont déjà sélectionnés
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color:
+                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Vous êtes automatiquement ajouté comme observateur',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

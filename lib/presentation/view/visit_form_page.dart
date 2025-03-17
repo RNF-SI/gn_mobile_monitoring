@@ -44,6 +44,24 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     // En mode édition, préparer les valeurs initiales
     if (_isEditMode && widget.visit != null) {
       _initialValues = _prepareInitialValues(widget.visit!);
+    } else {
+      // En mode création, initialiser avec l'utilisateur connecté comme observateur
+      _initialValues = {};
+      _loadConnectedUser();
+    }
+  }
+
+  /// Charge l'utilisateur connecté et l'ajoute comme observateur initial
+  Future<void> _loadConnectedUser() async {
+    final userId =
+        await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
+
+    if (userId != null && userId > 0) {
+      setState(() {
+        _initialValues = {
+          'observers': [userId]
+        };
+      });
     }
   }
 
@@ -152,16 +170,22 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer l'ID de l'utilisateur connecté
-        final userId = await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
-        
+        final userId =
+            await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
+
+        // Récupérer le nom de l'utilisateur connecté
+        final userName = await ref
+            .read(getUserNameFromLocalStorageUseCaseProvider)
+            .execute();
+
         // Récupérer les valeurs du formulaire
         final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
 
         // Extraire les données principales
         final Map<String, dynamic> mainData = {
           'id_base_site': widget.site.idBaseSite,
-          'id_module':
-              widget.moduleId ?? widget.site.idModule, // Utiliser moduleId passé en paramètre ou l'ID du module du site
+          'id_module': widget.moduleId ??
+              -1, // -1 indique un problème avec l'ID du module
           'id_dataset': 1, // TODO: Récupérer le dataset depuis la configuration
         };
 
@@ -178,17 +202,17 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
         // Gérer les observateurs
         List<int> observers = [];
-        
+
         // Si des observateurs sont déjà sélectionnés dans le formulaire, les utiliser
         if (formValues.containsKey('observers')) {
           observers = List<int>.from(formValues.remove('observers'));
         }
-        
+
         // Si l'utilisateur connecté n'est pas déjà dans la liste des observateurs, l'ajouter
         if (userId != null && userId > 0 && !observers.contains(userId)) {
           observers.add(userId);
         }
-        
+
         // Si la liste des observateurs n'est pas vide, l'ajouter aux données principales
         if (observers.isNotEmpty) {
           mainData['observers'] = observers;
@@ -224,8 +248,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             if (success) {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Visite mise à jour avec succès'),
+                SnackBar(
+                  content: Text(
+                      'Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                 ),
               );
             } else {
@@ -250,16 +275,17 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               if (_chainInput) {
                 _formBuilderKey.currentState?.resetForm();
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                  SnackBar(
                     content: Text(
-                        'Visite enregistrée. Vous pouvez saisir la suivante.'),
+                        'Visite enregistrée${userName != null ? " avec $userName comme observateur" : ""}. Vous pouvez saisir la suivante.'),
                   ),
                 );
               } else {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Visite créée avec succès'),
+                  SnackBar(
+                    content: Text(
+                        'Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                   ),
                 );
               }
@@ -328,7 +354,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 16),
 
                   // Formulaire dynamique
                   Expanded(
