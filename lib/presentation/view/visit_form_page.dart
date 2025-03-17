@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
 class VisitFormPage extends ConsumerStatefulWidget {
@@ -10,6 +11,7 @@ class VisitFormPage extends ConsumerStatefulWidget {
   final ObjectConfig visitConfig;
   final CustomConfig? customConfig;
   final BaseVisit? visit; // En mode édition, visite existante
+  final int? moduleId; // ID du module pour la visite
 
   const VisitFormPage({
     super.key,
@@ -17,6 +19,7 @@ class VisitFormPage extends ConsumerStatefulWidget {
     required this.visitConfig,
     this.customConfig,
     this.visit,
+    this.moduleId,
   });
 
   @override
@@ -41,9 +44,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     if (_isEditMode && widget.visit != null) {
       _initialValues = _prepareInitialValues(widget.visit!);
     }
-
-    // Log pour vérifier si displayProperties est correctement rempli
-    print("Display properties: ${widget.visitConfig.displayProperties}");
   }
 
   /// Prépare les valeurs initiales pour le formulaire à partir d'une visite existante
@@ -74,8 +74,10 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     return values;
   }
 
-  // Simulation d'une suppression avec confirmation
+  // Suppression d'une visite avec confirmation
   Future<void> _deleteVisit() async {
+    if (widget.visit == null) return;
+
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -97,18 +99,45 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
       setState(() {
         _isLoading = true;
       });
-      // Simuler la suppression (remplacer par votre appel API)
-      await Future.delayed(const Duration(seconds: 2));
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Visite supprimée avec succès (Simulation)'),
-          ),
-        );
+
+      try {
+        final viewModel = ref
+            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+        final success = await viewModel.deleteVisit(widget.visit!.idBaseVisit);
+
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+
+          if (success) {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Visite supprimée avec succès'),
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Erreur lors de la suppression de la visite'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erreur: ${e.toString()}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
       }
     }
   }
@@ -120,42 +149,124 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         _isLoading = true;
       });
 
-      // Récupérer les valeurs du formulaire
-      final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
+      try {
+        // Récupérer les valeurs du formulaire
+        final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
 
-      // Ajouter l'ID du site (obligatoire pour les visites)
-      formValues['id_base_site'] = widget.site.idBaseSite;
+        // Extraire les données principales
+        final Map<String, dynamic> mainData = {
+          'id_base_site': widget.site.idBaseSite,
+          'id_module':
+              widget.moduleId ?? 0, // Utiliser moduleId passé en paramètre
+          'id_dataset': 1, // TODO: Récupérer le dataset depuis la configuration
+        };
 
-      // Log pour débogage
-      debugPrint('Formulaire soumis: $formValues');
+        // Extraire les données génériques
+        if (formValues.containsKey('visit_date_min')) {
+          mainData['visit_date_min'] = formValues.remove('visit_date_min');
+        }
+        if (formValues.containsKey('visit_date_max')) {
+          mainData['visit_date_max'] = formValues.remove('visit_date_max');
+        }
+        if (formValues.containsKey('comments')) {
+          mainData['comments'] = formValues.remove('comments');
+        }
 
-      // Préparer les données pour l'API (dans une implémentation réelle)
-      // final dataToSend = BaseVisit.fromJson(formValues);
+        // Extraire les observateurs
+        List<int>? observers;
+        if (formValues.containsKey('observers')) {
+          observers = List<int>.from(formValues.remove('observers'));
+          mainData['observers'] = observers;
+        }
 
-      // Simulation d'un appel API asynchrone
-      await Future.delayed(const Duration(seconds: 2));
+        // Toutes les autres données vont dans le champ "data"
+        mainData['data'] = formValues;
 
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-
-        // Si enchaînement et création, réinitialiser le formulaire
-        if (_chainInput && !_isEditMode) {
-          _formBuilderKey.currentState?.resetForm();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Visite enregistrée. Vous pouvez saisir la suivante.'),
-            ),
-          );
+        // En mode édition, conserver l'ID de la visite
+        if (_isEditMode && widget.visit != null) {
+          mainData['id_base_visit'] = widget.visit!.idBaseVisit;
         } else {
-          Navigator.pop(context);
+          // En mode création, utiliser un ID temporaire qui sera remplacé par la BDD
+          mainData['id_base_visit'] = 0;
+        }
+
+        // Créer l'objet BaseVisit
+        final visit = BaseVisit.fromJson(mainData);
+
+        // Récupérer le ViewModel
+        final viewModel = ref
+            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+
+        // Sauvegarder ou mettre à jour
+        if (_isEditMode && widget.visit != null) {
+          final success = await viewModel.updateVisit(visit);
+
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+
+            if (success) {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Visite mise à jour avec succès'),
+                ),
+              );
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Erreur lors de la mise à jour de la visite'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        } else {
+          final visitId = await viewModel.saveVisit(visit);
+
+          if (mounted) {
+            setState(() {
+              _isLoading = false;
+            });
+
+            if (visitId > 0) {
+              // Si enchaînement et création, réinitialiser le formulaire
+              if (_chainInput) {
+                _formBuilderKey.currentState?.resetForm();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                        'Visite enregistrée. Vous pouvez saisir la suivante.'),
+                  ),
+                );
+              } else {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Visite créée avec succès'),
+                  ),
+                );
+              }
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Erreur lors de la création de la visite'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(_isEditMode
-                  ? 'Visite mise à jour avec succès (Simulation)'
-                  : 'Visite créée avec succès (Simulation)'),
+              content: Text('Erreur: ${e.toString()}'),
+              backgroundColor: Colors.red,
             ),
           );
         }

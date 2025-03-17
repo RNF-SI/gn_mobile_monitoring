@@ -21,9 +21,10 @@ class SiteDetailPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final visitsState = ref.watch(siteVisitsViewModelProvider(site.idBaseSite));
-    
+
     // Récupérer la configuration des visites depuis le module
-    final ObjectConfig? visitConfig = moduleInfo?.module.complement?.configuration?.visit;
+    final ObjectConfig? visitConfig =
+        moduleInfo?.module.complement?.configuration?.visit;
 
     return Scaffold(
       appBar: AppBar(
@@ -51,8 +52,7 @@ class SiteDetailPage extends ConsumerWidget {
                         'Description', site.baseSiteDescription ?? ''),
                     _buildPropertyRow(
                       'Altitude',
-                      site.altitudeMin != null &&
-                              site.altitudeMax != null
+                      site.altitudeMin != null && site.altitudeMax != null
                           ? '${site.altitudeMin}-${site.altitudeMax}m'
                           : site.altitudeMin?.toString() ??
                               site.altitudeMax?.toString() ??
@@ -63,7 +63,7 @@ class SiteDetailPage extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           // Visits Section
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -72,7 +72,8 @@ class SiteDetailPage extends ConsumerWidget {
               children: [
                 Text(
                   visitConfig?.label ?? 'Visites',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
@@ -83,17 +84,23 @@ class SiteDetailPage extends ConsumerWidget {
                           builder: (context) => VisitFormPage(
                             site: site,
                             visitConfig: visitConfig,
-                            customConfig: moduleInfo?.module.complement?.configuration?.custom,
+                            customConfig: moduleInfo
+                                ?.module.complement?.configuration?.custom,
+                            moduleId: moduleInfo?.module.id,
                           ),
                         ),
                       ).then((_) {
                         // Rafraîchir la liste des visites après ajout
-                        ref.read(siteVisitsViewModelProvider(site.idBaseSite).notifier).loadVisits();
+                        ref
+                            .read(siteVisitsViewModelProvider(site.idBaseSite)
+                                .notifier)
+                            .loadVisits();
                       });
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('Configuration de visite non disponible'),
+                          content:
+                              Text('Configuration de visite non disponible'),
                         ),
                       );
                     }
@@ -123,7 +130,8 @@ class SiteDetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildVisitsTable(List<BaseVisit> visits, ObjectConfig? visitConfig, BuildContext context) {
+  Widget _buildVisitsTable(
+      List<BaseVisit> visits, ObjectConfig? visitConfig, BuildContext context) {
     if (visits.isEmpty) {
       return const Center(
         child: Text('Aucune visite pour ce site'),
@@ -144,8 +152,8 @@ class SiteDetailPage extends ConsumerWidget {
             const TableRow(
               children: [
                 Padding(
-                  padding: EdgeInsets.symmetric(
-                      vertical: 8.0, horizontal: 16.0),
+                  padding:
+                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: Text('Action',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
@@ -167,70 +175,69 @@ class SiteDetailPage extends ConsumerWidget {
               ],
             ),
             ...visits.map((visit) => TableRow(
-              children: [
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0),
-                  height: 48,
-                  alignment: Alignment.center,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () {
-                          if (visitConfig != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => VisitFormPage(
-                                  site: site,
-                                  visitConfig: visitConfig,
-                                  customConfig: moduleInfo?.module.complement?.configuration?.custom,
-                                  visit: visit, // Passer la visite à éditer
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Configuration de visite non disponible'),
-                              ),
-                            );
-                          }
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
-                        ),
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      height: 48,
+                      alignment: Alignment.center,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            onPressed: () {
+                              if (visitConfig != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => VisitFormPage(
+                                      site: site,
+                                      visitConfig: visitConfig,
+                                      customConfig: moduleInfo?.module
+                                          .complement?.configuration?.custom,
+                                      moduleId: moduleInfo?.module.id,
+                                      visit: visit, // Passer la visite à éditer
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                        'Configuration de visite non disponible'),
+                                  ),
+                                );
+                              }
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  height: 48,
-                  alignment: Alignment.centerLeft,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(formatDate(visit.visitDateMin)),
-                ),
-                Container(
-                  height: 48,
-                  alignment: Alignment.centerLeft,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(visit.idDigitiser?.toString() ?? ''),
-                ),
-                Container(
-                  height: 48,
-                  alignment: Alignment.centerLeft,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8.0),
-                  child: Text(visit.comments ?? ''),
-                ),
-              ],
-            )),
+                    ),
+                    Container(
+                      height: 48,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(formatDate(visit.visitDateMin)),
+                    ),
+                    Container(
+                      height: 48,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(visit.idDigitiser?.toString() ?? ''),
+                    ),
+                    Container(
+                      height: 48,
+                      alignment: Alignment.centerLeft,
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: Text(visit.comments ?? ''),
+                    ),
+                  ],
+                )),
           ],
         ),
       ),
