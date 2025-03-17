@@ -41,11 +41,11 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     // Si la config indique que l'enchaînement est possible, on initialise la bascule
     _chainInput = widget.visitConfig.chained ?? false;
 
-    // En mode édition, préparer les valeurs initiales
+    // En mode édition, préparer les valeurs initiales depuis la visite existante
     if (_isEditMode && widget.visit != null) {
       _initialValues = _prepareInitialValues(widget.visit!);
     } else {
-      // En mode création, initialiser avec l'utilisateur connecté comme observateur
+      // En mode création, initialiser vide et charger l'utilisateur connecté comme observateur
       _initialValues = {};
       _loadConnectedUser();
     }
@@ -53,15 +53,19 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
   /// Charge l'utilisateur connecté et l'ajoute comme observateur initial
   Future<void> _loadConnectedUser() async {
-    final userId =
-        await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
+    try {
+      final userId = await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
 
-    if (userId != null && userId > 0) {
-      setState(() {
-        _initialValues = {
-          'observers': [userId]
-        };
-      });
+      if (userId != null && userId > 0 && mounted) {
+        setState(() {
+          _initialValues = {
+            'observers': [userId]
+          };
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement de l\'utilisateur connecté: $e');
+      // En cas d'erreur, on laisse les valeurs initiales vides
     }
   }
 
@@ -91,6 +95,93 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     }
 
     return values;
+  }
+
+  /// Convertit les données du formulaire en format JSON compatible avec le modèle BaseVisit
+  Map<String, dynamic> _prepareVisitJsonData(Map<String, dynamic> formData, int? userId) {
+    // Créer une structure JSON qui suit le format attendu par BaseVisit.fromJson()
+    final Map<String, dynamic> jsonData = {
+      // Champs obligatoires avec valeurs par défaut
+      'idBaseVisit': _isEditMode && widget.visit != null ? widget.visit!.idBaseVisit : 0,
+      'idBaseSite': widget.site.idBaseSite,
+      'idDataset': 1, // Valeur par défaut ou à récupérer depuis la configuration
+      'idModule': widget.moduleId ?? widget.site.idModule,
+      'visitDateMin': formData['visit_date_min'] is DateTime 
+          ? (formData['visit_date_min'] as DateTime).toIso8601String()
+          : formData['visit_date_min']?.toString() ?? DateTime.now().toIso8601String(),
+      
+      // Champs optionnels
+      'visitDateMax': formData['visit_date_max'] is DateTime
+          ? (formData['visit_date_max'] as DateTime).toIso8601String()
+          : formData['visit_date_max']?.toString(),
+      'comments': formData['comments']?.toString(),
+      
+      // Données spécifiques au module (exclure les champs standard)
+      'data': _extractModuleSpecificData(formData),
+    };
+    
+    // Gestion des observateurs - ils seront traités séparément par le use case
+    List<int> observers = [];
+    
+    // Si des observateurs sont déjà dans le formulaire
+    if (formData['observers'] is List) {
+      final rawObservers = formData['observers'] as List;
+      for (final item in rawObservers) {
+        if (item is int) {
+          observers.add(item);
+        } else if (item is String && int.tryParse(item) != null) {
+          observers.add(int.parse(item));
+        } else if (item is num) {
+          observers.add(item.toInt());
+        }
+      }
+    }
+    
+    // Ajouter l'utilisateur connecté s'il n'est pas déjà inclus
+    if (userId != null && userId > 0 && !observers.contains(userId)) {
+      observers.add(userId);
+    }
+    
+    // Ajouter la liste d'observateurs uniquement si non vide
+    if (observers.isNotEmpty) {
+      jsonData['observers'] = observers;
+    }
+    
+    return jsonData;
+  }
+  
+  /// Extrait les données spécifiques au module en excluant les champs standard
+  Map<String, dynamic> _extractModuleSpecificData(Map<String, dynamic> formData) {
+    // Liste des clés à exclure (champs standard)
+    const standardFields = {
+      'id_base_visit', 'id_base_site', 'id_dataset', 'id_module',
+      'visit_date_min', 'visit_date_max', 'comments', 'observers',
+    };
+    
+    // Créer un nouveau Map avec uniquement les données du module
+    final Map<String, dynamic> moduleData = {};
+    
+    formData.forEach((key, value) {
+      // Ignorer les champs standard et les valeurs null
+      if (!standardFields.contains(key) && value != null) {
+        // Conversion des types si nécessaire
+        if (value is String && double.tryParse(value) != null) {
+          // Convertir les nombres en format approprié
+          if (double.parse(value) % 1 == 0) {
+            moduleData[key] = int.parse(value);
+          } else {
+            moduleData[key] = double.parse(value);
+          }
+        } else if (value is DateTime) {
+          // Convertir les dates en chaînes ISO
+          moduleData[key] = value.toIso8601String();
+        } else {
+          moduleData[key] = value;
+        }
+      }
+    });
+    
+    return moduleData;
   }
 
   // Suppression d'une visite avec confirmation
@@ -170,73 +261,24 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer l'ID de l'utilisateur connecté
-        final userId =
-            await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
+        final userId = await ref.read(getUserIdFromLocalStorageUseCaseProvider).execute();
 
-        // Récupérer le nom de l'utilisateur connecté
-        final userName = await ref
-            .read(getUserNameFromLocalStorageUseCaseProvider)
-            .execute();
+        // Récupérer le nom de l'utilisateur connecté pour l'affichage
+        final userName = await ref.read(getUserNameFromLocalStorageUseCaseProvider).execute();
 
         // Récupérer les valeurs du formulaire
         final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
 
-        // Extraire les données principales
-        final Map<String, dynamic> mainData = {
-          'id_base_site': widget.site.idBaseSite,
-          'id_module': widget.moduleId ??
-              -1, // -1 indique un problème avec l'ID du module
-          'id_dataset': 1, // TODO: Récupérer le dataset depuis la configuration
-        };
-
-        // Extraire les données génériques
-        if (formValues.containsKey('visit_date_min')) {
-          mainData['visit_date_min'] = formValues.remove('visit_date_min');
-        }
-        if (formValues.containsKey('visit_date_max')) {
-          mainData['visit_date_max'] = formValues.remove('visit_date_max');
-        }
-        if (formValues.containsKey('comments')) {
-          mainData['comments'] = formValues.remove('comments');
-        }
-
-        // Gérer les observateurs
-        List<int> observers = [];
-
-        // Si des observateurs sont déjà sélectionnés dans le formulaire, les utiliser
-        if (formValues.containsKey('observers')) {
-          observers = List<int>.from(formValues.remove('observers'));
-        }
-
-        // Si l'utilisateur connecté n'est pas déjà dans la liste des observateurs, l'ajouter
-        if (userId != null && userId > 0 && !observers.contains(userId)) {
-          observers.add(userId);
-        }
-
-        // Si la liste des observateurs n'est pas vide, l'ajouter aux données principales
-        if (observers.isNotEmpty) {
-          mainData['observers'] = observers;
-        }
-
-        // Toutes les autres données vont dans le champ "data"
-        mainData['data'] = formValues;
-
-        // En mode édition, conserver l'ID de la visite
-        if (_isEditMode && widget.visit != null) {
-          mainData['id_base_visit'] = widget.visit!.idBaseVisit;
-        } else {
-          // En mode création, utiliser un ID temporaire qui sera remplacé par la BDD
-          mainData['id_base_visit'] = 0;
-        }
-
-        // Créer l'objet BaseVisit
-        final visit = BaseVisit.fromJson(mainData);
+        // Préparer les données au format JSON attendu par BaseVisit.fromJson
+        final jsonData = _prepareVisitJsonData(formValues, userId);
+        
+        // Créer l'objet BaseVisit à partir des données JSON bien structurées
+        final visit = BaseVisit.fromJson(jsonData);
 
         // Récupérer le ViewModel
-        final viewModel = ref
-            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+        final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
 
-        // Sauvegarder ou mettre à jour
+        // Sauvegarder ou mettre à jour selon le mode
         if (_isEditMode && widget.visit != null) {
           final success = await viewModel.updateVisit(visit);
 
@@ -249,8 +291,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text(
-                      'Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                  content: Text('Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                 ),
               );
             } else {
@@ -274,18 +315,20 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               // Si enchaînement et création, réinitialiser le formulaire
               if (_chainInput) {
                 _formBuilderKey.currentState?.resetForm();
+                // Réinitialiser avec l'utilisateur connecté comme observateur
+                setState(() {
+                  _initialValues = {'observers': userId != null ? [userId] : []};
+                });
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                        'Visite enregistrée${userName != null ? " avec $userName comme observateur" : ""}. Vous pouvez saisir la suivante.'),
+                    content: Text('Visite enregistrée${userName != null ? " avec $userName comme observateur" : ""}. Vous pouvez saisir la suivante.'),
                   ),
                 );
               } else {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(
-                        'Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                    content: Text('Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                   ),
                 );
               }
