@@ -185,35 +185,24 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Info du site
-                  Card(
-                    margin: const EdgeInsets.only(bottom: 16.0),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Site',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Nom: ${widget.site.baseSiteName}',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                          if (widget.site.baseSiteCode != null)
-                            Text(
-                              'Code: ${widget.site.baseSiteCode}',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                        ],
+                  // Bandeau d'information du site (compact)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 12.0),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surfaceVariant,
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    child: Text(
+                      'Site: ${widget.site.baseSiteName}${widget.site.baseSiteCode != null ? ' (${widget.site.baseSiteCode})' : ''}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
+                  const SizedBox(height: 8),
 
                   // Formulaire dynamique
                   Expanded(
