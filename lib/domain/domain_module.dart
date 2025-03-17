@@ -34,8 +34,14 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
@@ -187,6 +193,10 @@ final getVisitsBySiteIdUseCaseProvider = Provider<GetVisitsBySiteIdUseCase>(
   (ref) => GetVisitsBySiteIdUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
 
+final getVisitWithDetailsUseCaseProvider = Provider<GetVisitWithDetailsUseCase>(
+  (ref) => GetVisitWithDetailsUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
 final createVisitUseCaseProvider = Provider<CreateVisitUseCase>(
   (ref) => CreateVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
@@ -197,4 +207,12 @@ final updateVisitUseCaseProvider = Provider<UpdateVisitUseCase>(
 
 final deleteVisitUseCaseProvider = Provider<DeleteVisitUseCase>(
   (ref) => DeleteVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
+final getVisitComplementUseCaseProvider = Provider<GetVisitComplementUseCase>(
+  (ref) => GetVisitComplementUseCaseImpl(ref.watch(visitRepositoryProvider)),
+);
+
+final saveVisitComplementUseCaseProvider = Provider<SaveVisitComplementUseCase>(
+  (ref) => SaveVisitComplementUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
