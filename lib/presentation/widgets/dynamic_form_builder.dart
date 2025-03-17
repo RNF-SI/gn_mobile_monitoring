@@ -355,7 +355,13 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
 
   Widget _buildTimeField(String fieldName, String label, bool required,
       {String? description}) {
-    _textControllers[fieldName] ??= TextEditingController();
+    // Initialiser le controller avec la valeur existante si disponible
+    if (_formValues.containsKey(fieldName) && _formValues[fieldName] != null) {
+      final timeValue = _formValues[fieldName].toString();
+      _textControllers[fieldName] = TextEditingController(text: timeValue);
+    } else {
+      _textControllers[fieldName] ??= TextEditingController();
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -393,9 +399,26 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
                     : null
                 : null,
             onTap: () async {
+              // Initialiser avec la valeur existante si disponible
+              TimeOfDay initialTime = TimeOfDay.now();
+              if (_textControllers[fieldName]!.text.isNotEmpty) {
+                try {
+                  final parts = _textControllers[fieldName]!.text.split(':');
+                  if (parts.length == 2) {
+                    final hour = int.tryParse(parts[0].trim());
+                    final minute = int.tryParse(parts[1].trim());
+                    if (hour != null && minute != null) {
+                      initialTime = TimeOfDay(hour: hour, minute: minute);
+                    }
+                  }
+                } catch (_) {
+                  // En cas d'erreur, utiliser l'heure actuelle
+                }
+              }
+              
               final time = await showTimePicker(
                 context: context,
-                initialTime: TimeOfDay.now(),
+                initialTime: initialTime,
               );
               if (time != null) {
                 setState(() {
