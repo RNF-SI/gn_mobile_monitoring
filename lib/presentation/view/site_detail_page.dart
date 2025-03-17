@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
@@ -143,10 +144,10 @@ class SiteDetailPage extends ConsumerWidget {
       child: SingleChildScrollView(
         child: Table(
           columnWidths: const {
-            0: FixedColumnWidth(80), // Action column
-            1: FlexColumnWidth(1), // Date column
-            2: FlexColumnWidth(1), // Observer column
-            3: FlexColumnWidth(2), // Comments column
+            0: FixedColumnWidth(120), // Action column
+            1: FlexColumnWidth(3), // Date column
+            2: FlexColumnWidth(1), // Observers count column
+            3: FlexColumnWidth(4), // Comments column
           },
           children: [
             const TableRow(
@@ -154,7 +155,7 @@ class SiteDetailPage extends ConsumerWidget {
                 Padding(
                   padding:
                       EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Text('Action',
+                  child: Text('Actions',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 Padding(
@@ -164,7 +165,7 @@ class SiteDetailPage extends ConsumerWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Observateur',
+                  child: Text('Obs.',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 Padding(
@@ -183,6 +184,7 @@ class SiteDetailPage extends ConsumerWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          // Bouton d'édition
                           IconButton(
                             icon: const Icon(Icons.edit, size: 20),
                             onPressed: () {
@@ -214,6 +216,30 @@ class SiteDetailPage extends ConsumerWidget {
                               minWidth: 36,
                               minHeight: 36,
                             ),
+                            tooltip: 'Modifier',
+                          ),
+                          // Bouton de visualisation
+                          IconButton(
+                            icon: const Icon(Icons.visibility, size: 20),
+                            onPressed: () {
+                              // Naviguer vers la page de détail de la visite
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => VisitDetailPage(
+                                    visit: visit,
+                                    site: site,
+                                    moduleInfo: moduleInfo,
+                                  ),
+                                ),
+                              );
+                            },
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(
+                              minWidth: 36,
+                              minHeight: 36,
+                            ),
+                            tooltip: 'Voir les détails',
                           ),
                         ],
                       ),
@@ -222,19 +248,32 @@ class SiteDetailPage extends ConsumerWidget {
                       height: 48,
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(formatDateString(visit.visitDateMin)),
+                      child: Text(
+                        visit.visitDateMax != null &&
+                                visit.visitDateMax != visit.visitDateMin
+                            ? '${formatDateString(visit.visitDateMin)} - ${formatDateString(visit.visitDateMax!)}'
+                            : formatDateString(visit.visitDateMin),
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    Container(
+                      height: 48,
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child:
+                          visit.observers != null && visit.observers!.isNotEmpty
+                              ? Text('${visit.observers!.length}')
+                              : const Text('0'),
                     ),
                     Container(
                       height: 48,
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(visit.idDigitiser?.toString() ?? ''),
-                    ),
-                    Container(
-                      height: 48,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(visit.comments ?? ''),
+                      child: Text(
+                        visit.comments ?? '',
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ],
                 )),
