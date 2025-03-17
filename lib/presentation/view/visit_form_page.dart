@@ -44,7 +44,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     if (_isEditMode && widget.visit != null) {
       // Initialiser avec les valeurs basiques de la visite
       _initialValues = _prepareInitialValues(widget.visit!);
-      
+
       // Charger les données complètes de la visite (avec les données JSON)
       _loadVisitWithFullDetails(widget.visit!.idBaseVisit).then((fullVisit) {
         if (mounted) {
@@ -66,8 +66,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   Future<void> _loadConnectedUser() async {
     try {
       // Récupérer le ViewModel
-      final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
-      
+      final viewModel = ref
+          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+
       // Récupérer l'ID de l'utilisateur via le ViewModel
       final userId = await viewModel.getCurrentUserId();
 
@@ -104,30 +105,82 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
     // Champs spécifiques (on suppose qu'ils sont dans visit.data)
     if (visit.data != null) {
+      // Afficher les données pour débogage
+      debugPrint('Données de visite: ${visit.data}');
+
       for (final entry in visit.data!.entries) {
-        values[entry.key] = entry.value;
+        // Retirer les guillemets des clés si nécessaire
+        String key = entry.key.replaceAll('"', '');
+
+        // Traiter la valeur en fonction de son type
+        dynamic value = entry.value;
+
+        // Convertir la valeur en chaîne pour traitement uniforme
+        String valueStr = value.toString();
+
+        // Supprimer les guillemets au début et à la fin si présents
+        if (valueStr.startsWith('"') && valueStr.endsWith('"')) {
+          valueStr = valueStr.substring(1, valueStr.length - 1);
+        }
+
+        // Pour les champs d'heure, s'assurer qu'ils sont au bon format
+        if (key.toLowerCase().contains('time') &&
+            !key.toLowerCase().contains('date')) {
+          // Nettoyer les valeurs d'heure (retirer les guillemets, etc.)
+          valueStr = valueStr.replaceAll('"', '').trim();
+
+          // Vérifier le format et corriger si nécessaire
+          if (valueStr.contains(':')) {
+            final parts = valueStr.split(':');
+            if (parts.length == 2) {
+              final hour = int.tryParse(parts[0].trim());
+              final minute = int.tryParse(parts[1].trim());
+              if (hour != null && minute != null) {
+                valueStr =
+                    '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+              }
+            }
+          }
+          value = valueStr;
+        }
+        // Pour les valeurs numériques
+        else if (num.tryParse(valueStr) != null) {
+          // Garder le type numérique
+          value = num.tryParse(valueStr);
+        }
+        // Pour les autres chaînes
+        else {
+          value = valueStr;
+        }
+
+        // Ajouter la paire clé-valeur au résultat
+        values[key] = value;
+
+        // Log pour débogage
+        debugPrint('Champ ajouté: $key = $value (type: ${value.runtimeType})');
       }
     }
 
     return values;
   }
-  
+
   /// Charge une visite avec tous ses détails depuis le repository
   Future<BaseVisit> _loadVisitWithFullDetails(int visitId) async {
     try {
       setState(() {
         _isLoading = true;
       });
-      
-      final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+
+      final viewModel = ref
+          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
       final visit = await viewModel.getVisitWithFullDetails(visitId);
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
-      
+
       return visit;
     } catch (e) {
       if (mounted) {
@@ -144,7 +197,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
       rethrow;
     }
   }
-
 
   // Suppression d'une visite avec confirmation
   Future<void> _deleteVisit() async {
@@ -174,8 +226,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer le ViewModel
-        final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
-        
+        final viewModel = ref
+            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+
         // Supprimer la visite via le ViewModel
         final success = await viewModel.deleteVisit(widget.visit!.idBaseVisit);
 
@@ -225,20 +278,21 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer le ViewModel
-        final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
-        
+        final viewModel = ref
+            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+
         // Récupérer le nom d'utilisateur pour l'affichage
         final userName = await viewModel.getCurrentUserName();
-        
+
         // Récupérer les valeurs brutes du formulaire
         final formValues = _formBuilderKey.currentState?.getFormValues() ?? {};
-        
+
         // Sauvegarder ou mettre à jour selon le mode
         if (_isEditMode && widget.visit != null) {
           // Mettre à jour la visite existante
           final success = await viewModel.updateVisitFromFormData(
-            formValues, 
-            widget.site, 
+            formValues,
+            widget.site,
             widget.visit!.idBaseVisit,
             moduleId: widget.moduleId,
           );
@@ -252,7 +306,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                  content: Text(
+                      'Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                 ),
               );
             } else {
@@ -267,7 +322,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         } else {
           // Créer une nouvelle visite
           final visitId = await viewModel.createVisitFromFormData(
-            formValues, 
+            formValues,
             widget.site,
             moduleId: widget.moduleId,
           );
@@ -281,23 +336,27 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               // Si enchaînement et création, réinitialiser le formulaire
               if (_chainInput) {
                 _formBuilderKey.currentState?.resetForm();
-                
+
                 // Réinitialiser avec l'utilisateur connecté comme observateur
                 final userId = await viewModel.getCurrentUserId();
                 setState(() {
-                  _initialValues = {'observers': userId != null ? [userId] : []};
+                  _initialValues = {
+                    'observers': userId != null ? [userId] : []
+                  };
                 });
-                
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Visite enregistrée${userName != null ? " avec $userName comme observateur" : ""}. Vous pouvez saisir la suivante.'),
+                    content: Text(
+                        'Visite enregistrée${userName != null ? " avec $userName comme observateur" : ""}. Vous pouvez saisir la suivante.'),
                   ),
                 );
               } else {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                    content: Text(
+                        'Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
                   ),
                 );
               }
