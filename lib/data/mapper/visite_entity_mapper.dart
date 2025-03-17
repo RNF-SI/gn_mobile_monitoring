@@ -3,8 +3,30 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 
+import 'package:flutter/foundation.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+
 extension VisiteEntityMapper on BaseVisitEntity {
   BaseVisit toDomain() {
+    // Normaliser les données (champs d'heure, etc.) avant de créer l'objet de domaine
+    Map<String, dynamic>? normalizedData;
+    
+    if (data != null) {
+      normalizedData = {};
+      // Traiter chaque entrée pour s'assurer qu'elle est dans le bon format
+      data!.forEach((key, value) {
+        // Pour les champs d'heure, normaliser le format
+        if (key.toLowerCase().contains('time') && 
+            !key.toLowerCase().contains('date') &&
+            value is String) {
+          normalizedData![key] = normalizeTimeFormat(value);
+          debugPrint('Normalisé champ d\'heure: $key = ${normalizedData![key]}');
+        } else {
+          normalizedData![key] = value;
+        }
+      });
+    }
+    
     return BaseVisit(
       idBaseVisit: idBaseVisit,
       idBaseSite: idBaseSite,
@@ -20,7 +42,7 @@ extension VisiteEntityMapper on BaseVisitEntity {
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       observers: observers,
-      data: data,
+      data: normalizedData,
     );
   }
 
