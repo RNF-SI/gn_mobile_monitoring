@@ -222,7 +222,7 @@ class SiteDetailPage extends ConsumerWidget {
                       height: 48,
                       alignment: Alignment.centerLeft,
                       padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(formatDate(visit.visitDateMin)),
+                      child: Text(formatDateString(visit.visitDateMin)),
                     ),
                     Container(
                       height: 48,
