@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
@@ -12,6 +15,30 @@ class MockGetVisitsBySiteIdUseCase implements GetVisitsBySiteIdUseCase {
   Future<List<BaseVisit>> execute(int siteId) async {
     // Return empty list for testing
     return [];
+  }
+}
+
+class MockCreateVisitUseCase implements CreateVisitUseCase {
+  @override
+  Future<int> execute(BaseVisit visit) async {
+    // Return a dummy ID for testing
+    return 1;
+  }
+}
+
+class MockUpdateVisitUseCase implements UpdateVisitUseCase {
+  @override
+  Future<bool> execute(BaseVisit visit) async {
+    // Return success for testing
+    return true;
+  }
+}
+
+class MockDeleteVisitUseCase implements DeleteVisitUseCase {
+  @override
+  Future<bool> execute(int visitId) async {
+    // Return success for testing
+    return true;
   }
 }
 
@@ -29,10 +56,19 @@ void main() {
 
   testWidgets('SiteDetailPage displays site properties correctly',
       (WidgetTester tester) async {
-    final mockUseCase = MockGetVisitsBySiteIdUseCase();
-    
+    final mockGetVisitsBySiteIdUseCase = MockGetVisitsBySiteIdUseCase();
+    final mockCreateVisitUseCase = MockCreateVisitUseCase();
+    final mockUpdateVisitUseCase = MockUpdateVisitUseCase();
+    final mockDeleteVisitUseCase = MockDeleteVisitUseCase();
+
     // Pre-create a ViewModel with data already loaded
-    final preloadedViewModel = SiteVisitsViewModel(mockUseCase, testSite.idBaseSite);
+    final preloadedViewModel = SiteVisitsViewModel(
+      mockGetVisitsBySiteIdUseCase,
+      mockCreateVisitUseCase,
+      mockUpdateVisitUseCase,
+      mockDeleteVisitUseCase,
+      testSite.idBaseSite,
+    );
     preloadedViewModel.state = const AsyncValue.data([]);
 
     await tester.pumpWidget(ProviderScope(
@@ -55,19 +91,19 @@ void main() {
     expect(find.text('TST1'), findsOneWidget);
     expect(find.text('Test site description'), findsOneWidget);
     expect(find.text('100-200m'), findsOneWidget);
-    
+
     // Verify property labels are displayed
     expect(find.text('Nom'), findsOneWidget);
     expect(find.text('Code'), findsOneWidget);
     expect(find.text('Description'), findsOneWidget);
     expect(find.text('Altitude'), findsOneWidget);
     expect(find.text('Propriétés'), findsOneWidget);
-    
+
     // Verify visits section is displayed
     expect(find.text('Visites'), findsOneWidget);
     expect(find.byIcon(Icons.add), findsOneWidget);
     expect(find.text('Ajouter une visite'), findsOneWidget);
-    
+
     // Verify empty visits message is displayed (since mock returns empty list)
     expect(find.text('Aucune visite pour ce site'), findsOneWidget);
   });
