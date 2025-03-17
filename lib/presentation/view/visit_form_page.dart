@@ -42,7 +42,19 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
     // En mode édition, préparer les valeurs initiales depuis la visite existante
     if (_isEditMode && widget.visit != null) {
+      // Initialiser avec les valeurs basiques de la visite
       _initialValues = _prepareInitialValues(widget.visit!);
+      
+      // Charger les données complètes de la visite (avec les données JSON)
+      _loadVisitWithFullDetails(widget.visit!.idBaseVisit).then((fullVisit) {
+        if (mounted) {
+          setState(() {
+            _initialValues = _prepareInitialValues(fullVisit);
+          });
+        }
+      }).catchError((e) {
+        debugPrint('Erreur lors du chargement des détails de la visite: $e');
+      });
     } else {
       // En mode création, initialiser vide et charger l'utilisateur connecté comme observateur
       _initialValues = {};
@@ -98,6 +110,39 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     }
 
     return values;
+  }
+  
+  /// Charge une visite avec tous ses détails depuis le repository
+  Future<BaseVisit> _loadVisitWithFullDetails(int visitId) async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+      
+      final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      final visit = await viewModel.getVisitWithFullDetails(visitId);
+      
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      
+      return visit;
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur de chargement des données: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      rethrow;
+    }
   }
 
 
