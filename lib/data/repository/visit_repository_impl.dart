@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/base_visit_mapper.dart';
@@ -124,7 +125,7 @@ class VisitRepositoryImpl implements VisitRepository {
     final observers = await getVisitObservers(id);
     final observerIds = observers.map((o) => o.idRole).toList();
 
-    // Récupérer les données complémentaires en utilisant le mapper approprié
+    // Récupérer les données complémentaires en utilisant le mapper
     final complementDb = await _visitesDatabase.getVisitComplementById(id);
     Map<String, dynamic>? dataMap;
 
@@ -188,8 +189,30 @@ class VisitRepositoryImpl implements VisitRepository {
       metaCreateDate: baseEntity.metaCreateDate,
       metaUpdateDate: baseEntity.metaUpdateDate,
       observers: observerIds,
-      data: dataMap,
+      data: _processTimeFieldsInDataMap(dataMap),
     );
+  }
+
+  /// Traite les champs d'heure dans la carte de données
+  Map<String, dynamic>? _processTimeFieldsInDataMap(Map<String, dynamic>? dataMap) {
+    if (dataMap == null) return null;
+    
+    // Créer une nouvelle carte pour stocker les données traitées
+    final processedMap = <String, dynamic>{};
+    
+    // Parcourir toutes les entrées
+    dataMap.forEach((key, value) {
+      // Si la clé contient "time" et la valeur est une chaîne, normaliser
+      if (key.toLowerCase().contains('time') && 
+          !key.toLowerCase().contains('date') &&
+          value is String) {
+        processedMap[key] = normalizeTimeFormat(value);
+      } else {
+        processedMap[key] = value;
+      }
+    });
+    
+    return processedMap;
   }
 
   /// Parse une chaîne de caractères contenant des paires clé-valeur au format "cle: valeur"
@@ -212,7 +235,7 @@ class VisitRepositoryImpl implements VisitRepository {
 
         if (key != null && rawValue != null) {
           // Essayer de convertir la valeur en type approprié
-          final value = _convertStringToTypedValue(rawValue);
+          final value = _convertStringToTypedValue(rawValue, keyName: key);
           result[key] = value;
         }
       }
@@ -229,7 +252,7 @@ class VisitRepositoryImpl implements VisitRepository {
           final key = keyValue[0].trim();
           // Joindre le reste au cas où il y aurait des deux-points dans la valeur
           final rawValue = keyValue.sublist(1).join(':').trim();
-          final value = _convertStringToTypedValue(rawValue);
+          final value = _convertStringToTypedValue(rawValue, keyName: key);
           result[key] = value;
         }
       }
@@ -239,12 +262,19 @@ class VisitRepositoryImpl implements VisitRepository {
   }
 
   /// Tente de convertir une chaîne en valeur typée (int, double, bool, etc.)
-  dynamic _convertStringToTypedValue(String rawValue) {
+  dynamic _convertStringToTypedValue(String rawValue, {String? keyName}) {
     // Suppression des guillemets si présents
     String cleanValue = rawValue.trim();
     if ((cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
         (cleanValue.startsWith("'") && cleanValue.endsWith("'"))) {
       cleanValue = cleanValue.substring(1, cleanValue.length - 1);
+    }
+
+    // Si le nom de clé contient "time" et n'est pas une date, c'est probablement une heure
+    if (keyName != null && 
+        keyName.toLowerCase().contains('time') && 
+        !keyName.toLowerCase().contains('date')) {
+      return normalizeTimeFormat(cleanValue);
     }
 
     // Tentative de conversion en nombre
@@ -285,7 +315,7 @@ class VisitRepositoryImpl implements VisitRepository {
           final value = match.group(2);
 
           if (key != null && value != null) {
-            result[key] = _convertStringToTypedValue(value);
+            result[key] = _convertStringToTypedValue(value, keyName: key);
           }
         }
       }
@@ -302,7 +332,7 @@ class VisitRepositoryImpl implements VisitRepository {
             if (keyValue.length >= 2) {
               final key = keyValue[0].trim();
               final value = keyValue[1].trim();
-              result[key] = _convertStringToTypedValue(value);
+              result[key] = _convertStringToTypedValue(value, keyName: key);
             }
           }
         }
@@ -352,15 +382,19 @@ class VisitRepositoryImpl implements VisitRepository {
     // 3. Si des données complémentaires sont fournies, les enregistrer
     if (visit.data != null && visit.data!.isNotEmpty) {
       try {
+        // Pré-traiter les données pour normaliser les heures
+        final processedData = _processTimeFieldsInDataMap(visit.data);
+        
         // Encoder les données en JSON
-        final jsonData = jsonEncode(visit.data);
+        final jsonData = jsonEncode(processedData);
         await saveVisitComplementData(visitId, jsonData);
       } catch (e) {
         debugPrint('Erreur lors de l\'encodage des données en JSON: $e');
         // Tenter une approche alternative en cas d'échec
         try {
           // Convertir manuellement en chaîne JSON simple
-          final jsonData = _mapToSimpleJsonString(visit.data!);
+          final processedData = _processTimeFieldsInDataMap(visit.data);
+          final jsonData = _mapToSimpleJsonString(processedData!);
           await saveVisitComplementData(visitId, jsonData);
         } catch (e2) {
           debugPrint('Échec de la seconde tentative d\'encodage JSON: $e2');
@@ -398,8 +432,11 @@ class VisitRepositoryImpl implements VisitRepository {
           await deleteVisitComplementData(visit.idBaseVisit);
         } else {
           try {
+            // Pré-traiter les données pour normaliser les heures
+            final processedData = _processTimeFieldsInDataMap(visit.data);
+            
             // Encoder les données en JSON
-            final jsonData = jsonEncode(visit.data);
+            final jsonData = jsonEncode(processedData);
             await saveVisitComplementData(visit.idBaseVisit, jsonData);
           } catch (e) {
             debugPrint(
@@ -407,7 +444,8 @@ class VisitRepositoryImpl implements VisitRepository {
             // Tenter une approche alternative en cas d'échec
             try {
               // Convertir manuellement en chaîne JSON simple
-              final jsonData = _mapToSimpleJsonString(visit.data!);
+              final processedData = _processTimeFieldsInDataMap(visit.data);
+              final jsonData = _mapToSimpleJsonString(processedData!);
               await saveVisitComplementData(visit.idBaseVisit, jsonData);
             } catch (e2) {
               debugPrint(
@@ -444,9 +482,16 @@ class VisitRepositoryImpl implements VisitRepository {
       } else if (value is num || value is bool) {
         buffer.write(value.toString());
       } else if (value is String) {
-        // Échapper les guillemets dans la valeur si nécessaire
-        final escapedValue = value.replaceAll('"', '\\"');
-        buffer.write('"$escapedValue"');
+        // Si c'est un champ d'heure, normaliser
+        if (key.toLowerCase().contains('time') && 
+            !key.toLowerCase().contains('date')) {
+          final normalizedTime = normalizeTimeFormat(value);
+          buffer.write('"$normalizedTime"');
+        } else {
+          // Échapper les guillemets dans la valeur si nécessaire
+          final escapedValue = value.replaceAll('"', '\\"');
+          buffer.write('"$escapedValue"');
+        }
       } else if (value is List) {
         buffer.write('[');
         var firstItem = true;
