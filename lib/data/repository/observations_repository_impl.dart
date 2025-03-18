@@ -11,20 +11,29 @@ class ObservationsRepositoryImpl implements ObservationsRepository {
 
   @override
   Future<List<Observation>> getObservationsByVisitId(int visitId) async {
-    final entities = await _observationsDatabase.getObservationsByVisitId(visitId);
+    final entities =
+        await _observationsDatabase.getObservationsByVisitId(visitId);
     return entities.map((entity) => entity.toDomain()).toList();
   }
 
   @override
   Future<Observation?> getObservationById(int observationId) async {
-    final entity = await _observationsDatabase.getObservationById(observationId);
+    final entity =
+        await _observationsDatabase.getObservationById(observationId);
     return entity?.toDomain();
   }
 
   @override
-  Future<int> saveObservation(Observation observation) async {
+  Future<int> createObservation(Observation observation) async {
     final entity = observation.toEntity();
     return _observationsDatabase.saveObservation(entity);
+  }
+
+  @override
+  Future<bool> updateObservation(Observation observation) async {
+    final entity = observation.toEntity();
+    final result = await _observationsDatabase.saveObservation(entity);
+    return result > 0;
   }
 
   @override
