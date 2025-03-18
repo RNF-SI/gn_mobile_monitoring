@@ -53,7 +53,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
           });
         }
       }).catchError((e) {
-        debugPrint('Erreur lors du chargement des détails de la visite: $e');
+        // Erreur silencieuse
       });
     } else {
       // En mode création, initialiser vide et charger l'utilisateur connecté comme observateur
@@ -80,7 +80,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         });
       }
     } catch (e) {
-      debugPrint('Erreur lors du chargement de l\'utilisateur connecté: $e');
       // En cas d'erreur, on laisse les valeurs initiales vides
     }
   }
@@ -105,8 +104,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
     // Champs spécifiques (on suppose qu'ils sont dans visit.data)
     if (visit.data != null) {
-      // Afficher les données pour débogage
-      debugPrint('Données de visite: ${visit.data}');
 
       for (final entry in visit.data!.entries) {
         // Retirer les guillemets des clés si nécessaire
@@ -156,8 +153,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         // Ajouter la paire clé-valeur au résultat
         values[key] = value;
 
-        // Log pour débogage
-        debugPrint('Champ ajouté: $key = $value (type: ${value.runtimeType})');
       }
     }
 
