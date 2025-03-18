@@ -5387,30 +5387,23 @@ class $TObservationComplementsTable extends TObservationComplements
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
   $TObservationComplementsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idObservationComplementMeta =
-      const VerificationMeta('idObservationComplement');
-  @override
-  late final GeneratedColumn<int> idObservationComplement =
-      GeneratedColumn<int>('id_observation_complement', aliasedName, false,
-          hasAutoIncrement: true,
-          type: DriftSqlType.int,
-          requiredDuringInsert: false,
-          defaultConstraints:
-              GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _idObservationMeta =
       const VerificationMeta('idObservation');
   @override
   late final GeneratedColumn<int> idObservation = GeneratedColumn<int>(
-      'id_observation', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
+      'id_observation', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
   static const VerificationMeta _dataMeta = const VerificationMeta('data');
   @override
   late final GeneratedColumn<String> data = GeneratedColumn<String>(
       'data', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
   @override
-  List<GeneratedColumn> get $columns =>
-      [idObservationComplement, idObservation, data];
+  List<GeneratedColumn> get $columns => [idObservation, data];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5422,13 +5415,6 @@ class $TObservationComplementsTable extends TObservationComplements
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
-    if (data.containsKey('id_observation_complement')) {
-      context.handle(
-          _idObservationComplementMeta,
-          idObservationComplement.isAcceptableOrUnknown(
-              data['id_observation_complement']!,
-              _idObservationComplementMeta));
-    }
     if (data.containsKey('id_observation')) {
       context.handle(
           _idObservationMeta,
@@ -5443,16 +5429,13 @@ class $TObservationComplementsTable extends TObservationComplements
   }
 
   @override
-  Set<GeneratedColumn> get $primaryKey => {idObservationComplement};
+  Set<GeneratedColumn> get $primaryKey => {idObservation};
   @override
   TObservationComplement map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
     return TObservationComplement(
-      idObservationComplement: attachedDatabase.typeMapping.read(
-          DriftSqlType.int,
-          data['${effectivePrefix}id_observation_complement'])!,
       idObservation: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}id_observation']),
+          .read(DriftSqlType.int, data['${effectivePrefix}id_observation'])!,
       data: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}data']),
     );
@@ -5466,18 +5449,13 @@ class $TObservationComplementsTable extends TObservationComplements
 
 class TObservationComplement extends DataClass
     implements Insertable<TObservationComplement> {
-  final int idObservationComplement;
-  final int? idObservation;
+  final int idObservation;
   final String? data;
-  const TObservationComplement(
-      {required this.idObservationComplement, this.idObservation, this.data});
+  const TObservationComplement({required this.idObservation, this.data});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    map['id_observation_complement'] = Variable<int>(idObservationComplement);
-    if (!nullToAbsent || idObservation != null) {
-      map['id_observation'] = Variable<int>(idObservation);
-    }
+    map['id_observation'] = Variable<int>(idObservation);
     if (!nullToAbsent || data != null) {
       map['data'] = Variable<String>(data);
     }
@@ -5486,10 +5464,7 @@ class TObservationComplement extends DataClass
 
   TObservationComplementsCompanion toCompanion(bool nullToAbsent) {
     return TObservationComplementsCompanion(
-      idObservationComplement: Value(idObservationComplement),
-      idObservation: idObservation == null && nullToAbsent
-          ? const Value.absent()
-          : Value(idObservation),
+      idObservation: Value(idObservation),
       data: data == null && nullToAbsent ? const Value.absent() : Value(data),
     );
   }
@@ -5498,9 +5473,7 @@ class TObservationComplement extends DataClass
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return TObservationComplement(
-      idObservationComplement:
-          serializer.fromJson<int>(json['idObservationComplement']),
-      idObservation: serializer.fromJson<int?>(json['idObservation']),
+      idObservation: serializer.fromJson<int>(json['idObservation']),
       data: serializer.fromJson<String?>(json['data']),
     );
   }
@@ -5508,30 +5481,20 @@ class TObservationComplement extends DataClass
   Map<String, dynamic> toJson({ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
-      'idObservationComplement':
-          serializer.toJson<int>(idObservationComplement),
-      'idObservation': serializer.toJson<int?>(idObservation),
+      'idObservation': serializer.toJson<int>(idObservation),
       'data': serializer.toJson<String?>(data),
     };
   }
 
   TObservationComplement copyWith(
-          {int? idObservationComplement,
-          Value<int?> idObservation = const Value.absent(),
-          Value<String?> data = const Value.absent()}) =>
+          {int? idObservation, Value<String?> data = const Value.absent()}) =>
       TObservationComplement(
-        idObservationComplement:
-            idObservationComplement ?? this.idObservationComplement,
-        idObservation:
-            idObservation.present ? idObservation.value : this.idObservation,
+        idObservation: idObservation ?? this.idObservation,
         data: data.present ? data.value : this.data,
       );
   TObservationComplement copyWithCompanion(
       TObservationComplementsCompanion data) {
     return TObservationComplement(
-      idObservationComplement: data.idObservationComplement.present
-          ? data.idObservationComplement.value
-          : this.idObservationComplement,
       idObservation: data.idObservation.present
           ? data.idObservation.value
           : this.idObservation,
@@ -5542,7 +5505,6 @@ class TObservationComplement extends DataClass
   @override
   String toString() {
     return (StringBuffer('TObservationComplement(')
-          ..write('idObservationComplement: $idObservationComplement, ')
           ..write('idObservation: $idObservation, ')
           ..write('data: $data')
           ..write(')'))
@@ -5550,51 +5512,40 @@ class TObservationComplement extends DataClass
   }
 
   @override
-  int get hashCode => Object.hash(idObservationComplement, idObservation, data);
+  int get hashCode => Object.hash(idObservation, data);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TObservationComplement &&
-          other.idObservationComplement == this.idObservationComplement &&
           other.idObservation == this.idObservation &&
           other.data == this.data);
 }
 
 class TObservationComplementsCompanion
     extends UpdateCompanion<TObservationComplement> {
-  final Value<int> idObservationComplement;
-  final Value<int?> idObservation;
+  final Value<int> idObservation;
   final Value<String?> data;
   const TObservationComplementsCompanion({
-    this.idObservationComplement = const Value.absent(),
     this.idObservation = const Value.absent(),
     this.data = const Value.absent(),
   });
   TObservationComplementsCompanion.insert({
-    this.idObservationComplement = const Value.absent(),
     this.idObservation = const Value.absent(),
     this.data = const Value.absent(),
   });
   static Insertable<TObservationComplement> custom({
-    Expression<int>? idObservationComplement,
     Expression<int>? idObservation,
     Expression<String>? data,
   }) {
     return RawValuesInsertable({
-      if (idObservationComplement != null)
-        'id_observation_complement': idObservationComplement,
       if (idObservation != null) 'id_observation': idObservation,
       if (data != null) 'data': data,
     });
   }
 
   TObservationComplementsCompanion copyWith(
-      {Value<int>? idObservationComplement,
-      Value<int?>? idObservation,
-      Value<String?>? data}) {
+      {Value<int>? idObservation, Value<String?>? data}) {
     return TObservationComplementsCompanion(
-      idObservationComplement:
-          idObservationComplement ?? this.idObservationComplement,
       idObservation: idObservation ?? this.idObservation,
       data: data ?? this.data,
     );
@@ -5603,10 +5554,6 @@ class TObservationComplementsCompanion
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
-    if (idObservationComplement.present) {
-      map['id_observation_complement'] =
-          Variable<int>(idObservationComplement.value);
-    }
     if (idObservation.present) {
       map['id_observation'] = Variable<int>(idObservation.value);
     }
@@ -5619,7 +5566,6 @@ class TObservationComplementsCompanion
   @override
   String toString() {
     return (StringBuffer('TObservationComplementsCompanion(')
-          ..write('idObservationComplement: $idObservationComplement, ')
           ..write('idObservation: $idObservation, ')
           ..write('data: $data')
           ..write(')'))
@@ -11554,14 +11500,12 @@ typedef $$TObservationsTableProcessedTableManager = ProcessedTableManager<
     PrefetchHooks Function()>;
 typedef $$TObservationComplementsTableCreateCompanionBuilder
     = TObservationComplementsCompanion Function({
-  Value<int> idObservationComplement,
-  Value<int?> idObservation,
+  Value<int> idObservation,
   Value<String?> data,
 });
 typedef $$TObservationComplementsTableUpdateCompanionBuilder
     = TObservationComplementsCompanion Function({
-  Value<int> idObservationComplement,
-  Value<int?> idObservation,
+  Value<int> idObservation,
   Value<String?> data,
 });
 
@@ -11574,10 +11518,6 @@ class $$TObservationComplementsTableFilterComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnFilters<int> get idObservationComplement => $composableBuilder(
-      column: $table.idObservationComplement,
-      builder: (column) => ColumnFilters(column));
-
   ColumnFilters<int> get idObservation => $composableBuilder(
       column: $table.idObservation, builder: (column) => ColumnFilters(column));
 
@@ -11594,10 +11534,6 @@ class $$TObservationComplementsTableOrderingComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  ColumnOrderings<int> get idObservationComplement => $composableBuilder(
-      column: $table.idObservationComplement,
-      builder: (column) => ColumnOrderings(column));
-
   ColumnOrderings<int> get idObservation => $composableBuilder(
       column: $table.idObservation,
       builder: (column) => ColumnOrderings(column));
@@ -11615,9 +11551,6 @@ class $$TObservationComplementsTableAnnotationComposer
     super.$addJoinBuilderToRootComposer,
     super.$removeJoinBuilderFromRootComposer,
   });
-  GeneratedColumn<int> get idObservationComplement => $composableBuilder(
-      column: $table.idObservationComplement, builder: (column) => column);
-
   GeneratedColumn<int> get idObservation => $composableBuilder(
       column: $table.idObservation, builder: (column) => column);
 
@@ -11656,22 +11589,18 @@ class $$TObservationComplementsTableTableManager extends RootTableManager<
               $$TObservationComplementsTableAnnotationComposer(
                   $db: db, $table: table),
           updateCompanionCallback: ({
-            Value<int> idObservationComplement = const Value.absent(),
-            Value<int?> idObservation = const Value.absent(),
+            Value<int> idObservation = const Value.absent(),
             Value<String?> data = const Value.absent(),
           }) =>
               TObservationComplementsCompanion(
-            idObservationComplement: idObservationComplement,
             idObservation: idObservation,
             data: data,
           ),
           createCompanionCallback: ({
-            Value<int> idObservationComplement = const Value.absent(),
-            Value<int?> idObservation = const Value.absent(),
+            Value<int> idObservation = const Value.absent(),
             Value<String?> data = const Value.absent(),
           }) =>
               TObservationComplementsCompanion.insert(
-            idObservationComplement: idObservationComplement,
             idObservation: idObservation,
             data: data,
           ),
