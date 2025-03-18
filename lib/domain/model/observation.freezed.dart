@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-Observation _$ObservationFromJson(Map<String, dynamic> json) {
-  return _Observation.fromJson(json);
-}
-
 /// @nodoc
 mixin _$Observation {
   int get idObservation => throw _privateConstructorUsedError;
@@ -28,9 +24,6 @@ mixin _$Observation {
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
-
-  /// Serializes this Observation to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Observation
   /// with the given fields replaced by the non-null parameter values.
@@ -196,7 +189,7 @@ class __$$ObservationImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$ObservationImpl implements _Observation {
   const _$ObservationImpl(
       {required this.idObservation,
@@ -208,9 +201,6 @@ class _$ObservationImpl implements _Observation {
       this.metaUpdateDate,
       final Map<String, dynamic>? data})
       : _data = data;
-
-  factory _$ObservationImpl.fromJson(Map<String, dynamic> json) =>
-      _$$ObservationImplFromJson(json);
 
   @override
   final int idObservation;
@@ -262,7 +252,6 @@ class _$ObservationImpl implements _Observation {
             const DeepCollectionEquality().equals(other._data, _data));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -282,13 +271,6 @@ class _$ObservationImpl implements _Observation {
   @pragma('vm:prefer-inline')
   _$$ObservationImplCopyWith<_$ObservationImpl> get copyWith =>
       __$$ObservationImplCopyWithImpl<_$ObservationImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$ObservationImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _Observation implements Observation {
@@ -301,9 +283,6 @@ abstract class _Observation implements Observation {
       final String? metaCreateDate,
       final String? metaUpdateDate,
       final Map<String, dynamic>? data}) = _$ObservationImpl;
-
-  factory _Observation.fromJson(Map<String, dynamic> json) =
-      _$ObservationImpl.fromJson;
 
   @override
   int get idObservation;

@@ -14,7 +14,4 @@ class Observation with _$Observation {
     String? metaUpdateDate,
     Map<String, dynamic>? data, // Données complémentaires
   }) = _Observation;
-
-  factory Observation.fromJson(Map<String, dynamic> json) =>
-      _$ObservationFromJson(json);
 }
