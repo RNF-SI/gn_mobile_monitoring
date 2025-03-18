@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
@@ -81,6 +82,7 @@ part 'database.g.dart';
   SitesDao,
   TDatasetsDao,
   VisitesDao,
+  ObservationDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
