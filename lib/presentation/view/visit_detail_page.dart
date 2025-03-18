@@ -28,6 +28,21 @@ class VisitDetailPage extends ConsumerStatefulWidget {
 }
 
 class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
+  // Utiliser un FutureProvider unique à cette instance pour éviter la reconstruction à chaque build
+  late final AutoDisposeFutureProvider<BaseVisit> _visitDetailsProvider;
+  
+  @override
+  void initState() {
+    super.initState();
+    
+    // Définir un provider pour cette instance spécifique
+    _visitDetailsProvider = FutureProvider.autoDispose<BaseVisit>((ref) async {
+      // L'appel est maintenant contrôlé et ne sera exécuté qu'une seule fois par le FutureProvider
+      final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
+    });
+  }
+  
   @override
   Widget build(BuildContext context) {
     // Récupérer la configuration des visites depuis le module
@@ -38,14 +53,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
     final ObjectConfig? observationConfig =
         widget.moduleInfo?.module.complement?.configuration?.observation;
 
-    // Charger la visite avec tous les détails
-    final visitWithDetailsState = ref.watch(
-      FutureProvider((ref) async {
-        final viewModel =
-            ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
-        return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
-      }),
-    );
+    // Utiliser le provider défini dans initState qui est maintenant stable
+    final visitWithDetailsState = ref.watch(_visitDetailsProvider);
 
     return Scaffold(
       appBar: AppBar(
