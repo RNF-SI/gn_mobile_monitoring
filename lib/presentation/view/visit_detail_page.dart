@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
@@ -560,190 +561,77 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   
   // Méthodes pour gérer les observations
   
-  // Afficher le dialogue d'ajout d'observation
+  // Afficher le formulaire d'ajout d'observation
   void _showAddObservationDialog(int visitId, ObjectConfig? observationConfig) {
-    final formData = <String, dynamic>{};
+    if (observationConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Configuration des observations non disponible')),
+      );
+      return;
+    }
     
-    // Créer les contrôleurs pour les champs de base
-    final commentController = TextEditingController();
-    final taxonController = TextEditingController();
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Ajouter une observation'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Champ pour le taxon (cd_nom)
-              TextField(
-                controller: taxonController,
-                decoration: const InputDecoration(
-                  labelText: 'Taxon (CD_NOM)',
-                  hintText: 'Entrez le code du taxon',
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  if (value.isNotEmpty && int.tryParse(value) != null) {
-                    formData['cd_nom'] = int.parse(value);
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              // Champ pour les commentaires
-              TextField(
-                controller: commentController,
-                decoration: const InputDecoration(
-                  labelText: 'Commentaires',
-                  hintText: 'Entrez un commentaire',
-                ),
-                maxLines: 3,
-                onChanged: (value) {
-                  formData['comments'] = value;
-                },
-              ),
-              
-              // Ajouter d'autres champs selon la configuration
-              if (observationConfig != null) ...[
-                const SizedBox(height: 16),
-                const Text('Champs supplémentaires', 
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                // Ici vous pouvez générer des champs dynamiques selon observationConfig
-                // Comme exemple simple, ajoutons un champ générique:
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Abondance',
-                    hintText: 'Valeur numérique',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    if (value.isNotEmpty && int.tryParse(value) != null) {
-                      formData['id_nomenclature_abondance'] = int.parse(value);
-                    }
-                  },
-                ),
-              ],
-            ],
-          ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationFormPage(
+          visitId: visitId,
+          observationConfig: observationConfig,
+          customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+          moduleId: widget.moduleInfo?.module.id,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _createObservation(formData, visitId);
-            },
-            child: const Text('Enregistrer'),
-          ),
-        ],
       ),
-    );
+    ).then((_) {
+      // Actualiser la page quand on revient du formulaire
+      setState(() {});
+    });
   }
   
-  // Afficher le dialogue d'édition d'observation
+  // Afficher le formulaire d'édition d'observation
   void _showEditObservationDialog(
     int observationId, 
     int visitId,
     Map<String, dynamic> observationData,
     ObjectConfig? observationConfig
   ) {
-    final formData = Map<String, dynamic>.from(observationData);
+    if (observationConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Configuration des observations non disponible')),
+      );
+      return;
+    }
     
-    // Créer les contrôleurs pour les champs de base avec les valeurs existantes
-    final commentController = TextEditingController(
-      text: observationData['comments']?.toString() ?? '',
-    );
-    final taxonController = TextEditingController(
-      text: observationData['cd_nom']?.toString() ?? '',
-    );
-    
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Modifier l\'observation'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Champ pour le taxon (cd_nom)
-              TextField(
-                controller: taxonController,
-                decoration: const InputDecoration(
-                  labelText: 'Taxon (CD_NOM)',
-                  hintText: 'Entrez le code du taxon',
-                ),
-                keyboardType: TextInputType.number,
-                onChanged: (value) {
-                  if (value.isNotEmpty && int.tryParse(value) != null) {
-                    formData['cd_nom'] = int.parse(value);
-                  } else {
-                    formData['cd_nom'] = null;
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              // Champ pour les commentaires
-              TextField(
-                controller: commentController,
-                decoration: const InputDecoration(
-                  labelText: 'Commentaires',
-                  hintText: 'Entrez un commentaire',
-                ),
-                maxLines: 3,
-                onChanged: (value) {
-                  formData['comments'] = value;
-                },
-              ),
-              
-              // Ajouter d'autres champs selon la configuration et les données existantes
-              if (observationConfig != null) ...[
-                const SizedBox(height: 16),
-                const Text('Champs supplémentaires', 
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                // Ici vous pouvez générer des champs dynamiques selon observationConfig
-                // Pour cet exemple, nous ajoutons juste un champ d'abondance
-                TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Abondance',
-                    hintText: 'Valeur numérique',
-                  ),
-                  controller: TextEditingController(
-                    text: observationData['id_nomenclature_abondance']?.toString() ?? '',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onChanged: (value) {
-                    if (value.isNotEmpty && int.tryParse(value) != null) {
-                      formData['id_nomenclature_abondance'] = int.parse(value);
-                    } else {
-                      formData['id_nomenclature_abondance'] = null;
-                    }
-                  },
-                ),
-              ],
-            ],
+    // Récupérer l'observation complète
+    ref.read(observationsProvider(visitId).notifier)
+      .getObservationsByVisitId()
+      .then((observations) {
+        // Trouver l'observation correspondante
+        final observation = observations.firstWhere(
+          (o) => o.idObservation == observationId,
+          orElse: () => throw Exception('Observation not found'),
+        );
+        
+        // Naviguer vers la page d'édition
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ObservationFormPage(
+              visitId: visitId,
+              observationConfig: observationConfig,
+              customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+              moduleId: widget.moduleInfo?.module.id,
+              observation: observation,
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              _updateObservation(formData, observationId, visitId);
-            },
-            child: const Text('Enregistrer'),
-          ),
-        ],
-      ),
-    );
+        ).then((_) {
+          // Actualiser la page quand on revient du formulaire
+          setState(() {});
+        });
+      })
+      .catchError((error) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du chargement de l\'observation: $error')),
+        );
+      });
   }
   
   // Créer une nouvelle observation
