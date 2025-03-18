@@ -216,3 +216,20 @@ final getVisitComplementUseCaseProvider = Provider<GetVisitComplementUseCase>(
 final saveVisitComplementUseCaseProvider = Provider<SaveVisitComplementUseCase>(
   (ref) => SaveVisitComplementUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
+
+// Observations use cases
+final getObservationsByVisitIdUseCaseProvider = Provider<GetObservationsByVisitIdUseCase>(
+  (ref) => GetObservationsByVisitIdUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+final createObservationUseCaseProvider = Provider<CreateObservationUseCase>(
+  (ref) => CreateObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+final updateObservationUseCaseProvider = Provider<UpdateObservationUseCase>(
+  (ref) => UpdateObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+final deleteObservationUseCaseProvider = Provider<DeleteObservationUseCase>(
+  (ref) => DeleteObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
