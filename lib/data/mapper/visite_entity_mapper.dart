@@ -20,7 +20,6 @@ extension VisiteEntityMapper on BaseVisitEntity {
             !key.toLowerCase().contains('date') &&
             value is String) {
           normalizedData![key] = normalizeTimeFormat(value);
-          debugPrint('Normalisé champ d\'heure: $key = ${normalizedData![key]}');
         } else {
           normalizedData![key] = value;
         }
