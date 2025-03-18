@@ -1,10 +1,8 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/base_visit_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/cor_visit_observer_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_visit_complement_mapper.dart';
@@ -134,7 +132,7 @@ class VisitRepositoryImpl implements VisitRepository {
         complementDb.data!.isNotEmpty) {
       // Convertir en entité en utilisant le mapper
       final complementEntity = TVisitComplementMapper.toEntity(complementDb);
-      
+
       try {
         // Approche structurée avec le mapper
         final data = complementEntity.data!;
@@ -147,8 +145,8 @@ class VisitRepositoryImpl implements VisitRepository {
           // Décomposer en paires clé-valeur
           dataMap = _parseKeyValuePairs(content);
 
-          debugPrint(
-              'Données extraites avec succès: ${dataMap.length} entrées');
+          // debugPrint(
+          //     'Données extraites avec succès: ${dataMap.length} entrées');
         } else {
           // Si ce n'est pas au format dictionnaire, essayer d'autres approches
           debugPrint('Format non reconnu, tentative de décodage JSON standard');
@@ -194,16 +192,17 @@ class VisitRepositoryImpl implements VisitRepository {
   }
 
   /// Traite les champs d'heure dans la carte de données
-  Map<String, dynamic>? _processTimeFieldsInDataMap(Map<String, dynamic>? dataMap) {
+  Map<String, dynamic>? _processTimeFieldsInDataMap(
+      Map<String, dynamic>? dataMap) {
     if (dataMap == null) return null;
-    
+
     // Créer une nouvelle carte pour stocker les données traitées
     final processedMap = <String, dynamic>{};
-    
+
     // Parcourir toutes les entrées
     dataMap.forEach((key, value) {
       // Si la clé contient "time" et la valeur est une chaîne, normaliser
-      if (key.toLowerCase().contains('time') && 
+      if (key.toLowerCase().contains('time') &&
           !key.toLowerCase().contains('date') &&
           value is String) {
         processedMap[key] = normalizeTimeFormat(value);
@@ -211,7 +210,7 @@ class VisitRepositoryImpl implements VisitRepository {
         processedMap[key] = value;
       }
     });
-    
+
     return processedMap;
   }
 
@@ -271,8 +270,8 @@ class VisitRepositoryImpl implements VisitRepository {
     }
 
     // Si le nom de clé contient "time" et n'est pas une date, c'est probablement une heure
-    if (keyName != null && 
-        keyName.toLowerCase().contains('time') && 
+    if (keyName != null &&
+        keyName.toLowerCase().contains('time') &&
         !keyName.toLowerCase().contains('date')) {
       return normalizeTimeFormat(cleanValue);
     }
@@ -384,7 +383,7 @@ class VisitRepositoryImpl implements VisitRepository {
       try {
         // Pré-traiter les données pour normaliser les heures
         final processedData = _processTimeFieldsInDataMap(visit.data);
-        
+
         // Encoder les données en JSON
         final jsonData = jsonEncode(processedData);
         await saveVisitComplementData(visitId, jsonData);
@@ -434,7 +433,7 @@ class VisitRepositoryImpl implements VisitRepository {
           try {
             // Pré-traiter les données pour normaliser les heures
             final processedData = _processTimeFieldsInDataMap(visit.data);
-            
+
             // Encoder les données en JSON
             final jsonData = jsonEncode(processedData);
             await saveVisitComplementData(visit.idBaseVisit, jsonData);
@@ -483,7 +482,7 @@ class VisitRepositoryImpl implements VisitRepository {
         buffer.write(value.toString());
       } else if (value is String) {
         // Si c'est un champ d'heure, normaliser
-        if (key.toLowerCase().contains('time') && 
+        if (key.toLowerCase().contains('time') &&
             !key.toLowerCase().contains('date')) {
           final normalizedTime = normalizeTimeFormat(value);
           buffer.write('"$normalizedTime"');
@@ -585,14 +584,14 @@ class VisitRepositoryImpl implements VisitRepository {
       idBaseVisit: visitId,
       data: validJsonData,
     );
-    
+
     await saveVisitComplement(entity);
   }
 
   @override
   Future<void> saveVisitComplement(VisitComplementEntity complement) async {
     final companionObj = TVisitComplementMapper.toCompanion(complement);
-    
+
     try {
       await _visitesDatabase.insertVisitComplement(companionObj);
     } catch (_) {
