@@ -47,6 +47,9 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
   late Map<String, TextEditingController> _textControllers;
   late Map<String, dynamic> _unifiedSchema;
 
+  /// Returns the onSubmit callback from the widget
+  Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
+
   @override
   void initState() {
     super.initState();
@@ -415,7 +418,7 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
                   // En cas d'erreur, utiliser l'heure actuelle
                 }
               }
-              
+
               final time = await showTimePicker(
                 context: context,
                 initialTime: initialTime,
