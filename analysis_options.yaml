@@ -21,12 +21,16 @@ linter:
   # `// ignore_for_file: name_of_lint` syntax on the line or in the file
   # producing the lint.
   rules:
-    avoid_print: false  # Disabled because we use print statements in migrations
-    file_names: false   # Disabled for migration files with version numbers
-    prefer_const_constructors: false # Disabled to reduce number of warnings 
+    avoid_print: false # Disabled because we use print statements in migrations
+    file_names: false # Disabled for migration files with version numbers
+    prefer_const_constructors: false # Disabled to reduce number of warnings
     prefer_const_declarations: false # Disabled to reduce number of warnings
 
 analyzer:
+  # Exclude generated files from analysis
+  exclude:
+    - "**/*.freezed.dart"
+    - "**/*.g.dart"
   errors:
     # Treat all lint warnings as info
     unused_import: info
@@ -43,6 +47,5 @@ analyzer:
     library_prefixes: info
     # Completely ignore these warnings
     invalid_annotation_target: ignore
-
 # Additional information about this file can be found at
 # https://dart.dev/guides/language/analysis-options
