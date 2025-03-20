@@ -5,7 +5,6 @@ import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
-import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
@@ -31,19 +30,20 @@ class VisitDetailPage extends ConsumerStatefulWidget {
 class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   // Utiliser un FutureProvider unique à cette instance pour éviter la reconstruction à chaque build
   late final AutoDisposeFutureProvider<BaseVisit> _visitDetailsProvider;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Définir un provider pour cette instance spécifique
     _visitDetailsProvider = FutureProvider.autoDispose<BaseVisit>((ref) async {
       // L'appel est maintenant contrôlé et ne sera exécuté qu'une seule fois par le FutureProvider
-      final viewModel = ref.read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      final viewModel = ref
+          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
       return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     // Récupérer la configuration des visites depuis le module
@@ -71,8 +71,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                     builder: (context) => VisitFormPage(
                       site: widget.site,
                       visitConfig: visitConfig,
-                      customConfig:
-                          widget.moduleInfo?.module.complement?.configuration?.custom,
+                      customConfig: widget
+                          .moduleInfo?.module.complement?.configuration?.custom,
                       moduleId: widget.moduleInfo?.module.id,
                       visit: widget.visit,
                     ),
@@ -80,8 +80,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                 ).then((_) {
                   // Rafraîchir les données après édition
                   ref
-                      .read(
-                          siteVisitsViewModelProvider(widget.site.idBaseSite).notifier)
+                      .read(siteVisitsViewModelProvider(widget.site.idBaseSite)
+                          .notifier)
                       .loadVisits();
                 });
               } else {
@@ -239,7 +239,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                 ),
                 ElevatedButton.icon(
                   onPressed: () {
-                    _showAddObservationDialog(fullVisit.idBaseVisit, observationConfig);
+                    _showAddObservationDialog(
+                        fullVisit.idBaseVisit, observationConfig);
                   },
                   icon: const Icon(Icons.add),
                   label: const Text('Ajouter'),
@@ -261,8 +262,9 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   Widget _buildObservationsTable(BuildContext context, BaseVisit fullVisit,
       ObjectConfig? observationConfig) {
     // Utiliser le nouveau viewModel pour les observations
-    final observationsState = ref.watch(observationsProvider(fullVisit.idBaseVisit));
-    
+    final observationsState =
+        ref.watch(observationsProvider(fullVisit.idBaseVisit));
+
     return observationsState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, stackTrace) => Center(
@@ -281,12 +283,12 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
               'cd_nom': observation.cdNom,
               'comments': observation.comments,
             };
-            
+
             // Ajouter les données spécifiques
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
             }
-            
+
             observations.add(obsMap);
           }
         }
@@ -407,9 +409,9 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   }
 
   DataRow _buildDataRow(
-    Map<String, dynamic> observation, 
+    Map<String, dynamic> observation,
     List<String> columns,
-    ObjectConfig? observationConfig, 
+    ObjectConfig? observationConfig,
     BuildContext context,
     int visitId,
   ) {
@@ -425,11 +427,10 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                   icon: const Icon(Icons.edit, size: 20),
                   onPressed: () {
                     _showEditObservationDialog(
-                      observation['id_observation'] as int, 
-                      visitId,
-                      observation,
-                      observationConfig
-                    );
+                        observation['id_observation'] as int,
+                        visitId,
+                        observation,
+                        observationConfig);
                   },
                   constraints: const BoxConstraints(
                     minWidth: 40,
@@ -444,7 +445,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                       context: context,
                       builder: (context) => AlertDialog(
                         title: const Text('Confirmation'),
-                        content: const Text('Voulez-vous vraiment supprimer cette observation?'),
+                        content: const Text(
+                            'Voulez-vous vraiment supprimer cette observation?'),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.of(context).pop(),
@@ -458,7 +460,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                                 visitId,
                               );
                             },
-                            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+                            child: const Text('Supprimer',
+                                style: TextStyle(color: Colors.red)),
                           ),
                         ],
                       ),
@@ -503,7 +506,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       ),
     );
   }
-  
+
   List<Widget> _buildDataFields(
       Map<String, dynamic> data, ObjectConfig? config) {
     final List<Widget> widgets = [];
@@ -558,152 +561,103 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
 
     return widgets;
   }
-  
+
   // Méthodes pour gérer les observations
-  
+
   // Afficher le formulaire d'ajout d'observation
   void _showAddObservationDialog(int visitId, ObjectConfig? observationConfig) {
     if (observationConfig == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuration des observations non disponible')),
+        const SnackBar(
+            content: Text('Configuration des observations non disponible')),
       );
       return;
     }
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ObservationFormPage(
           visitId: visitId,
           observationConfig: observationConfig,
-          customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+          customConfig:
+              widget.moduleInfo?.module.complement?.configuration?.custom,
           moduleId: widget.moduleInfo?.module.id,
         ),
       ),
     ).then((_) {
-      // Actualiser la page quand on revient du formulaire
-      setState(() {});
+      // Rafraîchir les observations quand on revient du formulaire
+      ref.refresh(observationsProvider(visitId));
     });
   }
-  
+
   // Afficher le formulaire d'édition d'observation
-  void _showEditObservationDialog(
-    int observationId, 
-    int visitId,
-    Map<String, dynamic> observationData,
-    ObjectConfig? observationConfig
-  ) {
+  void _showEditObservationDialog(int observationId, int visitId,
+      Map<String, dynamic> observationData, ObjectConfig? observationConfig) {
     if (observationConfig == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Configuration des observations non disponible')),
+        const SnackBar(
+            content: Text('Configuration des observations non disponible')),
       );
       return;
     }
-    
+
     // Récupérer l'observation complète
-    ref.read(observationsProvider(visitId).notifier)
-      .getObservationsByVisitId()
-      .then((observations) {
-        // Trouver l'observation correspondante
-        final observation = observations.firstWhere(
-          (o) => o.idObservation == observationId,
-          orElse: () => throw Exception('Observation not found'),
-        );
-        
-        // Naviguer vers la page d'édition
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ObservationFormPage(
-              visitId: visitId,
-              observationConfig: observationConfig,
-              customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
-              moduleId: widget.moduleInfo?.module.id,
-              observation: observation,
-            ),
+    ref
+        .read(observationsProvider(visitId).notifier)
+        .getObservationsByVisitId()
+        .then((observations) {
+      // Trouver l'observation correspondante
+      final observation = observations.firstWhere(
+        (o) => o.idObservation == observationId,
+        orElse: () => throw Exception('Observation not found'),
+      );
+
+      // Naviguer vers la page d'édition
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ObservationFormPage(
+            visitId: visitId,
+            observationConfig: observationConfig,
+            customConfig:
+                widget.moduleInfo?.module.complement?.configuration?.custom,
+            moduleId: widget.moduleInfo?.module.id,
+            observation: observation,
           ),
-        ).then((_) {
-          // Actualiser la page quand on revient du formulaire
-          setState(() {});
-        });
-      })
-      .catchError((error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors du chargement de l\'observation: $error')),
-        );
+        ),
+      ).then((_) {
+        // Rafraîchir les observations quand on revient du formulaire
+        ref.refresh(observationsProvider(visitId));
       });
+    }).catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text('Erreur lors du chargement de l\'observation: $error')),
+      );
+    });
   }
-  
-  // Créer une nouvelle observation
-  Future<void> _createObservation(Map<String, dynamic> formData, int visitId) async {
-    try {
-      final viewModel = ref.read(observationsProvider(visitId).notifier);
-      await viewModel.createObservation(formData);
-      
-      // Afficher un message de succès
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Observation créée avec succès')),
-        );
-      }
-    } catch (e) {
-      // Afficher un message d'erreur
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
-      }
-    }
-  }
-  
-  // Mettre à jour une observation existante
-  Future<void> _updateObservation(
-    Map<String, dynamic> formData, 
-    int observationId, 
-    int visitId
-  ) async {
-    try {
-      final viewModel = ref.read(observationsProvider(visitId).notifier);
-      final success = await viewModel.updateObservation(formData, observationId);
-      
-      if (success) {
-        // Afficher un message de succès
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Observation mise à jour avec succès')),
-          );
-        }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erreur lors de la mise à jour de l\'observation')),
-        );
-      }
-    } catch (e) {
-      // Afficher un message d'erreur
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
-      }
-    }
-  }
-  
+
   // Supprimer une observation
   Future<void> _deleteObservation(int observationId, int visitId) async {
     try {
       final viewModel = ref.read(observationsProvider(visitId).notifier);
       final success = await viewModel.deleteObservation(observationId);
-      
+
       if (success) {
         // Afficher un message de succès
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Observation supprimée avec succès')),
           );
+          // Rafraîchir les observations
+          ref.refresh(observationsProvider(visitId));
         }
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erreur lors de la suppression de l\'observation')),
+          const SnackBar(
+              content: Text('Erreur lors de la suppression de l\'observation')),
         );
       }
     } catch (e) {
