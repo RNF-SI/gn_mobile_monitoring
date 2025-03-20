@@ -45,6 +45,12 @@ void main() {
   setUpAll(() {
     // Register fallback values for any() matcher
     registerFallbackValue(FakeBaseVisit());
+    registerFallbackValue(const BaseVisit(
+      idBaseVisit: 0,
+      idDataset: 1,
+      idModule: 1,
+      visitDateMin: '2023-01-01',
+    ));
   });
   late MockGetVisitsBySiteIdUseCase mockGetVisitsBySiteIdUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
@@ -126,7 +132,9 @@ void main() {
       firstUseDate: DateTime.now(),
     );
 
-    test('initial state should be data after setUp due to mock returning empty list', () {
+    test(
+        'initial state should be data after setUp due to mock returning empty list',
+        () {
       // We've mocked the initial load to return an empty list, so we should start with a data state
       expect(viewModel.state, isA<AsyncData<List<BaseVisit>>>());
     });
@@ -362,8 +370,12 @@ void main() {
       final formData = {
         'visit_date_min': '2023-03-15',
         'comments': 'Updated comment',
+        'observers': [10, 20],
+        'field1': 'updated value',
+        'field2': 99,
       };
 
+      // Configurer le mock pour retourner false pour n'importe quelle visite
       when(() => mockUpdateVisitUseCase.execute(any()))
           .thenAnswer((_) async => false);
 
@@ -377,7 +389,7 @@ void main() {
       // Assert
       expect(result, false);
       verify(() => mockUpdateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verifyNever(() => mockGetVisitsBySiteIdUseCase.execute(any()));
     });
 
     test('updateVisitFromFormData should handle exceptions', () async {

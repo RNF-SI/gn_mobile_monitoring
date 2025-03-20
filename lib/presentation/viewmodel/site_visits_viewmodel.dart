@@ -20,9 +20,12 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
     SiteVisitsViewModel, AsyncValue<List<BaseVisit>>, int>((ref, siteId) {
   final getVisitsBySiteIdUseCase = ref.watch(getVisitsBySiteIdUseCaseProvider);
-  final getVisitWithDetailsUseCase = ref.watch(getVisitWithDetailsUseCaseProvider);
-  final getVisitComplementUseCase = ref.watch(getVisitComplementUseCaseProvider);
-  final saveVisitComplementUseCase = ref.watch(saveVisitComplementUseCaseProvider);
+  final getVisitWithDetailsUseCase =
+      ref.watch(getVisitWithDetailsUseCaseProvider);
+  final getVisitComplementUseCase =
+      ref.watch(getVisitComplementUseCaseProvider);
+  final saveVisitComplementUseCase =
+      ref.watch(saveVisitComplementUseCaseProvider);
   final createVisitUseCase = ref.watch(createVisitUseCaseProvider);
   final updateVisitUseCase = ref.watch(updateVisitUseCaseProvider);
   final deleteVisitUseCase = ref.watch(deleteVisitUseCaseProvider);
@@ -105,9 +108,22 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       Map<String, dynamic> formData, BaseSite site,
       {int? moduleId}) async {
     try {
+      // Récupérer l'ID de l'utilisateur connecté
+      final userId = await _getUserIdUseCase.execute();
+
+      // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
+      final observers = List<int>.from(formData['observers'] ?? []);
+      if (userId != null && !observers.contains(userId)) {
+        observers.add(userId);
+      }
+
+      // Mettre à jour les observateurs dans les données du formulaire
+      final updatedFormData = Map<String, dynamic>.from(formData);
+      updatedFormData['observers'] = observers;
+
       // Convertir les données du formulaire en un format approprié pour BaseVisit
-      final jsonData =
-          await _prepareVisitJsonData(formData, site, moduleId: moduleId);
+      final jsonData = await _prepareVisitJsonData(updatedFormData, site,
+          moduleId: moduleId);
 
       // Créer l'objet BaseVisit à partir des données JSON
       final visit = BaseVisit.fromJson(jsonData);
@@ -130,8 +146,21 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       Map<String, dynamic> formData, BaseSite site, int visitId,
       {int? moduleId}) async {
     try {
+      // Récupérer l'ID de l'utilisateur connecté
+      final userId = await _getUserIdUseCase.execute();
+
+      // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
+      final observers = List<int>.from(formData['observers'] ?? []);
+      if (userId != null && !observers.contains(userId)) {
+        observers.add(userId);
+      }
+
+      // Mettre à jour les observateurs dans les données du formulaire
+      final updatedFormData = Map<String, dynamic>.from(formData);
+      updatedFormData['observers'] = observers;
+
       // Convertir les données du formulaire en un format approprié pour BaseVisit
-      final jsonData = await _prepareVisitJsonData(formData, site,
+      final jsonData = await _prepareVisitJsonData(updatedFormData, site,
           visitId: visitId, moduleId: moduleId);
 
       // Créer l'objet BaseVisit à partir des données JSON
@@ -146,9 +175,12 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       }
 
       return success;
+    } on Exception catch (e) {
+      debugPrint('Exception lors de la mise à jour de la visite: $e');
+      rethrow;
     } catch (e) {
       debugPrint('Erreur lors de la mise à jour de la visite: $e');
-      rethrow;
+      throw Exception(e.toString());
     }
   }
 
@@ -165,7 +197,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       rethrow;
     }
   }
-  
+
   /// Récupère une visite avec tous ses détails (observateurs et données complémentaires)
   Future<BaseVisit> getVisitWithFullDetails(int visitId) async {
     try {
@@ -175,7 +207,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       rethrow;
     }
   }
-  
+
   /// Récupère les données complémentaires d'une visite
   Future<VisitComplement?> getVisitComplement(int visitId) async {
     try {
@@ -185,19 +217,21 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       rethrow;
     }
   }
-  
+
   /// Sauvegarde des données complémentaires pour une visite
   Future<void> saveVisitComplement(VisitComplement complement) async {
     try {
       await _saveVisitComplementUseCase.execute(complement);
     } catch (e) {
-      debugPrint('Erreur lors de la sauvegarde des données complémentaires: $e');
+      debugPrint(
+          'Erreur lors de la sauvegarde des données complémentaires: $e');
       rethrow;
     }
   }
-  
+
   /// Sauvegarde les données complémentaires d'une visite à partir d'un Map
-  Future<void> saveVisitComplementFromData(int visitId, Map<String, dynamic> data) async {
+  Future<void> saveVisitComplementFromData(
+      int visitId, Map<String, dynamic> data) async {
     try {
       final complement = VisitComplement(
         idBaseVisit: visitId,
@@ -205,7 +239,8 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       );
       await _saveVisitComplementUseCase.execute(complement);
     } catch (e) {
-      debugPrint('Erreur lors de la sauvegarde des données complémentaires: $e');
+      debugPrint(
+          'Erreur lors de la sauvegarde des données complémentaires: $e');
       rethrow;
     }
   }
@@ -220,8 +255,8 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     // Prétraiter les données du formulaire pour normaliser les champs d'heure
     final Map<String, dynamic> processedFormData = Map.from(formData);
     processedFormData.forEach((key, value) {
-      if (key.toLowerCase().contains('time') && 
-          !key.toLowerCase().contains('date') && 
+      if (key.toLowerCase().contains('time') &&
+          !key.toLowerCase().contains('date') &&
           value is String) {
         processedFormData[key] = normalizeTimeFormat(value);
       }
@@ -234,13 +269,20 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       'idBaseSite': site.idBaseSite,
       'idDataset':
           1, // Valeur par défaut ou à récupérer depuis la configuration
-      'idModule': moduleId,
+      'idModule': moduleId ?? 1, // Valeur par défaut si non spécifiée
       'visitDateMin': _formatDateValue(processedFormData['visit_date_min']) ??
           DateTime.now().toIso8601String(),
 
       // Champs optionnels
+      'idDigitiser': userId,
       'visitDateMax': _formatDateValue(processedFormData['visit_date_max']),
       'comments': processedFormData['comments']?.toString(),
+      'idNomenclatureTechCollectCampanule':
+          processedFormData['id_nomenclature_tech_collect_campanule'],
+      'idNomenclatureGrpTyp': processedFormData['id_nomenclature_grp_typ'],
+      'uuidBaseVisit': processedFormData['uuid_base_visit'],
+      'metaCreateDate': DateTime.now().toIso8601String(),
+      'metaUpdateDate': DateTime.now().toIso8601String(),
 
       // Données spécifiques au module (exclure les champs standard)
       'data': _extractModuleSpecificData(processedFormData),
@@ -321,9 +363,9 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
         } else if (value is DateTime) {
           // Convertir les dates en chaînes ISO
           moduleData[key] = value.toIso8601String();
-        } else if (key.toLowerCase().contains('time') && 
-                 !key.toLowerCase().contains('date') && 
-                 value is String) {
+        } else if (key.toLowerCase().contains('time') &&
+            !key.toLowerCase().contains('date') &&
+            value is String) {
           // Normaliser les valeurs d'heure pour éviter les problèmes de format
           moduleData[key] = normalizeTimeFormat(value);
         } else {
