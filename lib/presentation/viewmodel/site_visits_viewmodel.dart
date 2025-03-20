@@ -135,7 +135,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       await loadVisits();
 
       return visitId;
-    } catch (e, stack) {
+    } catch (e) {
       debugPrint('Erreur lors de la création de la visite: $e');
       rethrow;
     }
