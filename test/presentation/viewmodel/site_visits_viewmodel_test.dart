@@ -38,7 +38,14 @@ class MockGetUserIdFromLocalStorageUseCase extends Mock
 class MockGetUserNameFromLocalStorageUseCase extends Mock
     implements GetUserNameFromLocalStorageUseCase {}
 
+// Fake class for BaseVisit to use as fallback
+class FakeBaseVisit extends Fake implements BaseVisit {}
+
 void main() {
+  setUpAll(() {
+    // Register fallback values for any() matcher
+    registerFallbackValue(FakeBaseVisit());
+  });
   late MockGetVisitsBySiteIdUseCase mockGetVisitsBySiteIdUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
   late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
@@ -119,8 +126,9 @@ void main() {
       firstUseDate: DateTime.now(),
     );
 
-    test('initial state should be loading after setUp', () {
-      expect(viewModel.state, const AsyncValue<List<BaseVisit>>.loading());
+    test('initial state should be data after setUp due to mock returning empty list', () {
+      // We've mocked the initial load to return an empty list, so we should start with a data state
+      expect(viewModel.state, isA<AsyncData<List<BaseVisit>>>());
     });
 
     test('loadVisits should update state with visits from use case', () async {

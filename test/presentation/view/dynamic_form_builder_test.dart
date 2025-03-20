@@ -131,7 +131,9 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      // Wait for widget to build but avoid using pumpAndSettle
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       // Assert - Priority fields should be visible
       expect(find.text('Text Field *'), findsOneWidget);
@@ -164,7 +166,9 @@ void main() {
         ),
       );
 
-      await tester.pumpAndSettle();
+      // Wait for widget to build but avoid using pumpAndSettle
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
 
       // Assert - Chain input option should be visible
       expect(find.text('Enchaîner les saisies'), findsOneWidget);

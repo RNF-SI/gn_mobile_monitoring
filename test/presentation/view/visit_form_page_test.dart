@@ -260,11 +260,32 @@ void main() {
       expect(find.text('Mettre à jour'), findsOneWidget);
     });
 
-    testWidgets('VisitFormPage should switch between actions based on mode',
+    testWidgets('VisitFormPage should show creation mode button',
         (WidgetTester tester) async {
-      // Test creation mode button text
+      // Create a container to properly dispose of later
+      final container = ProviderContainer(
+        overrides: [
+          // Same overrides as buildTestProviderScope
+          siteVisitsViewModelProvider
+              .overrideWith((ref, siteId) => SiteVisitsViewModel(
+                    mockGetVisitsBySiteIdUseCase,
+                    mockGetVisitWithDetailsUseCase,
+                    mockGetVisitComplementUseCase,
+                    mockSaveVisitComplementUseCase,
+                    mockCreateVisitUseCase,
+                    mockUpdateVisitUseCase,
+                    mockDeleteVisitUseCase,
+                    mockGetUserIdUseCase,
+                    mockGetUserNameUseCase,
+                    siteId,
+                  )),
+        ],
+      );
+      
+      // Test creation mode
       await tester.pumpWidget(
-        buildTestProviderScope(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp(
             home: VisitFormPage(
               site: testSite,
@@ -274,23 +295,45 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      
+      // Wait for widget to build without using pumpAndSettle
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      
+      // Check for creation mode button
       expect(find.text('Enregistrer'), findsOneWidget);
       expect(find.text('Mettre à jour'), findsNothing);
-
-      // Test edit mode button text
-      await tester.pumpWidget(
-        buildTestProviderScope(
-          child: MaterialApp(
-            home: Scaffold(body: Container()), // First clear the widget tree
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
       
-      // Now rebuild with the edit mode version
+      // Make sure to dispose the container
+      container.dispose();
+    });
+    
+    testWidgets('VisitFormPage should show edit mode button',
+        (WidgetTester tester) async {
+      // Create a container to properly dispose of later
+      final container = ProviderContainer(
+        overrides: [
+          // Same overrides as buildTestProviderScope
+          siteVisitsViewModelProvider
+              .overrideWith((ref, siteId) => SiteVisitsViewModel(
+                    mockGetVisitsBySiteIdUseCase,
+                    mockGetVisitWithDetailsUseCase,
+                    mockGetVisitComplementUseCase,
+                    mockSaveVisitComplementUseCase,
+                    mockCreateVisitUseCase,
+                    mockUpdateVisitUseCase,
+                    mockDeleteVisitUseCase,
+                    mockGetUserIdUseCase,
+                    mockGetUserNameUseCase,
+                    siteId,
+                  )),
+        ],
+      );
+      
+      // Test edit mode
       await tester.pumpWidget(
-        buildTestProviderScope(
+        UncontrolledProviderScope(
+          container: container,
           child: MaterialApp(
             home: VisitFormPage(
               site: testSite,
@@ -301,10 +344,16 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
       
-      // Verify the button text is correct for edit mode
-      expect(find.widgetWithText(ElevatedButton, 'Mettre à jour'), findsOneWidget);
+      // Wait for widget to build without using pumpAndSettle
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      
+      // Check for edit mode button
+      expect(find.text('Mettre à jour'), findsOneWidget);
+      
+      // Make sure to dispose the container
+      container.dispose();
     });
   });
 

@@ -253,16 +253,46 @@ void main() {
     final testSite = createTestSite();
     final moduleInfo = createTestModuleInfo();
 
-    // Build our widget with provider overrides
+    // Create a mock that returns a controlled future
+    final mockViewModel = MockSiteVisitsViewModelNotifier();
+    final completer = Completer<BaseVisit>();
+    when(() => mockViewModel.getVisitWithFullDetails(any()))
+        .thenAnswer((_) => completer.future);
+
+    // Create container to properly dispose
+    final container = ProviderContainer(
+      overrides: [
+        // Override with our controlled mock
+        siteVisitsViewModelProvider(testSite.idBaseSite)
+            .overrideWith((_) => mockViewModel),
+        
+        // Override observations provider to avoid loading real data
+        observationsProvider(providers.testVisit.idBaseVisit)
+            .overrideWith((_) => TestNotifier(AsyncValue.data(providers.testObservations))),
+      ],
+    );
+
+    // Build our widget with container
     await tester.pumpWidget(
-      createTestableWidget(
-        visit: providers.testVisit,
-        site: testSite,
-        moduleInfo: moduleInfo,
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: VisitDetailPage(
+            visit: providers.testVisit,
+            site: testSite,
+            moduleInfo: moduleInfo,
+          ),
+        ),
       ),
     );
 
-    // Wait for initial frame
+    // Complete the future to avoid pending timers
+    completer.complete(providers.testVisit);
+    
+    // Process first frame showing loading
+    await tester.pump();
+    
+    // Process frame after future completes
     await tester.pump();
 
     // Check for basic UI elements that should be present
@@ -276,6 +306,9 @@ void main() {
 
     // Check for action buttons
     expect(find.byIcon(Icons.edit), findsWidgets);
+    
+    // Clean up
+    container.dispose();
   });
 
   testWidgets(
@@ -329,22 +362,45 @@ void main() {
     // Create test objects
     final testSite = createTestSite();
     final moduleInfo = createTestModuleInfo();
+    
+    // Create a mock that returns a controlled future
+    final mockViewModel = MockSiteVisitsViewModelNotifier();
+    final completer = Completer<BaseVisit>();
+    when(() => mockViewModel.getVisitWithFullDetails(any()))
+        .thenAnswer((_) => completer.future);
 
-    // Build widget with empty observations list
+    // Create an observations test notifier with empty data
+    final observationsNotifier = TestNotifier(const AsyncValue.data([]));
+
+    // Build widget with overrides
     await tester.pumpWidget(
-      createTestableWidget(
-        visit: providers.testVisit,
-        site: testSite,
-        moduleInfo: moduleInfo,
-        additionalOverrides: [
-          // Override to provide empty observations list
+      ProviderScope(
+        overrides: [
+          // Override for visit details
+          siteVisitsViewModelProvider(testSite.idBaseSite)
+              .overrideWith((_) => mockViewModel),
+          
+          // Override for empty observations list
           observationsProvider(providers.testVisit.idBaseVisit)
-              .overrideWith((_) => TestNotifier(const AsyncValue.data([]))),
+              .overrideWith((_) => observationsNotifier),
         ],
+        child: MaterialApp(
+          home: VisitDetailPage(
+            visit: providers.testVisit,
+            site: testSite,
+            moduleInfo: moduleInfo,
+          ),
+        ),
       ),
     );
 
-    // Wait for first frame
+    // Complete the future to avoid pending timers
+    completer.complete(providers.testVisit);
+    
+    // Process first frame
+    await tester.pump();
+    
+    // Process frame after future completes
     await tester.pump();
 
     // Verify empty state message is displayed

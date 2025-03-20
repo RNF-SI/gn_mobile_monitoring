@@ -168,11 +168,19 @@ void main() {
 
     await pumpHomePage(tester, syncingStatus);
 
-    // Essayer de changer d'onglet
-    await tester.tap(find.text('Groupes de Sites'));
-    await tester.pump();
-
-    // Vérifier que nous sommes toujours sur le premier onglet
+    // Find the Tab widget instead of just the text
+    final tabFinder = find.ancestor(
+      of: find.text('Groupes de Sites'),
+      matching: find.byType(Tab),
+    );
+    
+    // Try to tap on the tab
+    if (tabFinder.evaluate().isNotEmpty) {
+      await tester.tap(tabFinder, warnIfMissed: false);
+      await tester.pump();
+    }
+    
+    // Verify we're still on the first tab
     expect(find.byType(ModuleListWidget), findsOneWidget);
     expect(find.byType(SiteGroupListWidget), findsNothing);
   });

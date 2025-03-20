@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -114,10 +115,11 @@ void main() {
       'LoginPage should display loading indicator during authentication',
       (WidgetTester tester) async {
     // Arrange
+    final completer = Completer<void>();
+    
     when(() =>
         mockAuthViewModel.signInWithEmailAndPassword(
-            any(), any(), any(), any())).thenAnswer(
-        (_) async => await Future.delayed(const Duration(milliseconds: 100)));
+            any(), any(), any(), any())).thenAnswer((_) => completer.future);
 
     await pumpLoginPage(tester, LoginStatusInfo.authenticating);
 
@@ -133,19 +135,18 @@ void main() {
     // Assert - Loading indicator should be visible
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
 
-    // Clean up any pending timers
-    await tester.pumpAndSettle();
+    // Complete the future to avoid pending timers
+    completer.complete();
+    await tester.pump();
   });
 
   testWidgets('LoginPage should display login status message',
       (WidgetTester tester) async {
-    // Arrange - Mock auth method with a short delay
+    // Arrange - Create a completer to control the async flow
+    final completer = Completer<void>();
+    
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
-        any(), any(), any(), any())).thenAnswer((_) async {
-      // Simulate a loading state that completes quickly
-      await Future.delayed(const Duration(milliseconds: 50));
-      return;
-    });
+        any(), any(), any(), any())).thenAnswer((_) => completer.future);
 
     await pumpLoginPage(tester, LoginStatusInfo.fetchingModules);
 
@@ -164,19 +165,19 @@ void main() {
     // Now status message should be visible
     expect(find.text(LoginStatusInfo.fetchingModules.message), findsOneWidget);
     
-    // No need to wait for the future to complete since we've already made our assertions
+    // Complete the future to avoid pending timers
+    completer.complete();
+    await tester.pump();
   });
 
   testWidgets('LoginPage should display error message',
       (WidgetTester tester) async {
     // Arrange
     const errorMessage = "Impossible de se connecter au serveur";
+    final completer = Completer<void>();
+    
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
-        any(), any(), any(), any())).thenAnswer((_) async {
-      // Simulate a loading state that completes quickly
-      await Future.delayed(const Duration(milliseconds: 50));
-      return;
-    });
+        any(), any(), any(), any())).thenAnswer((_) => completer.future);
 
     await pumpLoginPage(tester, LoginStatusInfo.error(errorMessage));
 
@@ -195,6 +196,8 @@ void main() {
     // Error message should be visible
     expect(find.text(errorMessage), findsOneWidget);
     
-    // No need to wait for the future to complete since we've already made our assertions
+    // Complete the future to avoid pending timers
+    completer.complete();
+    await tester.pump();
   });
 }
