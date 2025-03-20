@@ -20,10 +20,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<SiteGroup>>.loading();
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -49,10 +51,12 @@ void main() {
     final customState = custom_async_state.State<List<SiteGroup>>.error(
       Exception('Failed to load site groups'),
     );
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -76,10 +80,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<SiteGroup>>.init();
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -118,10 +124,11 @@ void main() {
     ];
 
     final customState = custom_async_state.State<List<SiteGroup>>.success(siteGroups);
-
+    
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 
@@ -155,6 +162,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 
@@ -188,6 +196,7 @@ void main() {
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
         siteGroupViewModelStateNotifierProvider.overrideWith((_) => mockNotifier),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 

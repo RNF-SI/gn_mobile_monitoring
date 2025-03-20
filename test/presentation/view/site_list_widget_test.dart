@@ -20,10 +20,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<BaseSite>>.loading();
+    final emptyList = <BaseSite>[];
 
     final container = ProviderContainer(
       overrides: [
         userSitesProvider.overrideWithValue(customState),
+        filteredSitesProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -49,10 +51,12 @@ void main() {
     final customState = custom_async_state.State<List<BaseSite>>.error(
       Exception('Failed to load sites'),
     );
+    final emptyList = <BaseSite>[];
 
     final container = ProviderContainer(
       overrides: [
         userSitesProvider.overrideWithValue(customState),
+        filteredSitesProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -76,10 +80,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<BaseSite>>.init();
+    final emptyList = <BaseSite>[];
 
     final container = ProviderContainer(
       overrides: [
         userSitesProvider.overrideWithValue(customState),
+        filteredSitesProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -126,6 +132,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         userSitesProvider.overrideWithValue(customState),
+        filteredSitesProvider.overrideWith((_) => sites),
       ],
     );
 
@@ -157,6 +164,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         userSitesProvider.overrideWithValue(customState),
+        filteredSitesProvider.overrideWith((_) => sites),
       ],
     );
 
@@ -190,6 +198,7 @@ void main() {
       overrides: [
         userSitesProvider.overrideWithValue(customState),
         userSitesViewModelStateNotifierProvider.overrideWith((_) => mockNotifier),
+        filteredSitesProvider.overrideWith((_) => sites),
       ],
     );
 
