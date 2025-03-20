@@ -323,12 +323,19 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      
+      // Wait for widget to build but don't use pumpAndSettle which might get stuck
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
 
-      // Tap cancel button
-      await tester.tap(find.text('Annuler'));
-      await tester.pumpAndSettle();
-
+      // Find and tap the cancel button (using a more targeted finder)
+      final cancelButton = find.widgetWithText(TextButton, 'Annuler');
+      expect(cancelButton, findsOneWidget);
+      await tester.tap(cancelButton);
+      
+      // Only pump once to avoid hanging
+      await tester.pump();
+      
       // Verify navigation popped
       verify(() => mockNavigatorObserver.didPop(any(), any())).called(1);
     });

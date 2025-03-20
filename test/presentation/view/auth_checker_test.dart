@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,8 +26,9 @@ void main() {
   testWidgets(
       'AuthChecker should display LoadingScreen while checking login status',
       (WidgetTester tester) async {
-    when(() => mockGetIsLoggedInUseCase.execute()).thenAnswer((_) async =>
-        Future.delayed(const Duration(milliseconds: 100), () => true));
+    // Use a Completer that we can manually complete for reliable testing
+    final completer = Completer<bool>();
+    when(() => mockGetIsLoggedInUseCase.execute()).thenAnswer((_) => completer.future);
 
     final container = ProviderContainer(
       overrides: [
@@ -43,11 +46,17 @@ void main() {
       ),
     );
 
+    // Verify loading is shown initially
     expect(find.byType(LoadingScreen), findsOneWidget);
-
-    // Wait for the Future to complete
-    await tester.pumpAndSettle();
-
+    
+    // Complete the future
+    completer.complete(true);
+    
+    // Process the completion
+    await tester.pump();
+    await tester.pump(); // Add an extra frame to ensure transitions complete
+    
+    // Verify we've navigated to the correct screen
     expect(find.byType(HomePage), findsOneWidget);
   });
 

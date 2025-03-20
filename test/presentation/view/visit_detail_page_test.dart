@@ -284,16 +284,17 @@ void main() {
     // Create test objects
     final testSite = createTestSite();
 
-    // Create a mock that returns a never-completing future to simulate loading
+    // Create a mock that uses a Completer for better control
     final mockViewModel = MockSiteVisitsViewModelNotifier();
+    final completer = Completer<BaseVisit>();
     when(() => mockViewModel.getVisitWithFullDetails(any()))
-        .thenAnswer((_) => Completer<BaseVisit>().future); // Never completes
+        .thenAnswer((_) => completer.future);
 
     // Build widget with loading state
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          // Override with our mock that never completes
+          // Override with our mock that has a brief delay
           siteVisitsViewModelProvider(testSite.idBaseSite)
               .overrideWith((_) => mockViewModel),
 
@@ -310,11 +311,17 @@ void main() {
       ),
     );
 
-    // Wait for first frame
+    // Wait for first frame, which should show loading
     await tester.pump();
 
     // Verify loading indicator is shown
     expect(find.byType(CircularProgressIndicator), findsWidgets);
+    
+    // Complete the future to avoid pending timers
+    completer.complete(providers.testVisit);
+    
+    // Process the completion
+    await tester.pump();
   });
 
   testWidgets('VisitDetailPage should display empty state when no observations',

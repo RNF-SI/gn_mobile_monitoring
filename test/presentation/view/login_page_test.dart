@@ -139,11 +139,11 @@ void main() {
 
   testWidgets('LoginPage should display login status message',
       (WidgetTester tester) async {
-    // Arrange - Mock auth method to keep loading state true
+    // Arrange - Mock auth method with a short delay
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
         any(), any(), any(), any())).thenAnswer((_) async {
-      // Simulate a loading state that stays active
-      await Future.delayed(const Duration(seconds: 10)); // Long enough for the test
+      // Simulate a loading state that completes quickly
+      await Future.delayed(const Duration(milliseconds: 50));
       return;
     });
 
@@ -164,8 +164,7 @@ void main() {
     // Now status message should be visible
     expect(find.text(LoginStatusInfo.fetchingModules.message), findsOneWidget);
     
-    // Cancel pending timer to clean up
-    await tester.pumpAndSettle(const Duration(milliseconds: 5));
+    // No need to wait for the future to complete since we've already made our assertions
   });
 
   testWidgets('LoginPage should display error message',
@@ -174,8 +173,8 @@ void main() {
     const errorMessage = "Impossible de se connecter au serveur";
     when(() => mockAuthViewModel.signInWithEmailAndPassword(
         any(), any(), any(), any())).thenAnswer((_) async {
-      // Simulate a loading state that stays active
-      await Future.delayed(const Duration(seconds: 10)); // Long enough for the test
+      // Simulate a loading state that completes quickly
+      await Future.delayed(const Duration(milliseconds: 50));
       return;
     });
 
@@ -196,7 +195,6 @@ void main() {
     // Error message should be visible
     expect(find.text(errorMessage), findsOneWidget);
     
-    // Cancel pending timer to clean up
-    await tester.pumpAndSettle(const Duration(milliseconds: 5));
+    // No need to wait for the future to complete since we've already made our assertions
   });
 }
