@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 
@@ -22,6 +24,9 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   bool _isLoadingSites = false;
   List<dynamic> _displayedSites = [];
 
+  // Configuration du module parsée
+  late Map<String, dynamic> _moduleConfig;
+
   @override
   void initState() {
     super.initState();
@@ -32,8 +37,38 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
     _tabController.addListener(_handleTabChange);
     _sitesScrollController.addListener(_handleScroll);
 
+    // Initialiser la configuration du module parsée
+    _initializeModuleConfig();
+
     if (_childrenTypes.contains('site')) {
       _loadInitialSites();
+    }
+  }
+
+  void _initializeModuleConfig() {
+    // Récupérer la configuration du module
+    final moduleConfig =
+        widget.moduleInfo.module.complement?.configuration?.module;
+    final customConfig =
+        widget.moduleInfo.module.complement?.configuration?.custom;
+
+    // Créer un ObjectConfig à partir du ModuleConfig pour pouvoir utiliser le FormConfigParser
+    if (moduleConfig != null) {
+      final ObjectConfig objectConfig = ObjectConfig(
+        label: moduleConfig.label,
+        labelList: moduleConfig.moduleLabel,
+        generic: moduleConfig.generic,
+        specific: moduleConfig.specific,
+        displayProperties: moduleConfig.displayProperties,
+        displayList: moduleConfig.displayList,
+        displayForm: moduleConfig.displayForm,
+      );
+
+      // Utiliser le FormConfigParser pour générer un schéma unifié
+      _moduleConfig =
+          FormConfigParser.generateUnifiedSchema(objectConfig, customConfig);
+    } else {
+      _moduleConfig = {};
     }
   }
 
@@ -102,66 +137,122 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   Widget build(BuildContext context) {
     final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
     final sitesGroupConfig =
-        widget.moduleInfo.module.complement?.configuration?.site;
+        widget.moduleInfo.module.complement?.configuration?.sitesGroup;
+
+    // Récupérer les labels pour les onglets
+    final sitesGroupLabel = sitesGroupConfig?.label ?? 'Secteurs';
+    final siteLabel = siteConfig?.labelList ?? siteConfig?.label ?? 'Dalles';
+
+    // Compter le nombre de sites et de groupes de sites
+    final sitesCount = widget.moduleInfo.module.sites?.length ?? 0;
+    final sitesGroupCount = widget.moduleInfo.module.sitesGroup?.length ?? 0;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Module Details'}'),
+        title: Text(widget.moduleInfo.module.moduleLabel ?? ''),
       ),
       body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Properties Card
+          // Afficher les propriétés du module
           Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Propriétés',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        'Nom', widget.moduleInfo.module.moduleLabel ?? ''),
-                    _buildPropertyRow('Description',
-                        widget.moduleInfo.module.moduleDesc ?? ''),
-                    _buildPropertyRow('Jeu de données',
-                        'Contact aléatoire tous règnes confondus'),
-                  ],
-                ),
-              ),
-            ),
+            padding: const EdgeInsets.all(16.0),
+            child: _buildModulePropertiesList(),
           ),
-          if (_childrenTypes.isNotEmpty) ...[
-            // Tab Bar
-            TabBar(
+          // Afficher les onglets avec le comptage
+          TabBar(
+            controller: _tabController,
+            tabs: [
+              Tab(
+                text: '$sitesGroupLabel ($sitesGroupCount)',
+              ),
+              Tab(
+                text: '$siteLabel ($sitesCount)',
+              ),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              tabs: [
-                if (_childrenTypes.contains('sites_group'))
-                  Tab(
-                      text:
-                          '${sitesGroupConfig?.labelList ?? 'Groupes'} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
-                if (_childrenTypes.contains('site'))
-                  Tab(text: siteConfig?.labelList ?? 'Sites'),
+              children: [
+                _buildSitesGroupList(),
+                _buildSitesList(),
               ],
             ),
-            // Tab Views
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
-                  if (_childrenTypes.contains('site')) _buildSitesTab(),
-                ],
-              ),
-            ),
-          ],
+          ),
         ],
       ),
+    );
+  }
+
+  Widget _buildModulePropertiesList() {
+    // Propriétés basiques à toujours afficher
+    final basicProperties = [
+      {
+        'key': 'moduleLabel',
+        'label': 'Nom',
+        'value': widget.moduleInfo.module.moduleLabel ?? ''
+      },
+      {
+        'key': 'moduleDesc',
+        'label': 'Description',
+        'value': widget.moduleInfo.module.moduleDesc ?? ''
+      },
+      {
+        'key': 'dataset',
+        'label': 'Jeu de données',
+        'value': 'Contact aléatoire tous règnes confondus'
+      },
+    ];
+
+    // Liste des propriétés à afficher
+    final List<Map<String, String>> properties = [];
+
+    // Ajouter les propriétés basiques
+    properties.addAll(basicProperties.map((p) => {
+          'label': p['label']!,
+          'value': p['value']!,
+        }));
+
+    // Ajouter les propriétés depuis la configuration parsée
+    if (_moduleConfig.isNotEmpty) {
+      // Récupérer la liste de propriétés d'affichage
+      final moduleConfig =
+          widget.moduleInfo.module.complement?.configuration?.module;
+      final List<String> displayProperties = moduleConfig?.displayProperties ??
+          moduleConfig?.displayList ??
+          FormConfigParser.generateDefaultDisplayProperties(_moduleConfig);
+
+      // Récupérer les valeurs des propriétés depuis le module
+      for (final propName in displayProperties) {
+        // Ne pas redondant avec les propriétés basiques déjà affichées
+        if (basicProperties.any((p) => p['key'] == propName)) continue;
+
+        if (_moduleConfig.containsKey(propName)) {
+          final fieldConfig = _moduleConfig[propName];
+          final label = fieldConfig['attribut_label'] ?? propName;
+          final value = widget.moduleInfo.module.complement?.data != null
+              ? Map<String, dynamic>.from(widget.moduleInfo.module.complement!
+                          .data as Map<String, dynamic>)[propName]
+                      ?.toString() ??
+                  ''
+              : '';
+
+          if (value.isNotEmpty) {
+            properties.add({
+              'label': label,
+              'value': value,
+            });
+          }
+        }
+      }
+    }
+
+    // Construire les widgets
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: properties
+          .map((prop) => _buildPropertyRow(prop['label']!, prop['value']!))
+          .toList(),
     );
   }
 
@@ -183,6 +274,25 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildGroupsTab() {
+    // Récupérer la configuration pour les groupes
+    final ObjectConfig? sitesGroupConfig =
+        widget.moduleInfo.module.complement?.configuration?.site;
+    Map<String, dynamic> parsedGroupConfig = {};
+
+    if (sitesGroupConfig != null) {
+      final customConfig =
+          widget.moduleInfo.module.complement?.configuration?.custom;
+      parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
+          sitesGroupConfig, customConfig);
+    }
+
+    // Libellés personnalisés en fonction de la configuration
+    final String groupNameLabel =
+        parsedGroupConfig.containsKey('sites_group_name')
+            ? parsedGroupConfig['sites_group_name']['attribut_label'] ??
+                'Nom du groupe'
+            : 'Nom du groupe';
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SingleChildScrollView(
@@ -194,25 +304,25 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
             3: FixedColumnWidth(80), // Visits count
           },
           children: [
-            const TableRow(
+            TableRow(
               children: [
-                Padding(
+                const Padding(
                   padding:
                       EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
                   child: Text('Action',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
                 Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Nom du groupe',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
+                  child: Text(groupNameLabel,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Text('Sites',
                       style: TextStyle(fontWeight: FontWeight.bold)),
                 ),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8.0),
                   child: Text('Visites',
                       style: TextStyle(fontWeight: FontWeight.bold)),
@@ -263,9 +373,31 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildSitesTab() {
+    // Obtenir la configuration des sites et l'analyser avec FormConfigParser
     final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
-    final baseSiteNameConfig = siteConfig?.generic?['base_site_name'];
-    final baseSiteNameLabel = baseSiteNameConfig?.attributLabel ?? 'Nom';
+    final customConfig =
+        widget.moduleInfo.module.complement?.configuration?.custom;
+    Map<String, dynamic> parsedSiteConfig = {};
+
+    if (siteConfig != null) {
+      parsedSiteConfig =
+          FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
+    }
+
+    // Récupérer les libellés personnalisés en fonction de la configuration
+    final String baseSiteNameLabel =
+        parsedSiteConfig.containsKey('base_site_name')
+            ? parsedSiteConfig['base_site_name']['attribut_label'] ?? 'Nom'
+            : 'Nom';
+
+    final String baseSiteCodeLabel =
+        parsedSiteConfig.containsKey('base_site_code')
+            ? parsedSiteConfig['base_site_code']['attribut_label'] ?? 'Code'
+            : 'Code';
+
+    final String altitudeLabel = parsedSiteConfig.containsKey('altitude')
+        ? parsedSiteConfig['altitude']['attribut_label'] ?? 'Altitude'
+        : 'Altitude';
 
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
@@ -300,15 +432,17 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text('Code',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(baseSiteCodeLabel,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text('Altitude',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(altitudeLabel,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -380,6 +514,107 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSitesGroupList() {
+    final sitesGroupConfig =
+        widget.moduleInfo.module.complement?.configuration?.sitesGroup;
+    final sitesGroups = widget.moduleInfo.module.sitesGroup ?? [];
+
+    return ListView.builder(
+      itemCount: sitesGroups.length,
+      itemBuilder: (context, index) {
+        final siteGroup = sitesGroups[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ListTile(
+            dense: true,
+            title: Text(
+              siteGroup.sitesGroupName ?? '',
+              style: const TextStyle(fontSize: 14),
+            ),
+            subtitle: siteGroup.sitesGroupDescription != null
+                ? Text(
+                    siteGroup.sitesGroupDescription!,
+                    style: const TextStyle(fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () {
+                    // TODO: Navigate to site group detail page
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSitesList() {
+    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
+    final sites = widget.moduleInfo.module.sites ?? [];
+
+    return ListView.builder(
+      itemCount: sites.length,
+      itemBuilder: (context, index) {
+        final site = sites[index];
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ListTile(
+            dense: true,
+            title: Text(
+              site.baseSiteName ?? '',
+              style: const TextStyle(fontSize: 14),
+            ),
+            subtitle: site.baseSiteDescription != null
+                ? Text(
+                    site.baseSiteDescription!,
+                    style: const TextStyle(fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : null,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteDetailPage(
+                          site: site,
+                          moduleInfo: widget.moduleInfo,
+                        ),
+                      ),
+                    );
+                  },
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(
+                    minWidth: 36,
+                    minHeight: 36,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -25,6 +25,7 @@ mixin _$ModuleConfiguration {
   ModuleConfig? get module => throw _privateConstructorUsedError;
   ObjectConfig? get observation => throw _privateConstructorUsedError;
   ObjectConfig? get site => throw _privateConstructorUsedError;
+  ObjectConfig? get sitesGroup => throw _privateConstructorUsedError;
   dynamic get synthese => throw _privateConstructorUsedError;
   TreeConfig? get tree => throw _privateConstructorUsedError;
   ObjectConfig? get visit => throw _privateConstructorUsedError;
@@ -50,6 +51,7 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
       ModuleConfig? module,
       ObjectConfig? observation,
       ObjectConfig? site,
+      ObjectConfig? sitesGroup,
       dynamic synthese,
       TreeConfig? tree,
       ObjectConfig? visit});
@@ -59,6 +61,7 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
   $ModuleConfigCopyWith<$Res>? get module;
   $ObjectConfigCopyWith<$Res>? get observation;
   $ObjectConfigCopyWith<$Res>? get site;
+  $ObjectConfigCopyWith<$Res>? get sitesGroup;
   $TreeConfigCopyWith<$Res>? get tree;
   $ObjectConfigCopyWith<$Res>? get visit;
 }
@@ -85,6 +88,7 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     Object? module = freezed,
     Object? observation = freezed,
     Object? site = freezed,
+    Object? sitesGroup = freezed,
     Object? synthese = freezed,
     Object? tree = freezed,
     Object? visit = freezed,
@@ -117,6 +121,10 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
       site: freezed == site
           ? _value.site
           : site // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
+      sitesGroup: freezed == sitesGroup
+          ? _value.sitesGroup
+          : sitesGroup // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
       synthese: freezed == synthese
           ? _value.synthese
@@ -207,6 +215,20 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $ObjectConfigCopyWith<$Res>? get sitesGroup {
+    if (_value.sitesGroup == null) {
+      return null;
+    }
+
+    return $ObjectConfigCopyWith<$Res>(_value.sitesGroup!, (value) {
+      return _then(_value.copyWith(sitesGroup: value) as $Val);
+    });
+  }
+
+  /// Create a copy of ModuleConfiguration
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $TreeConfigCopyWith<$Res>? get tree {
     if (_value.tree == null) {
       return null;
@@ -248,6 +270,7 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
       ModuleConfig? module,
       ObjectConfig? observation,
       ObjectConfig? site,
+      ObjectConfig? sitesGroup,
       dynamic synthese,
       TreeConfig? tree,
       ObjectConfig? visit});
@@ -262,6 +285,8 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
   $ObjectConfigCopyWith<$Res>? get observation;
   @override
   $ObjectConfigCopyWith<$Res>? get site;
+  @override
+  $ObjectConfigCopyWith<$Res>? get sitesGroup;
   @override
   $TreeConfigCopyWith<$Res>? get tree;
   @override
@@ -288,6 +313,7 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
     Object? module = freezed,
     Object? observation = freezed,
     Object? site = freezed,
+    Object? sitesGroup = freezed,
     Object? synthese = freezed,
     Object? tree = freezed,
     Object? visit = freezed,
@@ -321,6 +347,10 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
           ? _value.site
           : site // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
+      sitesGroup: freezed == sitesGroup
+          ? _value.sitesGroup
+          : sitesGroup // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
       synthese: freezed == synthese
           ? _value.synthese
           : synthese // ignore: cast_nullable_to_non_nullable
@@ -348,6 +378,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       this.module,
       this.observation,
       this.site,
+      this.sitesGroup,
       this.synthese,
       this.tree,
       this.visit})
@@ -387,6 +418,8 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
   @override
   final ObjectConfig? site;
   @override
+  final ObjectConfig? sitesGroup;
+  @override
   final dynamic synthese;
   @override
   final TreeConfig? tree;
@@ -395,7 +428,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
 
   @override
   String toString() {
-    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, site: $site, synthese: $synthese, tree: $tree, visit: $visit)';
+    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
   }
 
   @override
@@ -413,6 +446,8 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
             (identical(other.observation, observation) ||
                 other.observation == observation) &&
             (identical(other.site, site) || other.site == site) &&
+            (identical(other.sitesGroup, sitesGroup) ||
+                other.sitesGroup == sitesGroup) &&
             const DeepCollectionEquality().equals(other.synthese, synthese) &&
             (identical(other.tree, tree) || other.tree == tree) &&
             (identical(other.visit, visit) || other.visit == visit));
@@ -428,6 +463,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       module,
       observation,
       site,
+      sitesGroup,
       const DeepCollectionEquality().hash(synthese),
       tree,
       visit);
@@ -451,6 +487,7 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
       final ModuleConfig? module,
       final ObjectConfig? observation,
       final ObjectConfig? site,
+      final ObjectConfig? sitesGroup,
       final dynamic synthese,
       final TreeConfig? tree,
       final ObjectConfig? visit}) = _$ModuleConfigurationImpl;
@@ -469,6 +506,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   ObjectConfig? get observation;
   @override
   ObjectConfig? get site;
+  @override
+  ObjectConfig? get sitesGroup;
   @override
   dynamic get synthese;
   @override

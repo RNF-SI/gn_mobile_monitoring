@@ -14,6 +14,7 @@ class ModuleConfiguration with _$ModuleConfiguration {
     ModuleConfig? module,
     ObjectConfig? observation,
     ObjectConfig? site,
+    ObjectConfig? sitesGroup,
     dynamic synthese,
     TreeConfig? tree,
     ObjectConfig? visit,
@@ -46,6 +47,9 @@ class ModuleConfiguration with _$ModuleConfiguration {
       site: json['site'] == null
           ? null
           : ObjectConfig.fromJson(json['site'] as Map<String, dynamic>),
+      sitesGroup: json['sites_group'] == null
+          ? null
+          : ObjectConfig.fromJson(json['sites_group'] as Map<String, dynamic>),
       synthese: json['synthese'],
       tree: json['tree'] == null
           ? null
@@ -68,6 +72,7 @@ extension ModuleConfigurationX on ModuleConfiguration {
         if (module != null) 'module': module?.toJson(),
         if (observation != null) 'observation': observation?.toJson(),
         if (site != null) 'site': site?.toJson(),
+        if (sitesGroup != null) 'sites_group': sitesGroup?.toJson(),
         if (synthese != null) 'synthese': synthese,
         if (tree != null) 'tree': tree?.toJson(),
         if (visit != null) 'visit': visit?.toJson(),
