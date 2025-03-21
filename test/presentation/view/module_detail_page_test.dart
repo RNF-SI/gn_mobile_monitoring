@@ -7,11 +7,14 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 
 void main() {
   late ModuleInfo mockModuleInfo;
+  late MockNavigatorObserver mockNavigatorObserver;
 
   setUp(() {
+    mockNavigatorObserver = MockNavigatorObserver();
     mockModuleInfo = ModuleInfo(
       downloadStatus: ModuleDownloadStatus.moduleDownloaded,
       module: Module(
@@ -26,6 +29,7 @@ void main() {
             baseSiteCode: 'CODE$index',
             altitudeMin: 100,
             altitudeMax: 200,
+            baseSiteDescription: 'Description du site $index',
           ),
         ),
         complement: ModuleComplement(
@@ -48,7 +52,63 @@ void main() {
     );
   });
 
-  testWidgets('ModuleDetailPage shows initial sites list',
+  testWidgets('ModuleDetailPage shows module properties and tabs',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [mockNavigatorObserver],
+        home: ModuleDetailPage(moduleInfo: mockModuleInfo),
+      ),
+    );
+
+    // Wait for initial loading
+    await tester.pumpAndSettle();
+
+    // Verify module properties
+    expect(find.text('Test Module'), findsOneWidget);
+    expect(find.text('Test Description'), findsOneWidget);
+    expect(find.text('Jeu de données'), findsOneWidget);
+
+    // Verify tabs with counts
+    expect(find.text('Secteurs (0)'), findsOneWidget);
+    expect(find.text('Dalles (100)'), findsOneWidget);
+
+    // Verify initial sites list
+    expect(find.text('Site 0'), findsOneWidget);
+    expect(find.text('Description du site 0'), findsOneWidget);
+  });
+
+  testWidgets('ModuleDetailPage shows sites list with navigation',
+      (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        navigatorObservers: [mockNavigatorObserver],
+        home: ModuleDetailPage(moduleInfo: mockModuleInfo),
+      ),
+    );
+
+    // Wait for initial loading
+    await tester.pumpAndSettle();
+
+    // Verify that sites are displayed in cards
+    expect(find.byType(Card), findsNWidgets(20)); // First page of sites
+
+    // Verify site content
+    expect(find.text('Site 0'), findsOneWidget);
+    expect(find.text('Description du site 0'), findsOneWidget);
+
+    // Verify visibility icons
+    expect(find.byIcon(Icons.visibility), findsNWidgets(20));
+
+    // Tap on the visibility icon of the first site
+    await tester.tap(find.byIcon(Icons.visibility).first);
+    await tester.pumpAndSettle();
+
+    // Verify navigation to SiteDetailPage
+    verify(() => mockNavigatorObserver.didPush(any(), any())).called(1);
+  });
+
+  testWidgets('ModuleDetailPage shows properties card with correct information',
       (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -59,21 +119,13 @@ void main() {
     // Wait for initial loading
     await tester.pumpAndSettle();
 
-    // Verify that the table header is shown
-    expect(find.text('Action'), findsOneWidget);
-    expect(find.text('Nom du site'), findsOneWidget);
-    expect(find.text('Code'), findsOneWidget);
-    expect(find.text('Altitude'), findsOneWidget);
-
-    // Verify that the first site is shown
-    expect(find.text('Site 0'), findsOneWidget);
-    expect(find.text('CODE0'), findsOneWidget);
-
-    // Verify that we have the correct number of visibility icons
-    expect(find.byIcon(Icons.visibility), findsNWidgets(20));
+    // Verify that the properties card shows the correct information
+    expect(find.text('Test Module'), findsOneWidget);
+    expect(find.text('Test Description'), findsOneWidget);
+    expect(find.text('Jeu de données'), findsOneWidget);
   });
 
-  testWidgets('ModuleDetailPage shows sites list content correctly',
+  testWidgets('ModuleDetailPage loads more sites on scroll',
       (WidgetTester tester) async {
     await tester.binding.setSurfaceSize(const Size(800, 600));
 
@@ -89,17 +141,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // Verify initial content
-    for (var i = 0; i < 20; i++) {
-      expect(find.text('Site $i'), findsOneWidget);
-      expect(find.text('CODE$i'), findsOneWidget);
-    }
-
-    // Verify that site 20 is not visible yet
+    expect(find.text('Site 0'), findsOneWidget);
+    expect(find.text('Site 19'), findsOneWidget);
     expect(find.text('Site 20'), findsNothing);
 
     // Find the scrollable
-    final scrollable = find.byType(SingleChildScrollView);
-    final scrollableWidget = tester.widget<SingleChildScrollView>(scrollable);
+    final scrollable = find.byType(ListView);
+    final scrollableWidget = tester.widget<ListView>(scrollable);
     final controller = scrollableWidget.controller;
 
     // Simulate scroll to near the bottom
@@ -109,28 +157,37 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
 
-      // Verify that we can now see site 20
+      // Verify that we can now see more sites
       expect(find.text('Site 20'), findsOneWidget);
-      expect(find.text('CODE20'), findsOneWidget);
+      expect(find.text('Site 21'), findsOneWidget);
     } else {
       fail('ScrollController not found');
     }
   });
+}
 
-  testWidgets('ModuleDetailPage shows properties card with correct information',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: ModuleDetailPage(moduleInfo: mockModuleInfo),
-      ),
-    );
+class MockNavigatorObserver extends NavigatorObserver {
+  @override
+  void didPush(Route<dynamic> route, Route<dynamic>? previousRoute) {
+    // Verify that we're navigating to SiteDetailPage
+    expect(route, isA<MaterialPageRoute>());
+    final materialRoute = route as MaterialPageRoute;
+    expect(materialRoute.builder, isA<Function>());
+  }
 
-    // Wait for initial loading
-    await tester.pumpAndSettle();
+  @override
+  void didPop(Route<dynamic> route, Route<dynamic>? previousRoute) {}
 
-    // Verify that the properties card shows the correct information
-    expect(find.text('Propriétés'), findsOneWidget);
-    expect(find.text('Test Module'), findsOneWidget);
-    expect(find.text('Test Description'), findsOneWidget);
-  });
+  @override
+  void didRemove(Route<dynamic> route, Route<dynamic>? previousRoute) {}
+
+  @override
+  void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {}
+
+  @override
+  void didStartUserGesture(
+      Route<dynamic> route, Route<dynamic>? previousRoute) {}
+
+  @override
+  void didStopUserGesture() {}
 }
