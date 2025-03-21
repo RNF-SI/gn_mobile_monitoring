@@ -82,8 +82,12 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
     setState(() {
       _isLoadingSites = true;
       _currentSitesPage = 1;
-      _displayedSites =
-          widget.moduleInfo.module.sites?.take(_sitesPerPage).toList() ?? [];
+
+      // Les sites dans widget.moduleInfo.module.sites sont déjà filtrés
+      // pour ce module spécifique via la relation cor_site_module
+      final sitesForModule = widget.moduleInfo.module.sites ?? [];
+      _displayedSites = sitesForModule.take(_sitesPerPage).toList();
+
       _isLoadingSites = false;
     });
   }
@@ -97,14 +101,19 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
 
     final startIndex = _currentSitesPage * _sitesPerPage;
     final endIndex = startIndex + _sitesPerPage;
-    final allSites = widget.moduleInfo.module.sites ?? [];
 
-    if (startIndex < allSites.length) {
+    // Les sites dans widget.moduleInfo.module.sites sont déjà filtrés
+    // pour ce module spécifique via la relation cor_site_module
+    final allSitesForModule = widget.moduleInfo.module.sites ?? [];
+
+    if (startIndex < allSitesForModule.length) {
       setState(() {
         _displayedSites.addAll(
-          allSites.getRange(
+          allSitesForModule.getRange(
             startIndex,
-            endIndex > allSites.length ? allSites.length : endIndex,
+            endIndex > allSitesForModule.length
+                ? allSitesForModule.length
+                : endIndex,
           ),
         );
         _currentSitesPage++;
@@ -137,48 +146,59 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   Widget build(BuildContext context) {
     final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
     final sitesGroupConfig =
-        widget.moduleInfo.module.complement?.configuration?.sitesGroup;
-
-    // Récupérer les labels pour les onglets
-    final sitesGroupLabel = sitesGroupConfig?.label ?? 'Secteurs';
-    final siteLabel = siteConfig?.labelList ?? siteConfig?.label ?? 'Dalles';
-
-    // Compter le nombre de sites et de groupes de sites
-    final sitesCount = widget.moduleInfo.module.sites?.length ?? 0;
-    final sitesGroupCount = widget.moduleInfo.module.sitesGroup?.length ?? 0;
+        widget.moduleInfo.module.complement?.configuration?.site;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.moduleInfo.module.moduleLabel ?? ''),
+        title: Text(
+            'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Module Details'}'),
       ),
       body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Afficher les propriétés du module
+          // Properties Card
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: _buildModulePropertiesList(),
-          ),
-          // Afficher les onglets avec le comptage
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(
-                text: '$sitesGroupLabel ($sitesGroupCount)',
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Propriétés',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _buildModulePropertiesList(),
+                  ],
+                ),
               ),
-              Tab(
-                text: '$siteLabel ($sitesCount)',
-              ),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
-              controller: _tabController,
-              children: [
-                _buildSitesGroupList(),
-                _buildSitesList(),
-              ],
             ),
           ),
+          if (_childrenTypes.isNotEmpty) ...[
+            // Tab Bar
+            TabBar(
+              controller: _tabController,
+              tabs: [
+                if (_childrenTypes.contains('sites_group'))
+                  Tab(
+                      text:
+                          '${sitesGroupConfig?.labelList ?? 'Groupes'} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
+                if (_childrenTypes.contains('site'))
+                  Tab(text: siteConfig?.labelList ?? 'Sites'),
+              ],
+            ),
+            // Tab Views
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
+                  if (_childrenTypes.contains('site')) _buildSitesTab(),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -293,81 +313,104 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                 'Nom du groupe'
             : 'Nom du groupe';
 
+    // Vérifier si des groupes sont associés à ce module
+    final sitesGroup = widget.moduleInfo.module.sitesGroup ?? [];
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: SingleChildScrollView(
-        child: Table(
-          columnWidths: const {
-            0: FixedColumnWidth(80), // Reduced width for single icon
-            1: FlexColumnWidth(2), // Name column
-            2: FixedColumnWidth(80), // Sites count
-            3: FixedColumnWidth(80), // Visits count
-          },
-          children: [
-            TableRow(
-              children: [
-                const Padding(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Text('Action',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
+        child: sitesGroup.isEmpty
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: Text(
+                    'Aucun groupe de sites associé à ce module',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(groupNameLabel,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Sites',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Visites',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            if (widget.moduleInfo.module.sitesGroup != null)
-              ...widget.moduleInfo.module.sitesGroup!.map((group) => TableRow(
+              )
+            : Table(
+                columnWidths: const {
+                  0: FixedColumnWidth(80), // Reduced width for single icon
+                  1: FlexColumnWidth(2), // Name column
+                  2: FixedColumnWidth(80), // Sites count
+                  3: FixedColumnWidth(80), // Visits count
+                },
+                children: [
+                  TableRow(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        height: 48,
-                        alignment: Alignment.center,
-                        child: IconButton(
-                          icon: const Icon(Icons.visibility, size: 20),
-                          onPressed: () {},
-                          padding: EdgeInsets.zero,
-                          constraints: const BoxConstraints(
-                            minWidth: 36,
-                            minHeight: 36,
-                          ),
-                        ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 16.0),
+                        child: Text('Action',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      Container(
-                        height: 48,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: Text(group.sitesGroupName ?? ''),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(groupNameLabel,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      Container(
-                        height: 48,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: const Text('0'), // TODO: Implement actual count
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('Sites',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
-                      Container(
-                        height: 48,
-                        alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                        child: const Text('0'), // TODO: Implement actual count
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text('Visites',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
-                  )),
-          ],
-        ),
+                  ),
+                  ...widget.moduleInfo.module.sitesGroup!.map((group) =>
+                      TableRow(
+                        children: [
+                          Container(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            height: 48,
+                            alignment: Alignment.center,
+                            child: IconButton(
+                              icon: const Icon(Icons.visibility, size: 20),
+                              onPressed: () {},
+                              padding: EdgeInsets.zero,
+                              constraints: const BoxConstraints(
+                                minWidth: 36,
+                                minHeight: 36,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 48,
+                            alignment: Alignment.centerLeft,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Text(group.sitesGroupName ?? ''),
+                          ),
+                          Container(
+                            height: 48,
+                            alignment: Alignment.centerLeft,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child:
+                                const Text('0'), // TODO: Implement actual count
+                          ),
+                          Container(
+                            height: 48,
+                            alignment: Alignment.centerLeft,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child:
+                                const Text('0'), // TODO: Implement actual count
+                          ),
+                        ],
+                      )),
+                ],
+              ),
       ),
     );
   }
@@ -410,101 +453,119 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
           Expanded(
             child: SingleChildScrollView(
               controller: _sitesScrollController,
-              child: Table(
-                columnWidths: const {
-                  0: FixedColumnWidth(80), // Action column
-                  1: FlexColumnWidth(2), // Name column
-                  2: FixedColumnWidth(100), // Code column
-                  3: FixedColumnWidth(80), // Altitude column
-                },
-                children: [
-                  TableRow(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: Text('Action',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
+              child: _displayedSites.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Text(
+                          'Aucun site associé à ce module',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(baseSiteNameLabel,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(baseSiteCodeLabel,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(altitudeLabel,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  ..._displayedSites.map((site) => TableRow(
-                        children: [
-                          Container(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            height: 48,
-                            alignment: Alignment.center,
-                            child: IconButton(
-                              icon: const Icon(Icons.visibility, size: 20),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => SiteDetailPage(
-                                      site: site,
-                                      moduleInfo: widget.moduleInfo,
+                    )
+                  : Table(
+                      columnWidths: const {
+                        0: FixedColumnWidth(80), // Action column
+                        1: FlexColumnWidth(2), // Name column
+                        2: FixedColumnWidth(100), // Code column
+                        3: FixedColumnWidth(80), // Altitude column
+                      },
+                      children: [
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 16.0),
+                              child: Text('Action',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(baseSiteNameLabel,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(baseSiteCodeLabel,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(altitudeLabel,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        ..._displayedSites.map((site) => TableRow(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  child: IconButton(
+                                    icon:
+                                        const Icon(Icons.visibility, size: 20),
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SiteDetailPage(
+                                            site: site,
+                                            moduleInfo: widget.moduleInfo,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 36,
+                                      minHeight: 36,
                                     ),
                                   ),
-                                );
-                              },
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 36,
-                                minHeight: 36,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(site.baseSiteName ?? ''),
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(site.baseSiteCode ?? ''),
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(
-                              site.altitudeMin != null &&
-                                      site.altitudeMax != null
-                                  ? '${site.altitudeMin}-${site.altitudeMax}m'
-                                  : site.altitudeMin?.toString() ??
-                                      site.altitudeMax?.toString() ??
-                                      '',
-                            ),
-                          ),
-                        ],
-                      )),
-                ],
-              ),
+                                ),
+                                Container(
+                                  height: 48,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(site.baseSiteName ?? ''),
+                                ),
+                                Container(
+                                  height: 48,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(site.baseSiteCode ?? ''),
+                                ),
+                                Container(
+                                  height: 48,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(
+                                    site.altitudeMin != null &&
+                                            site.altitudeMax != null
+                                        ? '${site.altitudeMin}-${site.altitudeMax}m'
+                                        : site.altitudeMin?.toString() ??
+                                            site.altitudeMax?.toString() ??
+                                            '',
+                                  ),
+                                ),
+                              ],
+                            )),
+                      ],
+                    ),
             ),
           ),
           if (_isLoadingSites)
@@ -514,107 +575,6 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSitesGroupList() {
-    final sitesGroupConfig =
-        widget.moduleInfo.module.complement?.configuration?.sitesGroup;
-    final sitesGroups = widget.moduleInfo.module.sitesGroup ?? [];
-
-    return ListView.builder(
-      itemCount: sitesGroups.length,
-      itemBuilder: (context, index) {
-        final siteGroup = sitesGroups[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: ListTile(
-            dense: true,
-            title: Text(
-              siteGroup.sitesGroupName ?? '',
-              style: const TextStyle(fontSize: 14),
-            ),
-            subtitle: siteGroup.sitesGroupDescription != null
-                ? Text(
-                    siteGroup.sitesGroupDescription!,
-                    style: const TextStyle(fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : null,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility, size: 20),
-                  onPressed: () {
-                    // TODO: Navigate to site group detail page
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildSitesList() {
-    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
-    final sites = widget.moduleInfo.module.sites ?? [];
-
-    return ListView.builder(
-      itemCount: sites.length,
-      itemBuilder: (context, index) {
-        final site = sites[index];
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-          child: ListTile(
-            dense: true,
-            title: Text(
-              site.baseSiteName ?? '',
-              style: const TextStyle(fontSize: 14),
-            ),
-            subtitle: site.baseSiteDescription != null
-                ? Text(
-                    site.baseSiteDescription!,
-                    style: const TextStyle(fontSize: 12),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  )
-                : null,
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.visibility, size: 20),
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => SiteDetailPage(
-                          site: site,
-                          moduleInfo: widget.moduleInfo,
-                        ),
-                      ),
-                    );
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(
-                    minWidth: 36,
-                    minHeight: 36,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
     );
   }
 }
