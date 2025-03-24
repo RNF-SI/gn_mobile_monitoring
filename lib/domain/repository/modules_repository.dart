@@ -12,4 +12,11 @@ abstract class ModulesRepository {
 
   /// Downloads additional data for a specific module
   Future<void> downloadModuleData(int moduleId);
+
+  /// Récupère un module avec sa configuration complète
+  /// Retourne un Future qui complète seulement lorsque la configuration est disponible
+  /// Si la configuration n'est pas disponible, retourne un Module avec les données initiales
+  /// Si la configuration est disponible, retourne un Module avec les données complètes
+  /// Si la configuration n'est pas disponible, retourne un Module avec les données initiales
+  Future<Module> getModuleWithConfig(int moduleId);
 }

@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -245,4 +247,9 @@ final updateObservationUseCaseProvider = Provider<UpdateObservationUseCase>(
 final deleteObservationUseCaseProvider = Provider<DeleteObservationUseCase>(
   (ref) =>
       DeleteObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+// UseCase pour récupérer un module avec sa configuration complète
+final getModuleWithConfigUseCaseProvider = Provider<GetModuleWithConfigUseCase>(
+  (ref) => GetModuleWithConfigUseCaseImpl(ref.watch(modulesRepositoryProvider)),
 );
