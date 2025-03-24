@@ -3,6 +3,7 @@ enum SyncStep {
   syncingModules,
   syncingSites,
   syncingSiteGroups,
+  deletingDatabase,
   complete,
   error
 }
@@ -26,6 +27,12 @@ class SyncStatus {
     step: SyncStep.initial,
     message: 'Prêt à synchroniser',
     isInProgress: false,
+  );
+
+  static const deletingDatabase = SyncStatus(
+    step: SyncStep.deletingDatabase,
+    message: 'Suppression et rechargement de la base de données...',
+    isInProgress: true,
   );
 
   static const syncingModules = SyncStatus(
@@ -53,11 +60,11 @@ class SyncStatus {
   );
 
   factory SyncStatus.error(String details) => SyncStatus(
-    step: SyncStep.error,
-    message: 'Erreur de synchronisation',
-    errorDetails: details,
-    isInProgress: false,
-  );
+        step: SyncStep.error,
+        message: 'Erreur de synchronisation',
+        errorDetails: details,
+        isInProgress: false,
+      );
 
   SyncStatus copyWith({
     SyncStep? step,

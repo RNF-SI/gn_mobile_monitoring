@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 class MenuActions extends ConsumerWidget {
@@ -11,7 +10,7 @@ class MenuActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
-    final databaseService = ref.read(databaseServiceProvider.notifier);
+    final databaseSyncService = ref.read(databaseSyncServiceProvider);
     final syncService = ref.read(syncServiceProvider);
 
     // Observer le statut de synchronisation
@@ -26,12 +25,15 @@ class MenuActions extends ConsumerWidget {
         ref,
         context,
         authViewModel,
-        databaseService,
+        databaseSyncService,
         syncService,
       ),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
-        _buildMenuItem(Icons.delete, 'Supprimer la base de données', 'delete'),
+        _buildMenuItem(
+            Icons.delete,
+            '[DEV] Suppression et rechargement de la base de données',
+            'delete'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(Icons.logout, 'Déconnexion', 'logout'),
@@ -55,7 +57,7 @@ class MenuActions extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
     authViewModel,
-    databaseService,
+    databaseSyncService,
     syncService,
   ) async {
     switch (value) {
@@ -63,7 +65,7 @@ class MenuActions extends ConsumerWidget {
         await _startSync(context, syncService, ref);
         break;
       case 'delete':
-        await _confirmDelete(context, databaseService, ref);
+        await _confirmDelete(context, databaseSyncService, syncService);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -75,41 +77,38 @@ class MenuActions extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context,
-      DatabaseService databaseService, WidgetRef ref) async {
-    final confirm = await showDialog<bool>(
+      DatabaseSyncService databaseSyncService, SyncService syncService) async {
+    final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Confirmation'),
         content: const Text(
-            'Êtes-vous sûr de vouloir supprimer et réinitialiser la base de données ? Une synchronisation complète sera effectuée après la réinitialisation.'),
+            'Êtes-vous sûr de vouloir supprimer la base de données ?'),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
             child: const Text('Annuler'),
-            onPressed: () => Navigator.of(context).pop(false),
           ),
           TextButton(
-            child: const Text('Supprimer & Synchroniser'),
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Confirmer'),
           ),
         ],
       ),
     );
 
-    if (confirm == true) {
-      final scaffoldMessenger = ScaffoldMessenger.of(context);
-      // Afficher un message de chargement
-      scaffoldMessenger.showSnackBar(
-        const SnackBar(
-            content:
-                Text('Réinitialisation de la base de données en cours...')),
-      );
+    if (confirmed == true) {
+      final success = await syncService.deleteAndReinitializeDatabase();
 
-      // Supprimer et réinitialiser la base de données
-      await databaseService.deleteAndReinitializeDatabase();
-
-      // Lancer la synchronisation après la réinitialisation
-      if (context.mounted) {
-        await _startSync(context, ref.read(syncServiceProvider), ref);
+      if (!success) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content:
+                  Text('Erreur lors de la suppression de la base de données'),
+            ),
+          );
+        }
       }
     }
   }
@@ -174,13 +173,6 @@ class MenuActions extends ConsumerWidget {
     }
 
     // Démarrer la synchronisation
-    final success = await syncService.syncAll();
-
-    // Rafraîchir la liste des modules après la synchronisation
-    if (success) {
-      await ref
-          .read(userModuleListeViewModelStateNotifierProvider.notifier)
-          .loadModules();
-    }
+    await syncService.syncAll();
   }
 }

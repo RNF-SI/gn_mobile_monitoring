@@ -58,7 +58,8 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final _email = '';
   final _password = '';
 
-  User? user;
+  User? _user;
+  User? get user => _user;
 
   StreamController<User?> controller = StreamController<User?>();
 
@@ -91,19 +92,19 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._fetchSiteGroupsUseCase,
     this._ref,
   ) : super(const loadingState.State.init()) {
-    controller.add(user);
+    controller.add(_user);
   }
-  
+
   // For convenience, access to incremental sync use cases through ref
-  IncrementalSyncModulesUseCase get _incrementalSyncModulesUseCase => 
+  IncrementalSyncModulesUseCase get _incrementalSyncModulesUseCase =>
       _ref.read(incrementalSyncModulesUseCaseProvider);
-  
-  IncrementalSyncSitesUseCase get _incrementalSyncSitesUseCase => 
+
+  IncrementalSyncSitesUseCase get _incrementalSyncSitesUseCase =>
       _ref.read(incrementalSyncSitesUseCaseProvider);
-  
-  IncrementalSyncSiteGroupsUseCase get _incrementalSyncSiteGroupsUseCase => 
+
+  IncrementalSyncSiteGroupsUseCase get _incrementalSyncSiteGroupsUseCase =>
       _ref.read(incrementalSyncSiteGroupsUseCaseProvider);
-      
+
   GetModulesUseCase get _getModulesUseCase =>
       _ref.read(getModulesUseCaseProvider);
 
@@ -124,7 +125,8 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       _updateLoginStatus(LoginStatusInfo.authenticating);
 
       await _loginUseCase.execute(identifiant, password).then((user) async {
-        controller.add(user);
+        _user = user;
+        controller.add(_user);
 
         try {
           // Save user login state
@@ -137,33 +139,34 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           // Check if database already has data to determine if we need full sync or incremental
           final existingModules = await _getModulesUseCase.execute();
           final hasDatabaseData = existingModules.isNotEmpty;
-          
+
           try {
             if (hasDatabaseData) {
-              print("Database already contains data. Performing incremental sync...");
-              
+              print(
+                  "Database already contains data. Performing incremental sync...");
+
               // Perform incremental sync of modules
               _updateLoginStatus(LoginStatusInfo.incrementalSyncModules);
               await _incrementalSyncModulesUseCase.execute(user.token);
-              
+
               // Then incremental sync sites
               _updateLoginStatus(LoginStatusInfo.incrementalSyncSites);
               await _incrementalSyncSitesUseCase.execute(user.token);
-              
+
               // Then incremental sync site groups
               _updateLoginStatus(LoginStatusInfo.incrementalSyncSiteGroups);
               await _incrementalSyncSiteGroupsUseCase.execute(user.token);
             } else {
               print("Empty database. Performing full initial sync...");
-              
+
               // First fetch and sync modules
               _updateLoginStatus(LoginStatusInfo.fetchingModules);
               await _fetchModulesUseCase.execute(user.token);
-              
+
               // Then fetch sites
               _updateLoginStatus(LoginStatusInfo.fetchingSites);
               await _fetchSitesUseCase.execute(user.token);
-              
+
               // Then fetch site groups
               _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
               await _fetchSiteGroupsUseCase.execute(user.token);
@@ -227,7 +230,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
               },
             ),
           ),
-          // content: Text(e.toString()),
           actions: [
             TextButton(
                 onPressed: () {
@@ -255,15 +257,14 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           ],
         ),
       );
-      // state = State.error(e);
     }
   }
-
 
   Future<void> signOut(WidgetRef ref, BuildContext context) async {
     try {
       // Clear user data
-      controller.add(null);
+      _user = null;
+      controller.add(_user);
 
       // Update login state
       await _setIsLoggedInFromLocalStorageUseCase.execute(false);
