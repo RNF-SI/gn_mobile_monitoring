@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
@@ -15,6 +16,12 @@ class HomePage extends ConsumerWidget {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncStatusProvider);
     final isSyncing = syncStatus.isInProgress;
+
+    // Détermine si l'overlay doit être affiché
+    final showOverlay = syncStatus.step == SyncStep.syncingModules ||
+                      syncStatus.step == SyncStep.syncingSites ||
+                      syncStatus.step == SyncStep.syncingSiteGroups ||
+                      syncStatus.step == SyncStep.deletingDatabase;
 
     return DefaultTabController(
       length: 3,
@@ -54,9 +61,10 @@ class HomePage extends ConsumerWidget {
             ),
           ),
           // Overlay pour bloquer les interactions pendant la synchronisation
-          if (isSyncing)
+          if (showOverlay)
             Positioned.fill(
               child: ModalBarrier(
+                key: const Key('sync-modal-barrier'),
                 color: Colors.black.withOpacity(0.1),
                 dismissible: false,
               ),

@@ -119,6 +119,23 @@ void main() {
         equals(ModuleDownloadStatus.moduleNotDownloaded));
   });
 
+  test('loadModules should handle errors gracefully', () async {
+    // Arrange
+    when(() => mockGetModulesUseCase.execute())
+        .thenThrow(Exception('Failed to load modules'));
+
+    // Act
+    final userModulesViewModel =
+        container.read(userModuleListeViewModelStateNotifierProvider.notifier);
+    await userModulesViewModel.loadModules();
+
+    // Assert
+    final state = container.read(userModuleListeViewModelStateNotifierProvider);
+    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
+    expect(state.data, isNull);
+    expect(state.toString(), contains('Failed to load modules'));
+  });
+
   test(
       'startDownloadModule should update module state during and after download',
       () async {
@@ -175,5 +192,93 @@ void main() {
     expect(updatedModuleInfo.downloadStatus,
         equals(ModuleDownloadStatus.moduleDownloaded));
     expect(updatedModuleInfo.downloadProgress, equals(1.0));
+  });
+
+  test('startDownloadModule should handle download errors gracefully',
+      () async {
+    // Arrange
+    final mockModule = const Module(
+      id: 1,
+      moduleCode: 'code1',
+      moduleLabel: 'Module 1',
+      moduleDesc: 'Description 1',
+      modulePath: 'path/to/module1',
+      activeFrontend: true,
+      moduleTarget: 'target1',
+      modulePicto: 'picto1',
+      moduleDocUrl: 'doc/url1',
+      moduleGroup: 'group1',
+      downloaded: false,
+    );
+
+    final moduleInfo = ModuleInfo(
+      module: mockModule,
+      downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+    );
+
+    // Set initial state
+    final userModulesViewModel =
+        container.read(userModuleListeViewModelStateNotifierProvider.notifier);
+
+    // Mock initial state with our module
+    when(() => mockGetModulesUseCase.execute())
+        .thenAnswer((_) async => [mockModule]);
+    await userModulesViewModel.loadModules();
+
+    // Mock download usecase to throw error
+    when(() => mockDownloadModuleDataUseCase.execute(any(), any()))
+        .thenThrow(Exception('Download failed'));
+
+    // Act
+    await userModulesViewModel.startDownloadModule(moduleInfo, mockContext);
+
+    // Assert
+    final state = container.read(userModuleListeViewModelStateNotifierProvider);
+    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
+    expect(state.data, isNull);
+    expect(state.toString(), contains('Download failed'));
+  });
+
+  test('stopDownloadModule should update module state correctly', () async {
+    // Arrange
+    final mockModule = const Module(
+      id: 1,
+      moduleCode: 'code1',
+      moduleLabel: 'Module 1',
+      moduleDesc: 'Description 1',
+      modulePath: 'path/to/module1',
+      activeFrontend: true,
+      moduleTarget: 'target1',
+      modulePicto: 'picto1',
+      moduleDocUrl: 'doc/url1',
+      moduleGroup: 'group1',
+      downloaded: false,
+    );
+
+    final moduleInfo = ModuleInfo(
+      module: mockModule,
+      downloadStatus: ModuleDownloadStatus.moduleDownloading,
+      downloadProgress: 0.5,
+    );
+
+    // Set initial state
+    final userModulesViewModel =
+        container.read(userModuleListeViewModelStateNotifierProvider.notifier);
+
+    // Mock initial state with our module
+    when(() => mockGetModulesUseCase.execute())
+        .thenAnswer((_) async => [mockModule]);
+    await userModulesViewModel.loadModules();
+
+    // Act
+    await userModulesViewModel.stopDownloadModule(moduleInfo);
+
+    // Assert
+    final state = container.read(userModuleListeViewModelStateNotifierProvider);
+    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
+
+    final updatedModuleInfo = state.data!.values[0];
+    expect(updatedModuleInfo.downloadStatus,
+        equals(ModuleDownloadStatus.moduleNotDownloaded));
   });
 }
