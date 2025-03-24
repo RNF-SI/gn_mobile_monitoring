@@ -1,56 +1,199 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class ModuleDetailPage extends StatefulWidget {
+class ModuleDetailPage extends ConsumerStatefulWidget {
   final ModuleInfo moduleInfo;
 
   const ModuleDetailPage({super.key, required this.moduleInfo});
 
   @override
-  State<ModuleDetailPage> createState() => _ModuleDetailPageState();
+  ConsumerState<ModuleDetailPage> createState() => _ModuleDetailPageState();
 }
 
-class _ModuleDetailPageState extends State<ModuleDetailPage>
+class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  late List<String> _childrenTypes;
+  TabController? _tabController;
+  List<String> _childrenTypes = [];
   final ScrollController _sitesScrollController = ScrollController();
 
   static const int _sitesPerPage = 20;
   int _currentSitesPage = 1;
   bool _isLoadingSites = false;
   List<dynamic> _displayedSites = [];
+  bool _configurationLoaded = false;
+  bool _isInitialLoading = true;
+
+  // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
+  Module? _updatedModule;
 
   // Configuration du module parsée
-  late Map<String, dynamic> _moduleConfig;
+  Map<String, dynamic> _moduleConfig = {};
 
   @override
   void initState() {
     super.initState();
-    _childrenTypes = widget.moduleInfo.module.complement!.configuration?.module
-            ?.childrenTypes ??
-        [];
-    _tabController = TabController(length: _childrenTypes.length, vsync: this);
-    _tabController.addListener(_handleTabChange);
+
+    // Ajouter un écouteur pour le défilement
     _sitesScrollController.addListener(_handleScroll);
 
-    // Initialiser la configuration du module parsée
-    _initializeModuleConfig();
+    // Vérifier immédiatement si la configuration est disponible
+    if (widget.moduleInfo.module.complement?.configuration != null) {
+      _configurationLoaded = true;
 
-    if (_childrenTypes.contains('site')) {
+      // Stocker une référence au module actuel
+      _updatedModule = widget.moduleInfo.module;
+
+      // Configuration initiale (déjà disponible)
+      _updateChildrenTypesFromConfig();
+      _initializeModuleConfig();
+      _loadSitesIfAvailable();
+
+      // Marquer le chargement comme terminé
+      Future.delayed(Duration.zero, () {
+        if (mounted) {
+          setState(() {
+            _isInitialLoading = false;
+          });
+        }
+      });
+    } else {
+      // Utiliser le UseCase pour récupérer la configuration complète
+      _loadModuleWithConfig();
+    }
+  }
+
+  // Méthode pour charger le module avec sa configuration complète
+  Future<void> _loadModuleWithConfig() async {
+    try {
+      // Récupérer le UseCase depuis le provider
+      final getModuleWithConfigUseCase =
+          ref.read(getModuleWithConfigUseCaseProvider);
+
+      // Charger le module avec sa configuration
+      final moduleWithConfig =
+          await getModuleWithConfigUseCase.execute(widget.moduleInfo.module.id);
+
+      // Mettre à jour le ModuleInfo
+      if (mounted) {
+        setState(() {
+          // Stocker le module mis à jour avec sa configuration dans la variable de classe
+          _updatedModule = moduleWithConfig;
+
+          // Marquer la configuration comme chargée
+          _configurationLoaded = true;
+          _isInitialLoading = false;
+
+          // Mettre à jour l'interface
+          _updateChildrenTypesFromConfig();
+          _initializeModuleConfig();
+          _loadSitesIfAvailable();
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          // En cas d'erreur, marquer quand même comme chargé pour éviter un blocage de l'interface
+          _configurationLoaded = true;
+          _isInitialLoading = false;
+
+          // Utiliser la configuration actuelle, même si elle est incomplète
+          _updateChildrenTypesFromConfig();
+          _initializeModuleConfig();
+          _loadSitesIfAvailable();
+        });
+      }
+    }
+  }
+
+  void _updateChildrenTypesFromConfig() {
+    // Vérifier si le module a une configuration ou non
+    // Utiliser le module mis à jour s'il est disponible
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
+    if (module.complement?.configuration?.module != null) {
+      _childrenTypes =
+          module.complement!.configuration!.module!.childrenTypes ?? [];
+    } else {
+      // Si le module n'a pas de configuration, utiliser des valeurs par défaut
+      _childrenTypes = [];
+
+      // Si le module a des sites, ajouter 'site' au childrenTypes par défaut
+      if (module.sites != null && module.sites!.isNotEmpty) {
+        _childrenTypes = ['site'];
+      }
+
+      // Si le module a des groupes de sites, ajouter 'sites_group' au childrenTypes par défaut
+      if (_updatedModule?.sitesGroup != null &&
+          _updatedModule!.sitesGroup!.isNotEmpty) {
+        _childrenTypes = [..._childrenTypes, 'sites_group'];
+      } else if (widget.moduleInfo.module.sitesGroup != null &&
+          widget.moduleInfo.module.sitesGroup!.isNotEmpty) {
+        _childrenTypes = [..._childrenTypes, 'sites_group'];
+      }
+    }
+
+    // Assurer que nous avons au moins un onglet (même si aucun enfant n'est trouvé)
+    if (_childrenTypes.isEmpty) {
+      // Check using _updatedModule first if available
+      if (_updatedModule != null &&
+          _updatedModule!.sites != null &&
+          _updatedModule!.sites!.isNotEmpty) {
+        _childrenTypes = ['site'];
+      }
+      // Fallback to widget.moduleInfo.module
+      else if (widget.moduleInfo.module.sites != null &&
+          widget.moduleInfo.module.sites!.isNotEmpty) {
+        _childrenTypes = ['site'];
+      }
+    }
+
+    // Recréer le TabController si nécessaire
+    if (_tabController == null ||
+        _tabController!.length != _childrenTypes.length) {
+      if (_tabController != null) {
+        _tabController!.removeListener(_handleTabChange);
+        _tabController!.dispose();
+      }
+
+      _tabController = TabController(
+          length: _childrenTypes.isNotEmpty ? _childrenTypes.length : 1,
+          vsync: this);
+      _tabController!.addListener(_handleTabChange);
+    }
+  }
+
+  void _loadSitesIfAvailable() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    if (_childrenTypes.contains('site') ||
+        (module.sites != null && module.sites!.isNotEmpty)) {
       _loadInitialSites();
     }
   }
 
+  @override
+  void dispose() {
+    _sitesScrollController.removeListener(_handleScroll);
+    if (_tabController != null) {
+      _tabController!.removeListener(_handleTabChange);
+      _tabController!.dispose();
+    }
+    _sitesScrollController.dispose();
+    super.dispose();
+  }
+
   void _initializeModuleConfig() {
     // Récupérer la configuration du module
-    final moduleConfig =
-        widget.moduleInfo.module.complement?.configuration?.module;
-    final customConfig =
-        widget.moduleInfo.module.complement?.configuration?.custom;
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final moduleConfig = module.complement?.configuration?.module;
+    final customConfig = module.complement?.configuration?.custom;
 
     // Créer un ObjectConfig à partir du ModuleConfig pour pouvoir utiliser le FormConfigParser
     if (moduleConfig != null) {
@@ -68,12 +211,42 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
       _moduleConfig =
           FormConfigParser.generateUnifiedSchema(objectConfig, customConfig);
     } else {
-      _moduleConfig = {};
+      // Configuration par défaut si moduleConfig est null
+      _moduleConfig = {
+        'moduleLabel': {'attribut_label': 'Nom du module', 'required': true},
+        'moduleDesc': {'attribut_label': 'Description', 'required': false}
+      };
+
+      // Ajouter des propriétés de base pour les sites si présents
+      final module = _updatedModule ?? widget.moduleInfo.module;
+      if (module.sites != null && module.sites!.isNotEmpty) {
+        _moduleConfig['base_site_name'] = {
+          'attribut_label': 'Nom du site',
+          'required': true
+        };
+        _moduleConfig['base_site_code'] = {
+          'attribut_label': 'Code',
+          'required': false
+        };
+      }
+
+      // Ajouter des propriétés de base pour les groupes de sites si présents
+      if (module.sitesGroup != null && module.sitesGroup!.isNotEmpty) {
+        _moduleConfig['sites_group_name'] = {
+          'attribut_label': 'Nom du groupe',
+          'required': true
+        };
+        _moduleConfig['sites_group_code'] = {
+          'attribut_label': 'Code du groupe',
+          'required': false
+        };
+      }
     }
   }
 
   void _handleTabChange() {
-    if (_tabController.index == _childrenTypes.indexOf('site')) {
+    if (_tabController != null &&
+        _tabController!.index == _childrenTypes.indexOf('site')) {
       _loadInitialSites();
     }
   }
@@ -83,9 +256,10 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
       _isLoadingSites = true;
       _currentSitesPage = 1;
 
-      // Les sites dans widget.moduleInfo.module.sites sont déjà filtrés
+      // Les sites dans le module sont déjà filtrés
       // pour ce module spécifique via la relation cor_site_module
-      final sitesForModule = widget.moduleInfo.module.sites ?? [];
+      final module = _updatedModule ?? widget.moduleInfo.module;
+      final sitesForModule = module.sites ?? [];
       _displayedSites = sitesForModule.take(_sitesPerPage).toList();
 
       _isLoadingSites = false;
@@ -102,9 +276,10 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
     final startIndex = _currentSitesPage * _sitesPerPage;
     final endIndex = startIndex + _sitesPerPage;
 
-    // Les sites dans widget.moduleInfo.module.sites sont déjà filtrés
+    // Les sites dans le module sont déjà filtrés
     // pour ce module spécifique via la relation cor_site_module
-    final allSitesForModule = widget.moduleInfo.module.sites ?? [];
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final allSitesForModule = module.sites ?? [];
 
     if (startIndex < allSitesForModule.length) {
       setState(() {
@@ -134,24 +309,39 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   @override
-  void dispose() {
-    _tabController.removeListener(_handleTabChange);
-    _sitesScrollController.removeListener(_handleScroll);
-    _sitesScrollController.dispose();
-    _tabController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
-    final sitesGroupConfig =
-        widget.moduleInfo.module.complement?.configuration?.site;
+    // Utiliser le module mis à jour s'il est disponible, sinon utiliser celui du widget
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
+    final siteConfig = module.complement?.configuration?.site;
+    final sitesGroupConfig = module.complement?.configuration?.sitesGroup;
+
+    // Nombre d'éléments pour les groupes et les sites
+    final int siteGroupCount = module.sitesGroup?.length ?? 0;
+    final int siteCount = module.sites?.length ?? 0;
+
+    // Vérifier si la configuration est en cours de chargement
+    final bool isConfiguringModule = _isInitialLoading ||
+        (!_configurationLoaded && module.complement != null);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-            'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Module Details'}'),
+        title: Text('Module: ${module.moduleLabel ?? 'Module Details'}'),
+        // Afficher un indicateur de chargement dans l'AppBar si configuration en cours
+        actions: [
+          if (isConfiguringModule)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2.0,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              ),
+            ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,23 +365,57 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
               ),
             ),
           ),
-          if (_childrenTypes.isNotEmpty) ...[
+          // Message d'information si le module est en cours de configuration
+          if (isConfiguringModule)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                color: Colors.blue[50],
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Row(
+                    children: [
+                      Icon(Icons.info_outline, color: Colors.blue[700]),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Chargement de la configuration du module...',
+                          style: TextStyle(color: Colors.blue[700]),
+                        ),
+                      ),
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.0,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          if (_childrenTypes.isNotEmpty && _tabController != null) ...[
             // Tab Bar
             TabBar(
-              controller: _tabController,
+              controller: _tabController!,
               tabs: [
                 if (_childrenTypes.contains('sites_group'))
                   Tab(
                       text:
-                          '${sitesGroupConfig?.labelList ?? 'Groupes'} (${widget.moduleInfo.module.sitesGroup?.length ?? 0})'),
+                          '${sitesGroupConfig?.labelList ?? sitesGroupConfig?.label ?? 'Groupes de sites'} ($siteGroupCount)'),
                 if (_childrenTypes.contains('site'))
-                  Tab(text: siteConfig?.labelList ?? 'Sites'),
+                  Tab(
+                      text:
+                          '${siteConfig?.labelList ?? siteConfig?.label ?? 'Sites'} ($siteCount)'),
               ],
             ),
             // Tab Views
             Expanded(
               child: TabBarView(
-                controller: _tabController,
+                controller: _tabController!,
                 children: [
                   if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
                   if (_childrenTypes.contains('site')) _buildSitesTab(),
@@ -199,23 +423,27 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
               ),
             ),
           ],
+          // Si aucun onglet n'est disponible mais qu'on a des sites, afficher la liste des sites directement
+          if (_childrenTypes.isEmpty && siteCount > 0)
+            Expanded(
+              child: _buildSitesTab(),
+            ),
         ],
       ),
     );
   }
 
   Widget _buildModulePropertiesList() {
+    // Utiliser le module mis à jour s'il est disponible, sinon utiliser celui du widget
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
     // Propriétés basiques à toujours afficher
     final basicProperties = [
-      {
-        'key': 'moduleLabel',
-        'label': 'Nom',
-        'value': widget.moduleInfo.module.moduleLabel ?? ''
-      },
+      {'key': 'moduleLabel', 'label': 'Nom', 'value': module.moduleLabel ?? ''},
       {
         'key': 'moduleDesc',
         'label': 'Description',
-        'value': widget.moduleInfo.module.moduleDesc ?? ''
+        'value': module.moduleDesc ?? ''
       },
       {
         'key': 'dataset',
@@ -236,8 +464,8 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
     // Ajouter les propriétés depuis la configuration parsée
     if (_moduleConfig.isNotEmpty) {
       // Récupérer la liste de propriétés d'affichage
-      final moduleConfig =
-          widget.moduleInfo.module.complement?.configuration?.module;
+      final module = _updatedModule ?? widget.moduleInfo.module;
+      final moduleConfig = module.complement?.configuration?.module;
       final List<String> displayProperties = moduleConfig?.displayProperties ??
           moduleConfig?.displayList ??
           FormConfigParser.generateDefaultDisplayProperties(_moduleConfig);
@@ -250,9 +478,9 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
         if (_moduleConfig.containsKey(propName)) {
           final fieldConfig = _moduleConfig[propName];
           final label = fieldConfig['attribut_label'] ?? propName;
-          final value = widget.moduleInfo.module.complement?.data != null
-              ? Map<String, dynamic>.from(widget.moduleInfo.module.complement!
-                          .data as Map<String, dynamic>)[propName]
+          final value = module.complement?.data != null
+              ? Map<String, dynamic>.from(module.complement!.data
+                          as Map<String, dynamic>)[propName]
                       ?.toString() ??
                   ''
               : '';
@@ -294,14 +522,17 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildGroupsTab() {
+    // Utiliser le module mis à jour s'il est disponible
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
     // Récupérer la configuration pour les groupes
     final ObjectConfig? sitesGroupConfig =
-        widget.moduleInfo.module.complement?.configuration?.site;
+        module.complement?.configuration?.sitesGroup;
+
     Map<String, dynamic> parsedGroupConfig = {};
 
     if (sitesGroupConfig != null) {
-      final customConfig =
-          widget.moduleInfo.module.complement?.configuration?.custom;
+      final customConfig = module.complement?.configuration?.custom;
       parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
           sitesGroupConfig, customConfig);
     }
@@ -314,7 +545,7 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
             : 'Nom du groupe';
 
     // Vérifier si des groupes sont associés à ce module
-    final sitesGroup = widget.moduleInfo.module.sitesGroup ?? [];
+    final sitesGroup = module.sitesGroup ?? [];
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -366,8 +597,7 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                       ),
                     ],
                   ),
-                  ...widget.moduleInfo.module.sitesGroup!.map((group) =>
-                      TableRow(
+                  ...sitesGroup.map((group) => TableRow(
                         children: [
                           Container(
                             padding:
@@ -416,10 +646,12 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
   }
 
   Widget _buildSitesTab() {
+    // Utiliser le module mis à jour s'il est disponible
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
     // Obtenir la configuration des sites et l'analyser avec FormConfigParser
-    final siteConfig = widget.moduleInfo.module.complement?.configuration?.site;
-    final customConfig =
-        widget.moduleInfo.module.complement?.configuration?.custom;
+    final siteConfig = module.complement?.configuration?.site;
+    final customConfig = module.complement?.configuration?.custom;
     Map<String, dynamic> parsedSiteConfig = {};
 
     if (siteConfig != null) {
@@ -522,7 +754,10 @@ class _ModuleDetailPageState extends State<ModuleDetailPage>
                                         MaterialPageRoute(
                                           builder: (context) => SiteDetailPage(
                                             site: site,
-                                            moduleInfo: widget.moduleInfo,
+                                            moduleInfo: _updatedModule != null
+                                                ? widget.moduleInfo.copyWith(
+                                                    module: _updatedModule!)
+                                                : widget.moduleInfo,
                                           ),
                                         ),
                                       );
@@ -586,15 +821,17 @@ class ModuleSiteGroupsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final module = moduleInfo.module;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Site Groups'),
       ),
       body: ListView.builder(
         padding: const EdgeInsets.all(16.0),
-        itemCount: moduleInfo.module.sitesGroup!.length,
+        itemCount: module.sitesGroup?.length ?? 0,
         itemBuilder: (context, index) {
-          final siteGroup = moduleInfo.module.sitesGroup![index];
+          final siteGroup = module.sitesGroup![index];
           return Card(
             margin: const EdgeInsets.only(bottom: 8.0),
             child: ListTile(

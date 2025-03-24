@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module_loading_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -54,10 +54,10 @@ class ModuleDownloadButton extends HookConsumerWidget {
               .stopDownloadModule(moduleInfo);
           break;
         case ModuleDownloadStatus.moduleDownloaded:
-          // Navigate to the ModuleDetailPage
+          // Navigate to the ModuleLoadingPage which will then load the module with its configuration
           Navigator.push(context, MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return ModuleDetailPage(moduleInfo: moduleInfo);
+              return ModuleLoadingPage(moduleInfo: moduleInfo);
             },
           ));
           break;
