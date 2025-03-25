@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ModuleDetailPage extends ConsumerStatefulWidget {
@@ -676,7 +677,20 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                                   child: IconButton(
                                     icon:
                                         const Icon(Icons.visibility, size: 20),
-                                    onPressed: () {},
+                                    onPressed: () {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => SiteGroupDetailPage(
+                                            siteGroup: group,
+                                            moduleInfo: _updatedModule != null
+                                                ? widget.moduleInfo.copyWith(
+                                                    module: _updatedModule!)
+                                                : widget.moduleInfo,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
                                       minWidth: 36,
