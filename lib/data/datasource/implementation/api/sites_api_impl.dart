@@ -25,15 +25,40 @@ class SitesApiImpl implements SitesApi {
       String moduleCode, String token) async {
     try {
       final response = await _dio.get(
-        '/monitorings/list/$moduleCode/site',
+        '/monitorings/object/$moduleCode/module',
+        queryParameters: {
+          'depth': 1,
+          'field_name': 'module_code',
+        },
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> sites = response.data;
-        return sites.map((site) => BaseSiteEntity.fromJson(site)).toList();
+        final data = response.data as Map<String, dynamic>;
+        final result = <BaseSiteEntity>[];
+        
+        // Process sites from the children
+        if (data['children'] != null && data['children']['site'] != null) {
+          final sitesList = data['children']['site'] as List;
+          for (var site in sitesList) {
+            final siteData = site as Map<String, dynamic>;
+            final properties = siteData['properties'] as Map<String, dynamic>;
+            
+            // Extract site data from the properties
+            final siteJson = {
+              'id_base_site': properties['id_base_site'] ?? siteData['id'],
+              'base_site_name': properties['base_site_name'],
+              'base_site_code': properties['initial_code'],
+              // Add other fields as needed
+            };
+            
+            result.add(BaseSiteEntity.fromJson(siteJson));
+          }
+        }
+        
+        return result;
       }
 
       throw ApiException(
@@ -53,37 +78,50 @@ class SitesApiImpl implements SitesApi {
       String moduleCode, String token) async {
     try {
       final response = await _dio.get(
-        '/monitorings/list/$moduleCode/sites_group',
+        '/monitorings/object/$moduleCode/module',
+        queryParameters: {
+          'depth': 1,
+          'field_name': 'module_code',
+        },
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> siteGroups = response.data;
-
-        return siteGroups.map((siteGroup) {
-          // Convert the site group to the format our app expects
-          final Map<String, dynamic> groupData = {
-            'id_sites_group': siteGroup['id_sites_group'],
-            'sites_group_name': siteGroup['sites_group_name'] ?? '',
-            'sites_group_code': siteGroup['sites_group_code'] ?? '',
-            'comments': siteGroup['comments'],
-            'nb_sites': siteGroup['nb_sites'],
-            'nb_visits': siteGroup['nb_visits'],
-            // Add any other fields needed by SiteGroupEntity
-            'modules': [
-              moduleCode
-            ], // We know this site group belongs to this module
-          };
-
-          return SiteGroupsWithModulesLabel(
-            siteGroup: SiteGroupEntity.fromJson(groupData),
-            moduleLabelList: [
-              moduleCode
-            ], // We know this site group belongs to this module
-          );
-        }).toList();
+        final data = response.data as Map<String, dynamic>;
+        final result = <SiteGroupsWithModulesLabel>[];
+        
+        // Process site groups from the children
+        if (data['children'] != null && data['children']['sites_group'] != null) {
+          final siteGroupsList = data['children']['sites_group'] as List;
+          for (var group in siteGroupsList) {
+            final groupData = group as Map<String, dynamic>;
+            final properties = groupData['properties'] as Map<String, dynamic>;
+            
+            // Extract site group data from the properties
+            final Map<String, dynamic> formattedGroupData = {
+              'id_sites_group': properties['id_sites_group'] ?? groupData['id'],
+              'sites_group_name': properties['sites_group_name'] ?? '',
+              'sites_group_code': properties['sites_group_code'] ?? '',
+              'comments': properties['comments'],
+              'nb_sites': properties['nb_sites'],
+              'nb_visits': properties['nb_visits'],
+              'modules': [
+                moduleCode
+              ], // We know this site group belongs to this module
+            };
+            
+            result.add(SiteGroupsWithModulesLabel(
+              siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
+              moduleLabelList: [
+                moduleCode
+              ], // We know this site group belongs to this module
+            ));
+          }
+        }
+        
+        return result;
       }
 
       throw ApiException(
