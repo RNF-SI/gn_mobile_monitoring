@@ -780,8 +780,9 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                   : Table(
                       columnWidths: const {
                         0: FixedColumnWidth(80), // Action column
-                        1: FlexColumnWidth(2), // Name column
+                        1: FlexColumnWidth(80), // Name column
                         2: FixedColumnWidth(100), // Code column
+                        3: FixedColumnWidth(120), // Description truncated
                       },
                       children: [
                         TableRow(
@@ -806,6 +807,12 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                               child: Text(baseSiteCodeLabel,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold)),
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text('Description',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
                             ),
                           ],
                         ),
@@ -853,6 +860,21 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8.0),
                                   child: Text(site.baseSiteCode ?? ''),
+                                ),
+                                Container(
+                                  height: 48,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(
+                                    site.baseSiteDescription != null &&
+                                            site.baseSiteDescription!.isNotEmpty
+                                        ? site.baseSiteDescription!.length > 25
+                                            ? '${site.baseSiteDescription!.substring(0, 22)}...'
+                                            : site.baseSiteDescription!
+                                        : '-',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
                               ],
                             )),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+import 'package:intl/intl.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -11,6 +12,11 @@ import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 class SiteDetailPage extends ConsumerWidget {
+  // Fonction d'aide pour formater les dates
+  String _formatDate(DateTime date) {
+    final DateFormat formatter = DateFormat('dd/MM/yyyy');
+    return formatter.format(date);
+  }
   final BaseSite site;
   final ModuleInfo? moduleInfo;
 
@@ -50,6 +56,28 @@ class SiteDetailPage extends ConsumerWidget {
                     const SizedBox(height: 8),
                     _buildPropertyRow('Nom', site.baseSiteName ?? ''),
                     _buildPropertyRow('Code', site.baseSiteCode ?? ''),
+                    // Maintenant on affiche la description si disponible
+                    if (site.baseSiteDescription != null && site.baseSiteDescription!.isNotEmpty)
+                      _buildPropertyRow('Description', site.baseSiteDescription!),
+                    // Affichage de l'altitude si disponible
+                    if (site.altitudeMin != null || site.altitudeMax != null)
+                      _buildPropertyRow(
+                        'Altitude',
+                        site.altitudeMin != null && site.altitudeMax != null
+                            ? '${site.altitudeMin}-${site.altitudeMax} m'
+                            : site.altitudeMin != null
+                                ? '${site.altitudeMin} m'
+                                : '${site.altitudeMax} m',
+                      ),
+                    // Affichage de la date de première utilisation si disponible
+                    if (site.firstUseDate != null)
+                      _buildPropertyRow(
+                        'Date de première utilisation',
+                        _formatDate(site.firstUseDate!),
+                      ),
+                    // Ajout de l'identifiant UUID si disponible
+                    if (site.uuidBaseSite != null && site.uuidBaseSite!.isNotEmpty)
+                      _buildPropertyRow('UUID', site.uuidBaseSite!),
                   ],
                 ),
               ),
