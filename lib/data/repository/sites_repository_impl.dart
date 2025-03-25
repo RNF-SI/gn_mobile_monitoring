@@ -431,4 +431,27 @@ class SitesRepositoryImpl implements SitesRepository {
       throw Exception('Failed to get site groups');
     }
   }
+  
+  @override
+  Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
+    try {
+      // Fetch sites that have the given site group ID in their complements
+      final allSites = await database.getAllSites();
+      final allComplements = await database.getAllSiteComplements();
+      
+      // Map of site complements by site ID for easy lookup
+      final complementsMap = {for (var comp in allComplements) comp.idBaseSite: comp};
+      
+      // Filter sites that belong to the specified site group
+      final filteredSites = allSites.where((site) {
+        final complement = complementsMap[site.idBaseSite];
+        return complement != null && complement.idSitesGroup == siteGroupId;
+      }).toList();
+      
+      return filteredSites;
+    } catch (error) {
+      print('Error getting sites by site group: $error');
+      throw Exception('Failed to get sites by site group');
+    }
+  }
 }
