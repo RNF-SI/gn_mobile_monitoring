@@ -50,16 +50,6 @@ class SiteDetailPage extends ConsumerWidget {
                     const SizedBox(height: 8),
                     _buildPropertyRow('Nom', site.baseSiteName ?? ''),
                     _buildPropertyRow('Code', site.baseSiteCode ?? ''),
-                    _buildPropertyRow(
-                        'Description', site.baseSiteDescription ?? ''),
-                    _buildPropertyRow(
-                      'Altitude',
-                      site.altitudeMin != null && site.altitudeMax != null
-                          ? '${site.altitudeMin}-${site.altitudeMax}m'
-                          : site.altitudeMin?.toString() ??
-                              site.altitudeMax?.toString() ??
-                              '',
-                    ),
                   ],
                 ),
               ),

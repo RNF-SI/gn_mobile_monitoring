@@ -567,8 +567,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                 columnWidths: const {
                   0: FixedColumnWidth(80), // Reduced width for single icon
                   1: FlexColumnWidth(2), // Name column
-                  2: FixedColumnWidth(80), // Sites count
-                  3: FixedColumnWidth(80), // Visits count
                 },
                 children: [
                   TableRow(
@@ -584,16 +582,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                         child: Text(groupNameLabel,
                             style:
                                 const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text('Sites',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text('Visites',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ],
                   ),
@@ -620,22 +608,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                             padding:
                                 const EdgeInsets.symmetric(horizontal: 8.0),
                             child: Text(group.sitesGroupName ?? ''),
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child:
-                                const Text('0'), // TODO: Implement actual count
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child:
-                                const Text('0'), // TODO: Implement actual count
                           ),
                         ],
                       )),
@@ -703,7 +675,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                         0: FixedColumnWidth(80), // Action column
                         1: FlexColumnWidth(2), // Name column
                         2: FixedColumnWidth(100), // Code column
-                        3: FixedColumnWidth(80), // Altitude column
                       },
                       children: [
                         TableRow(
@@ -726,13 +697,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                               padding:
                                   const EdgeInsets.symmetric(vertical: 8.0),
                               child: Text(baseSiteCodeLabel,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(altitudeLabel,
                                   style: const TextStyle(
                                       fontWeight: FontWeight.bold)),
                             ),
@@ -782,20 +746,6 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                                   padding: const EdgeInsets.symmetric(
                                       horizontal: 8.0),
                                   child: Text(site.baseSiteCode ?? ''),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(
-                                    site.altitudeMin != null &&
-                                            site.altitudeMax != null
-                                        ? '${site.altitudeMin}-${site.altitudeMax}m'
-                                        : site.altitudeMin?.toString() ??
-                                            site.altitudeMax?.toString() ??
-                                            '',
-                                  ),
                                 ),
                               ],
                             )),

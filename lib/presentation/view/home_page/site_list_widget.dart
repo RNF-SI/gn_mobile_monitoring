@@ -89,7 +89,7 @@ class SiteListWidget extends ConsumerWidget {
           return Card(
             child: ListTile(
               title: Text(site.baseSiteName ?? "Nom du site"),
-              subtitle: Text(site.baseSiteDescription ?? "Description du site"),
+              subtitle: Text(site.baseSiteCode ?? "Code non disponible"),
             ),
           );
         },
