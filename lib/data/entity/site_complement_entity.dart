@@ -11,16 +11,18 @@ class SiteComplementEntity {
 
   factory SiteComplementEntity.fromJson(Map<String, dynamic> json) {
     return SiteComplementEntity(
-      idBaseSite: json['idBaseSite'] as int,
-      idSitesGroup: json['idSitesGroup'] as int?,
-      data: json['data'] as String?,
+      idBaseSite: json['id_base_site'] as int,
+      idSitesGroup: json['id_sites_group'] as int?,
+      data: json['data'] is Map
+          ? json['data'].toString()
+          : json['data'] as String?,
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'idBaseSite': idBaseSite,
-      'idSitesGroup': idSitesGroup,
+      'id_base_site': idBaseSite,
+      'id_sites_group': idSitesGroup,
       'data': data,
     };
   }
