@@ -34,6 +34,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
@@ -252,4 +254,9 @@ final deleteObservationUseCaseProvider = Provider<DeleteObservationUseCase>(
 // UseCase pour récupérer un module avec sa configuration complète
 final getModuleWithConfigUseCaseProvider = Provider<GetModuleWithConfigUseCase>(
   (ref) => GetModuleWithConfigUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+);
+
+// UseCase pour récupérer les sites associés à un groupe de sites
+final getSitesBySiteGroupUseCaseProvider = Provider<GetSitesBySiteGroupUseCase>(
+  (ref) => GetSitesBySiteGroupUseCaseImpl(ref.watch(sitesRepositoryProvider)),
 );
