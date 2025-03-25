@@ -23,11 +23,16 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
   TabController? _tabController;
   List<String> _childrenTypes = [];
   final ScrollController _sitesScrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
 
   static const int _sitesPerPage = 20;
   int _currentSitesPage = 1;
   bool _isLoadingSites = false;
   List<dynamic> _displayedSites = [];
+  List<dynamic> _filteredSites = [];
+  List<dynamic> _allSites = [];
+  List<dynamic> _filteredSiteGroups = [];
+  String _searchQuery = '';
   bool _configurationLoaded = false;
   bool _isInitialLoading = true;
 
@@ -186,6 +191,7 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
       _tabController!.dispose();
     }
     _sitesScrollController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
@@ -245,9 +251,19 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
   }
 
   void _handleTabChange() {
-    if (_tabController != null &&
-        _tabController!.index == _childrenTypes.indexOf('site')) {
-      _loadInitialSites();
+    if (_tabController != null) {
+      // Réinitialiser le champ de recherche lors du changement d'onglet
+      _searchController.clear();
+      _searchQuery = '';
+
+      // Charger les sites si on est sur l'onglet sites
+      if (_tabController!.index == _childrenTypes.indexOf('site')) {
+        _loadInitialSites();
+      }
+      // Mettre à jour les groupes de sites si on est sur l'onglet groupes
+      else if (_tabController!.index == _childrenTypes.indexOf('sites_group')) {
+        _filterSiteGroups();
+      }
     }
   }
 
@@ -260,10 +276,42 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
       // pour ce module spécifique via la relation cor_site_module
       final module = _updatedModule ?? widget.moduleInfo.module;
       final sitesForModule = module.sites ?? [];
-      _displayedSites = sitesForModule.take(_sitesPerPage).toList();
+      _allSites = sitesForModule;
+      _filterSites();
 
       _isLoadingSites = false;
     });
+  }
+
+  void _filterSites() {
+    if (_searchQuery.isEmpty) {
+      _filteredSites = _allSites;
+    } else {
+      _filteredSites = _allSites.where((site) {
+        final name = site.baseSiteName?.toLowerCase() ?? '';
+        final code = site.baseSiteCode?.toLowerCase() ?? '';
+        final query = _searchQuery.toLowerCase();
+        return name.contains(query) || code.contains(query);
+      }).toList();
+    }
+
+    _displayedSites = _filteredSites.take(_sitesPerPage).toList();
+  }
+
+  void _filterSiteGroups() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final allSiteGroups = module.sitesGroup ?? [];
+
+    if (_searchQuery.isEmpty) {
+      _filteredSiteGroups = allSiteGroups;
+    } else {
+      _filteredSiteGroups = allSiteGroups.where((group) {
+        final name = group.sitesGroupName?.toLowerCase() ?? '';
+        final code = group.sitesGroupCode?.toLowerCase() ?? '';
+        final query = _searchQuery.toLowerCase();
+        return name.contains(query) || code.contains(query);
+      }).toList();
+    }
   }
 
   void _loadMoreSites() {
@@ -276,19 +324,12 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     final startIndex = _currentSitesPage * _sitesPerPage;
     final endIndex = startIndex + _sitesPerPage;
 
-    // Les sites dans le module sont déjà filtrés
-    // pour ce module spécifique via la relation cor_site_module
-    final module = _updatedModule ?? widget.moduleInfo.module;
-    final allSitesForModule = module.sites ?? [];
-
-    if (startIndex < allSitesForModule.length) {
+    if (startIndex < _filteredSites.length) {
       setState(() {
         _displayedSites.addAll(
-          allSitesForModule.getRange(
+          _filteredSites.getRange(
             startIndex,
-            endIndex > allSitesForModule.length
-                ? allSitesForModule.length
-                : endIndex,
+            endIndex > _filteredSites.length ? _filteredSites.length : endIndex,
           ),
         );
         _currentSitesPage++;
@@ -299,6 +340,16 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
         _isLoadingSites = false;
       });
     }
+  }
+
+  void _handleSearch(String value) {
+    setState(() {
+      _searchQuery = value;
+      _currentSitesPage = 1;
+
+      _filterSites();
+      _filterSiteGroups();
+    });
   }
 
   void _handleScroll() {
@@ -544,75 +595,109 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                 'Nom du groupe'
             : 'Nom du groupe';
 
-    // Vérifier si des groupes sont associés à ce module
-    final sitesGroup = module.sitesGroup ?? [];
+    // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
+    if (_filteredSiteGroups.isEmpty) {
+      _filterSiteGroups();
+    }
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SingleChildScrollView(
-        child: sitesGroup.isEmpty
-            ? Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  child: Text(
-                    'Aucun groupe de sites associé à ce module',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                ),
-              )
-            : Table(
-                columnWidths: const {
-                  0: FixedColumnWidth(80), // Reduced width for single icon
-                  1: FlexColumnWidth(2), // Name column
-                },
-                children: [
-                  TableRow(
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(
-                            vertical: 8.0, horizontal: 16.0),
-                        child: Text('Action',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Text(groupNameLabel,
-                            style:
-                                const TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
-                  ),
-                  ...sitesGroup.map((group) => TableRow(
-                        children: [
-                          Container(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            height: 48,
-                            alignment: Alignment.center,
-                            child: IconButton(
-                              icon: const Icon(Icons.visibility, size: 20),
-                              onPressed: () {},
-                              padding: EdgeInsets.zero,
-                              constraints: const BoxConstraints(
-                                minWidth: 36,
-                                minHeight: 36,
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 48,
-                            alignment: Alignment.centerLeft,
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 8.0),
-                            child: Text(group.sitesGroupName ?? ''),
-                          ),
-                        ],
-                      )),
-                ],
+      child: Column(
+        children: [
+          // Champ de recherche
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Rechercher un groupe',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _handleSearch('');
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
               ),
+              onChanged: _handleSearch,
+            ),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: _filteredSiteGroups.isEmpty
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        child: Text(
+                          'Aucun groupe de sites associé à ce module',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                    )
+                  : Table(
+                      columnWidths: const {
+                        0: FixedColumnWidth(
+                            80), // Reduced width for single icon
+                        1: FlexColumnWidth(2), // Name column
+                      },
+                      children: [
+                        TableRow(
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 8.0, horizontal: 16.0),
+                              child: Text('Action',
+                                  style:
+                                      TextStyle(fontWeight: FontWeight.bold)),
+                            ),
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Text(groupNameLabel,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        ..._filteredSiteGroups.map((group) => TableRow(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  height: 48,
+                                  alignment: Alignment.center,
+                                  child: IconButton(
+                                    icon:
+                                        const Icon(Icons.visibility, size: 20),
+                                    onPressed: () {},
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                      minWidth: 36,
+                                      minHeight: 36,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  height: 48,
+                                  alignment: Alignment.centerLeft,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0),
+                                  child: Text(group.sitesGroupName ?? ''),
+                                ),
+                              ],
+                            )),
+                      ],
+                    ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -654,6 +739,28 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
       padding: const EdgeInsets.all(8.0),
       child: Column(
         children: [
+          // Champ de recherche
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                labelText: 'Rechercher un site',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _handleSearch('');
+                        },
+                      )
+                    : null,
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: _handleSearch,
+            ),
+          ),
           Expanded(
             child: SingleChildScrollView(
               controller: _sitesScrollController,
