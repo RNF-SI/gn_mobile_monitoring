@@ -50,30 +50,8 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     // Ajouter un écouteur pour le défilement
     _sitesScrollController.addListener(_handleScroll);
 
-    // Vérifier immédiatement si la configuration est disponible
-    if (widget.moduleInfo.module.complement?.configuration != null) {
-      _configurationLoaded = true;
-
-      // Stocker une référence au module actuel
-      _updatedModule = widget.moduleInfo.module;
-
-      // Configuration initiale (déjà disponible)
-      _updateChildrenTypesFromConfig();
-      _initializeModuleConfig();
-      _loadSitesIfAvailable();
-
-      // Marquer le chargement comme terminé
-      Future.delayed(Duration.zero, () {
-        if (mounted) {
-          setState(() {
-            _isInitialLoading = false;
-          });
-        }
-      });
-    } else {
-      // Utiliser le UseCase pour récupérer la configuration complète
-      _loadModuleWithConfig();
-    }
+    // Toujours charger la configuration complète du module
+    _loadModuleWithConfig();
   }
 
   // Méthode pour charger le module avec sa configuration complète
@@ -87,6 +65,10 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
       final moduleWithConfig =
           await getModuleWithConfigUseCase.execute(widget.moduleInfo.module.id);
 
+      // Vérifier si la configuration est bien présente
+      final bool hasConfiguration =
+          moduleWithConfig.complement?.configuration != null;
+
       // Mettre à jour le ModuleInfo
       if (mounted) {
         setState(() {
@@ -94,7 +76,7 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
           _updatedModule = moduleWithConfig;
 
           // Marquer la configuration comme chargée
-          _configurationLoaded = true;
+          _configurationLoaded = hasConfiguration;
           _isInitialLoading = false;
 
           // Mettre à jour l'interface
@@ -106,11 +88,13 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     } catch (e) {
       if (mounted) {
         setState(() {
-          // En cas d'erreur, marquer quand même comme chargé pour éviter un blocage de l'interface
-          _configurationLoaded = true;
+          // En cas d'erreur, utiliser la configuration existante si disponible
+          final hasExistingConfig =
+              widget.moduleInfo.module.complement?.configuration != null;
+          _configurationLoaded = hasExistingConfig;
           _isInitialLoading = false;
 
-          // Utiliser la configuration actuelle, même si elle est incomplète
+          // Mettre à jour l'interface avec les données disponibles
           _updateChildrenTypesFromConfig();
           _initializeModuleConfig();
           _loadSitesIfAvailable();
@@ -120,15 +104,16 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
   }
 
   void _updateChildrenTypesFromConfig() {
-    // Vérifier si le module a une configuration ou non
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
+    // Vérifier si le module a une configuration chargée
     if (module.complement?.configuration?.module != null) {
+      // Récupérer les types d'enfants directement depuis la configuration
       _childrenTypes =
           module.complement!.configuration!.module!.childrenTypes ?? [];
     } else {
-      // Si le module n'a pas de configuration, utiliser des valeurs par défaut
+      // Si le module n'a pas de configuration, construire les types à partir des données
       _childrenTypes = [];
 
       // Si le module a des sites, ajouter 'site' au childrenTypes par défaut
@@ -449,6 +434,7 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                 ),
               ),
             ),
+
           if (_childrenTypes.isNotEmpty && _tabController != null) ...[
             // Tab Bar
             TabBar(
@@ -457,11 +443,11 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                 if (_childrenTypes.contains('sites_group'))
                   Tab(
                       text:
-                          '${sitesGroupConfig?.labelList ?? sitesGroupConfig?.label ?? 'Groupes de sites'} ($siteGroupCount)'),
+                          '${module.complement?.configuration?.sitesGroup?.labelList ?? module.complement?.configuration?.sitesGroup?.label ?? 'Groupes de sites'} ($siteGroupCount)'),
                 if (_childrenTypes.contains('site'))
                   Tab(
                       text:
-                          '${siteConfig?.labelList ?? siteConfig?.label ?? 'Sites'} ($siteCount)'),
+                          '${module.complement?.configuration?.site?.labelList ?? module.complement?.configuration?.site?.label ?? 'Sites'} ($siteCount)'),
               ],
             ),
             // Tab Views
@@ -590,11 +576,11 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     }
 
     // Libellés personnalisés en fonction de la configuration
-    final String groupNameLabel =
-        parsedGroupConfig.containsKey('sites_group_name')
-            ? parsedGroupConfig['sites_group_name']['attribut_label'] ??
-                'Nom du groupe'
-            : 'Nom du groupe';
+    final String groupNameLabel = (parsedGroupConfig.isNotEmpty &&
+            parsedGroupConfig.containsKey('sites_group_name'))
+        ? parsedGroupConfig['sites_group_name']['attribut_label'] ??
+            'Nom du groupe'
+        : sitesGroupConfig?.label ?? 'Nom du groupe';
 
     // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
     if (_filteredSiteGroups.isEmpty) {
@@ -681,7 +667,8 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => SiteGroupDetailPage(
+                                          builder: (context) =>
+                                              SiteGroupDetailPage(
                                             siteGroup: group,
                                             moduleInfo: _updatedModule != null
                                                 ? widget.moduleInfo.copyWith(
@@ -723,6 +710,7 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     // Obtenir la configuration des sites et l'analyser avec FormConfigParser
     final siteConfig = module.complement?.configuration?.site;
     final customConfig = module.complement?.configuration?.custom;
+
     Map<String, dynamic> parsedSiteConfig = {};
 
     if (siteConfig != null) {
@@ -731,19 +719,15 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
     }
 
     // Récupérer les libellés personnalisés en fonction de la configuration
-    final String baseSiteNameLabel =
-        parsedSiteConfig.containsKey('base_site_name')
-            ? parsedSiteConfig['base_site_name']['attribut_label'] ?? 'Nom'
-            : 'Nom';
+    final String baseSiteNameLabel = (parsedSiteConfig.isNotEmpty &&
+            parsedSiteConfig.containsKey('base_site_name'))
+        ? parsedSiteConfig['base_site_name']['attribut_label'] ?? 'Nom'
+        : siteConfig?.label ?? 'Nom';
 
-    final String baseSiteCodeLabel =
-        parsedSiteConfig.containsKey('base_site_code')
-            ? parsedSiteConfig['base_site_code']['attribut_label'] ?? 'Code'
-            : 'Code';
-
-    final String altitudeLabel = parsedSiteConfig.containsKey('altitude')
-        ? parsedSiteConfig['altitude']['attribut_label'] ?? 'Altitude'
-        : 'Altitude';
+    final String baseSiteCodeLabel = (parsedSiteConfig.isNotEmpty &&
+            parsedSiteConfig.containsKey('base_site_code'))
+        ? parsedSiteConfig['base_site_code']['attribut_label'] ?? 'Code'
+        : 'Code';
 
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
