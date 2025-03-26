@@ -516,7 +516,8 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage>
         if (_moduleConfig.containsKey(propName)) {
           final fieldConfig = _moduleConfig[propName];
           final label = fieldConfig['attribut_label'] ?? propName;
-          final value = module.complement?.data != null
+          final value = module.complement?.data != null &&
+                  module.complement!.data.toString() != '{}'
               ? Map<String, dynamic>.from(module.complement!.data
                           as Map<String, dynamic>)[propName]
                       ?.toString() ??
