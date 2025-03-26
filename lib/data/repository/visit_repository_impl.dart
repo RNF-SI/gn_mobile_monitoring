@@ -52,8 +52,10 @@ class VisitRepositoryImpl implements VisitRepository {
   }
 
   @override
-  Future<List<BaseVisitEntity>> getVisitsBySiteId(int siteId) async {
-    final visits = await _visitesDatabase.getVisitsBySiteId(siteId);
+  Future<List<BaseVisitEntity>> getVisitsBySiteIdAndModuleId(
+      int siteId, int moduleId) async {
+    final visits =
+        await _visitesDatabase.getVisitsBySiteIdAndModuleId(siteId, moduleId);
 
     // Convertir chaque visite en entité avec tous les détails
     final visitEntities = <BaseVisitEntity>[];

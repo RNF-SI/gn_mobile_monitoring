@@ -12,8 +12,12 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
 
   Future<List<TBaseVisit>> getAllVisits() => select(tBaseVisits).get();
 
-  Future<List<TBaseVisit>> getVisitsBySiteId(int siteId) =>
-      (select(tBaseVisits)..where((t) => t.idBaseSite.equals(siteId))).get();
+  Future<List<TBaseVisit>> getVisitsBySiteIdAndModuleId(
+          int siteId, int moduleId) =>
+      (select(tBaseVisits)
+            ..where((t) =>
+                t.idBaseSite.equals(siteId) & t.idModule.equals(moduleId)))
+          .get();
 
   Future<TBaseVisit> getVisitById(int id) =>
       (select(tBaseVisits)..where((t) => t.idBaseVisit.equals(id))).getSingle();
@@ -46,23 +50,26 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
         await deleteVisitObservers(visitId);
         await deleteVisit(visitId);
       });
-      
+
   // Méthodes pour gérer les observateurs de visite
   Future<List<CorVisitObserverData>> getVisitObservers(int visitId) =>
-      (select(corVisitObserver)..where((t) => t.idBaseVisit.equals(visitId))).get();
-      
+      (select(corVisitObserver)..where((t) => t.idBaseVisit.equals(visitId)))
+          .get();
+
   Future<int> insertVisitObserver(CorVisitObserverCompanion observer) =>
       into(corVisitObserver).insert(observer);
-      
+
   Future<int> deleteVisitObservers(int visitId) =>
-      (delete(corVisitObserver)..where((t) => t.idBaseVisit.equals(visitId))).go();
-      
-  Future<int> deleteVisitObserver(int visitId, int idRole) =>
-      (delete(corVisitObserver)
+      (delete(corVisitObserver)..where((t) => t.idBaseVisit.equals(visitId)))
+          .go();
+
+  Future<int> deleteVisitObserver(int visitId, int idRole) => (delete(
+          corVisitObserver)
         ..where((t) => t.idBaseVisit.equals(visitId) & t.idRole.equals(idRole)))
-        .go();
-        
-  Future<void> replaceVisitObservers(int visitId, List<CorVisitObserverCompanion> observers) => 
+      .go();
+
+  Future<void> replaceVisitObservers(
+          int visitId, List<CorVisitObserverCompanion> observers) =>
       transaction(() async {
         await deleteVisitObservers(visitId);
         for (final observer in observers) {

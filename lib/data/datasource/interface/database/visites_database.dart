@@ -3,9 +3,10 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 abstract class VisitesDatabase {
   /// Get all visits
   Future<List<TBaseVisit>> getAllVisits();
-  
-  /// Get all visits for a specific site
-  Future<List<TBaseVisit>> getVisitsBySiteId(int siteId);
+
+  /// Get all visits for a specific site and module
+  Future<List<TBaseVisit>> getVisitsBySiteIdAndModuleId(
+      int siteId, int moduleId);
 
   /// Get a specific visit by ID
   Future<TBaseVisit> getVisitById(int id);
@@ -33,16 +34,17 @@ abstract class VisitesDatabase {
 
   /// Delete both visit and its complement in a single transaction
   Future<void> deleteVisitWithComplement(int visitId);
-  
+
   /// Get observers for a visit
   Future<List<CorVisitObserverData>> getVisitObservers(int visitId);
-  
+
   /// Insert a new visit observer
   Future<int> insertVisitObserver(CorVisitObserverCompanion observer);
-  
+
   /// Delete all observers for a visit
   Future<int> deleteVisitObservers(int visitId);
-  
+
   /// Replace all observers for a visit
-  Future<void> replaceVisitObservers(int visitId, List<CorVisitObserverCompanion> observers);
+  Future<void> replaceVisitObservers(
+      int visitId, List<CorVisitObserverCompanion> observers);
 }

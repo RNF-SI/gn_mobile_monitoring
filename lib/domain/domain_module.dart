@@ -1,7 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -28,6 +26,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
@@ -48,8 +48,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_cas
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
@@ -200,11 +200,6 @@ final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
   ),
 );
 
-// Visites use cases
-final getVisitsBySiteIdUseCaseProvider = Provider<GetVisitsBySiteIdUseCase>(
-  (ref) => GetVisitsBySiteIdUseCaseImpl(ref.watch(visitRepositoryProvider)),
-);
-
 final getVisitWithDetailsUseCaseProvider = Provider<GetVisitWithDetailsUseCase>(
   (ref) => GetVisitWithDetailsUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
@@ -259,4 +254,10 @@ final getModuleWithConfigUseCaseProvider = Provider<GetModuleWithConfigUseCase>(
 // UseCase pour récupérer les sites associés à un groupe de sites
 final getSitesBySiteGroupUseCaseProvider = Provider<GetSitesBySiteGroupUseCase>(
   (ref) => GetSitesBySiteGroupUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+);
+
+final getVisitsBySiteAndModuleUseCaseProvider =
+    Provider<GetVisitsBySiteAndModuleUseCase>(
+  (ref) =>
+      GetVisitsBySiteAndModuleUseCaseImpl(ref.watch(visitRepositoryProvider)),
 );
