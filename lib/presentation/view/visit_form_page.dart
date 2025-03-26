@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
 class VisitFormPage extends ConsumerStatefulWidget {
@@ -12,6 +15,8 @@ class VisitFormPage extends ConsumerStatefulWidget {
   final CustomConfig? customConfig;
   final BaseVisit? visit; // En mode édition, visite existante
   final int? moduleId; // ID du module pour la visite
+  final ModuleInfo? moduleInfo; // Information sur le module parent (pour le fil d'Ariane)
+  final dynamic siteGroup; // Groupe de sites parent éventuel (pour le fil d'Ariane)
 
   const VisitFormPage({
     super.key,
@@ -20,6 +25,8 @@ class VisitFormPage extends ConsumerStatefulWidget {
     this.customConfig,
     this.visit,
     this.moduleId,
+    this.moduleInfo,
+    this.siteGroup,
   });
 
   @override
@@ -403,23 +410,79 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  // Bandeau d'information du site (compact)
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 12.0),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surfaceVariant,
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: Text(
-                      'Site: ${widget.site.baseSiteName}${widget.site.baseSiteCode != null ? ' (${widget.site.baseSiteCode})' : ''}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  // Fil d'Ariane pour la navigation
+                  if (widget.moduleInfo != null)
+                    Card(
+                      margin: const EdgeInsets.only(bottom: 16.0),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                        child: BreadcrumbNavigation(
+                          items: [
+                            // Module
+                            BreadcrumbItem(
+                              label: 'Module',
+                              value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
+                              onTap: () {
+                                // Naviguer vers le module (plusieurs niveaux de retour)
+                                Navigator.of(context).popUntil((route) => 
+                                  route.isFirst || route.settings.name == '/module_detail'
+                                );
+                              },
+                            ),
+                            
+                            // Groupe de site (si disponible)
+                            if (widget.siteGroup != null)
+                              BreadcrumbItem(
+                                label: widget.moduleInfo!.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe',
+                                value: widget.siteGroup.sitesGroupName ?? widget.siteGroup.sitesGroupCode ?? 'Groupe',
+                                onTap: () {
+                                  // Retourner 2 niveaux en arrière pour revenir au groupe
+                                  int count = 0;
+                                  Navigator.of(context).popUntil((route) {
+                                    return count++ >= 2;
+                                  });
+                                },
+                              ),
+                            
+                            // Site
+                            BreadcrumbItem(
+                              label: widget.moduleInfo!.module.complement?.configuration?.site?.label ?? 'Site',
+                              value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
+                              onTap: () {
+                                // Revenir au site
+                                Navigator.of(context).pop();
+                              },
+                            ),
+                            
+                            // Visite (formulaire actuel)
+                            BreadcrumbItem(
+                              label: widget.visitConfig.label ?? 'Visite',
+                              value: widget.visit != null 
+                                ? formatDateString(widget.visit!.visitDateMin)
+                                : 'Nouvelle',
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                  // Si pas de moduleInfo, afficher juste le bandeau classique
+                  if (widget.moduleInfo == null)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 12.0),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surfaceVariant,
+                        borderRadius: BorderRadius.circular(8.0),
+                      ),
+                      child: Text(
+                        'Site: ${widget.site.baseSiteName}${widget.site.baseSiteCode != null ? ' (${widget.site.baseSiteCode})' : ''}',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 16),
 
                   // Formulaire dynamique

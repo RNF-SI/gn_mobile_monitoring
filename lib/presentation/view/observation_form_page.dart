@@ -4,7 +4,10 @@ import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 
 class ObservationFormPage extends ConsumerStatefulWidget {
   final int visitId;
@@ -12,6 +15,13 @@ class ObservationFormPage extends ConsumerStatefulWidget {
   final CustomConfig? customConfig;
   final Observation? observation; // En mode édition, observation existante
   final int? moduleId; // ID du module pour la visite/observation
+  
+  // Informations complémentaires pour le fil d'Ariane
+  final String? moduleName;
+  final String? siteLabel;
+  final String? siteName;
+  final String? visitLabel;
+  final String? visitDate;
 
   const ObservationFormPage({
     super.key,
@@ -20,6 +30,11 @@ class ObservationFormPage extends ConsumerStatefulWidget {
     this.customConfig,
     this.observation,
     this.moduleId,
+    this.moduleName,
+    this.siteLabel,
+    this.siteName,
+    this.visitLabel,
+    this.visitDate,
   });
 
   @override
@@ -85,15 +100,54 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Titre de la page
-                  Text(
-                    _isEditMode 
-                      ? 'Modifier les informations de l\'observation' 
-                      : 'Saisir une nouvelle observation',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  // Fil d'Ariane pour la navigation
+                  if (widget.moduleName != null || widget.siteName != null || widget.visitDate != null)
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                        child: BreadcrumbNavigation(
+                          items: [
+                            if (widget.moduleName != null)
+                              BreadcrumbItem(
+                                label: 'Module',
+                                value: widget.moduleName!,
+                                onTap: () {
+                                  // Retour au module (plusieurs niveaux)
+                                  Navigator.of(context).popUntil(
+                                    (route) => route.isFirst || route.settings.name == '/module_detail'
+                                  );
+                                },
+                              ),
+                            if (widget.siteName != null)
+                              BreadcrumbItem(
+                                label: widget.siteLabel ?? 'Site',
+                                value: widget.siteName!,
+                                onTap: () {
+                                  // Retour au site (2 niveaux)
+                                  int count = 0;
+                                  Navigator.of(context).popUntil((route) {
+                                    return count++ >= 2;
+                                  });
+                                },
+                              ),
+                            if (widget.visitDate != null)
+                              BreadcrumbItem(
+                                label: widget.visitLabel ?? 'Visite',
+                                value: widget.visitDate!,
+                                onTap: () {
+                                  // Retour à la visite (1 niveau)
+                                  Navigator.of(context).pop();
+                                },
+                              ),
+                            BreadcrumbItem(
+                              label: widget.observationConfig.label ?? 'Observation',
+                              value: _isEditMode ? (widget.observation?.cdNom?.toString() ?? 'Édition') : 'Nouvelle',
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 16),
-                  
                   // Formulaire dynamique basé sur la configuration
                   DynamicFormBuilder(
                     key: _formBuilderKey,
@@ -127,7 +181,7 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                 ],
               ),
             ),
-    );
+      );
   }
 
   /// Sauvegarde l'observation (création ou mise à jour)

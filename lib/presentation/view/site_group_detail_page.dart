@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class SiteGroupDetailPage extends ConsumerWidget {
   final SiteGroup siteGroup;
@@ -81,6 +82,30 @@ class SiteGroupDetailPage extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Fil d'Ariane pour la navigation
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                child: BreadcrumbNavigation(
+                  items: [
+                    BreadcrumbItem(
+                      label: 'Module',
+                      value: moduleInfo.module.moduleLabel ?? 'Module',
+                      onTap: () {
+                        Navigator.of(context).pop(); // Retour à la page précédente
+                      },
+                    ),
+                    BreadcrumbItem(
+                      label: moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe',
+                      value: siteGroup.sitesGroupName ?? siteGroup.sitesGroupCode ?? 'Groupe',
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
           // Group Properties Card
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -229,6 +254,7 @@ class SiteGroupDetailPage extends ConsumerWidget {
                               builder: (context) => SiteDetailPage(
                                 site: site,
                                 moduleInfo: moduleInfo,
+                                siteGroup: siteGroup, // Passer le groupe de sites
                               ),
                             ),
                           );

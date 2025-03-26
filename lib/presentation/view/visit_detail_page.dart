@@ -7,20 +7,24 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class VisitDetailPage extends ConsumerStatefulWidget {
   final BaseVisit visit;
   final BaseSite site;
   final ModuleInfo? moduleInfo;
+  final dynamic fromSiteGroup; // Information sur un éventuel groupe parent
 
   const VisitDetailPage({
     super.key,
     required this.visit,
     required this.site,
     this.moduleInfo,
+    this.fromSiteGroup,
   });
 
   @override
@@ -75,6 +79,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                           .moduleInfo?.module.complement?.configuration?.custom,
                       moduleId: widget.moduleInfo?.module.id,
                       visit: widget.visit,
+                      moduleInfo: widget.moduleInfo, // Pour le fil d'Ariane
+                      siteGroup: widget.fromSiteGroup, // Pour le fil d'Ariane
                     ),
                   ),
                 ).then((_) {
@@ -111,8 +117,65 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
 
   Widget _buildContent(BuildContext context, BaseVisit fullVisit,
       ObjectConfig? visitConfig, ObjectConfig? observationConfig) {
+    // Récupérer les labels configurés
+    final String siteLabel = widget.moduleInfo?.module.complement?.configuration?.site?.label ?? 'Site';
+    final String visitLabel = widget.moduleInfo?.module.complement?.configuration?.visit?.label ?? 'Visite';
+    final String groupLabel = widget.moduleInfo?.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe';
+        
     return Column(
       children: [
+        // Fil d'Ariane pour la navigation
+        if (widget.moduleInfo != null)
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                child: BreadcrumbNavigation(
+                  items: [
+                    // Module
+                    BreadcrumbItem(
+                      label: 'Module',
+                      value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
+                      onTap: () {
+                        // Naviguer vers le module (retour de plusieurs niveaux)
+                        Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/module_detail');
+                      },
+                    ),
+                    
+                    // Groupe de site (si disponible)
+                    if (widget.fromSiteGroup != null)
+                      BreadcrumbItem(
+                        label: groupLabel,
+                        value: widget.fromSiteGroup.sitesGroupName ?? widget.fromSiteGroup.sitesGroupCode ?? 'Groupe',
+                        onTap: () {
+                          // Retour vers le groupe (2 niveaux - passer par le site)
+                          int count = 0;
+                          Navigator.of(context).popUntil((route) {
+                            return count++ >= 2;
+                          });
+                        },
+                      ),
+                    
+                    // Site
+                    BreadcrumbItem(
+                      label: siteLabel,
+                      value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
+                      onTap: () {
+                        // Naviguer vers le site (retour de 1 niveau)
+                        Navigator.of(context).pop();
+                      },
+                    ),
+                    // Visite (actuelle)
+                    BreadcrumbItem(
+                      label: visitLabel,
+                      value: formatDateString(fullVisit.visitDateMin),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         // Informations de la visite (partie supérieure)
         Expanded(
           flex: 2, // Prend 1/3 de l'écran
@@ -573,6 +636,13 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       );
       return;
     }
+    
+    // Préparer les informations pour le fil d'Ariane
+    final String? moduleName = widget.moduleInfo?.module.moduleLabel;
+    final String? siteLabel = widget.moduleInfo?.module.complement?.configuration?.site?.label ?? 'Site';
+    final String? siteName = widget.site.baseSiteName ?? widget.site.baseSiteCode;
+    final String? visitLabel = widget.moduleInfo?.module.complement?.configuration?.visit?.label ?? 'Visite';
+    final String? visitDate = formatDateString(widget.visit.visitDateMin);
 
     Navigator.push(
       context,
@@ -580,9 +650,14 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
         builder: (context) => ObservationFormPage(
           visitId: visitId,
           observationConfig: observationConfig,
-          customConfig:
-              widget.moduleInfo?.module.complement?.configuration?.custom,
+          customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
           moduleId: widget.moduleInfo?.module.id,
+          // Passer les informations pour le fil d'Ariane
+          moduleName: moduleName,
+          siteLabel: siteLabel,
+          siteName: siteName, 
+          visitLabel: visitLabel,
+          visitDate: visitDate,
         ),
       ),
     ).then((_) {
@@ -601,6 +676,13 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       );
       return;
     }
+    
+    // Préparer les informations pour le fil d'Ariane
+    final String? moduleName = widget.moduleInfo?.module.moduleLabel;
+    final String? siteLabel = widget.moduleInfo?.module.complement?.configuration?.site?.label ?? 'Site';
+    final String? siteName = widget.site.baseSiteName ?? widget.site.baseSiteCode;
+    final String? visitLabel = widget.moduleInfo?.module.complement?.configuration?.visit?.label ?? 'Visite';
+    final String? visitDate = formatDateString(widget.visit.visitDateMin);
 
     // Récupérer l'observation complète
     ref
@@ -624,6 +706,12 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                 widget.moduleInfo?.module.complement?.configuration?.custom,
             moduleId: widget.moduleInfo?.module.id,
             observation: observation,
+            // Passer les informations pour le fil d'Ariane
+            moduleName: moduleName,
+            siteLabel: siteLabel,
+            siteName: siteName, 
+            visitLabel: visitLabel,
+            visitDate: visitDate,
           ),
         ),
       ).then((_) {

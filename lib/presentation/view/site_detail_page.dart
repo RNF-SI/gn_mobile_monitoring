@@ -7,9 +7,11 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class SiteDetailPage extends ConsumerWidget {
   // Fonction d'aide pour formater les dates
@@ -19,11 +21,13 @@ class SiteDetailPage extends ConsumerWidget {
   }
   final BaseSite site;
   final ModuleInfo? moduleInfo;
+  final dynamic siteGroup; // Peut être un SiteGroup si ouvert depuis un groupe
 
   const SiteDetailPage({
     super.key,
     required this.site,
     this.moduleInfo,
+    this.siteGroup,
   });
 
   @override
@@ -43,6 +47,48 @@ class SiteDetailPage extends ConsumerWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Fil d'Ariane pour la navigation
+          if (moduleInfo != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                  child: BreadcrumbNavigation(
+                    items: [
+                      // Module
+                      BreadcrumbItem(
+                        label: 'Module',
+                        value: moduleInfo!.module.moduleLabel ?? 'Module',
+                        onTap: () {
+                          // Retour au module (peut être à plusieurs niveaux)
+                          if (siteGroup != null) {
+                            // Si ouvert depuis un groupe, retourner de 2 niveaux
+                            Navigator.of(context).popUntil((route) => route.isFirst || route.settings.name == '/module_detail');
+                          } else {
+                            Navigator.of(context).pop(); // Retour simple à la page précédente
+                          }
+                        },
+                      ),
+                      // Groupe de site (si disponible)
+                      if (siteGroup != null)
+                        BreadcrumbItem(
+                          label: moduleInfo!.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe',
+                          value: siteGroup.sitesGroupName ?? siteGroup.sitesGroupCode ?? 'Groupe',
+                          onTap: () {
+                            Navigator.of(context).pop(); // Retour à la page du groupe
+                          },
+                        ),
+                      // Site (actuel)
+                      BreadcrumbItem(
+                        label: moduleInfo!.module.complement?.configuration?.site?.label ?? 'Site',
+                        value: site.baseSiteName ?? site.baseSiteCode ?? 'Détails',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           // Properties Card
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -119,6 +165,8 @@ class SiteDetailPage extends ConsumerWidget {
                             customConfig: moduleInfo
                                 ?.module.complement?.configuration?.custom,
                             moduleId: moduleInfo?.module.id,
+                            moduleInfo: moduleInfo, // Pour le fil d'Ariane
+                            siteGroup: siteGroup, // Pour le fil d'Ariane
                           ),
                         ),
                       ).then((_) {
@@ -276,6 +324,8 @@ class SiteDetailPage extends ConsumerWidget {
                               .complement?.configuration?.custom,
                           moduleId: moduleInfo?.module.id,
                           visit: visit, // Passer la visite à éditer
+                          moduleInfo: moduleInfo, // Pour le fil d'Ariane
+                          siteGroup: siteGroup // Pour le fil d'Ariane
                         ),
                       ),
                     );
@@ -307,6 +357,7 @@ class SiteDetailPage extends ConsumerWidget {
                         visit: visit,
                         site: site,
                         moduleInfo: moduleInfo,
+                        fromSiteGroup: siteGroup, // Passer le groupe de sites si disponible
                       ),
                     ),
                   );
