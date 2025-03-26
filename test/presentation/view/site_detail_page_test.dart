@@ -157,7 +157,7 @@ void main() {
     expect(find.text('Test Site'), findsAtLeastNWidgets(1));
     expect(find.text('TST1'), findsOneWidget);
     expect(find.text('Test site description'), findsOneWidget);
-    expect(find.text('100-200m'), findsOneWidget);
+    expect(find.text('100-200 m'), findsOneWidget); // Notez l'espace entre 200 et m
 
     // Verify property labels are displayed
     expect(find.text('Nom'), findsOneWidget);

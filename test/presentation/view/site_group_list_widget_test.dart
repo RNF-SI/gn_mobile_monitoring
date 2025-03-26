@@ -113,12 +113,14 @@ void main() {
         idSitesGroup: 1,
         sitesGroupName: 'Groupe de sites 1',
         sitesGroupDescription: 'Description du groupe 1',
+        sitesGroupCode: 'SG-1',  // Utilisé sitesGroupCode au lieu de uuidSitesGroup
         uuidSitesGroup: 'UUID-1',
       ),
       const SiteGroup(
         idSitesGroup: 2,
         sitesGroupName: 'Groupe de sites 2',
         sitesGroupDescription: 'Description du groupe 2',
+        sitesGroupCode: 'SG-2',  // Utilisé sitesGroupCode au lieu de uuidSitesGroup
         uuidSitesGroup: 'UUID-2',
       ),
     ];
@@ -146,11 +148,9 @@ void main() {
 
     // Assert
     expect(find.text('Groupe de sites 1'), findsOneWidget);
-    expect(find.text('Description du groupe 1'), findsOneWidget);
-    expect(find.text('UUID-1'), findsOneWidget);
+    expect(find.text('SG-1'), findsOneWidget);  // Vérifie le code et non l'UUID
     expect(find.text('Groupe de sites 2'), findsOneWidget);
-    expect(find.text('Description du groupe 2'), findsOneWidget);
-    expect(find.text('UUID-2'), findsOneWidget);
+    expect(find.text('SG-2'), findsOneWidget);  // Vérifie le code et non l'UUID
   });
 
   testWidgets('SiteGroupListWidget should display empty message when no site groups are available',

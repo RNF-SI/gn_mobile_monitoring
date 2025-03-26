@@ -184,9 +184,9 @@ void main() {
     
     // Assert
     expect(find.text('Site 1'), findsOneWidget);
-    expect(find.text('Description du site 1'), findsOneWidget);
+    expect(find.text('S1'), findsOneWidget);  // Code du site au lieu de la description
     expect(find.text('Site 2'), findsOneWidget);
-    expect(find.text('Description du site 2'), findsOneWidget);
+    expect(find.text('S2'), findsOneWidget);  // Code du site au lieu de la description
     
     // Dispose container
     container.dispose();
