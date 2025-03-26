@@ -8,14 +8,14 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockGetVisitsBySiteIdUseCase extends Mock
-    implements GetVisitsBySiteIdUseCase {}
+class MockGetVisitsBySiteAndModuleUseCase extends Mock
+    implements GetVisitsBySiteAndModuleUseCase {}
 
 class MockGetVisitWithDetailsUseCase extends Mock
     implements GetVisitWithDetailsUseCase {}
@@ -52,7 +52,7 @@ void main() {
       visitDateMin: '2023-01-01',
     ));
   });
-  late MockGetVisitsBySiteIdUseCase mockGetVisitsBySiteIdUseCase;
+  late MockGetVisitsBySiteAndModuleUseCase mockGetVisitsBySiteAndModuleUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
   late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
   late MockSaveVisitComplementUseCase mockSaveVisitComplementUseCase;
@@ -67,7 +67,7 @@ void main() {
   const String testUserName = "Test User";
 
   setUp(() {
-    mockGetVisitsBySiteIdUseCase = MockGetVisitsBySiteIdUseCase();
+    mockGetVisitsBySiteAndModuleUseCase = MockGetVisitsBySiteAndModuleUseCase();
     mockGetVisitWithDetailsUseCase = MockGetVisitWithDetailsUseCase();
     mockGetVisitComplementUseCase = MockGetVisitComplementUseCase();
     mockSaveVisitComplementUseCase = MockSaveVisitComplementUseCase();
@@ -84,11 +84,11 @@ void main() {
         .thenAnswer((_) async => testUserName);
 
     // Simuler un chargement initial des visites
-    when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+    when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
         .thenAnswer((_) async => []);
 
     viewModel = SiteVisitsViewModel(
-      mockGetVisitsBySiteIdUseCase,
+      mockGetVisitsBySiteAndModuleUseCase,
       mockGetVisitWithDetailsUseCase,
       mockGetVisitComplementUseCase,
       mockSaveVisitComplementUseCase,
@@ -98,10 +98,11 @@ void main() {
       mockGetUserIdUseCase,
       mockGetUserNameUseCase,
       testSiteId,
+      1, // moduleId is required
     );
 
     // Réinitialiser les compteurs d'appel après l'initialisation
-    reset(mockGetVisitsBySiteIdUseCase);
+    reset(mockGetVisitsBySiteAndModuleUseCase);
     reset(mockCreateVisitUseCase);
     reset(mockUpdateVisitUseCase);
     reset(mockDeleteVisitUseCase);
@@ -141,7 +142,7 @@ void main() {
 
     test('loadVisits should update state with visits from use case', () async {
       // Arrange
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => testVisits);
 
       // Act
@@ -149,13 +150,14 @@ void main() {
 
       // Assert
       expect(viewModel.state, AsyncValue.data(testVisits));
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('loadVisits should handle error', () async {
       // Arrange
       final exception = Exception('Test error');
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenThrow(exception);
 
       // Act
@@ -163,7 +165,8 @@ void main() {
 
       // Assert
       expect(viewModel.state.hasError, true);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('getCurrentUserId should return user ID from use case', () async {
@@ -192,8 +195,9 @@ void main() {
       when(() => mockDeleteVisitUseCase.execute(visitIdToDelete))
           .thenAnswer((_) async => true);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).thenAnswer(
-          (_) async => [testVisits[1]]); // Returned list without deleted visit
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .thenAnswer((_) async =>
+              [testVisits[1]]); // Returned list without deleted visit
 
       // Act
       final result = await viewModel.deleteVisit(visitIdToDelete);
@@ -201,7 +205,8 @@ void main() {
       // Assert
       expect(result, true);
       verify(() => mockDeleteVisitUseCase.execute(visitIdToDelete)).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('deleteVisit should return false and not reload when use case fails',
@@ -218,7 +223,8 @@ void main() {
       // Assert
       expect(result, false);
       verify(() => mockDeleteVisitUseCase.execute(visitIdToDelete)).called(1);
-      verifyNever(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId));
+      verifyNever(
+          () => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1));
     });
 
     test('deleteVisit should handle exceptions', () async {
@@ -258,7 +264,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 3);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -270,7 +276,8 @@ void main() {
 
       // Verify the use cases were called
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('createVisitFromFormData should work with empty observers list',
@@ -286,7 +293,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 3);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -298,7 +305,8 @@ void main() {
 
       // Verify the use cases were called
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test(
@@ -316,7 +324,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 3);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -328,7 +336,8 @@ void main() {
 
       // Verify the use cases were called
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test(
@@ -348,7 +357,7 @@ void main() {
       when(() => mockUpdateVisitUseCase.execute(any()))
           .thenAnswer((_) async => true);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -360,7 +369,8 @@ void main() {
 
       // Verify the use cases were called
       verify(() => mockUpdateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('updateVisitFromFormData should return false when update fails',
@@ -379,7 +389,7 @@ void main() {
       when(() => mockUpdateVisitUseCase.execute(any()))
           .thenAnswer((_) async => false);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -389,7 +399,8 @@ void main() {
       // Assert
       expect(result, false);
       verify(() => mockUpdateVisitUseCase.execute(any())).called(1);
-      verifyNever(() => mockGetVisitsBySiteIdUseCase.execute(any()));
+      verifyNever(
+          () => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()));
     });
 
     test('updateVisitFromFormData should handle exceptions', () async {
@@ -402,7 +413,7 @@ void main() {
       when(() => mockUpdateVisitUseCase.execute(any()))
           .thenThrow(Exception('Test error'));
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act & Assert
@@ -430,7 +441,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 1);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -438,7 +449,8 @@ void main() {
 
       // Assert
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('_extractModuleSpecificData should convert numeric strings', () async {
@@ -453,7 +465,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 1);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -461,7 +473,8 @@ void main() {
 
       // Assert
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
 
     test('_extractModuleSpecificData should ignore standard fields', () async {
@@ -478,7 +491,7 @@ void main() {
       when(() => mockCreateVisitUseCase.execute(any()))
           .thenAnswer((_) async => 1);
 
-      when(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId))
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
           .thenAnswer((_) async => []);
 
       // Act
@@ -486,7 +499,8 @@ void main() {
 
       // Assert
       verify(() => mockCreateVisitUseCase.execute(any())).called(1);
-      verify(() => mockGetVisitsBySiteIdUseCase.execute(testSiteId)).called(1);
+      verify(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .called(1);
     });
   });
 
@@ -518,7 +532,8 @@ void main() {
       await viewModel.loadVisits();
 
       // Assert - no exception thrown, no mock called
-      verifyNever(() => mockGetVisitsBySiteIdUseCase.execute(any()));
+      verifyNever(
+          () => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()));
     });
   });
 }

@@ -172,7 +172,7 @@ void main() {
     return ProviderScope(
       overrides: [
         // Override siteVisitsViewModelProvider to use our mock
-        siteVisitsViewModelProvider(site.idBaseSite)
+        siteVisitsViewModelProvider((site.idBaseSite, 1))
             .overrideWith((_) => mockViewModel),
 
         // Override the observations provider to prevent actual DB calls
@@ -263,7 +263,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         // Override with our controlled mock
-        siteVisitsViewModelProvider(testSite.idBaseSite)
+        siteVisitsViewModelProvider((testSite.idBaseSite, 1))
             .overrideWith((_) => mockViewModel),
 
         // Override observations provider to avoid loading real data
@@ -328,7 +328,7 @@ void main() {
       ProviderScope(
         overrides: [
           // Override with our mock that has a brief delay
-          siteVisitsViewModelProvider(testSite.idBaseSite)
+          siteVisitsViewModelProvider((testSite.idBaseSite, 1))
               .overrideWith((_) => mockViewModel),
 
           // Also make sure observations are in loading state
@@ -377,7 +377,7 @@ void main() {
       ProviderScope(
         overrides: [
           // Override for visit details
-          siteVisitsViewModelProvider(testSite.idBaseSite)
+          siteVisitsViewModelProvider((testSite.idBaseSite, 1))
               .overrideWith((_) => mockViewModel),
 
           // Override for empty observations list
@@ -427,7 +427,7 @@ void main() {
       ProviderScope(
         overrides: [
           // Override with our error-throwing mock
-          siteVisitsViewModelProvider(testSite.idBaseSite)
+          siteVisitsViewModelProvider((testSite.idBaseSite, 1))
               .overrideWith((_) => mockViewModel),
         ],
         child: MaterialApp(
@@ -462,7 +462,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          siteVisitsViewModelProvider(providers.testVisit.idBaseSite!)
+          siteVisitsViewModelProvider((providers.testVisit.idBaseSite!, 1))
               .overrideWith((_) => mockSiteVisitsViewModel),
           observationsProvider(providers.testVisit.idBaseVisit)
               .overrideWith((_) => mockObservationsViewModel),
@@ -511,7 +511,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          siteVisitsViewModelProvider(providers.testVisit.idBaseSite!)
+          siteVisitsViewModelProvider((providers.testVisit.idBaseSite!, 1))
               .overrideWith((_) => mockSiteVisitsViewModel),
           observationsProvider(providers.testVisit.idBaseVisit)
               .overrideWith((_) => mockObservationsViewModel),

@@ -10,7 +10,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
@@ -19,8 +19,8 @@ import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.d
 import 'package:mocktail/mocktail.dart';
 
 // Mocks
-class MockGetVisitsBySiteIdUseCase extends Mock
-    implements GetVisitsBySiteIdUseCase {}
+class MockGetVisitsBySiteAndModuleUseCase extends Mock
+    implements GetVisitsBySiteAndModuleUseCase {}
 
 class MockGetVisitWithDetailsUseCase extends Mock
     implements GetVisitWithDetailsUseCase {}
@@ -65,7 +65,7 @@ void main() {
   late CustomConfig testCustomConfig;
   late BaseVisit testVisit;
   late MockNavigatorObserver mockNavigatorObserver;
-  late MockGetVisitsBySiteIdUseCase mockGetVisitsBySiteIdUseCase;
+  late MockGetVisitsBySiteAndModuleUseCase mockGetVisitsBySiteAndModuleUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
   late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
   late MockSaveVisitComplementUseCase mockSaveVisitComplementUseCase;
@@ -152,7 +152,7 @@ void main() {
 
     // Initialiser les mocks pour le ViewModel
     mockNavigatorObserver = MockNavigatorObserver();
-    mockGetVisitsBySiteIdUseCase = MockGetVisitsBySiteIdUseCase();
+    mockGetVisitsBySiteAndModuleUseCase = MockGetVisitsBySiteAndModuleUseCase();
     mockGetVisitWithDetailsUseCase = MockGetVisitWithDetailsUseCase();
     mockGetVisitComplementUseCase = MockGetVisitComplementUseCase();
     mockSaveVisitComplementUseCase = MockSaveVisitComplementUseCase();
@@ -163,7 +163,7 @@ void main() {
     mockGetUserNameUseCase = MockGetUserNameFromLocalStorageUseCase();
 
     // Configure default behavior for mocks
-    when(() => mockGetVisitsBySiteIdUseCase.execute(any()))
+    when(() => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()))
         .thenAnswer((_) async => []);
     when(() => mockGetVisitWithDetailsUseCase.execute(any()))
         .thenAnswer((_) async => testVisit);
@@ -185,8 +185,8 @@ void main() {
       overrides: [
         // Override the viewModel provider
         siteVisitsViewModelProvider
-            .overrideWith((ref, siteId) => SiteVisitsViewModel(
-                  mockGetVisitsBySiteIdUseCase,
+            .overrideWith((ref, params) => SiteVisitsViewModel(
+                  mockGetVisitsBySiteAndModuleUseCase,
                   mockGetVisitWithDetailsUseCase,
                   mockGetVisitComplementUseCase,
                   mockSaveVisitComplementUseCase,
@@ -195,7 +195,8 @@ void main() {
                   mockDeleteVisitUseCase,
                   mockGetUserIdUseCase,
                   mockGetUserNameUseCase,
-                  siteId,
+                  params.$1,
+                  params.$2,
                 )),
       ],
       child: child,
@@ -267,8 +268,8 @@ void main() {
         overrides: [
           // Same overrides as buildTestProviderScope
           siteVisitsViewModelProvider
-              .overrideWith((ref, siteId) => SiteVisitsViewModel(
-                    mockGetVisitsBySiteIdUseCase,
+              .overrideWith((ref, params) => SiteVisitsViewModel(
+                    mockGetVisitsBySiteAndModuleUseCase,
                     mockGetVisitWithDetailsUseCase,
                     mockGetVisitComplementUseCase,
                     mockSaveVisitComplementUseCase,
@@ -277,11 +278,12 @@ void main() {
                     mockDeleteVisitUseCase,
                     mockGetUserIdUseCase,
                     mockGetUserNameUseCase,
-                    siteId,
+                    params.$1,
+                    params.$2,
                   )),
         ],
       );
-      
+
       // Test creation mode
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -295,19 +297,19 @@ void main() {
           ),
         ),
       );
-      
+
       // Wait for widget to build without using pumpAndSettle
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      
+
       // Check for creation mode button
       expect(find.text('Enregistrer'), findsOneWidget);
       expect(find.text('Mettre à jour'), findsNothing);
-      
+
       // Make sure to dispose the container
       container.dispose();
     });
-    
+
     testWidgets('VisitFormPage should show edit mode button',
         (WidgetTester tester) async {
       // Create a container to properly dispose of later
@@ -315,8 +317,8 @@ void main() {
         overrides: [
           // Same overrides as buildTestProviderScope
           siteVisitsViewModelProvider
-              .overrideWith((ref, siteId) => SiteVisitsViewModel(
-                    mockGetVisitsBySiteIdUseCase,
+              .overrideWith((ref, params) => SiteVisitsViewModel(
+                    mockGetVisitsBySiteAndModuleUseCase,
                     mockGetVisitWithDetailsUseCase,
                     mockGetVisitComplementUseCase,
                     mockSaveVisitComplementUseCase,
@@ -325,11 +327,12 @@ void main() {
                     mockDeleteVisitUseCase,
                     mockGetUserIdUseCase,
                     mockGetUserNameUseCase,
-                    siteId,
+                    params.$1,
+                    params.$2,
                   )),
         ],
       );
-      
+
       // Test edit mode
       await tester.pumpWidget(
         UncontrolledProviderScope(
@@ -344,14 +347,14 @@ void main() {
           ),
         ),
       );
-      
+
       // Wait for widget to build without using pumpAndSettle
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
-      
+
       // Check for edit mode button
       expect(find.text('Mettre à jour'), findsOneWidget);
-      
+
       // Make sure to dispose the container
       container.dispose();
     });
@@ -372,7 +375,7 @@ void main() {
           ),
         ),
       );
-      
+
       // Wait for widget to build but don't use pumpAndSettle which might get stuck
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 100));
@@ -381,10 +384,10 @@ void main() {
       final cancelButton = find.widgetWithText(TextButton, 'Annuler');
       expect(cancelButton, findsOneWidget);
       await tester.tap(cancelButton);
-      
+
       // Only pump once to avoid hanging
       await tester.pump();
-      
+
       // Verify navigation popped
       verify(() => mockNavigatorObserver.didPop(any(), any())).called(1);
     });
@@ -415,21 +418,25 @@ void main() {
       expect(find.text('Confirmer la suppression'), findsOneWidget);
       expect(find.text('Êtes-vous sûr de vouloir supprimer cette visite ?'),
           findsOneWidget);
-      
+
       // Find buttons within the dialog
       final dialog = find.byType(AlertDialog);
       expect(dialog, findsOneWidget);
-      
+
       // More specific finder for the Cancel button within the dialog context
-      expect(find.descendant(
-        of: dialog,
-        matching: find.text('Annuler'),
-      ), findsOneWidget);
-      
-      expect(find.descendant(
-        of: dialog,
-        matching: find.text('Supprimer'),
-      ), findsOneWidget);
+      expect(
+          find.descendant(
+            of: dialog,
+            matching: find.text('Annuler'),
+          ),
+          findsOneWidget);
+
+      expect(
+          find.descendant(
+            of: dialog,
+            matching: find.text('Supprimer'),
+          ),
+          findsOneWidget);
     });
   });
 

@@ -13,7 +13,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
@@ -22,8 +22,8 @@ import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockGetVisitsBySiteIdUseCase extends Mock
-    implements GetVisitsBySiteIdUseCase {}
+class MockGetVisitsBySiteAndModuleUseCase extends Mock
+    implements GetVisitsBySiteAndModuleUseCase {}
 
 class MockGetVisitWithDetailsUseCase extends Mock
     implements GetVisitWithDetailsUseCase {}
@@ -87,7 +87,7 @@ void main() {
     ),
   ];
 
-  late MockGetVisitsBySiteIdUseCase mockGetVisitsBySiteIdUseCase;
+  late MockGetVisitsBySiteAndModuleUseCase mockGetVisitsBySiteAndModuleUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
   late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
   late MockSaveVisitComplementUseCase mockSaveVisitComplementUseCase;
@@ -100,7 +100,7 @@ void main() {
   late MockNavigatorObserver mockNavigatorObserver;
 
   setUp(() {
-    mockGetVisitsBySiteIdUseCase = MockGetVisitsBySiteIdUseCase();
+    mockGetVisitsBySiteAndModuleUseCase = MockGetVisitsBySiteAndModuleUseCase();
     mockGetVisitWithDetailsUseCase = MockGetVisitWithDetailsUseCase();
     mockGetVisitComplementUseCase = MockGetVisitComplementUseCase();
     mockSaveVisitComplementUseCase = MockSaveVisitComplementUseCase();
@@ -120,7 +120,7 @@ void main() {
 
     // Pre-create a ViewModel with data already loaded
     preloadedViewModel = SiteVisitsViewModel(
-      mockGetVisitsBySiteIdUseCase,
+      mockGetVisitsBySiteAndModuleUseCase,
       mockGetVisitWithDetailsUseCase,
       mockGetVisitComplementUseCase,
       mockSaveVisitComplementUseCase,
@@ -130,6 +130,7 @@ void main() {
       mockGetUserIdUseCase,
       mockGetUserNameUseCase,
       testSite.idBaseSite,
+      1, // Default moduleId
     );
   });
 
@@ -157,7 +158,8 @@ void main() {
     expect(find.text('Test Site'), findsAtLeastNWidgets(1));
     expect(find.text('TST1'), findsOneWidget);
     expect(find.text('Test site description'), findsOneWidget);
-    expect(find.text('100-200 m'), findsOneWidget); // Notez l'espace entre 200 et m
+    expect(find.text('100-200 m'),
+        findsOneWidget); // Notez l'espace entre 200 et m
 
     // Property labels are dynamically determined by the module configuration
     // so we don't test for specific label texts
