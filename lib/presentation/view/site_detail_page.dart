@@ -36,7 +36,9 @@ class SiteDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(site.baseSiteName ?? 'Détails du site'),
+        title: Text(
+          '${moduleInfo?.module.complement?.configuration?.site?.label ?? 'Site'}: ${site.baseSiteName ?? 'Détails'}'
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,15 +52,25 @@ class SiteDetailPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Propriétés',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      moduleInfo?.module.complement?.configuration?.site?.label ?? 'Propriétés',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                    ),
                     const SizedBox(height: 8),
-                    _buildPropertyRow('Nom', site.baseSiteName ?? ''),
-                    _buildPropertyRow('Code', site.baseSiteCode ?? ''),
+                    _buildPropertyRow(
+                      _getFieldLabel('base_site_name', 'Nom', moduleInfo),
+                      site.baseSiteName ?? ''
+                    ),
+                    _buildPropertyRow(
+                      _getFieldLabel('base_site_code', 'Code', moduleInfo),
+                      site.baseSiteCode ?? ''
+                    ),
                     // Maintenant on affiche la description si disponible
                     if (site.baseSiteDescription != null && site.baseSiteDescription!.isNotEmpty)
-                      _buildPropertyRow('Description', site.baseSiteDescription!),
+                      _buildPropertyRow(
+                        _getFieldLabel('base_site_description', 'Description', moduleInfo),
+                        site.baseSiteDescription!
+                      ),
                     // Affichage de l'altitude si disponible
                     if (site.altitudeMin != null || site.altitudeMax != null)
                       _buildPropertyRow(
@@ -404,6 +416,37 @@ class SiteDetailPage extends ConsumerWidget {
         .join(' ');
   }
 
+  /// Méthode pour obtenir le libellé d'un champ à partir de la configuration du module
+  String _getFieldLabel(String fieldName, String defaultLabel, ModuleInfo? moduleInfo) {
+    if (moduleInfo == null || moduleInfo.module.complement?.configuration == null) {
+      return defaultLabel;
+    }
+    
+    // Récupérer la configuration du site
+    final siteConfig = moduleInfo.module.complement?.configuration?.site;
+    final customConfig = moduleInfo.module.complement?.configuration?.custom;
+    
+    if (siteConfig == null) {
+      return defaultLabel;
+    }
+    
+    // Générer le schéma unifié
+    final unifiedSchema = FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
+    
+    // Chercher le libellé dans le schéma
+    if (unifiedSchema.containsKey(fieldName) && 
+        unifiedSchema[fieldName].containsKey('attribut_label')) {
+      return unifiedSchema[fieldName]['attribut_label'];
+    }
+    
+    // Si pas trouvé dans le schéma, vérifier dans les champs generic
+    if (siteConfig.generic != null && siteConfig.generic!.containsKey(fieldName)) {
+      return siteConfig.generic![fieldName]!.attributLabel ?? defaultLabel;
+    }
+    
+    return defaultLabel;
+  }
+  
   Widget _buildPropertyRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
