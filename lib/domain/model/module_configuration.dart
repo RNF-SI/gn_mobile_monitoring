@@ -21,42 +21,52 @@ class ModuleConfiguration with _$ModuleConfiguration {
   }) = _ModuleConfiguration;
 
   factory ModuleConfiguration.fromJson(Map<String, dynamic> json) {
+    // Helper function to safely convert to Map
+    Map<String, dynamic>? toSafeMap(dynamic value) {
+      if (value == null) return null;
+      if (value is Map<String, dynamic>) return value;
+      return {};
+    }
+    
+    // Helper function to safely convert to Map for string fields
+    Map<String, String?>? toSafeStringMap(dynamic value) {
+      if (value == null) return null;
+      if (value is! Map) return {};
+      try {
+        return (value as Map<String, dynamic>).map((k, v) => MapEntry(k, v?.toString()));
+      } catch (e) {
+        return {};
+      }
+    }
+    
     return ModuleConfiguration(
-      custom: json['custom'] == null
-          ? null
-          : CustomConfig.fromJson(json['custom'] as Map<String, dynamic>),
-      data: json['data'] == null
-          ? null
-          : DataConfig.fromJson(json['data'] as Map<String, dynamic>),
-      defaultDisplayFieldNames: json['default_display_field_names'] == null
-          ? null
-          : (json['default_display_field_names'] as Map<String, dynamic>).map(
-              (k, v) => MapEntry(k, v?.toString()),
-            ),
-      displayFieldNames: json['display_field_names'] == null
-          ? null
-          : (json['display_field_names'] as Map<String, dynamic>).map(
-              (k, v) => MapEntry(k, v?.toString()),
-            ),
-      module: json['module'] == null
-          ? null
-          : ModuleConfig.fromJson(json['module'] as Map<String, dynamic>),
-      observation: json['observation'] == null
-          ? null
-          : ObjectConfig.fromJson(json['observation'] as Map<String, dynamic>),
-      site: json['site'] == null
-          ? null
-          : ObjectConfig.fromJson(json['site'] as Map<String, dynamic>),
-      sitesGroup: json['sites_group'] == null
-          ? null
-          : ObjectConfig.fromJson(json['sites_group'] as Map<String, dynamic>),
+      custom: json['custom'] != null && json['custom'] is Map 
+          ? CustomConfig.fromJson(toSafeMap(json['custom'])!)
+          : null,
+      data: json['data'] != null && json['data'] is Map
+          ? DataConfig.fromJson(toSafeMap(json['data'])!)
+          : null,
+      defaultDisplayFieldNames: toSafeStringMap(json['default_display_field_names']),
+      displayFieldNames: toSafeStringMap(json['display_field_names']),
+      module: json['module'] != null && json['module'] is Map
+          ? ModuleConfig.fromJson(toSafeMap(json['module'])!)
+          : null,
+      observation: json['observation'] != null && json['observation'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['observation'])!)
+          : null,
+      site: json['site'] != null && json['site'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['site'])!)
+          : null,
+      sitesGroup: json['sites_group'] != null && json['sites_group'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['sites_group'])!)
+          : null,
       synthese: json['synthese'],
-      tree: json['tree'] == null
-          ? null
-          : TreeConfig.fromJson(json['tree'] as Map<String, dynamic>),
-      visit: json['visit'] == null
-          ? null
-          : ObjectConfig.fromJson(json['visit'] as Map<String, dynamic>),
+      tree: json['tree'] != null && json['tree'] is Map
+          ? TreeConfig.fromJson(toSafeMap(json['tree'])!)
+          : null,
+      visit: json['visit'] != null && json['visit'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['visit'])!)
+          : null,
     );
   }
 }
@@ -98,22 +108,59 @@ class CustomConfig with _$CustomConfig {
   }) = _CustomConfig;
 
   factory CustomConfig.fromJson(Map<String, dynamic> json) {
+    // Safe conversion helper for bool
+    bool? toBool(dynamic value) {
+      if (value == null) return null;
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true';
+      if (value is num) return value != 0;
+      return null;
+    }
+    
+    // Safe conversion helper for int
+    int? toInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      if (value is double) return value.toInt();
+      return null;
+    }
+    
+    // Safe conversion helper for string
+    String? toString(dynamic value) {
+      if (value == null) return null;
+      return value.toString();
+    }
+    
+    // Safe conversion helper for TypeSite list
+    List<TypeSite>? toTypeSiteList(dynamic value) {
+      if (value == null) return null;
+      if (value is! List) return [];
+      
+      try {
+        return value.map((e) {
+          if (e is Map<String, dynamic>) {
+            return TypeSite.fromJson(e);
+          } else {
+            return TypeSite(idNomenclatureTypeSite: null, config: null);
+          }
+        }).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    
     return CustomConfig(
-      drawSitesGroup: json['__MODULE.B_DRAW_SITES_GROUP'] as bool?,
-      synthese: json['__MODULE.B_SYNTHESE'] as bool?,
-      typeSites: (json['__MODULE.IDS_TYPE_SITE'] as List<dynamic>?)
-          ?.map((e) => TypeSite.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      idListObserver: json['__MODULE.ID_LIST_OBSERVER'] as int?,
-      idListTaxonomy: json['__MODULE.ID_LIST_TAXONOMY'] as int?,
-      idModule: json['__MODULE.ID_MODULE'] as int?,
-      moduleCode: json['__MODULE.MODULE_CODE'] as String?,
-      taxonomyDisplayFieldName:
-          json['__MODULE.TAXONOMY_DISPLAY_FIELD_NAME'] as String?,
-      typesSite: (json['__MODULE.TYPES_SITE'] as List<dynamic>?)
-          ?.map((e) => TypeSite.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      monitoringsPath: json['__MONITORINGS_PATH'] as String?,
+      drawSitesGroup: toBool(json['__MODULE.B_DRAW_SITES_GROUP']),
+      synthese: toBool(json['__MODULE.B_SYNTHESE']),
+      typeSites: toTypeSiteList(json['__MODULE.IDS_TYPE_SITE']),
+      idListObserver: toInt(json['__MODULE.ID_LIST_OBSERVER']),
+      idListTaxonomy: toInt(json['__MODULE.ID_LIST_TAXONOMY']),
+      idModule: toInt(json['__MODULE.ID_MODULE']),
+      moduleCode: toString(json['__MODULE.MODULE_CODE']),
+      taxonomyDisplayFieldName: toString(json['__MODULE.TAXONOMY_DISPLAY_FIELD_NAME']),
+      typesSite: toTypeSiteList(json['__MODULE.TYPES_SITE']),
+      monitoringsPath: toString(json['__MONITORINGS_PATH']),
     );
   }
 }
@@ -509,52 +556,142 @@ class ObjectConfig with _$ObjectConfig {
   }) = _ObjectConfig;
 
   factory ObjectConfig.fromJson(Map<String, dynamic> json) {
+    // Safe conversion helpers
+    bool? toBool(dynamic value) {
+      if (value == null) return null;
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true';
+      if (value is num) return value != 0;
+      return null;
+    }
+    
+    int? toInt(dynamic value) {
+      if (value == null) return null;
+      if (value is int) return value;
+      if (value is String) return int.tryParse(value);
+      if (value is double) return value.toInt();
+      return null;
+    }
+    
+    String? toString(dynamic value) {
+      if (value == null) return null;
+      return value.toString();
+    }
+    
+    // Safe conversion for string lists
+    List<String>? toStringList(dynamic value) {
+      if (value == null) return null;
+      if (value is! List) return [];
+      try {
+        return value.map((e) => e?.toString() ?? "").toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    
+    // Safe conversion for ExportConfig list
+    List<ExportConfig>? toExportConfigList(dynamic value) {
+      if (value == null) return null;
+      if (value is! List) return [];
+      try {
+        return value.map((e) {
+          if (e is Map<String, dynamic>) {
+            return ExportConfig.fromJson(e);
+          } else {
+            return ExportConfig();
+          }
+        }).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    
+    // Safe conversion for SortConfig list
+    List<SortConfig>? toSortConfigList(dynamic value) {
+      if (value == null) return null;
+      if (value is! List) return [];
+      try {
+        return value.map((e) {
+          if (e is Map<String, dynamic>) {
+            return SortConfig.fromJson(e);
+          } else {
+            return SortConfig();
+          }
+        }).toList();
+      } catch (e) {
+        return [];
+      }
+    }
+    
+    // Safe conversion for Map
+    Map<String, dynamic>? toSafeMap(dynamic value) {
+      if (value == null) return null;
+      if (value is Map<String, dynamic>) return value;
+      return {};
+    }
+    
+    // Safe conversion for GenericFieldConfig map
+    Map<String, GenericFieldConfig>? toGenericFieldConfigMap(dynamic value) {
+      if (value == null) return null;
+      if (value is! Map) return {};
+      try {
+        final result = <String, GenericFieldConfig>{};
+        (value as Map).forEach((k, v) {
+          if (v is Map<String, dynamic>) {
+            result[k.toString()] = GenericFieldConfig.fromJson(v);
+          } else {
+            result[k.toString()] = GenericFieldConfig();
+          }
+        });
+        return result;
+      } catch (e) {
+        return {};
+      }
+    }
+    
+    // Safe conversion for TypeSiteConfig map
+    Map<String, TypeSiteConfig>? toTypeSiteConfigMap(dynamic value) {
+      if (value == null) return null;
+      if (value is! Map) return {};
+      try {
+        final result = <String, TypeSiteConfig>{};
+        (value as Map).forEach((k, v) {
+          if (v is Map<String, dynamic>) {
+            result[k.toString()] = TypeSiteConfig.fromJson(v);
+          } else {
+            result[k.toString()] = TypeSiteConfig();
+          }
+        });
+        return result;
+      } catch (e) {
+        return {};
+      }
+    }
+    
     return ObjectConfig(
-      chained: json['chained'] as bool?,
-      childrenTypes: (json['children_types'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      descriptionFieldName: json['description_field_name'] as String?,
-      displayForm: (json['display_form'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      displayList: (json['display_list'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      displayProperties: (json['display_properties'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      exportPdf: (json['export_pdf'] as List<dynamic>?)
-          ?.map((e) => ExportConfig.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      filters: json['filters'] as Map<String, dynamic>?,
-      generic: (json['generic'] as Map<String, dynamic>?)?.map(
-        (k, e) =>
-            MapEntry(k, GenericFieldConfig.fromJson(e as Map<String, dynamic>)),
-      ),
-      genre: json['genre'] as String?,
-      geomFieldName: json['geom_field_name'] as String?,
-      geometryType: json['geometry_type'] as String?,
-      idFieldName: json['id_field_name'] as String?,
-      idTableLocation: json['id_table_location'] as int?,
-      label: json['label'] as String?,
-      labelList: json['label_list'] as String?,
-      mapLabelFieldName: json['map_label_field_name'] as String?,
-      parentTypes: (json['parent_types'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      propertiesKeys: (json['properties_keys'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      sorts: (json['sorts'] as List<dynamic>?)
-          ?.map((e) => SortConfig.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      specific: json['specific'] as Map<String, dynamic>?,
-      typesSite: (json['types_site'] as Map<String, dynamic>?)?.map(
-        (k, e) =>
-            MapEntry(k, TypeSiteConfig.fromJson(e as Map<String, dynamic>)),
-      ),
-      uuidFieldName: json['uuid_field_name'] as String?,
+      chained: toBool(json['chained']),
+      childrenTypes: toStringList(json['children_types']),
+      descriptionFieldName: toString(json['description_field_name']),
+      displayForm: toStringList(json['display_form']),
+      displayList: toStringList(json['display_list']),
+      displayProperties: toStringList(json['display_properties']),
+      exportPdf: toExportConfigList(json['export_pdf']),
+      filters: toSafeMap(json['filters']),
+      generic: toGenericFieldConfigMap(json['generic']),
+      genre: toString(json['genre']),
+      geomFieldName: toString(json['geom_field_name']),
+      geometryType: toString(json['geometry_type']),
+      idFieldName: toString(json['id_field_name']),
+      idTableLocation: toInt(json['id_table_location']),
+      label: toString(json['label']),
+      labelList: toString(json['label_list']),
+      mapLabelFieldName: toString(json['map_label_field_name']),
+      parentTypes: toStringList(json['parent_types']),
+      propertiesKeys: toStringList(json['properties_keys']),
+      sorts: toSortConfigList(json['sorts']),
+      specific: toSafeMap(json['specific']),
+      typesSite: toTypeSiteConfigMap(json['types_site']),
+      uuidFieldName: toString(json['uuid_field_name']),
     );
   }
 }
