@@ -74,8 +74,9 @@ class SiteGroupDetailPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title:
-            Text('Groupe: ${siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
+        title: Text(
+          '${moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${siteGroup.sitesGroupName ?? 'Détail du groupe'}'
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,9 +90,10 @@ class SiteGroupDetailPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Propriétés du groupe',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    Text(
+                      moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Propriétés du groupe',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
+                    ),
                     const SizedBox(height: 8),
                     _buildPropertyRow(
                         groupNameLabel, siteGroup.sitesGroupName ?? ''),
@@ -114,6 +116,8 @@ class SiteGroupDetailPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
+                  moduleInfo.module.complement?.configuration?.site?.labelList ?? 
+                  moduleInfo.module.complement?.configuration?.site?.label ?? 
                   'Sites associés',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
