@@ -130,7 +130,7 @@ void main() {
         when(mockVisitesDatabase.insertVisitComplement(any))
             .thenAnswer((_) async => 1);
 
-        await repository.saveVisitComplementData(1, 'Test data');
+        await repository.saveVisitComplementData(1, '{"key":"Test data"}');
 
         verify(mockVisitesDatabase.insertVisitComplement(any)).called(1);
       });
@@ -143,7 +143,7 @@ void main() {
         when(mockVisitesDatabase.updateVisitComplement(any))
             .thenAnswer((_) async => true);
 
-        await repository.saveVisitComplementData(1, 'Test data');
+        await repository.saveVisitComplementData(1, '{"key":"Test data"}');
 
         verify(mockVisitesDatabase.insertVisitComplement(any)).called(1);
         verify(mockVisitesDatabase.updateVisitComplement(any)).called(1);

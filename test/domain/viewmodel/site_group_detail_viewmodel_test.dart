@@ -10,6 +10,15 @@ import 'package:mockito/mockito.dart';
 
 import 'site_group_detail_viewmodel_test.mocks.dart';
 
+// Créer un provider modifié pour les tests qui n'appelle pas loadSites() automatiquement
+final testSiteGroupDetailViewModelProvider = StateNotifierProvider.family<
+    SiteGroupDetailViewModel, AsyncValue<List<BaseSite>>, SiteGroup>(
+  (ref, siteGroup) => SiteGroupDetailViewModel(
+    ref.watch(getSitesBySiteGroupUseCaseProvider),
+    siteGroup,
+  ),
+);
+
 @GenerateMocks([GetSitesBySiteGroupUseCase])
 void main() {
   late MockGetSitesBySiteGroupUseCase mockGetSitesBySiteGroupUseCase;
@@ -53,7 +62,7 @@ void main() {
 
     // Add a listener to the provider we're testing to trigger updates
     container.listen(
-      siteGroupDetailViewModelProvider(testSiteGroup),
+      testSiteGroupDetailViewModelProvider(testSiteGroup),
       (previous, next) {},
     );
   });
@@ -69,7 +78,7 @@ void main() {
 
     // Act & Assert
     expect(
-      container.read(siteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
       const AsyncValue<List<BaseSite>>.loading(),
     );
   });
@@ -81,12 +90,12 @@ void main() {
 
     // Act - simulate the callback being triggered after the future completes
     await container
-        .read(siteGroupDetailViewModelProvider(testSiteGroup).notifier)
+        .read(testSiteGroupDetailViewModelProvider(testSiteGroup).notifier)
         .loadSites();
 
     // Assert
     expect(
-      container.read(siteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
       AsyncValue<List<BaseSite>>.data(testSites),
     );
     verify(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
@@ -101,12 +110,12 @@ void main() {
 
     // Act
     await container
-        .read(siteGroupDetailViewModelProvider(testSiteGroup).notifier)
+        .read(testSiteGroupDetailViewModelProvider(testSiteGroup).notifier)
         .loadSites();
 
     // Assert
     expect(
-      container.read(siteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
       isA<AsyncError<List<BaseSite>>>(),
     );
     verify(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
