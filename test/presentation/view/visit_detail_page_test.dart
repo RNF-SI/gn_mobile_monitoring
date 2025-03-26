@@ -265,10 +265,10 @@ void main() {
         // Override with our controlled mock
         siteVisitsViewModelProvider(testSite.idBaseSite)
             .overrideWith((_) => mockViewModel),
-        
+
         // Override observations provider to avoid loading real data
-        observationsProvider(providers.testVisit.idBaseVisit)
-            .overrideWith((_) => TestNotifier(AsyncValue.data(providers.testObservations))),
+        observationsProvider(providers.testVisit.idBaseVisit).overrideWith(
+            (_) => TestNotifier(AsyncValue.data(providers.testObservations))),
       ],
     );
 
@@ -288,10 +288,10 @@ void main() {
 
     // Complete the future to avoid pending timers
     completer.complete(providers.testVisit);
-    
+
     // Process first frame showing loading
     await tester.pump();
-    
+
     // Process frame after future completes
     await tester.pump();
 
@@ -306,7 +306,7 @@ void main() {
 
     // Check for action buttons
     expect(find.byIcon(Icons.edit), findsWidgets);
-    
+
     // Clean up
     container.dispose();
   });
@@ -349,10 +349,10 @@ void main() {
 
     // Verify loading indicator is shown
     expect(find.byType(CircularProgressIndicator), findsWidgets);
-    
+
     // Complete the future to avoid pending timers
     completer.complete(providers.testVisit);
-    
+
     // Process the completion
     await tester.pump();
   });
@@ -362,7 +362,7 @@ void main() {
     // Create test objects
     final testSite = createTestSite();
     final moduleInfo = createTestModuleInfo();
-    
+
     // Create a mock that returns a controlled future
     final mockViewModel = MockSiteVisitsViewModelNotifier();
     final completer = Completer<BaseVisit>();
@@ -379,7 +379,7 @@ void main() {
           // Override for visit details
           siteVisitsViewModelProvider(testSite.idBaseSite)
               .overrideWith((_) => mockViewModel),
-          
+
           // Override for empty observations list
           observationsProvider(providers.testVisit.idBaseVisit)
               .overrideWith((_) => observationsNotifier),
@@ -396,10 +396,10 @@ void main() {
 
     // Complete the future to avoid pending timers
     completer.complete(providers.testVisit);
-    
+
     // Process first frame
     await tester.pump();
-    
+
     // Process frame after future completes
     await tester.pump();
 
@@ -445,5 +445,89 @@ void main() {
     // Verify error message is displayed
     expect(find.textContaining('Erreur lors du chargement des détails'),
         findsOneWidget);
+  });
+
+  testWidgets('should show observation section when observation config exists',
+      (WidgetTester tester) async {
+    // Arrange
+    final mockSiteVisitsViewModel = MockSiteVisitsViewModelNotifier();
+    final mockObservationsViewModel = MockObservationsViewModel();
+
+    when(() => mockSiteVisitsViewModel.getVisitWithFullDetails(any()))
+        .thenAnswer((_) async => providers.testVisit);
+    when(() => mockObservationsViewModel.getObservationsByVisitId())
+        .thenAnswer((_) async => []);
+
+    // Act
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siteVisitsViewModelProvider(providers.testVisit.idBaseSite!)
+              .overrideWith((_) => mockSiteVisitsViewModel),
+          observationsProvider(providers.testVisit.idBaseVisit)
+              .overrideWith((_) => mockObservationsViewModel),
+        ],
+        child: MaterialApp(
+          home: VisitDetailPage(
+            visit: providers.testVisit,
+            site: createTestSite(),
+            moduleInfo: createTestModuleInfo(),
+          ),
+        ),
+      ),
+    );
+
+    // Assert
+    expect(find.text('Observations'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsOneWidget);
+  });
+
+  testWidgets(
+      'should not show observation section when no observation config exists',
+      (WidgetTester tester) async {
+    // Arrange
+    final mockSiteVisitsViewModel = MockSiteVisitsViewModelNotifier();
+    final mockObservationsViewModel = MockObservationsViewModel();
+
+    when(() => mockSiteVisitsViewModel.getVisitWithFullDetails(any()))
+        .thenAnswer((_) async => providers.testVisit);
+    when(() => mockObservationsViewModel.getObservationsByVisitId())
+        .thenAnswer((_) async => []);
+
+    // ModuleInfo sans configuration d'observations
+    final moduleInfoWithoutObsConfig = ModuleInfo(
+      module: Module(
+        id: 1,
+        moduleLabel: 'Test Module',
+        complement: ModuleComplement(
+          idModule: 1,
+          configuration: ModuleConfiguration(),
+        ),
+      ),
+      downloadStatus: ModuleDownloadStatus.moduleDownloaded,
+    );
+
+    // Act
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          siteVisitsViewModelProvider(providers.testVisit.idBaseSite!)
+              .overrideWith((_) => mockSiteVisitsViewModel),
+          observationsProvider(providers.testVisit.idBaseVisit)
+              .overrideWith((_) => mockObservationsViewModel),
+        ],
+        child: MaterialApp(
+          home: VisitDetailPage(
+            visit: providers.testVisit,
+            site: createTestSite(),
+            moduleInfo: moduleInfoWithoutObsConfig,
+          ),
+        ),
+      ),
+    );
+
+    // Assert
+    expect(find.text('Observations'), findsNothing);
+    expect(find.byIcon(Icons.add), findsNothing);
   });
 }
