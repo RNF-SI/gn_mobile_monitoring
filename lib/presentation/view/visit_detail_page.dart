@@ -43,8 +43,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
     // Définir un provider pour cette instance spécifique
     _visitDetailsProvider = FutureProvider.autoDispose<BaseVisit>((ref) async {
       // L'appel est maintenant contrôlé et ne sera exécuté qu'une seule fois par le FutureProvider
-      final viewModel = ref
-          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      final viewModel = ref.read(siteVisitsViewModelProvider(
+          (widget.site.idBaseSite, widget.visit.idModule)).notifier);
       return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
     });
   }
@@ -87,7 +87,8 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                 ).then((_) {
                   // Rafraîchir les données après édition
                   ref
-                      .read(siteVisitsViewModelProvider(widget.site.idBaseSite)
+                      .read(siteVisitsViewModelProvider(
+                              (widget.site.idBaseSite, widget.visit.idModule))
                           .notifier)
                       .loadVisits();
                 });

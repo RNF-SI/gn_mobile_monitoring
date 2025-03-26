@@ -32,7 +32,12 @@ class SiteDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final visitsState = ref.watch(siteVisitsViewModelProvider(site.idBaseSite));
+    // Récupérer l'ID du module depuis moduleInfo
+    final int? moduleId = moduleInfo?.module.id;
+
+    // Utiliser le provider avec l'ID du module si disponible
+    final visitsState =
+        ref.watch(siteVisitsViewModelProvider((site.idBaseSite, moduleId!)));
 
     // Récupérer la configuration des visites depuis le module
     final ObjectConfig? visitConfig =
@@ -185,8 +190,8 @@ class SiteDetailPage extends ConsumerWidget {
                       ).then((_) {
                         // Rafraîchir la liste des visites après ajout
                         ref
-                            .read(siteVisitsViewModelProvider(site.idBaseSite)
-                                .notifier)
+                            .read(siteVisitsViewModelProvider(
+                                (site.idBaseSite, moduleId!)).notifier)
                             .loadVisits();
                       });
                     } else {

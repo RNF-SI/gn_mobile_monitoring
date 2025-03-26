@@ -15,8 +15,10 @@ class VisitFormPage extends ConsumerStatefulWidget {
   final CustomConfig? customConfig;
   final BaseVisit? visit; // En mode édition, visite existante
   final int? moduleId; // ID du module pour la visite
-  final ModuleInfo? moduleInfo; // Information sur le module parent (pour le fil d'Ariane)
-  final dynamic siteGroup; // Groupe de sites parent éventuel (pour le fil d'Ariane)
+  final ModuleInfo?
+      moduleInfo; // Information sur le module parent (pour le fil d'Ariane)
+  final dynamic
+      siteGroup; // Groupe de sites parent éventuel (pour le fil d'Ariane)
 
   const VisitFormPage({
     super.key,
@@ -73,8 +75,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   Future<void> _loadConnectedUser() async {
     try {
       // Récupérer le ViewModel
-      final viewModel = ref
-          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      final viewModel = ref.read(siteVisitsViewModelProvider(
+          (widget.site.idBaseSite, widget.moduleId!)).notifier);
 
       // Récupérer l'ID de l'utilisateur via le ViewModel
       final userId = await viewModel.getCurrentUserId();
@@ -111,7 +113,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
     // Champs spécifiques (on suppose qu'ils sont dans visit.data)
     if (visit.data != null) {
-
       for (final entry in visit.data!.entries) {
         // Retirer les guillemets des clés si nécessaire
         String key = entry.key.replaceAll('"', '');
@@ -159,7 +160,6 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
         // Ajouter la paire clé-valeur au résultat
         values[key] = value;
-
       }
     }
 
@@ -173,8 +173,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
         _isLoading = true;
       });
 
-      final viewModel = ref
-          .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+      final viewModel = ref.read(siteVisitsViewModelProvider(
+          (widget.site.idBaseSite, widget.moduleId ?? 1)).notifier);
       final visit = await viewModel.getVisitWithFullDetails(visitId);
 
       if (mounted) {
@@ -228,8 +228,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer le ViewModel
-        final viewModel = ref
-            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+        final viewModel = ref.read(siteVisitsViewModelProvider(
+            (widget.site.idBaseSite, widget.moduleId ?? 1)).notifier);
 
         // Supprimer la visite via le ViewModel
         final success = await viewModel.deleteVisit(widget.visit!.idBaseVisit);
@@ -280,8 +280,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
 
       try {
         // Récupérer le ViewModel
-        final viewModel = ref
-            .read(siteVisitsViewModelProvider(widget.site.idBaseSite).notifier);
+        final viewModel = ref.read(siteVisitsViewModelProvider(
+            (widget.site.idBaseSite, widget.moduleId ?? 1)).notifier);
 
         // Récupérer le nom d'utilisateur pour l'affichage
         final userName = await viewModel.getCurrentUserName();
@@ -296,7 +296,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             formValues,
             widget.site,
             widget.visit!.idBaseVisit,
-            moduleId: widget.moduleId,
+            moduleId: widget.moduleId ?? 1,
           );
 
           if (mounted) {
@@ -326,7 +326,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
           final visitId = await viewModel.createVisitFromFormData(
             formValues,
             widget.site,
-            moduleId: widget.moduleId,
+            moduleId: widget.moduleId ?? 1,
           );
 
           if (mounted) {
@@ -415,26 +415,32 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                     Card(
                       margin: const EdgeInsets.only(bottom: 16.0),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 8.0, horizontal: 12.0),
                         child: BreadcrumbNavigation(
                           items: [
                             // Module
                             BreadcrumbItem(
                               label: 'Module',
-                              value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
+                              value: widget.moduleInfo!.module.moduleLabel ??
+                                  'Module',
                               onTap: () {
                                 // Naviguer vers le module (plusieurs niveaux de retour)
-                                Navigator.of(context).popUntil((route) => 
-                                  route.isFirst || route.settings.name == '/module_detail'
-                                );
+                                Navigator.of(context).popUntil((route) =>
+                                    route.isFirst ||
+                                    route.settings.name == '/module_detail');
                               },
                             ),
-                            
+
                             // Groupe de site (si disponible)
                             if (widget.siteGroup != null)
                               BreadcrumbItem(
-                                label: widget.moduleInfo!.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe',
-                                value: widget.siteGroup.sitesGroupName ?? widget.siteGroup.sitesGroupCode ?? 'Groupe',
+                                label: widget.moduleInfo!.module.complement
+                                        ?.configuration?.sitesGroup?.label ??
+                                    'Groupe',
+                                value: widget.siteGroup.sitesGroupName ??
+                                    widget.siteGroup.sitesGroupCode ??
+                                    'Groupe',
                                 onTap: () {
                                   // Retourner 2 niveaux en arrière pour revenir au groupe
                                   int count = 0;
@@ -443,23 +449,27 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                                   });
                                 },
                               ),
-                            
+
                             // Site
                             BreadcrumbItem(
-                              label: widget.moduleInfo!.module.complement?.configuration?.site?.label ?? 'Site',
-                              value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
+                              label: widget.moduleInfo!.module.complement
+                                      ?.configuration?.site?.label ??
+                                  'Site',
+                              value: widget.site.baseSiteName ??
+                                  widget.site.baseSiteCode ??
+                                  'Site',
                               onTap: () {
                                 // Revenir au site
                                 Navigator.of(context).pop();
                               },
                             ),
-                            
+
                             // Visite (formulaire actuel)
                             BreadcrumbItem(
                               label: widget.visitConfig.label ?? 'Visite',
-                              value: widget.visit != null 
-                                ? formatDateString(widget.visit!.visitDateMin)
-                                : 'Nouvelle',
+                              value: widget.visit != null
+                                  ? formatDateString(widget.visit!.visitDateMin)
+                                  : 'Nouvelle',
                             ),
                           ],
                         ),

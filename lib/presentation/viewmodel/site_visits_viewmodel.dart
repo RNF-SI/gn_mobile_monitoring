@@ -13,13 +13,18 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
-    SiteVisitsViewModel, AsyncValue<List<BaseVisit>>, int>((ref, siteId) {
-  final getVisitsBySiteIdUseCase = ref.watch(getVisitsBySiteIdUseCaseProvider);
+    SiteVisitsViewModel,
+    AsyncValue<List<BaseVisit>>,
+    (int, int)>((ref, params) {
+  final (siteId, moduleId) = params;
+
+  final getVisitsBySiteAndModuleUseCase =
+      ref.watch(getVisitsBySiteAndModuleUseCaseProvider);
   final getVisitWithDetailsUseCase =
       ref.watch(getVisitWithDetailsUseCaseProvider);
   final getVisitComplementUseCase =
@@ -34,7 +39,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
       ref.watch(getUserNameFromLocalStorageUseCaseProvider);
 
   return SiteVisitsViewModel(
-    getVisitsBySiteIdUseCase,
+    getVisitsBySiteAndModuleUseCase,
     getVisitWithDetailsUseCase,
     getVisitComplementUseCase,
     saveVisitComplementUseCase,
@@ -44,11 +49,12 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
     getUserIdUseCase,
     getUserNameUseCase,
     siteId,
+    moduleId,
   );
 });
 
 class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
-  final GetVisitsBySiteIdUseCase _getVisitsBySiteIdUseCase;
+  final GetVisitsBySiteAndModuleUseCase _getVisitsBySiteAndModuleUseCase;
   final GetVisitWithDetailsUseCase _getVisitWithDetailsUseCase;
   final GetVisitComplementUseCase _getVisitComplementUseCase;
   final SaveVisitComplementUseCase _saveVisitComplementUseCase;
@@ -58,10 +64,11 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final GetUserNameFromLocalStorageUseCase _getUserNameUseCase;
   final int _siteId;
+  final int _moduleId;
   bool _mounted = true;
 
   SiteVisitsViewModel(
-    this._getVisitsBySiteIdUseCase,
+    this._getVisitsBySiteAndModuleUseCase,
     this._getVisitWithDetailsUseCase,
     this._getVisitComplementUseCase,
     this._saveVisitComplementUseCase,
@@ -71,6 +78,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     this._getUserIdUseCase,
     this._getUserNameUseCase,
     this._siteId,
+    this._moduleId,
   ) : super(const AsyncValue.loading()) {
     loadVisits();
   }
@@ -81,7 +89,8 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
     try {
       state = const AsyncValue.loading();
-      final visits = await _getVisitsBySiteIdUseCase.execute(_siteId);
+      final visits =
+          await _getVisitsBySiteAndModuleUseCase.execute(_siteId, _moduleId);
       if (_mounted) {
         state = AsyncValue.data(visits);
       }
