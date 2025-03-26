@@ -55,13 +55,41 @@ class VisitRepositoryImpl implements VisitRepository {
   Future<List<BaseVisitEntity>> getVisitsBySiteId(int siteId) async {
     final visits = await _visitesDatabase.getVisitsBySiteId(siteId);
 
-    // Convertir chaque visite en entité et récupérer les observateurs
+    // Convertir chaque visite en entité avec tous les détails
     final visitEntities = <BaseVisitEntity>[];
 
     for (final visit in visits) {
       final baseEntity = visit.toEntity();
+
+      // Récupérer les observateurs
       final observers = await getVisitObservers(visit.idBaseVisit);
       final observerIds = observers.map((o) => o.idRole).toList();
+
+      // Récupérer les données complémentaires
+      final complementDb =
+          await _visitesDatabase.getVisitComplementById(visit.idBaseVisit);
+      Map<String, dynamic>? dataMap;
+
+      if (complementDb != null &&
+          complementDb.data != null &&
+          complementDb.data!.isNotEmpty) {
+        try {
+          // Tenter d'abord le parsing JSON standard
+          dataMap = jsonDecode(complementDb.data!) as Map<String, dynamic>;
+        } catch (e) {
+          debugPrint('Erreur lors du parsing JSON standard: $e');
+          // Si le parsing JSON échoue, essayer le parsing personnalisé
+          try {
+            final content = complementDb.data!.trim();
+            if (content.startsWith('{') && content.endsWith('}')) {
+              dataMap =
+                  _parseKeyValuePairs(content.substring(1, content.length - 1));
+            }
+          } catch (e2) {
+            debugPrint('Erreur lors du parsing personnalisé: $e2');
+          }
+        }
+      }
 
       visitEntities.add(BaseVisitEntity(
         idBaseVisit: baseEntity.idBaseVisit,
@@ -79,6 +107,7 @@ class VisitRepositoryImpl implements VisitRepository {
         metaCreateDate: baseEntity.metaCreateDate,
         metaUpdateDate: baseEntity.metaUpdateDate,
         observers: observerIds,
+        data: _processTimeFieldsInDataMap(dataMap),
       ));
     }
 
