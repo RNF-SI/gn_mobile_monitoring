@@ -5,7 +5,9 @@ import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
@@ -501,6 +503,37 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ObservationDetailPage(
+                          observation: Observation(
+                            idObservation: observation['id_observation'] as int,
+                            idBaseVisit: visitId,
+                            cdNom: observation['cd_nom'] as int?,
+                            comments: observation['comments'] as String?,
+                            data: observation,
+                            metaCreateDate:
+                                observation['meta_create_date'] as String?,
+                            metaUpdateDate:
+                                observation['meta_update_date'] as String?,
+                          ),
+                          visit: widget.visit,
+                          site: widget.site,
+                          moduleInfo: widget.moduleInfo,
+                          fromSiteGroup: widget.fromSiteGroup,
+                        ),
+                      ),
+                    );
+                  },
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                ),
                 IconButton(
                   icon: const Icon(Icons.edit, size: 20),
                   onPressed: () {
