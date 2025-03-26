@@ -38,8 +38,15 @@ extension TModuleComplementMapper on TModuleComplement {
       // Create ModuleConfiguration from the parsed JSON
       return ModuleConfiguration.fromJson(jsonData);
     } catch (e) {
-      // Return null if there is an error
-      return null;
+      // Return ModuleConfiguration with default values if there is an error
+      // Créer une configuration minimale mais valide
+      final Map<String, dynamic> defaultConfig = {
+        'module': {'children_types': [], 'label': 'Module'},
+        'site': {'label': 'Site', 'label_list': 'Sites'},
+        'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'}
+      };
+      
+      return ModuleConfiguration.fromJson(defaultConfig);
     }
   }
 }
