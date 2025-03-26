@@ -24,7 +24,8 @@ class SiteGroupDetailViewModel extends StateNotifier<AsyncValue<List<BaseSite>>>
   /// Loads sites associated with the site group
   Future<void> loadSites() async {
     try {
-      state = const AsyncValue.loading();
+      // On ne réinitialise pas l'état ici car le constructeur initialize déjà à loading
+      // Récupérer les sites directement
       final sites = await _getSitesBySiteGroupUseCase.execute(_siteGroup.idSitesGroup);
       state = AsyncValue.data(sites);
     } catch (e, stack) {
