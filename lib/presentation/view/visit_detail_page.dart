@@ -275,8 +275,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                               style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold)),
                           const SizedBox(height: 16),
-                          ..._buildDataFields(
-                              fullVisit.data!, observationConfig),
+                          ..._buildDataFields(fullVisit.data!, visitConfig),
                         ],
                       ),
                     ),
@@ -633,36 +632,36 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       for (final entry in parsedConfig.entries) {
         fieldLabels[entry.key] = entry.value['attribut_label'];
       }
-    }
 
-    // Trier les clés pour un affichage cohérent
-    final sortedKeys = data.keys.toList()..sort();
+      // Trier les clés pour un affichage cohérent
+      final sortedKeys = data.keys.toList()..sort();
 
-    for (final key in sortedKeys) {
-      if (data[key] != null) {
-        // Formater le libellé du champ
-        String displayLabel = fieldLabels[key] ?? key;
-        if (displayLabel == key) {
-          // Si pas de libellé trouvé, formater la clé pour qu'elle soit plus lisible
-          displayLabel = key
-              .replaceAll('_', ' ')
-              .split(' ')
-              .map((word) => word.isNotEmpty
-                  ? word[0].toUpperCase() + word.substring(1)
-                  : '')
-              .join(' ');
+      for (final key in sortedKeys) {
+        if (data[key] != null) {
+          // Formater le libellé du champ
+          String displayLabel = fieldLabels[key] ?? key;
+          if (displayLabel == key) {
+            // Si pas de libellé trouvé, formater la clé pour qu'elle soit plus lisible
+            displayLabel = key
+                .replaceAll('_', ' ')
+                .split(' ')
+                .map((word) => word.isNotEmpty
+                    ? word[0].toUpperCase() + word.substring(1)
+                    : '')
+                .join(' ');
+          }
+
+          String displayValue;
+          if (data[key] is Map) {
+            displayValue = 'Objet complexe';
+          } else if (data[key] is List) {
+            displayValue = 'Liste (${data[key].length} éléments)';
+          } else {
+            displayValue = data[key].toString();
+          }
+
+          widgets.add(_buildInfoRow(displayLabel, displayValue));
         }
-
-        String displayValue;
-        if (data[key] is Map) {
-          displayValue = 'Objet complexe';
-        } else if (data[key] is List) {
-          displayValue = 'Liste (${data[key].length} éléments)';
-        } else {
-          displayValue = data[key].toString();
-        }
-
-        widgets.add(_buildInfoRow(displayLabel, displayValue));
       }
     }
 
