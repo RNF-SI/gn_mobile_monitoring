@@ -49,18 +49,6 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
       ) as _i4.Future<List<_i2.TBaseVisit>>);
 
   @override
-  _i4.Future<List<_i2.TBaseVisit>> getVisitsBySiteId(int? siteId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getVisitsBySiteId,
-          [siteId],
-        ),
-        returnValue: _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
-        returnValueForMissingStub:
-            _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
-      ) as _i4.Future<List<_i2.TBaseVisit>>);
-
-  @override
   _i4.Future<List<_i2.TBaseVisit>> getVisitsBySiteIdAndModuleId(
     int? siteId,
     int? moduleId,
