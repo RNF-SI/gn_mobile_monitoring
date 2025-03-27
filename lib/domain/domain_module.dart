@@ -12,6 +12,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_detail_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
@@ -30,6 +32,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observation_detail_by_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
@@ -62,6 +66,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_databa
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
@@ -244,6 +249,37 @@ final updateObservationUseCaseProvider = Provider<UpdateObservationUseCase>(
 final deleteObservationUseCaseProvider = Provider<DeleteObservationUseCase>(
   (ref) =>
       DeleteObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+// ObservationDetail Providers
+final getObservationDetailsByObservationIdUseCaseProvider =
+    Provider<GetObservationDetailsByObservationIdUseCase>(
+  (ref) => GetObservationDetailsByObservationIdUseCaseImpl(
+      ref.watch(observationDetailsRepositoryImplProvider)),
+);
+
+final getObservationDetailByIdUseCaseProvider =
+    Provider<GetObservationDetailByIdUseCase>(
+  (ref) => GetObservationDetailByIdUseCaseImpl(
+      ref.watch(observationDetailsRepositoryImplProvider)),
+);
+
+final saveObservationDetailUseCaseProvider =
+    Provider<SaveObservationDetailUseCase>(
+  (ref) => SaveObservationDetailUseCaseImpl(
+      ref.watch(observationDetailsRepositoryImplProvider)),
+);
+
+final deleteObservationDetailUseCaseProvider =
+    Provider<DeleteObservationDetailUseCase>(
+  (ref) => DeleteObservationDetailUseCaseImpl(
+      ref.watch(observationDetailsRepositoryImplProvider)),
+);
+
+final deleteObservationDetailsByObservationIdUseCaseProvider =
+    Provider<DeleteObservationDetailsByObservationIdUseCase>(
+  (ref) => DeleteObservationDetailsByObservationIdUseCaseImpl(
+      ref.watch(observationDetailsRepositoryImplProvider)),
 );
 
 // UseCase pour récupérer un module avec sa configuration complète

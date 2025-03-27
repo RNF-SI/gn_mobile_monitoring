@@ -24,6 +24,8 @@ mixin _$ModuleConfiguration {
       throw _privateConstructorUsedError;
   ModuleConfig? get module => throw _privateConstructorUsedError;
   ObjectConfig? get observation => throw _privateConstructorUsedError;
+  ObjectConfig? get observationDetail =>
+      throw _privateConstructorUsedError; // Nouvelle propriété pour les détails d'observation
   ObjectConfig? get site => throw _privateConstructorUsedError;
   ObjectConfig? get sitesGroup => throw _privateConstructorUsedError;
   dynamic get synthese => throw _privateConstructorUsedError;
@@ -50,6 +52,7 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
       Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
+      ObjectConfig? observationDetail,
       ObjectConfig? site,
       ObjectConfig? sitesGroup,
       dynamic synthese,
@@ -60,6 +63,7 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
   $DataConfigCopyWith<$Res>? get data;
   $ModuleConfigCopyWith<$Res>? get module;
   $ObjectConfigCopyWith<$Res>? get observation;
+  $ObjectConfigCopyWith<$Res>? get observationDetail;
   $ObjectConfigCopyWith<$Res>? get site;
   $ObjectConfigCopyWith<$Res>? get sitesGroup;
   $TreeConfigCopyWith<$Res>? get tree;
@@ -87,6 +91,7 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     Object? displayFieldNames = freezed,
     Object? module = freezed,
     Object? observation = freezed,
+    Object? observationDetail = freezed,
     Object? site = freezed,
     Object? sitesGroup = freezed,
     Object? synthese = freezed,
@@ -117,6 +122,10 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
       observation: freezed == observation
           ? _value.observation
           : observation // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
+      observationDetail: freezed == observationDetail
+          ? _value.observationDetail
+          : observationDetail // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
       site: freezed == site
           ? _value.site
@@ -201,6 +210,20 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $ObjectConfigCopyWith<$Res>? get observationDetail {
+    if (_value.observationDetail == null) {
+      return null;
+    }
+
+    return $ObjectConfigCopyWith<$Res>(_value.observationDetail!, (value) {
+      return _then(_value.copyWith(observationDetail: value) as $Val);
+    });
+  }
+
+  /// Create a copy of ModuleConfiguration
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get site {
     if (_value.site == null) {
       return null;
@@ -269,6 +292,7 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
       Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
+      ObjectConfig? observationDetail,
       ObjectConfig? site,
       ObjectConfig? sitesGroup,
       dynamic synthese,
@@ -283,6 +307,8 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
   $ModuleConfigCopyWith<$Res>? get module;
   @override
   $ObjectConfigCopyWith<$Res>? get observation;
+  @override
+  $ObjectConfigCopyWith<$Res>? get observationDetail;
   @override
   $ObjectConfigCopyWith<$Res>? get site;
   @override
@@ -312,6 +338,7 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
     Object? displayFieldNames = freezed,
     Object? module = freezed,
     Object? observation = freezed,
+    Object? observationDetail = freezed,
     Object? site = freezed,
     Object? sitesGroup = freezed,
     Object? synthese = freezed,
@@ -342,6 +369,10 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
       observation: freezed == observation
           ? _value.observation
           : observation // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
+      observationDetail: freezed == observationDetail
+          ? _value.observationDetail
+          : observationDetail // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
       site: freezed == site
           ? _value.site
@@ -377,6 +408,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       final Map<String, String?>? displayFieldNames,
       this.module,
       this.observation,
+      this.observationDetail,
       this.site,
       this.sitesGroup,
       this.synthese,
@@ -416,6 +448,9 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
   @override
   final ObjectConfig? observation;
   @override
+  final ObjectConfig? observationDetail;
+// Nouvelle propriété pour les détails d'observation
+  @override
   final ObjectConfig? site;
   @override
   final ObjectConfig? sitesGroup;
@@ -428,7 +463,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
 
   @override
   String toString() {
-    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
+    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
   }
 
   @override
@@ -445,6 +480,8 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
             (identical(other.module, module) || other.module == module) &&
             (identical(other.observation, observation) ||
                 other.observation == observation) &&
+            (identical(other.observationDetail, observationDetail) ||
+                other.observationDetail == observationDetail) &&
             (identical(other.site, site) || other.site == site) &&
             (identical(other.sitesGroup, sitesGroup) ||
                 other.sitesGroup == sitesGroup) &&
@@ -462,6 +499,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       const DeepCollectionEquality().hash(_displayFieldNames),
       module,
       observation,
+      observationDetail,
       site,
       sitesGroup,
       const DeepCollectionEquality().hash(synthese),
@@ -486,6 +524,7 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
       final Map<String, String?>? displayFieldNames,
       final ModuleConfig? module,
       final ObjectConfig? observation,
+      final ObjectConfig? observationDetail,
       final ObjectConfig? site,
       final ObjectConfig? sitesGroup,
       final dynamic synthese,
@@ -504,6 +543,9 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   ModuleConfig? get module;
   @override
   ObjectConfig? get observation;
+  @override
+  ObjectConfig?
+      get observationDetail; // Nouvelle propriété pour les détails d'observation
   @override
   ObjectConfig? get site;
   @override

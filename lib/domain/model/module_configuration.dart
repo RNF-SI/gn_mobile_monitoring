@@ -13,6 +13,7 @@ class ModuleConfiguration with _$ModuleConfiguration {
     Map<String, String?>? displayFieldNames,
     ModuleConfig? module,
     ObjectConfig? observation,
+    ObjectConfig? observationDetail, // Nouvelle propriété pour les détails d'observation
     ObjectConfig? site,
     ObjectConfig? sitesGroup,
     dynamic synthese,
@@ -54,6 +55,10 @@ class ModuleConfiguration with _$ModuleConfiguration {
       observation: json['observation'] != null && json['observation'] is Map
           ? ObjectConfig.fromJson(toSafeMap(json['observation'])!)
           : null,
+      // Ajout du parsing de observation_detail
+      observationDetail: json['observation_detail'] != null && json['observation_detail'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['observation_detail'])!)
+          : null,
       site: json['site'] != null && json['site'] is Map
           ? ObjectConfig.fromJson(toSafeMap(json['site'])!)
           : null,
@@ -81,6 +86,8 @@ extension ModuleConfigurationX on ModuleConfiguration {
         if (displayFieldNames != null) 'display_field_names': displayFieldNames,
         if (module != null) 'module': module?.toJson(),
         if (observation != null) 'observation': observation?.toJson(),
+        // Ajout de l'observation_detail à la sérialisation
+        if (observationDetail != null) 'observation_detail': observationDetail?.toJson(),
         if (site != null) 'site': site?.toJson(),
         if (sitesGroup != null) 'sites_group': sitesGroup?.toJson(),
         if (synthese != null) 'synthese': synthese,
