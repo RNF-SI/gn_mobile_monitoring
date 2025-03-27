@@ -95,13 +95,34 @@ class PropertyDisplayWidget extends StatelessWidget {
     // Séparer les propriétés remplies et vides
     final filledProperties = <MapEntry<String, dynamic>>[];
     final emptyProperties = <MapEntry<String, dynamic>>[];
+    final Set<String> allKeys = <String>{};
+    
+    // Ajouter toutes les clés de data
+    allKeys.addAll(data.keys);
+    
+    // Ajouter toutes les clés définies dans la configuration
+    if (config != null) {
+      // Récupérer les clés des propriétés configurées
+      if (config.propertiesKeys != null) {
+        allKeys.addAll(config.propertiesKeys!);
+      }
+      // Récupérer les clés de generic
+      if (config.generic != null) {
+        allKeys.addAll(config.generic!.keys);
+      }
+      // Récupérer les clés de specific
+      if (config.specific != null) {
+        allKeys.addAll(config.specific!.keys);
+      }
+    }
 
     // Trier les propriétés selon qu'elles sont remplies ou non
-    for (var entry in data.entries) {
-      if (entry.value != null && entry.value.toString().isNotEmpty) {
-        filledProperties.add(entry);
+    for (var key in allKeys) {
+      if (data.containsKey(key) && data[key] != null && data[key].toString().isNotEmpty) {
+        filledProperties.add(MapEntry(key, data[key]));
       } else {
-        emptyProperties.add(entry);
+        // Soit la propriété n'existe pas, soit elle est vide
+        emptyProperties.add(MapEntry(key, null));
       }
     }
 
