@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
@@ -13,6 +12,7 @@ import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
 
 class VisitDetailPage extends ConsumerStatefulWidget {
   final BaseVisit visit;
@@ -266,20 +266,10 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
 
                 // Données spécifiques au module
                 if (fullVisit.data != null && fullVisit.data!.isNotEmpty)
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text('Données spécifiques',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
-                          const SizedBox(height: 16),
-                          ..._buildDataFields(fullVisit.data!, visitConfig),
-                        ],
-                      ),
-                    ),
+                  PropertyDisplayWidget(
+                    data: fullVisit.data!,
+                    config: visitConfig,
+                    customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
                   ),
               ],
             ),
@@ -618,60 +608,6 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
     );
   }
 
-  List<Widget> _buildDataFields(
-      Map<String, dynamic> data, ObjectConfig? config) {
-    final List<Widget> widgets = [];
-    final Map<String, String> fieldLabels = {};
-
-    // Si une configuration est disponible, utiliser le form_config_parser
-    // pour obtenir des libellés appropriés
-    if (config != null) {
-      final parsedConfig = FormConfigParser.generateUnifiedSchema(
-          config, widget.moduleInfo?.module.complement?.configuration?.custom);
-
-      // Extraire les libellés des champs
-      for (final entry in parsedConfig.entries) {
-        fieldLabels[entry.key] = entry.value['attribut_label'];
-      }
-
-      // Trier les clés pour un affichage cohérent
-      final sortedKeys = data.keys.toList()..sort();
-
-      for (final key in sortedKeys) {
-        if (data[key] != null) {
-          // Formater le libellé du champ
-          String displayLabel = fieldLabels[key] ?? key;
-          if (displayLabel == key) {
-            // Si pas de libellé trouvé, formater la clé pour qu'elle soit plus lisible
-            displayLabel = key
-                .replaceAll('_', ' ')
-                .split(' ')
-                .map((word) => word.isNotEmpty
-                    ? word[0].toUpperCase() + word.substring(1)
-                    : '')
-                .join(' ');
-          }
-
-          String displayValue;
-          if (data[key] is Map) {
-            displayValue = 'Objet complexe';
-          } else if (data[key] is List) {
-            displayValue = 'Liste (${data[key].length} éléments)';
-          } else {
-            displayValue = data[key].toString();
-          }
-
-          widgets.add(_buildInfoRow(displayLabel, displayValue));
-        }
-      }
-    }
-
-    if (widgets.isEmpty) {
-      widgets.add(const Text('Aucune donnée spécifique disponible'));
-    }
-
-    return widgets;
-  }
 
   // Méthodes pour gérer les observations
 

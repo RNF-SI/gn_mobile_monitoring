@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/presentation/view/observation_detail_form_p
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
 
 class ObservationDetailPage extends ConsumerStatefulWidget {
   final Observation observation;
@@ -257,24 +258,11 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
           // Données spécifiques
           if (widget.observation.data != null &&
               widget.observation.data!.isNotEmpty)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Données spécifiques',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    // Trier et afficher les propriétés
-                    ..._buildSortedProperties(
-                      widget.observation.data!,
-                      observationConfig,
-                    ),
-                  ],
-                ),
-              ),
+            PropertyDisplayWidget(
+              data: widget.observation.data!,
+              config: observationConfig,
+              customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+              separateEmptyFields: true,
             ),
 
           const SizedBox(height: 16),
@@ -908,136 +896,4 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
     }
   }
 
-  List<Widget> _buildSortedProperties(
-    Map<String, dynamic> data,
-    ObjectConfig? observationConfig,
-  ) {
-    // Séparer les propriétés remplies et vides
-    final filledProperties = <MapEntry<String, dynamic>>[];
-    final emptyProperties = <MapEntry<String, dynamic>>[];
-
-    // Trier les propriétés selon qu'elles sont remplies ou non
-    for (var entry in data.entries) {
-      if (entry.value != null && entry.value.toString().isNotEmpty) {
-        filledProperties.add(entry);
-      } else {
-        emptyProperties.add(entry);
-      }
-    }
-
-    // Trier les propriétés par ordre alphabétique dans chaque groupe
-    filledProperties.sort((a, b) => a.key.compareTo(b.key));
-    emptyProperties.sort((a, b) => a.key.compareTo(b.key));
-
-    // Fonction pour obtenir le label d'une propriété
-    String getPropertyLabel(String key) {
-      if (observationConfig != null) {
-        // Vérifier dans generic
-        if (observationConfig.generic != null &&
-            observationConfig.generic!.containsKey(key)) {
-          return observationConfig.generic![key]!.attributLabel ?? key;
-        }
-        // Vérifier dans specific
-        else if (observationConfig.specific != null &&
-            observationConfig.specific!.containsKey(key)) {
-          final specificConfig =
-              observationConfig.specific![key] as Map<String, dynamic>;
-          if (specificConfig.containsKey('attribut_label')) {
-            return specificConfig['attribut_label'];
-          }
-        }
-      }
-      // Formater le libellé par défaut
-      return key
-          .replaceAll('_', ' ')
-          .split(' ')
-          .map((word) =>
-              word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
-          .join(' ');
-    }
-
-    // Construire les widgets pour les propriétés remplies
-    final widgets = <Widget>[];
-
-    // Ajouter les propriétés remplies
-    if (filledProperties.isNotEmpty) {
-      widgets.add(
-        const Padding(
-          padding: EdgeInsets.only(bottom: 16.0),
-          child: Text(
-            'Champs remplis',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.green,
-            ),
-          ),
-        ),
-      );
-
-      widgets.addAll(filledProperties.map((entry) => _buildPropertyRow(
-            getPropertyLabel(entry.key),
-            entry.value.toString(),
-          )));
-    }
-
-    // Ajouter les propriétés vides
-    if (emptyProperties.isNotEmpty) {
-      widgets.add(
-        const SizedBox(height: 16),
-      );
-      widgets.add(
-        const Padding(
-          padding: EdgeInsets.only(bottom: 16.0),
-          child: Text(
-            'Champs non remplis',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-      );
-
-      widgets.addAll(emptyProperties.map((entry) => _buildPropertyRow(
-            getPropertyLabel(entry.key),
-            'Non renseigné',
-            isEmptyField: true,
-          )));
-    }
-
-    return widgets;
-  }
-
-  Widget _buildPropertyRow(String label, String value,
-      {bool isEmptyField = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 200,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w500,
-                color: isEmptyField ? Colors.grey : null,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: isEmptyField ? Colors.grey : null,
-                fontStyle: isEmptyField ? FontStyle.italic : null,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
