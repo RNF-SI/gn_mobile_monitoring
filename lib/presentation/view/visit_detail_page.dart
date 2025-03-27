@@ -269,7 +269,9 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                   PropertyDisplayWidget(
                     data: fullVisit.data!,
                     config: visitConfig,
-                    customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+                    customConfig: widget
+                        .moduleInfo?.module.complement?.configuration?.custom,
+                    separateEmptyFields: true,
                   ),
               ],
             ),
@@ -607,7 +609,6 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       ),
     );
   }
-
 
   // Méthodes pour gérer les observations
 
