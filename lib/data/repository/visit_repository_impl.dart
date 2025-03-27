@@ -154,48 +154,29 @@ class VisitRepositoryImpl implements VisitRepository {
     final observers = await getVisitObservers(id);
     final observerIds = observers.map((o) => o.idRole).toList();
 
-    // Récupérer les données complémentaires en utilisant le mapper
+    // Récupérer les données complémentaires
     final complementDb = await _visitesDatabase.getVisitComplementById(id);
     Map<String, dynamic>? dataMap;
 
     if (complementDb != null &&
         complementDb.data != null &&
         complementDb.data!.isNotEmpty) {
-      // Convertir en entité en utilisant le mapper
-      final complementEntity = TVisitComplementMapper.toEntity(complementDb);
-
       try {
-        // Approche structurée avec le mapper
-        final data = complementEntity.data!;
-
-        // Approche 1: Parser en tant que dictionnaire Python-like
-        if (data.trim().startsWith('{') && data.trim().endsWith('}')) {
-          // Extraction du contenu entre accolades, en ignorant les accolades externes
-          final content = data.trim().substring(1, data.trim().length - 1);
-
-          // Décomposer en paires clé-valeur
-          dataMap = _parseKeyValuePairs(content);
-
-          // debugPrint(
-          //     'Données extraites avec succès: ${dataMap.length} entrées');
-        } else {
-          // Si ce n'est pas au format dictionnaire, essayer d'autres approches
-          debugPrint('Format non reconnu, tentative de décodage JSON standard');
-          dataMap = jsonDecode(data) as Map<String, dynamic>;
-        }
+        // Essayer d'abord le parsing JSON standard
+        dataMap = jsonDecode(complementDb.data!) as Map<String, dynamic>;
       } catch (e) {
-        debugPrint('Erreur lors du traitement des données: $e');
-        debugPrint('Contenu problématique: ${complementDb.data}');
-
-        // En dernier recours, tenter une approche plus agressive
+        debugPrint('Erreur lors du décodage JSON standard: $e');
+        // Si le parsing JSON standard échoue, essayer l'approche de parsing personnalisée
         try {
-          final data = complementDb.data!;
-          if (data.contains(':')) {
-            // Créer un nouveau dictionnaire en analysant la chaîne directement
-            dataMap = _forceParseDictionary(data);
+          if (complementDb.data!.trim().startsWith('{') && 
+              complementDb.data!.trim().endsWith('}')) {
+            // Extraction du contenu entre accolades
+            final content = complementDb.data!.trim().substring(1, complementDb.data!.trim().length - 1);
+            // Utiliser notre méthode de parsing personnalisée
+            dataMap = _parseKeyValuePairs(content);
           }
         } catch (e2) {
-          debugPrint('Échec de la dernière tentative de parsing: $e2');
+          debugPrint('Échec du parsing personnalisé: $e2');
           // Laisser dataMap à null
         }
       }
@@ -409,27 +390,24 @@ class VisitRepositoryImpl implements VisitRepository {
       await saveVisitObservers(visitId, observers);
     }
 
-    // 3. Si des données complémentaires sont fournies, les enregistrer
+    // 3. Si des données complémentaires sont fournies, les enregistrer en utilisant le format JSON standard
     if (visit.data != null && visit.data!.isNotEmpty) {
       try {
         // Pré-traiter les données pour normaliser les heures
         final processedData = _processTimeFieldsInDataMap(visit.data);
 
-        // Encoder les données en JSON
+        // Encoder les données en JSON standard (identique à la méthode utilisée pour Observation)
         final jsonData = jsonEncode(processedData);
-        await saveVisitComplementData(visitId, jsonData);
+        
+        // Sauvegarder directement au format JSON
+        final complement = VisitComplementEntity(
+          idBaseVisit: visitId,
+          data: jsonData,
+        );
+        await saveVisitComplement(complement);
       } catch (e) {
         debugPrint('Erreur lors de l\'encodage des données en JSON: $e');
-        // Tenter une approche alternative en cas d'échec
-        try {
-          // Convertir manuellement en chaîne JSON simple
-          final processedData = _processTimeFieldsInDataMap(visit.data);
-          final jsonData = _mapToSimpleJsonString(processedData!);
-          await saveVisitComplementData(visitId, jsonData);
-        } catch (e2) {
-          debugPrint('Échec de la seconde tentative d\'encodage JSON: $e2');
-          // Nous ne voulons pas que cette erreur bloque la création de la visite
-        }
+        // En cas d'erreur, ne pas bloquer la création de la visite
       }
     }
 
@@ -455,7 +433,7 @@ class VisitRepositoryImpl implements VisitRepository {
         await saveVisitObservers(visit.idBaseVisit, observers);
       }
 
-      // 3. Mettre à jour les données complémentaires
+      // 3. Mettre à jour les données complémentaires en utilisant le format JSON standard
       if (visit.data != null) {
         if (visit.data!.isEmpty) {
           // Si les données sont vides, supprimer le complément
@@ -465,23 +443,18 @@ class VisitRepositoryImpl implements VisitRepository {
             // Pré-traiter les données pour normaliser les heures
             final processedData = _processTimeFieldsInDataMap(visit.data);
 
-            // Encoder les données en JSON
+            // Encoder les données en JSON standard (identique à la méthode utilisée pour Observation)
             final jsonData = jsonEncode(processedData);
-            await saveVisitComplementData(visit.idBaseVisit, jsonData);
+            
+            // Créer et sauvegarder l'entité complément
+            final complement = VisitComplementEntity(
+              idBaseVisit: visit.idBaseVisit,
+              data: jsonData,
+            );
+            await saveVisitComplement(complement);
           } catch (e) {
-            debugPrint(
-                'Erreur lors de l\'encodage des données en JSON (update): $e');
-            // Tenter une approche alternative en cas d'échec
-            try {
-              // Convertir manuellement en chaîne JSON simple
-              final processedData = _processTimeFieldsInDataMap(visit.data);
-              final jsonData = _mapToSimpleJsonString(processedData!);
-              await saveVisitComplementData(visit.idBaseVisit, jsonData);
-            } catch (e2) {
-              debugPrint(
-                  'Échec de la seconde tentative d\'encodage JSON (update): $e2');
-              // Nous ne voulons pas que cette erreur bloque la mise à jour de la visite
-            }
+            debugPrint('Erreur lors de l\'encodage des données en JSON (update): $e');
+            // En cas d'erreur, ne pas bloquer la mise à jour de la visite
           }
         }
       }
@@ -588,29 +561,18 @@ class VisitRepositoryImpl implements VisitRepository {
   /// [data] - Chaîne de données au format JSON à sauvegarder
   @override
   Future<void> saveVisitComplementData(int visitId, String data) async {
-    // S'assurer que les données sont au format JSON valide
+    // Vérifier que les données sont au format JSON valide
     String validJsonData = data;
-
-    // Si les données ne sont pas au format JSON valide, tenter de les convertir
-    if (!_isValidJson(data)) {
-      try {
-        // Tenter de les convertir
-        if (data.trim().startsWith('{') && data.trim().endsWith('}')) {
-          validJsonData = _convertToValidJson(data);
-        } else {
-          // Si le format ne ressemble pas à du JSON, encapsuler dans des accolades
-          validJsonData = '{${_convertToValidJson(data)}}';
-        }
-
-        // Vérifier que la conversion est correcte en essayant de décoder
-        jsonDecode(validJsonData);
-      } catch (e) {
-        debugPrint('Erreur lors de la conversion en JSON valide: $e');
-        // En cas d'erreur, conserver les données telles quelles
-      }
+    try {
+      // Vérifier si le format est valide en essayant de le décoder/encoder
+      final decoded = jsonDecode(data);
+      validJsonData = jsonEncode(decoded); // Garantit un format JSON standard
+    } catch (e) {
+      debugPrint('Erreur lors de la validation JSON: $e');
+      // En cas d'erreur, utiliser les données telles quelles
     }
 
-    // Utiliser l'entité adaptée
+    // Créer et sauvegarder l'entité
     final entity = VisitComplementEntity(
       idBaseVisit: visitId,
       data: validJsonData,
