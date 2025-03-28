@@ -5,6 +5,8 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
@@ -305,13 +307,42 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             });
 
             if (success) {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                      'Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
-                ),
-              );
+              // Vérifier si la configuration des observations existe
+              final hasObservationConfig = widget.moduleInfo?.module.complement
+                      ?.configuration?.observation !=
+                  null;
+
+              // Demander à l'utilisateur s'il souhaite saisir des observations seulement si la config existe
+              if (!_chainInput && hasObservationConfig) {
+                final bool? createObservations = await _askForObservations();
+
+                if (createObservations == true && mounted) {
+                  // Naviguer vers le formulaire d'observation
+                  _navigateToObservationForm(widget.visit!.idBaseVisit);
+                  return;
+                }
+              }
+
+              // Rediriger vers la page de détail de la visite
+              if (mounted) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => VisitDetailPage(
+                      visit: widget.visit!,
+                      site: widget.site,
+                      moduleInfo: widget.moduleInfo,
+                      fromSiteGroup: widget.siteGroup,
+                    ),
+                  ),
+                );
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        'Visite mise à jour avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                  ),
+                );
+              }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -354,13 +385,30 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                   ),
                 );
               } else {
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                        'Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
-                  ),
-                );
+                // Récupérer la visite créée pour la redirection
+                final newVisit =
+                    await viewModel.getVisitWithFullDetails(visitId);
+
+                // Rediriger vers la page de détail de la visite
+                if (mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => VisitDetailPage(
+                        visit: newVisit,
+                        site: widget.site,
+                        moduleInfo: widget.moduleInfo,
+                        fromSiteGroup: widget.siteGroup,
+                      ),
+                    ),
+                  );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          'Visite créée avec succès${userName != null ? " avec $userName comme observateur" : ""}'),
+                    ),
+                  );
+                }
               }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -384,6 +432,78 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             ),
           );
         }
+      }
+    }
+  }
+
+  /// Demande à l'utilisateur s'il souhaite saisir des observations pour cette visite
+  Future<bool?> _askForObservations() async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Saisir des observations'),
+        content: const Text(
+            "Souhaitez-vous saisir des observations pour cette visite ?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Non'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Oui'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Navigue vers le formulaire d'observation pour la visite spécifiée
+  void _navigateToObservationForm(int visitId) async {
+    // Récupérer la visite créée pour la redirection
+    final viewModel = ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.moduleId ?? 1)).notifier);
+    final newVisit = await viewModel.getVisitWithFullDetails(visitId);
+
+    // Récupérer la config pour les observations depuis le module
+    if (widget.moduleInfo?.module.complement?.configuration?.observation !=
+        null) {
+      final observationConfig =
+          widget.moduleInfo!.module.complement!.configuration!.observation!;
+      final customConfig = widget.customConfig;
+
+      // Naviguer vers le formulaire d'observation avec les informations nécessaires
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ObservationFormPage(
+              visitId: visitId,
+              observationConfig: observationConfig,
+              customConfig: customConfig,
+              moduleId: widget.moduleId,
+              moduleName: widget.moduleInfo?.module.moduleLabel,
+              siteLabel: widget
+                  .moduleInfo?.module.complement?.configuration?.site?.label,
+              siteName: widget.site.baseSiteName ?? widget.site.baseSiteCode,
+              visitLabel: widget.visitConfig.label,
+              visitDate: formatDateString(newVisit.visitDateMin),
+              observationDetailConfig: widget.moduleInfo?.module.complement
+                  ?.configuration?.observationDetail,
+            ),
+          ),
+        );
+      }
+    } else {
+      // Pas de config d'observation disponible
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Configuration des observations non disponible'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        Navigator.pop(context);
       }
     }
   }
