@@ -74,13 +74,13 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Nouvelle visite'),
+            title: const Text('Créer une observation'),
             content: const Text(
-                'Souhaitez-vous saisir des observations pour cette visite ?'),
+                'Voulez-vous créer une observation pour cette visite maintenant ?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Non'),
+                child: const Text('Plus tard'),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -88,7 +88,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                   _showAddObservationDialog(
                       widget.visit.idBaseVisit, observationConfig);
                 },
-                child: const Text('Oui'),
+                child: const Text('Créer'),
               ),
             ],
           ),

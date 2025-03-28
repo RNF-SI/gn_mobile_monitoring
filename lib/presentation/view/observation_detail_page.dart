@@ -89,13 +89,13 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Nouvelle observation'),
+            title: const Text('Ajouter des détails'),
             content: const Text(
-                'Souhaitez-vous saisir des détails pour cette observation ?'),
+                'Voulez-vous ajouter des détails à cette observation maintenant ?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Non'),
+                child: const Text('Plus tard'),
               ),
               ElevatedButton(
                 onPressed: () {
@@ -104,7 +104,7 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                       widget.observation.idObservation,
                       observationDetailConfig);
                 },
-                child: const Text('Oui'),
+                child: const Text('Ajouter'),
               ),
             ],
           ),
