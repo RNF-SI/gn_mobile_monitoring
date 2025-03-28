@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_detail_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_detail_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
@@ -22,6 +23,8 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
   final createObservationUseCase = ref.watch(createObservationUseCaseProvider);
   final updateObservationUseCase = ref.watch(updateObservationUseCaseProvider);
   final deleteObservationUseCase = ref.watch(deleteObservationUseCaseProvider);
+  final getObservationByIdUseCase =
+      ref.watch(getObservationByIdUseCaseProvider);
 
   // ObservationDetail use cases
   final getObservationDetailsByObservationIdUseCase =
@@ -40,6 +43,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
     createObservationUseCase,
     updateObservationUseCase,
     deleteObservationUseCase,
+    getObservationByIdUseCase,
     getObservationDetailsByObservationIdUseCase,
     getObservationDetailByIdUseCase,
     saveObservationDetailUseCase,
@@ -61,6 +65,7 @@ class ObservationsViewModel
   final CreateObservationUseCase _createObservationUseCase;
   final UpdateObservationUseCase _updateObservationUseCase;
   final DeleteObservationUseCase _deleteObservationUseCase;
+  final GetObservationByIdUseCase _getObservationByIdUseCase;
 
   // ObservationDetail use cases
   final GetObservationDetailsByObservationIdUseCase
@@ -79,6 +84,7 @@ class ObservationsViewModel
     this._createObservationUseCase,
     this._updateObservationUseCase,
     this._deleteObservationUseCase,
+    this._getObservationByIdUseCase,
     this._getObservationDetailsByObservationIdUseCase,
     this._getObservationDetailByIdUseCase,
     this._saveObservationDetailUseCase,
@@ -295,6 +301,20 @@ class ObservationsViewModel
       debugPrint(
           'Erreur lors de la suppression des détails d\'observation: $e');
       rethrow;
+    }
+  }
+
+  /// Récupère une observation par son ID
+  Future<Observation> getObservationById(int observationId) async {
+    try {
+      final observation =
+          await _getObservationByIdUseCase.execute(observationId);
+      if (observation == null) {
+        throw Exception('Observation not found');
+      }
+      return observation;
+    } catch (e) {
+      throw Exception('Failed to get observation: $e');
     }
   }
 
