@@ -343,8 +343,9 @@ class SiteDetailPage extends ConsumerWidget {
                       visit: visit,
                       site: site,
                       moduleInfo: moduleInfo,
-                      fromSiteGroup:
-                          siteGroup, // Passer le groupe de sites si disponible
+                      fromSiteGroup: siteGroup,
+                      isNewVisit:
+                          false, // Indiquer explicitement que ce n'est pas une nouvelle visite
                     ),
                   ),
                 );

@@ -19,6 +19,7 @@ class VisitDetailPage extends ConsumerStatefulWidget {
   final BaseSite site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup; // Information sur un éventuel groupe parent
+  final bool isNewVisit;
 
   const VisitDetailPage({
     super.key,
@@ -26,6 +27,7 @@ class VisitDetailPage extends ConsumerStatefulWidget {
     required this.site,
     this.moduleInfo,
     this.fromSiteGroup,
+    this.isNewVisit = false,
   });
 
   @override
@@ -40,18 +42,23 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   @override
   void initState() {
     super.initState();
+    _loadVisitDetails();
 
+    // Proposer la création d'une observation après un court délai seulement si c'est une nouvelle visite
+    if (widget.isNewVisit) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _proposeObservationCreation();
+      });
+    }
+  }
+
+  void _loadVisitDetails() {
     // Définir un provider pour cette instance spécifique
     _visitDetailsProvider = FutureProvider.autoDispose<BaseVisit>((ref) async {
       // L'appel est maintenant contrôlé et ne sera exécuté qu'une seule fois par le FutureProvider
       final viewModel = ref.read(siteVisitsViewModelProvider(
           (widget.site.idBaseSite, widget.visit.idModule)).notifier);
       return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
-    });
-
-    // Proposer la création d'une observation après un court délai
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _proposeObservationCreation();
     });
   }
 

@@ -399,6 +399,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                         site: widget.site,
                         moduleInfo: widget.moduleInfo,
                         fromSiteGroup: widget.siteGroup,
+                        isNewVisit: true,
                       ),
                     ),
                   );
