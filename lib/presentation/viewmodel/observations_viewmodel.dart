@@ -3,16 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
-import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_detail_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_observation_detail_by_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 
 /// Provider pour accéder aux observations pour une visite spécifique
@@ -26,29 +20,12 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
   final getObservationByIdUseCase =
       ref.watch(getObservationByIdUseCaseProvider);
 
-  // ObservationDetail use cases
-  final getObservationDetailsByObservationIdUseCase =
-      ref.watch(getObservationDetailsByObservationIdUseCaseProvider);
-  final getObservationDetailByIdUseCase =
-      ref.watch(getObservationDetailByIdUseCaseProvider);
-  final saveObservationDetailUseCase =
-      ref.watch(saveObservationDetailUseCaseProvider);
-  final deleteObservationDetailUseCase =
-      ref.watch(deleteObservationDetailUseCaseProvider);
-  final deleteObservationDetailsByObservationIdUseCase =
-      ref.watch(deleteObservationDetailsByObservationIdUseCaseProvider);
-
   return ObservationsViewModel(
     getObservationsByVisitIdUseCase,
     createObservationUseCase,
     updateObservationUseCase,
     deleteObservationUseCase,
     getObservationByIdUseCase,
-    getObservationDetailsByObservationIdUseCase,
-    getObservationDetailByIdUseCase,
-    saveObservationDetailUseCase,
-    deleteObservationDetailUseCase,
-    deleteObservationDetailsByObservationIdUseCase,
     visitId,
   );
 });
@@ -67,15 +44,6 @@ class ObservationsViewModel
   final DeleteObservationUseCase _deleteObservationUseCase;
   final GetObservationByIdUseCase _getObservationByIdUseCase;
 
-  // ObservationDetail use cases
-  final GetObservationDetailsByObservationIdUseCase
-      _getObservationDetailsByObservationIdUseCase;
-  final GetObservationDetailByIdUseCase _getObservationDetailByIdUseCase;
-  final SaveObservationDetailUseCase _saveObservationDetailUseCase;
-  final DeleteObservationDetailUseCase _deleteObservationDetailUseCase;
-  final DeleteObservationDetailsByObservationIdUseCase
-      _deleteObservationDetailsByObservationIdUseCase;
-
   final int _visitId;
   bool _mounted = true;
 
@@ -85,11 +53,6 @@ class ObservationsViewModel
     this._updateObservationUseCase,
     this._deleteObservationUseCase,
     this._getObservationByIdUseCase,
-    this._getObservationDetailsByObservationIdUseCase,
-    this._getObservationDetailByIdUseCase,
-    this._saveObservationDetailUseCase,
-    this._deleteObservationDetailUseCase,
-    this._deleteObservationDetailsByObservationIdUseCase,
     this._visitId,
   ) : super(const AsyncValue.loading()) {
     if (_visitId > 0) {
@@ -246,62 +209,6 @@ class ObservationsViewModel
     });
 
     return specificData;
-  }
-
-  /// Récupère tous les détails d'une observation par son ID
-  Future<List<ObservationDetail>> getObservationDetailsByObservationId(
-      int observationId) async {
-    try {
-      return await _getObservationDetailsByObservationIdUseCase
-          .execute(observationId);
-    } catch (e) {
-      debugPrint(
-          'Erreur lors de la récupération des détails d\'observation: $e');
-      return [];
-    }
-  }
-
-  /// Récupère un détail d'observation par son ID
-  Future<ObservationDetail?> getObservationDetailById(int detailId) async {
-    try {
-      return await _getObservationDetailByIdUseCase.execute(detailId);
-    } catch (e) {
-      debugPrint('Erreur lors de la récupération du détail d\'observation: $e');
-      return null;
-    }
-  }
-
-  /// Sauvegarde un détail d'observation
-  Future<int> saveObservationDetail(ObservationDetail detail) async {
-    try {
-      return await _saveObservationDetailUseCase.execute(detail);
-    } catch (e) {
-      debugPrint('Erreur lors de la sauvegarde du détail d\'observation: $e');
-      rethrow;
-    }
-  }
-
-  /// Supprime un détail d'observation
-  Future<bool> deleteObservationDetail(int detailId) async {
-    try {
-      return await _deleteObservationDetailUseCase.execute(detailId);
-    } catch (e) {
-      debugPrint('Erreur lors de la suppression du détail d\'observation: $e');
-      rethrow;
-    }
-  }
-
-  /// Supprime tous les détails d'une observation
-  Future<bool> deleteObservationDetailsByObservationId(
-      int observationId) async {
-    try {
-      return await _deleteObservationDetailsByObservationIdUseCase
-          .execute(observationId);
-    } catch (e) {
-      debugPrint(
-          'Erreur lors de la suppression des détails d\'observation: $e');
-      rethrow;
-    }
   }
 
   /// Récupère une observation par son ID
