@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
@@ -10,6 +11,9 @@ import 'package:mocktail/mocktail.dart';
 
 class MockGetObservationsByVisitIdUseCase extends Mock
     implements GetObservationsByVisitIdUseCase {}
+
+class MockGetObservationByIdUseCase extends Mock
+    implements GetObservationByIdUseCase {}
 
 class MockCreateObservationUseCase extends Mock
     implements CreateObservationUseCase {}
@@ -27,6 +31,7 @@ void main() {
     late MockCreateObservationUseCase mockCreateObservationUseCase;
     late MockUpdateObservationUseCase mockUpdateObservationUseCase;
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
+    late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
@@ -35,6 +40,7 @@ void main() {
       mockCreateObservationUseCase = MockCreateObservationUseCase();
       mockUpdateObservationUseCase = MockUpdateObservationUseCase();
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
+      mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
 
       registerFallbackValue(const Observation(idObservation: 1));
     });
@@ -50,6 +56,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 
@@ -89,6 +96,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 
@@ -111,6 +119,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 
@@ -142,6 +151,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 
@@ -170,6 +180,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 
@@ -198,6 +209,7 @@ void main() {
     late MockCreateObservationUseCase mockCreateObservationUseCase;
     late MockUpdateObservationUseCase mockUpdateObservationUseCase;
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
+    late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
@@ -206,6 +218,7 @@ void main() {
       mockCreateObservationUseCase = MockCreateObservationUseCase();
       mockUpdateObservationUseCase = MockUpdateObservationUseCase();
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
+      mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
 
       // Configurer pour les opérations CRUD
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
@@ -219,6 +232,7 @@ void main() {
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
+        mockGetObservationByIdUseCase,
         testVisitId,
       );
 

@@ -46,6 +46,11 @@ class TestNotifier extends StateNotifier<AsyncValue<List<Observation>>>
   Future<void> loadObservations() async {
     // Ne rien faire pour éviter les chargements supplémentaires qui causent des timeouts
   }
+  
+  @override
+  Future<Observation> getObservationById(int observationId) {
+    return Future.value(Observation(idObservation: observationId));
+  }
 
   @override
   Future<List<Observation>> getObservationsByVisitId() {

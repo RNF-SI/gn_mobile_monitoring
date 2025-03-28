@@ -34,6 +34,11 @@ class TestObservationsNotifier
 
   @override
   Future<void> loadObservations() async {}
+  
+  @override
+  Future<Observation> getObservationById(int observationId) async {
+    return Observation(idObservation: observationId);
+  }
 
   @override
   Future<List<Observation>> getObservationsByVisitId() async {
