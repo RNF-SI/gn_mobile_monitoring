@@ -35,6 +35,7 @@ class VisitDetailPage extends ConsumerStatefulWidget {
 class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
   // Utiliser un FutureProvider unique à cette instance pour éviter la reconstruction à chaque build
   late final AutoDisposeFutureProvider<BaseVisit> _visitDetailsProvider;
+  bool _hasShownObservationDialog = false;
 
   @override
   void initState() {
@@ -47,6 +48,46 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
           (widget.site.idBaseSite, widget.visit.idModule)).notifier);
       return viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit);
     });
+
+    // Proposer la création d'une observation après un court délai
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _proposeObservationCreation();
+    });
+  }
+
+  void _proposeObservationCreation() {
+    if (!_hasShownObservationDialog && mounted) {
+      _hasShownObservationDialog = true;
+
+      // Récupérer la configuration des observations
+      final ObjectConfig? observationConfig =
+          widget.moduleInfo?.module.complement?.configuration?.observation;
+
+      if (observationConfig != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Nouvelle visite'),
+            content: const Text(
+                'Souhaitez-vous saisir des observations pour cette visite ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Non'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showAddObservationDialog(
+                      widget.visit.idBaseVisit, observationConfig);
+                },
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -649,6 +690,11 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
           siteName: siteName,
           visitLabel: visitLabel,
           visitDate: visitDate,
+          // Passer les informations pour la redirection
+          visit: widget.visit,
+          site: widget.site,
+          moduleInfo: widget.moduleInfo,
+          fromSiteGroup: widget.fromSiteGroup,
         ),
       ),
     ).then((_) {
