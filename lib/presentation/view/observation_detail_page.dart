@@ -11,7 +11,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_detail_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
 
@@ -21,6 +21,9 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
   final BaseSite site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
+  final ObjectConfig? observationConfig;
+  final CustomConfig? customConfig;
+  final ObjectConfig? observationDetailConfig;
 
   const ObservationDetailPage({
     super.key,
@@ -29,6 +32,9 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
     required this.site,
     this.moduleInfo,
     this.fromSiteGroup,
+    this.observationConfig,
+    this.customConfig,
+    this.observationDetailConfig,
   });
 
   @override
@@ -39,18 +45,24 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
 class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
   // Future pour charger les détails d'observation
   Future<List<ObservationDetail>>? _observationDetailsFuture;
+  bool _hasShownDetailDialog = false;
 
   @override
   void initState() {
     super.initState();
     _loadObservationDetails();
+
+    // Proposer la création d'un détail après un court délai
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _proposeObservationDetailCreation();
+    });
   }
 
   // Méthode pour charger ou recharger les détails d'observation
   void _loadObservationDetails() {
-    final observationsViewModel =
-        ref.read(observationsProvider(widget.visit.idBaseVisit).notifier);
-    _observationDetailsFuture = observationsViewModel
+    final observationDetailsViewModel = ref.read(
+        observationDetailsProvider(widget.observation.idObservation).notifier);
+    _observationDetailsFuture = observationDetailsViewModel
         .getObservationDetailsByObservationId(widget.observation.idObservation);
   }
 
@@ -61,30 +73,146 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
     });
   }
 
+  void _proposeObservationDetailCreation() {
+    if (!_hasShownDetailDialog && mounted) {
+      _hasShownDetailDialog = true;
+
+      // Récupérer la configuration des détails d'observation
+      final ObjectConfig? observationDetailConfig = widget
+          .moduleInfo?.module.complement?.configuration?.observationDetail;
+
+      if (observationDetailConfig != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Nouvelle observation'),
+            content: const Text(
+                'Souhaitez-vous saisir des détails pour cette observation ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Non'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _showAddObservationDetailDialog(
+                      widget.observation.idObservation,
+                      observationDetailConfig);
+                },
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  void _showAddObservationDetailDialog(
+      int observationId, ObjectConfig observationDetailConfig) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationDetailFormPage(
+          observationDetail: observationDetailConfig,
+          observation: widget.observation,
+          customConfig: widget.customConfig,
+          visit: widget.visit,
+          site: widget.site,
+          moduleInfo: widget.moduleInfo,
+          fromSiteGroup: widget.fromSiteGroup,
+        ),
+      ),
+    ).then((_) {
+      // Rafraîchir les détails après ajout
+      ref.refresh(observationDetailsProvider(observationId));
+    });
+  }
+
+  void _showEditObservationDetailDialog(int observationId, int detailId,
+      Map<String, dynamic> detailData, ObjectConfig observationDetailConfig) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationDetailFormPage(
+          observationDetail: observationDetailConfig,
+          observation: widget.observation,
+          customConfig: widget.customConfig,
+          visit: widget.visit,
+          site: widget.site,
+          moduleInfo: widget.moduleInfo,
+          fromSiteGroup: widget.fromSiteGroup,
+          existingDetail: ObservationDetail(
+            idObservationDetail: detailId,
+            idObservation: observationId,
+            data: detailData,
+          ),
+        ),
+      ),
+    ).then((_) {
+      // Rafraîchir les détails après édition
+      ref.refresh(observationDetailsProvider(observationId));
+    });
+  }
+
+  Future<void> _deleteObservationDetail(int observationId, int detailId) async {
+    try {
+      final success = await ref
+          .read(observationDetailsProvider(observationId).notifier)
+          .deleteObservationDetail(detailId);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Détail d\'observation supprimé avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Erreur lors de la suppression du détail d\'observation'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Récupérer la configuration des observations depuis le module
-    final ObjectConfig? observationConfig =
-        widget.moduleInfo?.module.complement?.configuration?.observation;
+    // Utiliser le provider pour les détails d'observation
+    final observationDetailsState =
+        ref.watch(observationDetailsProvider(widget.observation.idObservation));
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Détails de l\'observation'),
+        title: const Text('Détails de l\'observation'),
         actions: [
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () {
-              if (observationConfig != null) {
+              if (widget.observationConfig != null) {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => ObservationFormPage(
                       visitId: widget.visit.idBaseVisit,
-                      observationConfig: observationConfig,
-                      customConfig: widget
-                          .moduleInfo?.module.complement?.configuration?.custom,
-                      moduleId: widget.moduleInfo?.module.id,
+                      observationConfig: widget.observationConfig!,
+                      customConfig: widget.customConfig,
                       observation: widget.observation,
+                      moduleId: widget.moduleInfo?.module.id,
                       moduleName: widget.moduleInfo?.module.moduleLabel,
                       siteLabel: widget.moduleInfo?.module.complement
                               ?.configuration?.site?.label ??
@@ -95,29 +223,40 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                               ?.configuration?.visit?.label ??
                           'Visite',
                       visitDate: formatDateString(widget.visit.visitDateMin),
+                      visit: widget.visit,
+                      site: widget.site,
+                      moduleInfo: widget.moduleInfo,
+                      fromSiteGroup: widget.fromSiteGroup,
                     ),
                   ),
                 ).then((_) {
-                  // Rafraîchir les observations après édition
-                  ref.refresh(observationsProvider(widget.visit.idBaseVisit));
+                  // Rafraîchir les détails après édition
+                  ref.refresh(observationDetailsProvider(
+                      widget.observation.idObservation));
                 });
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content:
-                        Text('Configuration des observations non disponible'),
-                  ),
-                );
               }
             },
           ),
         ],
       ),
-      body: _buildContent(context, observationConfig),
+      body: observationDetailsState.when(
+        data: (details) => _buildContent(context, details),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stackTrace) => Center(
+          child: Text(
+            'Erreur lors du chargement des détails: $error',
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      ),
     );
   }
 
-  Widget _buildContent(BuildContext context, ObjectConfig? observationConfig) {
+  Widget _buildContent(BuildContext context, List<ObservationDetail> details) {
+    // Récupérer la configuration des observations depuis le module
+    final ObjectConfig? observationConfig =
+        widget.moduleInfo?.module.complement?.configuration?.observation;
+
     // Récupérer les labels configurés
     final String siteLabel =
         widget.moduleInfo?.module.complement?.configuration?.site?.label ??
@@ -139,65 +278,71 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
         children: [
           // Fil d'Ariane pour la navigation
           if (widget.moduleInfo != null)
-            Card(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                child: BreadcrumbNavigation(
-                  items: [
-                    // Module
-                    BreadcrumbItem(
-                      label: 'Module',
-                      value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
-                      onTap: () {
-                        Navigator.of(context).popUntil((route) =>
-                            route.isFirst ||
-                            route.settings.name == '/module_detail');
-                      },
-                    ),
-
-                    // Groupe de site (si disponible)
-                    if (widget.fromSiteGroup != null)
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 8.0, horizontal: 12.0),
+                  child: BreadcrumbNavigation(
+                    items: [
+                      // Module
                       BreadcrumbItem(
-                        label: groupLabel,
-                        value: widget.fromSiteGroup.sitesGroupName ??
-                            widget.fromSiteGroup.sitesGroupCode ??
-                            'Groupe',
+                        label: 'Module',
+                        value:
+                            widget.moduleInfo!.module.moduleLabel ?? 'Module',
                         onTap: () {
-                          int count = 0;
-                          Navigator.of(context).popUntil((route) {
-                            return count++ >= 3;
-                          });
+                          // Naviguer vers le module (retour de plusieurs niveaux)
+                          Navigator.of(context).popUntil((route) =>
+                              route.isFirst ||
+                              route.settings.name == '/module_detail');
                         },
                       ),
 
-                    // Site
-                    BreadcrumbItem(
-                      label: siteLabel,
-                      value: widget.site.baseSiteName ??
-                          widget.site.baseSiteCode ??
-                          'Site',
-                      onTap: () {
-                        int count = 0;
-                        Navigator.of(context).popUntil((route) => count++ >= 2);
-                      },
-                    ),
+                      // Groupe de site (si disponible)
+                      if (widget.fromSiteGroup != null)
+                        BreadcrumbItem(
+                          label: groupLabel,
+                          value: widget.fromSiteGroup.sitesGroupName ??
+                              widget.fromSiteGroup.sitesGroupCode ??
+                              'Groupe',
+                          onTap: () {
+                            // Retour vers le groupe (2 niveaux - passer par le site)
+                            int count = 0;
+                            Navigator.of(context).popUntil((route) {
+                              return count++ >= 2;
+                            });
+                          },
+                        ),
 
-                    // Visite
-                    BreadcrumbItem(
-                      label: visitLabel,
-                      value: formatDateString(widget.visit.visitDateMin),
-                      onTap: () {
-                        Navigator.of(context).pop();
-                      },
-                    ),
-
-                    // Observation (actuelle)
-                    BreadcrumbItem(
-                      label: observationLabel,
-                      value: 'Observation #${widget.observation.idObservation}',
-                    ),
-                  ],
+                      // Site
+                      BreadcrumbItem(
+                        label: siteLabel,
+                        value: widget.site.baseSiteName ??
+                            widget.site.baseSiteCode ??
+                            'Site',
+                        onTap: () {
+                          // Naviguer vers le site (retour de 1 niveau)
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      // Visite
+                      BreadcrumbItem(
+                        label: visitLabel,
+                        value: formatDateString(widget.visit.visitDateMin),
+                        onTap: () {
+                          // Retour à la visite (1 niveau)
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      // Observation (actuelle)
+                      BreadcrumbItem(
+                        label: observationLabel,
+                        value:
+                            'Observation #${widget.observation.idObservation}',
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -261,7 +406,8 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
             PropertyDisplayWidget(
               data: widget.observation.data!,
               config: observationConfig,
-              customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+              customConfig:
+                  widget.moduleInfo?.module.complement?.configuration?.custom,
               separateEmptyFields: true,
             ),
 
@@ -341,6 +487,10 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                                     observation: widget.observation,
                                     customConfig: widget.moduleInfo!.module
                                         .complement!.configuration!.custom,
+                                    visit: widget.visit,
+                                    site: widget.site,
+                                    moduleInfo: widget.moduleInfo,
+                                    fromSiteGroup: widget.fromSiteGroup,
                                   ),
                                 ),
                               ).then((result) {
@@ -581,10 +731,11 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
   void _editObservationDetail(int detailId, ObjectConfig observationDetail,
       CustomConfig? customConfig) async {
     try {
-      final observationsViewModel =
-          ref.read(observationsProvider(widget.visit.idBaseVisit).notifier);
+      final observationDetailsViewModel = ref.read(
+          observationDetailsProvider(widget.observation.idObservation)
+              .notifier);
       final detail =
-          await observationsViewModel.getObservationDetailById(detailId);
+          await observationDetailsViewModel.getObservationDetailById(detailId);
 
       if (detail != null) {
         if (mounted) {
@@ -596,6 +747,10 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                 observation: widget.observation,
                 customConfig: customConfig,
                 detail: detail, // Passer le détail existant pour l'édition
+                visit: widget.visit,
+                site: widget.site,
+                moduleInfo: widget.moduleInfo,
+                fromSiteGroup: widget.fromSiteGroup,
               ),
             ),
           ).then((result) {
@@ -650,50 +805,14 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
           TextButton(
             onPressed: () {
               Navigator.of(context).pop();
-              _deleteObservationDetail(detailId);
+              _deleteObservationDetail(
+                  widget.observation.idObservation, detailId);
             },
             child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _deleteObservationDetail(int detailId) async {
-    try {
-      final observationsViewModel =
-          ref.read(observationsProvider(widget.visit.idBaseVisit).notifier);
-      final success =
-          await observationsViewModel.deleteObservationDetail(detailId);
-
-      if (success) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-                content: Text('Détail d\'observation supprimé avec succès'),
-                backgroundColor: Colors.green),
-          );
-          // Forcer un rechargement complet des détails
-          setState(() {
-            // Annuler toute future en cours
-            _observationDetailsFuture = null;
-            // Recharger les détails
-            _loadObservationDetails();
-          });
-        }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Erreur lors de la suppression du détail')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
-      }
-    }
   }
 
   Widget _buildInfoRow(String label, String value) {
@@ -786,11 +905,10 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                         MaterialPageRoute(
                           builder: (context) => ObservationFormPage(
                             visitId: widget.visit.idBaseVisit,
-                            observationConfig: observationConfig,
-                            customConfig: widget.moduleInfo?.module.complement
-                                ?.configuration?.custom,
-                            moduleId: widget.moduleInfo?.module.id,
+                            observationConfig: widget.observationConfig!,
+                            customConfig: widget.customConfig,
                             observation: widget.observation,
+                            moduleId: widget.moduleInfo?.module.id,
                             moduleName: widget.moduleInfo?.module.moduleLabel,
                             siteLabel: widget.moduleInfo?.module.complement
                                     ?.configuration?.site?.label ??
@@ -802,12 +920,16 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                                 'Visite',
                             visitDate:
                                 formatDateString(widget.visit.visitDateMin),
+                            visit: widget.visit,
+                            site: widget.site,
+                            moduleInfo: widget.moduleInfo,
+                            fromSiteGroup: widget.fromSiteGroup,
                           ),
                         ),
                       ).then((_) {
-                        // Rafraîchir les observations après édition
-                        ref.refresh(
-                            observationsProvider(widget.visit.idBaseVisit));
+                        // Rafraîchir les détails après édition
+                        ref.refresh(observationDetailsProvider(
+                            widget.observation.idObservation));
                       });
                     }
                   },
@@ -834,7 +956,9 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pop();
-                              _deleteObservation(observationId);
+                              _deleteObservationDetail(
+                                  widget.observation.idObservation,
+                                  observationId);
                             },
                             child: const Text('Supprimer',
                                 style: TextStyle(color: Colors.red)),
@@ -861,39 +985,4 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
       }).toList(),
     );
   }
-
-  // Supprimer une observation
-  Future<void> _deleteObservation(int observationId) async {
-    try {
-      final viewModel =
-          ref.read(observationsProvider(widget.visit.idBaseVisit).notifier);
-      final success = await viewModel.deleteObservation(observationId);
-
-      if (success) {
-        // Afficher un message de succès
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Observation supprimée avec succès')),
-          );
-          // Rafraîchir les observations
-          ref.refresh(observationsProvider(widget.visit.idBaseVisit));
-          // Retourner à la page précédente
-          Navigator.of(context).pop();
-        }
-      } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Erreur lors de la suppression de l\'observation')),
-        );
-      }
-    } catch (e) {
-      // Afficher un message d'erreur
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
 }
