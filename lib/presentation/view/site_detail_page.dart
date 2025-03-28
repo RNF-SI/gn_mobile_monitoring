@@ -262,27 +262,40 @@ class SiteDetailPage extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columns: displayColumns.map((column) {
-            String label = _getColumnLabel(column, unifiedSchema, visitConfig);
-            return DataColumn(
-              label: Text(
-                label,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+      child: Card(
+        child: Column(
+          children: [
+            // Corps du tableau (scrollable verticalement)
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    columns: displayColumns.map((column) {
+                      String label =
+                          _getColumnLabel(column, unifiedSchema, visitConfig);
+                      return DataColumn(
+                        label: Text(
+                          label,
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      );
+                    }).toList(),
+                    rows: visits.map((visit) {
+                      return DataRow(
+                        cells: displayColumns.map((column) {
+                          return DataCell(
+                            _buildVisitTableCell(
+                                column, visit, visitConfig, context),
+                          );
+                        }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
-            );
-          }).toList(),
-          rows: visits.map((visit) {
-            return DataRow(
-              cells: displayColumns.map((column) {
-                return DataCell(
-                  _buildVisitTableCell(column, visit, visitConfig, context),
-                );
-              }).toList(),
-            );
-          }).toList(),
+            ),
+          ],
         ),
       ),
     );
