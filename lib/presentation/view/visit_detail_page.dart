@@ -558,6 +558,12 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
                           site: widget.site,
                           moduleInfo: widget.moduleInfo,
                           fromSiteGroup: widget.fromSiteGroup,
+                          observationConfig: observationConfig,
+                          customConfig: widget.moduleInfo?.module.complement
+                              ?.configuration?.custom,
+                          observationDetailConfig: widget.moduleInfo?.module
+                              .complement?.configuration?.observation,
+                          isNewObservation: false,
                         ),
                       ),
                     );

@@ -262,6 +262,10 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                       site: widget.site!,
                       moduleInfo: widget.moduleInfo,
                       fromSiteGroup: widget.fromSiteGroup,
+                      observationConfig: widget.observationConfig,
+                      customConfig: widget.customConfig,
+                      observationDetailConfig: widget.observationDetailConfig,
+                      isNewObservation: false,
                     ),
                   ),
                 );
@@ -303,10 +307,10 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
           // Gérer la navigation
           if (!_chainInput) {
             // Récupérer l'observation créée
-            final observation = await observationsViewModel
+            final newObservation = await observationsViewModel
                 .getObservationById(newObservationId);
 
-            if (observation != null && mounted) {
+            if (newObservation != null && mounted) {
               // Rediriger vers la page de détail de l'observation
               if (mounted && widget.visit != null && widget.site != null) {
                 setState(() {
@@ -316,11 +320,15 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => ObservationDetailPage(
-                      observation: observation,
+                      observation: newObservation,
                       visit: widget.visit!,
                       site: widget.site!,
                       moduleInfo: widget.moduleInfo,
                       fromSiteGroup: widget.fromSiteGroup,
+                      observationConfig: widget.observationConfig,
+                      customConfig: widget.customConfig,
+                      observationDetailConfig: widget.observationDetailConfig,
+                      isNewObservation: true,
                     ),
                   ),
                 );

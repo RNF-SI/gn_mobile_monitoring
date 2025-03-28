@@ -24,6 +24,7 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
   final ObjectConfig? observationConfig;
   final CustomConfig? customConfig;
   final ObjectConfig? observationDetailConfig;
+  final bool isNewObservation;
 
   const ObservationDetailPage({
     super.key,
@@ -35,6 +36,7 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
     this.observationConfig,
     this.customConfig,
     this.observationDetailConfig,
+    this.isNewObservation = false,
   });
 
   @override
@@ -52,10 +54,12 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
     super.initState();
     _loadObservationDetails();
 
-    // Proposer la création d'un détail après un court délai
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _proposeObservationDetailCreation();
-    });
+    // Proposer la création d'un détail après un court délai seulement si c'est une nouvelle observation
+    if (widget.isNewObservation) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _proposeObservationDetailCreation();
+      });
+    }
   }
 
   // Méthode pour charger ou recharger les détails d'observation
