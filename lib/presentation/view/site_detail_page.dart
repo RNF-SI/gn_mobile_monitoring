@@ -191,7 +191,7 @@ class SiteDetailPage extends ConsumerWidget {
                         // Rafraîchir la liste des visites après ajout
                         ref
                             .read(siteVisitsViewModelProvider(
-                                (site.idBaseSite, moduleId!)).notifier)
+                                (site.idBaseSite, moduleId)).notifier)
                             .loadVisits();
                       });
                     } else {
@@ -247,9 +247,9 @@ class SiteDetailPage extends ConsumerWidget {
     // Utiliser les propriétés d'affichage de la configuration si disponibles
     final List<String> displayColumns =
         visitConfig?.displayList?.isNotEmpty ?? false
-            ? ['actions', ...visitConfig!.displayList!]
+            ? ['actions', ...(visitConfig?.displayList ?? [])]
             : visitConfig?.displayProperties?.isNotEmpty ?? false
-                ? ['actions', ...visitConfig!.displayProperties!]
+                ? ['actions', ...(visitConfig?.displayProperties ?? [])]
                 : defaultColumns;
 
     // Obtenir le schéma unifié de la configuration des visites pour les libellés
