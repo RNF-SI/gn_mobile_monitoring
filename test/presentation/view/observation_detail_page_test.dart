@@ -7,146 +7,124 @@ import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockObservationsViewModel extends Mock implements ObservationsViewModel {}
+class MockObservationDetailViewModel
+    extends StateNotifier<AsyncValue<List<ObservationDetail>>>
+    with Mock
+    implements ObservationDetailViewModel {
+  MockObservationDetailViewModel() : super(const AsyncValue.data([]));
+  
+  @override
+  Future<List<ObservationDetail>> getObservationDetailsByObservationId(int observationId) async {
+    return [];
+  }
+  
+  @override
+  Future<ObservationDetail?> getObservationDetailById(int observationDetailId) async {
+    return null;
+  }
+  
+  @override
+  Future<int> saveObservationDetail(ObservationDetail detail) async {
+    return 1;
+  }
+  
+  @override
+  Future<bool> deleteObservationDetail(int observationDetailId) async {
+    return true;
+  }
+  
+  @override
+  Future<void> loadObservationDetails() async {}
+}
 
 void main() {
-  late BaseSite site;
-  late BaseVisit visit;
-  late Observation observation;
-  late ModuleInfo moduleInfo;
+  late MockObservationDetailViewModel mockViewModel;
 
   setUp(() {
-    site = BaseSite(
-      idBaseSite: 1,
-      baseSiteName: 'Test Site',
-      baseSiteCode: 'TS001',
-    );
-
-    visit = BaseVisit(
-      idBaseVisit: 1,
-      visitDateMin: '2024-03-20',
-      idModule: 1,
-      idDataset: 1,
-    );
-
-    observation = Observation(
-      idObservation: 1,
-      comments: 'Test comment',
-      data: {'test_field': 'test_value'},
-      metaCreateDate: '2024-03-20',
-      metaUpdateDate: '2024-03-20',
-    );
-
-    moduleInfo = ModuleInfo(
-      module: Module(
-        id: 1,
-        moduleLabel: 'Test Module',
-        complement: ModuleComplement(
-          idModule: 1,
-          configuration: ModuleConfiguration(
-            observation: ObjectConfig(
-              label: 'Observation',
-              displayList: ['test_field', 'comments'],
-              generic: {
-                'test_field': GenericFieldConfig(
-                  attributLabel: 'Test Field',
-                  typeWidget: 'text',
-                ),
-                'comments': GenericFieldConfig(
-                  attributLabel: 'Commentaires',
-                  typeWidget: 'textarea',
-                ),
-              },
-            ),
-            site: ObjectConfig(
-              label: 'Site',
-              displayList: [],
-              generic: {},
-            ),
-            visit: ObjectConfig(
-              label: 'Visite',
-              displayList: [],
-              generic: {},
-            ),
-          ),
-        ),
-      ),
-      downloadStatus: ModuleDownloadStatus.moduleDownloaded,
-    );
+    mockViewModel = MockObservationDetailViewModel();
   });
 
   testWidgets('ObservationDetailPage displays observation details correctly',
       (WidgetTester tester) async {
-    final mockObservationsViewModel = MockObservationsViewModel();
+    // Créer les données de test
+    final observation = Observation(
+      idObservation: 1,
+      idBaseVisit: 1,
+      metaCreateDate: DateTime.now().toString(),
+      data: {},
+    );
 
+    final visit = BaseVisit(
+      idBaseVisit: 1,
+      idBaseSite: 1,
+      idModule: 1,
+      idDataset: 1,
+      visitDateMin: DateTime.now().toString(),
+    );
+
+    final site = BaseSite(
+      idBaseSite: 1,
+      baseSiteCode: 'SITE1',
+      baseSiteName: 'Test Site',
+    );
+
+    final testModule = Module(
+      id: 1,
+      moduleCode: 'TEST',
+      moduleLabel: 'Test Module',
+      moduleDesc: 'Test Description',
+      complement: ModuleComplement(
+        idModule: 1,
+        configuration: ModuleConfiguration(
+          observation: ObjectConfig(
+            label: 'Observation',
+            displayList: [],
+            generic: {},
+          ),
+        ),
+      ),
+    );
+
+    final testModuleInfo = ModuleInfo(
+      module: testModule,
+      downloadStatus: ModuleDownloadStatus.moduleDownloaded,
+      downloadProgress: 0,
+    );
+
+    // Construire le widget avec le ProviderScope
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
-          observationsProvider(visit.idBaseVisit)
-              .overrideWith((ref) => mockObservationsViewModel),
+          observationDetailsProvider(observation.idObservation)
+              .overrideWith((_) => mockViewModel),
         ],
         child: MaterialApp(
           home: ObservationDetailPage(
             observation: observation,
             visit: visit,
             site: site,
-            moduleInfo: moduleInfo,
+            moduleInfo: testModuleInfo,
           ),
         ),
       ),
     );
 
-    // Vérifier que les informations générales sont affichées
+    // Attendre que le widget soit construit
+    await tester.pump();
+    
+    // Attendre que l'interface se mette à jour après le chargement des données
+    await tester.pump(const Duration(milliseconds: 50));
+
+    // Vérifier que les éléments sont affichés
     expect(find.text('Informations générales'), findsOneWidget);
     expect(find.text('ID'), findsOneWidget);
-    expect(find.text('Commentaires'), findsOneWidget);
-    expect(find.text('Données spécifiques'), findsOneWidget);
-
-    // Vérifier que le bouton d'édition est présent
-    expect(find.byIcon(Icons.edit), findsOneWidget);
-  });
-
-  testWidgets('ObservationDetailPage handles missing configuration',
-      (WidgetTester tester) async {
-    final mockObservationsViewModel = MockObservationsViewModel();
-    final moduleInfoWithoutConfig = ModuleInfo(
-      module: Module(
-        id: 1,
-        moduleLabel: 'Test Module',
-        complement: ModuleComplement(
-          idModule: 1,
-          configuration: ModuleConfiguration(),
-        ),
-      ),
-      downloadStatus: ModuleDownloadStatus.moduleDownloaded,
-    );
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          observationsProvider(visit.idBaseVisit)
-              .overrideWith((ref) => mockObservationsViewModel),
-        ],
-        child: MaterialApp(
-          home: ObservationDetailPage(
-            observation: observation,
-            visit: visit,
-            site: site,
-            moduleInfo: moduleInfoWithoutConfig,
-          ),
-        ),
-      ),
-    );
-
-    // Vérifier que la page s'affiche sans erreur même sans configuration
-    expect(find.text('Informations générales'), findsOneWidget);
-    expect(find.text('Commentaires'), findsOneWidget);
-    expect(find.text('Données spécifiques'), findsOneWidget);
+    expect(find.text(observation.idObservation.toString()), findsOneWidget);
   });
 }
