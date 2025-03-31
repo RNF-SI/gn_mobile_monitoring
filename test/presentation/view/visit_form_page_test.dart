@@ -444,8 +444,8 @@ void main() {
     // Note: For these tests, we'll use spy-like behavior to verify calls to the ViewModel
 
     // Ce test est trop fragile et cause des délais d'attente
-  // Nous préférons le commenter pour améliorer la stabilité des tests
-  /*
+    // Nous préférons le commenter pour améliorer la stabilité des tests
+    /*
   testWidgets('VisitFormPage should load connected user in creation mode',
         (WidgetTester tester) async {
       // Setup mocks to complete immediately

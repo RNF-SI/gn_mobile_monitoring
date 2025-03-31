@@ -63,6 +63,33 @@ void main() {
     metaUpdateDate: DateTime.parse('2024-03-21'),
   );
 
+  final testModuleInfo = ModuleInfo(
+    module: Module(
+      id: 1,
+      moduleLabel: 'Test Module',
+      moduleCode: 'TEST_MODULE',
+      moduleDesc: 'Test module description',
+      complement: ModuleComplement(
+        idModule: 1,
+        configuration: ModuleConfiguration(
+          visit: ObjectConfig(
+            label: 'Visites',
+            displayList: ['visit_date_min', 'observers', 'comments'],
+          ),
+          site: ObjectConfig(
+            label: 'Site',
+            displayList: [
+              'base_site_name',
+              'base_site_code',
+              'base_site_description'
+            ],
+          ),
+        ),
+      ),
+    ),
+    downloadStatus: ModuleDownloadStatus.moduleDownloaded,
+  );
+
   final testVisits = [
     BaseVisit(
       idBaseVisit: 1,
@@ -147,7 +174,10 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: SiteDetailPage(site: testSite),
+        home: SiteDetailPage(
+          site: testSite,
+          moduleInfo: testModuleInfo,
+        ),
       ),
     ));
 
@@ -185,7 +215,10 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: SiteDetailPage(site: testSite),
+        home: SiteDetailPage(
+          site: testSite,
+          moduleInfo: testModuleInfo,
+        ),
       ),
     ));
 
@@ -222,7 +255,10 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: SiteDetailPage(site: testSite),
+        home: SiteDetailPage(
+          site: testSite,
+          moduleInfo: testModuleInfo,
+        ),
       ),
     ));
 
@@ -245,7 +281,10 @@ void main() {
         ),
       ],
       child: MaterialApp(
-        home: SiteDetailPage(site: testSite),
+        home: SiteDetailPage(
+          site: testSite,
+          moduleInfo: testModuleInfo,
+        ),
       ),
     ));
 
@@ -343,11 +382,7 @@ void main() {
 
     await tester.pump();
 
-    // Tap the button to try to navigate to the visit form
-    await tester.tap(find.text('Ajouter une visite'));
-    await tester.pumpAndSettle();
-
-    // Verify the snackbar with the error message is shown
-    expect(find.text('Configuration de visite non disponible'), findsOneWidget);
+    // Vérifier que le message d'erreur est affiché
+    expect(find.text('Module non disponible'), findsOneWidget);
   });
 }

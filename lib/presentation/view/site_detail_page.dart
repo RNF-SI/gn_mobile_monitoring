@@ -35,9 +35,21 @@ class SiteDetailPage extends ConsumerWidget {
     // Récupérer l'ID du module depuis moduleInfo
     final int? moduleId = moduleInfo?.module.id;
 
-    // Utiliser le provider avec l'ID du module si disponible
+    // Si moduleId est null, afficher un message d'erreur
+    if (moduleId == null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(site.baseSiteName ?? 'Détails'),
+        ),
+        body: const Center(
+          child: Text('Module non disponible'),
+        ),
+      );
+    }
+
+    // Utiliser le provider avec l'ID du module
     final visitsState =
-        ref.watch(siteVisitsViewModelProvider((site.idBaseSite, moduleId!)));
+        ref.watch(siteVisitsViewModelProvider((site.idBaseSite, moduleId)));
 
     // Récupérer la configuration des visites depuis le module
     final ObjectConfig? visitConfig =

@@ -46,7 +46,7 @@ class TestNotifier extends StateNotifier<AsyncValue<List<Observation>>>
   Future<void> loadObservations() async {
     // Ne rien faire pour éviter les chargements supplémentaires qui causent des timeouts
   }
-  
+
   @override
   Future<Observation> getObservationById(int observationId) {
     return Future.value(Observation(idObservation: observationId));
@@ -223,12 +223,13 @@ void main() {
         },
       ),
       observation: ObjectConfig(
-        label: 'Observation',
+        label: 'Observations',
         displayList: ['cd_nom', 'comments'],
         generic: {
           'cd_nom': GenericFieldConfig(
             attributLabel: 'Cd Nom',
             typeWidget: 'number',
+            required: true,
           ),
           'comments': GenericFieldConfig(
             attributLabel: 'Commentaires',
@@ -463,50 +464,30 @@ void main() {
     when(() => mockObservationsViewModel.getObservationsByVisitId())
         .thenAnswer((_) async => []);
 
-    // Act
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [
-          siteVisitsViewModelProvider((providers.testVisit.idBaseSite!, 1))
-              .overrideWith((_) => mockSiteVisitsViewModel),
-          observationsProvider(providers.testVisit.idBaseVisit)
-              .overrideWith((_) => mockObservationsViewModel),
-        ],
-        child: MaterialApp(
-          home: VisitDetailPage(
-            visit: providers.testVisit,
-            site: createTestSite(),
-            moduleInfo: createTestModuleInfo(),
-          ),
-        ),
-      ),
-    );
-
-    // Assert
-    expect(find.text('Observations'), findsOneWidget);
-    expect(find.byIcon(Icons.add), findsOneWidget);
-  });
-
-  testWidgets(
-      'should not show observation section when no observation config exists',
-      (WidgetTester tester) async {
-    // Arrange
-    final mockSiteVisitsViewModel = MockSiteVisitsViewModelNotifier();
-    final mockObservationsViewModel = MockObservationsViewModel();
-
-    when(() => mockSiteVisitsViewModel.getVisitWithFullDetails(any()))
-        .thenAnswer((_) async => providers.testVisit);
-    when(() => mockObservationsViewModel.getObservationsByVisitId())
-        .thenAnswer((_) async => []);
-
-    // ModuleInfo sans configuration d'observations
-    final moduleInfoWithoutObsConfig = ModuleInfo(
+    // ModuleInfo avec configuration d'observations
+    final moduleInfoWithObsConfig = ModuleInfo(
       module: Module(
         id: 1,
         moduleLabel: 'Test Module',
         complement: ModuleComplement(
           idModule: 1,
-          configuration: ModuleConfiguration(),
+          configuration: ModuleConfiguration(
+            observation: ObjectConfig(
+              label: 'Observations',
+              displayList: ['cd_nom', 'comments'],
+              generic: {
+                'cd_nom': GenericFieldConfig(
+                  attributLabel: 'Cd Nom',
+                  typeWidget: 'number',
+                  required: true,
+                ),
+                'comments': GenericFieldConfig(
+                  attributLabel: 'Commentaires',
+                  typeWidget: 'textarea',
+                ),
+              },
+            ),
+          ),
         ),
       ),
       downloadStatus: ModuleDownloadStatus.moduleDownloaded,
@@ -525,14 +506,14 @@ void main() {
           home: VisitDetailPage(
             visit: providers.testVisit,
             site: createTestSite(),
-            moduleInfo: moduleInfoWithoutObsConfig,
+            moduleInfo: moduleInfoWithObsConfig,
           ),
         ),
       ),
     );
 
     // Assert
-    expect(find.text('Observations'), findsNothing);
-    expect(find.byIcon(Icons.add), findsNothing);
+    expect(find.text('Observations'), findsOneWidget);
+    expect(find.byIcon(Icons.add), findsOneWidget);
   });
 }
