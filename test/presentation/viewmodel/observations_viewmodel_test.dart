@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -24,28 +25,36 @@ class MockUpdateObservationUseCase extends Mock
 class MockDeleteObservationUseCase extends Mock
     implements DeleteObservationUseCase {}
 
+class MockFormDataProcessor extends Mock implements FormDataProcessor {}
+
 void main() {
   // Test pour les fonctionnalités de base
   group('ObservationsViewModel - Basic operations', () {
-    late MockGetObservationsByVisitIdUseCase mockGetObservationsByVisitIdUseCase;
+    late MockGetObservationsByVisitIdUseCase
+        mockGetObservationsByVisitIdUseCase;
     late MockCreateObservationUseCase mockCreateObservationUseCase;
     late MockUpdateObservationUseCase mockUpdateObservationUseCase;
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
     late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
+    late MockFormDataProcessor mockFormDataProcessor;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
     setUp(() {
-      mockGetObservationsByVisitIdUseCase = MockGetObservationsByVisitIdUseCase();
+      mockGetObservationsByVisitIdUseCase =
+          MockGetObservationsByVisitIdUseCase();
       mockCreateObservationUseCase = MockCreateObservationUseCase();
       mockUpdateObservationUseCase = MockUpdateObservationUseCase();
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
       mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
+      mockFormDataProcessor = MockFormDataProcessor();
 
       registerFallbackValue(const Observation(idObservation: 1));
     });
 
-    test('initial state should be loading and loadObservations should be called', () async {
+    test(
+        'initial state should be loading and loadObservations should be called',
+        () async {
       // Configure la réponse du mock
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
           .thenAnswer((_) async => []);
@@ -57,6 +66,7 @@ void main() {
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
@@ -67,10 +77,12 @@ void main() {
       await Future.delayed(Duration.zero);
 
       // Vérifier que loadObservations a été appelé
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(1);
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(1);
     });
 
-    test('loadObservations should update state with observations from use case', () async {
+    test('loadObservations should update state with observations from use case',
+        () async {
       // Configure les mocks
       final testObservations = [
         Observation(
@@ -97,6 +109,7 @@ void main() {
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
@@ -120,6 +133,7 @@ void main() {
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
@@ -131,7 +145,8 @@ void main() {
       expect(viewModel.state.error, exception);
     });
 
-    test('getObservationsByVisitId should return observations from use case', () async {
+    test('getObservationsByVisitId should return observations from use case',
+        () async {
       // Arrange
       final testObservations = [
         Observation(
@@ -152,6 +167,7 @@ void main() {
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
@@ -166,21 +182,24 @@ void main() {
 
       // Assert
       expect(result, testObservations);
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(1);
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(1);
     });
 
-    test('getObservationsByVisitId should return empty list on error', () async {
+    test('getObservationsByVisitId should return empty list on error',
+        () async {
       // Arrange
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
           .thenThrow(Exception('Test error'));
 
-      // Initialiser le viewModel 
+      // Initialiser le viewModel
       viewModel = ObservationsViewModel(
         mockGetObservationsByVisitIdUseCase,
         mockCreateObservationUseCase,
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
@@ -199,31 +218,36 @@ void main() {
 
       // Assert
       expect(result, []);
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(1);
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(1);
     });
   });
 
   // Test pour les opérations CRUD
   group('ObservationsViewModel - CRUD operations', () {
-    late MockGetObservationsByVisitIdUseCase mockGetObservationsByVisitIdUseCase;
+    late MockGetObservationsByVisitIdUseCase
+        mockGetObservationsByVisitIdUseCase;
     late MockCreateObservationUseCase mockCreateObservationUseCase;
     late MockUpdateObservationUseCase mockUpdateObservationUseCase;
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
     late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
+    late MockFormDataProcessor mockFormDataProcessor;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
     setUp(() {
-      mockGetObservationsByVisitIdUseCase = MockGetObservationsByVisitIdUseCase();
+      mockGetObservationsByVisitIdUseCase =
+          MockGetObservationsByVisitIdUseCase();
       mockCreateObservationUseCase = MockCreateObservationUseCase();
       mockUpdateObservationUseCase = MockUpdateObservationUseCase();
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
       mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
+      mockFormDataProcessor = MockFormDataProcessor();
 
       // Configurer pour les opérations CRUD
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
           .thenAnswer((_) async => []);
-      
+
       registerFallbackValue(const Observation(idObservation: 1));
 
       // Créer le viewModel
@@ -233,12 +257,13 @@ void main() {
         mockUpdateObservationUseCase,
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
+        mockFormDataProcessor,
         testVisitId,
       );
 
       // Attendre la fin de l'initialisation
       Future.delayed(Duration.zero);
-      
+
       // Réinitialiser les compteurs d'appels après l'initialisation
       clearInteractions(mockGetObservationsByVisitIdUseCase);
       clearInteractions(mockCreateObservationUseCase);
@@ -246,7 +271,8 @@ void main() {
       clearInteractions(mockDeleteObservationUseCase);
     });
 
-    test('deleteObservation should call deleteObservationUseCase and reload observations',
+    test(
+        'deleteObservation should call deleteObservationUseCase and reload observations',
         () async {
       // Arrange
       const observationIdToDelete = 1;
@@ -262,11 +288,14 @@ void main() {
 
       // Assert
       expect(result, true);
-      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete)).called(1);
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(1);
+      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete))
+          .called(1);
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(1);
     });
 
-    test('deleteObservation should return false and not reload when use case fails',
+    test(
+        'deleteObservation should return false and not reload when use case fails',
         () async {
       // Arrange
       const observationIdToDelete = 1;
@@ -279,8 +308,10 @@ void main() {
 
       // Assert
       expect(result, false);
-      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete)).called(1);
-      verifyNever(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId));
+      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete))
+          .called(1);
+      verifyNever(
+          () => mockGetObservationsByVisitIdUseCase.execute(testVisitId));
     });
 
     test('deleteObservation should handle exceptions', () async {
@@ -291,8 +322,10 @@ void main() {
           .thenThrow(Exception('Test error'));
 
       // Act & Assert
-      expect(() => viewModel.deleteObservation(observationIdToDelete), throwsException);
-      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete)).called(1);
+      expect(() => viewModel.deleteObservation(observationIdToDelete),
+          throwsException);
+      verify(() => mockDeleteObservationUseCase.execute(observationIdToDelete))
+          .called(1);
     });
 
     test('createObservation should convert form data correctly', () async {
@@ -317,7 +350,8 @@ void main() {
       // Assert
       expect(result, 3);
       verify(() => mockCreateObservationUseCase.execute(any())).called(1);
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(1);
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(1);
     });
 
     test('updateObservation should convert form data correctly', () async {
@@ -331,7 +365,7 @@ void main() {
         uuidObservation: 'test-uuid',
         metaCreateDate: '2023-01-01T12:00:00',
       );
-      
+
       final formData = {
         'cd_nom': 123,
         'comments': 'Updated comment',
@@ -352,7 +386,8 @@ void main() {
       // Assert
       expect(result, true);
       verify(() => mockUpdateObservationUseCase.execute(any())).called(1);
-      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId)).called(2); 
+      verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
+          .called(2);
       // Une fois pour récupérer l'observation existante, une fois pour recharger après
     });
   });
