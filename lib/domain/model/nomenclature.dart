@@ -9,6 +9,7 @@ class Nomenclature with _$Nomenclature {
     required int idType,
     required String cdNomenclature,
     String? mnemonique,
+    String? codeType,  // Ajout du champ code_type
     String? labelDefault,
     String? definitionDefault,
     String? labelFr,
