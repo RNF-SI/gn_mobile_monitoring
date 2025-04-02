@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/bib_nomenclatures_types_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_detail_dao.dart';
@@ -11,9 +12,13 @@ import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nomenclatures.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_type_site.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_site_type.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
@@ -68,6 +73,8 @@ part 'database.g.dart';
   TObservationComplements,
   TObservationDetails,
   BibTablesLocations,
+  BibNomenclaturesTypesTable,
+  BibTypeSitesTable,
   TObjects,
   TActions,
   TPermissionsAvailable,
@@ -76,6 +83,7 @@ part 'database.g.dart';
   CorSitesGroupModuleTable,
   CorObjectModuleTable,
   CorVisitObserver,
+  CorSiteTypeTable,
   TBaseVisits,
 ], daos: [
   ModulesDao,
@@ -85,6 +93,7 @@ part 'database.g.dart';
   VisitesDao,
   ObservationDao,
   ObservationDetailDao,
+  BibNomenclaturesTypesDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
@@ -106,7 +115,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -130,6 +139,7 @@ class AppDatabase extends _$AppDatabase {
           await migration17(m, this);
           await migration18(m, this);
           await migration19(m, this);
+          await migration20(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           final db = this; // Access the database instance
@@ -188,6 +198,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 19:
                 await migration19(m, db);
+                break;
+              case 20:
+                await migration20(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");
