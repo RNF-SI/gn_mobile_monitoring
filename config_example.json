@@ -1,0 +1,797 @@
+{
+  "custom": {
+    "__MODULE.B_DRAW_SITES_GROUP": null,
+    "__MODULE.B_SYNTHESE": true,
+    "__MODULE.IDS_TYPE_SITE": [
+      {
+        "id_nomenclature_type_site": 686
+      }
+    ],
+    "__MODULE.ID_LIST_OBSERVER": 1,
+    "__MODULE.ID_LIST_TAXONOMY": 50003,
+    "__MODULE.ID_MODULE": 21,
+    "__MODULE.MODULE_CODE": "apollons",
+    "__MODULE.TAXONOMY_DISPLAY_FIELD_NAME": "nom_vern,lb_nom",
+    "__MODULE.TYPES_SITE": [
+      {
+        "config": null,
+        "id_nomenclature_type_site": 686
+      }
+    ],
+    "__MONITORINGS_PATH": "monitorings"
+  },
+  "data": {
+    "nomenclature": ["TYPE_MEDIA", "TYPE_SITE"],
+    "user": 1
+  },
+  "default_display_field_names": {
+    "area": "area_name",
+    "dataset": "dataset_name",
+    "habitat": "lb_hab_fr",
+    "module": "module_label",
+    "municipality": "nom_com_dept",
+    "nomenclature": "label_fr",
+    "observer_list": "nom_liste",
+    "site": "base_site_name",
+    "sites_group": "sites_group_name",
+    "taxonomy": "nom_vern,lb_nom",
+    "taxonomy_list": "nom_liste",
+    "user": "nom_complet"
+  },
+  "display_field_names": {
+    "area": "area_name",
+    "dataset": "dataset_name",
+    "habitat": "lb_hab_fr",
+    "module": "module_label",
+    "municipality": "nom_com_dept",
+    "nomenclature": "label_fr",
+    "observer_list": "nom_liste",
+    "site": "base_site_name",
+    "sites_group": "sites_group_name",
+    "taxonomy": "nom_vern,lb_nom",
+    "taxonomy_list": "nom_liste",
+    "user": "nom_complet"
+  },
+  "module": {
+    "b_draw_sites_group": null,
+    "b_synthese": true,
+    "children_types": ["site", "sites_group"],
+    "description_field_name": "module_label",
+    "display_form": [],
+    "display_list": ["module_label", "module_desc", "datasets"],
+    "display_properties": ["module_label", "module_desc", "datasets"],
+    "export_csv": [
+      {
+        "label": "Résultats par dalles",
+        "method": "results_per_dalle",
+        "type": "csv"
+      }
+    ],
+    "filters": {},
+    "generic": {
+      "active_frontend": {
+        "attribut_label": "Afficher dans le menu ?",
+        "definition": "Afficher le module dans le menu de GeoNature. (Recharger la page pour voir les modifications).",
+        "type_widget": "bool_checkbox"
+      },
+      "b_draw_sites_group": {
+        "attribut_label": "Dessiner les groupes de sites",
+        "definition": "Affichage des groupes de site en dessinant l'enveloppe des sites du groupe et en affichant l'aire du groupe de sites",
+        "hidden": true,
+        "type_widget": "bool_checkbox"
+      },
+      "b_synthese": {
+        "attribut_label": "Activer la synthèse ?",
+        "definition": "Insertion automatique des nouvelles données dans la synthèse.",
+        "type_widget": "bool_checkbox"
+      },
+      "datasets": {
+        "attribut_label": "Jeu de données",
+        "multi_select": true,
+        "required": true,
+        "type_util": "dataset",
+        "type_widget": "dataset"
+      },
+      "id_list_observer": {
+        "api": "users/listes",
+        "application": "GeoNature",
+        "attribut_label": "Liste des observateurs",
+        "definition": "Liste des observateurs. À gérer dans UsersHub.",
+        "designStyle": "bootstrap",
+        "keyLabel": "nom_liste",
+        "keyValue": "id_liste",
+        "multiple": false,
+        "required": true,
+        "type_util": "observer_list",
+        "type_widget": "datalist"
+      },
+      "id_list_taxonomy": {
+        "api": "biblistes/",
+        "application": "TaxHub",
+        "attribut_label": "Liste des taxons",
+        "data_path": "data",
+        "definition": "Liste des taxons. À gérer dans TaxHub.",
+        "designStyle": "bootstrap",
+        "keyLabel": "nom_liste",
+        "keyValue": "id_liste",
+        "multiple": false,
+        "required": true,
+        "type_util": "taxonomy_list",
+        "type_widget": "datalist"
+      },
+      "id_module": {
+        "attribut_label": "ID",
+        "hidden": true,
+        "type_widget": "text"
+      },
+      "medias": {
+        "attribut_label": "Médias",
+        "schema_dot_table": "gn_monitoring.t_module_complements",
+        "type_widget": "medias"
+      },
+      "module_code": {
+        "attribut_label": "Code",
+        "hidden": true,
+        "required": true,
+        "type_widget": "text"
+      },
+      "module_desc": {
+        "attribut_label": "Description",
+        "hidden": true,
+        "required": true,
+        "type_widget": "text"
+      },
+      "module_label": {
+        "attribut_label": "Nom",
+        "hidden": true,
+        "required": true,
+        "type_widget": "text"
+      },
+      "module_path": {
+        "attribut_label": "Path",
+        "hidden": true,
+        "required": true,
+        "type_widget": "text"
+      },
+      "module_picto": {
+        "attribut_label": "Icone dans le menu",
+        "required": true,
+        "type_widget": "text"
+      },
+      "taxonomy_display_field_name": {
+        "attribut_label": "Affichage des taxons",
+        "designStyle": "bootstrap",
+        "required": true,
+        "type_widget": "datalist",
+        "values": [
+          {
+            "label": "Nom vernaculaire ou nom latin",
+            "value": "nom_vern,lb_nom"
+          },
+          {
+            "label": "Nom latin",
+            "value": "lb_nom"
+          }
+        ]
+      },
+      "types_site": {
+        "api": "monitorings/sites/types",
+        "application": "GeoNature",
+        "attribut_label": "Types de sites",
+        "data_path": "items",
+        "definition": "Permet de paramétrer la compatibilité de ce module avec les types de sites",
+        "designStyle": "bootstrap",
+        "keyLabel": "label",
+        "keyValue": "id_nomenclature_type_site",
+        "multiple": true,
+        "required": true,
+        "type_util": "types_site",
+        "type_widget": "datalist"
+      },
+      "uuid_module_complement": {
+        "attribut_label": "uuid"
+      }
+    },
+    "genre": "M",
+    "id_field_name": "id_module",
+    "id_list_observer": 1,
+    "id_list_taxonomy": 50003,
+    "id_module": 21,
+    "id_table_location": 20,
+    "label": "Module",
+    "module_code": "apollons",
+    "module_desc": "Module pour le protocole de suivi des dalles à orpins",
+    "module_label": "Apollons",
+    "parent_types": [],
+    "properties_keys": [
+      "id_module",
+      "module_code",
+      "module_label",
+      "module_path",
+      "module_desc",
+      "module_picto",
+      "uuid_module_complement",
+      "datasets",
+      "id_list_observer",
+      "id_list_taxonomy",
+      "b_synthese",
+      "b_draw_sites_group",
+      "taxonomy_display_field_name",
+      "active_frontend",
+      "types_site",
+      "medias"
+    ],
+    "root_object": true,
+    "specific": {},
+    "taxonomy_display_field_name": "nom_vern,lb_nom",
+    "types_site": {
+      "686": {
+        "display_properties": [],
+        "name": "Dalles à orpins"
+      }
+    },
+    "uuid_field_name": "uuid_module_complement"
+  },
+  "site": {
+    "chained": true,
+    "children_types": ["visit"],
+    "description_field_name": "base_site_name",
+    "display_form": [],
+    "display_list": [
+      "base_site_name",
+      "id_inventor",
+      "last_visit",
+      "nb_visits"
+    ],
+    "display_properties": [
+      "id_sites_group",
+      "base_site_code",
+      "base_site_name",
+      "initial_code",
+      "id_inventor",
+      "base_site_description",
+      "last_visit",
+      "nb_visits"
+    ],
+    "filters": {},
+    "generic": {
+      "altitude_max": {
+        "attribut_label": "Altitude (max)",
+        "type_widget": "integer"
+      },
+      "altitude_min": {
+        "attribut_label": "Altitude (min)",
+        "type_widget": "integer"
+      },
+      "base_site_code": {
+        "attribut_label": "Code",
+        "required": true,
+        "type_widget": "text"
+      },
+      "base_site_description": {
+        "attribut_label": "Description",
+        "type_widget": "textarea"
+      },
+      "base_site_name": {
+        "attribut_label": "Nom",
+        "required": true,
+        "type_widget": "text"
+      },
+      "first_use_date": {
+        "attribut_label": "Date description",
+        "required": true,
+        "type_widget": "date"
+      },
+      "id_base_site": {
+        "attribut_label": "Id site",
+        "hidden": true,
+        "type_widget": "text"
+      },
+      "id_digitiser": {
+        "attribut_label": "Digitiser",
+        "hidden": true,
+        "required": true,
+        "type_util": "user",
+        "type_widget": "text"
+      },
+      "id_inventor": {
+        "attribut_label": "Observateur",
+        "code_list": "CODE_OBSERVERS_LIST",
+        "multi_select": false,
+        "required": true,
+        "type_util": "user",
+        "type_widget": "observers"
+      },
+      "id_sites_group": {
+        "api": "monitorings/list/apollons/sites_group?id_module=21&fields=id_sites_group&fields=sites_group_name",
+        "application": "GeoNature",
+        "attribut_label": "Secteur",
+        "designStyle": "bootstrap",
+        "hidden": false,
+        "keyLabel": "sites_group_name",
+        "keyValue": "id_sites_group",
+        "required": false,
+        "type_util": "sites_group",
+        "type_widget": "datalist"
+      },
+      "last_visit": {
+        "attribut_label": "Dernière visite",
+        "type_util": "date"
+      },
+      "medias": {
+        "attribut_label": "Médias",
+        "schema_dot_table": "gn_monitoring.t_base_sites",
+        "type_widget": "medias"
+      },
+      "nb_visits": {
+        "attribut_label": "Nb. visites"
+      },
+      "types_site": {
+        "api": "monitorings/modules/apollons/types_sites",
+        "application": "GeoNature",
+        "attribut_label": "Type(s) de site",
+        "definition": "Permet de n'avoir que les types de site lié au module",
+        "designStyle": "bootstrap",
+        "keyLabel": "label",
+        "keyValue": "id_nomenclature_type_site",
+        "multiple": true,
+        "nullDefault": true,
+        "required": true,
+        "type_util": "types_site",
+        "type_widget": "datalist"
+      },
+      "uuid_base_site": {
+        "attribut_label": "uuid"
+      }
+    },
+    "genre": "F",
+    "geom_field_name": "geom",
+    "geometry_type": "Point",
+    "id_field_name": "id_base_site",
+    "id_table_location": 2,
+    "label": "Dalle",
+    "label_list": "Dalles",
+    "map_label_field_name": "base_site_code",
+    "parent_types": ["module", "sites_group"],
+    "properties_keys": [
+      "id_base_site",
+      "base_site_code",
+      "base_site_name",
+      "base_site_description",
+      "id_inventor",
+      "id_digitiser",
+      "first_use_date",
+      "last_visit",
+      "nb_visits",
+      "uuid_base_site",
+      "medias",
+      "altitude_min",
+      "altitude_max",
+      "types_site",
+      "id_sites_group",
+      "id_nomenclature_type_site",
+      "initial_code"
+    ],
+    "sorts": [
+      {
+        "dir": "asc",
+        "prop": "base_site_name"
+      }
+    ],
+    "specific": {
+      "id_nomenclature_type_site": {
+        "attribut_label": "Type site",
+        "hidden": true,
+        "type_util": "nomenclature",
+        "type_widget": "text",
+        "value": {
+          "cd_nomenclature": "APO_DALLES",
+          "code_nomenclature_type": "TYPE_SITE"
+        }
+      },
+      "initial_code": {
+        "attribut_label": "Code inital (1er fiche)",
+        "hidden": false,
+        "required": false,
+        "type_widget": "text"
+      }
+    },
+    "types_site": {
+      "686": {
+        "display_properties": [],
+        "name": "Dalles à orpins"
+      }
+    },
+    "uuid_field_name": "uuid_base_site"
+  },
+  "sites_group": {
+    "chained": false,
+    "children_types": ["site"],
+    "description_field_name": "sites_group_name",
+    "display_form": [],
+    "display_list": [
+      "sites_group_name",
+      "sites_group_code",
+      "modules",
+      "nb_sites",
+      "nb_visits",
+      "comments"
+    ],
+    "display_properties": [
+      "sites_group_name",
+      "sites_group_code",
+      "modules",
+      "nb_sites",
+      "nb_visits",
+      "comments"
+    ],
+    "filters": {},
+    "generic": {
+      "altitude_max": {
+        "attribut_label": "Altitude (max)",
+        "type_widget": "integer"
+      },
+      "altitude_min": {
+        "attribut_label": "Altitude (min)",
+        "type_widget": "integer"
+      },
+      "comments": {
+        "attribut_label": "Commentaires",
+        "type_widget": "text"
+      },
+      "id_digitiser": {
+        "attribut_label": "Digitiser",
+        "hidden": true,
+        "required": true,
+        "type_util": "user",
+        "type_widget": "text"
+      },
+      "id_sites_group": {
+        "attribut_label": "Id site",
+        "hidden": true,
+        "type_widget": "text"
+      },
+      "medias": {
+        "attribut_label": "Médias",
+        "schema_dot_table": "gn_monitoring.t_sites_groups",
+        "type_widget": "medias"
+      },
+      "modules": {
+        "api": "monitorings/modules",
+        "application": "GeoNature",
+        "attribut_label": "Modules",
+        "default": [
+          {
+            "id_module": 21
+          }
+        ],
+        "definition": "Permet de contrôler dans quel(s) module(s) les groupes de site remonteront",
+        "designStyle": "bootstrap",
+        "keyLabel": "module_label",
+        "keyValue": "id_module",
+        "multiple": true,
+        "required": true,
+        "type_util": "module",
+        "type_widget": "datalist"
+      },
+      "nb_sites": {
+        "attribut_label": "Nombre de sites"
+      },
+      "nb_visits": {
+        "attribut_label": "Nombre de visites"
+      },
+      "sites_group_code": {
+        "attribut_label": "Code",
+        "required": true,
+        "type_widget": "text"
+      },
+      "sites_group_description": {
+        "attribut_label": "Description",
+        "type_widget": "textarea"
+      },
+      "sites_group_name": {
+        "attribut_label": "Nom",
+        "required": true,
+        "type_widget": "text"
+      },
+      "uuid_sites_group": {
+        "attribut_label": "uuid"
+      }
+    },
+    "genre": "M",
+    "geom_field_name": "geom",
+    "geometry_type": "Polygon",
+    "id_field_name": "id_sites_group",
+    "id_table_location": null,
+    "label": "Secteurs",
+    "label_list": "Secteurs",
+    "parent_types": ["module"],
+    "properties_keys": [
+      "id_sites_group",
+      "sites_group_name",
+      "sites_group_code",
+      "sites_group_description",
+      "comments",
+      "uuid_sites_group",
+      "nb_sites",
+      "nb_visits",
+      "medias",
+      "altitude_min",
+      "altitude_max",
+      "id_digitiser",
+      "modules"
+    ],
+    "sorts": [
+      {
+        "prop": "sites_group_name"
+      }
+    ],
+    "specific": {},
+    "uuid_field_name": "uuid_sites_group"
+  },
+  "synthese": true,
+  "synthese_object": "visit",
+  "tree": {
+    "module": {
+      "site": null,
+      "sites_group": {
+        "site": {
+          "visit": null
+        }
+      }
+    }
+  },
+  "visit": {
+    "chain_show": ["visit_date_min", "id_base_site", "num_passage"],
+    "chained": true,
+    "children_types": [],
+    "description_field_name": "visit_date_min",
+    "display_form": [],
+    "display_list": [
+      "id_base_site",
+      "visit_date_min",
+      "num_passage",
+      "time_start",
+      "count_stade_l1",
+      "count_stade_l2",
+      "count_stade_l3",
+      "count_stade_l4",
+      "count_stade_l5",
+      "observers"
+    ],
+    "display_properties": [
+      "id_base_site",
+      "observers",
+      "visit_date_min",
+      "num_passage",
+      "id_nomenclature_vent",
+      "id_nomenclature_meteo",
+      "time_start",
+      "time_end",
+      "time_first_detection",
+      "count_stade_l1",
+      "count_stade_l2",
+      "count_stade_l3",
+      "count_stade_l4",
+      "count_stade_l5",
+      "comments"
+    ],
+    "filters": {},
+    "generic": {
+      "comments": {
+        "attribut_label": "Commentaires",
+        "type_widget": "text"
+      },
+      "id_base_site": {
+        "api": "monitorings/list/apollons/site",
+        "application": "GeoNature",
+        "attribut_label": "Site",
+        "hidden": "({meta, value}) => !meta.bChainInput && value.id_base_site",
+        "keyLabel": "base_site_name",
+        "keyValue": "id_base_site",
+        "params": [
+          "({meta}) => ({",
+          "id_module: 21,",
+          "id_sites_group: meta.parents.site && meta.parents.site.properties.id_sites_group,",
+          "order_by: 'base_site_name*'",
+          "})"
+        ],
+        "required": true,
+        "type_util": "site",
+        "type_widget": "datalist"
+      },
+      "id_base_visit": {
+        "attribut_label": "ID",
+        "hidden": true,
+        "type_widget": "text"
+      },
+      "id_dataset": {
+        "attribut_label": "Jeu de données",
+        "creatable_in_module": "apollons.MONITORINGS_VISITES",
+        "hidden": "({meta}) => meta.dataset && Object.keys(meta.dataset).length == 1",
+        "module_code": "apollons",
+        "required": true,
+        "type_util": "dataset",
+        "type_widget": "dataset"
+      },
+      "id_digitiser": {
+        "attribut_label": "Digitiser",
+        "hidden": true,
+        "required": true,
+        "type_util": "user",
+        "type_widget": "text"
+      },
+      "id_module": {
+        "attribut_label": "ID Module",
+        "hidden": true,
+        "type_widget": "text"
+      },
+      "medias": {
+        "attribut_label": "Médias",
+        "schema_dot_table": "gn_monitoring.t_base_visits",
+        "type_widget": "medias"
+      },
+      "nb_observations": {
+        "attribut_label": "Nombre d'observations"
+      },
+      "observers": {
+        "api": "users/menu/1",
+        "application": "GeoNature",
+        "attribut_label": "Observateurs",
+        "designStyle": "bootstrap",
+        "hidden": false,
+        "keyLabel": "nom_complet",
+        "keyValue": "id_role",
+        "multiple": true,
+        "required": true,
+        "type_util": "user",
+        "type_widget": "datalist"
+      },
+      "observers_txt": {
+        "attribut_label": "Observateur(s) (extérieur)",
+        "hidden": true,
+        "required": false,
+        "type_widget": "observers-text"
+      },
+      "uuid_base_visit": {
+        "attribut_label": "uuid"
+      },
+      "visit_date_max": {
+        "attribut_label": "Date (max)",
+        "hidden": true,
+        "type_widget": "date"
+      },
+      "visit_date_min": {
+        "attribut_label": "Date",
+        "required": true,
+        "type_widget": "date"
+      }
+    },
+    "genre": "F",
+    "id_field_name": "id_base_visit",
+    "id_table_location": 3,
+    "keep": [
+      "num_passage",
+      "visit_date_min",
+      "id_nomenclature_vent",
+      "id_nomenclature_meteo",
+      "observers",
+      "id_dataset",
+      "comment"
+    ],
+    "label": "Visite",
+    "map_label_field_name": "base_site_code",
+    "parent_types": ["site"],
+    "properties_keys": [
+      "id_base_visit",
+      "id_base_site",
+      "id_module",
+      "observers",
+      "observers_txt",
+      "id_digitiser",
+      "visit_date_min",
+      "visit_date_max",
+      "comments",
+      "uuid_base_visit",
+      "id_dataset",
+      "nb_observations",
+      "medias",
+      "num_passage",
+      "id_nomenclature_meteo",
+      "id_nomenclature_vent",
+      "time_start",
+      "time_end",
+      "time_first_detection",
+      "cd_nom",
+      "count_stade_l1",
+      "count_stade_l2",
+      "count_stade_l3",
+      "count_stade_l4",
+      "count_stade_l5"
+    ],
+    "sorts": [
+      {
+        "dir": "desc",
+        "prop": "visit_date_min"
+      }
+    ],
+    "specific": {
+      "cd_nom": {
+        "attribut_label": "cd nom",
+        "hidden": true,
+        "type_util": "taxonomy",
+        "type_widget": "text",
+        "value": 54496
+      },
+      "count_stade_l1": {
+        "attribut_label": "Nb L1",
+        "default": 0,
+        "description": "Chenille entièrement noire et de très petite taille (moins de 1,5 mm)",
+        "min": 0,
+        "required": true,
+        "type_widget": "number"
+      },
+      "count_stade_l2": {
+        "attribut_label": "Nb L2",
+        "default": 0,
+        "description": "Chenille entièrement noire et de très petite taille (moins de 1,5 mm)",
+        "min": 0,
+        "required": true,
+        "type_widget": "number"
+      },
+      "count_stade_l3": {
+        "attribut_label": "Nb L3",
+        "default": 0,
+        "description": "Chenille entièrement noire et de très petite taille (moins de 1,5 mm)",
+        "min": 0,
+        "required": true,
+        "type_widget": "number"
+      },
+      "count_stade_l4": {
+        "attribut_label": "Nb L4",
+        "default": 0,
+        "description": "Chenille entièrement noire et de très petite taille (moins de 1,5 mm)",
+        "min": 0,
+        "required": true,
+        "type_widget": "number"
+      },
+      "count_stade_l5": {
+        "attribut_label": "Nb L5",
+        "default": 0,
+        "description": "Chenille entièrement noire et de très petite taille (moins de 1,5 mm)",
+        "min": 0,
+        "required": true,
+        "type_widget": "number"
+      },
+      "id_nomenclature_meteo": {
+        "attribut_label": "Meteo : Ciel",
+        "type_widget": "select",
+        "values": ["Indéterminé", "Nuageux", "Moyennement nuageux", "Clair"]
+      },
+      "id_nomenclature_vent": {
+        "attribut_label": "Meteo : Vent",
+        "type_widget": "select",
+        "values": ["Indéterminé", "Fort", "Modéré", "Faible", "Nul"]
+      },
+      "num_passage": {
+        "attribut_label": "N° de passage",
+        "description": "Préciser si c'est le premier (1) ou deuxième passage (2)",
+        "type_widget": "select",
+        "values": ["1", "2"]
+      },
+      "time_end": {
+        "attribut_label": "Heure de fin",
+        "type_widget": "time"
+      },
+      "time_first_detection": {
+        "attribut_label": "Heure (première détection)",
+        "type_widget": "time"
+      },
+      "time_start": {
+        "attribut_label": "Heure de début",
+        "type_widget": "time"
+      }
+    },
+    "uuid_field_name": "uuid_base_visit"
+  }
+}

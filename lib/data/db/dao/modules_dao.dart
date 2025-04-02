@@ -218,4 +218,11 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final result = await query.getSingleOrNull();
     return result?.toDomain();
   }
+  
+  Future<Module?> getModuleByCode(String moduleCode) async {
+    final query = select(tModules)
+      ..where((tbl) => tbl.moduleCode.equals(moduleCode));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
+  }
 }

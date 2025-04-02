@@ -201,6 +201,68 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  // Create the bib_nomenclatures_types table
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_nomenclatures_types_table (
+        id_type INTEGER PRIMARY KEY AUTOINCREMENT,
+        mnemonique TEXT,
+        label_default TEXT,
+        definition_default TEXT,
+        label_fr TEXT,
+        definition_fr TEXT,
+        label_en TEXT,
+        definition_en TEXT,
+        label_es TEXT,
+        definition_es TEXT,
+        label_de TEXT,
+        definition_de TEXT,
+        label_it TEXT,
+        definition_it TEXT,
+        source TEXT,
+        statut TEXT,
+        meta_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TIMESTAMP
+      );
+    ''');
+    print("bib_nomenclatures_types_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_nomenclatures_types_table table: $e");
+    rethrow;
+  }
+
+  // Create the bib_type_site table
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_type_site_table (
+        id_nomenclature_type_site INTEGER PRIMARY KEY,
+        config TEXT,
+        FOREIGN KEY (id_nomenclature_type_site) REFERENCES t_nomenclatures (id_nomenclature)
+      );
+    ''');
+    print("bib_type_site_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_type_site table: $e");
+    rethrow;
+  }
+
+  // Create the cor_site_type table for relationships between sites and site types
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_site_type_table (
+        id_base_site INTEGER,
+        id_nomenclature_type_site INTEGER,
+        PRIMARY KEY (id_base_site, id_nomenclature_type_site),
+        FOREIGN KEY (id_base_site) REFERENCES t_base_sites (id_base_site),
+        FOREIGN KEY (id_nomenclature_type_site) REFERENCES bib_type_site (id_nomenclature_type_site)
+      );
+    ''');
+    print("cor_site_type_table table created successfully.");
+  } catch (e) {
+    print("Error creating cor_site_type_table table: $e");
+    rethrow;
+  }
+
   try {
     await db.customStatement('''
     CREATE TABLE t_datasets (

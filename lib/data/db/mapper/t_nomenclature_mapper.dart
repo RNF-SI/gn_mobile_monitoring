@@ -8,6 +8,7 @@ extension TNomenclatureMapper on TNomenclature {
       idType: idType,
       cdNomenclature: cdNomenclature,
       mnemonique: mnemonique,
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,
@@ -38,6 +39,7 @@ extension NomenclatureMapper on Nomenclature {
       idType: idType,
       cdNomenclature: cdNomenclature, // Required field
       mnemonique: mnemonique ?? '',
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,

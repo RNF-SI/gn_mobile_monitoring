@@ -4,6 +4,8 @@ import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_im
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:stack_trace/stack_trace.dart' as stack_trace;
 
@@ -60,11 +62,14 @@ void main() async {
   );
 }
 
-class MainApp extends StatelessWidget {
+class MainApp extends ConsumerWidget {
   const MainApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // S'assurer que les services essentiels sont initialisés
+    ref.watch(databaseServiceProvider);
+    ref.watch(nomenclatureServiceProvider);
     final MaterialColor customBlueSwatch = createMaterialColor(
       const Color(0xFF8AAC3E),
     );

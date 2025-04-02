@@ -32,6 +32,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_detail_by_id_use_case.dart';
@@ -303,4 +305,11 @@ final getVisitsBySiteAndModuleUseCaseProvider =
 final getObservationByIdUseCaseProvider = Provider<GetObservationByIdUseCase>(
   (ref) =>
       GetObservationByIdUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+);
+
+// Provider pour le cas d'utilisation des nomenclatures par type
+final getNomenclaturesByTypeCodeUseCaseProvider =
+    Provider<GetNomenclaturesByTypeCodeUseCase>(
+  (ref) => GetNomenclaturesByTypeCodeUseCaseImpl(
+      ref.watch(modulesRepositoryProvider)),
 );

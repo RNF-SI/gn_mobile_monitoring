@@ -108,9 +108,171 @@ class FormConfigParser {
     return result;
   }
 
+  /// Détermine si un champ est de type nomenclature
+  /// Prend en compte les différentes façons d'identifier un champ de nomenclature:
+  /// 1. Ancienne méthode: type_util: "nomenclature" + type_widget: "datalist"
+  /// 2. Nouvelle méthode: type_widget: "nomenclature"
+  /// 3. URL dans le champ API: api: "nomenclatures/nomenclature/XXX"
+  /// 4. Présence de la propriété code_nomenclature_type
+  /// 5. Attribut commençant par id_nomenclature_
+  static bool isNomenclatureField(Map<String, dynamic> fieldConfig) {
+    // Vérifier la nouvelle méthode en priorité (type_widget: "nomenclature")
+    if (fieldConfig['type_widget'] == 'nomenclature') {
+      return true;
+    }
+    
+    // Vérifier l'ancienne méthode (type_util: "nomenclature")
+    if (fieldConfig['type_util'] == 'nomenclature') {
+      return true;
+    }
+    
+    // Vérifier si l'URL dans le champ api contient "nomenclatures/nomenclature/"
+    final api = fieldConfig['api'] as String?;
+    if (api != null && api.contains('nomenclatures/nomenclature/')) {
+      return true;
+    }
+    
+    // Vérifier si le champ possède une propriété code_nomenclature_type
+    if (fieldConfig['code_nomenclature_type'] != null) {
+      return true;
+    }
+    
+    // Vérifier si le nom de l'attribut commence par id_nomenclature_
+    final attributName = fieldConfig['attribut_name'] as String?;
+    if (attributName != null && attributName.startsWith('id_nomenclature_')) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /// Récupère les données de nomenclature depuis la configuration du champ
+  /// Prend en compte tous les formats possibles:
+  /// 1. Ancienne méthode: avec type_util et value contenant les informations
+  /// 2. Nouvelle méthode: avec type_widget et attribut_name pour identifier le code
+  /// 3. Avec code_nomenclature_type défini directement dans la configuration
+  /// 4. Avec api contenant l'URL de la nomenclature
+  static Map<String, dynamic>? getNomenclatureValue(
+      Map<String, dynamic> fieldConfig) {
+    if (!isNomenclatureField(fieldConfig)) {
+      return null;
+    }
+
+    // Si la valeur est déjà présente, l'utiliser
+    if (fieldConfig['value'] is Map<String, dynamic>) {
+      return fieldConfig['value'] as Map<String, dynamic>;
+    }
+    
+    // Déterminer le code du type de nomenclature en utilisant toutes les méthodes
+    String? codeNomenclatureType;
+    
+    // 1. Utiliser la propriété code_nomenclature_type si elle existe
+    if (fieldConfig['code_nomenclature_type'] != null) {
+      codeNomenclatureType = fieldConfig['code_nomenclature_type'] as String?;
+    } 
+    // 2. Sinon, essayer d'extraire depuis l'API
+    else if (fieldConfig['api'] != null) {
+      codeNomenclatureType = extractMnemonique(fieldConfig);
+    }
+    // 3. Finalement, essayer d'extraire depuis le nom de l'attribut
+    else {
+      codeNomenclatureType = _extractNomenclatureTypeFromAttributName(fieldConfig['attribut_name']);
+    }
+    
+    // Pour tous les formats, construire un map avec les informations disponibles
+    // Le format complet pourra être rempli lors de la sélection d'une nomenclature
+    return {
+      'attribut_name': fieldConfig['attribut_name'],
+      'code_nomenclature_type': codeNomenclatureType,
+      // Les autres valeurs seront remplies lors de la sélection
+      'cd_nomenclature': null,
+      'label_default': null,
+    };
+  }
+
+  /// Extrait le code du type de nomenclature à partir du nom de l'attribut
+  /// Par exemple: id_nomenclature_abondance_braunblanquet -> abondance_braunblanquet
+  static String? _extractNomenclatureTypeFromAttributName(String? attributName) {
+    if (attributName == null) return null;
+    
+    // Format attendu: id_nomenclature_XXXX ou id_nomenclature_XXXX_YYYY
+    if (attributName.startsWith('id_nomenclature_')) {
+      // Extraire la partie après "id_nomenclature_"
+      return attributName.substring('id_nomenclature_'.length);
+    }
+    
+    return null;
+  }
+
+  /// Extrait la mnémonique du type de nomenclature à partir du champ 'api'
+  /// Format attendu: "nomenclatures/nomenclature/STADE_VIE" -> retourne "STADE_VIE"
+  static String? extractMnemonique(Map<String, dynamic> fieldConfig) {
+    final api = fieldConfig['api'] as String?;
+    if (api == null || !api.contains('/')) {
+      return null;
+    }
+    
+    // Extraire la dernière partie de l'URL après le dernier '/'
+    final parts = api.split('/');
+    if (parts.isNotEmpty) {
+      return parts.last;
+    }
+    
+    return null;
+  }
+
+  /// Récupère le code du type de nomenclature à partir de la configuration
+  /// Fonctionne avec les formats suivants (par ordre de priorité):
+  /// 1. Directement à partir de la propriété code_nomenclature_type du champ
+  /// 2. À partir de la valeur existante (value) qui contient code_nomenclature_type
+  /// 3. À partir de la mnémonique extraite du champ 'api'
+  /// 4. À partir du nom de l'attribut (id_nomenclature_XXX)
+  static String? getNomenclatureTypeCode(Map<String, dynamic> fieldConfig) {
+    // 1. Vérifier si la propriété existe directement dans fieldConfig
+    if (fieldConfig['code_nomenclature_type'] != null) {
+      return fieldConfig['code_nomenclature_type'] as String?;
+    }
+    
+    // 2. Vérifier dans la valeur existante
+    final value = getNomenclatureValue(fieldConfig);
+    if (value != null && value['code_nomenclature_type'] != null) {
+      return value['code_nomenclature_type'] as String?;
+    }
+    
+    // 3. Essayer d'extraire la mnémonique depuis le champ 'api'
+    final mnemonique = extractMnemonique(fieldConfig);
+    if (mnemonique != null) {
+      return mnemonique;
+    }
+    
+    // 4. Essayer d'extraire le code du type à partir du nom de l'attribut
+    if (fieldConfig['attribut_name'] != null) {
+      return _extractNomenclatureTypeFromAttributName(fieldConfig['attribut_name'] as String);
+    }
+    
+    return null;
+  }
+
+  /// Récupère le code de la nomenclature sélectionnée à partir de la configuration
+  static String? getSelectedNomenclatureCode(Map<String, dynamic> fieldConfig) {
+    final value = getNomenclatureValue(fieldConfig);
+    if (value == null) return null;
+    return value['cd_nomenclature'] as String?;
+  }
+
   /// Détermine le type de widget Flutter à utiliser en fonction
   /// de la configuration du champ
   static String determineWidgetType(Map<String, dynamic> fieldConfig) {
+    // Vérifier si c'est un champ de type nomenclature (par l'une des deux méthodes)
+    if (isNomenclatureField(fieldConfig)) {
+      // Si le widget_type est déjà défini, l'utiliser (comme dans l'exemple fourni)
+      if (fieldConfig['widget_type'] != null) {
+        return fieldConfig['widget_type'].toString();
+      }
+      // Sinon utiliser le widget par défaut pour les nomenclatures
+      return 'NomenclatureSelector';
+    }
+
     final String typeWidget = fieldConfig['type_widget']?.toString() ?? 'text';
 
     switch (typeWidget) {
@@ -127,7 +289,14 @@ class FormConfigParser {
       case 'select':
         return 'DropdownButton';
       case 'datalist':
+        // Vérifier si c'est un champ datalist qui est en fait une nomenclature
+        if (fieldConfig['api'] != null && 
+            fieldConfig['api'].toString().contains('nomenclatures/nomenclature/')) {
+          return 'NomenclatureSelector';
+        }
         return 'AutocompleteField';
+      case 'nomenclature':
+        return 'NomenclatureSelector';
       case 'bool_checkbox':
       case 'checkbox':
         return 'Checkbox';
@@ -232,6 +401,10 @@ class FormConfigParser {
           if (fieldConfig['values'] != null) 'values': fieldConfig['values'],
           'validations': determineValidations(fieldConfig),
           'visibility': determineVisibility(fieldConfig),
+          // Ajouter les propriétés importantes pour les nomenclatures
+          if (fieldConfig['api'] != null) 'api': fieldConfig['api'],
+          if (fieldConfig['code_nomenclature_type'] != null) 
+            'code_nomenclature_type': fieldConfig['code_nomenclature_type'],
         };
       }
     });

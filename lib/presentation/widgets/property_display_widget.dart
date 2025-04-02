@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 
 class PropertyDisplayWidget extends StatelessWidget {
@@ -215,24 +216,11 @@ class PropertyDisplayWidget extends StatelessWidget {
   }
 
   static String _formatLabel(String key) {
-    return key
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((word) =>
-            word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
-        .join(' ');
+    return ValueFormatter.formatLabel(key);
   }
 
   static String _formatValue(dynamic value) {
-    if (value == null) {
-      return 'Non renseigné';
-    } else if (value is Map) {
-      return 'Objet complexe';
-    } else if (value is List) {
-      return 'Liste (${value.length} éléments)';
-    } else {
-      return value.toString();
-    }
+    return ValueFormatter.format(value);
   }
 
   static Widget _buildPropertyRow(

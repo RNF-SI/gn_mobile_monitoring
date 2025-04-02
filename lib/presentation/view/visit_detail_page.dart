@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -512,12 +513,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       }
 
       // Formater le libellé
-      label = label
-          .replaceAll('_', ' ')
-          .split(' ')
-          .map((word) =>
-              word.isNotEmpty ? word[0].toUpperCase() + word.substring(1) : '')
-          .join(' ');
+      label = ValueFormatter.formatLabel(label);
 
       return DataColumn(
         label: Text(
@@ -636,7 +632,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
 
         // Cellules de données
         final value = observation[column];
-        String displayValue = value?.toString() ?? '';
+        String displayValue = ValueFormatter.format(value);
 
         return DataCell(Text(displayValue));
       }).toList(),

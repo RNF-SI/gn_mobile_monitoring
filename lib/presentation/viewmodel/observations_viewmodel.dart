@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
 /// Provider pour accéder aux observations pour une visite spécifique
 final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
@@ -19,6 +20,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
   final deleteObservationUseCase = ref.watch(deleteObservationUseCaseProvider);
   final getObservationByIdUseCase =
       ref.watch(getObservationByIdUseCaseProvider);
+  final formDataProcessor = ref.watch(formDataProcessorProvider);
 
   return ObservationsViewModel(
     getObservationsByVisitIdUseCase,
@@ -26,6 +28,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
     updateObservationUseCase,
     deleteObservationUseCase,
     getObservationByIdUseCase,
+    formDataProcessor,
     visitId,
   );
 });
@@ -43,6 +46,7 @@ class ObservationsViewModel
   final UpdateObservationUseCase _updateObservationUseCase;
   final DeleteObservationUseCase _deleteObservationUseCase;
   final GetObservationByIdUseCase _getObservationByIdUseCase;
+  final FormDataProcessor _formDataProcessor;
 
   final int _visitId;
   bool _mounted = true;
@@ -53,6 +57,7 @@ class ObservationsViewModel
     this._updateObservationUseCase,
     this._deleteObservationUseCase,
     this._getObservationByIdUseCase,
+    this._formDataProcessor,
     this._visitId,
   ) : super(const AsyncValue.loading()) {
     if (_visitId > 0) {
@@ -68,8 +73,17 @@ class ObservationsViewModel
       state = const AsyncValue.loading();
       final observations =
           await _getObservationsByVisitIdUseCase.execute(_visitId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedObservations =
+          await Future.wait(observations.map((observation) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(observation.data!);
+        return observation.copyWith(data: processedData);
+      }));
+
       if (_mounted) {
-        state = AsyncValue.data(observations);
+        state = AsyncValue.data(processedObservations);
       }
     } catch (e, stack) {
       if (_mounted) {
@@ -81,7 +95,18 @@ class ObservationsViewModel
   /// Récupère toutes les observations associées à une visite
   Future<List<Observation>> getObservationsByVisitId() async {
     try {
-      return await _getObservationsByVisitIdUseCase.execute(_visitId);
+      final observations =
+          await _getObservationsByVisitIdUseCase.execute(_visitId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedObservations =
+          await Future.wait(observations.map((observation) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(observation.data!);
+        return observation.copyWith(data: processedData);
+      }));
+
+      return processedObservations;
     } catch (e) {
       debugPrint('Erreur lors du chargement des observations: $e');
       return [];
@@ -91,13 +116,18 @@ class ObservationsViewModel
   /// Crée une nouvelle observation
   Future<int> createObservation(Map<String, dynamic> formData) async {
     try {
+      // Extraire les données spécifiques et traiter les nomenclatures
+      final specificData = _extractObservationSpecificData(formData);
+      final processedData =
+          await _formDataProcessor.processFormData(specificData);
+
       // Préparer l'objet Observation à partir des données du formulaire
       final observation = Observation(
         idObservation: 0, // Nouvel ID généré par la BDD
         idBaseVisit: _visitId,
         cdNom: formData['cd_nom'] is int ? formData['cd_nom'] : null,
         comments: formData['comments']?.toString(),
-        data: _extractObservationSpecificData(formData),
+        data: processedData,
       );
 
       final newObservationId =
@@ -125,6 +155,11 @@ class ObservationsViewModel
         orElse: () => throw Exception('Observation not found'),
       );
 
+      // Extraire les données spécifiques et traiter les nomenclatures
+      final specificData = _extractObservationSpecificData(formData);
+      final processedData =
+          await _formDataProcessor.processFormData(specificData);
+
       // Créer une nouvelle observation avec les données mises à jour
       final updatedObservation = Observation(
         idObservation: observationId,
@@ -137,7 +172,7 @@ class ObservationsViewModel
         uuidObservation: existingObservation.uuidObservation,
         metaCreateDate: existingObservation.metaCreateDate,
         metaUpdateDate: DateTime.now().toIso8601String(),
-        data: _extractObservationSpecificData(formData),
+        data: processedData,
       );
 
       final success =
@@ -219,7 +254,11 @@ class ObservationsViewModel
       if (observation == null) {
         throw Exception('Observation not found');
       }
-      return observation;
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedData =
+          await _formDataProcessor.processFormDataForDisplay(observation.data!);
+      return observation.copyWith(data: processedData);
     } catch (e) {
       throw Exception('Failed to get observation: $e');
     }

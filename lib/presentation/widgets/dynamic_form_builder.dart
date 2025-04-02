@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
 
 /// Un widget qui génère un formulaire dynamique
 /// basé sur la configuration d'un module GeoNature Monitoring
-class DynamicFormBuilder extends StatefulWidget {
+class DynamicFormBuilder extends ConsumerStatefulWidget {
   /// La configuration de l'objet (visite, site, etc.)
   final ObjectConfig objectConfig;
 
@@ -38,10 +41,10 @@ class DynamicFormBuilder extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  DynamicFormBuilderState createState() => DynamicFormBuilderState();
+  ConsumerState<DynamicFormBuilder> createState() => DynamicFormBuilderState();
 }
 
-class DynamicFormBuilderState extends State<DynamicFormBuilder> {
+class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   final _formKey = GlobalKey<FormState>();
   late Map<String, dynamic> _formValues;
   late Map<String, TextEditingController> _textControllers;
@@ -81,6 +84,11 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
     }
 
     _initControllers();
+    
+    // Précharger les nomenclatures nécessaires pour ce formulaire
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadNomenclatures();
+    });
   }
 
   @override
@@ -132,6 +140,40 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
       controller.clear();
     });
     setState(() {});
+  }
+  
+  /// Précharge toutes les nomenclatures nécessaires pour ce formulaire
+  void _preloadNomenclatures() {
+    try {
+      // Identifie tous les champs de nomenclature dans le formulaire
+      final nomenclatureFields = _unifiedSchema.entries
+          .where((entry) => FormConfigParser.isNomenclatureField(entry.value))
+          .toList();
+          
+      // Si aucun champ de nomenclature n'est trouvé, on s'arrête
+      if (nomenclatureFields.isEmpty) return;
+      
+      // Récupére tous les types de nomenclature uniques
+      final Set<String> typeCodes = {};
+      
+      for (final field in nomenclatureFields) {
+        final typeCode = FormConfigParser.getNomenclatureTypeCode(field.value);
+        if (typeCode != null && typeCode.isNotEmpty) {
+          typeCodes.add(typeCode);
+        }
+      }
+      
+      // Précharger les nomenclatures
+      if (typeCodes.isNotEmpty) {
+        // Récupérer le service de nomenclature
+        final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+        
+        // Précharger les nomenclatures pour tous les types identifiés
+        nomenclatureService.preloadNomenclatures(typeCodes.toList());
+      }
+    } catch (e) {
+      print('Erreur lors du préchargement des nomenclatures: $e');
+    }
   }
 
   bool validate() {
@@ -241,6 +283,9 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
             description: description);
       case 'ObserverField':
         return _buildObserverField(fieldName, label, isRequired,
+            description: description);
+      case 'NomenclatureSelector':
+        return _buildNomenclatureField(fieldName, label, isRequired, fieldConfig,
             description: description);
       default:
         return _buildTextField(fieldName, label, isRequired,
@@ -712,7 +757,7 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
 
       _formValues[fieldName] = safeList;
     }
-
+    
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -790,6 +835,52 @@ class DynamicFormBuilderState extends State<DynamicFormBuilder> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Pour les champs de type nomenclature
+  Widget _buildNomenclatureField(String fieldName, String label, bool required,
+      Map<String, dynamic> fieldConfig, {String? description}) {
+    // Construire un widget de sélection de nomenclature
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          NomenclatureSelectorWidget(
+            label: label,
+            fieldConfig: fieldConfig,
+            value: _formValues[fieldName] as Map<String, dynamic>?,
+            isRequired: required,
+            onChanged: (value) {
+              setState(() {
+                if (value == null) {
+                  _formValues.remove(fieldName);
+                } else {
+                  _formValues[fieldName] = value;
+                }
+              });
+            },
           ),
         ],
       ),

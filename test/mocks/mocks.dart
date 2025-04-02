@@ -24,7 +24,11 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
@@ -141,6 +145,15 @@ class MockFetchModulesUseCase extends Mock implements FetchModulesUseCase {}
 
 class MockDownloadModuleDataUseCase extends Mock
     implements DownloadModuleDataUseCase {}
+
+// Nomenclatures
+class MockGetNomenclaturesUseCase extends Mock implements GetNomenclaturesUseCase {}
+
+class MockGetNomenclaturesByTypeCodeUseCase extends Mock implements GetNomenclaturesByTypeCodeUseCase {}
+
+class MockGetNomenclatureByCodeUseCase extends Mock implements GetNomenclatureByCodeUseCase {}
+
+class MockGetModuleNomenclaturesUseCase extends Mock implements GetModuleNomenclaturesUseCase {}
 
 // Sites
 class MockGetSitesUseCase extends Mock implements GetSitesUseCase {}

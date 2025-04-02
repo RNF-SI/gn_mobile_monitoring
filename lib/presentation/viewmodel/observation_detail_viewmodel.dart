@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_detail_us
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_detail_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_details_by_observation_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
 /// Provider pour accéder aux détails d'observation pour une observation spécifique
 final observationDetailsProvider = StateNotifierProvider.family<
@@ -20,12 +21,15 @@ final observationDetailsProvider = StateNotifierProvider.family<
       ref.watch(saveObservationDetailUseCaseProvider);
   final deleteObservationDetailUseCase =
       ref.watch(deleteObservationDetailUseCaseProvider);
+  final formDataProcessor =
+      ref.watch(formDataProcessorProvider);
 
   return ObservationDetailViewModel(
     getObservationDetailsByObservationIdUseCase,
     getObservationDetailByIdUseCase,
     saveObservationDetailUseCase,
     deleteObservationDetailUseCase,
+    formDataProcessor,
     observationId,
   );
 });
@@ -42,6 +46,7 @@ class ObservationDetailViewModel
   final GetObservationDetailByIdUseCase _getObservationDetailByIdUseCase;
   final SaveObservationDetailUseCase _saveObservationDetailUseCase;
   final DeleteObservationDetailUseCase _deleteObservationDetailUseCase;
+  final FormDataProcessor _formDataProcessor;
 
   final int _observationId;
   bool _mounted = true;
@@ -51,6 +56,7 @@ class ObservationDetailViewModel
     this._getObservationDetailByIdUseCase,
     this._saveObservationDetailUseCase,
     this._deleteObservationDetailUseCase,
+    this._formDataProcessor,
     this._observationId,
   ) : super(const AsyncValue.loading()) {
     if (_observationId > 0) {
@@ -66,8 +72,17 @@ class ObservationDetailViewModel
       state = const AsyncValue.loading();
       final details = await _getObservationDetailsByObservationIdUseCase
           .execute(_observationId);
+          
+      // Traiter les données pour l'affichage
+      final processedDetails = await Future.wait(
+        details.map((detail) async {
+          final processedData = await _formDataProcessor.processFormDataForDisplay(detail.data);
+          return detail.copyWith(data: processedData);
+        })
+      );
+      
       if (_mounted) {
-        state = AsyncValue.data(details);
+        state = AsyncValue.data(processedDetails);
       }
     } catch (e, stack) {
       if (_mounted) {
@@ -80,8 +95,18 @@ class ObservationDetailViewModel
   Future<List<ObservationDetail>> getObservationDetailsByObservationId(
       int observationId) async {
     try {
-      return await _getObservationDetailsByObservationIdUseCase
+      final details = await _getObservationDetailsByObservationIdUseCase
           .execute(observationId);
+          
+      // Traiter les données pour l'affichage
+      final processedDetails = await Future.wait(
+        details.map((detail) async {
+          final processedData = await _formDataProcessor.processFormDataForDisplay(detail.data);
+          return detail.copyWith(data: processedData);
+        })
+      );
+      
+      return processedDetails;
     } catch (e) {
       debugPrint(
           'Erreur lors de la récupération des détails d\'observation: $e');
@@ -92,7 +117,17 @@ class ObservationDetailViewModel
   /// Récupère un détail d'observation par son ID
   Future<ObservationDetail?> getObservationDetailById(int detailId) async {
     try {
-      return await _getObservationDetailByIdUseCase.execute(detailId);
+      final detail = await _getObservationDetailByIdUseCase.execute(detailId);
+      
+      if (detail != null) {
+        // Convertir les IDs de nomenclature en objets pour l'affichage
+        final processedData = await _formDataProcessor.processFormDataForDisplay(detail.data);
+        
+        // Créer un nouvel objet avec les données traitées
+        return detail.copyWith(data: processedData);
+      }
+      
+      return detail;
     } catch (e) {
       debugPrint('Erreur lors de la récupération du détail d\'observation: $e');
       return null;
@@ -102,7 +137,15 @@ class ObservationDetailViewModel
   /// Sauvegarde un détail d'observation
   Future<int> saveObservationDetail(ObservationDetail detail) async {
     try {
-      final result = await _saveObservationDetailUseCase.execute(detail);
+      // Traiter les données pour convertir les nomenclatures en ID
+      final processedData = await _formDataProcessor.processFormData(detail.data);
+      
+      // Créer un nouvel objet avec les données traitées
+      final processedDetail = detail.copyWith(data: processedData);
+      
+      // Sauvegarder le détail d'observation avec les données traitées
+      final result = await _saveObservationDetailUseCase.execute(processedDetail);
+      
       // Recharger les détails après la sauvegarde
       await loadObservationDetails();
       return result;

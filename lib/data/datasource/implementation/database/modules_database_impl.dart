@@ -61,6 +61,20 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     return await db.modulesDao.getModuleComplementById(moduleId);
   }
+  
+  @override
+  Future<ModuleComplement?> getModuleComplementByModuleCode(String moduleCode) async {
+    final db = await _database;
+    // Trouver d'abord le module par son code
+    final module = await db.modulesDao.getModuleByCode(moduleCode);
+    
+    if (module == null) {
+      return null;
+    }
+    
+    // Récupérer ensuite le complément par l'ID du module
+    return await db.modulesDao.getModuleComplementById(module.id);
+  }
 
   @override
   Future<List<ModuleComplement>> getAllModuleComplements() async {
