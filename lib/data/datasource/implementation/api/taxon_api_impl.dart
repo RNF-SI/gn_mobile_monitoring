@@ -18,18 +18,15 @@ class TaxonApiImpl implements TaxonApi {
         ));
 
   @override
-  Future<List<Taxon>> getTaxonsByList(int idListe, String token) async {
+  Future<List<Taxon>> getTaxonsByList(int idListe) async {
     try {
       final response = await _dio.get(
-        '/taxonomie/taxref/list/$idListe',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        '/taxhub/api/taxref/allnamebylist/$idListe',
       );
 
       if (response.statusCode == 200) {
         final List<dynamic> parsed = response.data;
-        return parsed.map((json) => _parseTaxon(json)).toList();
+        return parsed.map((json) => _parseTaxonFromList(json)).toList();
       }
 
       throw ApiException(
@@ -45,13 +42,10 @@ class TaxonApiImpl implements TaxonApi {
   }
 
   @override
-  Future<TaxonList> getTaxonList(int idListe, String token) async {
+  Future<TaxonList> getTaxonList(int idListe) async {
     try {
       final response = await _dio.get(
-        '/taxonomie/lists/$idListe',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        '/monitorings/util/taxonomy_list/$idListe',
       );
 
       if (response.statusCode == 200) {
@@ -79,13 +73,10 @@ class TaxonApiImpl implements TaxonApi {
   }
 
   @override
-  Future<Taxon> getTaxonByCdNom(int cdNom, String token) async {
+  Future<Taxon> getTaxonByCdNom(int cdNom) async {
     try {
       final response = await _dio.get(
         '/taxonomie/taxref/$cdNom',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
       );
 
       if (response.statusCode == 200) {
@@ -132,6 +123,38 @@ class TaxonApiImpl implements TaxonApi {
       group2Inpn: json['group2_inpn'],
       group3Inpn: json['group3_inpn'],
       url: json['url'],
+    );
+  }
+  
+  // Méthode spécifique pour parser les taxons venant de l'endpoint allnamebylist
+  Taxon _parseTaxonFromList(Map<String, dynamic> json) {
+    return Taxon(
+      cdNom: json['cd_nom'],
+      cdRef: json['cd_ref'],
+      regne: json['regne'],
+      lbNom: json['lb_nom'],
+      nomComplet: json['search_name'] ?? json['lb_nom'] ?? 'Sans nom',
+      nomVern: json['nom_vern'],
+      nomValide: json['nom_valide'],
+      group2Inpn: json['group2_inpn'],
+      group3Inpn: json['group3_inpn'],
+      // Champs facultatifs
+      idStatut: null,
+      idHabitat: null,
+      idRang: null,
+      phylum: null,
+      classe: null,
+      ordre: null,
+      famille: null,
+      sousFamille: null,
+      tribu: null,
+      cdTaxsup: null,
+      cdSup: null,
+      lbAuteur: null,
+      nomCompletHtml: null,
+      nomVernEng: null,
+      group1Inpn: null,
+      url: null,
     );
   }
 }

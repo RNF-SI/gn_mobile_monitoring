@@ -17,6 +17,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
   final GlobalApi globalApi;
@@ -24,9 +25,16 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final ModulesDatabase database;
   final NomenclaturesDatabase nomenclaturesDatabase;
   final DatasetsDatabase datasetsDatabase;
+  final TaxonRepository? taxonRepository; // Optional to maintain backward compatibility
 
-  ModulesRepositoryImpl(this.globalApi, this.api, this.database,
-      this.nomenclaturesDatabase, this.datasetsDatabase);
+  ModulesRepositoryImpl(
+    this.globalApi,
+    this.api,
+    this.database,
+    this.nomenclaturesDatabase,
+    this.datasetsDatabase, {
+    this.taxonRepository,
+  });
 
   @override
   Future<List<Module>> getModulesFromLocal() async {
@@ -277,6 +285,28 @@ class ModulesRepositoryImpl implements ModulesRepository {
         // }
       }
 
+      // 4. Download module taxons if available
+      try {
+        // Check if the module has a taxonomy list associated with it
+        final moduleComplement =
+            await database.getModuleComplementById(moduleId);
+        if (moduleComplement != null &&
+            moduleComplement.idListTaxonomy != null &&
+            taxonRepository != null) {
+          // Use the TaxonRepository to download the taxons
+          print(
+              'Module has taxonomy list (ID: ${moduleComplement.idListTaxonomy}). Downloading taxons...');
+          await taxonRepository!.downloadModuleTaxons(moduleId);
+          print('Taxons downloaded successfully.');
+        } else if (moduleComplement?.idListTaxonomy != null) {
+          print(
+              'Module has taxonomy list (ID: ${moduleComplement!.idListTaxonomy}) but TaxonRepository is not available.');
+        }
+      } catch (taxonError) {
+        // Log error but don't fail the whole download - taxons are optional
+        print('Error downloading taxons for module $moduleId: $taxonError');
+      }
+
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);
     } catch (e) {
@@ -314,14 +344,14 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // Récupère les types de nomenclature depuis la base de données
       final types = await nomenclaturesDatabase.getAllNomenclatureTypes();
       final mapping = <String, int>{};
-      
+
       // Construire le mapping à partir des types
       for (final type in types) {
         if (type.mnemonique != null) {
           mapping[type.mnemonique!] = type.idType;
         }
       }
-      
+
       // Si aucune donnée n'est disponible, utiliser des valeurs par défaut
       if (mapping.isEmpty) {
         return {
@@ -332,7 +362,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
           'TYPE_PERMISSION': 120,
         };
       }
-      
+
       return mapping;
     } catch (e) {
       // En cas d'erreur, retourner les valeurs par défaut
@@ -345,12 +375,13 @@ class ModulesRepositoryImpl implements ModulesRepository {
       };
     }
   }
-  
+
   @override
   Future<int?> getNomenclatureTypeIdByMnemonique(String mnemonique) async {
     try {
       // Chercher le type par mnémonique dans la base de données
-      final type = await nomenclaturesDatabase.getNomenclatureTypeByMnemonique(mnemonique);
+      final type = await nomenclaturesDatabase
+          .getNomenclatureTypeByMnemonique(mnemonique);
       return type?.idType;
     } catch (e) {
       // Essayer avec le mapping statique en fallback
@@ -394,4 +425,5 @@ class ModulesRepositoryImpl implements ModulesRepository {
       throw Exception('Failed to get module configuration: $e');
     }
   }
+  
 }
