@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
 
@@ -86,7 +85,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     _initControllers();
-    
+
     // Précharger les nomenclatures nécessaires pour ce formulaire
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadNomenclatures();
@@ -143,7 +142,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     });
     setState(() {});
   }
-  
+
   /// Précharge toutes les nomenclatures nécessaires pour ce formulaire
   void _preloadNomenclatures() {
     try {
@@ -151,25 +150,26 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       final nomenclatureFields = _unifiedSchema.entries
           .where((entry) => FormConfigParser.isNomenclatureField(entry.value))
           .toList();
-          
+
       // Si aucun champ de nomenclature n'est trouvé, on s'arrête
       if (nomenclatureFields.isEmpty) return;
-      
+
       // Récupére tous les types de nomenclature uniques
       final Set<String> typeCodes = {};
-      
+
       for (final field in nomenclatureFields) {
         final typeCode = FormConfigParser.getNomenclatureTypeCode(field.value);
         if (typeCode != null && typeCode.isNotEmpty) {
           typeCodes.add(typeCode);
         }
       }
-      
+
       // Précharger les nomenclatures
       if (typeCodes.isNotEmpty) {
         // Récupérer le service de nomenclature
-        final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
-        
+        final nomenclatureService =
+            ref.read(nomenclatureServiceProvider.notifier);
+
         // Précharger les nomenclatures pour tous les types identifiés
         nomenclatureService.preloadNomenclatures(typeCodes.toList());
       }
@@ -287,7 +287,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         return _buildObserverField(fieldName, label, isRequired,
             description: description);
       case 'NomenclatureSelector':
-        return _buildNomenclatureField(fieldName, label, isRequired, fieldConfig,
+        return _buildNomenclatureField(
+            fieldName, label, isRequired, fieldConfig,
             description: description);
       case 'TaxonSelector':
         return _buildTaxonField(fieldName, label, isRequired, fieldConfig,
@@ -762,7 +763,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
       _formValues[fieldName] = safeList;
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -845,10 +846,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       ),
     );
   }
-  
+
   // Pour les champs de type nomenclature
   Widget _buildNomenclatureField(String fieldName, String label, bool required,
-      Map<String, dynamic> fieldConfig, {String? description}) {
+      Map<String, dynamic> fieldConfig,
+      {String? description}) {
     // Construire un widget de sélection de nomenclature
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -891,13 +893,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       ),
     );
   }
-  
+
   // Pour les champs de type taxonomie
   Widget _buildTaxonField(String fieldName, String label, bool required,
-      Map<String, dynamic> fieldConfig, {String? description}) {
+      Map<String, dynamic> fieldConfig,
+      {String? description}) {
     // Déterminer la valeur initiale (cd_nom)
     int? initialValue;
-    
+
     if (_formValues.containsKey(fieldName)) {
       final value = _formValues[fieldName];
       if (value is int) {
@@ -909,10 +912,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       // Essayer de récupérer depuis la configuration
       initialValue = FormConfigParser.getSelectedTaxonCdNom(fieldConfig);
     }
-    
+
     // Pour obtenir l'ID du module
     final int moduleId = widget.customConfig?.idModule ?? 0;
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -935,27 +938,21 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
             ),
           const SizedBox(height: 8),
-          SizedBox(
-            // Définir une hauteur fixe pour éviter les problèmes de layout
-            height: 300, 
-            child: TaxonSelectorWidget(
-              label: label,
-              moduleId: moduleId,
-              fieldConfig: fieldConfig,
-              value: initialValue,
-              isRequired: required,
-              onChanged: (cdNom) {
-                setState(() {
-                  if (cdNom == null) {
-                    _formValues.remove(fieldName);
-                  } else {
-                    // Stocker seulement le cd_nom (code nomenclature) comme valeur
-                    // Il sera converti en objet complet lors de l'affichage
-                    _formValues[fieldName] = cdNom;
-                  }
-                });
-              },
-            ),
+          TaxonSelectorWidget(
+            label: label,
+            moduleId: moduleId,
+            fieldConfig: fieldConfig,
+            value: initialValue,
+            isRequired: required,
+            onChanged: (cdNom) {
+              setState(() {
+                if (cdNom == null) {
+                  _formValues.remove(fieldName);
+                } else {
+                  _formValues[fieldName] = cdNom;
+                }
+              });
+            },
           ),
         ],
       ),

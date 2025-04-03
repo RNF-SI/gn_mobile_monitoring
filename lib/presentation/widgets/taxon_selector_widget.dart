@@ -4,8 +4,6 @@ import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 
-// On utilise les providers existants définis dans taxon_service.dart
-
 /// Widget de sélection de taxon pour les formulaires
 class TaxonSelectorWidget extends ConsumerStatefulWidget {
   final String label;
@@ -34,65 +32,27 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
 
 class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   final TextEditingController _searchController = TextEditingController();
-  List<Taxon> _allTaxons = [];
-  List<Taxon> _filteredTaxons = [];
   Taxon? _selectedTaxon;
-  bool _isLoading = false;
-  bool _isSearchFocused = false;
+  List<Taxon> _searchResults = [];
+  bool _isSearching = false;
 
   @override
   void initState() {
     super.initState();
-    _loadInitialTaxons();
+    _initializeSelectedTaxon();
   }
 
-  Future<void> _loadInitialTaxons() async {
-    setState(() {
-      _isLoading = true;
-    });
-
-    // Charger les taxons pour le module ou la liste
-    final taxonService = ref.read(taxonServiceProvider.notifier);
-
-    // Déterminer si on doit charger par liste ou par module
-    int? listId;
-    if (widget.fieldConfig != null) {
-      listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
-    }
-
-    final List<Taxon> taxons;
-    if (listId != null) {
-      taxons = await taxonService.getTaxonsByListId(listId);
-    } else {
-      taxons = await taxonService.getTaxonsByModuleId(widget.moduleId);
-    }
-
-    // Initialiser avec la valeur existante si disponible
+  Future<void> _initializeSelectedTaxon() async {
     if (widget.value != null) {
-      final selectedTaxon =
-          taxons.where((t) => t.cdNom == widget.value).firstOrNull;
+      final taxonService = ref.read(taxonServiceProvider.notifier);
+      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
 
-      if (selectedTaxon != null) {
-        _selectedTaxon = selectedTaxon;
-        _searchController.text = _formatDisplayName(selectedTaxon);
-      } else {
-        // Si le taxon n'est pas dans la liste, essayer de le récupérer directement
-        final taxon = await taxonService.getTaxonByCdNom(widget.value!);
-        if (taxon != null) {
+      if (mounted && taxon != null) {
+        setState(() {
           _selectedTaxon = taxon;
           _searchController.text = _formatDisplayName(taxon);
-        }
+        });
       }
-    }
-
-    if (mounted) {
-      setState(() {
-        _allTaxons = taxons;
-        _filteredTaxons = _searchController.text.isNotEmpty
-            ? _filterTaxonsBySearchTerm(_searchController.text)
-            : [];
-        _isLoading = false;
-      });
     }
   }
 
@@ -100,43 +60,32 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   void didUpdateWidget(TaxonSelectorWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    // Si la valeur change dans le parent, mettre à jour le taxon sélectionné
     if (oldWidget.value != widget.value) {
-      if (widget.value == null) {
-        setState(() {
-          _selectedTaxon = null;
-          _searchController.clear();
-        });
-      } else if (_selectedTaxon?.cdNom != widget.value) {
-        _updateSelectedTaxon();
-      }
+      _updateSelectedTaxon();
     }
   }
 
   Future<void> _updateSelectedTaxon() async {
-    if (widget.value == null) return;
-
-    // D'abord chercher dans la liste des taxons déjà chargés
-    final existingTaxon =
-        _allTaxons.where((t) => t.cdNom == widget.value).firstOrNull;
-
-    if (existingTaxon != null) {
-      setState(() {
-        _selectedTaxon = existingTaxon;
-        _searchController.text = _formatDisplayName(existingTaxon);
-      });
+    if (widget.value == null) {
+      if (mounted) {
+        setState(() {
+          _selectedTaxon = null;
+          _searchController.clear();
+        });
+      }
       return;
     }
 
-    // Sinon, récupérer le taxon depuis la base de données
-    final taxonService = ref.read(taxonServiceProvider.notifier);
-    final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+    if (_selectedTaxon?.cdNom != widget.value) {
+      final taxonService = ref.read(taxonServiceProvider.notifier);
+      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
 
-    if (mounted && taxon != null) {
-      setState(() {
-        _selectedTaxon = taxon;
-        _searchController.text = _formatDisplayName(taxon);
-      });
+      if (mounted && taxon != null) {
+        setState(() {
+          _selectedTaxon = taxon;
+          _searchController.text = _formatDisplayName(taxon);
+        });
+      }
     }
   }
 
@@ -146,7 +95,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     super.dispose();
   }
 
-  /// Formatte le nom d'affichage d'un taxon selon le format configuré
+  /// Format le nom d'affichage d'un taxon selon le format configuré
   String _formatDisplayName(Taxon taxon) {
     final String displayFormat;
     if (widget.fieldConfig != null) {
@@ -160,50 +109,34 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     return taxonService.formatTaxonDisplay(taxon, displayFormat);
   }
 
-  /// Filtre les taxons par terme de recherche
-  List<Taxon> _filterTaxonsBySearchTerm(String searchTerm) {
-    if (searchTerm.isEmpty) return [];
-
-    final searchLower = searchTerm.toLowerCase();
-
-    return _allTaxons
-        .where((taxon) {
-          return (taxon.nomComplet.toLowerCase().contains(searchLower)) ||
-              (taxon.lbNom?.toLowerCase().contains(searchLower) ?? false) ||
-              (taxon.nomVern?.toLowerCase().contains(searchLower) ?? false);
-        })
-        .take(50)
-        .toList(); // Limiter les résultats pour des performances
-  }
-
-  /// Effectue une recherche dans la base de données pour trouver des taxons
-  Future<void> _searchTaxonsInDatabase(String searchTerm) async {
-    if (searchTerm.length < 3) {
+  /// Recherche des taxons
+  Future<void> _searchTaxons(String query) async {
+    if (query.length < 3) {
       setState(() {
-        _filteredTaxons = [];
+        _searchResults = [];
       });
       return;
     }
 
     setState(() {
-      _isLoading = true;
+      _isSearching = true;
     });
 
     try {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final results = await taxonService.searchTaxons(searchTerm);
+      final results = await taxonService.searchTaxons(query);
 
       if (mounted) {
         setState(() {
-          _filteredTaxons = results;
-          _isLoading = false;
+          _searchResults = results;
+          _isSearching = false;
         });
       }
     } catch (e) {
       if (mounted) {
         setState(() {
-          _filteredTaxons = [];
-          _isLoading = false;
+          _searchResults = [];
+          _isSearching = false;
         });
       }
     }
@@ -211,19 +144,26 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
+    // Déterminer la liste taxonomique à utiliser
+    int? listId;
+    if (widget.fieldConfig != null) {
+      listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
+    }
+
+    // Récupérer les taxons via le provider approprié
+    final taxonsAsync = listId != null
+        ? ref.watch(taxonsByListProvider(listId))
+        : ref.watch(taxonsByModuleProvider(widget.moduleId));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(
-          widget.isRequired ? '${widget.label} *' : widget.label,
-          style: const TextStyle(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-
-        // Champ de recherche
+        // Champ de recherche/affichage
         TextFormField(
           controller: _searchController,
           decoration: InputDecoration(
+            labelText: widget.isRequired ? '${widget.label} *' : widget.label,
             hintText: 'Rechercher un taxon...',
             suffixIcon: _selectedTaxon != null
                 ? IconButton(
@@ -232,7 +172,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                       setState(() {
                         _selectedTaxon = null;
                         _searchController.clear();
-                        _filteredTaxons = [];
+                        _searchResults = [];
                         widget.onChanged(null);
                       });
                     },
@@ -242,24 +182,13 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           ),
           readOnly: _selectedTaxon != null,
           onChanged: (value) {
-            // Si on a déjà beaucoup de taxons chargés, filtrer localement
-            if (_allTaxons.length > 100) {
+            if (value.length >= 3) {
+              _searchTaxons(value);
+            } else {
               setState(() {
-                _filteredTaxons = _filterTaxonsBySearchTerm(value);
-              });
-            } else if (value.length >= 3) {
-              // Sinon faire une recherche en base de données
-              _searchTaxonsInDatabase(value);
-            } else if (value.isEmpty) {
-              setState(() {
-                _filteredTaxons = [];
+                _searchResults = [];
               });
             }
-          },
-          onTap: () {
-            setState(() {
-              _isSearchFocused = true;
-            });
           },
           validator: widget.isRequired
               ? (value) =>
@@ -267,37 +196,35 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
               : null,
         ),
 
-        // Affichage du message de chargement ou de la liste de résultats
-        if (_isLoading)
+        // Résultats de recherche
+        if (_isSearching)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
             child: Center(child: CircularProgressIndicator()),
           )
-        else if (_filteredTaxons.isNotEmpty)
+        else if (_searchResults.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(top: 4),
-            constraints: const BoxConstraints(maxHeight: 200),
+            constraints: const BoxConstraints(maxHeight: 150),
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
               borderRadius: BorderRadius.circular(4),
             ),
             child: ListView.builder(
               shrinkWrap: true,
-              itemCount: _filteredTaxons.length,
+              itemCount: _searchResults.length,
               itemBuilder: (context, index) {
-                final taxon = _filteredTaxons[index];
+                final taxon = _searchResults[index];
                 final displayName = _formatDisplayName(taxon);
 
                 return ListTile(
                   title: Text(displayName),
-                  subtitle: Text('CD_NOM: ${taxon.cdNom}'),
                   dense: true,
                   onTap: () {
                     setState(() {
                       _selectedTaxon = taxon;
                       _searchController.text = displayName;
-                      _filteredTaxons = [];
-                      _isSearchFocused = false;
+                      _searchResults = [];
                     });
                     widget.onChanged(taxon.cdNom);
                   },
@@ -306,17 +233,52 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
             ),
           ),
 
-        // Si on n'a pas de résultats et qu'on est en recherche
-        if (_searchController.text.isNotEmpty &&
-            _filteredTaxons.isEmpty &&
-            !_isLoading &&
-            _isSearchFocused)
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              'Aucun taxon trouvé, essayez un autre terme ou contactez l\'administrateur',
-              style: TextStyle(fontStyle: FontStyle.italic, color: Colors.grey),
-            ),
+        // Liste de suggestions basée sur module/liste
+        if (_searchController.text.isEmpty && _selectedTaxon == null)
+          taxonsAsync.when(
+            data: (taxons) {
+              if (taxons.isEmpty) {
+                return const SizedBox.shrink();
+              }
+
+              final displayTaxons =
+                  taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
+
+              return Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Suggestions:',
+                      style:
+                          TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                    ),
+                    const SizedBox(height: 4),
+                    Wrap(
+                      spacing: 8,
+                      children: displayTaxons.map((taxon) {
+                        final displayName = _formatDisplayName(taxon);
+                        return ChoiceChip(
+                          label: Text(displayName,
+                              style: const TextStyle(fontSize: 12)),
+                          selected: false,
+                          onSelected: (_) {
+                            setState(() {
+                              _selectedTaxon = taxon;
+                              _searchController.text = displayName;
+                            });
+                            widget.onChanged(taxon.cdNom);
+                          },
+                        );
+                      }).toList(),
+                    ),
+                  ],
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
       ],
     );
