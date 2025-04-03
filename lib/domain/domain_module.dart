@@ -48,6 +48,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usec
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
@@ -75,6 +77,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/login_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -322,5 +325,25 @@ final downloadModuleTaxonsUseCaseProvider =
 );
 
 final getModuleTaxonsUseCaseProvider = Provider<GetModuleTaxonsUseCase>(
-  (ref) => GetModuleTaxonsUseCaseImpl(ref.watch(taxonRepositoryProvider)),
+  (ref) => GetModuleTaxonsUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final getTaxonsByListIdUseCaseProvider = Provider<GetTaxonsByListIdUseCase>(
+  (ref) => GetTaxonsByListIdUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final getTaxonByCdNomUseCaseProvider = Provider<GetTaxonByCdNomUseCase>(
+  (ref) => GetTaxonByCdNomUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
+  (ref) => SearchTaxonsUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
 );
