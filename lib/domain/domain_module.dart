@@ -29,6 +29,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -318,4 +319,8 @@ final getNomenclaturesByTypeCodeUseCaseProvider =
 final downloadModuleTaxonsUseCaseProvider =
     Provider<DownloadModuleTaxonsUseCase>(
   (ref) => DownloadModuleTaxonsUseCaseImpl(ref.watch(taxonRepositoryProvider)),
+);
+
+final getModuleTaxonsUseCaseProvider = Provider<GetModuleTaxonsUseCase>(
+  (ref) => GetModuleTaxonsUseCaseImpl(ref.watch(taxonRepositoryProvider)),
 );

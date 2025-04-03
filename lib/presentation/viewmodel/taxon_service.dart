@@ -1,11 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/taxon_download_status.dart';
 
+final taxonServiceProvider =
+    StateNotifierProvider<TaxonService, TaxonDownloadStatus>(
+  (ref) => TaxonService(
+    ref.watch(getModuleTaxonsUseCaseProvider),
+  ),
+);
+
 class TaxonService extends StateNotifier<TaxonDownloadStatus> {
   final GetModuleTaxonsUseCase _getModuleTaxonsUseCase;
-  
+
   TaxonService(this._getModuleTaxonsUseCase)
       : super(const TaxonDownloadStatus.initial());
 
