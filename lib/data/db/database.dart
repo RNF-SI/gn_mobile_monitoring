@@ -9,10 +9,12 @@ import 'package:gn_mobile_monitoring/data/db/dao/observation_detail_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/taxon_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nomenclatures.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_type_site.dart';
@@ -20,6 +22,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_type.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_taxon_liste.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
@@ -36,6 +39,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_permissions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_permissions_available.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_taxrefs.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -85,6 +89,9 @@ part 'database.g.dart';
   CorVisitObserver,
   CorSiteTypeTable,
   TBaseVisits,
+  TTaxrefs,
+  BibListesTable,
+  CorTaxonListeTable,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,
@@ -94,6 +101,7 @@ part 'database.g.dart';
   ObservationDao,
   ObservationDetailDao,
   BibNomenclaturesTypesDao,
+  TaxonDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());

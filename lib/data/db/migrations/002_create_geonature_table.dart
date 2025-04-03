@@ -349,5 +349,75 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  // Create taxonomic tables
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_taxrefs (
+        cd_nom INTEGER PRIMARY KEY,
+        cd_ref INTEGER,
+        id_statut TEXT,
+        id_habitat INTEGER,
+        id_rang TEXT,
+        regne TEXT,
+        phylum TEXT,
+        classe TEXT,
+        ordre TEXT,
+        famille TEXT,
+        sous_famille TEXT,
+        tribu TEXT,
+        cd_taxsup INTEGER,
+        cd_sup INTEGER,
+        lb_nom TEXT,
+        lb_auteur TEXT,
+        nom_complet TEXT NOT NULL,
+        nom_complet_html TEXT,
+        nom_vern TEXT,
+        nom_valide TEXT,
+        nom_vern_eng TEXT,
+        group1_inpn TEXT,
+        group2_inpn TEXT,
+        group3_inpn TEXT,
+        url TEXT
+      );
+    ''');
+    print("t_taxrefs table created successfully.");
+  } catch (e) {
+    print("Error creating t_taxrefs table: $e");
+    rethrow;
+  }
+
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_listes_table (
+        id_liste INTEGER PRIMARY KEY,
+        code_liste TEXT,
+        nom_liste TEXT NOT NULL,
+        desc_liste TEXT,
+        regne TEXT,
+        group2_inpn TEXT
+      );
+    ''');
+    print("bib_listes_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_listes_table table: $e");
+    rethrow;
+  }
+
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_taxon_liste_table (
+        id_liste INTEGER NOT NULL,
+        cd_nom INTEGER NOT NULL,
+        PRIMARY KEY (id_liste, cd_nom),
+        FOREIGN KEY (id_liste) REFERENCES bib_listes_table (id_liste) ON DELETE CASCADE,
+        FOREIGN KEY (cd_nom) REFERENCES taxrefs (cd_nom) ON DELETE CASCADE
+      );
+    ''');
+    print("cor_taxon_liste_table table created successfully.");
+  } catch (e) {
+    print("Error creating cor_taxon_liste_table table: $e");
+    rethrow;
+  }
+
   print("Migration2 executed successfully");
 }

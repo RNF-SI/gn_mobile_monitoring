@@ -10358,6 +10358,1654 @@ class CorSiteTypeTableCompanion extends UpdateCompanion<CorSiteType> {
   }
 }
 
+class $TTaxrefsTable extends TTaxrefs with TableInfo<$TTaxrefsTable, TTaxref> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TTaxrefsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
+  @override
+  late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
+      'cd_nom', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _cdRefMeta = const VerificationMeta('cdRef');
+  @override
+  late final GeneratedColumn<int> cdRef = GeneratedColumn<int>(
+      'cd_ref', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idStatutMeta =
+      const VerificationMeta('idStatut');
+  @override
+  late final GeneratedColumn<String> idStatut = GeneratedColumn<String>(
+      'id_statut', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _idHabitatMeta =
+      const VerificationMeta('idHabitat');
+  @override
+  late final GeneratedColumn<int> idHabitat = GeneratedColumn<int>(
+      'id_habitat', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idRangMeta = const VerificationMeta('idRang');
+  @override
+  late final GeneratedColumn<String> idRang = GeneratedColumn<String>(
+      'id_rang', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _regneMeta = const VerificationMeta('regne');
+  @override
+  late final GeneratedColumn<String> regne = GeneratedColumn<String>(
+      'regne', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _phylumMeta = const VerificationMeta('phylum');
+  @override
+  late final GeneratedColumn<String> phylum = GeneratedColumn<String>(
+      'phylum', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _classeMeta = const VerificationMeta('classe');
+  @override
+  late final GeneratedColumn<String> classe = GeneratedColumn<String>(
+      'classe', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _ordreMeta = const VerificationMeta('ordre');
+  @override
+  late final GeneratedColumn<String> ordre = GeneratedColumn<String>(
+      'ordre', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _familleMeta =
+      const VerificationMeta('famille');
+  @override
+  late final GeneratedColumn<String> famille = GeneratedColumn<String>(
+      'famille', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _sousFamilleMeta =
+      const VerificationMeta('sousFamille');
+  @override
+  late final GeneratedColumn<String> sousFamille = GeneratedColumn<String>(
+      'sous_famille', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _tribuMeta = const VerificationMeta('tribu');
+  @override
+  late final GeneratedColumn<String> tribu = GeneratedColumn<String>(
+      'tribu', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _cdTaxsupMeta =
+      const VerificationMeta('cdTaxsup');
+  @override
+  late final GeneratedColumn<int> cdTaxsup = GeneratedColumn<int>(
+      'cd_taxsup', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _cdSupMeta = const VerificationMeta('cdSup');
+  @override
+  late final GeneratedColumn<int> cdSup = GeneratedColumn<int>(
+      'cd_sup', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _lbNomMeta = const VerificationMeta('lbNom');
+  @override
+  late final GeneratedColumn<String> lbNom = GeneratedColumn<String>(
+      'lb_nom', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _lbAuteurMeta =
+      const VerificationMeta('lbAuteur');
+  @override
+  late final GeneratedColumn<String> lbAuteur = GeneratedColumn<String>(
+      'lb_auteur', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nomCompletMeta =
+      const VerificationMeta('nomComplet');
+  @override
+  late final GeneratedColumn<String> nomComplet = GeneratedColumn<String>(
+      'nom_complet', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _nomCompletHtmlMeta =
+      const VerificationMeta('nomCompletHtml');
+  @override
+  late final GeneratedColumn<String> nomCompletHtml = GeneratedColumn<String>(
+      'nom_complet_html', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nomVernMeta =
+      const VerificationMeta('nomVern');
+  @override
+  late final GeneratedColumn<String> nomVern = GeneratedColumn<String>(
+      'nom_vern', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nomValideMeta =
+      const VerificationMeta('nomValide');
+  @override
+  late final GeneratedColumn<String> nomValide = GeneratedColumn<String>(
+      'nom_valide', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nomVernEngMeta =
+      const VerificationMeta('nomVernEng');
+  @override
+  late final GeneratedColumn<String> nomVernEng = GeneratedColumn<String>(
+      'nom_vern_eng', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _group1InpnMeta =
+      const VerificationMeta('group1Inpn');
+  @override
+  late final GeneratedColumn<String> group1Inpn = GeneratedColumn<String>(
+      'group1_inpn', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _group2InpnMeta =
+      const VerificationMeta('group2Inpn');
+  @override
+  late final GeneratedColumn<String> group2Inpn = GeneratedColumn<String>(
+      'group2_inpn', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _group3InpnMeta =
+      const VerificationMeta('group3Inpn');
+  @override
+  late final GeneratedColumn<String> group3Inpn = GeneratedColumn<String>(
+      'group3_inpn', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+      'url', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        cdNom,
+        cdRef,
+        idStatut,
+        idHabitat,
+        idRang,
+        regne,
+        phylum,
+        classe,
+        ordre,
+        famille,
+        sousFamille,
+        tribu,
+        cdTaxsup,
+        cdSup,
+        lbNom,
+        lbAuteur,
+        nomComplet,
+        nomCompletHtml,
+        nomVern,
+        nomValide,
+        nomVernEng,
+        group1Inpn,
+        group2Inpn,
+        group3Inpn,
+        url
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_taxrefs';
+  @override
+  VerificationContext validateIntegrity(Insertable<TTaxref> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('cd_nom')) {
+      context.handle(
+          _cdNomMeta, cdNom.isAcceptableOrUnknown(data['cd_nom']!, _cdNomMeta));
+    }
+    if (data.containsKey('cd_ref')) {
+      context.handle(
+          _cdRefMeta, cdRef.isAcceptableOrUnknown(data['cd_ref']!, _cdRefMeta));
+    }
+    if (data.containsKey('id_statut')) {
+      context.handle(_idStatutMeta,
+          idStatut.isAcceptableOrUnknown(data['id_statut']!, _idStatutMeta));
+    }
+    if (data.containsKey('id_habitat')) {
+      context.handle(_idHabitatMeta,
+          idHabitat.isAcceptableOrUnknown(data['id_habitat']!, _idHabitatMeta));
+    }
+    if (data.containsKey('id_rang')) {
+      context.handle(_idRangMeta,
+          idRang.isAcceptableOrUnknown(data['id_rang']!, _idRangMeta));
+    }
+    if (data.containsKey('regne')) {
+      context.handle(
+          _regneMeta, regne.isAcceptableOrUnknown(data['regne']!, _regneMeta));
+    }
+    if (data.containsKey('phylum')) {
+      context.handle(_phylumMeta,
+          phylum.isAcceptableOrUnknown(data['phylum']!, _phylumMeta));
+    }
+    if (data.containsKey('classe')) {
+      context.handle(_classeMeta,
+          classe.isAcceptableOrUnknown(data['classe']!, _classeMeta));
+    }
+    if (data.containsKey('ordre')) {
+      context.handle(
+          _ordreMeta, ordre.isAcceptableOrUnknown(data['ordre']!, _ordreMeta));
+    }
+    if (data.containsKey('famille')) {
+      context.handle(_familleMeta,
+          famille.isAcceptableOrUnknown(data['famille']!, _familleMeta));
+    }
+    if (data.containsKey('sous_famille')) {
+      context.handle(
+          _sousFamilleMeta,
+          sousFamille.isAcceptableOrUnknown(
+              data['sous_famille']!, _sousFamilleMeta));
+    }
+    if (data.containsKey('tribu')) {
+      context.handle(
+          _tribuMeta, tribu.isAcceptableOrUnknown(data['tribu']!, _tribuMeta));
+    }
+    if (data.containsKey('cd_taxsup')) {
+      context.handle(_cdTaxsupMeta,
+          cdTaxsup.isAcceptableOrUnknown(data['cd_taxsup']!, _cdTaxsupMeta));
+    }
+    if (data.containsKey('cd_sup')) {
+      context.handle(
+          _cdSupMeta, cdSup.isAcceptableOrUnknown(data['cd_sup']!, _cdSupMeta));
+    }
+    if (data.containsKey('lb_nom')) {
+      context.handle(
+          _lbNomMeta, lbNom.isAcceptableOrUnknown(data['lb_nom']!, _lbNomMeta));
+    }
+    if (data.containsKey('lb_auteur')) {
+      context.handle(_lbAuteurMeta,
+          lbAuteur.isAcceptableOrUnknown(data['lb_auteur']!, _lbAuteurMeta));
+    }
+    if (data.containsKey('nom_complet')) {
+      context.handle(
+          _nomCompletMeta,
+          nomComplet.isAcceptableOrUnknown(
+              data['nom_complet']!, _nomCompletMeta));
+    } else if (isInserting) {
+      context.missing(_nomCompletMeta);
+    }
+    if (data.containsKey('nom_complet_html')) {
+      context.handle(
+          _nomCompletHtmlMeta,
+          nomCompletHtml.isAcceptableOrUnknown(
+              data['nom_complet_html']!, _nomCompletHtmlMeta));
+    }
+    if (data.containsKey('nom_vern')) {
+      context.handle(_nomVernMeta,
+          nomVern.isAcceptableOrUnknown(data['nom_vern']!, _nomVernMeta));
+    }
+    if (data.containsKey('nom_valide')) {
+      context.handle(_nomValideMeta,
+          nomValide.isAcceptableOrUnknown(data['nom_valide']!, _nomValideMeta));
+    }
+    if (data.containsKey('nom_vern_eng')) {
+      context.handle(
+          _nomVernEngMeta,
+          nomVernEng.isAcceptableOrUnknown(
+              data['nom_vern_eng']!, _nomVernEngMeta));
+    }
+    if (data.containsKey('group1_inpn')) {
+      context.handle(
+          _group1InpnMeta,
+          group1Inpn.isAcceptableOrUnknown(
+              data['group1_inpn']!, _group1InpnMeta));
+    }
+    if (data.containsKey('group2_inpn')) {
+      context.handle(
+          _group2InpnMeta,
+          group2Inpn.isAcceptableOrUnknown(
+              data['group2_inpn']!, _group2InpnMeta));
+    }
+    if (data.containsKey('group3_inpn')) {
+      context.handle(
+          _group3InpnMeta,
+          group3Inpn.isAcceptableOrUnknown(
+              data['group3_inpn']!, _group3InpnMeta));
+    }
+    if (data.containsKey('url')) {
+      context.handle(
+          _urlMeta, url.isAcceptableOrUnknown(data['url']!, _urlMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {cdNom};
+  @override
+  TTaxref map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TTaxref(
+      cdNom: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_nom'])!,
+      cdRef: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_ref']),
+      idStatut: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id_statut']),
+      idHabitat: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_habitat']),
+      idRang: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}id_rang']),
+      regne: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}regne']),
+      phylum: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}phylum']),
+      classe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}classe']),
+      ordre: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}ordre']),
+      famille: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}famille']),
+      sousFamille: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}sous_famille']),
+      tribu: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}tribu']),
+      cdTaxsup: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_taxsup']),
+      cdSup: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_sup']),
+      lbNom: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}lb_nom']),
+      lbAuteur: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}lb_auteur']),
+      nomComplet: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_complet'])!,
+      nomCompletHtml: attachedDatabase.typeMapping.read(
+          DriftSqlType.string, data['${effectivePrefix}nom_complet_html']),
+      nomVern: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_vern']),
+      nomValide: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_valide']),
+      nomVernEng: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_vern_eng']),
+      group1Inpn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group1_inpn']),
+      group2Inpn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group2_inpn']),
+      group3Inpn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group3_inpn']),
+      url: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}url']),
+    );
+  }
+
+  @override
+  $TTaxrefsTable createAlias(String alias) {
+    return $TTaxrefsTable(attachedDatabase, alias);
+  }
+}
+
+class TTaxref extends DataClass implements Insertable<TTaxref> {
+  final int cdNom;
+  final int? cdRef;
+  final String? idStatut;
+  final int? idHabitat;
+  final String? idRang;
+  final String? regne;
+  final String? phylum;
+  final String? classe;
+  final String? ordre;
+  final String? famille;
+  final String? sousFamille;
+  final String? tribu;
+  final int? cdTaxsup;
+  final int? cdSup;
+  final String? lbNom;
+  final String? lbAuteur;
+  final String nomComplet;
+  final String? nomCompletHtml;
+  final String? nomVern;
+  final String? nomValide;
+  final String? nomVernEng;
+  final String? group1Inpn;
+  final String? group2Inpn;
+  final String? group3Inpn;
+  final String? url;
+  const TTaxref(
+      {required this.cdNom,
+      this.cdRef,
+      this.idStatut,
+      this.idHabitat,
+      this.idRang,
+      this.regne,
+      this.phylum,
+      this.classe,
+      this.ordre,
+      this.famille,
+      this.sousFamille,
+      this.tribu,
+      this.cdTaxsup,
+      this.cdSup,
+      this.lbNom,
+      this.lbAuteur,
+      required this.nomComplet,
+      this.nomCompletHtml,
+      this.nomVern,
+      this.nomValide,
+      this.nomVernEng,
+      this.group1Inpn,
+      this.group2Inpn,
+      this.group3Inpn,
+      this.url});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['cd_nom'] = Variable<int>(cdNom);
+    if (!nullToAbsent || cdRef != null) {
+      map['cd_ref'] = Variable<int>(cdRef);
+    }
+    if (!nullToAbsent || idStatut != null) {
+      map['id_statut'] = Variable<String>(idStatut);
+    }
+    if (!nullToAbsent || idHabitat != null) {
+      map['id_habitat'] = Variable<int>(idHabitat);
+    }
+    if (!nullToAbsent || idRang != null) {
+      map['id_rang'] = Variable<String>(idRang);
+    }
+    if (!nullToAbsent || regne != null) {
+      map['regne'] = Variable<String>(regne);
+    }
+    if (!nullToAbsent || phylum != null) {
+      map['phylum'] = Variable<String>(phylum);
+    }
+    if (!nullToAbsent || classe != null) {
+      map['classe'] = Variable<String>(classe);
+    }
+    if (!nullToAbsent || ordre != null) {
+      map['ordre'] = Variable<String>(ordre);
+    }
+    if (!nullToAbsent || famille != null) {
+      map['famille'] = Variable<String>(famille);
+    }
+    if (!nullToAbsent || sousFamille != null) {
+      map['sous_famille'] = Variable<String>(sousFamille);
+    }
+    if (!nullToAbsent || tribu != null) {
+      map['tribu'] = Variable<String>(tribu);
+    }
+    if (!nullToAbsent || cdTaxsup != null) {
+      map['cd_taxsup'] = Variable<int>(cdTaxsup);
+    }
+    if (!nullToAbsent || cdSup != null) {
+      map['cd_sup'] = Variable<int>(cdSup);
+    }
+    if (!nullToAbsent || lbNom != null) {
+      map['lb_nom'] = Variable<String>(lbNom);
+    }
+    if (!nullToAbsent || lbAuteur != null) {
+      map['lb_auteur'] = Variable<String>(lbAuteur);
+    }
+    map['nom_complet'] = Variable<String>(nomComplet);
+    if (!nullToAbsent || nomCompletHtml != null) {
+      map['nom_complet_html'] = Variable<String>(nomCompletHtml);
+    }
+    if (!nullToAbsent || nomVern != null) {
+      map['nom_vern'] = Variable<String>(nomVern);
+    }
+    if (!nullToAbsent || nomValide != null) {
+      map['nom_valide'] = Variable<String>(nomValide);
+    }
+    if (!nullToAbsent || nomVernEng != null) {
+      map['nom_vern_eng'] = Variable<String>(nomVernEng);
+    }
+    if (!nullToAbsent || group1Inpn != null) {
+      map['group1_inpn'] = Variable<String>(group1Inpn);
+    }
+    if (!nullToAbsent || group2Inpn != null) {
+      map['group2_inpn'] = Variable<String>(group2Inpn);
+    }
+    if (!nullToAbsent || group3Inpn != null) {
+      map['group3_inpn'] = Variable<String>(group3Inpn);
+    }
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
+    return map;
+  }
+
+  TTaxrefsCompanion toCompanion(bool nullToAbsent) {
+    return TTaxrefsCompanion(
+      cdNom: Value(cdNom),
+      cdRef:
+          cdRef == null && nullToAbsent ? const Value.absent() : Value(cdRef),
+      idStatut: idStatut == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idStatut),
+      idHabitat: idHabitat == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idHabitat),
+      idRang:
+          idRang == null && nullToAbsent ? const Value.absent() : Value(idRang),
+      regne:
+          regne == null && nullToAbsent ? const Value.absent() : Value(regne),
+      phylum:
+          phylum == null && nullToAbsent ? const Value.absent() : Value(phylum),
+      classe:
+          classe == null && nullToAbsent ? const Value.absent() : Value(classe),
+      ordre:
+          ordre == null && nullToAbsent ? const Value.absent() : Value(ordre),
+      famille: famille == null && nullToAbsent
+          ? const Value.absent()
+          : Value(famille),
+      sousFamille: sousFamille == null && nullToAbsent
+          ? const Value.absent()
+          : Value(sousFamille),
+      tribu:
+          tribu == null && nullToAbsent ? const Value.absent() : Value(tribu),
+      cdTaxsup: cdTaxsup == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cdTaxsup),
+      cdSup:
+          cdSup == null && nullToAbsent ? const Value.absent() : Value(cdSup),
+      lbNom:
+          lbNom == null && nullToAbsent ? const Value.absent() : Value(lbNom),
+      lbAuteur: lbAuteur == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lbAuteur),
+      nomComplet: Value(nomComplet),
+      nomCompletHtml: nomCompletHtml == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nomCompletHtml),
+      nomVern: nomVern == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nomVern),
+      nomValide: nomValide == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nomValide),
+      nomVernEng: nomVernEng == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nomVernEng),
+      group1Inpn: group1Inpn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(group1Inpn),
+      group2Inpn: group2Inpn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(group2Inpn),
+      group3Inpn: group3Inpn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(group3Inpn),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
+    );
+  }
+
+  factory TTaxref.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TTaxref(
+      cdNom: serializer.fromJson<int>(json['cdNom']),
+      cdRef: serializer.fromJson<int?>(json['cdRef']),
+      idStatut: serializer.fromJson<String?>(json['idStatut']),
+      idHabitat: serializer.fromJson<int?>(json['idHabitat']),
+      idRang: serializer.fromJson<String?>(json['idRang']),
+      regne: serializer.fromJson<String?>(json['regne']),
+      phylum: serializer.fromJson<String?>(json['phylum']),
+      classe: serializer.fromJson<String?>(json['classe']),
+      ordre: serializer.fromJson<String?>(json['ordre']),
+      famille: serializer.fromJson<String?>(json['famille']),
+      sousFamille: serializer.fromJson<String?>(json['sousFamille']),
+      tribu: serializer.fromJson<String?>(json['tribu']),
+      cdTaxsup: serializer.fromJson<int?>(json['cdTaxsup']),
+      cdSup: serializer.fromJson<int?>(json['cdSup']),
+      lbNom: serializer.fromJson<String?>(json['lbNom']),
+      lbAuteur: serializer.fromJson<String?>(json['lbAuteur']),
+      nomComplet: serializer.fromJson<String>(json['nomComplet']),
+      nomCompletHtml: serializer.fromJson<String?>(json['nomCompletHtml']),
+      nomVern: serializer.fromJson<String?>(json['nomVern']),
+      nomValide: serializer.fromJson<String?>(json['nomValide']),
+      nomVernEng: serializer.fromJson<String?>(json['nomVernEng']),
+      group1Inpn: serializer.fromJson<String?>(json['group1Inpn']),
+      group2Inpn: serializer.fromJson<String?>(json['group2Inpn']),
+      group3Inpn: serializer.fromJson<String?>(json['group3Inpn']),
+      url: serializer.fromJson<String?>(json['url']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'cdNom': serializer.toJson<int>(cdNom),
+      'cdRef': serializer.toJson<int?>(cdRef),
+      'idStatut': serializer.toJson<String?>(idStatut),
+      'idHabitat': serializer.toJson<int?>(idHabitat),
+      'idRang': serializer.toJson<String?>(idRang),
+      'regne': serializer.toJson<String?>(regne),
+      'phylum': serializer.toJson<String?>(phylum),
+      'classe': serializer.toJson<String?>(classe),
+      'ordre': serializer.toJson<String?>(ordre),
+      'famille': serializer.toJson<String?>(famille),
+      'sousFamille': serializer.toJson<String?>(sousFamille),
+      'tribu': serializer.toJson<String?>(tribu),
+      'cdTaxsup': serializer.toJson<int?>(cdTaxsup),
+      'cdSup': serializer.toJson<int?>(cdSup),
+      'lbNom': serializer.toJson<String?>(lbNom),
+      'lbAuteur': serializer.toJson<String?>(lbAuteur),
+      'nomComplet': serializer.toJson<String>(nomComplet),
+      'nomCompletHtml': serializer.toJson<String?>(nomCompletHtml),
+      'nomVern': serializer.toJson<String?>(nomVern),
+      'nomValide': serializer.toJson<String?>(nomValide),
+      'nomVernEng': serializer.toJson<String?>(nomVernEng),
+      'group1Inpn': serializer.toJson<String?>(group1Inpn),
+      'group2Inpn': serializer.toJson<String?>(group2Inpn),
+      'group3Inpn': serializer.toJson<String?>(group3Inpn),
+      'url': serializer.toJson<String?>(url),
+    };
+  }
+
+  TTaxref copyWith(
+          {int? cdNom,
+          Value<int?> cdRef = const Value.absent(),
+          Value<String?> idStatut = const Value.absent(),
+          Value<int?> idHabitat = const Value.absent(),
+          Value<String?> idRang = const Value.absent(),
+          Value<String?> regne = const Value.absent(),
+          Value<String?> phylum = const Value.absent(),
+          Value<String?> classe = const Value.absent(),
+          Value<String?> ordre = const Value.absent(),
+          Value<String?> famille = const Value.absent(),
+          Value<String?> sousFamille = const Value.absent(),
+          Value<String?> tribu = const Value.absent(),
+          Value<int?> cdTaxsup = const Value.absent(),
+          Value<int?> cdSup = const Value.absent(),
+          Value<String?> lbNom = const Value.absent(),
+          Value<String?> lbAuteur = const Value.absent(),
+          String? nomComplet,
+          Value<String?> nomCompletHtml = const Value.absent(),
+          Value<String?> nomVern = const Value.absent(),
+          Value<String?> nomValide = const Value.absent(),
+          Value<String?> nomVernEng = const Value.absent(),
+          Value<String?> group1Inpn = const Value.absent(),
+          Value<String?> group2Inpn = const Value.absent(),
+          Value<String?> group3Inpn = const Value.absent(),
+          Value<String?> url = const Value.absent()}) =>
+      TTaxref(
+        cdNom: cdNom ?? this.cdNom,
+        cdRef: cdRef.present ? cdRef.value : this.cdRef,
+        idStatut: idStatut.present ? idStatut.value : this.idStatut,
+        idHabitat: idHabitat.present ? idHabitat.value : this.idHabitat,
+        idRang: idRang.present ? idRang.value : this.idRang,
+        regne: regne.present ? regne.value : this.regne,
+        phylum: phylum.present ? phylum.value : this.phylum,
+        classe: classe.present ? classe.value : this.classe,
+        ordre: ordre.present ? ordre.value : this.ordre,
+        famille: famille.present ? famille.value : this.famille,
+        sousFamille: sousFamille.present ? sousFamille.value : this.sousFamille,
+        tribu: tribu.present ? tribu.value : this.tribu,
+        cdTaxsup: cdTaxsup.present ? cdTaxsup.value : this.cdTaxsup,
+        cdSup: cdSup.present ? cdSup.value : this.cdSup,
+        lbNom: lbNom.present ? lbNom.value : this.lbNom,
+        lbAuteur: lbAuteur.present ? lbAuteur.value : this.lbAuteur,
+        nomComplet: nomComplet ?? this.nomComplet,
+        nomCompletHtml:
+            nomCompletHtml.present ? nomCompletHtml.value : this.nomCompletHtml,
+        nomVern: nomVern.present ? nomVern.value : this.nomVern,
+        nomValide: nomValide.present ? nomValide.value : this.nomValide,
+        nomVernEng: nomVernEng.present ? nomVernEng.value : this.nomVernEng,
+        group1Inpn: group1Inpn.present ? group1Inpn.value : this.group1Inpn,
+        group2Inpn: group2Inpn.present ? group2Inpn.value : this.group2Inpn,
+        group3Inpn: group3Inpn.present ? group3Inpn.value : this.group3Inpn,
+        url: url.present ? url.value : this.url,
+      );
+  TTaxref copyWithCompanion(TTaxrefsCompanion data) {
+    return TTaxref(
+      cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
+      cdRef: data.cdRef.present ? data.cdRef.value : this.cdRef,
+      idStatut: data.idStatut.present ? data.idStatut.value : this.idStatut,
+      idHabitat: data.idHabitat.present ? data.idHabitat.value : this.idHabitat,
+      idRang: data.idRang.present ? data.idRang.value : this.idRang,
+      regne: data.regne.present ? data.regne.value : this.regne,
+      phylum: data.phylum.present ? data.phylum.value : this.phylum,
+      classe: data.classe.present ? data.classe.value : this.classe,
+      ordre: data.ordre.present ? data.ordre.value : this.ordre,
+      famille: data.famille.present ? data.famille.value : this.famille,
+      sousFamille:
+          data.sousFamille.present ? data.sousFamille.value : this.sousFamille,
+      tribu: data.tribu.present ? data.tribu.value : this.tribu,
+      cdTaxsup: data.cdTaxsup.present ? data.cdTaxsup.value : this.cdTaxsup,
+      cdSup: data.cdSup.present ? data.cdSup.value : this.cdSup,
+      lbNom: data.lbNom.present ? data.lbNom.value : this.lbNom,
+      lbAuteur: data.lbAuteur.present ? data.lbAuteur.value : this.lbAuteur,
+      nomComplet:
+          data.nomComplet.present ? data.nomComplet.value : this.nomComplet,
+      nomCompletHtml: data.nomCompletHtml.present
+          ? data.nomCompletHtml.value
+          : this.nomCompletHtml,
+      nomVern: data.nomVern.present ? data.nomVern.value : this.nomVern,
+      nomValide: data.nomValide.present ? data.nomValide.value : this.nomValide,
+      nomVernEng:
+          data.nomVernEng.present ? data.nomVernEng.value : this.nomVernEng,
+      group1Inpn:
+          data.group1Inpn.present ? data.group1Inpn.value : this.group1Inpn,
+      group2Inpn:
+          data.group2Inpn.present ? data.group2Inpn.value : this.group2Inpn,
+      group3Inpn:
+          data.group3Inpn.present ? data.group3Inpn.value : this.group3Inpn,
+      url: data.url.present ? data.url.value : this.url,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TTaxref(')
+          ..write('cdNom: $cdNom, ')
+          ..write('cdRef: $cdRef, ')
+          ..write('idStatut: $idStatut, ')
+          ..write('idHabitat: $idHabitat, ')
+          ..write('idRang: $idRang, ')
+          ..write('regne: $regne, ')
+          ..write('phylum: $phylum, ')
+          ..write('classe: $classe, ')
+          ..write('ordre: $ordre, ')
+          ..write('famille: $famille, ')
+          ..write('sousFamille: $sousFamille, ')
+          ..write('tribu: $tribu, ')
+          ..write('cdTaxsup: $cdTaxsup, ')
+          ..write('cdSup: $cdSup, ')
+          ..write('lbNom: $lbNom, ')
+          ..write('lbAuteur: $lbAuteur, ')
+          ..write('nomComplet: $nomComplet, ')
+          ..write('nomCompletHtml: $nomCompletHtml, ')
+          ..write('nomVern: $nomVern, ')
+          ..write('nomValide: $nomValide, ')
+          ..write('nomVernEng: $nomVernEng, ')
+          ..write('group1Inpn: $group1Inpn, ')
+          ..write('group2Inpn: $group2Inpn, ')
+          ..write('group3Inpn: $group3Inpn, ')
+          ..write('url: $url')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+        cdNom,
+        cdRef,
+        idStatut,
+        idHabitat,
+        idRang,
+        regne,
+        phylum,
+        classe,
+        ordre,
+        famille,
+        sousFamille,
+        tribu,
+        cdTaxsup,
+        cdSup,
+        lbNom,
+        lbAuteur,
+        nomComplet,
+        nomCompletHtml,
+        nomVern,
+        nomValide,
+        nomVernEng,
+        group1Inpn,
+        group2Inpn,
+        group3Inpn,
+        url
+      ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TTaxref &&
+          other.cdNom == this.cdNom &&
+          other.cdRef == this.cdRef &&
+          other.idStatut == this.idStatut &&
+          other.idHabitat == this.idHabitat &&
+          other.idRang == this.idRang &&
+          other.regne == this.regne &&
+          other.phylum == this.phylum &&
+          other.classe == this.classe &&
+          other.ordre == this.ordre &&
+          other.famille == this.famille &&
+          other.sousFamille == this.sousFamille &&
+          other.tribu == this.tribu &&
+          other.cdTaxsup == this.cdTaxsup &&
+          other.cdSup == this.cdSup &&
+          other.lbNom == this.lbNom &&
+          other.lbAuteur == this.lbAuteur &&
+          other.nomComplet == this.nomComplet &&
+          other.nomCompletHtml == this.nomCompletHtml &&
+          other.nomVern == this.nomVern &&
+          other.nomValide == this.nomValide &&
+          other.nomVernEng == this.nomVernEng &&
+          other.group1Inpn == this.group1Inpn &&
+          other.group2Inpn == this.group2Inpn &&
+          other.group3Inpn == this.group3Inpn &&
+          other.url == this.url);
+}
+
+class TTaxrefsCompanion extends UpdateCompanion<TTaxref> {
+  final Value<int> cdNom;
+  final Value<int?> cdRef;
+  final Value<String?> idStatut;
+  final Value<int?> idHabitat;
+  final Value<String?> idRang;
+  final Value<String?> regne;
+  final Value<String?> phylum;
+  final Value<String?> classe;
+  final Value<String?> ordre;
+  final Value<String?> famille;
+  final Value<String?> sousFamille;
+  final Value<String?> tribu;
+  final Value<int?> cdTaxsup;
+  final Value<int?> cdSup;
+  final Value<String?> lbNom;
+  final Value<String?> lbAuteur;
+  final Value<String> nomComplet;
+  final Value<String?> nomCompletHtml;
+  final Value<String?> nomVern;
+  final Value<String?> nomValide;
+  final Value<String?> nomVernEng;
+  final Value<String?> group1Inpn;
+  final Value<String?> group2Inpn;
+  final Value<String?> group3Inpn;
+  final Value<String?> url;
+  const TTaxrefsCompanion({
+    this.cdNom = const Value.absent(),
+    this.cdRef = const Value.absent(),
+    this.idStatut = const Value.absent(),
+    this.idHabitat = const Value.absent(),
+    this.idRang = const Value.absent(),
+    this.regne = const Value.absent(),
+    this.phylum = const Value.absent(),
+    this.classe = const Value.absent(),
+    this.ordre = const Value.absent(),
+    this.famille = const Value.absent(),
+    this.sousFamille = const Value.absent(),
+    this.tribu = const Value.absent(),
+    this.cdTaxsup = const Value.absent(),
+    this.cdSup = const Value.absent(),
+    this.lbNom = const Value.absent(),
+    this.lbAuteur = const Value.absent(),
+    this.nomComplet = const Value.absent(),
+    this.nomCompletHtml = const Value.absent(),
+    this.nomVern = const Value.absent(),
+    this.nomValide = const Value.absent(),
+    this.nomVernEng = const Value.absent(),
+    this.group1Inpn = const Value.absent(),
+    this.group2Inpn = const Value.absent(),
+    this.group3Inpn = const Value.absent(),
+    this.url = const Value.absent(),
+  });
+  TTaxrefsCompanion.insert({
+    this.cdNom = const Value.absent(),
+    this.cdRef = const Value.absent(),
+    this.idStatut = const Value.absent(),
+    this.idHabitat = const Value.absent(),
+    this.idRang = const Value.absent(),
+    this.regne = const Value.absent(),
+    this.phylum = const Value.absent(),
+    this.classe = const Value.absent(),
+    this.ordre = const Value.absent(),
+    this.famille = const Value.absent(),
+    this.sousFamille = const Value.absent(),
+    this.tribu = const Value.absent(),
+    this.cdTaxsup = const Value.absent(),
+    this.cdSup = const Value.absent(),
+    this.lbNom = const Value.absent(),
+    this.lbAuteur = const Value.absent(),
+    required String nomComplet,
+    this.nomCompletHtml = const Value.absent(),
+    this.nomVern = const Value.absent(),
+    this.nomValide = const Value.absent(),
+    this.nomVernEng = const Value.absent(),
+    this.group1Inpn = const Value.absent(),
+    this.group2Inpn = const Value.absent(),
+    this.group3Inpn = const Value.absent(),
+    this.url = const Value.absent(),
+  }) : nomComplet = Value(nomComplet);
+  static Insertable<TTaxref> custom({
+    Expression<int>? cdNom,
+    Expression<int>? cdRef,
+    Expression<String>? idStatut,
+    Expression<int>? idHabitat,
+    Expression<String>? idRang,
+    Expression<String>? regne,
+    Expression<String>? phylum,
+    Expression<String>? classe,
+    Expression<String>? ordre,
+    Expression<String>? famille,
+    Expression<String>? sousFamille,
+    Expression<String>? tribu,
+    Expression<int>? cdTaxsup,
+    Expression<int>? cdSup,
+    Expression<String>? lbNom,
+    Expression<String>? lbAuteur,
+    Expression<String>? nomComplet,
+    Expression<String>? nomCompletHtml,
+    Expression<String>? nomVern,
+    Expression<String>? nomValide,
+    Expression<String>? nomVernEng,
+    Expression<String>? group1Inpn,
+    Expression<String>? group2Inpn,
+    Expression<String>? group3Inpn,
+    Expression<String>? url,
+  }) {
+    return RawValuesInsertable({
+      if (cdNom != null) 'cd_nom': cdNom,
+      if (cdRef != null) 'cd_ref': cdRef,
+      if (idStatut != null) 'id_statut': idStatut,
+      if (idHabitat != null) 'id_habitat': idHabitat,
+      if (idRang != null) 'id_rang': idRang,
+      if (regne != null) 'regne': regne,
+      if (phylum != null) 'phylum': phylum,
+      if (classe != null) 'classe': classe,
+      if (ordre != null) 'ordre': ordre,
+      if (famille != null) 'famille': famille,
+      if (sousFamille != null) 'sous_famille': sousFamille,
+      if (tribu != null) 'tribu': tribu,
+      if (cdTaxsup != null) 'cd_taxsup': cdTaxsup,
+      if (cdSup != null) 'cd_sup': cdSup,
+      if (lbNom != null) 'lb_nom': lbNom,
+      if (lbAuteur != null) 'lb_auteur': lbAuteur,
+      if (nomComplet != null) 'nom_complet': nomComplet,
+      if (nomCompletHtml != null) 'nom_complet_html': nomCompletHtml,
+      if (nomVern != null) 'nom_vern': nomVern,
+      if (nomValide != null) 'nom_valide': nomValide,
+      if (nomVernEng != null) 'nom_vern_eng': nomVernEng,
+      if (group1Inpn != null) 'group1_inpn': group1Inpn,
+      if (group2Inpn != null) 'group2_inpn': group2Inpn,
+      if (group3Inpn != null) 'group3_inpn': group3Inpn,
+      if (url != null) 'url': url,
+    });
+  }
+
+  TTaxrefsCompanion copyWith(
+      {Value<int>? cdNom,
+      Value<int?>? cdRef,
+      Value<String?>? idStatut,
+      Value<int?>? idHabitat,
+      Value<String?>? idRang,
+      Value<String?>? regne,
+      Value<String?>? phylum,
+      Value<String?>? classe,
+      Value<String?>? ordre,
+      Value<String?>? famille,
+      Value<String?>? sousFamille,
+      Value<String?>? tribu,
+      Value<int?>? cdTaxsup,
+      Value<int?>? cdSup,
+      Value<String?>? lbNom,
+      Value<String?>? lbAuteur,
+      Value<String>? nomComplet,
+      Value<String?>? nomCompletHtml,
+      Value<String?>? nomVern,
+      Value<String?>? nomValide,
+      Value<String?>? nomVernEng,
+      Value<String?>? group1Inpn,
+      Value<String?>? group2Inpn,
+      Value<String?>? group3Inpn,
+      Value<String?>? url}) {
+    return TTaxrefsCompanion(
+      cdNom: cdNom ?? this.cdNom,
+      cdRef: cdRef ?? this.cdRef,
+      idStatut: idStatut ?? this.idStatut,
+      idHabitat: idHabitat ?? this.idHabitat,
+      idRang: idRang ?? this.idRang,
+      regne: regne ?? this.regne,
+      phylum: phylum ?? this.phylum,
+      classe: classe ?? this.classe,
+      ordre: ordre ?? this.ordre,
+      famille: famille ?? this.famille,
+      sousFamille: sousFamille ?? this.sousFamille,
+      tribu: tribu ?? this.tribu,
+      cdTaxsup: cdTaxsup ?? this.cdTaxsup,
+      cdSup: cdSup ?? this.cdSup,
+      lbNom: lbNom ?? this.lbNom,
+      lbAuteur: lbAuteur ?? this.lbAuteur,
+      nomComplet: nomComplet ?? this.nomComplet,
+      nomCompletHtml: nomCompletHtml ?? this.nomCompletHtml,
+      nomVern: nomVern ?? this.nomVern,
+      nomValide: nomValide ?? this.nomValide,
+      nomVernEng: nomVernEng ?? this.nomVernEng,
+      group1Inpn: group1Inpn ?? this.group1Inpn,
+      group2Inpn: group2Inpn ?? this.group2Inpn,
+      group3Inpn: group3Inpn ?? this.group3Inpn,
+      url: url ?? this.url,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (cdNom.present) {
+      map['cd_nom'] = Variable<int>(cdNom.value);
+    }
+    if (cdRef.present) {
+      map['cd_ref'] = Variable<int>(cdRef.value);
+    }
+    if (idStatut.present) {
+      map['id_statut'] = Variable<String>(idStatut.value);
+    }
+    if (idHabitat.present) {
+      map['id_habitat'] = Variable<int>(idHabitat.value);
+    }
+    if (idRang.present) {
+      map['id_rang'] = Variable<String>(idRang.value);
+    }
+    if (regne.present) {
+      map['regne'] = Variable<String>(regne.value);
+    }
+    if (phylum.present) {
+      map['phylum'] = Variable<String>(phylum.value);
+    }
+    if (classe.present) {
+      map['classe'] = Variable<String>(classe.value);
+    }
+    if (ordre.present) {
+      map['ordre'] = Variable<String>(ordre.value);
+    }
+    if (famille.present) {
+      map['famille'] = Variable<String>(famille.value);
+    }
+    if (sousFamille.present) {
+      map['sous_famille'] = Variable<String>(sousFamille.value);
+    }
+    if (tribu.present) {
+      map['tribu'] = Variable<String>(tribu.value);
+    }
+    if (cdTaxsup.present) {
+      map['cd_taxsup'] = Variable<int>(cdTaxsup.value);
+    }
+    if (cdSup.present) {
+      map['cd_sup'] = Variable<int>(cdSup.value);
+    }
+    if (lbNom.present) {
+      map['lb_nom'] = Variable<String>(lbNom.value);
+    }
+    if (lbAuteur.present) {
+      map['lb_auteur'] = Variable<String>(lbAuteur.value);
+    }
+    if (nomComplet.present) {
+      map['nom_complet'] = Variable<String>(nomComplet.value);
+    }
+    if (nomCompletHtml.present) {
+      map['nom_complet_html'] = Variable<String>(nomCompletHtml.value);
+    }
+    if (nomVern.present) {
+      map['nom_vern'] = Variable<String>(nomVern.value);
+    }
+    if (nomValide.present) {
+      map['nom_valide'] = Variable<String>(nomValide.value);
+    }
+    if (nomVernEng.present) {
+      map['nom_vern_eng'] = Variable<String>(nomVernEng.value);
+    }
+    if (group1Inpn.present) {
+      map['group1_inpn'] = Variable<String>(group1Inpn.value);
+    }
+    if (group2Inpn.present) {
+      map['group2_inpn'] = Variable<String>(group2Inpn.value);
+    }
+    if (group3Inpn.present) {
+      map['group3_inpn'] = Variable<String>(group3Inpn.value);
+    }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TTaxrefsCompanion(')
+          ..write('cdNom: $cdNom, ')
+          ..write('cdRef: $cdRef, ')
+          ..write('idStatut: $idStatut, ')
+          ..write('idHabitat: $idHabitat, ')
+          ..write('idRang: $idRang, ')
+          ..write('regne: $regne, ')
+          ..write('phylum: $phylum, ')
+          ..write('classe: $classe, ')
+          ..write('ordre: $ordre, ')
+          ..write('famille: $famille, ')
+          ..write('sousFamille: $sousFamille, ')
+          ..write('tribu: $tribu, ')
+          ..write('cdTaxsup: $cdTaxsup, ')
+          ..write('cdSup: $cdSup, ')
+          ..write('lbNom: $lbNom, ')
+          ..write('lbAuteur: $lbAuteur, ')
+          ..write('nomComplet: $nomComplet, ')
+          ..write('nomCompletHtml: $nomCompletHtml, ')
+          ..write('nomVern: $nomVern, ')
+          ..write('nomValide: $nomValide, ')
+          ..write('nomVernEng: $nomVernEng, ')
+          ..write('group1Inpn: $group1Inpn, ')
+          ..write('group2Inpn: $group2Inpn, ')
+          ..write('group3Inpn: $group3Inpn, ')
+          ..write('url: $url')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $BibListesTableTable extends BibListesTable
+    with TableInfo<$BibListesTableTable, TBibListe> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $BibListesTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idListeMeta =
+      const VerificationMeta('idListe');
+  @override
+  late final GeneratedColumn<int> idListe = GeneratedColumn<int>(
+      'id_liste', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _codeListeMeta =
+      const VerificationMeta('codeListe');
+  @override
+  late final GeneratedColumn<String> codeListe = GeneratedColumn<String>(
+      'code_liste', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _nomListeMeta =
+      const VerificationMeta('nomListe');
+  @override
+  late final GeneratedColumn<String> nomListe = GeneratedColumn<String>(
+      'nom_liste', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _descListeMeta =
+      const VerificationMeta('descListe');
+  @override
+  late final GeneratedColumn<String> descListe = GeneratedColumn<String>(
+      'desc_liste', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _regneMeta = const VerificationMeta('regne');
+  @override
+  late final GeneratedColumn<String> regne = GeneratedColumn<String>(
+      'regne', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _group2InpnMeta =
+      const VerificationMeta('group2Inpn');
+  @override
+  late final GeneratedColumn<String> group2Inpn = GeneratedColumn<String>(
+      'group2_inpn', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns =>
+      [idListe, codeListe, nomListe, descListe, regne, group2Inpn];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'bib_listes_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<TBibListe> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_liste')) {
+      context.handle(_idListeMeta,
+          idListe.isAcceptableOrUnknown(data['id_liste']!, _idListeMeta));
+    }
+    if (data.containsKey('code_liste')) {
+      context.handle(_codeListeMeta,
+          codeListe.isAcceptableOrUnknown(data['code_liste']!, _codeListeMeta));
+    }
+    if (data.containsKey('nom_liste')) {
+      context.handle(_nomListeMeta,
+          nomListe.isAcceptableOrUnknown(data['nom_liste']!, _nomListeMeta));
+    } else if (isInserting) {
+      context.missing(_nomListeMeta);
+    }
+    if (data.containsKey('desc_liste')) {
+      context.handle(_descListeMeta,
+          descListe.isAcceptableOrUnknown(data['desc_liste']!, _descListeMeta));
+    }
+    if (data.containsKey('regne')) {
+      context.handle(
+          _regneMeta, regne.isAcceptableOrUnknown(data['regne']!, _regneMeta));
+    }
+    if (data.containsKey('group2_inpn')) {
+      context.handle(
+          _group2InpnMeta,
+          group2Inpn.isAcceptableOrUnknown(
+              data['group2_inpn']!, _group2InpnMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idListe};
+  @override
+  TBibListe map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TBibListe(
+      idListe: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_liste'])!,
+      codeListe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}code_liste']),
+      nomListe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_liste'])!,
+      descListe: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}desc_liste']),
+      regne: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}regne']),
+      group2Inpn: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}group2_inpn']),
+    );
+  }
+
+  @override
+  $BibListesTableTable createAlias(String alias) {
+    return $BibListesTableTable(attachedDatabase, alias);
+  }
+}
+
+class TBibListe extends DataClass implements Insertable<TBibListe> {
+  final int idListe;
+  final String? codeListe;
+  final String nomListe;
+  final String? descListe;
+  final String? regne;
+  final String? group2Inpn;
+  const TBibListe(
+      {required this.idListe,
+      this.codeListe,
+      required this.nomListe,
+      this.descListe,
+      this.regne,
+      this.group2Inpn});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_liste'] = Variable<int>(idListe);
+    if (!nullToAbsent || codeListe != null) {
+      map['code_liste'] = Variable<String>(codeListe);
+    }
+    map['nom_liste'] = Variable<String>(nomListe);
+    if (!nullToAbsent || descListe != null) {
+      map['desc_liste'] = Variable<String>(descListe);
+    }
+    if (!nullToAbsent || regne != null) {
+      map['regne'] = Variable<String>(regne);
+    }
+    if (!nullToAbsent || group2Inpn != null) {
+      map['group2_inpn'] = Variable<String>(group2Inpn);
+    }
+    return map;
+  }
+
+  BibListesTableCompanion toCompanion(bool nullToAbsent) {
+    return BibListesTableCompanion(
+      idListe: Value(idListe),
+      codeListe: codeListe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(codeListe),
+      nomListe: Value(nomListe),
+      descListe: descListe == null && nullToAbsent
+          ? const Value.absent()
+          : Value(descListe),
+      regne:
+          regne == null && nullToAbsent ? const Value.absent() : Value(regne),
+      group2Inpn: group2Inpn == null && nullToAbsent
+          ? const Value.absent()
+          : Value(group2Inpn),
+    );
+  }
+
+  factory TBibListe.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TBibListe(
+      idListe: serializer.fromJson<int>(json['idListe']),
+      codeListe: serializer.fromJson<String?>(json['codeListe']),
+      nomListe: serializer.fromJson<String>(json['nomListe']),
+      descListe: serializer.fromJson<String?>(json['descListe']),
+      regne: serializer.fromJson<String?>(json['regne']),
+      group2Inpn: serializer.fromJson<String?>(json['group2Inpn']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idListe': serializer.toJson<int>(idListe),
+      'codeListe': serializer.toJson<String?>(codeListe),
+      'nomListe': serializer.toJson<String>(nomListe),
+      'descListe': serializer.toJson<String?>(descListe),
+      'regne': serializer.toJson<String?>(regne),
+      'group2Inpn': serializer.toJson<String?>(group2Inpn),
+    };
+  }
+
+  TBibListe copyWith(
+          {int? idListe,
+          Value<String?> codeListe = const Value.absent(),
+          String? nomListe,
+          Value<String?> descListe = const Value.absent(),
+          Value<String?> regne = const Value.absent(),
+          Value<String?> group2Inpn = const Value.absent()}) =>
+      TBibListe(
+        idListe: idListe ?? this.idListe,
+        codeListe: codeListe.present ? codeListe.value : this.codeListe,
+        nomListe: nomListe ?? this.nomListe,
+        descListe: descListe.present ? descListe.value : this.descListe,
+        regne: regne.present ? regne.value : this.regne,
+        group2Inpn: group2Inpn.present ? group2Inpn.value : this.group2Inpn,
+      );
+  TBibListe copyWithCompanion(BibListesTableCompanion data) {
+    return TBibListe(
+      idListe: data.idListe.present ? data.idListe.value : this.idListe,
+      codeListe: data.codeListe.present ? data.codeListe.value : this.codeListe,
+      nomListe: data.nomListe.present ? data.nomListe.value : this.nomListe,
+      descListe: data.descListe.present ? data.descListe.value : this.descListe,
+      regne: data.regne.present ? data.regne.value : this.regne,
+      group2Inpn:
+          data.group2Inpn.present ? data.group2Inpn.value : this.group2Inpn,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TBibListe(')
+          ..write('idListe: $idListe, ')
+          ..write('codeListe: $codeListe, ')
+          ..write('nomListe: $nomListe, ')
+          ..write('descListe: $descListe, ')
+          ..write('regne: $regne, ')
+          ..write('group2Inpn: $group2Inpn')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(idListe, codeListe, nomListe, descListe, regne, group2Inpn);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TBibListe &&
+          other.idListe == this.idListe &&
+          other.codeListe == this.codeListe &&
+          other.nomListe == this.nomListe &&
+          other.descListe == this.descListe &&
+          other.regne == this.regne &&
+          other.group2Inpn == this.group2Inpn);
+}
+
+class BibListesTableCompanion extends UpdateCompanion<TBibListe> {
+  final Value<int> idListe;
+  final Value<String?> codeListe;
+  final Value<String> nomListe;
+  final Value<String?> descListe;
+  final Value<String?> regne;
+  final Value<String?> group2Inpn;
+  const BibListesTableCompanion({
+    this.idListe = const Value.absent(),
+    this.codeListe = const Value.absent(),
+    this.nomListe = const Value.absent(),
+    this.descListe = const Value.absent(),
+    this.regne = const Value.absent(),
+    this.group2Inpn = const Value.absent(),
+  });
+  BibListesTableCompanion.insert({
+    this.idListe = const Value.absent(),
+    this.codeListe = const Value.absent(),
+    required String nomListe,
+    this.descListe = const Value.absent(),
+    this.regne = const Value.absent(),
+    this.group2Inpn = const Value.absent(),
+  }) : nomListe = Value(nomListe);
+  static Insertable<TBibListe> custom({
+    Expression<int>? idListe,
+    Expression<String>? codeListe,
+    Expression<String>? nomListe,
+    Expression<String>? descListe,
+    Expression<String>? regne,
+    Expression<String>? group2Inpn,
+  }) {
+    return RawValuesInsertable({
+      if (idListe != null) 'id_liste': idListe,
+      if (codeListe != null) 'code_liste': codeListe,
+      if (nomListe != null) 'nom_liste': nomListe,
+      if (descListe != null) 'desc_liste': descListe,
+      if (regne != null) 'regne': regne,
+      if (group2Inpn != null) 'group2_inpn': group2Inpn,
+    });
+  }
+
+  BibListesTableCompanion copyWith(
+      {Value<int>? idListe,
+      Value<String?>? codeListe,
+      Value<String>? nomListe,
+      Value<String?>? descListe,
+      Value<String?>? regne,
+      Value<String?>? group2Inpn}) {
+    return BibListesTableCompanion(
+      idListe: idListe ?? this.idListe,
+      codeListe: codeListe ?? this.codeListe,
+      nomListe: nomListe ?? this.nomListe,
+      descListe: descListe ?? this.descListe,
+      regne: regne ?? this.regne,
+      group2Inpn: group2Inpn ?? this.group2Inpn,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idListe.present) {
+      map['id_liste'] = Variable<int>(idListe.value);
+    }
+    if (codeListe.present) {
+      map['code_liste'] = Variable<String>(codeListe.value);
+    }
+    if (nomListe.present) {
+      map['nom_liste'] = Variable<String>(nomListe.value);
+    }
+    if (descListe.present) {
+      map['desc_liste'] = Variable<String>(descListe.value);
+    }
+    if (regne.present) {
+      map['regne'] = Variable<String>(regne.value);
+    }
+    if (group2Inpn.present) {
+      map['group2_inpn'] = Variable<String>(group2Inpn.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('BibListesTableCompanion(')
+          ..write('idListe: $idListe, ')
+          ..write('codeListe: $codeListe, ')
+          ..write('nomListe: $nomListe, ')
+          ..write('descListe: $descListe, ')
+          ..write('regne: $regne, ')
+          ..write('group2Inpn: $group2Inpn')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CorTaxonListeTableTable extends CorTaxonListeTable
+    with TableInfo<$CorTaxonListeTableTable, CorTaxonListe> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorTaxonListeTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idListeMeta =
+      const VerificationMeta('idListe');
+  @override
+  late final GeneratedColumn<int> idListe = GeneratedColumn<int>(
+      'id_liste', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'REFERENCES bib_listes_table (id_liste)'));
+  static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
+  @override
+  late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
+      'cd_nom', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: true,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('REFERENCES t_taxrefs (cd_nom)'));
+  @override
+  List<GeneratedColumn> get $columns => [idListe, cdNom];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cor_taxon_liste_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<CorTaxonListe> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_liste')) {
+      context.handle(_idListeMeta,
+          idListe.isAcceptableOrUnknown(data['id_liste']!, _idListeMeta));
+    } else if (isInserting) {
+      context.missing(_idListeMeta);
+    }
+    if (data.containsKey('cd_nom')) {
+      context.handle(
+          _cdNomMeta, cdNom.isAcceptableOrUnknown(data['cd_nom']!, _cdNomMeta));
+    } else if (isInserting) {
+      context.missing(_cdNomMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idListe, cdNom};
+  @override
+  CorTaxonListe map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorTaxonListe(
+      idListe: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_liste'])!,
+      cdNom: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_nom'])!,
+    );
+  }
+
+  @override
+  $CorTaxonListeTableTable createAlias(String alias) {
+    return $CorTaxonListeTableTable(attachedDatabase, alias);
+  }
+}
+
+class CorTaxonListe extends DataClass implements Insertable<CorTaxonListe> {
+  final int idListe;
+  final int cdNom;
+  const CorTaxonListe({required this.idListe, required this.cdNom});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_liste'] = Variable<int>(idListe);
+    map['cd_nom'] = Variable<int>(cdNom);
+    return map;
+  }
+
+  CorTaxonListeTableCompanion toCompanion(bool nullToAbsent) {
+    return CorTaxonListeTableCompanion(
+      idListe: Value(idListe),
+      cdNom: Value(cdNom),
+    );
+  }
+
+  factory CorTaxonListe.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorTaxonListe(
+      idListe: serializer.fromJson<int>(json['idListe']),
+      cdNom: serializer.fromJson<int>(json['cdNom']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idListe': serializer.toJson<int>(idListe),
+      'cdNom': serializer.toJson<int>(cdNom),
+    };
+  }
+
+  CorTaxonListe copyWith({int? idListe, int? cdNom}) => CorTaxonListe(
+        idListe: idListe ?? this.idListe,
+        cdNom: cdNom ?? this.cdNom,
+      );
+  CorTaxonListe copyWithCompanion(CorTaxonListeTableCompanion data) {
+    return CorTaxonListe(
+      idListe: data.idListe.present ? data.idListe.value : this.idListe,
+      cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorTaxonListe(')
+          ..write('idListe: $idListe, ')
+          ..write('cdNom: $cdNom')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(idListe, cdNom);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorTaxonListe &&
+          other.idListe == this.idListe &&
+          other.cdNom == this.cdNom);
+}
+
+class CorTaxonListeTableCompanion extends UpdateCompanion<CorTaxonListe> {
+  final Value<int> idListe;
+  final Value<int> cdNom;
+  final Value<int> rowid;
+  const CorTaxonListeTableCompanion({
+    this.idListe = const Value.absent(),
+    this.cdNom = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorTaxonListeTableCompanion.insert({
+    required int idListe,
+    required int cdNom,
+    this.rowid = const Value.absent(),
+  })  : idListe = Value(idListe),
+        cdNom = Value(cdNom);
+  static Insertable<CorTaxonListe> custom({
+    Expression<int>? idListe,
+    Expression<int>? cdNom,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (idListe != null) 'id_liste': idListe,
+      if (cdNom != null) 'cd_nom': cdNom,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorTaxonListeTableCompanion copyWith(
+      {Value<int>? idListe, Value<int>? cdNom, Value<int>? rowid}) {
+    return CorTaxonListeTableCompanion(
+      idListe: idListe ?? this.idListe,
+      cdNom: cdNom ?? this.cdNom,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idListe.present) {
+      map['id_liste'] = Variable<int>(idListe.value);
+    }
+    if (cdNom.present) {
+      map['cd_nom'] = Variable<int>(cdNom.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorTaxonListeTableCompanion(')
+          ..write('idListe: $idListe, ')
+          ..write('cdNom: $cdNom, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -10399,6 +12047,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CorVisitObserverTable(this);
   late final $CorSiteTypeTableTable corSiteTypeTable =
       $CorSiteTypeTableTable(this);
+  late final $TTaxrefsTable tTaxrefs = $TTaxrefsTable(this);
+  late final $BibListesTableTable bibListesTable = $BibListesTableTable(this);
+  late final $CorTaxonListeTableTable corTaxonListeTable =
+      $CorTaxonListeTableTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
@@ -10411,6 +12063,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ObservationDetailDao(this as AppDatabase);
   late final BibNomenclaturesTypesDao bibNomenclaturesTypesDao =
       BibNomenclaturesTypesDao(this as AppDatabase);
+  late final TaxonDao taxonDao = TaxonDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -10439,7 +12092,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         corObjectModuleTable,
         tBaseVisits,
         corVisitObserver,
-        corSiteTypeTable
+        corSiteTypeTable,
+        tTaxrefs,
+        bibListesTable,
+        corTaxonListeTable
       ];
 }
 
@@ -15679,6 +17335,1134 @@ typedef $$CorSiteTypeTableTableProcessedTableManager = ProcessedTableManager<
     ),
     CorSiteType,
     PrefetchHooks Function()>;
+typedef $$TTaxrefsTableCreateCompanionBuilder = TTaxrefsCompanion Function({
+  Value<int> cdNom,
+  Value<int?> cdRef,
+  Value<String?> idStatut,
+  Value<int?> idHabitat,
+  Value<String?> idRang,
+  Value<String?> regne,
+  Value<String?> phylum,
+  Value<String?> classe,
+  Value<String?> ordre,
+  Value<String?> famille,
+  Value<String?> sousFamille,
+  Value<String?> tribu,
+  Value<int?> cdTaxsup,
+  Value<int?> cdSup,
+  Value<String?> lbNom,
+  Value<String?> lbAuteur,
+  required String nomComplet,
+  Value<String?> nomCompletHtml,
+  Value<String?> nomVern,
+  Value<String?> nomValide,
+  Value<String?> nomVernEng,
+  Value<String?> group1Inpn,
+  Value<String?> group2Inpn,
+  Value<String?> group3Inpn,
+  Value<String?> url,
+});
+typedef $$TTaxrefsTableUpdateCompanionBuilder = TTaxrefsCompanion Function({
+  Value<int> cdNom,
+  Value<int?> cdRef,
+  Value<String?> idStatut,
+  Value<int?> idHabitat,
+  Value<String?> idRang,
+  Value<String?> regne,
+  Value<String?> phylum,
+  Value<String?> classe,
+  Value<String?> ordre,
+  Value<String?> famille,
+  Value<String?> sousFamille,
+  Value<String?> tribu,
+  Value<int?> cdTaxsup,
+  Value<int?> cdSup,
+  Value<String?> lbNom,
+  Value<String?> lbAuteur,
+  Value<String> nomComplet,
+  Value<String?> nomCompletHtml,
+  Value<String?> nomVern,
+  Value<String?> nomValide,
+  Value<String?> nomVernEng,
+  Value<String?> group1Inpn,
+  Value<String?> group2Inpn,
+  Value<String?> group3Inpn,
+  Value<String?> url,
+});
+
+final class $$TTaxrefsTableReferences
+    extends BaseReferences<_$AppDatabase, $TTaxrefsTable, TTaxref> {
+  $$TTaxrefsTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CorTaxonListeTableTable, List<CorTaxonListe>>
+      _corTaxonListeTableRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.corTaxonListeTable,
+              aliasName: $_aliasNameGenerator(
+                  db.tTaxrefs.cdNom, db.corTaxonListeTable.cdNom));
+
+  $$CorTaxonListeTableTableProcessedTableManager get corTaxonListeTableRefs {
+    final manager =
+        $$CorTaxonListeTableTableTableManager($_db, $_db.corTaxonListeTable)
+            .filter((f) => f.cdNom.cdNom($_item.cdNom));
+
+    final cache =
+        $_typedResult.readTableOrNull(_corTaxonListeTableRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$TTaxrefsTableFilterComposer
+    extends Composer<_$AppDatabase, $TTaxrefsTable> {
+  $$TTaxrefsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get cdNom => $composableBuilder(
+      column: $table.cdNom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get cdRef => $composableBuilder(
+      column: $table.cdRef, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get idStatut => $composableBuilder(
+      column: $table.idStatut, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idHabitat => $composableBuilder(
+      column: $table.idHabitat, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get idRang => $composableBuilder(
+      column: $table.idRang, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get regne => $composableBuilder(
+      column: $table.regne, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get phylum => $composableBuilder(
+      column: $table.phylum, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get classe => $composableBuilder(
+      column: $table.classe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get ordre => $composableBuilder(
+      column: $table.ordre, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get famille => $composableBuilder(
+      column: $table.famille, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get sousFamille => $composableBuilder(
+      column: $table.sousFamille, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get tribu => $composableBuilder(
+      column: $table.tribu, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get cdTaxsup => $composableBuilder(
+      column: $table.cdTaxsup, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get cdSup => $composableBuilder(
+      column: $table.cdSup, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lbNom => $composableBuilder(
+      column: $table.lbNom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get lbAuteur => $composableBuilder(
+      column: $table.lbAuteur, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomComplet => $composableBuilder(
+      column: $table.nomComplet, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomCompletHtml => $composableBuilder(
+      column: $table.nomCompletHtml,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomVern => $composableBuilder(
+      column: $table.nomVern, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomValide => $composableBuilder(
+      column: $table.nomValide, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomVernEng => $composableBuilder(
+      column: $table.nomVernEng, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get group1Inpn => $composableBuilder(
+      column: $table.group1Inpn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get group3Inpn => $composableBuilder(
+      column: $table.group3Inpn, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> corTaxonListeTableRefs(
+      Expression<bool> Function($$CorTaxonListeTableTableFilterComposer f) f) {
+    final $$CorTaxonListeTableTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.cdNom,
+        referencedTable: $db.corTaxonListeTable,
+        getReferencedColumn: (t) => t.cdNom,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CorTaxonListeTableTableFilterComposer(
+              $db: $db,
+              $table: $db.corTaxonListeTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$TTaxrefsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TTaxrefsTable> {
+  $$TTaxrefsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get cdNom => $composableBuilder(
+      column: $table.cdNom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get cdRef => $composableBuilder(
+      column: $table.cdRef, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get idStatut => $composableBuilder(
+      column: $table.idStatut, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idHabitat => $composableBuilder(
+      column: $table.idHabitat, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get idRang => $composableBuilder(
+      column: $table.idRang, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get regne => $composableBuilder(
+      column: $table.regne, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get phylum => $composableBuilder(
+      column: $table.phylum, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get classe => $composableBuilder(
+      column: $table.classe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get ordre => $composableBuilder(
+      column: $table.ordre, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get famille => $composableBuilder(
+      column: $table.famille, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get sousFamille => $composableBuilder(
+      column: $table.sousFamille, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get tribu => $composableBuilder(
+      column: $table.tribu, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get cdTaxsup => $composableBuilder(
+      column: $table.cdTaxsup, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get cdSup => $composableBuilder(
+      column: $table.cdSup, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lbNom => $composableBuilder(
+      column: $table.lbNom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get lbAuteur => $composableBuilder(
+      column: $table.lbAuteur, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomComplet => $composableBuilder(
+      column: $table.nomComplet, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomCompletHtml => $composableBuilder(
+      column: $table.nomCompletHtml,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomVern => $composableBuilder(
+      column: $table.nomVern, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomValide => $composableBuilder(
+      column: $table.nomValide, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomVernEng => $composableBuilder(
+      column: $table.nomVernEng, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get group1Inpn => $composableBuilder(
+      column: $table.group1Inpn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get group3Inpn => $composableBuilder(
+      column: $table.group3Inpn, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get url => $composableBuilder(
+      column: $table.url, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TTaxrefsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TTaxrefsTable> {
+  $$TTaxrefsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get cdNom =>
+      $composableBuilder(column: $table.cdNom, builder: (column) => column);
+
+  GeneratedColumn<int> get cdRef =>
+      $composableBuilder(column: $table.cdRef, builder: (column) => column);
+
+  GeneratedColumn<String> get idStatut =>
+      $composableBuilder(column: $table.idStatut, builder: (column) => column);
+
+  GeneratedColumn<int> get idHabitat =>
+      $composableBuilder(column: $table.idHabitat, builder: (column) => column);
+
+  GeneratedColumn<String> get idRang =>
+      $composableBuilder(column: $table.idRang, builder: (column) => column);
+
+  GeneratedColumn<String> get regne =>
+      $composableBuilder(column: $table.regne, builder: (column) => column);
+
+  GeneratedColumn<String> get phylum =>
+      $composableBuilder(column: $table.phylum, builder: (column) => column);
+
+  GeneratedColumn<String> get classe =>
+      $composableBuilder(column: $table.classe, builder: (column) => column);
+
+  GeneratedColumn<String> get ordre =>
+      $composableBuilder(column: $table.ordre, builder: (column) => column);
+
+  GeneratedColumn<String> get famille =>
+      $composableBuilder(column: $table.famille, builder: (column) => column);
+
+  GeneratedColumn<String> get sousFamille => $composableBuilder(
+      column: $table.sousFamille, builder: (column) => column);
+
+  GeneratedColumn<String> get tribu =>
+      $composableBuilder(column: $table.tribu, builder: (column) => column);
+
+  GeneratedColumn<int> get cdTaxsup =>
+      $composableBuilder(column: $table.cdTaxsup, builder: (column) => column);
+
+  GeneratedColumn<int> get cdSup =>
+      $composableBuilder(column: $table.cdSup, builder: (column) => column);
+
+  GeneratedColumn<String> get lbNom =>
+      $composableBuilder(column: $table.lbNom, builder: (column) => column);
+
+  GeneratedColumn<String> get lbAuteur =>
+      $composableBuilder(column: $table.lbAuteur, builder: (column) => column);
+
+  GeneratedColumn<String> get nomComplet => $composableBuilder(
+      column: $table.nomComplet, builder: (column) => column);
+
+  GeneratedColumn<String> get nomCompletHtml => $composableBuilder(
+      column: $table.nomCompletHtml, builder: (column) => column);
+
+  GeneratedColumn<String> get nomVern =>
+      $composableBuilder(column: $table.nomVern, builder: (column) => column);
+
+  GeneratedColumn<String> get nomValide =>
+      $composableBuilder(column: $table.nomValide, builder: (column) => column);
+
+  GeneratedColumn<String> get nomVernEng => $composableBuilder(
+      column: $table.nomVernEng, builder: (column) => column);
+
+  GeneratedColumn<String> get group1Inpn => $composableBuilder(
+      column: $table.group1Inpn, builder: (column) => column);
+
+  GeneratedColumn<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => column);
+
+  GeneratedColumn<String> get group3Inpn => $composableBuilder(
+      column: $table.group3Inpn, builder: (column) => column);
+
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
+  Expression<T> corTaxonListeTableRefs<T extends Object>(
+      Expression<T> Function($$CorTaxonListeTableTableAnnotationComposer a) f) {
+    final $$CorTaxonListeTableTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.cdNom,
+            referencedTable: $db.corTaxonListeTable,
+            getReferencedColumn: (t) => t.cdNom,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$CorTaxonListeTableTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.corTaxonListeTable,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$TTaxrefsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TTaxrefsTable,
+    TTaxref,
+    $$TTaxrefsTableFilterComposer,
+    $$TTaxrefsTableOrderingComposer,
+    $$TTaxrefsTableAnnotationComposer,
+    $$TTaxrefsTableCreateCompanionBuilder,
+    $$TTaxrefsTableUpdateCompanionBuilder,
+    (TTaxref, $$TTaxrefsTableReferences),
+    TTaxref,
+    PrefetchHooks Function({bool corTaxonListeTableRefs})> {
+  $$TTaxrefsTableTableManager(_$AppDatabase db, $TTaxrefsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TTaxrefsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TTaxrefsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TTaxrefsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> cdNom = const Value.absent(),
+            Value<int?> cdRef = const Value.absent(),
+            Value<String?> idStatut = const Value.absent(),
+            Value<int?> idHabitat = const Value.absent(),
+            Value<String?> idRang = const Value.absent(),
+            Value<String?> regne = const Value.absent(),
+            Value<String?> phylum = const Value.absent(),
+            Value<String?> classe = const Value.absent(),
+            Value<String?> ordre = const Value.absent(),
+            Value<String?> famille = const Value.absent(),
+            Value<String?> sousFamille = const Value.absent(),
+            Value<String?> tribu = const Value.absent(),
+            Value<int?> cdTaxsup = const Value.absent(),
+            Value<int?> cdSup = const Value.absent(),
+            Value<String?> lbNom = const Value.absent(),
+            Value<String?> lbAuteur = const Value.absent(),
+            Value<String> nomComplet = const Value.absent(),
+            Value<String?> nomCompletHtml = const Value.absent(),
+            Value<String?> nomVern = const Value.absent(),
+            Value<String?> nomValide = const Value.absent(),
+            Value<String?> nomVernEng = const Value.absent(),
+            Value<String?> group1Inpn = const Value.absent(),
+            Value<String?> group2Inpn = const Value.absent(),
+            Value<String?> group3Inpn = const Value.absent(),
+            Value<String?> url = const Value.absent(),
+          }) =>
+              TTaxrefsCompanion(
+            cdNom: cdNom,
+            cdRef: cdRef,
+            idStatut: idStatut,
+            idHabitat: idHabitat,
+            idRang: idRang,
+            regne: regne,
+            phylum: phylum,
+            classe: classe,
+            ordre: ordre,
+            famille: famille,
+            sousFamille: sousFamille,
+            tribu: tribu,
+            cdTaxsup: cdTaxsup,
+            cdSup: cdSup,
+            lbNom: lbNom,
+            lbAuteur: lbAuteur,
+            nomComplet: nomComplet,
+            nomCompletHtml: nomCompletHtml,
+            nomVern: nomVern,
+            nomValide: nomValide,
+            nomVernEng: nomVernEng,
+            group1Inpn: group1Inpn,
+            group2Inpn: group2Inpn,
+            group3Inpn: group3Inpn,
+            url: url,
+          ),
+          createCompanionCallback: ({
+            Value<int> cdNom = const Value.absent(),
+            Value<int?> cdRef = const Value.absent(),
+            Value<String?> idStatut = const Value.absent(),
+            Value<int?> idHabitat = const Value.absent(),
+            Value<String?> idRang = const Value.absent(),
+            Value<String?> regne = const Value.absent(),
+            Value<String?> phylum = const Value.absent(),
+            Value<String?> classe = const Value.absent(),
+            Value<String?> ordre = const Value.absent(),
+            Value<String?> famille = const Value.absent(),
+            Value<String?> sousFamille = const Value.absent(),
+            Value<String?> tribu = const Value.absent(),
+            Value<int?> cdTaxsup = const Value.absent(),
+            Value<int?> cdSup = const Value.absent(),
+            Value<String?> lbNom = const Value.absent(),
+            Value<String?> lbAuteur = const Value.absent(),
+            required String nomComplet,
+            Value<String?> nomCompletHtml = const Value.absent(),
+            Value<String?> nomVern = const Value.absent(),
+            Value<String?> nomValide = const Value.absent(),
+            Value<String?> nomVernEng = const Value.absent(),
+            Value<String?> group1Inpn = const Value.absent(),
+            Value<String?> group2Inpn = const Value.absent(),
+            Value<String?> group3Inpn = const Value.absent(),
+            Value<String?> url = const Value.absent(),
+          }) =>
+              TTaxrefsCompanion.insert(
+            cdNom: cdNom,
+            cdRef: cdRef,
+            idStatut: idStatut,
+            idHabitat: idHabitat,
+            idRang: idRang,
+            regne: regne,
+            phylum: phylum,
+            classe: classe,
+            ordre: ordre,
+            famille: famille,
+            sousFamille: sousFamille,
+            tribu: tribu,
+            cdTaxsup: cdTaxsup,
+            cdSup: cdSup,
+            lbNom: lbNom,
+            lbAuteur: lbAuteur,
+            nomComplet: nomComplet,
+            nomCompletHtml: nomCompletHtml,
+            nomVern: nomVern,
+            nomValide: nomValide,
+            nomVernEng: nomVernEng,
+            group1Inpn: group1Inpn,
+            group2Inpn: group2Inpn,
+            group3Inpn: group3Inpn,
+            url: url,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) =>
+                  (e.readTable(table), $$TTaxrefsTableReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: ({corTaxonListeTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (corTaxonListeTableRefs) db.corTaxonListeTable
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (corTaxonListeTableRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$TTaxrefsTableReferences
+                            ._corTaxonListeTableRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$TTaxrefsTableReferences(db, table, p0)
+                                .corTaxonListeTableRefs,
+                        referencedItemsForCurrentItem: (item,
+                                referencedItems) =>
+                            referencedItems.where((e) => e.cdNom == item.cdNom),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$TTaxrefsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TTaxrefsTable,
+    TTaxref,
+    $$TTaxrefsTableFilterComposer,
+    $$TTaxrefsTableOrderingComposer,
+    $$TTaxrefsTableAnnotationComposer,
+    $$TTaxrefsTableCreateCompanionBuilder,
+    $$TTaxrefsTableUpdateCompanionBuilder,
+    (TTaxref, $$TTaxrefsTableReferences),
+    TTaxref,
+    PrefetchHooks Function({bool corTaxonListeTableRefs})>;
+typedef $$BibListesTableTableCreateCompanionBuilder = BibListesTableCompanion
+    Function({
+  Value<int> idListe,
+  Value<String?> codeListe,
+  required String nomListe,
+  Value<String?> descListe,
+  Value<String?> regne,
+  Value<String?> group2Inpn,
+});
+typedef $$BibListesTableTableUpdateCompanionBuilder = BibListesTableCompanion
+    Function({
+  Value<int> idListe,
+  Value<String?> codeListe,
+  Value<String> nomListe,
+  Value<String?> descListe,
+  Value<String?> regne,
+  Value<String?> group2Inpn,
+});
+
+final class $$BibListesTableTableReferences
+    extends BaseReferences<_$AppDatabase, $BibListesTableTable, TBibListe> {
+  $$BibListesTableTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$CorTaxonListeTableTable, List<CorTaxonListe>>
+      _corTaxonListeTableRefsTable(_$AppDatabase db) =>
+          MultiTypedResultKey.fromTable(db.corTaxonListeTable,
+              aliasName: $_aliasNameGenerator(
+                  db.bibListesTable.idListe, db.corTaxonListeTable.idListe));
+
+  $$CorTaxonListeTableTableProcessedTableManager get corTaxonListeTableRefs {
+    final manager =
+        $$CorTaxonListeTableTableTableManager($_db, $_db.corTaxonListeTable)
+            .filter((f) => f.idListe.idListe($_item.idListe));
+
+    final cache =
+        $_typedResult.readTableOrNull(_corTaxonListeTableRefsTable($_db));
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: cache));
+  }
+}
+
+class $$BibListesTableTableFilterComposer
+    extends Composer<_$AppDatabase, $BibListesTableTable> {
+  $$BibListesTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idListe => $composableBuilder(
+      column: $table.idListe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get codeListe => $composableBuilder(
+      column: $table.codeListe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomListe => $composableBuilder(
+      column: $table.nomListe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get descListe => $composableBuilder(
+      column: $table.descListe, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get regne => $composableBuilder(
+      column: $table.regne, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => ColumnFilters(column));
+
+  Expression<bool> corTaxonListeTableRefs(
+      Expression<bool> Function($$CorTaxonListeTableTableFilterComposer f) f) {
+    final $$CorTaxonListeTableTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idListe,
+        referencedTable: $db.corTaxonListeTable,
+        getReferencedColumn: (t) => t.idListe,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$CorTaxonListeTableTableFilterComposer(
+              $db: $db,
+              $table: $db.corTaxonListeTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return f(composer);
+  }
+}
+
+class $$BibListesTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $BibListesTableTable> {
+  $$BibListesTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idListe => $composableBuilder(
+      column: $table.idListe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get codeListe => $composableBuilder(
+      column: $table.codeListe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomListe => $composableBuilder(
+      column: $table.nomListe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get descListe => $composableBuilder(
+      column: $table.descListe, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get regne => $composableBuilder(
+      column: $table.regne, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => ColumnOrderings(column));
+}
+
+class $$BibListesTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $BibListesTableTable> {
+  $$BibListesTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idListe =>
+      $composableBuilder(column: $table.idListe, builder: (column) => column);
+
+  GeneratedColumn<String> get codeListe =>
+      $composableBuilder(column: $table.codeListe, builder: (column) => column);
+
+  GeneratedColumn<String> get nomListe =>
+      $composableBuilder(column: $table.nomListe, builder: (column) => column);
+
+  GeneratedColumn<String> get descListe =>
+      $composableBuilder(column: $table.descListe, builder: (column) => column);
+
+  GeneratedColumn<String> get regne =>
+      $composableBuilder(column: $table.regne, builder: (column) => column);
+
+  GeneratedColumn<String> get group2Inpn => $composableBuilder(
+      column: $table.group2Inpn, builder: (column) => column);
+
+  Expression<T> corTaxonListeTableRefs<T extends Object>(
+      Expression<T> Function($$CorTaxonListeTableTableAnnotationComposer a) f) {
+    final $$CorTaxonListeTableTableAnnotationComposer composer =
+        $composerBuilder(
+            composer: this,
+            getCurrentColumn: (t) => t.idListe,
+            referencedTable: $db.corTaxonListeTable,
+            getReferencedColumn: (t) => t.idListe,
+            builder: (joinBuilder,
+                    {$addJoinBuilderToRootComposer,
+                    $removeJoinBuilderFromRootComposer}) =>
+                $$CorTaxonListeTableTableAnnotationComposer(
+                  $db: $db,
+                  $table: $db.corTaxonListeTable,
+                  $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                  joinBuilder: joinBuilder,
+                  $removeJoinBuilderFromRootComposer:
+                      $removeJoinBuilderFromRootComposer,
+                ));
+    return f(composer);
+  }
+}
+
+class $$BibListesTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $BibListesTableTable,
+    TBibListe,
+    $$BibListesTableTableFilterComposer,
+    $$BibListesTableTableOrderingComposer,
+    $$BibListesTableTableAnnotationComposer,
+    $$BibListesTableTableCreateCompanionBuilder,
+    $$BibListesTableTableUpdateCompanionBuilder,
+    (TBibListe, $$BibListesTableTableReferences),
+    TBibListe,
+    PrefetchHooks Function({bool corTaxonListeTableRefs})> {
+  $$BibListesTableTableTableManager(
+      _$AppDatabase db, $BibListesTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$BibListesTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$BibListesTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$BibListesTableTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idListe = const Value.absent(),
+            Value<String?> codeListe = const Value.absent(),
+            Value<String> nomListe = const Value.absent(),
+            Value<String?> descListe = const Value.absent(),
+            Value<String?> regne = const Value.absent(),
+            Value<String?> group2Inpn = const Value.absent(),
+          }) =>
+              BibListesTableCompanion(
+            idListe: idListe,
+            codeListe: codeListe,
+            nomListe: nomListe,
+            descListe: descListe,
+            regne: regne,
+            group2Inpn: group2Inpn,
+          ),
+          createCompanionCallback: ({
+            Value<int> idListe = const Value.absent(),
+            Value<String?> codeListe = const Value.absent(),
+            required String nomListe,
+            Value<String?> descListe = const Value.absent(),
+            Value<String?> regne = const Value.absent(),
+            Value<String?> group2Inpn = const Value.absent(),
+          }) =>
+              BibListesTableCompanion.insert(
+            idListe: idListe,
+            codeListe: codeListe,
+            nomListe: nomListe,
+            descListe: descListe,
+            regne: regne,
+            group2Inpn: group2Inpn,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$BibListesTableTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({corTaxonListeTableRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (corTaxonListeTableRefs) db.corTaxonListeTable
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (corTaxonListeTableRefs)
+                    await $_getPrefetchedData(
+                        currentTable: table,
+                        referencedTable: $$BibListesTableTableReferences
+                            ._corTaxonListeTableRefsTable(db),
+                        managerFromTypedResult: (p0) =>
+                            $$BibListesTableTableReferences(db, table, p0)
+                                .corTaxonListeTableRefs,
+                        referencedItemsForCurrentItem:
+                            (item, referencedItems) => referencedItems
+                                .where((e) => e.idListe == item.idListe),
+                        typedResults: items)
+                ];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$BibListesTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $BibListesTableTable,
+    TBibListe,
+    $$BibListesTableTableFilterComposer,
+    $$BibListesTableTableOrderingComposer,
+    $$BibListesTableTableAnnotationComposer,
+    $$BibListesTableTableCreateCompanionBuilder,
+    $$BibListesTableTableUpdateCompanionBuilder,
+    (TBibListe, $$BibListesTableTableReferences),
+    TBibListe,
+    PrefetchHooks Function({bool corTaxonListeTableRefs})>;
+typedef $$CorTaxonListeTableTableCreateCompanionBuilder
+    = CorTaxonListeTableCompanion Function({
+  required int idListe,
+  required int cdNom,
+  Value<int> rowid,
+});
+typedef $$CorTaxonListeTableTableUpdateCompanionBuilder
+    = CorTaxonListeTableCompanion Function({
+  Value<int> idListe,
+  Value<int> cdNom,
+  Value<int> rowid,
+});
+
+final class $$CorTaxonListeTableTableReferences extends BaseReferences<
+    _$AppDatabase, $CorTaxonListeTableTable, CorTaxonListe> {
+  $$CorTaxonListeTableTableReferences(
+      super.$_db, super.$_table, super.$_typedResult);
+
+  static $BibListesTableTable _idListeTable(_$AppDatabase db) =>
+      db.bibListesTable.createAlias($_aliasNameGenerator(
+          db.corTaxonListeTable.idListe, db.bibListesTable.idListe));
+
+  $$BibListesTableTableProcessedTableManager get idListe {
+    final manager = $$BibListesTableTableTableManager($_db, $_db.bibListesTable)
+        .filter((f) => f.idListe($_item.idListe));
+    final item = $_typedResult.readTableOrNull(_idListeTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+
+  static $TTaxrefsTable _cdNomTable(_$AppDatabase db) =>
+      db.tTaxrefs.createAlias(
+          $_aliasNameGenerator(db.corTaxonListeTable.cdNom, db.tTaxrefs.cdNom));
+
+  $$TTaxrefsTableProcessedTableManager get cdNom {
+    final manager = $$TTaxrefsTableTableManager($_db, $_db.tTaxrefs)
+        .filter((f) => f.cdNom($_item.cdNom));
+    final item = $_typedResult.readTableOrNull(_cdNomTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+        manager.$state.copyWith(prefetchedData: [item]));
+  }
+}
+
+class $$CorTaxonListeTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorTaxonListeTableTable> {
+  $$CorTaxonListeTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$BibListesTableTableFilterComposer get idListe {
+    final $$BibListesTableTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idListe,
+        referencedTable: $db.bibListesTable,
+        getReferencedColumn: (t) => t.idListe,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BibListesTableTableFilterComposer(
+              $db: $db,
+              $table: $db.bibListesTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TTaxrefsTableFilterComposer get cdNom {
+    final $$TTaxrefsTableFilterComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.cdNom,
+        referencedTable: $db.tTaxrefs,
+        getReferencedColumn: (t) => t.cdNom,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TTaxrefsTableFilterComposer(
+              $db: $db,
+              $table: $db.tTaxrefs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorTaxonListeTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorTaxonListeTableTable> {
+  $$CorTaxonListeTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$BibListesTableTableOrderingComposer get idListe {
+    final $$BibListesTableTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idListe,
+        referencedTable: $db.bibListesTable,
+        getReferencedColumn: (t) => t.idListe,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BibListesTableTableOrderingComposer(
+              $db: $db,
+              $table: $db.bibListesTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TTaxrefsTableOrderingComposer get cdNom {
+    final $$TTaxrefsTableOrderingComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.cdNom,
+        referencedTable: $db.tTaxrefs,
+        getReferencedColumn: (t) => t.cdNom,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TTaxrefsTableOrderingComposer(
+              $db: $db,
+              $table: $db.tTaxrefs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorTaxonListeTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorTaxonListeTableTable> {
+  $$CorTaxonListeTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  $$BibListesTableTableAnnotationComposer get idListe {
+    final $$BibListesTableTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.idListe,
+        referencedTable: $db.bibListesTable,
+        getReferencedColumn: (t) => t.idListe,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$BibListesTableTableAnnotationComposer(
+              $db: $db,
+              $table: $db.bibListesTable,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+
+  $$TTaxrefsTableAnnotationComposer get cdNom {
+    final $$TTaxrefsTableAnnotationComposer composer = $composerBuilder(
+        composer: this,
+        getCurrentColumn: (t) => t.cdNom,
+        referencedTable: $db.tTaxrefs,
+        getReferencedColumn: (t) => t.cdNom,
+        builder: (joinBuilder,
+                {$addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer}) =>
+            $$TTaxrefsTableAnnotationComposer(
+              $db: $db,
+              $table: $db.tTaxrefs,
+              $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+              joinBuilder: joinBuilder,
+              $removeJoinBuilderFromRootComposer:
+                  $removeJoinBuilderFromRootComposer,
+            ));
+    return composer;
+  }
+}
+
+class $$CorTaxonListeTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CorTaxonListeTableTable,
+    CorTaxonListe,
+    $$CorTaxonListeTableTableFilterComposer,
+    $$CorTaxonListeTableTableOrderingComposer,
+    $$CorTaxonListeTableTableAnnotationComposer,
+    $$CorTaxonListeTableTableCreateCompanionBuilder,
+    $$CorTaxonListeTableTableUpdateCompanionBuilder,
+    (CorTaxonListe, $$CorTaxonListeTableTableReferences),
+    CorTaxonListe,
+    PrefetchHooks Function({bool idListe, bool cdNom})> {
+  $$CorTaxonListeTableTableTableManager(
+      _$AppDatabase db, $CorTaxonListeTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorTaxonListeTableTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorTaxonListeTableTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorTaxonListeTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idListe = const Value.absent(),
+            Value<int> cdNom = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorTaxonListeTableCompanion(
+            idListe: idListe,
+            cdNom: cdNom,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int idListe,
+            required int cdNom,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorTaxonListeTableCompanion.insert(
+            idListe: idListe,
+            cdNom: cdNom,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (
+                    e.readTable(table),
+                    $$CorTaxonListeTableTableReferences(db, table, e)
+                  ))
+              .toList(),
+          prefetchHooksCallback: ({idListe = false, cdNom = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins: <
+                  T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic>>(state) {
+                if (idListe) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.idListe,
+                    referencedTable:
+                        $$CorTaxonListeTableTableReferences._idListeTable(db),
+                    referencedColumn: $$CorTaxonListeTableTableReferences
+                        ._idListeTable(db)
+                        .idListe,
+                  ) as T;
+                }
+                if (cdNom) {
+                  state = state.withJoin(
+                    currentTable: table,
+                    currentColumn: table.cdNom,
+                    referencedTable:
+                        $$CorTaxonListeTableTableReferences._cdNomTable(db),
+                    referencedColumn: $$CorTaxonListeTableTableReferences
+                        ._cdNomTable(db)
+                        .cdNom,
+                  ) as T;
+                }
+
+                return state;
+              },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ));
+}
+
+typedef $$CorTaxonListeTableTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $CorTaxonListeTableTable,
+    CorTaxonListe,
+    $$CorTaxonListeTableTableFilterComposer,
+    $$CorTaxonListeTableTableOrderingComposer,
+    $$CorTaxonListeTableTableAnnotationComposer,
+    $$CorTaxonListeTableTableCreateCompanionBuilder,
+    $$CorTaxonListeTableTableUpdateCompanionBuilder,
+    (CorTaxonListe, $$CorTaxonListeTableTableReferences),
+    CorTaxonListe,
+    PrefetchHooks Function({bool idListe, bool cdNom})>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -15735,4 +18519,10 @@ class $AppDatabaseManager {
       $$CorVisitObserverTableTableManager(_db, _db.corVisitObserver);
   $$CorSiteTypeTableTableTableManager get corSiteTypeTable =>
       $$CorSiteTypeTableTableTableManager(_db, _db.corSiteTypeTable);
+  $$TTaxrefsTableTableManager get tTaxrefs =>
+      $$TTaxrefsTableTableManager(_db, _db.tTaxrefs);
+  $$BibListesTableTableTableManager get bibListesTable =>
+      $$BibListesTableTableTableManager(_db, _db.bibListesTable);
+  $$CorTaxonListeTableTableTableManager get corTaxonListeTable =>
+      $$CorTaxonListeTableTableTableManager(_db, _db.corTaxonListeTable);
 }
