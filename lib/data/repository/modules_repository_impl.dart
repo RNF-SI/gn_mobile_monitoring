@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
@@ -17,24 +19,25 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
-import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
   final GlobalApi globalApi;
   final ModulesApi api;
+  final TaxonApi taxonApi;
   final ModulesDatabase database;
   final NomenclaturesDatabase nomenclaturesDatabase;
   final DatasetsDatabase datasetsDatabase;
-  final TaxonRepository? taxonRepository; // Optional to maintain backward compatibility
+  final TaxonDatabase? taxonDatabase;
 
   ModulesRepositoryImpl(
     this.globalApi,
     this.api,
+    this.taxonApi,
     this.database,
     this.nomenclaturesDatabase,
-    this.datasetsDatabase, {
-    this.taxonRepository,
-  });
+    this.datasetsDatabase,
+    this.taxonDatabase,
+  );
 
   @override
   Future<List<Module>> getModulesFromLocal() async {
@@ -292,15 +295,27 @@ class ModulesRepositoryImpl implements ModulesRepository {
             await database.getModuleComplementById(moduleId);
         if (moduleComplement != null &&
             moduleComplement.idListTaxonomy != null &&
-            taxonRepository != null) {
-          // Use the TaxonRepository to download the taxons
-          print(
-              'Module has taxonomy list (ID: ${moduleComplement.idListTaxonomy}). Downloading taxons...');
-          await taxonRepository!.downloadModuleTaxons(moduleId);
-          print('Taxons downloaded successfully.');
+            taxonDatabase != null) {
+          final idListTaxonomy = moduleComplement.idListTaxonomy!;
+
+          // Get taxons from API
+          final taxons = await taxonApi.getTaxonsByList(idListTaxonomy);
+
+          // Save taxons in local database
+          await taxonDatabase!.saveTaxons(taxons);
+
+          // Get and save the taxon list
+          final taxonList = await taxonApi.getTaxonList(idListTaxonomy);
+          await taxonDatabase!.saveTaxonLists([taxonList]);
+
+          // Link taxons to the list
+          final cdNoms = taxons.map((t) => t.cdNom).toList();
+          await taxonDatabase!.saveTaxonsToList(idListTaxonomy, cdNoms);
+
+          print('Taxons downloaded and saved successfully.');
         } else if (moduleComplement?.idListTaxonomy != null) {
           print(
-              'Module has taxonomy list (ID: ${moduleComplement!.idListTaxonomy}) but TaxonRepository is not available.');
+              'Module has taxonomy list (ID: ${moduleComplement!.idListTaxonomy}) but TaxonDatabase is not available.');
         }
       } catch (taxonError) {
         // Log error but don't fail the whole download - taxons are optional
@@ -425,5 +440,4 @@ class ModulesRepositoryImpl implements ModulesRepository {
       throw Exception('Failed to get module configuration: $e');
     }
   }
-  
 }

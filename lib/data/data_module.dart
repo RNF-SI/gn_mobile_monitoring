@@ -75,9 +75,11 @@ final modulesRepositoryProvider =
     Provider<ModulesRepository>((ref) => ModulesRepositoryImpl(
           ref.watch(globalApiProvider),
           ref.watch(modulesApiProvider),
+          ref.watch(taxonApiProvider),
           ref.watch(moduleDatabaseProvider),
           ref.watch(nomenclatureDatabaseProvider),
           ref.watch(datasetsDatabaseProvider),
+          ref.watch(taxonDatabaseProvider),
         ));
 
 final sitesApiProvider = Provider<SitesApi>((_) => SitesApiImpl());
