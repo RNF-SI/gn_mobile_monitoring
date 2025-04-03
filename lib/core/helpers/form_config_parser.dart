@@ -145,6 +145,37 @@ class FormConfigParser {
     
     return false;
   }
+  
+  /// Détermine si un champ est de type taxonomie
+  /// Prend en compte les différentes façons d'identifier un champ taxonomique:
+  /// 1. type_widget: "taxonomy"
+  /// 2. type_util: "taxonomy"
+  /// 3. Présence de la propriété id_list référençant une liste taxonomique
+  static bool isTaxonomyField(Map<String, dynamic> fieldConfig) {
+    // Vérifier le type de widget
+    if (fieldConfig['type_widget'] == 'taxonomy') {
+      return true;
+    }
+    
+    // Vérifier le type d'utilitaire
+    if (fieldConfig['type_util'] == 'taxonomy') {
+      return true;
+    }
+    
+    // Vérifier si le champ contient une référence à une liste taxonomique
+    final idList = fieldConfig['id_list'] as String?;
+    if (idList != null && idList.contains('ID_LIST_TAXONOMY')) {
+      return true;
+    }
+    
+    // Vérifier si le nom de l'attribut est cd_nom
+    final attributName = fieldConfig['attribut_name'] as String?;
+    if (attributName == 'cd_nom') {
+      return true;
+    }
+    
+    return false;
+  }
 
   /// Récupère les données de nomenclature depuis la configuration du champ
   /// Prend en compte tous les formats possibles:
@@ -259,11 +290,73 @@ class FormConfigParser {
     if (value == null) return null;
     return value['cd_nomenclature'] as String?;
   }
+  
+  /// Récupère l'identifiant de la liste taxonomique à partir de la configuration du champ
+  static int? getTaxonListId(Map<String, dynamic> fieldConfig) {
+    if (!isTaxonomyField(fieldConfig)) {
+      return null;
+    }
+    
+    // Vérifier si c'est une référence à une liste taxonomique MODULE
+    final idList = fieldConfig['id_list'] as String?;
+    if (idList != null && idList.isNotEmpty) {
+      // Si c'est une valeur numérique directe
+      final directId = int.tryParse(idList);
+      if (directId != null) {
+        return directId;
+      }
+      
+      // Si c'est une référence qui a été substituée
+      if (idList.contains('__MODULE.ID_LIST_TAXONOMY')) {
+        // Cette valeur devrait déjà être substituée par le bon ID
+        return int.tryParse(idList);
+      }
+    }
+    
+    // Cas où l'ID de liste est stocké dans la valeur existante
+    final value = fieldConfig['value'] as Map<String, dynamic>?;
+    if (value != null && value['id_list'] != null) {
+      return value['id_list'] as int?;
+    }
+    
+    return null;
+  }
+  
+  /// Récupère le cd_nom du taxon sélectionné à partir de la configuration
+  static int? getSelectedTaxonCdNom(Map<String, dynamic> fieldConfig) {
+    if (!isTaxonomyField(fieldConfig)) {
+      return null;
+    }
+    
+    // Si la valeur est directement un entier (cd_nom)
+    if (fieldConfig['value'] is int) {
+      return fieldConfig['value'] as int;
+    }
+    
+    // Si la valeur est un objet Taxon complet
+    final value = fieldConfig['value'] as Map<String, dynamic>?;
+    if (value != null && value['cd_nom'] != null) {
+      return value['cd_nom'] as int;
+    }
+    
+    return null;
+  }
+  
+  /// Récupère le format d'affichage configuré pour les taxons
+  static String getTaxonomyDisplayFormat(Map<String, dynamic> fieldConfig) {
+    final displayFormat = fieldConfig['taxonomy_display_field_name'] as String?;
+    if (displayFormat != null && displayFormat.isNotEmpty) {
+      return displayFormat;
+    }
+    
+    // Valeur par défaut
+    return 'nom_vern,lb_nom';
+  }
 
   /// Détermine le type de widget Flutter à utiliser en fonction
   /// de la configuration du champ
   static String determineWidgetType(Map<String, dynamic> fieldConfig) {
-    // Vérifier si c'est un champ de type nomenclature (par l'une des deux méthodes)
+    // Vérifier si c'est un champ de type nomenclature
     if (isNomenclatureField(fieldConfig)) {
       // Si le widget_type est déjà défini, l'utiliser (comme dans l'exemple fourni)
       if (fieldConfig['widget_type'] != null) {
@@ -271,6 +364,11 @@ class FormConfigParser {
       }
       // Sinon utiliser le widget par défaut pour les nomenclatures
       return 'NomenclatureSelector';
+    }
+    
+    // Vérifier si c'est un champ de type taxonomie
+    if (isTaxonomyField(fieldConfig)) {
+      return 'TaxonSelector';
     }
 
     final String typeWidget = fieldConfig['type_widget']?.toString() ?? 'text';
@@ -297,6 +395,8 @@ class FormConfigParser {
         return 'AutocompleteField';
       case 'nomenclature':
         return 'NomenclatureSelector';
+      case 'taxonomy':
+        return 'TaxonSelector';
       case 'bool_checkbox':
       case 'checkbox':
         return 'Checkbox';
