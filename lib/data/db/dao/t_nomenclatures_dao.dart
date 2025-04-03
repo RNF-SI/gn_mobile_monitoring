@@ -36,4 +36,14 @@ class TNomenclaturesDao extends DatabaseAccessor<AppDatabase>
       throw Exception("Failed to clear nomenclatures: ${e.toString()}");
     }
   }
+
+  Future<void> updateNomenclature(Nomenclature nomenclature) async {
+    try {
+      await (update(tNomenclatures)
+            ..where((t) => t.idNomenclature.equals(nomenclature.id)))
+          .write(nomenclature.toDatabaseEntity().toCompanion(true));
+    } catch (e) {
+      throw Exception("Failed to update nomenclature: ${e.toString()}");
+    }
+  }
 }

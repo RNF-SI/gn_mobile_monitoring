@@ -177,7 +177,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
           .map((e) => e.toDomain())
           .toList();
 
-      await nomenclaturesDatabase.clearNomenclatures();
+      // Insert nomenclatures with duplicate handling
       await nomenclaturesDatabase.insertNomenclatures(nomenclatures);
 
       // Process nomenclature types - extract from the nomenclatures

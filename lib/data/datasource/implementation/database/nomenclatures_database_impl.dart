@@ -23,7 +23,34 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
   @override
   Future<void> insertNomenclatures(List<Nomenclature> nomenclatures) async {
     final db = await _database;
-    await db.tNomenclaturesDao.insertNomenclatures(nomenclatures);
+
+    // Get existing nomenclatures to avoid duplicates
+    final existingNomenclatures =
+        await db.tNomenclaturesDao.getAllNomenclatures();
+    final existingNomenclatureIds =
+        existingNomenclatures.map((n) => n.id).toSet();
+
+    // Filter out nomenclatures that already exist
+    final newNomenclatures = nomenclatures
+        .where((nomenclature) =>
+            !existingNomenclatureIds.contains(nomenclature.id))
+        .toList();
+
+    // Update existing nomenclatures
+    final nomenclaturesToUpdate = nomenclatures
+        .where(
+            (nomenclature) => existingNomenclatureIds.contains(nomenclature.id))
+        .toList();
+
+    // Insert new nomenclatures
+    if (newNomenclatures.isNotEmpty) {
+      await db.tNomenclaturesDao.insertNomenclatures(newNomenclatures);
+    }
+
+    // Update existing nomenclatures
+    for (final nomenclature in nomenclaturesToUpdate) {
+      await db.tNomenclaturesDao.updateNomenclature(nomenclature);
+    }
   }
 
   @override
@@ -37,19 +64,21 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
   @override
   Future<void> insertNomenclatureTypes(List<NomenclatureType> types) async {
     final database = await _database;
-    
+
     // Get existing types to avoid duplicates
-    final existingTypes = await database.bibNomenclaturesTypesDao.getAllNomenclatureTypes();
+    final existingTypes =
+        await database.bibNomenclaturesTypesDao.getAllNomenclatureTypes();
     final existingTypeIds = existingTypes.map((t) => t.idType).toSet();
-    
+
     // Filter out types that already exist
-    final newTypes = types.where((type) => !existingTypeIds.contains(type.idType)).toList();
-    
+    final newTypes =
+        types.where((type) => !existingTypeIds.contains(type.idType)).toList();
+
     if (newTypes.isEmpty) {
       // No new types to insert
       return;
     }
-    
+
     final entries = newTypes.map((type) {
       // For minimal implementation, we only need idType and mnemonique
       return BibNomenclaturesTypesTableCompanion.insert(
