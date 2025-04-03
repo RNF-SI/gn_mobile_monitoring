@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
 
 /// Un widget qui génère un formulaire dynamique
 /// basé sur la configuration d'un module GeoNature Monitoring
@@ -286,6 +288,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             description: description);
       case 'NomenclatureSelector':
         return _buildNomenclatureField(fieldName, label, isRequired, fieldConfig,
+            description: description);
+      case 'TaxonSelector':
+        return _buildTaxonField(fieldName, label, isRequired, fieldConfig,
             description: description);
       default:
         return _buildTextField(fieldName, label, isRequired,
@@ -881,6 +886,76 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 }
               });
             },
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Pour les champs de type taxonomie
+  Widget _buildTaxonField(String fieldName, String label, bool required,
+      Map<String, dynamic> fieldConfig, {String? description}) {
+    // Déterminer la valeur initiale (cd_nom)
+    int? initialValue;
+    
+    if (_formValues.containsKey(fieldName)) {
+      final value = _formValues[fieldName];
+      if (value is int) {
+        initialValue = value;
+      } else if (value is Map<String, dynamic> && value.containsKey('cd_nom')) {
+        initialValue = value['cd_nom'] as int?;
+      }
+    } else {
+      // Essayer de récupérer depuis la configuration
+      initialValue = FormConfigParser.getSelectedTaxonCdNom(fieldConfig);
+    }
+    
+    // Pour obtenir l'ID du module
+    final int moduleId = widget.customConfig?.idModule ?? 0;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          SizedBox(
+            // Définir une hauteur fixe pour éviter les problèmes de layout
+            height: 300, 
+            child: TaxonSelectorWidget(
+              label: label,
+              moduleId: moduleId,
+              fieldConfig: fieldConfig,
+              value: initialValue,
+              isRequired: required,
+              onChanged: (cdNom) {
+                setState(() {
+                  if (cdNom == null) {
+                    _formValues.remove(fieldName);
+                  } else {
+                    // Stocker seulement le cd_nom (code nomenclature) comme valeur
+                    // Il sera converti en objet complet lors de l'affichage
+                    _formValues[fieldName] = cdNom;
+                  }
+                });
+              },
+            ),
           ),
         ],
       ),
