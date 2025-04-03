@@ -83,7 +83,7 @@ class TaxonRepositoryImpl implements TaxonRepository {
   }
 
   @override
-  Future<void> downloadModuleTaxons(int moduleId) async {
+  Future<void> downloadModuleTaxons(int moduleId, String token) async {
     // 1. Récupérer l'id_list_taxonomy du module
     final moduleComplement =
         await _modulesDatabase.getModuleComplementById(moduleId);
@@ -92,11 +92,11 @@ class TaxonRepositoryImpl implements TaxonRepository {
     final idListTaxonomy = moduleComplement!.idListTaxonomy!;
 
     // 2. Télécharger la liste taxonomique
-    final taxonList = await _taxonApi.getTaxonList(idListTaxonomy);
+    final taxonList = await _taxonApi.getTaxonList(idListTaxonomy, token);
     await _taxonDatabase.saveTaxonLists([taxonList]);
 
     // 3. Télécharger les taxons associés à cette liste
-    final taxons = await _taxonApi.getTaxonsByList(idListTaxonomy);
+    final taxons = await _taxonApi.getTaxonsByList(idListTaxonomy, token);
 
     // 4. Sauvegarder en local
     await _taxonDatabase.saveTaxons(taxons);

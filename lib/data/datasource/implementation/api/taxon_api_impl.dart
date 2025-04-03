@@ -1,59 +1,61 @@
-import 'dart:convert';
-
+import 'package:dio/dio.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
-import 'package:http/http.dart' as http;
 
 class TaxonApiImpl implements TaxonApi {
-  final http.Client _client;
-  final String _baseUrl;
-  final String _token;
+  final Dio _dio;
 
-  TaxonApiImpl(this._client, this._baseUrl, this._token);
+  TaxonApiImpl()
+      : _dio = Dio(BaseOptions(
+          baseUrl: Config.apiBase,
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 60),
+        ));
 
   @override
-  Future<List<Taxon>> getTaxonsByList(int idListe) async {
+  Future<List<Taxon>> getTaxonsByList(int idListe, String token) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$_baseUrl/taxonomie/taxref/list/$idListe'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.get(
+        '/taxonomie/taxref/list/$idListe',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        final parsed = json.decode(response.body) as List;
+        final List<dynamic> parsed = response.data;
         return parsed.map((json) => _parseTaxon(json)).toList();
-      } else {
-        throw ApiException(
-          'Failed to load taxons for list $idListe',
-          statusCode: response.statusCode,
-        );
       }
-    } catch (e) {
+
       throw ApiException(
-        'Error fetching taxons for list $idListe: ${e.toString()}',
-        statusCode: 500,
+        'Failed to load taxons for list $idListe',
+        statusCode: response.statusCode,
       );
+    } on DioException catch (e) {
+      throw NetworkException(
+          'Network error while fetching taxons for list $idListe: ${e.message}');
+    } catch (e) {
+      throw ApiException('Failed to fetch taxons for list $idListe: $e');
     }
   }
 
   @override
-  Future<TaxonList> getTaxonList(int idListe) async {
+  Future<TaxonList> getTaxonList(int idListe, String token) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$_baseUrl/taxonomie/lists/$idListe'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.get(
+        '/taxonomie/lists/$idListe',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
+        final json = response.data;
         return TaxonList(
           idListe: json['id_liste'],
           codeListe: json['code_liste'],
@@ -62,45 +64,44 @@ class TaxonApiImpl implements TaxonApi {
           regne: json['regne'],
           group2Inpn: json['group2_inpn'],
         );
-      } else {
-        throw ApiException(
-          'Failed to load taxon list with id $idListe',
-          statusCode: response.statusCode,
-        );
       }
-    } catch (e) {
+
       throw ApiException(
-        'Error fetching taxon list with id $idListe: ${e.toString()}',
-        statusCode: 500,
+        'Failed to load taxon list with id $idListe',
+        statusCode: response.statusCode,
       );
+    } on DioException catch (e) {
+      throw NetworkException(
+          'Network error while fetching taxon list: ${e.message}');
+    } catch (e) {
+      throw ApiException('Failed to fetch taxon list: $e');
     }
   }
 
   @override
-  Future<Taxon> getTaxonByCdNom(int cdNom) async {
+  Future<Taxon> getTaxonByCdNom(int cdNom, String token) async {
     try {
-      final response = await _client.get(
-        Uri.parse('$_baseUrl/taxonomie/taxref/$cdNom'),
-        headers: {
-          'Authorization': 'Bearer $_token',
-          'Content-Type': 'application/json',
-        },
+      final response = await _dio.get(
+        '/taxonomie/taxref/$cdNom',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
       );
 
       if (response.statusCode == 200) {
-        final json = jsonDecode(response.body);
+        final json = response.data;
         return _parseTaxon(json);
-      } else {
-        throw ApiException(
-          'Failed to load taxon with cd_nom $cdNom',
-          statusCode: response.statusCode,
-        );
       }
-    } catch (e) {
+
       throw ApiException(
-        'Error fetching taxon with cd_nom $cdNom: ${e.toString()}',
-        statusCode: 500,
+        'Failed to load taxon with cd_nom $cdNom',
+        statusCode: response.statusCode,
       );
+    } on DioException catch (e) {
+      throw NetworkException(
+          'Network error while fetching taxon: ${e.message}');
+    } catch (e) {
+      throw ApiException('Failed to fetch taxon: $e');
     }
   }
 
