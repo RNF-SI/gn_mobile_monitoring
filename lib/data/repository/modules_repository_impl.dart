@@ -19,6 +19,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
   final GlobalApi globalApi;
@@ -28,6 +29,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final NomenclaturesDatabase nomenclaturesDatabase;
   final DatasetsDatabase datasetsDatabase;
   final TaxonDatabase? taxonDatabase;
+  final TaxonRepository taxonRepository;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -37,6 +39,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.nomenclaturesDatabase,
     this.datasetsDatabase,
     this.taxonDatabase,
+    this.taxonRepository,
   );
 
   @override
@@ -288,38 +291,14 @@ class ModulesRepositoryImpl implements ModulesRepository {
         // }
       }
 
-      // 4. Download module taxons if available
+      // 4. Download module taxons from configuration
       try {
-        // Check if the module has a taxonomy list associated with it
-        final moduleComplement =
-            await database.getModuleComplementById(moduleId);
-        if (moduleComplement != null &&
-            moduleComplement.idListTaxonomy != null &&
-            taxonDatabase != null) {
-          final idListTaxonomy = moduleComplement.idListTaxonomy!;
-
-          // Get taxons from API
-          final taxons = await taxonApi.getTaxonsByList(idListTaxonomy);
-
-          // Save taxons in local database
-          await taxonDatabase!.saveTaxons(taxons);
-
-          // Get and save the taxon list
-          final taxonList = await taxonApi.getTaxonList(idListTaxonomy);
-          await taxonDatabase!.saveTaxonLists([taxonList]);
-
-          // Link taxons to the list
-          final cdNoms = taxons.map((t) => t.cdNom).toList();
-          await taxonDatabase!.saveTaxonsToList(idListTaxonomy, cdNoms);
-
-          print('Taxons downloaded and saved successfully.');
-        } else if (moduleComplement?.idListTaxonomy != null) {
-          print(
-              'Module has taxonomy list (ID: ${moduleComplement!.idListTaxonomy}) but TaxonDatabase is not available.');
+        if (taxonDatabase != null) {
+          await taxonRepository.downloadTaxonsFromConfig(config);
+          print('Taxons downloaded from configuration successfully.');
         }
       } catch (taxonError) {
-        // Log error but don't fail the whole download - taxons are optional
-        print('Error downloading taxons for module $moduleId: $taxonError');
+        print('Error processing taxonomy lists: $taxonError');
       }
 
       // Mark module as downloaded

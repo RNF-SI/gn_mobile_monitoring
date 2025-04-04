@@ -23,4 +23,7 @@ abstract class TaxonRepository {
   // Module specific
   Future<List<Taxon>> getTaxonsByModuleId(int moduleId);
   Future<void> downloadModuleTaxons(int moduleId);
+
+  // Configuration
+  Future<void> downloadTaxonsFromConfig(Map<String, dynamic> config);
 }

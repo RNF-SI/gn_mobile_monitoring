@@ -105,4 +105,66 @@ class TaxonRepositoryImpl implements TaxonRepository {
     final cdNoms = taxons.map((t) => t.cdNom).toList();
     await _taxonDatabase.saveTaxonsToList(idListTaxonomy, cdNoms);
   }
+
+  /// Télécharge toutes les listes taxonomiques mentionnées dans la configuration
+  ///
+  /// Analyse la configuration pour trouver les champs de type 'taxonomy' avec un 'id_list'
+  /// et télécharge les taxons correspondants
+  @override
+  Future<void> downloadTaxonsFromConfig(Map<String, dynamic> config) async {
+    try {
+      // Extraire tous les IDs de listes taxonomiques de la configuration
+      final Set<int> taxonomyListIds = _extractTaxonomyListIds(config);
+
+      // Pour chaque liste taxonomique trouvée dans la configuration
+      for (final listId in taxonomyListIds) {
+        try {
+          // Télécharger et sauvegarder la liste
+          final taxonList = await _taxonApi.getTaxonList(listId);
+          await _taxonDatabase.saveTaxonLists([taxonList]);
+
+          // Télécharger les taxons associés à cette liste
+          final taxons = await _taxonApi.getTaxonsByList(listId);
+          await _taxonDatabase.saveTaxons(taxons);
+
+          // Enregistrer les associations entre les taxons et la liste
+          final cdNoms = taxons.map((t) => t.cdNom).toList();
+          await _taxonDatabase.saveTaxonsToList(listId, cdNoms);
+
+          print('Taxons for list $listId downloaded and saved successfully.');
+        } catch (e) {
+          print('Error downloading taxons for list $listId: $e');
+          // Continue with other lists even if one fails
+        }
+      }
+    } catch (e) {
+      print('Error processing taxonomy lists from configuration: $e');
+    }
+  }
+
+  /// Extrait tous les IDs de listes taxonomiques de la configuration
+  Set<int> _extractTaxonomyListIds(Map<String, dynamic> config) {
+    final Set<int> listIds = {};
+
+    void searchForTaxonomyFields(dynamic obj) {
+      if (obj is Map<String, dynamic>) {
+        // Si c'est un champ de taxonomie avec un id_list
+        if (obj['type_util'] == 'taxonomy' && obj.containsKey('id_list')) {
+          final int? listId = obj['id_list'] as int?;
+          if (listId != null) {
+            listIds.add(listId);
+          }
+        }
+
+        // Recherche récursive dans tous les sous-objets
+        obj.values.forEach(searchForTaxonomyFields);
+      } else if (obj is List) {
+        // Recherche dans les tableaux
+        obj.forEach(searchForTaxonomyFields);
+      }
+    }
+
+    searchForTaxonomyFields(config);
+    return listIds;
+  }
 }
