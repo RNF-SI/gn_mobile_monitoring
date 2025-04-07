@@ -47,7 +47,7 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     if (objectConfig == null) {
       return {};
     }
-    
+
     return FormConfigParser.generateUnifiedSchema(objectConfig!, customConfig);
   }
 
@@ -147,21 +147,27 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
   /// Détermine les colonnes à afficher dans un tableau de données
   /// basé sur la configuration et les données
   List<String> determineDataColumns({
-    required List<String> standardColumns, // Colonnes toujours affichées (ex: 'actions', 'date')
-    ObjectConfig? itemConfig, // Configuration de l'élément (visite, observation)
-    Map<String, dynamic>? firstItemData, // Données du premier élément pour auto-détection
-    bool filterMetaColumns = true, // Filtrer les colonnes de métadonnées (geom, uuid, meta)
+    required List<String>
+        standardColumns, // Colonnes toujours affichées (ex: 'actions', 'date')
+    ObjectConfig?
+        itemConfig, // Configuration de l'élément (visite, observation)
+    Map<String, dynamic>?
+        firstItemData, // Données du premier élément pour auto-détection
+    bool filterMetaColumns =
+        true, // Filtrer les colonnes de métadonnées (geom, uuid, meta)
   }) {
     List<String> displayColumns = List.from(standardColumns);
     Set<String> allPossibleKeys = <String>{};
-    
+
     // Utiliser en priorité les propriétés définies dans la configuration
-    if (itemConfig?.displayList != null && itemConfig!.displayList!.isNotEmpty) {
+    if (itemConfig?.displayList != null &&
+        itemConfig!.displayList!.isNotEmpty) {
       allPossibleKeys.addAll(itemConfig.displayList!);
-    } else if (itemConfig?.displayProperties != null && itemConfig!.displayProperties!.isNotEmpty) {
+    } else if (itemConfig?.displayProperties != null &&
+        itemConfig!.displayProperties!.isNotEmpty) {
       allPossibleKeys.addAll(itemConfig.displayProperties!);
     }
-    
+
     // Ajouter les propriétés de generic et specific si disponibles
     if (itemConfig != null) {
       if (itemConfig.generic != null) {
@@ -174,28 +180,26 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
         allPossibleKeys.addAll(itemConfig.propertiesKeys!);
       }
     }
-    
+
     // Ajouter les clés trouvées dans les données
     if (firstItemData != null) {
       allPossibleKeys.addAll(firstItemData.keys);
     }
-    
+
     // Filtrer les clés pour ne garder que les pertinentes
-    List<String> filteredKeys = allPossibleKeys
-        .where((key) {
-          bool keyIsValid = !displayColumns.contains(key);
-          
-          if (filterMetaColumns) {
-            keyIsValid = keyIsValid &&
-                !key.contains('geom') &&
-                !key.contains('uuid') &&
-                !key.contains('meta');
-          }
-          
-          return keyIsValid;
-        })
-        .toList();
-    
+    List<String> filteredKeys = allPossibleKeys.where((key) {
+      bool keyIsValid = !displayColumns.contains(key);
+
+      if (filterMetaColumns) {
+        keyIsValid = keyIsValid &&
+            !key.contains('geom') &&
+            !key.contains('uuid') &&
+            !key.contains('meta');
+      }
+
+      return keyIsValid;
+    }).toList();
+
     // Prioriser les clés plutôt que les limiter
     List<String> priorityKeys = [];
     if (itemConfig?.displayList != null) {
@@ -203,7 +207,7 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     } else if (itemConfig?.displayProperties != null) {
       priorityKeys.addAll(itemConfig!.displayProperties!);
     }
-    
+
     // Trier les clés pour mettre en priorité celles définies dans la configuration
     filteredKeys.sort((a, b) {
       // Si a est dans priorityKeys mais pas b, a vient en premier
@@ -217,10 +221,10 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
       // Sinon, ordre alphabétique
       return a.compareTo(b);
     });
-    
+
     // Ajouter les clés filtrées aux colonnes
     displayColumns.addAll(filteredKeys);
-    
+
     return displayColumns;
   }
 
@@ -235,19 +239,19 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     if (itemConfig != null) {
       schema = FormConfigParser.generateUnifiedSchema(itemConfig, customConfig);
     }
-    
+
     return columns.map((column) {
       String label = column;
-      
+
       // Vérifier d'abord les labels prédéfinis
       if (predefinedLabels.containsKey(column)) {
         label = predefinedLabels[column]!;
-      } 
+      }
       // Sinon rechercher dans la configuration
       else {
         if (itemConfig != null) {
           // Vérifier dans la configuration parsée
-          if (schema.containsKey(column) && 
+          if (schema.containsKey(column) &&
               schema[column].containsKey('attribut_label')) {
             label = schema[column]['attribut_label'];
           }
@@ -268,10 +272,10 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
           }
         }
       }
-      
+
       // Formater le libellé pour une meilleure présentation
       label = ValueFormatter.formatLabel(label);
-      
+
       return DataColumn(
         label: Text(
           label,
@@ -290,16 +294,16 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     if (rawValue == null) {
       return '';
     }
-    
+
     // Valeur par défaut en cas d'erreur de formatage
     String displayValue = ValueFormatter.format(rawValue);
-    
+
     try {
       // Utiliser le type défini dans le schéma pour formater correctement la valeur
       if (schema.containsKey(columnName)) {
         final fieldConfig = schema[columnName];
         final typeWidget = fieldConfig['type_widget'];
-        
+
         // Formater en fonction du type de widget
         switch (typeWidget) {
           case 'nomenclature':
@@ -336,10 +340,10 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
       // En cas d'erreur de formatage, utiliser le format par défaut
       debugPrint('Erreur de formatage pour $columnName: $e');
     }
-    
+
     return displayValue;
   }
-  
+
   /// Construit une cellule de données formatée avec tooltip pour les valeurs longues
   DataCell buildFormattedDataCell({
     required String value,
@@ -354,6 +358,134 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
           value,
           overflow: TextOverflow.ellipsis,
           maxLines: maxLines,
+        ),
+      ),
+    );
+  }
+
+  /// Couleurs et styles communs pour les tableaux
+  static const Color tableHeaderColor = Color(0xFFE8F5E9);
+  static const Color tableRowColor = Colors.white;
+  static const Color tableAlternateRowColor = Color(0xFFF5F5F5);
+  static const Color tableBorderColor = Color(0xFFDDDDDD);
+
+  /// Construit un onglet avec TabBar
+  Widget buildTabBar({
+    required TabController tabController,
+    required List<Tab> tabs,
+  }) {
+    return Material(
+      color: Theme.of(context).primaryColor.withOpacity(0.1),
+      child: TabBar(
+        controller: tabController,
+        tabs: tabs,
+        labelColor: Theme.of(context).primaryColor,
+        indicatorColor: Theme.of(context).primaryColor,
+      ),
+    );
+  }
+
+  /// Construit un tableau de données avec le style standardisé
+  Widget buildDataTable({
+    required List<DataColumn> columns,
+    required List<DataRow> rows,
+    bool showSearch = true,
+    String searchHint = 'Rechercher',
+    TextEditingController? searchController,
+    Function(String)? onSearchChanged,
+    Widget? headerActions,
+    bool isLoading = false,
+    Widget? emptyMessage,
+  }) {
+    return Container(
+      color: Colors.grey.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            // Barre avec bouton d'ajout + recherche
+            if (showSearch || headerActions != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  children: [
+                    if (headerActions != null) headerActions,
+                    const Spacer(),
+                    if (showSearch && searchController != null)
+                      SizedBox(
+                        width: 200,
+                        child: TextField(
+                          controller: searchController,
+                          decoration: InputDecoration(
+                            hintText: searchHint,
+                            suffixIcon: searchController.text.isNotEmpty
+                                ? IconButton(
+                                    icon: const Icon(Icons.clear),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      if (onSearchChanged != null) {
+                                        onSearchChanged('');
+                                      }
+                                    },
+                                  )
+                                : const Icon(Icons.search),
+                            border: const OutlineInputBorder(),
+                            contentPadding:
+                                const EdgeInsets.symmetric(horizontal: 12),
+                          ),
+                          onChanged: onSearchChanged,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+            // Tableau de données
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : rows.isEmpty
+                      ? Center(
+                          child: emptyMessage ??
+                              Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.info_outline,
+                                      size: 48, color: Colors.grey),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'Aucune donnée disponible',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey[600],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                        )
+                      : Card(
+                          elevation: 2,
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: SingleChildScrollView(
+                              child: DataTable(
+                                columns: columns,
+                                rows: rows,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: tableBorderColor,
+                                    width: 1,
+                                  ),
+                                ),
+                                headingRowColor: MaterialStateProperty.all(
+                                  tableHeaderColor,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+            ),
+          ],
         ),
       ),
     );

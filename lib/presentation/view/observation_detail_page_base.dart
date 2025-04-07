@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_detail_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/taxon_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -48,6 +53,8 @@ class ObservationDetailPageBaseState
     extends DetailPageState<ObservationDetailPageBase> {
   Taxon? _taxon;
   bool _isLoadingTaxon = false;
+  List<ObservationDetail> _observationDetails = [];
+  bool _isLoadingDetails = false;
 
   @override
   ObjectConfig? get objectConfig => widget.observationConfig;
@@ -69,6 +76,10 @@ class ObservationDetailPageBaseState
   bool get separateEmptyFields => true;
 
   @override
+  List<String> get childrenTypes => 
+      widget.observationDetailConfig != null ? ['observation_detail'] : [];
+
+  @override
   void initState() {
     super.initState();
     // Le chargement se fera une fois que le service aura été injecté par la classe parent
@@ -77,6 +88,7 @@ class ObservationDetailPageBaseState
   // Cette méthode sera appelée après l'injection des dépendances
   void startLoadingData() {
     _loadTaxonData();
+    _loadObservationDetails();
   }
 
   // Service d'accès aux taxons (pourra être injecté par la classe parente)
@@ -105,6 +117,46 @@ class ObservationDetailPageBaseState
             _isLoadingTaxon = false;
           });
         }
+      }
+    }
+  }
+  
+  Future<void> _loadObservationDetails() async {
+    if (widget.observationDetailConfig == null) return;
+    
+    setState(() {
+      _isLoadingDetails = true;
+    });
+    
+    try {
+      // Récupérer les détails d'observation via le ViewModel
+      final detailsProvider = observationDetailsProvider(widget.observation.idObservation);
+      
+      // Forcer un chargement initial si nécessaire
+      await widget.ref.read(detailsProvider.notifier).loadObservationDetails();
+      
+      // Récupérer les résultats directement du provider
+      final result = widget.ref.read(detailsProvider);
+      
+      if (mounted) {
+        setState(() {
+          if (result is AsyncData<List<ObservationDetail>>) {
+            _observationDetails = result.value;
+          } else {
+            _observationDetails = [];
+          }
+          _isLoadingDetails = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingDetails = false;
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erreur lors du chargement des détails: $e')),
+        );
       }
     }
   }
@@ -252,10 +304,7 @@ class ObservationDetailPageBaseState
 
   @override
   String getTitle() {
-    if (_taxon != null) {
-      return _taxon!.lbNom ?? 'Détails de l\'observation';
-    }
-    return 'Détails de l\'observation';
+    return _taxon?.lbNom ?? 'Détails de l\'observation';
   }
 
   @override
@@ -330,6 +379,320 @@ class ObservationDetailPageBaseState
         ],
       ),
     );
+  }
+  
+  @override
+  Widget? buildChildrenContent() {
+    if (widget.observationDetailConfig == null || _observationDetails.isEmpty) {
+      return null;
+    }
+    
+    return _buildObservationDetailsSection();
+  }
+  
+  Widget _buildObservationDetailsSection() {
+    // Utiliser une approche similaire à un TabBar mais sans les problèmes de controller
+    return Column(
+      children: [
+        // En-tête avec le style similaire à un TabBar
+        Container(
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+          alignment: Alignment.centerLeft,
+          child: Text(
+            widget.observationDetailConfig?.label ?? 'Détails de l\'observation',
+            style: TextStyle(
+              color: Theme.of(context).primaryColor,
+              fontWeight: FontWeight.bold,
+              fontSize: 16.0,
+            ),
+          ),
+        ),
+        
+        // Tableau des détails d'observation
+        Expanded(
+          child: _buildObservationDetailsTable(),
+        ),
+      ],
+    );
+  }
+  
+  Widget _buildObservationDetailsTable() {
+    // Bouton d'ajout de détail d'observation
+    Widget addDetailButton = ElevatedButton.icon(
+      onPressed: () {
+        _showAddObservationDetailForm();
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Ajouter'),
+    );
+
+    // Message lorsqu'il n'y a pas de détails
+    Widget emptyMessage = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.format_list_bulleted, size: 48, color: Colors.grey),
+        const SizedBox(height: 16),
+        Text(
+          'Aucun détail d\'observation enregistré',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Cliquez sur "Ajouter" pour créer un nouveau détail',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
+
+    if (_isLoadingDetails) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    
+    // Déterminer les colonnes à afficher pour les détails d'observation
+    List<String> standardColumns = ['actions'];
+    
+    // Récupérer le premier élément pour auto-détecter les propriétés
+    Map<String, dynamic>? firstItemData = 
+        _observationDetails.isNotEmpty ? _observationDetails.first.data : null;
+    
+    List<String> displayColumns = determineDataColumns(
+      standardColumns: standardColumns,
+      itemConfig: widget.observationDetailConfig,
+      firstItemData: firstItemData,
+      filterMetaColumns: true,
+    );
+    
+    // Créer les colonnes du DataTable
+    List<DataColumn> columns = buildDataColumns(
+      columns: displayColumns,
+      itemConfig: widget.observationDetailConfig,
+      predefinedLabels: {
+        'actions': 'Actions',
+        'hauteur_strate': 'Strate',
+        'denombrement': 'Dénombrement',
+      },
+    );
+    
+    // Construire les lignes de données
+    List<DataRow> rows = [];
+    if (_observationDetails.isNotEmpty) {
+      // Générer le schéma pour le formatage des cellules
+      Map<String, dynamic> schema = {};
+      if (widget.observationDetailConfig != null) {
+        schema = FormConfigParser.generateUnifiedSchema(
+            widget.observationDetailConfig!, widget.customConfig);
+      }
+      
+      rows = _observationDetails.map((detail) {
+        return DataRow(
+          cells: displayColumns.map((column) {
+            // Colonne d'actions
+            if (column == 'actions') {
+              return DataCell(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.visibility, size: 20),
+                      onPressed: () {
+                        _navigateToDetailPage(detail);
+                      },
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.edit, size: 20),
+                      onPressed: () {
+                        _showEditObservationDetailForm(detail);
+                      },
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 20),
+                      onPressed: () {
+                        _showDeleteConfirmation(detail);
+                      },
+                      constraints: const BoxConstraints(
+                        minWidth: 40,
+                        minHeight: 40,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+            
+            // Récupérer la valeur depuis les données
+            dynamic rawValue;
+            if (detail.data.containsKey(column)) {
+              rawValue = detail.data[column];
+            }
+            
+            // Formater la valeur et créer la cellule
+            String displayValue = formatDataCellValue(
+              rawValue: rawValue,
+              columnName: column,
+              schema: schema,
+            );
+            
+            return buildFormattedDataCell(
+              value: displayValue,
+              enableTooltip: true,
+            );
+          }).toList(),
+        );
+      }).toList();
+    }
+    
+    // Utiliser la méthode factorisée buildDataTable
+    return buildDataTable(
+      columns: columns,
+      rows: rows,
+      showSearch: false, // Pas de recherche pour les details
+      headerActions: addDetailButton,
+      emptyMessage: emptyMessage,
+      isLoading: false,
+    );
+  }
+  
+  void _navigateToDetailPage(ObservationDetail detail) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationDetailDetailPage(
+          observationDetail: detail,
+          config: widget.observationDetailConfig!,
+          customConfig: widget.customConfig,
+          index: _observationDetails.indexOf(detail) + 1,
+        ),
+      ),
+    );
+  }
+  
+  void _showAddObservationDetailForm() {
+    // Vérifier que la configuration est disponible
+    if (widget.observationDetailConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Configuration non disponible')),
+      );
+      return;
+    }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationDetailFormPage(
+          observationDetail: widget.observationDetailConfig,
+          observation: widget.observation,
+          customConfig: widget.customConfig,
+        ),
+      ),
+    ).then((_) {
+      // Recharger les détails après l'ajout
+      _loadObservationDetails();
+    });
+  }
+  
+  void _showEditObservationDetailForm(ObservationDetail detail) {
+    // Vérifier que la configuration est disponible
+    if (widget.observationDetailConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Configuration non disponible')),
+      );
+      return;
+    }
+    
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationDetailFormPage(
+          observationDetail: widget.observationDetailConfig,
+          observation: widget.observation,
+          customConfig: widget.customConfig,
+          existingDetail: detail,
+        ),
+      ),
+    ).then((_) {
+      // Recharger les détails après l'édition
+      _loadObservationDetails();
+    });
+  }
+  
+  void _showDeleteConfirmation(ObservationDetail detail) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmation'),
+        content: const Text('Voulez-vous vraiment supprimer ce détail d\'observation?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteObservationDetail(detail);
+            },
+            child: const Text('Supprimer', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  void _deleteObservationDetail(ObservationDetail detail) async {
+    try {
+      final detailsProvider = observationDetailsProvider(widget.observation.idObservation);
+      
+      // Vérifier si l'ID existe
+      if (detail.idObservationDetail == null) {
+        throw Exception("Identifiant du détail non disponible");
+      }
+      
+      // Appeler la méthode de suppression
+      final success = await widget.ref.read(detailsProvider.notifier)
+          .deleteObservationDetail(detail.idObservationDetail!);
+      
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Détail supprimé avec succès')),
+          );
+          
+          // Recharger les détails après la suppression
+          _loadObservationDetails();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Échec de la suppression du détail'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la suppression: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildTaxonInfoCard() {

@@ -39,13 +39,17 @@ class VisitDetailPageBase extends DetailPage {
       _VisitDetailPageBaseState();
 }
 
-class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
+class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> with SingleTickerProviderStateMixin {
   bool _hasShownObservationDialog = false;
   BaseVisit? _fullVisit;
+  TabController? _tabController;
 
   @override
   void initState() {
     super.initState();
+
+    // Initialiser le TabController avec un seul onglet "Observations"
+    _tabController = TabController(length: 1, vsync: this);
 
     // Charger les détails de la visite dès l'initialisation
     _loadVisitDetails();
@@ -56,6 +60,12 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
         _proposeObservationCreation();
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _tabController?.dispose();
+    super.dispose();
   }
 
   // Charger les détails de la visite
@@ -382,43 +392,28 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
 
   Widget _buildObservationsSection(BuildContext context, BaseVisit fullVisit,
       ObjectConfig observationConfig) {
-    return Container(
-      color: Colors.grey.shade100,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Titre et bouton d'ajout
-          Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  observationConfig.label ?? 'Observations',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    _showAddObservationDialog(
-                        fullVisit.idBaseVisit, observationConfig);
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Ajouter'),
-                ),
-              ],
-            ),
+    if (_tabController == null) return const SizedBox.shrink();
+    
+    return Column(
+      children: [
+        // TabBar avec une seule option "Observations"
+        buildTabBar(
+          tabController: _tabController!,
+          tabs: const [
+            Tab(text: 'Observations'),
+          ],
+        ),
+        
+        // TabBarView avec le tableau des observations
+        Expanded(
+          child: TabBarView(
+            controller: _tabController!,
+            children: [
+              _buildObservationsTable(context, fullVisit, observationConfig),
+            ],
           ),
-
-          // Tableau des observations
-          Expanded(
-            child:
-                _buildObservationsTable(context, fullVisit, observationConfig),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -427,6 +422,39 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
     // Utiliser le viewModel pour les observations
     final observationsState =
         widget.ref.watch(observationsProvider(fullVisit.idBaseVisit));
+
+    // Bouton d'ajout d'observation
+    Widget addObservationButton = ElevatedButton.icon(
+      onPressed: () {
+        _showAddObservationDialog(fullVisit.idBaseVisit, observationConfig);
+      },
+      icon: const Icon(Icons.add),
+      label: const Text('Ajouter'),
+    );
+
+    // Message vide personnalisé pour les observations
+    Widget emptyObservationsMessage = Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Icon(Icons.nature, size: 48, color: Colors.grey),
+        const SizedBox(height: 16),
+        Text(
+          'Aucune observation enregistrée pour cette visite',
+          style: TextStyle(
+            fontSize: 16,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Cliquez sur "Ajouter" pour créer une nouvelle observation',
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
 
     return observationsState.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -456,33 +484,6 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
           }
         }
 
-        if (observations.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.nature, size: 48, color: Colors.grey),
-                const SizedBox(height: 16),
-                Text(
-                  'Aucune observation enregistrée pour cette visite',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey.shade700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Cliquez sur "Ajouter" pour créer une nouvelle observation',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-
         // Utiliser la méthode factorisée pour déterminer les colonnes à afficher
         List<String> standardColumns = ['actions'];
 
@@ -497,28 +498,28 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
           filterMetaColumns: true,
         );
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Card(
-            elevation: 2,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: SingleChildScrollView(
-                child: DataTable(
-                  columns: _buildDataColumns(displayColumns, observationConfig),
-                  rows: observations.map((observation) {
-                    return _buildDataRow(
-                      observation,
-                      displayColumns,
-                      observationConfig,
-                      context,
-                      fullVisit.idBaseVisit,
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-          ),
+        // Construire les colonnes du tableau
+        List<DataColumn> columns = _buildDataColumns(displayColumns, observationConfig);
+        
+        // Construire les lignes du tableau
+        List<DataRow> rows = observations.map((observation) {
+          return _buildDataRow(
+            observation,
+            displayColumns,
+            observationConfig,
+            context,
+            fullVisit.idBaseVisit,
+          );
+        }).toList();
+
+        // Utiliser la méthode factorisée buildDataTable
+        return buildDataTable(
+          columns: columns,
+          rows: rows,
+          showSearch: false, // Pas de recherche pour les observations
+          headerActions: addObservationButton,
+          emptyMessage: emptyObservationsMessage,
+          isLoading: false,
         );
       },
     );

@@ -208,17 +208,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
     return Column(
       children: [
-        // TabBar avec une seule option "Visites"
-        Material(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
-          child: TabBar(
-            controller: _tabController!,
-            tabs: const [
-              Tab(text: 'Visites'),
-            ],
-            labelColor: Theme.of(context).primaryColor,
-            indicatorColor: Theme.of(context).primaryColor,
-          ),
+        // TabBar utilisant la méthode factorisée
+        buildTabBar(
+          tabController: _tabController!,
+          tabs: const [
+            Tab(text: 'Visites'),
+          ],
         ),
 
         // Visites en bas avec TabBarView - prend tout l'espace restant
@@ -315,144 +310,100 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     final visitsAsyncValue =
         widget.ref.watch(siteVisitsViewModelProvider(params));
 
-    return Container(
-      color: Colors.grey.shade100,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
+    // Bouton d'ajout de visite
+    Widget? addVisitButton = visitConfig != null
+        ? ElevatedButton.icon(
+            onPressed: () {
+              _showAddVisitForm(visitConfig);
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Nouvelle visite'),
+          )
+        : null;
+
+    return visitsAsyncValue.when(
+      data: (visits) {
+        // Filtrer les visites
+        if (_visitsFiltered.isEmpty ||
+            _visitsFiltered.length != visits.length) {
+          _filterVisits(visitsAsyncValue);
+        }
+
+        // Utiliser la méthode factorisée pour déterminer les colonnes
+        List<String> standardColumns = ['actions', 'visit_date_min', 'comments'];
+        
+        // Ajouter les observateurs si disponibles
+        if (_visitsFiltered.isNotEmpty &&
+            _visitsFiltered.first.observers != null) {
+          standardColumns.add('observers');
+        }
+        
+        // Utiliser la méthode commune pour déterminer les colonnes
+        Map<String, dynamic>? firstItemData = 
+            _visitsFiltered.isNotEmpty && _visitsFiltered.first.data != null
+            ? _visitsFiltered.first.data
+            : null;
+        
+        List<String> displayColumns = determineDataColumns(
+          standardColumns: standardColumns,
+          itemConfig: visitConfig,
+          firstItemData: firstItemData,
+          filterMetaColumns: true,
+        );
+
+        // Construire les colonnes du tableau
+        List<DataColumn> columns = _buildVisitDataColumns(displayColumns, visitConfig);
+        
+        // Construire les lignes du tableau
+        List<DataRow> rows = _visitsFiltered.map((visit) {
+          return _buildVisitDataRow(
+            visit,
+            displayColumns,
+            visitConfig,
+          );
+        }).toList();
+
+        // Message vide personnalisé
+        Widget emptyMessage = Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Bouton d'ajout de visite + Champ de recherche
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Row(
-                children: [
-                  if (visitConfig != null)
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        _showAddVisitForm(visitConfig);
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Nouvelle visite'),
-                    ),
-                  const Spacer(),
-                  SizedBox(
-                    width: 200,
-                    child: TextField(
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher',
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  _searchController.clear();
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _filterVisits(visitsAsyncValue);
-                                  });
-                                },
-                              )
-                            : const Icon(Icons.search),
-                        border: const OutlineInputBorder(),
-                        contentPadding:
-                            const EdgeInsets.symmetric(horizontal: 12),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                          _filterVisits(visitsAsyncValue);
-                        });
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Liste des visites
-            Expanded(
-              child: visitsAsyncValue.when(
-                data: (visits) {
-                  // Filtrer les visites
-                  if (_visitsFiltered.isEmpty ||
-                      _visitsFiltered.length != visits.length) {
-                    _filterVisits(visitsAsyncValue);
-                  }
-
-                  if (_visitsFiltered.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.calendar_today,
-                              size: 48, color: Colors.grey),
-                          const SizedBox(height: 16),
-                          Text(
-                            _searchQuery.isNotEmpty
-                                ? 'Aucune visite ne correspond à votre recherche'
-                                : 'Aucune visite pour ce site',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-
-                  // Utiliser la méthode factorisée pour déterminer les colonnes
-                  List<String> standardColumns = ['actions', 'visit_date_min', 'comments'];
-                  
-                  // Ajouter les observateurs si disponibles
-                  if (_visitsFiltered.isNotEmpty &&
-                      _visitsFiltered.first.observers != null) {
-                    standardColumns.add('observers');
-                  }
-                  
-                  // Utiliser la méthode commune de DetailPage pour déterminer les colonnes
-                  Map<String, dynamic>? firstItemData = 
-                      _visitsFiltered.isNotEmpty && _visitsFiltered.first.data != null
-                      ? _visitsFiltered.first.data
-                      : null;
-                  
-                  List<String> displayColumns = determineDataColumns(
-                    standardColumns: standardColumns,
-                    itemConfig: visitConfig,
-                    firstItemData: firstItemData,
-                    filterMetaColumns: true,
-                  );
-
-                  return Card(
-                    elevation: 2,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SingleChildScrollView(
-                        child: DataTable(
-                          columns: _buildVisitDataColumns(
-                              displayColumns, visitConfig),
-                          rows: _visitsFiltered.map((visit) {
-                            return _buildVisitDataRow(
-                              visit,
-                              displayColumns,
-                              visitConfig,
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => Center(
-                  child: Text(
-                    'Erreur lors du chargement des visites: $error',
-                    style: const TextStyle(color: Colors.red),
-                  ),
-                ),
+            const Icon(Icons.calendar_today, size: 48, color: Colors.grey),
+            const SizedBox(height: 16),
+            Text(
+              _searchQuery.isNotEmpty
+                  ? 'Aucune visite ne correspond à votre recherche'
+                  : 'Aucune visite pour ce site',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey[600],
               ),
             ),
           ],
+        );
+
+        // Utiliser la méthode factoriée pour construire le tableau
+        return buildDataTable(
+          columns: columns,
+          rows: rows,
+          showSearch: true,
+          searchHint: 'Rechercher une visite',
+          searchController: _searchController,
+          onSearchChanged: (value) {
+            setState(() {
+              _searchQuery = value;
+              _filterVisits(visitsAsyncValue);
+            });
+          },
+          headerActions: addVisitButton,
+          emptyMessage: emptyMessage,
+          isLoading: false,
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(
+        child: Text(
+          'Erreur lors du chargement des visites: $error',
+          style: const TextStyle(color: Colors.red),
         ),
       ),
     );

@@ -15,7 +15,7 @@ class ModuleDetailPageBase extends DetailPage {
   // It relies on the GlobalKey<ModuleDetailPageBaseState> and injected use cases rather than WidgetRef
 
   const ModuleDetailPageBase({
-    super.key, 
+    super.key,
     required this.moduleInfo,
   });
 
@@ -43,41 +43,40 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
-  
+
   // Injection du use case pour respecter la Clean Architecture
   late GetModuleWithConfigUseCase getModuleWithConfigUseCase;
 
   @override
   ObjectConfig? get objectConfig {
     // Récupérer la configuration du module (qui est de type ModuleConfig)
-    final moduleConfig = _updatedModule?.complement?.configuration?.module ?? 
-                      widget.moduleInfo.module.complement?.configuration?.module;
-    
+    final moduleConfig = _updatedModule?.complement?.configuration?.module ??
+        widget.moduleInfo.module.complement?.configuration?.module;
+
     // La configuration du module n'est pas compatible avec le type attendu
     // Nous devons créer un ObjectConfig plutôt que de retourner directement moduleConfig
     if (moduleConfig == null) return null;
-    
+
     // Conversion de ModuleConfig en ObjectConfig en copiant les propriétés pertinentes
     return ObjectConfig(
-      childrenTypes: moduleConfig.childrenTypes,
-      descriptionFieldName: moduleConfig.descriptionFieldName,
-      displayForm: moduleConfig.displayForm,
-      displayList: moduleConfig.displayList,
-      displayProperties: moduleConfig.displayProperties,
-      exportPdf: moduleConfig.exportPdf,
-      filters: moduleConfig.filters,
-      generic: moduleConfig.generic,
-      genre: moduleConfig.genre,
-      idFieldName: moduleConfig.idFieldName,
-      idTableLocation: moduleConfig.idTableLocation,
-      label: moduleConfig.label,
-      labelList: moduleConfig.moduleLabel,
-      parentTypes: moduleConfig.parentTypes,
-      propertiesKeys: moduleConfig.propertiesKeys,
-      specific: moduleConfig.specific,
-      typesSite: moduleConfig.typesSite,
-      uuidFieldName: moduleConfig.uuidFieldName
-    );
+        childrenTypes: moduleConfig.childrenTypes,
+        descriptionFieldName: moduleConfig.descriptionFieldName,
+        displayForm: moduleConfig.displayForm,
+        displayList: moduleConfig.displayList,
+        displayProperties: moduleConfig.displayProperties,
+        exportPdf: moduleConfig.exportPdf,
+        filters: moduleConfig.filters,
+        generic: moduleConfig.generic,
+        genre: moduleConfig.genre,
+        idFieldName: moduleConfig.idFieldName,
+        idTableLocation: moduleConfig.idTableLocation,
+        label: moduleConfig.label,
+        labelList: moduleConfig.moduleLabel,
+        parentTypes: moduleConfig.parentTypes,
+        propertiesKeys: moduleConfig.propertiesKeys,
+        specific: moduleConfig.specific,
+        typesSite: moduleConfig.typesSite,
+        uuidFieldName: moduleConfig.uuidFieldName);
   }
 
   @override
@@ -116,7 +115,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   @override
   void initState() {
     super.initState();
-    
+
     // Ajouter un écouteur pour le défilement
     _sitesScrollController.addListener(_handleScroll);
 
@@ -371,8 +370,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   PreferredSizeWidget buildAppBar() {
     // Vérifier si la configuration est en cours de chargement
     final bool isConfiguringModule = _isInitialLoading ||
-        (!_configurationLoaded && 
-        (widget.moduleInfo.module.complement != null || _updatedModule?.complement != null));
+        (!_configurationLoaded &&
+            (widget.moduleInfo.module.complement != null ||
+                _updatedModule?.complement != null));
 
     return AppBar(
       title: Text(getTitle()),
@@ -414,7 +414,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       children: [
         // Message d'information si le module est en cours de configuration
         if (_isInitialLoading ||
-            (!_configurationLoaded && widget.moduleInfo.module.complement != null))
+            (!_configurationLoaded &&
+                widget.moduleInfo.module.complement != null))
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
@@ -445,18 +446,17 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               ),
             ),
           ),
-        
-        // Tab Bar
-        TabBar(
-          controller: _tabController!,
+
+        // Utiliser notre méthode factorisée buildTabBar
+        buildTabBar(
+          tabController: _tabController!,
           tabs: [
             if (_childrenTypes.contains('sites_group'))
               _buildTabLabel('sites_group'),
-            if (_childrenTypes.contains('site'))
-              _buildTabLabel('site'),
+            if (_childrenTypes.contains('site')) _buildTabLabel('site'),
           ],
         ),
-        
+
         // Tab Views
         Expanded(
           child: TabBarView(
@@ -471,21 +471,21 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-  Widget _buildTabLabel(String childType) {
+  Tab _buildTabLabel(String childType) {
     final module = _updatedModule ?? widget.moduleInfo.module;
     int count = 0;
     String label = '';
 
     if (childType == 'site') {
       count = module.sites?.length ?? 0;
-      label = module.complement?.configuration?.site?.labelList ?? 
-              module.complement?.configuration?.site?.label ?? 
-              'Sites';
+      label = module.complement?.configuration?.site?.labelList ??
+          module.complement?.configuration?.site?.label ??
+          'Sites';
     } else if (childType == 'sites_group') {
       count = module.sitesGroup?.length ?? 0;
-      label = module.complement?.configuration?.sitesGroup?.labelList ?? 
-              module.complement?.configuration?.sitesGroup?.label ?? 
-              'Groupes de sites';
+      label = module.complement?.configuration?.sitesGroup?.labelList ??
+          module.complement?.configuration?.sitesGroup?.label ??
+          'Groupes de sites';
     }
 
     return Tab(text: '$label ($count)');
@@ -639,186 +639,134 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
-    // Obtenir la configuration des sites et l'analyser avec FormConfigParser
+    // Obtenir la configuration des sites
     final siteConfig = module.complement?.configuration?.site;
-    final customConfig = module.complement?.configuration?.custom;
-
-    Map<String, dynamic> parsedSiteConfig = {};
-
-    if (siteConfig != null) {
-      parsedSiteConfig =
-          FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
-    }
-
-    // Récupérer les libellés personnalisés en fonction de la configuration
-    final String baseSiteNameLabel = (parsedSiteConfig.isNotEmpty &&
-            parsedSiteConfig.containsKey('base_site_name'))
-        ? parsedSiteConfig['base_site_name']['attribut_label'] ?? 'Nom'
-        : siteConfig?.label ?? 'Nom';
-
-    final String baseSiteCodeLabel = (parsedSiteConfig.isNotEmpty &&
-            parsedSiteConfig.containsKey('base_site_code'))
-        ? parsedSiteConfig['base_site_code']['attribut_label'] ?? 'Code'
-        : 'Code';
 
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          // Champ de recherche
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Rechercher un site',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _handleSearch('');
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: _handleSearch,
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              controller: _sitesScrollController,
-              child: _displayedSites.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Text(
-                          'Aucun site associé à ce module',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+    // Déterminer les colonnes à afficher pour les sites
+    List<String> standardColumns = [
+      'actions',
+      'base_site_name',
+      'base_site_code',
+      'base_site_description'
+    ];
+
+    // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
+    Map<String, dynamic>? firstItemData = null;
+
+    List<String> displayColumns = determineDataColumns(
+      standardColumns: standardColumns,
+      itemConfig: siteConfig,
+      firstItemData: firstItemData,
+      filterMetaColumns: true,
+    );
+
+    // Créer les colonnes du DataTable
+    List<DataColumn> columns = buildDataColumns(
+      columns: displayColumns,
+      itemConfig: siteConfig,
+      predefinedLabels: {
+        'actions': 'Action',
+        'base_site_name': 'Nom',
+        'base_site_code': 'Code',
+        'base_site_description': 'Description',
+      },
+    );
+
+    // Générer le schéma pour le formatage des cellules
+    Map<String, dynamic> schema = {};
+    if (siteConfig != null) {
+      schema = FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
+    }
+
+    // Construire les lignes du tableau
+    List<DataRow> rows = _displayedSites.map((site) {
+      return DataRow(
+        cells: displayColumns.map((column) {
+          // Colonne d'actions
+          if (column == 'actions') {
+            return DataCell(
+              IconButton(
+                icon: const Icon(Icons.visibility, size: 20),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteDetailPage(
+                        site: site,
+                        moduleInfo: _updatedModule != null
+                            ? widget.moduleInfo
+                                .copyWith(module: _updatedModule!)
+                            : widget.moduleInfo,
                       ),
-                    )
-                  : Table(
-                      columnWidths: const {
-                        0: FixedColumnWidth(80), // Action column
-                        1: FlexColumnWidth(80), // Name column
-                        2: FixedColumnWidth(100), // Code column
-                        3: FixedColumnWidth(120), // Description truncated
-                      },
-                      children: [
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 16.0),
-                              child: Text('Action',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(baseSiteNameLabel,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(baseSiteCodeLabel,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text('Description',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        ..._displayedSites.map((site) => TableRow(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  height: 48,
-                                  alignment: Alignment.center,
-                                  child: IconButton(
-                                    icon:
-                                        const Icon(Icons.visibility, size: 20),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => SiteDetailPage(
-                                            site: site,
-                                            moduleInfo: _updatedModule != null
-                                                ? widget.moduleInfo.copyWith(
-                                                    module: _updatedModule!)
-                                                : widget.moduleInfo,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(site.baseSiteName ?? ''),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(site.baseSiteCode ?? ''),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(
-                                    site.baseSiteDescription != null &&
-                                            site.baseSiteDescription!.isNotEmpty
-                                        ? site.baseSiteDescription!.length > 25
-                                            ? '${site.baseSiteDescription!.substring(0, 22)}...'
-                                            : site.baseSiteDescription!
-                                        : '-',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
-                            )),
-                      ],
                     ),
-            ),
-          ),
-          if (_isLoadingSites)
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Center(child: CircularProgressIndicator()),
-            ),
-        ],
+                  );
+                },
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            );
+          }
+
+          // Propriétés standard du site
+          dynamic value;
+          switch (column) {
+            case 'base_site_name':
+              value = site.baseSiteName;
+              break;
+            case 'base_site_code':
+              value = site.baseSiteCode;
+              break;
+            case 'base_site_description':
+              value = site.baseSiteDescription;
+              break;
+            default:
+              // BaseSite n'a pas de propriété 'data', on laisse la valeur à null
+              value = null;
+          }
+
+          // Formater la valeur et créer la cellule
+          String displayValue = formatDataCellValue(
+            rawValue: value,
+            columnName: column,
+            schema: schema,
+          );
+
+          return buildFormattedDataCell(
+            value: displayValue,
+            enableTooltip: true,
+          );
+        }).toList(),
+      );
+    }).toList();
+
+    // Message vide personnalisé
+    Widget emptyMessage = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Text(
+        'Aucun site associé à ce module',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.grey[600],
+        ),
       ),
+    );
+
+    // Utiliser notre méthode factorisée buildDataTable
+    return buildDataTable(
+      columns: columns,
+      rows: rows,
+      showSearch: true,
+      searchHint: "Rechercher un site",
+      searchController: _searchController,
+      onSearchChanged: _handleSearch,
+      emptyMessage: emptyMessage,
+      isLoading: _isLoadingSites,
     );
   }
 }
