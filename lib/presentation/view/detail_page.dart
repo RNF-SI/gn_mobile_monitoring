@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
@@ -138,5 +140,222 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
   /// Obtient le titre de la page (à surcharger dans les sous-classes)
   String getTitle() {
     return 'Détails';
+  }
+
+  // MÉTHODES COMMUNES POUR LES TABLEAUX DE DONNÉES
+
+  /// Détermine les colonnes à afficher dans un tableau de données
+  /// basé sur la configuration et les données
+  List<String> determineDataColumns({
+    required List<String> standardColumns, // Colonnes toujours affichées (ex: 'actions', 'date')
+    ObjectConfig? itemConfig, // Configuration de l'élément (visite, observation)
+    Map<String, dynamic>? firstItemData, // Données du premier élément pour auto-détection
+    bool filterMetaColumns = true, // Filtrer les colonnes de métadonnées (geom, uuid, meta)
+  }) {
+    List<String> displayColumns = List.from(standardColumns);
+    Set<String> allPossibleKeys = <String>{};
+    
+    // Utiliser en priorité les propriétés définies dans la configuration
+    if (itemConfig?.displayList != null && itemConfig!.displayList!.isNotEmpty) {
+      allPossibleKeys.addAll(itemConfig.displayList!);
+    } else if (itemConfig?.displayProperties != null && itemConfig!.displayProperties!.isNotEmpty) {
+      allPossibleKeys.addAll(itemConfig.displayProperties!);
+    }
+    
+    // Ajouter les propriétés de generic et specific si disponibles
+    if (itemConfig != null) {
+      if (itemConfig.generic != null) {
+        allPossibleKeys.addAll(itemConfig.generic!.keys);
+      }
+      if (itemConfig.specific != null) {
+        allPossibleKeys.addAll(itemConfig.specific!.keys);
+      }
+      if (itemConfig.propertiesKeys != null) {
+        allPossibleKeys.addAll(itemConfig.propertiesKeys!);
+      }
+    }
+    
+    // Ajouter les clés trouvées dans les données
+    if (firstItemData != null) {
+      allPossibleKeys.addAll(firstItemData.keys);
+    }
+    
+    // Filtrer les clés pour ne garder que les pertinentes
+    List<String> filteredKeys = allPossibleKeys
+        .where((key) {
+          bool keyIsValid = !displayColumns.contains(key);
+          
+          if (filterMetaColumns) {
+            keyIsValid = keyIsValid &&
+                !key.contains('geom') &&
+                !key.contains('uuid') &&
+                !key.contains('meta');
+          }
+          
+          return keyIsValid;
+        })
+        .toList();
+    
+    // Prioriser les clés plutôt que les limiter
+    List<String> priorityKeys = [];
+    if (itemConfig?.displayList != null) {
+      priorityKeys.addAll(itemConfig!.displayList!);
+    } else if (itemConfig?.displayProperties != null) {
+      priorityKeys.addAll(itemConfig!.displayProperties!);
+    }
+    
+    // Trier les clés pour mettre en priorité celles définies dans la configuration
+    filteredKeys.sort((a, b) {
+      // Si a est dans priorityKeys mais pas b, a vient en premier
+      if (priorityKeys.contains(a) && !priorityKeys.contains(b)) {
+        return -1;
+      }
+      // Si b est dans priorityKeys mais pas a, b vient en premier
+      if (!priorityKeys.contains(a) && priorityKeys.contains(b)) {
+        return 1;
+      }
+      // Sinon, ordre alphabétique
+      return a.compareTo(b);
+    });
+    
+    // Ajouter les clés filtrées aux colonnes
+    displayColumns.addAll(filteredKeys);
+    
+    return displayColumns;
+  }
+
+  /// Construit les colonnes d'un DataTable basé sur la configuration
+  List<DataColumn> buildDataColumns({
+    required List<String> columns,
+    required ObjectConfig? itemConfig,
+    Map<String, String> predefinedLabels = const {},
+  }) {
+    // Générer le schéma unifié à partir de la configuration
+    Map<String, dynamic> schema = {};
+    if (itemConfig != null) {
+      schema = FormConfigParser.generateUnifiedSchema(itemConfig, customConfig);
+    }
+    
+    return columns.map((column) {
+      String label = column;
+      
+      // Vérifier d'abord les labels prédéfinis
+      if (predefinedLabels.containsKey(column)) {
+        label = predefinedLabels[column]!;
+      } 
+      // Sinon rechercher dans la configuration
+      else {
+        if (itemConfig != null) {
+          // Vérifier dans la configuration parsée
+          if (schema.containsKey(column) && 
+              schema[column].containsKey('attribut_label')) {
+            label = schema[column]['attribut_label'];
+          }
+          // Vérifier dans generic
+          else if (itemConfig.generic != null &&
+              itemConfig.generic!.containsKey(column)) {
+            label = itemConfig.generic![column]!.attributLabel ?? column;
+          }
+          // Vérifier dans specific
+          else if (itemConfig.specific != null &&
+              itemConfig.specific!.containsKey(column)) {
+            final specificConfig =
+                itemConfig.specific![column] as Map<String, dynamic>?;
+            if (specificConfig != null &&
+                specificConfig.containsKey('attribut_label')) {
+              label = specificConfig['attribut_label'];
+            }
+          }
+        }
+      }
+      
+      // Formater le libellé pour une meilleure présentation
+      label = ValueFormatter.formatLabel(label);
+      
+      return DataColumn(
+        label: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
+    }).toList();
+  }
+
+  /// Formate une valeur en fonction de son type et de la configuration
+  String formatDataCellValue({
+    required dynamic rawValue,
+    required String columnName,
+    required Map<String, dynamic> schema,
+  }) {
+    if (rawValue == null) {
+      return '';
+    }
+    
+    // Valeur par défaut en cas d'erreur de formatage
+    String displayValue = ValueFormatter.format(rawValue);
+    
+    try {
+      // Utiliser le type défini dans le schéma pour formater correctement la valeur
+      if (schema.containsKey(columnName)) {
+        final fieldConfig = schema[columnName];
+        final typeWidget = fieldConfig['type_widget'];
+        
+        // Formater en fonction du type de widget
+        switch (typeWidget) {
+          case 'nomenclature':
+            // Idéalement récupérer le label de la nomenclature
+            // Pour l'instant, on utilise juste la valeur brute
+            displayValue = rawValue.toString();
+            break;
+          case 'checkbox':
+            displayValue = rawValue == true ? 'Oui' : 'Non';
+            break;
+          case 'date':
+          case 'datetime':
+            if (rawValue is String) {
+              displayValue = formatDateString(rawValue);
+            }
+            break;
+          case 'number':
+            if (rawValue is num) {
+              // Appliquer un format spécifique pour les nombres si nécessaire
+              displayValue = ValueFormatter.format(rawValue);
+            }
+            break;
+          case 'text':
+          case 'textarea':
+            if (rawValue is String) {
+              displayValue = rawValue;
+            }
+            break;
+          default:
+            displayValue = ValueFormatter.format(rawValue);
+        }
+      }
+    } catch (e) {
+      // En cas d'erreur de formatage, utiliser le format par défaut
+      debugPrint('Erreur de formatage pour $columnName: $e');
+    }
+    
+    return displayValue;
+  }
+  
+  /// Construit une cellule de données formatée avec tooltip pour les valeurs longues
+  DataCell buildFormattedDataCell({
+    required String value,
+    bool enableTooltip = true,
+    int tooltipThreshold = 30,
+    int maxLines = 1,
+  }) {
+    return DataCell(
+      Tooltip(
+        message: enableTooltip && value.length > tooltipThreshold ? value : '',
+        child: Text(
+          value,
+          overflow: TextOverflow.ellipsis,
+          maxLines: maxLines,
+        ),
+      ),
+    );
   }
 }

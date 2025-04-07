@@ -401,87 +401,27 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                     );
                   }
 
-                  // Déterminer les colonnes à afficher en suivant la même logique
-                  // que dans PropertyDisplayWidget
-
-                  List<String> displayColumns = ['actions'];
-
-                  // Ajouter les colonnes génériques toujours présentes
-                  displayColumns.addAll(['visit_date_min', 'comments']);
-
+                  // Utiliser la méthode factorisée pour déterminer les colonnes
+                  List<String> standardColumns = ['actions', 'visit_date_min', 'comments'];
+                  
                   // Ajouter les observateurs si disponibles
                   if (_visitsFiltered.isNotEmpty &&
                       _visitsFiltered.first.observers != null) {
-                    displayColumns.add('observers');
-                  }
-
-                  // Collecter toutes les clés possibles, comme dans PropertyDisplayWidget._buildSortedProperties
-                  Set<String> allPossibleKeys = <String>{};
-
-                  // Utiliser en priorité les propriétés d'affichage définies dans la configuration
-                  if (visitConfig?.displayList != null &&
-                      visitConfig!.displayList!.isNotEmpty) {
-                    // Utiliser displayList pour un affichage personnalisé
-                    allPossibleKeys.addAll(visitConfig!.displayList!);
-                  } else if (visitConfig?.displayProperties != null &&
-                      visitConfig!.displayProperties!.isNotEmpty) {
-                    // Utiliser displayProperties comme alternative
-                    allPossibleKeys.addAll(visitConfig!.displayProperties!);
-                  } 
-                  
-                  // Ajouter les propriétés de generic et specific si disponibles
-                  if (visitConfig != null) {
-                    if (visitConfig.generic != null) {
-                      allPossibleKeys.addAll(visitConfig.generic!.keys);
-                    }
-                    if (visitConfig.specific != null) {
-                      allPossibleKeys.addAll(visitConfig.specific!.keys);
-                    }
-                    if (visitConfig.propertiesKeys != null) {
-                      allPossibleKeys.addAll(visitConfig.propertiesKeys!);
-                    }
-                  }
-
-                  // Ajouter les clés trouvées dans les données
-                  if (_visitsFiltered.isNotEmpty && _visitsFiltered.first.data != null) {
-                    allPossibleKeys.addAll(_visitsFiltered.first.data!.keys);
-                  }
-
-                  // Filtrer les clés pour ne garder que les pertinentes
-                  // Éviter les métadonnées et géométries
-                  List<String> filteredKeys = allPossibleKeys
-                      .where((key) => 
-                          !key.contains('geom') &&
-                          !key.contains('uuid') &&
-                          !key.contains('meta') &&
-                          !displayColumns.contains(key))
-                      .toList();
-
-                  // Prioriser les clés plutôt que les limiter
-                  // (suppression de la limitation à 5 clés pour afficher toutes les propriétés)
-                  List<String> priorityKeys = [];
-                  if (visitConfig?.displayList != null) {
-                    priorityKeys.addAll(visitConfig!.displayList!);
-                  } else if (visitConfig?.displayProperties != null) {
-                    priorityKeys.addAll(visitConfig!.displayProperties!);
+                    standardColumns.add('observers');
                   }
                   
-                  // Trier les clés pour mettre en priorité celles définies dans la configuration
-                  filteredKeys.sort((a, b) {
-                    // Si a est dans priorityKeys mais pas b, a vient en premier
-                    if (priorityKeys.contains(a) && !priorityKeys.contains(b)) {
-                      return -1;
-                    }
-                    // Si b est dans priorityKeys mais pas a, b vient en premier
-                    if (!priorityKeys.contains(a) && priorityKeys.contains(b)) {
-                      return 1;
-                    }
-                    // Sinon, ordre alphabétique
-                    return a.compareTo(b);
-                  });
-
-                  // Ajouter les clés filtrées aux colonnes
-                  displayColumns.addAll(filteredKeys);
+                  // Utiliser la méthode commune de DetailPage pour déterminer les colonnes
+                  Map<String, dynamic>? firstItemData = 
+                      _visitsFiltered.isNotEmpty && _visitsFiltered.first.data != null
+                      ? _visitsFiltered.first.data
+                      : null;
+                  
+                  List<String> displayColumns = determineDataColumns(
+                    standardColumns: standardColumns,
+                    itemConfig: visitConfig,
+                    firstItemData: firstItemData,
+                    filterMetaColumns: true,
+                  );
 
                   return Card(
                     elevation: 2,
@@ -520,60 +460,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   List<DataColumn> _buildVisitDataColumns(
       List<String> columns, ObjectConfig? visitConfig) {
-    // Générer le schéma unifié à partir de la configuration de visite
-    Map<String, dynamic> schema = {};
-    if (visitConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(visitConfig, customConfig);
-    }
-
-    return columns.map((column) {
-      String label = column;
-
-      // Colonnes prédéfinies standards
-      if (column == 'actions') {
-        label = 'Actions';
-      } else if (column == 'visit_date_min') {
-        label = 'Date de visite';
-      } else if (column == 'comments') {
-        label = 'Commentaires';
-      } else if (column == 'observers') {
-        label = 'Observateurs';
-      } else {
-        // Utiliser la même logique que dans PropertyDisplayWidget._getPropertyLabel
-        if (visitConfig != null) {
-          // Vérifier dans la configuration parsée
-          if (schema.containsKey(column) && 
-              schema[column].containsKey('attribut_label')) {
-            label = schema[column]['attribut_label'];
-          }
-          // Si pas trouvé, vérifier dans generic
-          else if (visitConfig.generic != null &&
-              visitConfig.generic!.containsKey(column)) {
-            label = visitConfig.generic![column]!.attributLabel ?? column;
-          }
-          // Si pas trouvé, vérifier dans specific
-          else if (visitConfig.specific != null &&
-              visitConfig.specific!.containsKey(column)) {
-            final specificConfig =
-                visitConfig.specific![column] as Map<String, dynamic>?;
-            if (specificConfig != null &&
-                specificConfig.containsKey('attribut_label')) {
-              label = specificConfig['attribut_label'];
-            }
-          }
-        }
-      }
-
-      // Formater le libellé pour une meilleure présentation
-      label = ValueFormatter.formatLabel(label);
-
-      return DataColumn(
-        label: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
-    }).toList();
+    // Utiliser la méthode factorisée pour construire les colonnes du tableau
+    return buildDataColumns(
+      columns: columns,
+      itemConfig: visitConfig,
+      predefinedLabels: {
+        'actions': 'Actions',
+        'visit_date_min': 'Date de visite',
+        'comments': 'Commentaires',
+        'observers': 'Observateurs',
+      },
+    );
   }
 
   DataRow _buildVisitDataRow(
@@ -682,77 +579,34 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         }
 
         // Données spécifiques (depuis le champ data)
-        String displayValue = '';
         if (visit.data != null) {
           dynamic rawValue;
-
+          
           // Récupérer la valeur brute
           if (visit.data.containsKey(column)) {
             rawValue = visit.data[column];
           }
-
-          // Formater la valeur selon son type et la configuration
+          
           if (rawValue != null) {
-            // Utiliser le type défini dans le schéma pour formater correctement la valeur
-            if (schema.containsKey(column)) {
-              final fieldConfig = schema[column];
-              final typeWidget = fieldConfig['type_widget'];
-
-              // Formater en fonction du type de widget
-              switch (typeWidget) {
-                case 'nomenclature':
-                  // Idéalement récupérer le label de la nomenclature
-                  // Pour l'instant, on utilise juste la valeur brute
-                  displayValue = rawValue.toString();
-                  break;
-                case 'checkbox':
-                  displayValue = rawValue == true ? 'Oui' : 'Non';
-                  break;
-                case 'date':
-                case 'datetime':
-                  if (rawValue is String) {
-                    displayValue = formatDateString(rawValue);
-                  } else {
-                    displayValue = ValueFormatter.format(rawValue);
-                  }
-                  break;
-                case 'number':
-                  if (rawValue is num) {
-                    // Appliquer un format spécifique pour les nombres si nécessaire
-                    displayValue = ValueFormatter.format(rawValue);
-                  } else {
-                    displayValue = ValueFormatter.format(rawValue);
-                  }
-                  break;
-                case 'text':
-                case 'textarea':
-                  if (rawValue is String) {
-                    displayValue = rawValue;
-                  } else {
-                    displayValue = ValueFormatter.format(rawValue);
-                  }
-                  break;
-                default:
-                  displayValue = ValueFormatter.format(rawValue);
-              }
-            } else {
-              // Format par défaut si aucune configuration spécifique
-              displayValue = ValueFormatter.format(rawValue);
-            }
+            // Utiliser la méthode factorisée pour formater la valeur
+            String displayValue = formatDataCellValue(
+              rawValue: rawValue,
+              columnName: column,
+              schema: schema,
+            );
+            
+            // Utiliser la méthode factorisée pour construire la cellule
+            return buildFormattedDataCell(
+              value: displayValue,
+              enableTooltip: true,
+              tooltipThreshold: 30,
+              maxLines: 1,
+            );
           }
         }
-
-        // Pour afficher proprement les valeurs potentiellement longues
-        return DataCell(
-          Tooltip(
-            message: displayValue.length > 30 ? displayValue : '',
-            child: Text(
-              displayValue,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-        );
+        
+        // Valeur vide si aucune donnée
+        return buildFormattedDataCell(value: '');
       }).toList(),
     );
   }

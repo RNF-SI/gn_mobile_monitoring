@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
-import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -14,7 +14,6 @@ import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
-import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
 
 /// Page de détail de visite basée sur la classe DetailPage
 class VisitDetailPageBase extends DetailPage {
@@ -36,20 +35,21 @@ class VisitDetailPageBase extends DetailPage {
   });
 
   @override
-  DetailPageState<VisitDetailPageBase> createState() => _VisitDetailPageBaseState();
+  DetailPageState<VisitDetailPageBase> createState() =>
+      _VisitDetailPageBaseState();
 }
 
 class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
   bool _hasShownObservationDialog = false;
   BaseVisit? _fullVisit;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Charger les détails de la visite dès l'initialisation
     _loadVisitDetails();
-    
+
     // Proposer la création d'une observation après un court délai si c'est une nouvelle visite
     if (widget.isNewVisit) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -57,12 +57,12 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
       });
     }
   }
-  
+
   // Charger les détails de la visite
   void _loadVisitDetails() {
     final viewModel = widget.ref.read(siteVisitsViewModelProvider(
         (widget.site.idBaseSite, widget.visit.idModule)).notifier);
-    
+
     viewModel.getVisitWithFullDetails(widget.visit.idBaseVisit).then((visit) {
       if (mounted) {
         setState(() {
@@ -81,7 +81,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
       }
     });
   }
-  
+
   void _proposeObservationCreation() {
     if (!_hasShownObservationDialog && mounted) {
       _hasShownObservationDialog = true;
@@ -120,15 +120,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
   @override
   ObjectConfig? get objectConfig =>
       widget.moduleInfo?.module.complement?.configuration?.visit;
-  
+
   @override
   CustomConfig? get customConfig =>
       widget.moduleInfo?.module.complement?.configuration?.custom;
-  
+
   @override
   List<String>? get displayProperties =>
       objectConfig?.displayProperties ?? objectConfig?.displayList;
-  
+
   @override
   Map<String, dynamic> get objectData {
     if (_fullVisit?.data != null) {
@@ -136,10 +136,10 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
     }
     return {};
   }
-  
+
   @override
   String get propertiesTitle => 'Données spécifiques de la visite';
-  
+
   @override
   bool get separateEmptyFields => true;
 
@@ -195,8 +195,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
       items.add(
         BreadcrumbItem(
           label: siteLabel,
-          value:
-              widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
+          value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
           onTap: () {
             // Naviguer vers le site (retour de 1 niveau)
             Navigator.of(context).pop();
@@ -245,7 +244,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
                             (widget.site.idBaseSite, widget.visit.idModule))
                         .notifier)
                     .loadVisits();
-                    
+
                 // Recharger les détails
                 _loadVisitDetails();
               });
@@ -286,7 +285,8 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text('Informations générales',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   _buildInfoRow(
                       'Site', widget.site.baseSiteName ?? 'Non spécifié'),
@@ -327,8 +327,8 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Commentaires',
-                        style:
-                            TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     Text(_fullVisit!.comments ?? 'Aucun commentaire'),
                   ],
@@ -380,8 +380,8 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
     return _buildObservationsSection(context, _fullVisit!, observationConfig);
   }
 
-  Widget _buildObservationsSection(
-      BuildContext context, BaseVisit fullVisit, ObjectConfig observationConfig) {
+  Widget _buildObservationsSection(BuildContext context, BaseVisit fullVisit,
+      ObjectConfig observationConfig) {
     return Container(
       color: Colors.grey.shade100,
       child: Column(
@@ -483,21 +483,19 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
           );
         }
 
-        // Déterminer les colonnes à afficher
-        List<String> displayColumns = ['actions'];
+        // Utiliser la méthode factorisée pour déterminer les colonnes à afficher
+        List<String> standardColumns = ['actions'];
 
-        if (observationConfig.displayList != null &&
-            observationConfig.displayList!.isNotEmpty) {
-          // Utiliser les colonnes définies dans la config
-          displayColumns.addAll(observationConfig.displayList!);
-        } else if (observationConfig.displayProperties != null &&
-            observationConfig.displayProperties!.isNotEmpty) {
-          // Utiliser les propriétés si disponibles
-          displayColumns.addAll(observationConfig.displayProperties!);
-        } else {
-          // Colonnes par défaut
-          displayColumns.addAll(['cd_nom', 'comments']);
-        }
+        // Récupérer le premier élément pour auto-détecter les propriétés
+        Map<String, dynamic>? firstItemData =
+            observations.isNotEmpty ? observations.first : null;
+
+        List<String> displayColumns = determineDataColumns(
+          standardColumns: standardColumns,
+          itemConfig: observationConfig,
+          firstItemData: firstItemData,
+          filterMetaColumns: true,
+        );
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -528,50 +526,16 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
 
   List<DataColumn> _buildDataColumns(
       List<String> columns, ObjectConfig observationConfig) {
-    return columns.map((column) {
-      String label = column;
-
-      // Obtenir le libellé à partir de la configuration
-      if (column != 'actions') {
-        // Utiliser le schéma unifié pour récupérer les labels
-        final schema = generateSchema();
-
-        if (schema.containsKey(column) && 
-            schema[column].containsKey('attribut_label')) {
-          label = schema[column]['attribut_label'];
-        } else {
-          // Vérifier dans generic
-          if (observationConfig.generic != null &&
-              observationConfig.generic!.containsKey(column)) {
-            label = observationConfig.generic![column]!.attributLabel ?? column;
-          }
-          // Vérifier dans specific
-          else if (observationConfig.specific != null &&
-              observationConfig.specific!.containsKey(column)) {
-            final specificConfig =
-                observationConfig.specific![column] as Map<String, dynamic>;
-            if (specificConfig.containsKey('attribut_label')) {
-              label = specificConfig['attribut_label'];
-            }
-          }
-        }
-      }
-
-      // Pour la colonne des actions
-      if (column == 'actions') {
-        label = 'Actions';
-      }
-
-      // Formater le libellé
-      label = ValueFormatter.formatLabel(label);
-
-      return DataColumn(
-        label: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-      );
-    }).toList();
+    // Utiliser la méthode factorisée pour construire les colonnes du tableau
+    return buildDataColumns(
+      columns: columns,
+      itemConfig: observationConfig,
+      predefinedLabels: {
+        'actions': 'Actions',
+        'cd_nom': 'Taxon',
+        'comments': 'Commentaires',
+      },
+    );
   }
 
   DataRow _buildDataRow(
@@ -680,11 +644,28 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> {
           );
         }
 
-        // Cellules de données
-        final value = observation[column];
-        String displayValue = ValueFormatter.format(value);
+        // Cellules de données avec la logique factorisée
+        final rawValue = observation[column];
 
-        return DataCell(Text(displayValue));
+        // Générer le schéma si ce n'est pas déjà fait
+        Map<String, dynamic> schema = {};
+        if (observationConfig != null) {
+          schema = FormConfigParser.generateUnifiedSchema(
+              observationConfig, customConfig);
+        }
+
+        // Formater la valeur
+        String displayValue = formatDataCellValue(
+          rawValue: rawValue,
+          columnName: column,
+          schema: schema,
+        );
+
+        // Construire la cellule
+        return buildFormattedDataCell(
+          value: displayValue,
+          enableTooltip: true,
+        );
       }).toList(),
     );
   }
