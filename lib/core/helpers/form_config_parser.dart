@@ -120,32 +120,32 @@ class FormConfigParser {
     if (fieldConfig['type_widget'] == 'nomenclature') {
       return true;
     }
-    
+
     // Vérifier l'ancienne méthode (type_util: "nomenclature")
     if (fieldConfig['type_util'] == 'nomenclature') {
       return true;
     }
-    
+
     // Vérifier si l'URL dans le champ api contient "nomenclatures/nomenclature/"
     final api = fieldConfig['api'] as String?;
     if (api != null && api.contains('nomenclatures/nomenclature/')) {
       return true;
     }
-    
+
     // Vérifier si le champ possède une propriété code_nomenclature_type
     if (fieldConfig['code_nomenclature_type'] != null) {
       return true;
     }
-    
+
     // Vérifier si le nom de l'attribut commence par id_nomenclature_
     final attributName = fieldConfig['attribut_name'] as String?;
     if (attributName != null && attributName.startsWith('id_nomenclature_')) {
       return true;
     }
-    
+
     return false;
   }
-  
+
   /// Détermine si un champ est de type taxonomie
   /// Prend en compte les différentes façons d'identifier un champ taxonomique:
   /// 1. type_widget: "taxonomy"
@@ -156,24 +156,24 @@ class FormConfigParser {
     if (fieldConfig['type_widget'] == 'taxonomy') {
       return true;
     }
-    
+
     // Vérifier le type d'utilitaire
     if (fieldConfig['type_util'] == 'taxonomy') {
       return true;
     }
-    
+
     // Vérifier si le champ contient une référence à une liste taxonomique
     final idList = fieldConfig['id_list'] as String?;
     if (idList != null && idList.contains('ID_LIST_TAXONOMY')) {
       return true;
     }
-    
+
     // Vérifier si le nom de l'attribut est cd_nom
     final attributName = fieldConfig['attribut_name'] as String?;
     if (attributName == 'cd_nom') {
       return true;
     }
-    
+
     return false;
   }
 
@@ -193,23 +193,24 @@ class FormConfigParser {
     if (fieldConfig['value'] is Map<String, dynamic>) {
       return fieldConfig['value'] as Map<String, dynamic>;
     }
-    
+
     // Déterminer le code du type de nomenclature en utilisant toutes les méthodes
     String? codeNomenclatureType;
-    
+
     // 1. Utiliser la propriété code_nomenclature_type si elle existe
     if (fieldConfig['code_nomenclature_type'] != null) {
       codeNomenclatureType = fieldConfig['code_nomenclature_type'] as String?;
-    } 
+    }
     // 2. Sinon, essayer d'extraire depuis l'API
     else if (fieldConfig['api'] != null) {
       codeNomenclatureType = extractMnemonique(fieldConfig);
     }
     // 3. Finalement, essayer d'extraire depuis le nom de l'attribut
     else {
-      codeNomenclatureType = _extractNomenclatureTypeFromAttributName(fieldConfig['attribut_name']);
+      codeNomenclatureType = _extractNomenclatureTypeFromAttributName(
+          fieldConfig['attribut_name']);
     }
-    
+
     // Pour tous les formats, construire un map avec les informations disponibles
     // Le format complet pourra être rempli lors de la sélection d'une nomenclature
     return {
@@ -223,15 +224,16 @@ class FormConfigParser {
 
   /// Extrait le code du type de nomenclature à partir du nom de l'attribut
   /// Par exemple: id_nomenclature_abondance_braunblanquet -> abondance_braunblanquet
-  static String? _extractNomenclatureTypeFromAttributName(String? attributName) {
+  static String? _extractNomenclatureTypeFromAttributName(
+      String? attributName) {
     if (attributName == null) return null;
-    
+
     // Format attendu: id_nomenclature_XXXX ou id_nomenclature_XXXX_YYYY
     if (attributName.startsWith('id_nomenclature_')) {
       // Extraire la partie après "id_nomenclature_"
       return attributName.substring('id_nomenclature_'.length);
     }
-    
+
     return null;
   }
 
@@ -242,13 +244,13 @@ class FormConfigParser {
     if (api == null || !api.contains('/')) {
       return null;
     }
-    
+
     // Extraire la dernière partie de l'URL après le dernier '/'
     final parts = api.split('/');
     if (parts.isNotEmpty) {
       return parts.last;
     }
-    
+
     return null;
   }
 
@@ -263,24 +265,25 @@ class FormConfigParser {
     if (fieldConfig['code_nomenclature_type'] != null) {
       return fieldConfig['code_nomenclature_type'] as String?;
     }
-    
+
     // 2. Vérifier dans la valeur existante
     final value = getNomenclatureValue(fieldConfig);
     if (value != null && value['code_nomenclature_type'] != null) {
       return value['code_nomenclature_type'] as String?;
     }
-    
+
     // 3. Essayer d'extraire la mnémonique depuis le champ 'api'
     final mnemonique = extractMnemonique(fieldConfig);
     if (mnemonique != null) {
       return mnemonique;
     }
-    
+
     // 4. Essayer d'extraire le code du type à partir du nom de l'attribut
     if (fieldConfig['attribut_name'] != null) {
-      return _extractNomenclatureTypeFromAttributName(fieldConfig['attribut_name'] as String);
+      return _extractNomenclatureTypeFromAttributName(
+          fieldConfig['attribut_name'] as String);
     }
-    
+
     return null;
   }
 
@@ -290,13 +293,13 @@ class FormConfigParser {
     if (value == null) return null;
     return value['cd_nomenclature'] as String?;
   }
-  
+
   /// Récupère l'identifiant de la liste taxonomique à partir de la configuration du champ
   static int? getTaxonListId(Map<String, dynamic> fieldConfig) {
     if (!isTaxonomyField(fieldConfig)) {
       return null;
     }
-    
+
     // Vérifier si c'est une référence à une liste taxonomique MODULE
     final idList = fieldConfig['id_list'] as String?;
     if (idList != null && idList.isNotEmpty) {
@@ -305,50 +308,50 @@ class FormConfigParser {
       if (directId != null) {
         return directId;
       }
-      
+
       // Si c'est une référence qui a été substituée
       if (idList.contains('__MODULE.ID_LIST_TAXONOMY')) {
         // Cette valeur devrait déjà être substituée par le bon ID
         return int.tryParse(idList);
       }
     }
-    
+
     // Cas où l'ID de liste est stocké dans la valeur existante
     final value = fieldConfig['value'] as Map<String, dynamic>?;
     if (value != null && value['id_list'] != null) {
       return value['id_list'] as int?;
     }
-    
+
     return null;
   }
-  
+
   /// Récupère le cd_nom du taxon sélectionné à partir de la configuration
   static int? getSelectedTaxonCdNom(Map<String, dynamic> fieldConfig) {
     if (!isTaxonomyField(fieldConfig)) {
       return null;
     }
-    
+
     // Si la valeur est directement un entier (cd_nom)
     if (fieldConfig['value'] is int) {
       return fieldConfig['value'] as int;
     }
-    
+
     // Si la valeur est un objet Taxon complet
     final value = fieldConfig['value'] as Map<String, dynamic>?;
     if (value != null && value['cd_nom'] != null) {
       return value['cd_nom'] as int;
     }
-    
+
     return null;
   }
-  
+
   /// Récupère le format d'affichage configuré pour les taxons
   static String getTaxonomyDisplayFormat(Map<String, dynamic> fieldConfig) {
     final displayFormat = fieldConfig['taxonomy_display_field_name'] as String?;
     if (displayFormat != null && displayFormat.isNotEmpty) {
       return displayFormat;
     }
-    
+
     // Valeur par défaut
     return 'nom_vern,lb_nom';
   }
@@ -365,7 +368,7 @@ class FormConfigParser {
       // Sinon utiliser le widget par défaut pour les nomenclatures
       return 'NomenclatureSelector';
     }
-    
+
     // Vérifier si c'est un champ de type taxonomie
     if (isTaxonomyField(fieldConfig)) {
       return 'TaxonSelector';
@@ -388,8 +391,10 @@ class FormConfigParser {
         return 'DropdownButton';
       case 'datalist':
         // Vérifier si c'est un champ datalist qui est en fait une nomenclature
-        if (fieldConfig['api'] != null && 
-            fieldConfig['api'].toString().contains('nomenclatures/nomenclature/')) {
+        if (fieldConfig['api'] != null &&
+            fieldConfig['api']
+                .toString()
+                .contains('nomenclatures/nomenclature/')) {
           return 'NomenclatureSelector';
         }
         return 'AutocompleteField';
@@ -501,10 +506,13 @@ class FormConfigParser {
           if (fieldConfig['values'] != null) 'values': fieldConfig['values'],
           'validations': determineValidations(fieldConfig),
           'visibility': determineVisibility(fieldConfig),
-          // Ajouter les propriétés importantes pour les nomenclatures
+          // Ajouter les propriétés importantes pour les nomenclatures et taxonomies
           if (fieldConfig['api'] != null) 'api': fieldConfig['api'],
-          if (fieldConfig['code_nomenclature_type'] != null) 
+          if (fieldConfig['code_nomenclature_type'] != null)
             'code_nomenclature_type': fieldConfig['code_nomenclature_type'],
+          if (fieldConfig['id_list'] != null) 'id_list': fieldConfig['id_list'],
+          if (fieldConfig['type_util'] != null)
+            'type_util': fieldConfig['type_util'],
         };
       }
     });
