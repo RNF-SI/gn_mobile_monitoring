@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
@@ -313,219 +314,257 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     final visitsAsyncValue =
         widget.ref.watch(siteVisitsViewModelProvider(params));
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          // Bouton d'ajout de visite + Champ de recherche
-          Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              children: [
-                if (visitConfig != null)
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      _showAddVisitForm(visitConfig);
-                    },
-                    icon: const Icon(Icons.add),
-                    label: const Text('Nouvelle visite'),
-                  ),
-                const Spacer(),
-                SizedBox(
-                  width: 200,
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Rechercher',
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = '';
-                                  _filterVisits(visitsAsyncValue);
-                                });
-                              },
-                            )
-                          : const Icon(Icons.search),
-                      border: const OutlineInputBorder(),
-                      contentPadding:
-                          const EdgeInsets.symmetric(horizontal: 12),
+    return Container(
+      color: Colors.grey.shade100,
+      child: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          children: [
+            // Bouton d'ajout de visite + Champ de recherche
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                children: [
+                  if (visitConfig != null)
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        _showAddVisitForm(visitConfig);
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Nouvelle visite'),
                     ),
-                    onChanged: (value) {
-                      setState(() {
-                        _searchQuery = value;
-                        _filterVisits(visitsAsyncValue);
-                      });
-                    },
+                  const Spacer(),
+                  SizedBox(
+                    width: 200,
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher',
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  _searchController.clear();
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _filterVisits(visitsAsyncValue);
+                                  });
+                                },
+                              )
+                            : const Icon(Icons.search),
+                        border: const OutlineInputBorder(),
+                        contentPadding:
+                            const EdgeInsets.symmetric(horizontal: 12),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value;
+                          _filterVisits(visitsAsyncValue);
+                        });
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          // Liste des visites
-          Expanded(
-            child: visitsAsyncValue.when(
-              data: (visits) {
-                // Filtrer les visites seulement si nécessaire
-                // Soit la liste est vide, soit les données ont changé
-                if (_visitsFiltered.isEmpty ||
-                    _visitsFiltered.length != visits.length) {
-                  _filterVisits(visitsAsyncValue);
-                }
 
-                // Afficher un message si aucune visite
-                if (_visitsFiltered.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(Icons.info_outline,
-                            size: 48, color: Colors.grey),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isNotEmpty
-                              ? 'Aucune visite ne correspond à votre recherche'
-                              : 'Aucune visite pour ce site',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                }
+            // Liste des visites
+            Expanded(
+              child: visitsAsyncValue.when(
+                data: (visits) {
+                  // Filtrer les visites
+                  if (_visitsFiltered.isEmpty ||
+                      _visitsFiltered.length != visits.length) {
+                    _filterVisits(visitsAsyncValue);
+                  }
 
-                // Nous avons supprimé la génération du siteConfig car il n'était pas utilisé
-                // Cela supprime l'avertissement de variable non utilisée
-
-                return Column(
-                  children: [
-                    // Libellé de la section visites
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
-                      child: Row(
+                  if (_visitsFiltered.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
+                          const Icon(Icons.calendar_today,
+                              size: 48, color: Colors.grey),
+                          const SizedBox(height: 16),
                           Text(
-                            'Visites (${_visitsFiltered.length})',
-                            style: const TextStyle(
+                            _searchQuery.isNotEmpty
+                                ? 'Aucune visite ne correspond à votre recherche'
+                                : 'Aucune visite pour ce site',
+                            style: TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[600],
                             ),
                           ),
                         ],
                       ),
-                    ),
-                    // Table des visites
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: _visitsFiltered.length,
-                        itemBuilder: (context, index) {
-                          final visit = _visitsFiltered[index];
-                          return Card(
-                            margin: const EdgeInsets.only(bottom: 8.0),
-                            child: ListTile(
-                              title: Text(
-                                visit.visitDateMin != null
-                                    ? 'Visite du ${visit.visitDateMin}'
-                                    : 'Visite sans date',
-                                style: const TextStyle(
-                                    fontSize: 16, fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: visit.comments != null &&
-                                      visit.comments!.isNotEmpty
-                                  ? Text(
-                                      visit.comments!,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    )
-                                  : null,
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.edit),
-                                    onPressed: () {
-                                      if (visitConfig != null) {
-                                        Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => VisitFormPage(
-                                              site: widget.site,
-                                              visitConfig: visitConfig,
-                                              customConfig: customConfig,
-                                              moduleId:
-                                                  widget.moduleInfo?.module.id,
-                                              visit: visit,
-                                              moduleInfo: widget.moduleInfo,
-                                              siteGroup: widget.fromSiteGroup,
-                                            ),
-                                          ),
-                                        ).then((_) {
-                                          // Rafraîchir les visites avec le provider
-                                          final params = (
-                                            widget.site.idBaseSite,
-                                            widget.moduleInfo?.module.id ?? 0
-                                          );
-                                          widget.ref.invalidate(
-                                              siteVisitsViewModelProvider(
-                                                  params));
-                                        });
-                                      }
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.visibility),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => VisitDetailPage(
-                                            visit: visit,
-                                            site: widget.site,
-                                            moduleInfo: widget.moduleInfo,
-                                            fromSiteGroup: widget.fromSiteGroup,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                  ),
-                                ],
-                              ),
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => VisitDetailPage(
-                                      visit: visit,
-                                      site: widget.site,
-                                      moduleInfo: widget.moduleInfo,
-                                      fromSiteGroup: widget.fromSiteGroup,
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          );
-                        },
+                    );
+                  }
+
+                  // Déterminer les colonnes à afficher
+                  List<String> displayColumns = ['actions'];
+
+                  // Ajouter les colonnes génériques
+                  displayColumns.addAll(['visit_date_min', 'comments']);
+
+                  // Ajouter les colonnes spécifiques depuis la configuration
+                  if (visitConfig?.displayList != null) {
+                    displayColumns.addAll(visitConfig!.displayList!);
+                  } else if (visitConfig?.displayProperties != null) {
+                    displayColumns.addAll(visitConfig!.displayProperties!);
+                  }
+
+                  return Card(
+                    elevation: 2,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SingleChildScrollView(
+                        child: DataTable(
+                          columns: _buildVisitDataColumns(
+                              displayColumns, visitConfig),
+                          rows: _visitsFiltered.map((visit) {
+                            return _buildVisitDataRow(
+                              visit,
+                              displayColumns,
+                              visitConfig,
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
-                  ],
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stackTrace) => Center(
-                child: Text(
-                  'Erreur lors du chargement des visites: $error',
-                  style: const TextStyle(color: Colors.red),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => Center(
+                  child: Text(
+                    'Erreur lors du chargement des visites: $error',
+                    style: const TextStyle(color: Colors.red),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  List<DataColumn> _buildVisitDataColumns(
+      List<String> columns, ObjectConfig? visitConfig) {
+    return columns.map((column) {
+      String label = column;
+
+      if (column == 'actions') {
+        label = 'Actions';
+      } else if (column == 'visit_date_min') {
+        label = 'Date de visite';
+      } else if (column == 'comments') {
+        label = 'Commentaires';
+      } else if (visitConfig != null) {
+        // Utiliser le schéma unifié pour récupérer les labels
+        final schema = generateSchema();
+        if (schema.containsKey(column) &&
+            schema[column].containsKey('attribut_label')) {
+          label = schema[column]['attribut_label'];
+        }
+      }
+
+      // Formater le libellé
+      label = ValueFormatter.formatLabel(label);
+
+      return DataColumn(
+        label: Text(
+          label,
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+      );
+    }).toList();
+  }
+
+  DataRow _buildVisitDataRow(
+    dynamic visit,
+    List<String> columns,
+    ObjectConfig? visitConfig,
+  ) {
+    return DataRow(
+      cells: columns.map((column) {
+        if (column == 'actions') {
+          return DataCell(
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VisitDetailPage(
+                          visit: visit,
+                          site: widget.site,
+                          moduleInfo: widget.moduleInfo,
+                          fromSiteGroup: widget.fromSiteGroup,
+                        ),
+                      ),
+                    );
+                  },
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 20),
+                  onPressed: () {
+                    if (visitConfig != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VisitFormPage(
+                            site: widget.site,
+                            visitConfig: visitConfig,
+                            customConfig: customConfig,
+                            moduleId: widget.moduleInfo?.module.id,
+                            visit: visit,
+                            moduleInfo: widget.moduleInfo,
+                            siteGroup: widget.fromSiteGroup,
+                          ),
+                        ),
+                      ).then((_) {
+                        // Rafraîchir les visites
+                        final params = (
+                          widget.site.idBaseSite,
+                          widget.moduleInfo?.module.id ?? 0
+                        );
+                        widget.ref
+                            .invalidate(siteVisitsViewModelProvider(params));
+                      });
+                    }
+                  },
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        // Pour les autres colonnes
+        var value = '';
+        if (column == 'visit_date_min') {
+          value = formatDateString(visit.visitDateMin);
+        } else if (column == 'comments') {
+          value = visit.comments ?? '';
+        } else {
+          // Récupérer les données spécifiques depuis visit.data
+          if (visit.data != null && visit.data.containsKey(column)) {
+            value = ValueFormatter.format(visit.data[column]);
+          }
+        }
+
+        return DataCell(Text(value));
+      }).toList(),
     );
   }
 
