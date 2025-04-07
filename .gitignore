@@ -55,3 +55,4 @@ assets/tables_csv
 prompts/
 CLAUDE.md
 config_example_prairies.json
+config_example_ligne_lecture.json
