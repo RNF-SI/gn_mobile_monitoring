@@ -37,35 +37,11 @@ class _SiteDetailPageState extends ConsumerState<SiteDetailPage> {
     final baseState = _baseKey.currentState;
     if (baseState != null) {
       try {
-        // Récupérer une instance du ViewModel
-        // Note: nous ne pouvons pas utiliser .notifier directement sur un Provider.family
-        final viewModel = ref.read(
-          siteVisitsViewModelProvider((widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0))
-        ).asData?.value;
-        
-        if (viewModel != null) {
-          baseState.siteVisitsViewModel = viewModel as StateNotifier;
-        }
-        
-        // Redéfinir les fonctions pour le watch et refresh
-        baseState.observeVisits = (args) {
-          if (args is (int, int)) {
-            return ref.watch(siteVisitsViewModelProvider(args));
-          }
-          return const AsyncValue.loading();
-        };
-        
-        baseState.refreshVisits = (args) {
-          if (args is (int, int)) {
-            final result = ref.refresh(siteVisitsViewModelProvider(args));
-            return result;
-          }
-        };
-        
-        // Déclencher le chargement des données
+        // Déclencher directement le chargement des données
+        // La méthode startLoadingData accédera maintenant directement au provider
         baseState.startLoadingData();
       } catch (e) {
-        debugPrint('Erreur lors de l\'injection des dépendances: $e');
+        debugPrint('Erreur lors du chargement des visites: $e');
       }
     }
   }

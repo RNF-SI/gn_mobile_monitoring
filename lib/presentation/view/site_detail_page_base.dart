@@ -1,7 +1,7 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -10,6 +10,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class SiteDetailPageBase extends DetailPage {
@@ -37,16 +38,9 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   List<dynamic> _visitsFiltered = [];
-  
-  // Service pour accéder aux visites, sera injecté par la classe parente
-  late StateNotifier siteVisitsViewModel;
-  
-  // Fonctions pour encapsuler les appels au ViewModel des visites
-  AsyncValue<List<dynamic>> Function(dynamic) observeVisits = (_) => const AsyncValue.loading();
-  
-  Function(dynamic) refreshVisits = (_) {
-    debugPrint('refreshVisits appelé avec $_');
-  };
+
+  // Nous n'avons plus besoin de stocker le ViewModel dans une variable d'instance
+  // ni d'avoir des fonctions d'encapsulation, car nous accéderons directement au provider
 
   @override
   ObjectConfig? get objectConfig =>
@@ -62,7 +56,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   // Site complement data pour le site courant
   SiteComplement? _siteComplement;
-    
+
   @override
   Map<String, dynamic> get objectData {
     // Obtenir les données du site depuis le complément
@@ -71,7 +65,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         // Tenter de parser le JSON si c'est au format chaîne
         if (_siteComplement!.data is String) {
           return Map<String, dynamic>.from(
-            jsonDecode(_siteComplement!.data as String));
+              jsonDecode(_siteComplement!.data as String));
         }
         // Sinon, essayer de le convertir directement
         return Map<String, dynamic>.from(_siteComplement!.data as Map);
@@ -93,15 +87,31 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     super.initState();
     _initializeTabController();
   }
-  
+
   // Cette méthode sera appelée une fois que les dépendances sont injectées
   void startLoadingData() {
-    // Vous pourriez charger des données complémentaires ici si nécessaire
+    // Force le rechargement des visites en utilisant le provider directement
+    try {
+      if (widget.moduleInfo?.module.id != null) {
+        // Paramètres pour le provider
+        final params = (widget.site.idBaseSite, widget.moduleInfo!.module.id);
+
+        // Accéder au SiteVisitsViewModel directement via le provider et appeler loadVisits()
+        widget.ref
+            .read(siteVisitsViewModelProvider(params).notifier)
+            .loadVisits();
+
+        // Invalider le provider pour forcer un rechargement complet
+        widget.ref.invalidate(siteVisitsViewModelProvider(params));
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des visites: $e');
+    }
   }
 
   void _initializeTabController() {
-    // Si le site a des visites, initialiser le TabController
-    _tabController = TabController(length: 2, vsync: this);
+    // Initialiser le TabController avec une seule tab "Visites"
+    _tabController = TabController(length: 1, vsync: this);
   }
 
   @override
@@ -196,56 +206,24 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
     return Column(
       children: [
-        // TabBar pour les propriétés et les visites
-        TabBar(
-          controller: _tabController!,
-          tabs: const [
-            Tab(text: 'Propriétés'),
-            Tab(text: 'Visites'),
-          ],
+        // TabBar avec une seule option "Visites"
+        Material(
+          color: Theme.of(context).primaryColor.withOpacity(0.1),
+          child: TabBar(
+            controller: _tabController!,
+            tabs: const [
+              Tab(text: 'Visites'),
+            ],
+            labelColor: Theme.of(context).primaryColor,
+            indicatorColor: Theme.of(context).primaryColor,
+          ),
         ),
+
+        // Visites en bas avec TabBarView - prend tout l'espace restant
         Expanded(
           child: TabBarView(
             controller: _tabController!,
             children: [
-              // Onglet des propriétés
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Informations générales
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('Informations générales',
-                                style: TextStyle(
-                                    fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 16),
-                            _buildInfoRow('Code', widget.site.baseSiteCode ?? 'Non spécifié'),
-                            _buildInfoRow('Nom', widget.site.baseSiteName ?? 'Non spécifié'),
-                            _buildInfoRow(
-                                'Description',
-                                widget.site.baseSiteDescription ??
-                                    'Non spécifiée'),
-                            if (widget.site.firstUseDate != null)
-                              _buildInfoRow('Date de création',
-                                  formatDateString(widget.site.firstUseDate!.toString())),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Propriétés spécifiques au module
-                    if (_siteComplement?.data != null)
-                      buildPropertiesWidget(),
-                  ],
-                ),
-              ),
-              // Onglet des visites
               _buildVisitsTab(),
             ],
           ),
@@ -256,42 +234,50 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   Widget buildBaseContent() {
-    // Si on a un TabController, le contenu de base est géré par buildChildrenContent()
-    if (_tabController != null) {
-      return super.buildBaseContent();
-    }
-
-    // Sinon, on affiche juste les informations du site
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Informations générales
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Informations générales',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 16),
-                  _buildInfoRow('Code', widget.site.baseSiteCode ?? 'Non spécifié'),
-                  _buildInfoRow('Nom', widget.site.baseSiteName ?? 'Non spécifié'),
-                  _buildInfoRow('Description',
-                      widget.site.baseSiteDescription ?? 'Non spécifiée'),
-                  if (widget.site.firstUseDate != null)
-                    _buildInfoRow('Date de création', formatDateString(widget.site.firstUseDate!.toString())),
-                ],
+          // Propriétés du site - non expandable et taille intrinsèque
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Informations générales',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 12),
+                    _buildInfoRow(
+                        'Code', widget.site.baseSiteCode ?? 'Non spécifié'),
+                    _buildInfoRow(
+                        'Nom', widget.site.baseSiteName ?? 'Non spécifié'),
+                    _buildInfoRow('Description',
+                        widget.site.baseSiteDescription ?? 'Non spécifiée'),
+                    if (widget.site.firstUseDate != null)
+                      _buildInfoRow(
+                          'Date de création',
+                          formatDateString(
+                              widget.site.firstUseDate!.toString())),
+                  ],
+                ),
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Propriétés spécifiques au module
+
+          // Propriétés spécifiques au module si présentes
           if (_siteComplement?.data != null)
-            buildPropertiesWidget(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: buildPropertiesWidget(),
+            ),
+
+          // Séparateur
+          const Divider(thickness: 1, height: 20),
         ],
       ),
     );
@@ -324,11 +310,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         widget.moduleInfo?.module.complement?.configuration?.visit;
 
     // Préparer les arguments pour la requête des visites
-    final args = (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
-    
-    // Récupérer toutes les visites de ce site via la méthode observeVisits
-    // (cette méthode sera ajoutée au viewmodel)
-    final visitsAsyncValue = observeVisits(args);
+    final params = (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
+
+    // Récupérer toutes les visites de ce site via le provider
+    final visitsAsyncValue =
+        widget.ref.watch(siteVisitsViewModelProvider(params));
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -385,8 +371,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           Expanded(
             child: visitsAsyncValue.when(
               data: (visits) {
-                // Filtrer les visites si nécessaire
-                _filterVisits(visitsAsyncValue);
+                // Filtrer les visites seulement si nécessaire
+                // Soit la liste est vide, soit les données ont changé
+                if (_visitsFiltered.isEmpty ||
+                    _visitsFiltered.length != visits.length) {
+                  _filterVisits(visitsAsyncValue);
+                }
 
                 // Afficher un message si aucune visite
                 if (_visitsFiltered.isEmpty) {
@@ -394,7 +384,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.info_outline, size: 48, color: Colors.grey),
+                        const Icon(Icons.info_outline,
+                            size: 48, color: Colors.grey),
                         const SizedBox(height: 16),
                         Text(
                           _searchQuery.isNotEmpty
@@ -410,16 +401,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                   );
                 }
 
-                // Créer les libellés de colonnes pour le tableau de visites
-                Map<String, dynamic> siteConfig = {};
-                // Préparer la configuration du tableau
-                if (widget.moduleInfo?.module.complement?.configuration?.visit != null &&
-                    customConfig != null) {
-                  final visitObjectConfig =
-                      widget.moduleInfo!.module.complement!.configuration!.visit!;
-                  siteConfig = FormConfigParser.generateUnifiedSchema(
-                      visitObjectConfig, customConfig);
-                }
+                // Nous avons supprimé la génération du siteConfig car il n'était pas utilisé
+                // Cela supprime l'avertissement de variable non utilisée
 
                 return Column(
                   children: [
@@ -454,7 +437,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                                 style: const TextStyle(
                                     fontSize: 16, fontWeight: FontWeight.bold),
                               ),
-                              subtitle: visit.comments != null && visit.comments!.isNotEmpty
+                              subtitle: visit.comments != null &&
+                                      visit.comments!.isNotEmpty
                                   ? Text(
                                       visit.comments!,
                                       maxLines: 2,
@@ -475,18 +459,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                                               site: widget.site,
                                               visitConfig: visitConfig,
                                               customConfig: customConfig,
-                                              moduleId: widget.moduleInfo?.module.id,
+                                              moduleId:
+                                                  widget.moduleInfo?.module.id,
                                               visit: visit,
                                               moduleInfo: widget.moduleInfo,
                                               siteGroup: widget.fromSiteGroup,
                                             ),
                                           ),
                                         ).then((_) {
-                                          // Rafraîchir les visites
-                                          refreshVisits((
-                                            widget.site.idBaseSite,
-                                            widget.moduleInfo?.module.id ?? 0,
-                                          ));
+                                          // Rafraîchir les visites avec le provider
+                                          final params = (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
+                                          widget.ref.invalidate(siteVisitsViewModelProvider(params));
                                         });
                                       }
                                     },
@@ -545,13 +528,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   }
 
   void _filterVisits(AsyncValue<List<dynamic>> visitsAsyncValue) {
+    // Utiliser une variable temporaire pour éviter des mises à jour d'état excessives
+    List<dynamic> newFilteredVisits = [];
+
     if (visitsAsyncValue is AsyncData) {
       final visits = visitsAsyncValue.value ?? [];
+
       if (_searchQuery.isEmpty) {
-        _visitsFiltered = List.from(visits);
+        newFilteredVisits = List.from(visits);
       } else {
         final query = _searchQuery.toLowerCase();
-        _visitsFiltered = visits.where((visit) {
+        newFilteredVisits = visits.where((visit) {
           // Recherche par date de visite
           final date = visit.visitDateMin?.toLowerCase() ?? '';
           // Recherche par commentaires
@@ -559,9 +546,30 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           return date.contains(query) || comments.contains(query);
         }).toList();
       }
-    } else {
-      _visitsFiltered = [];
     }
+
+    // Mettre à jour l'état uniquement si les résultats ont réellement changé
+    // pour éviter des mises à jour d'état infinies
+    if (!_areListsEqual(_visitsFiltered, newFilteredVisits)) {
+      setState(() {
+        _visitsFiltered = newFilteredVisits;
+      });
+    }
+  }
+
+  // Utilitaire pour comparer deux listes
+  bool _areListsEqual(List<dynamic> list1, List<dynamic> list2) {
+    if (list1.length != list2.length) return false;
+
+    // Pour simplifier, on compare juste les identifiants
+    // Pour une comparaison plus précise, on pourrait comparer plus de propriétés
+    for (int i = 0; i < list1.length; i++) {
+      if (list1[i].idBaseVisit != list2[i].idBaseVisit) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   void _showAddVisitForm(ObjectConfig visitConfig) {
@@ -578,11 +586,10 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         ),
       ),
     ).then((_) {
-      // Rafraîchir les visites
-      refreshVisits((
-        widget.site.idBaseSite,
-        widget.moduleInfo?.module.id ?? 0,
-      ));
+      // Rafraîchir les visites en utilisant le provider
+      final params =
+          (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
+      widget.ref.invalidate(siteVisitsViewModelProvider(params));
     });
   }
 }
