@@ -275,9 +275,6 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
               child: buildPropertiesWidget(),
             ),
-
-          // Séparateur
-          const Divider(thickness: 1, height: 20),
         ],
       ),
     );
@@ -468,8 +465,13 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                                           ),
                                         ).then((_) {
                                           // Rafraîchir les visites avec le provider
-                                          final params = (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
-                                          widget.ref.invalidate(siteVisitsViewModelProvider(params));
+                                          final params = (
+                                            widget.site.idBaseSite,
+                                            widget.moduleInfo?.module.id ?? 0
+                                          );
+                                          widget.ref.invalidate(
+                                              siteVisitsViewModelProvider(
+                                                  params));
                                         });
                                       }
                                     },
