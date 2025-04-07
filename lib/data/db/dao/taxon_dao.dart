@@ -57,6 +57,23 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
     return results.map((t) => t.toDomain()).toList();
   }
 
+  /// Recherche des taxons dans une liste taxonomique spécifique
+  Future<List<Taxon>> searchTaxonsByListId(
+      String searchTerm, int idListe) async {
+    final query = select(tTaxrefs).join([
+      innerJoin(corTaxonListeTable,
+          corTaxonListeTable.cdNom.equalsExp(tTaxrefs.cdNom)),
+    ])
+      ..where(corTaxonListeTable.idListe.equals(idListe) &
+          (tTaxrefs.nomComplet.like('%$searchTerm%') |
+              tTaxrefs.lbNom.like('%$searchTerm%') |
+              tTaxrefs.nomVern.like('%$searchTerm%')))
+      ..limit(50); // Limit results to improve performance
+
+    final results = await query.get();
+    return results.map((row) => row.readTable(tTaxrefs).toDomain()).toList();
+  }
+
   Future<List<Taxon>> getAllTaxons() async {
     final results = await select(tTaxrefs).get();
     return results.map((t) => t.toDomain()).toList();

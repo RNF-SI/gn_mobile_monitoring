@@ -32,6 +32,13 @@ class TaxonDatabaseImpl implements TaxonDatabase {
   }
 
   @override
+  Future<List<Taxon>> searchTaxonsByListId(
+      String searchTerm, int idListe) async {
+    final db = await _database;
+    return db.taxonDao.searchTaxonsByListId(searchTerm, idListe);
+  }
+
+  @override
   Future<void> saveTaxons(List<Taxon> taxons) async {
     final db = await _database;
     return db.taxonDao.insertTaxons(taxons);

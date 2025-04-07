@@ -34,6 +34,11 @@ class TaxonRepositoryImpl implements TaxonRepository {
   }
 
   @override
+  Future<List<Taxon>> searchTaxonsByListId(String searchTerm, int idListe) {
+    return _taxonDatabase.searchTaxonsByListId(searchTerm, idListe);
+  }
+
+  @override
   Future<void> saveTaxons(List<Taxon> taxons) {
     return _taxonDatabase.saveTaxons(taxons);
   }
