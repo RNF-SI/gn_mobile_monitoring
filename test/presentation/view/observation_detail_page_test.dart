@@ -10,7 +10,7 @@ import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -19,27 +19,29 @@ class MockObservationDetailViewModel
     with Mock
     implements ObservationDetailViewModel {
   MockObservationDetailViewModel() : super(const AsyncValue.data([]));
-  
+
   @override
-  Future<List<ObservationDetail>> getObservationDetailsByObservationId(int observationId) async {
+  Future<List<ObservationDetail>> getObservationDetailsByObservationId(
+      int observationId) async {
     return [];
   }
-  
+
   @override
-  Future<ObservationDetail?> getObservationDetailById(int observationDetailId) async {
+  Future<ObservationDetail?> getObservationDetailById(
+      int observationDetailId) async {
     return null;
   }
-  
+
   @override
   Future<int> saveObservationDetail(ObservationDetail detail) async {
     return 1;
   }
-  
+
   @override
   Future<bool> deleteObservationDetail(int observationDetailId) async {
     return true;
   }
-  
+
   @override
   Future<void> loadObservationDetails() async {}
 }
@@ -118,7 +120,7 @@ void main() {
 
     // Attendre que le widget soit construit
     await tester.pump();
-    
+
     // Attendre que l'interface se mette à jour après le chargement des données
     await tester.pump(const Duration(milliseconds: 50));
 
