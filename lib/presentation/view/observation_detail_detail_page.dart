@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
-import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page_base.dart';
 
-class ObservationDetailDetailPage extends ConsumerWidget {
+class ObservationDetailDetailPage extends ConsumerStatefulWidget {
   final ObservationDetail observationDetail;
   final ObjectConfig config;
   final CustomConfig? customConfig;
@@ -19,28 +19,18 @@ class ObservationDetailDetailPage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Détails de l\'observation détail ${index}'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Section Propriétés
-              PropertyDisplayWidget(
-                data: observationDetail.data,
-                config: config,
-                customConfig: customConfig,
-                title: 'Propriétés',
-              ),
-            ],
-          ),
-        ),
-      ),
+  ConsumerState<ObservationDetailDetailPage> createState() => _ObservationDetailDetailPageState();
+}
+
+class _ObservationDetailDetailPageState extends ConsumerState<ObservationDetailDetailPage> {
+  @override
+  Widget build(BuildContext context) {
+    return ObservationDetailDetailPageBase(
+      ref: ref,
+      observationDetail: widget.observationDetail,
+      config: widget.config,
+      customConfig: widget.customConfig,
+      index: widget.index,
     );
   }
 }

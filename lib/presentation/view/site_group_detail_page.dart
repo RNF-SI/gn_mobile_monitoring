@@ -76,8 +76,7 @@ class SiteGroupDetailPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          '${moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${siteGroup.sitesGroupName ?? 'Détail du groupe'}'
-        ),
+            '${moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,19 +86,25 @@ class SiteGroupDetailPage extends ConsumerWidget {
             padding: const EdgeInsets.all(8.0),
             child: Card(
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
                 child: BreadcrumbNavigation(
                   items: [
                     BreadcrumbItem(
                       label: 'Module',
                       value: moduleInfo.module.moduleLabel ?? 'Module',
                       onTap: () {
-                        Navigator.of(context).pop(); // Retour à la page précédente
+                        Navigator.of(context)
+                            .pop(); // Retour à la page précédente
                       },
                     ),
                     BreadcrumbItem(
-                      label: moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe',
-                      value: siteGroup.sitesGroupName ?? siteGroup.sitesGroupCode ?? 'Groupe',
+                      label: moduleInfo.module.complement?.configuration
+                              ?.sitesGroup?.label ??
+                          'Groupe',
+                      value: siteGroup.sitesGroupName ??
+                          siteGroup.sitesGroupCode ??
+                          'Groupe',
                     ),
                   ],
                 ),
@@ -116,9 +121,11 @@ class SiteGroupDetailPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Propriétés du groupe',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)
-                    ),
+                        moduleInfo.module.complement?.configuration?.sitesGroup
+                                ?.label ??
+                            'Propriétés du groupe',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     _buildPropertyRow(
                         groupNameLabel, siteGroup.sitesGroupName ?? ''),
@@ -141,9 +148,11 @@ class SiteGroupDetailPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  moduleInfo.module.complement?.configuration?.site?.labelList ?? 
-                  moduleInfo.module.complement?.configuration?.site?.label ?? 
-                  'Sites associés',
+                  moduleInfo
+                          .module.complement?.configuration?.site?.labelList ??
+                      moduleInfo
+                          .module.complement?.configuration?.site?.label ??
+                      'Sites associés',
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
                 ),
@@ -254,7 +263,8 @@ class SiteGroupDetailPage extends ConsumerWidget {
                               builder: (context) => SiteDetailPage(
                                 site: site,
                                 moduleInfo: moduleInfo,
-                                siteGroup: siteGroup, // Passer le groupe de sites
+                                fromSiteGroup:
+                                    siteGroup, // Passer le groupe de sites avec le nom correct du paramètre
                               ),
                             ),
                           );
