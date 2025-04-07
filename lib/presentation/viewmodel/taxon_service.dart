@@ -44,7 +44,7 @@ final taxonByCdNomProvider = FutureProvider.family<Taxon?, int>(
   },
 );
 
-/// Service pour gérer les taxons, similaire à NomenclatureService
+/// Service pour gérer les taxons
 class TaxonService
     extends StateNotifier<custom_async_state.State<Map<String, List<Taxon>>>> {
   final Ref ref;
@@ -62,6 +62,8 @@ class TaxonService
   ) : super(const custom_async_state.State.init());
 
   /// Récupère les taxons pour un module donné
+  /// Note: Cette méthode est maintenue pour la compatibilité, mais il est préférable
+  /// d'utiliser getTaxonsByListId avec l'id_list spécifique du champ de formulaire
   Future<List<Taxon>> getTaxonsByModuleId(int moduleId) async {
     try {
       return await _getModuleTaxonsUseCase.execute(moduleId);
@@ -94,9 +96,10 @@ class TaxonService
   }
 
   /// Recherche des taxons par terme de recherche
-  Future<List<Taxon>> searchTaxons(String searchTerm) async {
+  /// Si idListe est fourni, la recherche se fait uniquement dans cette liste taxonomique
+  Future<List<Taxon>> searchTaxons(String searchTerm, {int? idListe}) async {
     try {
-      return await _searchTaxonsUseCase.execute(searchTerm);
+      return await _searchTaxonsUseCase.execute(searchTerm, idListe: idListe);
     } catch (e) {
       print('Erreur lors de la recherche de taxons avec "$searchTerm": $e');
       return [];
