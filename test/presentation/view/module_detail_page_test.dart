@@ -7,8 +7,8 @@ import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Classes for Mocktail fallbacks
@@ -82,8 +82,7 @@ void main() {
     expect(find.text('Test Module'), findsWidgets);
   });
 
-  testWidgets('ModuleDetailPage shows sites list',
-      (WidgetTester tester) async {
+  testWidgets('ModuleDetailPage shows sites list', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
@@ -139,7 +138,7 @@ void main() {
     // Wait for initial loading but avoid pumpAndSettle
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
-    
+
     // This is a simplified test that just verifies the page builds without errors
     expect(find.byType(ModuleDetailPage), findsOneWidget);
   });

@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_page_base.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page_base.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 
 class ObservationDetailPage extends ConsumerStatefulWidget {
@@ -33,11 +33,13 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ObservationDetailPage> createState() => _ObservationDetailPageState();
+  ConsumerState<ObservationDetailPage> createState() =>
+      _ObservationDetailPageState();
 }
 
 class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
-  final GlobalKey<ObservationDetailPageBaseState> _baseKey = GlobalKey<ObservationDetailPageBaseState>();
+  final GlobalKey<ObservationDetailPageBaseState> _baseKey =
+      GlobalKey<ObservationDetailPageBaseState>();
 
   @override
   void initState() {
@@ -53,7 +55,7 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
     if (baseState != null) {
       // Injection du service taxon provenant du provider
       baseState.taxonService = ref.read(taxonServiceProvider.notifier);
-      
+
       // Maintenant que les dépendances sont injectées, démarrer le chargement des données
       baseState.startLoadingData();
     }

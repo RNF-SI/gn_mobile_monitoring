@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module_detail_page_base.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page_base.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ModuleDetailPage extends ConsumerStatefulWidget {
@@ -14,7 +14,8 @@ class ModuleDetailPage extends ConsumerStatefulWidget {
 }
 
 class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage> {
-  final GlobalKey<ModuleDetailPageBaseState> _moduleDetailPageBaseStateKey = GlobalKey<ModuleDetailPageBaseState>();
+  final GlobalKey<ModuleDetailPageBaseState> _moduleDetailPageBaseStateKey =
+      GlobalKey<ModuleDetailPageBaseState>();
 
   @override
   void initState() {
@@ -26,10 +27,12 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage> {
   }
 
   void _loadModuleConfig() {
-    final moduleDetailPageBaseState = _moduleDetailPageBaseStateKey.currentState;
+    final moduleDetailPageBaseState =
+        _moduleDetailPageBaseStateKey.currentState;
     if (moduleDetailPageBaseState != null) {
       // Injection du use case provenant du provider
-      moduleDetailPageBaseState.getModuleWithConfigUseCase = ref.read(getModuleWithConfigUseCaseProvider);
+      moduleDetailPageBaseState.getModuleWithConfigUseCase =
+          ref.read(getModuleWithConfigUseCaseProvider);
       // Démarrer le chargement de la configuration
       moduleDetailPageBaseState.loadModuleWithConfig();
     }

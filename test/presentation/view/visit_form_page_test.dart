@@ -13,7 +13,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
-import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 import 'package:mocktail/mocktail.dart';

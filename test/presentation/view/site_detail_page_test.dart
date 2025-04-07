@@ -18,7 +18,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_ca
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 

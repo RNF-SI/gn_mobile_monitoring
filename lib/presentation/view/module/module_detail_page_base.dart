@@ -4,8 +4,8 @@ import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/view/detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 

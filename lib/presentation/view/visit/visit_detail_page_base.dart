@@ -7,10 +7,10 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/view/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
@@ -39,7 +39,8 @@ class VisitDetailPageBase extends DetailPage {
       _VisitDetailPageBaseState();
 }
 
-class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> with SingleTickerProviderStateMixin {
+class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
+    with SingleTickerProviderStateMixin {
   bool _hasShownObservationDialog = false;
   BaseVisit? _fullVisit;
   TabController? _tabController;
@@ -393,7 +394,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> wit
   Widget _buildObservationsSection(BuildContext context, BaseVisit fullVisit,
       ObjectConfig observationConfig) {
     if (_tabController == null) return const SizedBox.shrink();
-    
+
     return Column(
       children: [
         // TabBar avec une seule option "Observations"
@@ -403,7 +404,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> wit
             Tab(text: 'Observations'),
           ],
         ),
-        
+
         // TabBarView avec le tableau des observations
         Expanded(
           child: TabBarView(
@@ -499,8 +500,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase> wit
         );
 
         // Construire les colonnes du tableau
-        List<DataColumn> columns = _buildDataColumns(displayColumns, observationConfig);
-        
+        List<DataColumn> columns =
+            _buildDataColumns(displayColumns, observationConfig);
+
         // Construire les lignes du tableau
         List<DataRow> rows = observations.map((observation) {
           return _buildDataRow(

@@ -8,10 +8,10 @@ import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/view/detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/taxon_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
@@ -76,7 +76,7 @@ class ObservationDetailPageBaseState
   bool get separateEmptyFields => true;
 
   @override
-  List<String> get childrenTypes => 
+  List<String> get childrenTypes =>
       widget.observationDetailConfig != null ? ['observation_detail'] : [];
 
   @override
@@ -84,7 +84,7 @@ class ObservationDetailPageBaseState
     super.initState();
     // Le chargement se fera une fois que le service aura été injecté par la classe parent
   }
-  
+
   // Cette méthode sera appelée après l'injection des dépendances
   void startLoadingData() {
     _loadTaxonData();
@@ -120,24 +120,25 @@ class ObservationDetailPageBaseState
       }
     }
   }
-  
+
   Future<void> _loadObservationDetails() async {
     if (widget.observationDetailConfig == null) return;
-    
+
     setState(() {
       _isLoadingDetails = true;
     });
-    
+
     try {
       // Récupérer les détails d'observation via le ViewModel
-      final detailsProvider = observationDetailsProvider(widget.observation.idObservation);
-      
+      final detailsProvider =
+          observationDetailsProvider(widget.observation.idObservation);
+
       // Forcer un chargement initial si nécessaire
       await widget.ref.read(detailsProvider.notifier).loadObservationDetails();
-      
+
       // Récupérer les résultats directement du provider
       final result = widget.ref.read(detailsProvider);
-      
+
       if (mounted) {
         setState(() {
           if (result is AsyncData<List<ObservationDetail>>) {
@@ -153,7 +154,7 @@ class ObservationDetailPageBaseState
         setState(() {
           _isLoadingDetails = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Erreur lors du chargement des détails: $e')),
         );
@@ -380,16 +381,16 @@ class ObservationDetailPageBaseState
       ),
     );
   }
-  
+
   @override
   Widget? buildChildrenContent() {
     if (widget.observationDetailConfig == null || _observationDetails.isEmpty) {
       return null;
     }
-    
+
     return _buildObservationDetailsSection();
   }
-  
+
   Widget _buildObservationDetailsSection() {
     // Utiliser une approche similaire à un TabBar mais sans les problèmes de controller
     return Column(
@@ -400,7 +401,8 @@ class ObservationDetailPageBaseState
           padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
           alignment: Alignment.centerLeft,
           child: Text(
-            widget.observationDetailConfig?.label ?? 'Détails de l\'observation',
+            widget.observationDetailConfig?.label ??
+                'Détails de l\'observation',
             style: TextStyle(
               color: Theme.of(context).primaryColor,
               fontWeight: FontWeight.bold,
@@ -408,7 +410,7 @@ class ObservationDetailPageBaseState
             ),
           ),
         ),
-        
+
         // Tableau des détails d'observation
         Expanded(
           child: _buildObservationDetailsTable(),
@@ -416,7 +418,7 @@ class ObservationDetailPageBaseState
       ],
     );
   }
-  
+
   Widget _buildObservationDetailsTable() {
     // Bouton d'ajout de détail d'observation
     Widget addDetailButton = ElevatedButton.icon(
@@ -454,21 +456,21 @@ class ObservationDetailPageBaseState
     if (_isLoadingDetails) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     // Déterminer les colonnes à afficher pour les détails d'observation
     List<String> standardColumns = ['actions'];
-    
+
     // Récupérer le premier élément pour auto-détecter les propriétés
-    Map<String, dynamic>? firstItemData = 
+    Map<String, dynamic>? firstItemData =
         _observationDetails.isNotEmpty ? _observationDetails.first.data : null;
-    
+
     List<String> displayColumns = determineDataColumns(
       standardColumns: standardColumns,
       itemConfig: widget.observationDetailConfig,
       firstItemData: firstItemData,
       filterMetaColumns: true,
     );
-    
+
     // Créer les colonnes du DataTable
     List<DataColumn> columns = buildDataColumns(
       columns: displayColumns,
@@ -479,7 +481,7 @@ class ObservationDetailPageBaseState
         'denombrement': 'Dénombrement',
       },
     );
-    
+
     // Construire les lignes de données
     List<DataRow> rows = [];
     if (_observationDetails.isNotEmpty) {
@@ -489,7 +491,7 @@ class ObservationDetailPageBaseState
         schema = FormConfigParser.generateUnifiedSchema(
             widget.observationDetailConfig!, widget.customConfig);
       }
-      
+
       rows = _observationDetails.map((detail) {
         return DataRow(
           cells: displayColumns.map((column) {
@@ -533,20 +535,20 @@ class ObservationDetailPageBaseState
                 ),
               );
             }
-            
+
             // Récupérer la valeur depuis les données
             dynamic rawValue;
             if (detail.data.containsKey(column)) {
               rawValue = detail.data[column];
             }
-            
+
             // Formater la valeur et créer la cellule
             String displayValue = formatDataCellValue(
               rawValue: rawValue,
               columnName: column,
               schema: schema,
             );
-            
+
             return buildFormattedDataCell(
               value: displayValue,
               enableTooltip: true,
@@ -555,7 +557,7 @@ class ObservationDetailPageBaseState
         );
       }).toList();
     }
-    
+
     // Utiliser la méthode factorisée buildDataTable
     return buildDataTable(
       columns: columns,
@@ -566,7 +568,7 @@ class ObservationDetailPageBaseState
       isLoading: false,
     );
   }
-  
+
   void _navigateToDetailPage(ObservationDetail detail) {
     Navigator.push(
       context,
@@ -580,7 +582,7 @@ class ObservationDetailPageBaseState
       ),
     );
   }
-  
+
   void _showAddObservationDetailForm() {
     // Vérifier que la configuration est disponible
     if (widget.observationDetailConfig == null) {
@@ -589,7 +591,7 @@ class ObservationDetailPageBaseState
       );
       return;
     }
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -604,7 +606,7 @@ class ObservationDetailPageBaseState
       _loadObservationDetails();
     });
   }
-  
+
   void _showEditObservationDetailForm(ObservationDetail detail) {
     // Vérifier que la configuration est disponible
     if (widget.observationDetailConfig == null) {
@@ -613,7 +615,7 @@ class ObservationDetailPageBaseState
       );
       return;
     }
-    
+
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -629,13 +631,14 @@ class ObservationDetailPageBaseState
       _loadObservationDetails();
     });
   }
-  
+
   void _showDeleteConfirmation(ObservationDetail detail) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmation'),
-        content: const Text('Voulez-vous vraiment supprimer ce détail d\'observation?'),
+        content: const Text(
+            'Voulez-vous vraiment supprimer ce détail d\'observation?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -652,26 +655,28 @@ class ObservationDetailPageBaseState
       ),
     );
   }
-  
+
   void _deleteObservationDetail(ObservationDetail detail) async {
     try {
-      final detailsProvider = observationDetailsProvider(widget.observation.idObservation);
-      
+      final detailsProvider =
+          observationDetailsProvider(widget.observation.idObservation);
+
       // Vérifier si l'ID existe
       if (detail.idObservationDetail == null) {
         throw Exception("Identifiant du détail non disponible");
       }
-      
+
       // Appeler la méthode de suppression
-      final success = await widget.ref.read(detailsProvider.notifier)
+      final success = await widget.ref
+          .read(detailsProvider.notifier)
           .deleteObservationDetail(detail.idObservationDetail!);
-      
+
       if (mounted) {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Détail supprimé avec succès')),
           );
-          
+
           // Recharger les détails après la suppression
           _loadObservationDetails();
         } else {

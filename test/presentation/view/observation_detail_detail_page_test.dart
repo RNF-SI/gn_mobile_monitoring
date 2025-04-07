@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/property_display_widget.dart';
 
 void main() {
@@ -42,7 +42,8 @@ void main() {
 
   final customConfig = CustomConfig();
 
-  testWidgets('ObservationDetailDetailPage displays correct title with index', (WidgetTester tester) async {
+  testWidgets('ObservationDetailDetailPage displays correct title with index',
+      (WidgetTester tester) async {
     // Build our widget and trigger a frame
     await tester.pumpWidget(
       ProviderScope(
@@ -61,7 +62,9 @@ void main() {
     expect(find.text('Détails de l\'observation détail 3'), findsOneWidget);
   });
 
-  testWidgets('ObservationDetailDetailPage displays PropertyDisplayWidget with correct data', (WidgetTester tester) async {
+  testWidgets(
+      'ObservationDetailDetailPage displays PropertyDisplayWidget with correct data',
+      (WidgetTester tester) async {
     // Build our widget and trigger a frame
     await tester.pumpWidget(
       ProviderScope(
@@ -78,12 +81,14 @@ void main() {
 
     // Verify that PropertyDisplayWidget is included
     expect(find.byType(PropertyDisplayWidget), findsOneWidget);
-    
+
     // Verify that the page is scrollable
     expect(find.byType(SingleChildScrollView), findsOneWidget);
   });
 
-  testWidgets('ObservationDetailDetailPage passes correct data to PropertyDisplayWidget', (WidgetTester tester) async {
+  testWidgets(
+      'ObservationDetailDetailPage passes correct data to PropertyDisplayWidget',
+      (WidgetTester tester) async {
     // Build our widget and trigger a frame
     await tester.pumpWidget(
       ProviderScope(

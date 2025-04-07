@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation_detail_detail_page_base.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_detail_page_base.dart';
 
 class ObservationDetailDetailPage extends ConsumerStatefulWidget {
   final ObservationDetail observationDetail;
@@ -19,10 +19,12 @@ class ObservationDetailDetailPage extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ObservationDetailDetailPage> createState() => _ObservationDetailDetailPageState();
+  ConsumerState<ObservationDetailDetailPage> createState() =>
+      _ObservationDetailDetailPageState();
 }
 
-class _ObservationDetailDetailPageState extends ConsumerState<ObservationDetailDetailPage> {
+class _ObservationDetailDetailPageState
+    extends ConsumerState<ObservationDetailDetailPage> {
   @override
   Widget build(BuildContext context) {
     return ObservationDetailDetailPageBase(
