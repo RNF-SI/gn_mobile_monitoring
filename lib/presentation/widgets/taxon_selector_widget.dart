@@ -124,7 +124,15 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
 
     try {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final results = await taxonService.searchTaxons(query);
+
+      // Récupérer l'id_list depuis la configuration si disponible
+      int? listId;
+      if (widget.fieldConfig != null) {
+        listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
+      }
+
+      // Effectuer la recherche avec l'id_list si disponible
+      final results = await taxonService.searchTaxons(query, idListe: listId);
 
       if (mounted) {
         setState(() {
