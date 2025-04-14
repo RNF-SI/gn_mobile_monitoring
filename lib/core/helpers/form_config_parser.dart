@@ -162,9 +162,16 @@ class FormConfigParser {
       return true;
     }
 
-    // Vérifier si le champ contient une référence à une liste taxonomique
-    final idList = fieldConfig['id_list'] as String?;
-    if (idList != null && idList.contains('ID_LIST_TAXONOMY')) {
+    // Vérifier si le champ contient une référence ou valeur de liste taxonomique
+    final dynamic idList = fieldConfig['id_list'];
+    
+    // Si c'est une référence chaîne à une liste taxonomique
+    if (idList is String && idList.contains('ID_LIST_TAXONOMY')) {
+      return true;
+    }
+    
+    // Si c'est une valeur entière directe (id_list numérique)
+    if (idList is int || (idList is String && int.tryParse(idList) != null)) {
       return true;
     }
 
@@ -300,19 +307,27 @@ class FormConfigParser {
       return null;
     }
 
-    // Vérifier si c'est une référence à une liste taxonomique MODULE
-    final idList = fieldConfig['id_list'] as String?;
-    if (idList != null && idList.isNotEmpty) {
-      // Si c'est une valeur numérique directe
-      final directId = int.tryParse(idList);
-      if (directId != null) {
-        return directId;
+    // Vérifier si c'est une liste taxonomique définie en tant qu'entier directement
+    final dynamic rawIdList = fieldConfig['id_list'];
+    if (rawIdList != null) {
+      // Si c'est directement un entier
+      if (rawIdList is int) {
+        return rawIdList;
       }
+      
+      // Si c'est une chaîne
+      if (rawIdList is String && rawIdList.isNotEmpty) {
+        // Si c'est une valeur numérique sous forme de chaîne
+        final directId = int.tryParse(rawIdList);
+        if (directId != null) {
+          return directId;
+        }
 
-      // Si c'est une référence qui a été substituée
-      if (idList.contains('__MODULE.ID_LIST_TAXONOMY')) {
-        // Cette valeur devrait déjà être substituée par le bon ID
-        return int.tryParse(idList);
+        // Si c'est une référence qui a été substituée
+        if (rawIdList.contains('__MODULE.ID_LIST_TAXONOMY')) {
+          // Cette valeur devrait déjà être substituée par le bon ID
+          return int.tryParse(rawIdList);
+        }
       }
     }
 
