@@ -465,6 +465,7 @@ class GenericFieldConfig with _$GenericFieldConfig {
     Map<String, dynamic>? default_,
     String? designStyle,
     String? dataPath,
+    @JsonKey(name: 'id_list') dynamic idList, // Peut être un entier ou une chaîne
   }) = _GenericFieldConfig;
 
   factory GenericFieldConfig.fromJson(Map<String, dynamic> json) {
@@ -487,6 +488,7 @@ class GenericFieldConfig with _$GenericFieldConfig {
       default_: json['default'] as Map<String, dynamic>?,
       designStyle: json['designStyle'] as String?,
       dataPath: json['data_path'] as String?,
+      idList: json['id_list'], // Peut être un entier ou une chaîne
     );
   }
 }
@@ -509,6 +511,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
         if (default_ != null) 'default': default_,
         if (designStyle != null) 'designStyle': designStyle,
         if (dataPath != null) 'data_path': dataPath,
+        if (idList != null) 'id_list': idList,
       };
 }
 

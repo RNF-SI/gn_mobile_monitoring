@@ -2573,6 +2573,8 @@ mixin _$GenericFieldConfig {
   Map<String, dynamic>? get default_ => throw _privateConstructorUsedError;
   String? get designStyle => throw _privateConstructorUsedError;
   String? get dataPath => throw _privateConstructorUsedError;
+  @JsonKey(name: 'id_list')
+  dynamic get idList => throw _privateConstructorUsedError;
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -2603,7 +2605,8 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       List<Map<String, dynamic>>? values,
       Map<String, dynamic>? default_,
       String? designStyle,
-      String? dataPath});
+      String? dataPath,
+      @JsonKey(name: 'id_list') dynamic idList});
 }
 
 /// @nodoc
@@ -2637,6 +2640,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
+    Object? idList = freezed,
   }) {
     return _then(_value.copyWith(
       attributLabel: freezed == attributLabel
@@ -2703,6 +2707,10 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
           ? _value.dataPath
           : dataPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      idList: freezed == idList
+          ? _value.idList
+          : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ) as $Val);
   }
 }
@@ -2731,7 +2739,8 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       List<Map<String, dynamic>>? values,
       Map<String, dynamic>? default_,
       String? designStyle,
-      String? dataPath});
+      String? dataPath,
+      @JsonKey(name: 'id_list') dynamic idList});
 }
 
 /// @nodoc
@@ -2763,6 +2772,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
+    Object? idList = freezed,
   }) {
     return _then(_$GenericFieldConfigImpl(
       attributLabel: freezed == attributLabel
@@ -2829,6 +2839,10 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           ? _value.dataPath
           : dataPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      idList: freezed == idList
+          ? _value.idList
+          : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ));
   }
 }
@@ -2852,7 +2866,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       final List<Map<String, dynamic>>? values,
       final Map<String, dynamic>? default_,
       this.designStyle,
-      this.dataPath})
+      this.dataPath,
+      @JsonKey(name: 'id_list') this.idList})
       : _values = values,
         _default_ = default_;
 
@@ -2905,10 +2920,13 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   final String? designStyle;
   @override
   final String? dataPath;
+  @override
+  @JsonKey(name: 'id_list')
+  final dynamic idList;
 
   @override
   String toString() {
-    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, default_: $default_, designStyle: $designStyle, dataPath: $dataPath)';
+    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
   }
 
   @override
@@ -2943,7 +2961,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
             (identical(other.designStyle, designStyle) ||
                 other.designStyle == designStyle) &&
             (identical(other.dataPath, dataPath) ||
-                other.dataPath == dataPath));
+                other.dataPath == dataPath) &&
+            const DeepCollectionEquality().equals(other.idList, idList));
   }
 
   @override
@@ -2964,7 +2983,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       const DeepCollectionEquality().hash(_values),
       const DeepCollectionEquality().hash(_default_),
       designStyle,
-      dataPath);
+      dataPath,
+      const DeepCollectionEquality().hash(idList));
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -2978,22 +2998,24 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
 
 abstract class _GenericFieldConfig implements GenericFieldConfig {
   const factory _GenericFieldConfig(
-      {@JsonKey(name: 'attribut_label') final String? attributLabel,
-      final String? definition,
-      final bool? hidden,
-      final bool? required,
-      final String? typeWidget,
-      final String? typeUtil,
-      final bool? multiSelect,
-      final String? api,
-      final String? application,
-      final String? keyLabel,
-      final String? keyValue,
-      final bool? multiple,
-      final List<Map<String, dynamic>>? values,
-      final Map<String, dynamic>? default_,
-      final String? designStyle,
-      final String? dataPath}) = _$GenericFieldConfigImpl;
+          {@JsonKey(name: 'attribut_label') final String? attributLabel,
+          final String? definition,
+          final bool? hidden,
+          final bool? required,
+          final String? typeWidget,
+          final String? typeUtil,
+          final bool? multiSelect,
+          final String? api,
+          final String? application,
+          final String? keyLabel,
+          final String? keyValue,
+          final bool? multiple,
+          final List<Map<String, dynamic>>? values,
+          final Map<String, dynamic>? default_,
+          final String? designStyle,
+          final String? dataPath,
+          @JsonKey(name: 'id_list') final dynamic idList}) =
+      _$GenericFieldConfigImpl;
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -3028,6 +3050,9 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   String? get designStyle;
   @override
   String? get dataPath;
+  @override
+  @JsonKey(name: 'id_list')
+  dynamic get idList;
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.
