@@ -14,6 +14,10 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
   final int moduleId;
   final String displayMode;
 
+  /// ID de la liste taxonomique du module (niveau module)
+  /// Cette liste est utilisée comme fallback si aucune liste n'est spécifiée au niveau du champ
+  final int? idListTaxonomy;
+
   const TaxonSelectorWidget({
     Key? key,
     required this.moduleId,
@@ -23,6 +27,7 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
     this.value,
     this.isRequired = false,
     this.displayMode = 'nom_vern,lb_nom',
+    this.idListTaxonomy,
   }) : super(key: key);
 
   @override
@@ -36,6 +41,19 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   List<Taxon> _searchResults = [];
   bool _isSearching = false;
 
+  /// Obtient l'ID de la liste taxonomique à utiliser
+  /// Priorise la liste du champ (fieldConfig) sur celle du module
+  int? _getEffectiveListId() {
+    // 1. Vérifier d'abord si une liste est spécifiée au niveau du champ
+    if (widget.fieldConfig != null) {
+      final fieldListId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
+      if (fieldListId != null) return fieldListId;
+    }
+
+    // 2. Si pas de liste au niveau du champ, utiliser celle du module
+    return widget.idListTaxonomy;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -46,6 +64,28 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     if (widget.value != null) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
       final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+
+      // Vérifier si le taxon appartient à la liste taxonomique appropriée
+      if (taxon != null) {
+        final effectiveListId = _getEffectiveListId();
+        if (effectiveListId != null) {
+          // Vérifier si le taxon est dans la liste
+          final taxonsInList =
+              await taxonService.getTaxonsByListId(effectiveListId);
+          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+
+          if (!isInList) {
+            if (mounted) {
+              setState(() {
+                _selectedTaxon = null;
+                _searchController.clear();
+              });
+              widget.onChanged(null);
+            }
+            return;
+          }
+        }
+      }
 
       if (mounted && taxon != null) {
         setState(() {
@@ -79,6 +119,28 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     if (_selectedTaxon?.cdNom != widget.value) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
       final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+
+      // Vérifier si le taxon appartient à la liste taxonomique appropriée
+      if (taxon != null) {
+        final effectiveListId = _getEffectiveListId();
+        if (effectiveListId != null) {
+          // Vérifier si le taxon est dans la liste
+          final taxonsInList =
+              await taxonService.getTaxonsByListId(effectiveListId);
+          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+
+          if (!isInList) {
+            if (mounted) {
+              setState(() {
+                _selectedTaxon = null;
+                _searchController.clear();
+              });
+              widget.onChanged(null);
+            }
+            return;
+          }
+        }
+      }
 
       if (mounted && taxon != null) {
         setState(() {
@@ -152,15 +214,12 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
 
   @override
   Widget build(BuildContext context) {
-    // Déterminer la liste taxonomique à utiliser
-    int? listId;
-    if (widget.fieldConfig != null) {
-      listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
-    }
+    // Utiliser la liste taxonomique appropriée
+    final effectiveListId = _getEffectiveListId();
 
     // Récupérer les taxons via le provider approprié
-    final taxonsAsync = listId != null
-        ? ref.watch(taxonsByListProvider(listId))
+    final taxonsAsync = effectiveListId != null
+        ? ref.watch(taxonsByListProvider(effectiveListId))
         : ref.watch(taxonsByModuleProvider(widget.moduleId));
 
     return Column(
@@ -199,8 +258,24 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
             }
           },
           validator: widget.isRequired
-              ? (value) =>
-                  (_selectedTaxon == null) ? 'Ce champ est obligatoire' : null
+              ? (value) {
+                  if (_selectedTaxon == null) {
+                    return 'Ce champ est obligatoire';
+                  }
+
+                  // Vérifier si un id_list est spécifié
+                  if (widget.fieldConfig != null) {
+                    final listId =
+                        FormConfigParser.getTaxonListId(widget.fieldConfig!);
+                    if (listId != null) {
+                      // La validation de l'appartenance à la liste est déjà faite lors de la sélection
+                      // Si nous avons un _selectedTaxon, c'est qu'il est valide
+                      return null;
+                    }
+                  }
+
+                  return null;
+                }
               : null,
         ),
 
