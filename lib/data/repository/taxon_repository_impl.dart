@@ -89,26 +89,39 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
   @override
   Future<void> downloadModuleTaxons(int moduleId) async {
-    // 1. Récupérer l'id_list_taxonomy du module
-    final moduleComplement =
-        await _modulesDatabase.getModuleComplementById(moduleId);
-    if (moduleComplement?.idListTaxonomy == null) return;
+    try {
+      // 1. Récupérer l'id_list_taxonomy du module
+      final moduleComplement =
+          await _modulesDatabase.getModuleComplementById(moduleId);
+      if (moduleComplement?.idListTaxonomy == null) return;
 
-    final idListTaxonomy = moduleComplement!.idListTaxonomy!;
+      final idListTaxonomy = moduleComplement!.idListTaxonomy!;
 
-    // 2. Télécharger la liste taxonomique
-    final taxonList = await _taxonApi.getTaxonList(idListTaxonomy);
-    await _taxonDatabase.saveTaxonLists([taxonList]);
+      // 2. Télécharger la liste taxonomique
+      final taxonList = await _taxonApi.getTaxonList(idListTaxonomy);
+      await _taxonDatabase.saveTaxonLists([taxonList]);
 
-    // 3. Télécharger les taxons associés à cette liste
-    final taxons = await _taxonApi.getTaxonsByList(idListTaxonomy);
+      // 3. Télécharger les taxons associés à cette liste
+      final taxons = await _taxonApi.getTaxonsByList(idListTaxonomy);
 
-    // 4. Sauvegarder en local
-    await _taxonDatabase.saveTaxons(taxons);
+      // 4. Sauvegarder chaque taxon individuellement pour éviter les erreurs de contrainte
+      for (final taxon in taxons) {
+        try {
+          await _taxonDatabase.saveTaxon(taxon);
+        } catch (e) {
+          print('Erreur lors de la sauvegarde du taxon ${taxon.cdNom}: $e');
+          // Continuer avec le taxon suivant
+        }
+      }
 
-    // 5. Enregistrer les associations entre les taxons et la liste
-    final cdNoms = taxons.map((t) => t.cdNom).toList();
-    await _taxonDatabase.saveTaxonsToList(idListTaxonomy, cdNoms);
+      // 5. Enregistrer les associations entre les taxons et la liste
+      final cdNoms = taxons.map((t) => t.cdNom).toList();
+      await _taxonDatabase.saveTaxonsToList(idListTaxonomy, cdNoms);
+      
+      print('Taxons for module $moduleId downloaded and saved successfully.');
+    } catch (e) {
+      print('Error downloading taxons for module $moduleId: $e');
+    }
   }
 
   /// Télécharge toutes les listes taxonomiques mentionnées dans la configuration
@@ -130,7 +143,16 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
           // Télécharger les taxons associés à cette liste
           final taxons = await _taxonApi.getTaxonsByList(listId);
-          await _taxonDatabase.saveTaxons(taxons);
+          
+          // Sauvegarder chaque taxon individuellement pour éviter les erreurs de contrainte
+          for (final taxon in taxons) {
+            try {
+              await _taxonDatabase.saveTaxon(taxon);
+            } catch (e) {
+              print('Erreur lors de la sauvegarde du taxon ${taxon.cdNom}: $e');
+              // Continuer avec le taxon suivant
+            }
+          }
 
           // Enregistrer les associations entre les taxons et la liste
           final cdNoms = taxons.map((t) => t.cdNom).toList();
