@@ -30,6 +30,9 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
   /// Liste des propriétés à afficher dans l'ordre
   final List<String>? displayProperties;
 
+  /// ID de la liste taxonomique du module
+  final int? idListTaxonomy;
+
   const DynamicFormBuilder({
     Key? key,
     required this.objectConfig,
@@ -39,6 +42,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
     this.chainInput,
     this.onChainInputChanged,
     this.displayProperties,
+    this.idListTaxonomy,
   }) : super(key: key);
 
   @override
@@ -916,6 +920,23 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Pour obtenir l'ID du module
     final int moduleId = widget.customConfig?.idModule ?? 0;
 
+    // Récupérer la configuration originale du champ depuis l'objectConfig
+    final originalFieldConfig = widget.objectConfig.generic?[fieldName];
+
+    // Fusionner les configurations en donnant la priorité à la configuration originale
+    final mergedConfig = Map<String, dynamic>.from(fieldConfig);
+    if (originalFieldConfig != null) {
+      // Convertir GenericFieldConfig en Map<String, dynamic>
+      mergedConfig.addAll({
+        'attribut_label': originalFieldConfig.attributLabel,
+        'type_widget': originalFieldConfig.typeWidget,
+        'type_util': originalFieldConfig.typeUtil,
+        'required': originalFieldConfig.required,
+        'hidden': originalFieldConfig.hidden,
+        'id_list': originalFieldConfig.idList,
+      });
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -941,7 +962,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           TaxonSelectorWidget(
             label: label,
             moduleId: moduleId,
-            fieldConfig: fieldConfig,
+            fieldConfig: mergedConfig,
             value: initialValue,
             isRequired: required,
             onChanged: (cdNom) {
@@ -953,6 +974,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 }
               });
             },
+            idListTaxonomy: widget.idListTaxonomy,
           ),
         ],
       ),

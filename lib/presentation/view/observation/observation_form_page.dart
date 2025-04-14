@@ -181,6 +181,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                     },
                     displayProperties:
                         widget.observationConfig.displayProperties,
+                    idListTaxonomy:
+                        widget.moduleInfo?.module.complement?.idListTaxonomy,
                   ),
 
                   const SizedBox(height: 24),
