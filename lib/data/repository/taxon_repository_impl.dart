@@ -155,7 +155,17 @@ class TaxonRepositoryImpl implements TaxonRepository {
       if (obj is Map<String, dynamic>) {
         // Si c'est un champ de taxonomie avec un id_list
         if (obj['type_util'] == 'taxonomy' && obj.containsKey('id_list')) {
-          final int? listId = obj['id_list'] as int?;
+          // La propriété id_list peut être un entier ou une chaîne
+          dynamic rawListId = obj['id_list'];
+          int? listId;
+          
+          if (rawListId is int) {
+            listId = rawListId;
+          } else if (rawListId is String) {
+            // Tenter de convertir en entier
+            listId = int.tryParse(rawListId);
+          }
+          
           if (listId != null) {
             listIds.add(listId);
           }
