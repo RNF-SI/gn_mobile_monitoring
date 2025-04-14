@@ -17,15 +17,35 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
 
   // Taxons CRUD
   Future<void> insertTaxon(Taxon taxon) async {
-    await into(tTaxrefs).insert(taxon.toDatabaseEntity());
+    try {
+      // Vérifier si le taxon existe déjà
+      final existingTaxon = await (select(tTaxrefs)..where((t) => t.cdNom.equals(taxon.cdNom))).getSingleOrNull();
+      
+      if (existingTaxon != null) {
+        // Mettre à jour le taxon existant
+        await (update(tTaxrefs)..where((t) => t.cdNom.equals(taxon.cdNom)))
+          .write(taxon.toDatabaseEntity());
+      } else {
+        // Insérer un nouveau taxon
+        await into(tTaxrefs).insert(taxon.toDatabaseEntity());
+      }
+    } catch (e) {
+      print('Erreur dans insertTaxon pour cd_nom ${taxon.cdNom}: $e');
+      // Tenter une insertion avec conflit update en dernier recours
+      await into(tTaxrefs).insertOnConflictUpdate(taxon.toDatabaseEntity());
+    }
   }
 
   Future<void> insertTaxons(List<Taxon> taxons) async {
-    final dbEntities = taxons.map((e) => e.toDatabaseEntity()).toList();
-
-    await batch((batch) {
-      batch.insertAll(tTaxrefs, dbEntities);
-    });
+    // Traiter chaque taxon individuellement pour éviter les erreurs de batch
+    for (final taxon in taxons) {
+      try {
+        await insertTaxon(taxon);
+      } catch (e) {
+        print('Erreur dans insertTaxons pour cd_nom ${taxon.cdNom}: $e');
+        // Continuer avec les autres taxons
+      }
+    }
   }
 
   Future<Taxon?> getTaxonByCdNom(int cdNom) async {
@@ -81,15 +101,35 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
 
   // BibListesTable CRUD
   Future<void> insertTaxonList(TaxonList list) async {
-    await into(bibListesTable).insert(list.toDatabaseEntity());
+    try {
+      // Vérifier si la liste existe déjà
+      final existingList = await (select(bibListesTable)..where((t) => t.idListe.equals(list.idListe))).getSingleOrNull();
+      
+      if (existingList != null) {
+        // Mettre à jour la liste existante
+        await (update(bibListesTable)..where((t) => t.idListe.equals(list.idListe)))
+          .write(list.toDatabaseEntity());
+      } else {
+        // Insérer une nouvelle liste
+        await into(bibListesTable).insert(list.toDatabaseEntity());
+      }
+    } catch (e) {
+      print('Erreur dans insertTaxonList pour id_liste ${list.idListe}: $e');
+      // Tenter une insertion avec conflit update en dernier recours
+      await into(bibListesTable).insertOnConflictUpdate(list.toDatabaseEntity());
+    }
   }
 
   Future<void> insertTaxonLists(List<TaxonList> lists) async {
-    final dbEntities = lists.map((e) => e.toDatabaseEntity()).toList();
-
-    await batch((batch) {
-      batch.insertAll(bibListesTable, dbEntities);
-    });
+    // Traiter chaque liste individuellement pour éviter les erreurs de batch
+    for (final list in lists) {
+      try {
+        await insertTaxonList(list);
+      } catch (e) {
+        print('Erreur dans insertTaxonLists pour id_liste ${list.idListe}: $e');
+        // Continuer avec les autres listes
+      }
+    }
   }
 
   Future<List<TaxonList>> getAllTaxonLists() async {
@@ -106,23 +146,50 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
 
   // CorTaxonListeTable CRUD
   Future<void> linkTaxonToList(int idListe, int cdNom) async {
-    await into(corTaxonListeTable).insert(CorTaxonListeTableCompanion(
-      idListe: Value(idListe),
-      cdNom: Value(cdNom),
-    ));
+    try {
+      // Vérifier si la relation existe déjà
+      final existingRelation = await (select(corTaxonListeTable)
+        ..where((t) => t.idListe.equals(idListe) & t.cdNom.equals(cdNom)))
+        .getSingleOrNull();
+      
+      if (existingRelation == null) {
+        // Insérer seulement si la relation n'existe pas
+        await into(corTaxonListeTable).insert(
+          CorTaxonListeTableCompanion(
+            idListe: Value(idListe),
+            cdNom: Value(cdNom),
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+      }
+    } catch (e) {
+      print('Erreur dans linkTaxonToList pour liste $idListe et cd_nom $cdNom: $e');
+    }
   }
 
   Future<void> linkTaxonsToList(int idListe, List<int> cdNoms) async {
-    await batch((batch) {
-      for (final cdNom in cdNoms) {
-        batch.insert(
-            corTaxonListeTable,
+    for (final cdNom in cdNoms) {
+      try {
+        // Vérifier si la relation existe déjà
+        final existingRelation = await (select(corTaxonListeTable)
+          ..where((t) => t.idListe.equals(idListe) & t.cdNom.equals(cdNom)))
+          .getSingleOrNull();
+        
+        if (existingRelation == null) {
+          // Insérer seulement si la relation n'existe pas
+          await into(corTaxonListeTable).insert(
             CorTaxonListeTableCompanion(
               idListe: Value(idListe),
               cdNom: Value(cdNom),
-            ));
+            ),
+            mode: InsertMode.insertOrIgnore
+          );
+        }
+      } catch (e) {
+        print('Erreur dans linkTaxonsToList pour liste $idListe et cd_nom $cdNom: $e');
+        // Continuer avec les autres relations
       }
-    });
+    }
   }
 
   Future<void> clearTaxons() async {
