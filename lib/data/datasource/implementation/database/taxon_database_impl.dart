@@ -39,6 +39,12 @@ class TaxonDatabaseImpl implements TaxonDatabase {
   }
 
   @override
+  Future<void> saveTaxon(Taxon taxon) async {
+    final db = await _database;
+    return db.taxonDao.insertTaxon(taxon);
+  }
+
+  @override
   Future<void> saveTaxons(List<Taxon> taxons) async {
     final db = await _database;
     return db.taxonDao.insertTaxons(taxons);

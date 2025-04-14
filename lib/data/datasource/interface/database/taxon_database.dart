@@ -8,6 +8,7 @@ abstract class TaxonDatabase {
   Future<Taxon?> getTaxonByCdNom(int cdNom);
   Future<List<Taxon>> searchTaxons(String searchTerm);
   Future<List<Taxon>> searchTaxonsByListId(String searchTerm, int idListe);
+  Future<void> saveTaxon(Taxon taxon);
   Future<void> saveTaxons(List<Taxon> taxons);
   Future<void> clearTaxons();
 
