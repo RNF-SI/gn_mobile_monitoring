@@ -11,6 +11,9 @@ import 'package:gn_mobile_monitoring/presentation/view/observation/observation_d
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
+// Provider pour le statut du bouton "Enchainer les saisies" des détails d'observation
+final chainDetailInputProvider = StateProvider<bool>((ref) => false);
+
 /// Page de formulaire pour créer ou éditer un détail d'observation
 class ObservationDetailFormPage extends ConsumerStatefulWidget {
   final ObjectConfig? observationDetail;
@@ -58,8 +61,19 @@ class _ObservationDetailFormPageState
   void initState() {
     super.initState();
     _initForm();
-    // Si la config indique que l'enchaînement est possible, on initialise la bascule
-    _chainInput = widget.observationDetail?.chained ?? false;
+    
+    // Récupérer l'état du bouton depuis le provider dans le prochain frame 
+    // (car on ne peut pas accéder à ref dans initState)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        // Si la config indique que l'enchaînement est possible, on récupère la valeur du provider
+        if (widget.observationDetail?.chained == true) {
+          _chainInput = ref.read(chainDetailInputProvider);
+        } else {
+          _chainInput = false;
+        }
+      });
+    });
   }
 
   /// Initialise le formulaire avec les données existantes ou nouvelles
@@ -137,6 +151,8 @@ class _ObservationDetailFormPageState
                       onChainInputChanged: (value) {
                         setState(() {
                           _chainInput = value;
+                          // Mettre à jour le provider pour les prochaines saisies
+                          ref.read(chainDetailInputProvider.notifier).state = value;
                         });
                       },
                       displayProperties: widget.observationDetail

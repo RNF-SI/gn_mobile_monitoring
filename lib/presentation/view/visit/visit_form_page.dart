@@ -11,6 +11,9 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmode
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
+// Provider pour le statut du bouton "Enchainer les saisies" des visites
+final chainVisitInputProvider = StateProvider<bool>((ref) => false);
+
 class VisitFormPage extends ConsumerStatefulWidget {
   final BaseSite site;
   final ObjectConfig visitConfig;
@@ -48,8 +51,19 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   void initState() {
     super.initState();
     _isEditMode = widget.visit != null;
-    // Si la config indique que l'enchaînement est possible, on initialise la bascule
-    _chainInput = widget.visitConfig.chained ?? false;
+    
+    // Récupérer l'état du bouton depuis le provider dans le prochain frame 
+    // (car on ne peut pas accéder à ref dans initState)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        // Si la config indique que l'enchaînement est possible, on récupère la valeur du provider
+        if (widget.visitConfig.chained == true) {
+          _chainInput = ref.read(chainVisitInputProvider);
+        } else {
+          _chainInput = false;
+        }
+      });
+    });
 
     // En mode édition, préparer les valeurs initiales depuis la visite existante
     if (_isEditMode && widget.visit != null) {
@@ -628,6 +642,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                         onChainInputChanged: (value) {
                           setState(() {
                             _chainInput = value;
+                            // Mettre à jour le provider pour les prochaines saisies
+                            ref.read(chainVisitInputProvider.notifier).state = value;
                           });
                         },
                         // Utiliser les propriétés d'affichage de la configuration

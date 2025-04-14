@@ -11,6 +11,9 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmod
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
+// Provider pour le statut du bouton "Enchainer les saisies"
+final chainObservationInputProvider = StateProvider<bool>((ref) => false);
+
 class ObservationFormPage extends ConsumerStatefulWidget {
   final int visitId;
   final ObjectConfig observationConfig;
@@ -65,8 +68,19 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
   void initState() {
     super.initState();
     _isEditMode = widget.observation != null;
-    // Si la config indique que l'enchaînement est possible, on initialise la bascule
-    _chainInput = widget.observationConfig.chained ?? false;
+
+    // Récupérer l'état du bouton depuis le provider dans le prochain frame
+    // (car on ne peut pas accéder à ref dans initState)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      setState(() {
+        // Si la config indique que l'enchaînement est possible, on récupère la valeur du provider
+        if (widget.observationConfig.chained == true) {
+          _chainInput = ref.read(chainObservationInputProvider);
+        } else {
+          _chainInput = false;
+        }
+      });
+    });
 
     // En mode édition, préparer les valeurs initiales depuis l'observation existante
     if (_isEditMode && widget.observation != null) {
@@ -177,6 +191,9 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                     onChainInputChanged: (value) {
                       setState(() {
                         _chainInput = value;
+                        // Mettre à jour le provider pour les prochaines saisies
+                        ref.read(chainObservationInputProvider.notifier).state =
+                            value;
                       });
                     },
                     displayProperties:
