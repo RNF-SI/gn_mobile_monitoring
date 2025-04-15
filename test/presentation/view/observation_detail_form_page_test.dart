@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
-import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
