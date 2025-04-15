@@ -15,6 +15,7 @@ import 'package:gn_mobile_monitoring/domain/repository/global_database_repositor
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
@@ -81,6 +82,8 @@ class MockLocalStorageRepository extends Mock
 class MockModulesRepository extends Mock implements ModulesRepository {}
 
 class MockSitesRepository extends Mock implements SitesRepository {}
+
+class MockTaxonRepository extends Mock implements TaxonRepository {}
 
 // Domain layer mocks - UseCases
 // Auth
