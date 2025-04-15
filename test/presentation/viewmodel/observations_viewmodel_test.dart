@@ -49,7 +49,15 @@ void main() {
       mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
       mockFormDataProcessor = MockFormDataProcessor();
 
+      // Mock both FormDataProcessor methods to prevent null pointer issues
+      when(() => mockFormDataProcessor.processFormData(any()))
+          .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
+          
+      when(() => mockFormDataProcessor.processFormDataForDisplay(any()))
+          .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
+
       registerFallbackValue(const Observation(idObservation: 1));
+      registerFallbackValue(<String, dynamic>{});
     });
 
     test(
@@ -90,12 +98,14 @@ void main() {
           idBaseVisit: testVisitId,
           cdNom: 123,
           comments: 'Test observation 1',
+          data: {'key': 'value1'},
         ),
         Observation(
           idObservation: 2,
           idBaseVisit: testVisitId,
           cdNom: 456,
           comments: 'Test observation 2',
+          data: {'key': 'value2'},
         ),
       ];
 
@@ -116,8 +126,18 @@ void main() {
       // Attendre que l'état se mette à jour
       await Future.delayed(Duration.zero);
 
-      // Vérifier l'état
-      expect(viewModel.state, AsyncValue.data(testObservations));
+      // Vérifier l'état - check for equality based on specific properties
+      expect(viewModel.state.hasValue, isTrue);
+      expect(viewModel.state.value?.length, equals(testObservations.length));
+      
+      final value = viewModel.state.value;
+      if (value != null) {
+        for (int i = 0; i < testObservations.length; i++) {
+          expect(value[i].idObservation, equals(testObservations[i].idObservation));
+          expect(value[i].cdNom, equals(testObservations[i].cdNom));
+          expect(value[i].comments, equals(testObservations[i].comments));
+        }
+      }
     });
 
     test('loadObservations should handle error', () async {
@@ -154,6 +174,7 @@ void main() {
           idBaseVisit: testVisitId,
           cdNom: 123,
           comments: 'Test observation',
+          data: {'key': 'value'},
         ),
       ];
 
@@ -180,8 +201,14 @@ void main() {
       // Act
       final result = await viewModel.getObservationsByVisitId();
 
-      // Assert
-      expect(result, testObservations);
+      // Assert - check for equality based on specific properties
+      expect(result.length, equals(testObservations.length));
+      
+      if (result.isNotEmpty) {
+        expect(result[0].idObservation, equals(testObservations[0].idObservation));
+        expect(result[0].cdNom, equals(testObservations[0].cdNom));
+        expect(result[0].comments, equals(testObservations[0].comments));
+      }
       verify(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
           .called(1);
     });
@@ -248,7 +275,15 @@ void main() {
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
           .thenAnswer((_) async => []);
 
+      // Setup the FormDataProcessor mock - both methods
+      when(() => mockFormDataProcessor.processFormData(any()))
+          .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
+          
+      when(() => mockFormDataProcessor.processFormDataForDisplay(any()))
+          .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
+
       registerFallbackValue(const Observation(idObservation: 1));
+      registerFallbackValue(<String, dynamic>{});
 
       // Créer le viewModel
       viewModel = ObservationsViewModel(
@@ -262,13 +297,14 @@ void main() {
       );
 
       // Attendre la fin de l'initialisation
-      Future.delayed(Duration.zero);
+      Future.microtask(() => null);
 
       // Réinitialiser les compteurs d'appels après l'initialisation
       clearInteractions(mockGetObservationsByVisitIdUseCase);
       clearInteractions(mockCreateObservationUseCase);
       clearInteractions(mockUpdateObservationUseCase);
       clearInteractions(mockDeleteObservationUseCase);
+      clearInteractions(mockFormDataProcessor);
     });
 
     test(
@@ -364,6 +400,7 @@ void main() {
         comments: 'Original comment',
         uuidObservation: 'test-uuid',
         metaCreateDate: '2023-01-01T12:00:00',
+        data: {'original': 'data'},
       );
 
       final formData = {

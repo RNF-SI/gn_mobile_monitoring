@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockNomenclatureService extends Mock implements NomenclatureService {}
+
+class MockTaxonService extends Mock implements TaxonService {}
 
 class MockRef extends Mock implements Ref {}
 
@@ -16,11 +19,16 @@ void main() {
 
   setUp(() {
     mockNomenclatureService = MockNomenclatureService();
+    final mockTaxonService = MockTaxonService();
     mockRef = MockRef();
     
     // Setup the mock Ref to return mockNomenclatureService
     when(() => mockRef.read(nomenclatureServiceProvider.notifier))
         .thenReturn(mockNomenclatureService);
+    
+    // Setup the mock Ref to return mockTaxonService
+    when(() => mockRef.read(taxonServiceProvider.notifier))
+        .thenReturn(mockTaxonService);
     
     formDataProcessor = FormDataProcessor(mockRef);
   });
