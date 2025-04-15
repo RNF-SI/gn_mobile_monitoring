@@ -4,8 +4,8 @@
 // In a local development environment, uncomment these imports and
 // create the corresponding files with appropriate API endpoints.
 //
-import 'config_dev.dart';
-import 'config_prod.dart';
+// import 'config_dev.dart';
+// import 'config_prod.dart';
 
 // Configuration classes for development and production
 // These will be used when the real config files are not available (CI)
