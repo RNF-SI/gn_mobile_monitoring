@@ -69,25 +69,22 @@ void main() {
   });
 
   group('loadObservationDetails', () {
-    setUp(() async {
-      viewModel = ObservationDetailViewModel(
-        mockGetObservationDetailsByObservationIdUseCase,
-        mockGetObservationDetailByIdUseCase,
-        mockSaveObservationDetailUseCase,
-        mockDeleteObservationDetailUseCase,
-        mockFormDataProcessor,
-        observationId,
-      );
-
-      // Wait for the initial load to complete
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Reset mock for the next calls
+    late ObservationDetailViewModel localViewModel;
+    
+    setUp(() {
+      // Reset mocks to ensure clean environment
       reset(mockGetObservationDetailsByObservationIdUseCase);
+      reset(mockGetObservationDetailByIdUseCase);
+      reset(mockSaveObservationDetailUseCase);
+      reset(mockDeleteObservationDetailUseCase);
+      
+      // Do not load initial data in setup - this leads to race conditions and timer/future issues in testing
+      when(() => mockGetObservationDetailsByObservationIdUseCase.execute(observationId))
+          .thenAnswer((_) async => []);
     });
 
     test('should update state to data when use case succeeds', () async {
-      // Arrange
+      // Arrange - Set up the mock for this specific test with the data we want to return
       final details = [
         ObservationDetail(
           idObservationDetail: 1,
@@ -103,15 +100,26 @@ void main() {
         ),
       ];
 
+      // Make sure the mock returns our test data
       when(() => mockGetObservationDetailsByObservationIdUseCase
           .execute(observationId)).thenAnswer((_) async => details);
+          
+      // Create a new local view model for this test specifically
+      localViewModel = ObservationDetailViewModel(
+        mockGetObservationDetailsByObservationIdUseCase,
+        mockGetObservationDetailByIdUseCase,
+        mockSaveObservationDetailUseCase,
+        mockDeleteObservationDetailUseCase,
+        mockFormDataProcessor,
+        observationId,
+      );
 
-      // Act
-      await viewModel.loadObservationDetails();
+      // Act - Wait for the initial load from constructor to complete
+      await Future.microtask(() => null);
 
-      // Assert
-      expect(viewModel.state.hasValue, isTrue);
-      expect(viewModel.state.value, details);
+      // Assert - Initial load should have already called the use case and updated the state
+      expect(localViewModel.state.hasValue, isTrue);
+      expect(localViewModel.state.value, details);
       verify(() => mockGetObservationDetailsByObservationIdUseCase
           .execute(observationId)).called(1);
     });
@@ -122,20 +130,8 @@ void main() {
       when(() => mockGetObservationDetailsByObservationIdUseCase
           .execute(observationId)).thenThrow(exception);
 
-      // Act
-      await viewModel.loadObservationDetails();
-
-      // Assert
-      expect(viewModel.state.hasError, isTrue);
-      expect(viewModel.state.error, exception);
-      verify(() => mockGetObservationDetailsByObservationIdUseCase
-          .execute(observationId)).called(1);
-    });
-  });
-
-  group('getObservationDetailsByObservationId', () {
-    setUp(() async {
-      viewModel = ObservationDetailViewModel(
+      // Create local viewmodel to avoid conflicts with other tests
+      localViewModel = ObservationDetailViewModel(
         mockGetObservationDetailsByObservationIdUseCase,
         mockGetObservationDetailByIdUseCase,
         mockSaveObservationDetailUseCase,
@@ -144,15 +140,49 @@ void main() {
         observationId,
       );
 
-      // Wait for the initial load to complete
-      await Future.delayed(const Duration(milliseconds: 100));
+      // Act - Wait for the initial load to complete (which will throw an error)
+      await Future.microtask(() => null);
 
-      // Reset mock for the next calls
+      // Assert
+      expect(localViewModel.state.hasError, isTrue);
+      expect(localViewModel.state.error, exception);
+      verify(() => mockGetObservationDetailsByObservationIdUseCase
+          .execute(observationId)).called(1);
+    });
+  });
+
+  group('getObservationDetailsByObservationId', () {
+    late ObservationDetailViewModel localViewModel;
+    
+    setUp(() {
+      // Reset mocks to ensure clean environment
       reset(mockGetObservationDetailsByObservationIdUseCase);
+      reset(mockGetObservationDetailByIdUseCase);
+      reset(mockSaveObservationDetailUseCase);
+      reset(mockDeleteObservationDetailUseCase);
+      
+      // Configure the initial load to not interfere with our tests
+      when(() => mockGetObservationDetailsByObservationIdUseCase.execute(observationId))
+          .thenAnswer((_) async => []);
+          
+      // Create the view model
+      localViewModel = ObservationDetailViewModel(
+        mockGetObservationDetailsByObservationIdUseCase,
+        mockGetObservationDetailByIdUseCase,
+        mockSaveObservationDetailUseCase,
+        mockDeleteObservationDetailUseCase,
+        mockFormDataProcessor,
+        observationId,
+      );
     });
 
     test('should return details when use case succeeds', () async {
-      // Arrange
+      // Arrange - Wait for initial loading to complete first
+      await Future.microtask(() => null);
+      
+      // Reset the mock to return our test data
+      reset(mockGetObservationDetailsByObservationIdUseCase);
+      
       final details = [
         ObservationDetail(
           idObservationDetail: 1,
@@ -167,7 +197,7 @@ void main() {
 
       // Act
       final result =
-          await viewModel.getObservationDetailsByObservationId(observationId);
+          await localViewModel.getObservationDetailsByObservationId(observationId);
 
       // Assert
       expect(result, equals(details));
@@ -176,13 +206,17 @@ void main() {
     });
 
     test('should return empty list when use case throws', () async {
-      // Arrange
+      // Arrange - Wait for initial loading to complete first
+      await Future.microtask(() => null);
+      
+      // Reset the mock for this test
+      reset(mockGetObservationDetailsByObservationIdUseCase);
       when(() => mockGetObservationDetailsByObservationIdUseCase
           .execute(observationId)).thenThrow(Exception('Error'));
 
       // Act
       final result =
-          await viewModel.getObservationDetailsByObservationId(observationId);
+          await localViewModel.getObservationDetailsByObservationId(observationId);
 
       // Assert
       expect(result, isEmpty);
@@ -192,8 +226,21 @@ void main() {
   });
 
   group('getObservationDetailById', () {
-    setUp(() async {
-      viewModel = ObservationDetailViewModel(
+    late ObservationDetailViewModel localViewModel;
+    
+    setUp(() {
+      // Reset mocks to ensure clean environment
+      reset(mockGetObservationDetailsByObservationIdUseCase);
+      reset(mockGetObservationDetailByIdUseCase);
+      reset(mockSaveObservationDetailUseCase);
+      reset(mockDeleteObservationDetailUseCase);
+      
+      // Configure the initial load to not interfere with our tests
+      when(() => mockGetObservationDetailsByObservationIdUseCase.execute(observationId))
+          .thenAnswer((_) async => []);
+      
+      // Create view model for this group of tests
+      localViewModel = ObservationDetailViewModel(
         mockGetObservationDetailsByObservationIdUseCase,
         mockGetObservationDetailByIdUseCase,
         mockSaveObservationDetailUseCase,
@@ -201,13 +248,13 @@ void main() {
         mockFormDataProcessor,
         observationId,
       );
-
-      // Wait for the initial load to complete
-      await Future.delayed(const Duration(milliseconds: 100));
     });
 
     test('should return detail when use case succeeds', () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       final detail = ObservationDetail(
         idObservationDetail: detailId,
         idObservation: observationId,
@@ -219,7 +266,7 @@ void main() {
           .thenAnswer((_) async => detail);
 
       // Act
-      final result = await viewModel.getObservationDetailById(detailId);
+      final result = await localViewModel.getObservationDetailById(detailId);
 
       // Assert
       expect(result, equals(detail));
@@ -229,11 +276,14 @@ void main() {
 
     test('should return null when use case throws', () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       when(() => mockGetObservationDetailByIdUseCase.execute(detailId))
           .thenThrow(Exception('Error'));
 
       // Act
-      final result = await viewModel.getObservationDetailById(detailId);
+      final result = await localViewModel.getObservationDetailById(detailId);
 
       // Assert
       expect(result, isNull);
@@ -243,8 +293,21 @@ void main() {
   });
 
   group('saveObservationDetail', () {
-    setUp(() async {
-      viewModel = ObservationDetailViewModel(
+    late ObservationDetailViewModel localViewModel;
+    
+    setUp(() {
+      // Reset mocks to ensure clean environment
+      reset(mockGetObservationDetailsByObservationIdUseCase);
+      reset(mockGetObservationDetailByIdUseCase);
+      reset(mockSaveObservationDetailUseCase);
+      reset(mockDeleteObservationDetailUseCase);
+      
+      // Configure the initial load to not interfere with our tests
+      when(() => mockGetObservationDetailsByObservationIdUseCase.execute(observationId))
+          .thenAnswer((_) async => []);
+
+      // Create view model
+      localViewModel = ObservationDetailViewModel(
         mockGetObservationDetailsByObservationIdUseCase,
         mockGetObservationDetailByIdUseCase,
         mockSaveObservationDetailUseCase,
@@ -252,17 +315,14 @@ void main() {
         mockFormDataProcessor,
         observationId,
       );
-
-      // Wait for the initial load to complete
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Reset mock for the next calls
-      reset(mockGetObservationDetailsByObservationIdUseCase);
     });
 
     test('should save detail and reload details when use case succeeds',
         () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       const insertedId = 3;
       final detail = ObservationDetail(
         idObservation: observationId,
@@ -283,7 +343,7 @@ void main() {
           .execute(observationId)).thenAnswer((_) async => details);
 
       // Act
-      final result = await viewModel.saveObservationDetail(detail);
+      final result = await localViewModel.saveObservationDetail(detail);
 
       // Assert
       expect(result, equals(insertedId));
@@ -294,6 +354,9 @@ void main() {
 
     test('should rethrow exception when use case throws', () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       final detail = ObservationDetail(
         idObservation: observationId,
         data: {'key': 'value'},
@@ -305,7 +368,7 @@ void main() {
 
       // Act & Assert
       expect(
-        () => viewModel.saveObservationDetail(detail),
+        () => localViewModel.saveObservationDetail(detail),
         throwsA(equals(exception)),
       );
       verify(() => mockSaveObservationDetailUseCase.execute(detail)).called(1);
@@ -315,8 +378,21 @@ void main() {
   });
 
   group('deleteObservationDetail', () {
-    setUp(() async {
-      viewModel = ObservationDetailViewModel(
+    late ObservationDetailViewModel localViewModel;
+    
+    setUp(() {
+      // Reset mocks to ensure clean environment
+      reset(mockGetObservationDetailsByObservationIdUseCase);
+      reset(mockGetObservationDetailByIdUseCase);
+      reset(mockSaveObservationDetailUseCase);
+      reset(mockDeleteObservationDetailUseCase);
+      
+      // Configure the initial load to not interfere with our tests
+      when(() => mockGetObservationDetailsByObservationIdUseCase.execute(observationId))
+          .thenAnswer((_) async => []);
+
+      // Create view model
+      localViewModel = ObservationDetailViewModel(
         mockGetObservationDetailsByObservationIdUseCase,
         mockGetObservationDetailByIdUseCase,
         mockSaveObservationDetailUseCase,
@@ -324,18 +400,15 @@ void main() {
         mockFormDataProcessor,
         observationId,
       );
-
-      // Wait for the initial load to complete
-      await Future.delayed(const Duration(milliseconds: 100));
-
-      // Reset mock for the next calls
-      reset(mockGetObservationDetailsByObservationIdUseCase);
     });
 
     test(
         'should delete detail and reload details when use case succeeds with true',
         () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       const detailId = 2;
       final details = [
         ObservationDetail(
@@ -351,7 +424,7 @@ void main() {
           .execute(observationId)).thenAnswer((_) async => details);
 
       // Act
-      final result = await viewModel.deleteObservationDetail(detailId);
+      final result = await localViewModel.deleteObservationDetail(detailId);
 
       // Assert
       expect(result, isTrue);
@@ -363,13 +436,16 @@ void main() {
 
     test('should not reload details when use case returns false', () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       const detailId = 2;
 
       when(() => mockDeleteObservationDetailUseCase.execute(detailId))
           .thenAnswer((_) async => false);
 
       // Act
-      final result = await viewModel.deleteObservationDetail(detailId);
+      final result = await localViewModel.deleteObservationDetail(detailId);
 
       // Assert
       expect(result, isFalse);
@@ -381,6 +457,9 @@ void main() {
 
     test('should rethrow exception when use case throws', () async {
       // Arrange
+      // Wait for initial load to complete
+      await Future.microtask(() => null);
+      
       const detailId = 2;
       final exception = Exception('Error deleting detail');
 
@@ -389,7 +468,7 @@ void main() {
 
       // Act & Assert
       expect(
-        () => viewModel.deleteObservationDetail(detailId),
+        () => localViewModel.deleteObservationDetail(detailId),
         throwsA(equals(exception)),
       );
       verify(() => mockDeleteObservationDetailUseCase.execute(detailId))
