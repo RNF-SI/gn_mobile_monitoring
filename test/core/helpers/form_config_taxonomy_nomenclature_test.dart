@@ -49,8 +49,8 @@ void main() {
 
     test('getSelectedTaxonCdNom should extract cd_nom from taxonomy fields', () {
       // Arrange
-      final cdNomAsValue = {'value': 12345};
-      final cdNomInObject = {'value': {'cd_nom': 12345}};
+      final cdNomAsValue = {'type_util': 'taxonomy', 'value': 12345};
+      final cdNomInObject = {'type_util': 'taxonomy', 'value': {'cd_nom': 12345}};
       final noCdNom = {'type_util': 'taxonomy'};
       final notTaxonomy = {'type_widget': 'text'};
 
