@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 import 'package:gn_mobile_monitoring/data/repository/modules_repository_impl.dart';
@@ -7,6 +9,9 @@ import 'package:mocktail/mocktail.dart';
 
 import '../../mocks/mocks.dart';
 
+class MockTaxonApi extends Mock implements TaxonApi {}
+class MockTaxonDatabase extends Mock implements TaxonDatabase {}
+
 void main() {
   late ModulesRepositoryImpl repository;
   late MockGlobalApi mockGlobalApi;
@@ -14,20 +19,30 @@ void main() {
   late MockModulesDatabase mockModulesDatabase;
   late MockNomenclaturesDatabase mockNomenclaturesDatabase;
   late MockDatasetsDatabase mockDatasetsDatabase;
+  late MockTaxonApi mockTaxonApi;
+  late MockTaxonDatabase mockTaxonDatabase;
 
   setUp(() {
     mockGlobalApi = MockGlobalApi();
     mockModulesApi = MockModulesApi();
+    mockTaxonApi = MockTaxonApi();
     mockModulesDatabase = MockModulesDatabase();
     mockNomenclaturesDatabase = MockNomenclaturesDatabase();
     mockDatasetsDatabase = MockDatasetsDatabase();
+    mockTaxonDatabase = MockTaxonDatabase();
 
+    // Mock for TaxonRepository
+    final mockTaxonRepository = MockTaxonRepository();
+    
     repository = ModulesRepositoryImpl(
       mockGlobalApi,
       mockModulesApi,
+      mockTaxonApi,
       mockModulesDatabase,
       mockNomenclaturesDatabase,
       mockDatasetsDatabase,
+      mockTaxonDatabase,
+      mockTaxonRepository,
     );
   });
 
