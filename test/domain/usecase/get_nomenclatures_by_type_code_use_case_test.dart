@@ -53,6 +53,10 @@ void main() {
           .thenAnswer((_) async => nomenclatures);
       when(() => mockModulesRepository.getNomenclatureTypeMapping())
           .thenAnswer((_) async => typeMappings);
+      // Ce mock n'est pas nécessaire car le code devrait trouver l'ID dans le mapping,
+      // mais on l'ajoute par précaution
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute(typeCode);
@@ -62,6 +66,7 @@ void main() {
       expect(result.every((e) => e.idType == 117), isTrue);
       verify(() => mockModulesRepository.getNomenclatures()).called(1);
       verify(() => mockModulesRepository.getNomenclatureTypeMapping()).called(1);
+      verifyNever(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()));
     });
 
     test('should return empty list when type code is not found in mappings', () async {
@@ -71,6 +76,8 @@ void main() {
           .thenAnswer((_) async => nomenclatures);
       when(() => mockModulesRepository.getNomenclatureTypeMapping())
           .thenAnswer((_) async => typeMappings);
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
 
       // Act
       final result = await useCase.execute(typeCode);
@@ -78,6 +85,7 @@ void main() {
       // Assert
       expect(result, isEmpty);
       verify(() => mockModulesRepository.getNomenclatureTypeMapping()).called(1);
+      verify(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(typeCode)).called(1);
     });
 
     test('should rethrow exception when repository throws an error', () async {
@@ -86,6 +94,8 @@ void main() {
       final exception = Exception('Failed to get nomenclature type mappings');
       when(() => mockModulesRepository.getNomenclatureTypeMapping())
           .thenThrow(exception);
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
 
       // Act & Assert
       expect(
