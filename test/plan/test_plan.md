@@ -14,39 +14,49 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | `ObservationsRepository`       | ✅ Testé     | -           |
 | `ObservationDetailsRepository` | ✅ Testé     | -           |
 | `VisitRepository`              | ✅ Testé     | -           |
+| `TaxonRepository`              | ✅ Testé     | -           |
+| `NomenclaturesDatabase`        | ✅ Testé     | -           |
 
 ## 2. Couche Domain (UseCases)
 
-| UseCase                                          | Status        | Priorité  |
-| ------------------------------------------------ | ------------- | --------- |
-| `GetModulesUseCase`                              | ✅ Testé      | -         |
-| `FetchModulesUseCase`                            | ✅ Testé      | -         |
-| `GetSitesUseCase`                                | ✅ Testé      | -         |
-| `FetchSitesUseCase`                              | ✅ Testé      | -         |
-| `GetSiteGroupsUseCase`                           | ✅ Testé      | -         |
-| `FetchSiteGroupsUseCase`                         | ✅ Testé      | -         |
-| `LoginUseCase`                                   | ✅ Testé      | -         |
-| `DownloadModuleDataUseCase`                      | ✅ Testé      | -         |
-| `InitLocalMonitoringDatabaseUseCase`             | ✅ Testé      | -         |
-| `DeleteLocalMonitoringDatabaseUseCase`           | ✅ Testé      | -         |
-| `IncrementalSyncAllUseCase`                      | ✅ Testé      | -         |
-| `CreateObservationUseCase`                       | ✅ Testé      | -         |
-| `UpdateObservationUseCase`                       | ✅ Testé      | -         |
-| `DeleteObservationUseCase`                       | ✅ Testé      | -         |
-| `GetObservationByIdUseCase`                      | ✅ Testé      | -         |
-| `GetObservationsbyVisitIdUseCase`                | ✅ Testé      | -         |
-| `CreateVisitUseCase`                             | ✅ Testé      | -         |
-| `UpdateVisitUseCase`                             | ✅ Testé      | -         |
-| `DeleteVisitUseCase`                             | ✅ Testé      | -         |
-| `GetVisitComplementUseCase`                      | ✅ Testé      | -         |
-| `SaveVisitComplementUseCase`                     | ✅ Testé      | -         |
-| `GetVisitWithDetailsUseCase`                     | ✅ Testé      | -         |
-| `SaveObservationDetailUseCase`                   | ✅ Testé      | -         |
-| `GetObservationDetailByIdUseCase`                | ✅ Testé      | -         |
-| `GetObservationDetailsByObservationIdUseCase`    | ✅ Testé      | -         |
-| `DeleteObservationDetailUseCase`                 | ✅ Testé      | -         |
-| `DeleteObservationDetailsByObservationIdUseCase` | ✅ Testé      | -         |
-| Use cases de stockage local                      | ❌ Non testés | 3 - Basse |
+| UseCase                                          | Status        | Priorité    |
+| ------------------------------------------------ | ------------- | ----------- |
+| `GetModulesUseCase`                              | ✅ Testé      | -           |
+| `FetchModulesUseCase`                            | ✅ Testé      | -           |
+| `GetSitesUseCase`                                | ✅ Testé      | -           |
+| `FetchSitesUseCase`                              | ✅ Testé      | -           |
+| `GetSiteGroupsUseCase`                           | ✅ Testé      | -           |
+| `FetchSiteGroupsUseCase`                         | ✅ Testé      | -           |
+| `LoginUseCase`                                   | ✅ Testé      | -           |
+| `DownloadModuleDataUseCase`                      | ✅ Testé      | -           |
+| `InitLocalMonitoringDatabaseUseCase`             | ✅ Testé      | -           |
+| `DeleteLocalMonitoringDatabaseUseCase`           | ✅ Testé      | -           |
+| `IncrementalSyncAllUseCase`                      | ✅ Testé      | -           |
+| `CreateObservationUseCase`                       | ✅ Testé      | -           |
+| `UpdateObservationUseCase`                       | ✅ Testé      | -           |
+| `DeleteObservationUseCase`                       | ✅ Testé      | -           |
+| `GetObservationByIdUseCase`                      | ✅ Testé      | -           |
+| `GetObservationsbyVisitIdUseCase`                | ✅ Testé      | -           |
+| `CreateVisitUseCase`                             | ✅ Testé      | -           |
+| `UpdateVisitUseCase`                             | ✅ Testé      | -           |
+| `DeleteVisitUseCase`                             | ✅ Testé      | -           |
+| `GetVisitComplementUseCase`                      | ✅ Testé      | -           |
+| `SaveVisitComplementUseCase`                     | ✅ Testé      | -           |
+| `GetVisitWithDetailsUseCase`                     | ✅ Testé      | -           |
+| `SaveObservationDetailUseCase`                   | ✅ Testé      | -           |
+| `GetObservationDetailByIdUseCase`                | ✅ Testé      | -           |
+| `GetObservationDetailsByObservationIdUseCase`    | ✅ Testé      | -           |
+| `DeleteObservationDetailUseCase`                 | ✅ Testé      | -           |
+| `DeleteObservationDetailsByObservationIdUseCase` | ✅ Testé      | -           |
+| Use cases de stockage local                      | ❌ Non testés | 3 - Basse   |
+| `DownloadModuleTaxonsUseCase`                    | ✅ Testé      | -           |
+| `GetModuleTaxonsUseCase`                         | ✅ Testé      | -           |
+| `SaveTaxonUseCase`                               | ❌ Non testé  | 2 - Moyenne |
+| `GetTaxonByIdUseCase`                            | ✅ Testé      | -           |
+| `GetTaxonsByListIdUseCase`                       | ✅ Testé      | -           |
+| `SearchTaxonsByListIdUseCase`                    | ✅ Testé      | -           |
+| `GetNomenclatureTypesUseCase`                    | ✅ Testé      | -           |
+| `GetNomenclaturesByTypeUseCase`                  | ✅ Testé      | -           |
 
 ## 3. Couche Presentation (ViewModels)
 
@@ -61,6 +71,8 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | `SiteVisitsViewModel`            | ✅ Testé     | -           |
 | `ObservationsViewModel`          | ✅ Testé     | -           |
 | `ObservationDetailViewModel`     | ✅ Testé     | -           |
+| `TaxonService`                   | ✅ Testé     | -           |
+| `NomenclatureService`            | ✅ Testé     | -           |
 
 ## 4. Couche Presentation (Widgets/Pages)
 
@@ -89,6 +101,8 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | `BreadcrumbNavigation`        | ❌ Non testé | 2 - Moyenne |
 | `ErrorScreen`                 | ❌ Non testé | 3 - Basse   |
 | `LoadingScreen`               | ❌ Non testé | 3 - Basse   |
+| `TaxonSelectorWidget`         | ✅ Testé     | -           |
+| `FormConfigParser`            | ✅ Testé     | -           |
 
 ## 5. Tests d'intégration
 
@@ -104,10 +118,13 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | `ObservationsRepository -> ObservationsViewModel`                 | ❌ Non testé | 2 - Moyenne |
 | `ObservationDetailsRepository -> ObservationDetailViewModel`      | ❌ Non testé | 2 - Moyenne |
 | `End-to-End (Auth -> Modules -> Sites -> Visits -> Observations)` | ❌ Non testé | 3 - Basse   |
+| `TaxonRepository -> TaxonService`                                 | ✅ Testé     | -           |
+| `NomenclaturesRepository -> NomenclatureService`                  | ✅ Testé     | -           |
+| `TaxonService -> TaxonSelectorWidget`                             | ✅ Testé     | -           |
+| `TaxonRepository -> DynamicFormBuilder`                           | ❌ Non testé | 2 - Moyenne |
 
 ## 6. Tests des nouvelles fonctionnalités
 
-=
 | Fonctionnalité | Status | Priorité |
 |----------------|--------|----------|
 | Flux de travail des observations | ✅ Testé | - |
@@ -116,6 +133,13 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 | Gestion des observations nouvelles vs existantes (isNewObservation) | ❌ Non testé | 2 - Moyenne |
 | Navigation par fil d'Ariane | ❌ Non testé | 2 - Moyenne |
 | Affichage des données structurées | ❌ Non testé | 2 - Moyenne |
+| Chaînage des saisies (enchaînement des formulaires) | ✅ Testé | - |
+| Sélection et validation des taxons | ✅ Testé | - |
+| Gestion des listes taxonomiques | ✅ Testé | - |
+| Persistance des taxons et nomenclatures | ✅ Testé | - |
+| Recherche et filtrage des taxons | ✅ Testé | - |
+| Configuration des champs taxonomie et nomenclature | ✅ Testé | - |
+| Téléchargement et synchronisation des taxons | ✅ Testé | - |
 
 ## 7. Correction des tests échoués
 
@@ -128,18 +152,28 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 
 ## Plan d'implémentation
 
-### Progression actuelle (état au 28/03/2025)
+### Progression actuelle (état au 15/04/2025)
 
 ✅ Tous les tests existants ont été réparés et passent avec succès
-✅ Tous les composants prioritaires (Priorité 1) ont été testés
-❌ Prochaines étapes à effectuer :
+✅ Tous les composants prioritaires initiaux (Priorité 1) ont été testés
+✅ Tests pour TaxonRepository implémentés et fonctionnels
+✅ Tests pour TaxonSelectorWidget implémentés et fonctionnels
+✅ Tests des Use Cases de nomenclatures vérifiés et fonctionnels
+✅ Tests pour NomenclatureService corrigés et fonctionnels 
+✅ Tests pour les use cases de taxons implémentés et fonctionnels
+✅ Tests pour TaxonService implémentés et fonctionnels
+✅ Tests pour FormConfigParser concernant les taxons et nomenclatures implémentés
+✅ Tests pour le chaînage des saisies implémentés
+✅ La Phase 0 est complétée avec 46 tests qui passent sur 46
+✅ NomenclaturesDatabase entièrement testé
 
 ### Phase 1 : Tests restants de priorité moyenne (Priorité 2)
-
-1. Tests pour services (DatabaseService, SyncService)
-2. Tests pour widgets auxiliaires (PropertyDisplayWidget, BreadcrumbNavigation, etc.)
-3. Tests d'intégration pour les observations, visites et détails d'observation
-4. Tests des nouvelles fonctionnalités (isNewVisit, isNewObservation, etc.)
+1. Tests pour SaveTaxonUseCase
+2. Tests pour services (DatabaseService, SyncService)
+3. Tests pour widgets auxiliaires (PropertyDisplayWidget, BreadcrumbNavigation, etc.)
+4. Tests d'intégration pour les observations, visites et détails d'observation
+5. Tests d'intégration supplémentaire (TaxonRepository -> DynamicFormBuilder)
+6. Tests des nouvelles fonctionnalités (isNewVisit, isNewObservation, etc.)
 
 ### Phase 2 : Tests complémentaires (Priorité 3)
 
@@ -183,3 +217,14 @@ Pour chaque composant à tester :
 5. **Tests des dialogues** :
    - Vérifier que les dialogues de proposition s'affichent correctement dans les bonnes conditions
    - Tester les actions associées aux boutons des dialogues
+
+6. **Tests des taxons et nomenclatures** :
+   - Tester les différentes façons de spécifier une liste taxonomique
+   - Vérifier la recherche et le filtrage des taxons par liste
+   - Tester la validation des taxons par rapport aux listes configurées
+   - Vérifier l'intégration et l'affichage dans les formulaires dynamiques
+
+7. **Tests d'enchaînement des saisies** :
+   - Tester l'activation/désactivation du chaînage des formulaires
+   - Vérifier la persistance de l'état d'enchaînement entre les formulaires
+   - Tester la réinitialisation correcte des formulaires lors de l'enchaînement
