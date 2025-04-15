@@ -204,4 +204,21 @@ class TaxonRepositoryImpl implements TaxonRepository {
     searchForTaxonomyFields(config);
     return listIds;
   }
+  
+  @override
+  Future<List<Taxon>> getMostUsedTaxons({
+    required int idListe,
+    required int moduleId,
+    int? siteId,
+    int? visitId,
+    int limit = 10,
+  }) {
+    return _taxonDatabase.getMostUsedTaxons(
+      idListe: idListe,
+      moduleId: moduleId,
+      siteId: siteId,
+      visitId: visitId,
+      limit: limit,
+    );
+  }
 }

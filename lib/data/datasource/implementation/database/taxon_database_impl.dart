@@ -91,4 +91,42 @@ class TaxonDatabaseImpl implements TaxonDatabase {
     final db = await _database;
     return db.taxonDao.clearCorTaxonListe();
   }
+  
+  @override
+  Future<List<Taxon>> getMostUsedTaxons({
+    required int idListe,
+    required int moduleId,
+    int? siteId,
+    int? visitId,
+    int limit = 10,
+  }) async {
+    final db = await _database;
+    
+    try {
+      // 1. D'abord, récupérer tous les taxons de la liste taxonomique
+      final taxonsList = await db.taxonDao.getTaxonsByListId(idListe);
+      final validCdNoms = taxonsList.map((t) => t.cdNom).toList();
+      
+      if (validCdNoms.isEmpty) {
+        return [];
+      }
+      
+      // 2. Ensuite, obtenir les identifiants des taxons les plus utilisés via ObservationDao
+      final prioritizedCdNoms = await db.observationDao.getMostUsedTaxonIds(
+        validCdNoms: validCdNoms,
+        moduleId: moduleId,
+        siteId: siteId,
+        visitId: visitId,
+        limit: limit,
+      );
+      
+      // 3. Finalement, récupérer les objets Taxon complets pour ces identifiants
+      return await db.taxonDao.getTaxonsByCdNoms(prioritizedCdNoms);
+    } catch (e) {
+      print('Erreur dans getMostUsedTaxons: $e');
+      // En cas d'erreur, retourner la liste standard des taxons (limitée)
+      final allTaxons = await db.taxonDao.getTaxonsByListId(idListe);
+      return allTaxons.take(limit).toList();
+    }
+  }
 }

@@ -77,6 +77,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/login_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_most_used_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
@@ -344,6 +345,12 @@ final getTaxonByCdNomUseCaseProvider = Provider<GetTaxonByCdNomUseCase>(
 
 final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
   (ref) => SearchTaxonsUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final getMostUsedTaxonsUseCaseProvider = Provider<GetMostUsedTaxonsUseCase>(
+  (ref) => GetMostUsedTaxonsUseCaseImpl(
     ref.watch(taxonRepositoryProvider),
   ),
 );

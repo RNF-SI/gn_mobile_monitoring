@@ -18,8 +18,14 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
   /// Cette liste est utilisée comme fallback si aucune liste n'est spécifiée au niveau du champ
   final int? idListTaxonomy;
 
+  /// ID optionnel du site actuel (pour les suggestions d'utilisation)
+  final int? siteId;
+
+  /// ID optionnel de la visite actuelle (pour les suggestions d'utilisation)
+  final int? visitId;
+
   const TaxonSelectorWidget({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.onChanged,
     this.label = 'Taxon',
@@ -28,7 +34,9 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
     this.isRequired = false,
     this.displayMode = 'nom_vern,lb_nom',
     this.idListTaxonomy,
-  }) : super(key: key);
+    this.siteId,
+    this.visitId,
+  });
 
   @override
   ConsumerState<TaxonSelectorWidget> createState() =>
@@ -57,104 +65,51 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   @override
   void initState() {
     super.initState();
-    _initializeSelectedTaxon();
-  }
-
-  Future<void> _initializeSelectedTaxon() async {
-    if (widget.value != null) {
-      final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
-
-      // Vérifier si le taxon appartient à la liste taxonomique appropriée
-      if (taxon != null) {
-        final effectiveListId = _getEffectiveListId();
-        if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
-
-          if (!isInList) {
-            if (mounted) {
-              setState(() {
-                _selectedTaxon = null;
-                _searchController.clear();
-              });
-              widget.onChanged(null);
-            }
-            return;
-          }
-        }
-      }
-
-      if (mounted && taxon != null) {
-        setState(() {
-          _selectedTaxon = taxon;
-          _searchController.text = _formatDisplayName(taxon);
-        });
-      }
-    }
   }
 
   @override
   void didUpdateWidget(TaxonSelectorWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    if (oldWidget.value != widget.value) {
-      _updateSelectedTaxon();
-    }
-  }
-
-  Future<void> _updateSelectedTaxon() async {
-    if (widget.value == null) {
-      if (mounted) {
-        setState(() {
-          _selectedTaxon = null;
-          _searchController.clear();
-        });
-      }
-      return;
-    }
-
-    if (_selectedTaxon?.cdNom != widget.value) {
-      final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
-
-      // Vérifier si le taxon appartient à la liste taxonomique appropriée
-      if (taxon != null) {
-        final effectiveListId = _getEffectiveListId();
-        if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
-
-          if (!isInList) {
-            if (mounted) {
-              setState(() {
-                _selectedTaxon = null;
-                _searchController.clear();
-              });
-              widget.onChanged(null);
-            }
-            return;
-          }
-        }
-      }
-
-      if (mounted && taxon != null) {
-        setState(() {
-          _selectedTaxon = taxon;
-          _searchController.text = _formatDisplayName(taxon);
-        });
-      }
-    }
   }
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  /// Construit le widget d'affichage des suggestions
+  Widget _buildSuggestionsWidget(List<Taxon> taxons, String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+          ),
+          const SizedBox(height: 4),
+          Wrap(
+            spacing: 8,
+            children: taxons.map((taxon) {
+              final displayName = _formatDisplayName(taxon);
+              return ChoiceChip(
+                label: Text(displayName, style: const TextStyle(fontSize: 12)),
+                selected: false,
+                onSelected: (_) {
+                  setState(() {
+                    _selectedTaxon = taxon;
+                    _searchController.text = displayName;
+                  });
+                  widget.onChanged(taxon.cdNom);
+                },
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Format le nom d'affichage d'un taxon selon le format configuré
@@ -226,7 +181,6 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Champ de recherche/affichage
         TextFormField(
           controller: _searchController,
           decoration: InputDecoration(
@@ -262,24 +216,10 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                   if (_selectedTaxon == null) {
                     return 'Ce champ est obligatoire';
                   }
-
-                  // Vérifier si un id_list est spécifié
-                  if (widget.fieldConfig != null) {
-                    final listId =
-                        FormConfigParser.getTaxonListId(widget.fieldConfig!);
-                    if (listId != null) {
-                      // La validation de l'appartenance à la liste est déjà faite lors de la sélection
-                      // Si nous avons un _selectedTaxon, c'est qu'il est valide
-                      return null;
-                    }
-                  }
-
                   return null;
                 }
               : null,
         ),
-
-        // Résultats de recherche
         if (_isSearching)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 8.0),
@@ -299,7 +239,6 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
               itemBuilder: (context, index) {
                 final taxon = _searchResults[index];
                 final displayName = _formatDisplayName(taxon);
-
                 return ListTile(
                   title: Text(displayName),
                   dense: true,
@@ -315,53 +254,71 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
               },
             ),
           ),
-
-        // Liste de suggestions basée sur module/liste
         if (_searchController.text.isEmpty && _selectedTaxon == null)
-          taxonsAsync.when(
-            data: (taxons) {
-              if (taxons.isEmpty) {
-                return const SizedBox.shrink();
+          Builder(
+            builder: (context) {
+              final effectiveListId = _getEffectiveListId();
+
+              if (effectiveListId != null) {
+                final params = (
+                  idListe: effectiveListId,
+                  moduleId: widget.moduleId,
+                  siteId: widget.siteId,
+                  visitId: widget.visitId
+                );
+
+                final suggestionsAsync =
+                    ref.watch(mostUsedTaxonsProvider(params));
+
+                return suggestionsAsync.when(
+                  data: (suggestedTaxons) {
+                    if (suggestedTaxons.isEmpty) {
+                      return taxonsAsync.when(
+                        data: (taxons) {
+                          if (taxons.isEmpty) return const SizedBox.shrink();
+                          final displayTaxons = taxons.length > 10
+                              ? taxons.sublist(0, 10)
+                              : taxons;
+                          return _buildSuggestionsWidget(
+                              displayTaxons, "Suggestions:");
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
+                      );
+                    }
+                    return _buildSuggestionsWidget(
+                        suggestedTaxons, "Taxons fréquemment utilisés:");
+                  },
+                  loading: () => const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, __) => taxonsAsync.when(
+                    data: (taxons) {
+                      if (taxons.isEmpty) return const SizedBox.shrink();
+                      final displayTaxons =
+                          taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
+                      return _buildSuggestionsWidget(
+                          displayTaxons, "Suggestions:");
+                    },
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, __) => const SizedBox.shrink(),
+                  ),
+                );
+              } else {
+                return taxonsAsync.when(
+                  data: (taxons) {
+                    if (taxons.isEmpty) return const SizedBox.shrink();
+                    final displayTaxons =
+                        taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
+                    return _buildSuggestionsWidget(
+                        displayTaxons, "Suggestions:");
+                  },
+                  loading: () => const SizedBox.shrink(),
+                  error: (_, __) => const SizedBox.shrink(),
+                );
               }
-
-              final displayTaxons =
-                  taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
-
-              return Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Suggestions:',
-                      style:
-                          TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                    ),
-                    const SizedBox(height: 4),
-                    Wrap(
-                      spacing: 8,
-                      children: displayTaxons.map((taxon) {
-                        final displayName = _formatDisplayName(taxon);
-                        return ChoiceChip(
-                          label: Text(displayName,
-                              style: const TextStyle(fontSize: 12)),
-                          selected: false,
-                          onSelected: (_) {
-                            setState(() {
-                              _selectedTaxon = taxon;
-                              _searchController.text = displayName;
-                            });
-                            widget.onChanged(taxon.cdNom);
-                          },
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              );
             },
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
           ),
       ],
     );

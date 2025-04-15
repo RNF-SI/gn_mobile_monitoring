@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_most_used_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
@@ -17,6 +18,7 @@ final taxonServiceProvider = StateNotifierProvider<TaxonService,
     ref.watch(getTaxonsByListIdUseCaseProvider),
     ref.watch(getTaxonByCdNomUseCaseProvider),
     ref.watch(searchTaxonsUseCaseProvider),
+    ref.watch(getMostUsedTaxonsUseCaseProvider),
   ),
 );
 
@@ -44,6 +46,19 @@ final taxonByCdNomProvider = FutureProvider.family<Taxon?, int>(
   },
 );
 
+/// Provider pour récupérer les taxons les plus utilisés
+final mostUsedTaxonsProvider = FutureProvider.family<List<Taxon>, ({int idListe, int moduleId, int? siteId, int? visitId})>(
+  (ref, params) async {
+    final taxonService = ref.read(taxonServiceProvider.notifier);
+    return await taxonService.getMostUsedTaxons(
+      idListe: params.idListe,
+      moduleId: params.moduleId,
+      siteId: params.siteId,
+      visitId: params.visitId,
+    );
+  },
+);
+
 /// Service pour gérer les taxons
 class TaxonService
     extends StateNotifier<custom_async_state.State<Map<String, List<Taxon>>>> {
@@ -52,6 +67,7 @@ class TaxonService
   final GetTaxonsByListIdUseCase _getTaxonsByListIdUseCase;
   final GetTaxonByCdNomUseCase _getTaxonByCdNomUseCase;
   final SearchTaxonsUseCase _searchTaxonsUseCase;
+  final GetMostUsedTaxonsUseCase _getMostUsedTaxonsUseCase;
 
   TaxonService(
     this.ref,
@@ -59,6 +75,7 @@ class TaxonService
     this._getTaxonsByListIdUseCase,
     this._getTaxonByCdNomUseCase,
     this._searchTaxonsUseCase,
+    this._getMostUsedTaxonsUseCase,
   ) : super(const custom_async_state.State.init());
 
   /// Récupère les taxons pour un module donné
@@ -121,6 +138,35 @@ class TaxonService
         return taxon.nomVern ?? taxon.lbNom ?? taxon.nomComplet;
       default:
         return taxon.nomComplet;
+    }
+  }
+  
+  /// Récupère les taxons les plus fréquemment utilisés pour un module et site donnés
+  /// 
+  /// [idListe] Identifiant de la liste taxonomique à filtrer
+  /// [moduleId] Identifiant du module (protocole)
+  /// [siteId] Identifiant du site (optionnel)
+  /// [visitId] Identifiant de la visite en cours (optionnel)
+  /// [limit] Nombre maximum de taxons à retourner
+  Future<List<Taxon>> getMostUsedTaxons({
+    required int idListe,
+    required int moduleId,
+    int? siteId,
+    int? visitId,
+    int limit = 10,
+  }) async {
+    try {
+      return await _getMostUsedTaxonsUseCase.execute(
+        idListe: idListe,
+        moduleId: moduleId,
+        siteId: siteId,
+        visitId: visitId,
+        limit: limit,
+      );
+    } catch (e) {
+      print('Erreur lors de la récupération des taxons les plus utilisés: $e');
+      // En cas d'erreur, retourner la liste standard des taxons
+      return await getTaxonsByListId(idListe);
     }
   }
 }

@@ -7,4 +7,6 @@ mixin _$ObservationDaoMixin on DatabaseAccessor<AppDatabase> {
   $TObservationsTable get tObservations => attachedDatabase.tObservations;
   $TObservationComplementsTable get tObservationComplements =>
       attachedDatabase.tObservationComplements;
+  $TBaseVisitsTable get tBaseVisits => attachedDatabase.tBaseVisits;
+  $TTaxrefsTable get tTaxrefs => attachedDatabase.tTaxrefs;
 }
