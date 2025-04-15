@@ -9,13 +9,13 @@
 
 // Configuration classes for development and production
 // These will be used when the real config files are not available (CI)
-// class ConfigDev {
-//   static const String apiBase = 'https://dev-api-placeholder.example.com';
-// }
+class ConfigDev {
+  static const String apiBase = 'https://dev-api-placeholder.example.com';
+}
 
-// class ConfigProd {
-//   static const String apiBase = 'https://prod-api-placeholder.example.com';
-// }
+class ConfigProd {
+  static const String apiBase = 'https://prod-api-placeholder.example.com';
+}
 
 // Main configuration facade
 class Config {
