@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -38,6 +39,8 @@ class MockGetUserIdFromLocalStorageUseCase extends Mock
 class MockGetUserNameFromLocalStorageUseCase extends Mock
     implements GetUserNameFromLocalStorageUseCase {}
 
+class MockDatasetService extends Mock implements DatasetService {}
+
 // Fake class for BaseVisit to use as fallback
 class FakeBaseVisit extends Fake implements BaseVisit {}
 
@@ -61,6 +64,7 @@ void main() {
   late MockDeleteVisitUseCase mockDeleteVisitUseCase;
   late MockGetUserIdFromLocalStorageUseCase mockGetUserIdUseCase;
   late MockGetUserNameFromLocalStorageUseCase mockGetUserNameUseCase;
+  late MockDatasetService mockDatasetService;
   late SiteVisitsViewModel viewModel;
   const int testSiteId = 1;
   const int testUserId = 42;
@@ -76,6 +80,7 @@ void main() {
     mockDeleteVisitUseCase = MockDeleteVisitUseCase();
     mockGetUserIdUseCase = MockGetUserIdFromLocalStorageUseCase();
     mockGetUserNameUseCase = MockGetUserNameFromLocalStorageUseCase();
+    mockDatasetService = MockDatasetService();
 
     // Configure les mocks pour les use cases d'utilisateur
     when(() => mockGetUserIdUseCase.execute())
@@ -85,6 +90,10 @@ void main() {
 
     // Simuler un chargement initial des visites
     when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+        .thenAnswer((_) async => []);
+
+    // Configure mock behavior
+    when(() => mockDatasetService.getDatasetsForModule(any()))
         .thenAnswer((_) async => []);
 
     viewModel = SiteVisitsViewModel(
@@ -97,6 +106,7 @@ void main() {
       mockDeleteVisitUseCase,
       mockGetUserIdUseCase,
       mockGetUserNameUseCase,
+      mockDatasetService,
       testSiteId,
       1, // moduleId is required
     );
