@@ -126,6 +126,11 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     if (visit.observers != null && visit.observers!.isNotEmpty) {
       values['observers'] = visit.observers;
     }
+    
+    // Ajouter le dataset si disponible
+    if (visit.idDataset != null && visit.idDataset! > 0) {
+      values['id_dataset'] = visit.idDataset;
+    }
 
     // Champs spécifiques (on suppose qu'ils sont dans visit.data)
     if (visit.data != null) {
