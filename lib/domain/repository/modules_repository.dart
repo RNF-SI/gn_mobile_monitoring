@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -24,6 +25,9 @@ abstract class ModulesRepository {
   
   /// Récupère les identifiants de datasets associés à un module
   Future<List<int>> getDatasetIdsForModule(int moduleId);
+  
+  /// Récupère les datasets par leurs identifiants
+  Future<List<Dataset>> getDatasetsByIds(List<int> datasetIds);
   
   /// Récupère toutes les nomenclatures stockées localement
   Future<List<Nomenclature>> getNomenclatures();

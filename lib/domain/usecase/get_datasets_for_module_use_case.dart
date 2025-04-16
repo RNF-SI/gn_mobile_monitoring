@@ -15,8 +15,7 @@ class GetDatasetsForModuleUseCaseImpl implements GetDatasetsForModuleUseCase {
     // Get dataset IDs for the module
     final datasetIds = await _modulesRepository.getDatasetIdsForModule(moduleId);
     
-    // For now, we'll return empty list
-    // In a future implementation, we should load the actual dataset objects
-    return [];
+    // Get the actual datasets
+    return await _modulesRepository.getDatasetsByIds(datasetIds);
   }
 }
