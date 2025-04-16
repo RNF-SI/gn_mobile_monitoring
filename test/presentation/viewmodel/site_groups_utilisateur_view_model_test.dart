@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+// Domain model import is sufficient
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart';

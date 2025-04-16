@@ -24,7 +24,10 @@ mixin _$ModuleConfiguration {
       throw _privateConstructorUsedError;
   ModuleConfig? get module => throw _privateConstructorUsedError;
   ObjectConfig? get observation => throw _privateConstructorUsedError;
+  ObjectConfig? get observationDetail =>
+      throw _privateConstructorUsedError; // Nouvelle propriété pour les détails d'observation
   ObjectConfig? get site => throw _privateConstructorUsedError;
+  ObjectConfig? get sitesGroup => throw _privateConstructorUsedError;
   dynamic get synthese => throw _privateConstructorUsedError;
   TreeConfig? get tree => throw _privateConstructorUsedError;
   ObjectConfig? get visit => throw _privateConstructorUsedError;
@@ -49,7 +52,9 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
       Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
+      ObjectConfig? observationDetail,
       ObjectConfig? site,
+      ObjectConfig? sitesGroup,
       dynamic synthese,
       TreeConfig? tree,
       ObjectConfig? visit});
@@ -58,7 +63,9 @@ abstract class $ModuleConfigurationCopyWith<$Res> {
   $DataConfigCopyWith<$Res>? get data;
   $ModuleConfigCopyWith<$Res>? get module;
   $ObjectConfigCopyWith<$Res>? get observation;
+  $ObjectConfigCopyWith<$Res>? get observationDetail;
   $ObjectConfigCopyWith<$Res>? get site;
+  $ObjectConfigCopyWith<$Res>? get sitesGroup;
   $TreeConfigCopyWith<$Res>? get tree;
   $ObjectConfigCopyWith<$Res>? get visit;
 }
@@ -84,7 +91,9 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     Object? displayFieldNames = freezed,
     Object? module = freezed,
     Object? observation = freezed,
+    Object? observationDetail = freezed,
     Object? site = freezed,
+    Object? sitesGroup = freezed,
     Object? synthese = freezed,
     Object? tree = freezed,
     Object? visit = freezed,
@@ -114,9 +123,17 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
           ? _value.observation
           : observation // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
+      observationDetail: freezed == observationDetail
+          ? _value.observationDetail
+          : observationDetail // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
       site: freezed == site
           ? _value.site
           : site // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
+      sitesGroup: freezed == sitesGroup
+          ? _value.sitesGroup
+          : sitesGroup // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
       synthese: freezed == synthese
           ? _value.synthese
@@ -193,6 +210,20 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
   /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
+  $ObjectConfigCopyWith<$Res>? get observationDetail {
+    if (_value.observationDetail == null) {
+      return null;
+    }
+
+    return $ObjectConfigCopyWith<$Res>(_value.observationDetail!, (value) {
+      return _then(_value.copyWith(observationDetail: value) as $Val);
+    });
+  }
+
+  /// Create a copy of ModuleConfiguration
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get site {
     if (_value.site == null) {
       return null;
@@ -200,6 +231,20 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
 
     return $ObjectConfigCopyWith<$Res>(_value.site!, (value) {
       return _then(_value.copyWith(site: value) as $Val);
+    });
+  }
+
+  /// Create a copy of ModuleConfiguration
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $ObjectConfigCopyWith<$Res>? get sitesGroup {
+    if (_value.sitesGroup == null) {
+      return null;
+    }
+
+    return $ObjectConfigCopyWith<$Res>(_value.sitesGroup!, (value) {
+      return _then(_value.copyWith(sitesGroup: value) as $Val);
     });
   }
 
@@ -247,7 +292,9 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
       Map<String, String?>? displayFieldNames,
       ModuleConfig? module,
       ObjectConfig? observation,
+      ObjectConfig? observationDetail,
       ObjectConfig? site,
+      ObjectConfig? sitesGroup,
       dynamic synthese,
       TreeConfig? tree,
       ObjectConfig? visit});
@@ -261,7 +308,11 @@ abstract class _$$ModuleConfigurationImplCopyWith<$Res>
   @override
   $ObjectConfigCopyWith<$Res>? get observation;
   @override
+  $ObjectConfigCopyWith<$Res>? get observationDetail;
+  @override
   $ObjectConfigCopyWith<$Res>? get site;
+  @override
+  $ObjectConfigCopyWith<$Res>? get sitesGroup;
   @override
   $TreeConfigCopyWith<$Res>? get tree;
   @override
@@ -287,7 +338,9 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
     Object? displayFieldNames = freezed,
     Object? module = freezed,
     Object? observation = freezed,
+    Object? observationDetail = freezed,
     Object? site = freezed,
+    Object? sitesGroup = freezed,
     Object? synthese = freezed,
     Object? tree = freezed,
     Object? visit = freezed,
@@ -317,9 +370,17 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
           ? _value.observation
           : observation // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
+      observationDetail: freezed == observationDetail
+          ? _value.observationDetail
+          : observationDetail // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
       site: freezed == site
           ? _value.site
           : site // ignore: cast_nullable_to_non_nullable
+              as ObjectConfig?,
+      sitesGroup: freezed == sitesGroup
+          ? _value.sitesGroup
+          : sitesGroup // ignore: cast_nullable_to_non_nullable
               as ObjectConfig?,
       synthese: freezed == synthese
           ? _value.synthese
@@ -347,7 +408,9 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       final Map<String, String?>? displayFieldNames,
       this.module,
       this.observation,
+      this.observationDetail,
       this.site,
+      this.sitesGroup,
       this.synthese,
       this.tree,
       this.visit})
@@ -385,7 +448,12 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
   @override
   final ObjectConfig? observation;
   @override
+  final ObjectConfig? observationDetail;
+// Nouvelle propriété pour les détails d'observation
+  @override
   final ObjectConfig? site;
+  @override
+  final ObjectConfig? sitesGroup;
   @override
   final dynamic synthese;
   @override
@@ -395,7 +463,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
 
   @override
   String toString() {
-    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, site: $site, synthese: $synthese, tree: $tree, visit: $visit)';
+    return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
   }
 
   @override
@@ -412,7 +480,11 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
             (identical(other.module, module) || other.module == module) &&
             (identical(other.observation, observation) ||
                 other.observation == observation) &&
+            (identical(other.observationDetail, observationDetail) ||
+                other.observationDetail == observationDetail) &&
             (identical(other.site, site) || other.site == site) &&
+            (identical(other.sitesGroup, sitesGroup) ||
+                other.sitesGroup == sitesGroup) &&
             const DeepCollectionEquality().equals(other.synthese, synthese) &&
             (identical(other.tree, tree) || other.tree == tree) &&
             (identical(other.visit, visit) || other.visit == visit));
@@ -427,7 +499,9 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       const DeepCollectionEquality().hash(_displayFieldNames),
       module,
       observation,
+      observationDetail,
       site,
+      sitesGroup,
       const DeepCollectionEquality().hash(synthese),
       tree,
       visit);
@@ -450,7 +524,9 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
       final Map<String, String?>? displayFieldNames,
       final ModuleConfig? module,
       final ObjectConfig? observation,
+      final ObjectConfig? observationDetail,
       final ObjectConfig? site,
+      final ObjectConfig? sitesGroup,
       final dynamic synthese,
       final TreeConfig? tree,
       final ObjectConfig? visit}) = _$ModuleConfigurationImpl;
@@ -468,7 +544,12 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   @override
   ObjectConfig? get observation;
   @override
+  ObjectConfig?
+      get observationDetail; // Nouvelle propriété pour les détails d'observation
+  @override
   ObjectConfig? get site;
+  @override
+  ObjectConfig? get sitesGroup;
   @override
   dynamic get synthese;
   @override
@@ -2492,6 +2573,8 @@ mixin _$GenericFieldConfig {
   Map<String, dynamic>? get default_ => throw _privateConstructorUsedError;
   String? get designStyle => throw _privateConstructorUsedError;
   String? get dataPath => throw _privateConstructorUsedError;
+  @JsonKey(name: 'id_list')
+  dynamic get idList => throw _privateConstructorUsedError;
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -2522,7 +2605,8 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       List<Map<String, dynamic>>? values,
       Map<String, dynamic>? default_,
       String? designStyle,
-      String? dataPath});
+      String? dataPath,
+      @JsonKey(name: 'id_list') dynamic idList});
 }
 
 /// @nodoc
@@ -2556,6 +2640,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
+    Object? idList = freezed,
   }) {
     return _then(_value.copyWith(
       attributLabel: freezed == attributLabel
@@ -2622,6 +2707,10 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
           ? _value.dataPath
           : dataPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      idList: freezed == idList
+          ? _value.idList
+          : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ) as $Val);
   }
 }
@@ -2650,7 +2739,8 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       List<Map<String, dynamic>>? values,
       Map<String, dynamic>? default_,
       String? designStyle,
-      String? dataPath});
+      String? dataPath,
+      @JsonKey(name: 'id_list') dynamic idList});
 }
 
 /// @nodoc
@@ -2682,6 +2772,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
+    Object? idList = freezed,
   }) {
     return _then(_$GenericFieldConfigImpl(
       attributLabel: freezed == attributLabel
@@ -2748,6 +2839,10 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           ? _value.dataPath
           : dataPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      idList: freezed == idList
+          ? _value.idList
+          : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ));
   }
 }
@@ -2771,7 +2866,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       final List<Map<String, dynamic>>? values,
       final Map<String, dynamic>? default_,
       this.designStyle,
-      this.dataPath})
+      this.dataPath,
+      @JsonKey(name: 'id_list') this.idList})
       : _values = values,
         _default_ = default_;
 
@@ -2824,10 +2920,13 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   final String? designStyle;
   @override
   final String? dataPath;
+  @override
+  @JsonKey(name: 'id_list')
+  final dynamic idList;
 
   @override
   String toString() {
-    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, default_: $default_, designStyle: $designStyle, dataPath: $dataPath)';
+    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
   }
 
   @override
@@ -2862,7 +2961,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
             (identical(other.designStyle, designStyle) ||
                 other.designStyle == designStyle) &&
             (identical(other.dataPath, dataPath) ||
-                other.dataPath == dataPath));
+                other.dataPath == dataPath) &&
+            const DeepCollectionEquality().equals(other.idList, idList));
   }
 
   @override
@@ -2883,7 +2983,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       const DeepCollectionEquality().hash(_values),
       const DeepCollectionEquality().hash(_default_),
       designStyle,
-      dataPath);
+      dataPath,
+      const DeepCollectionEquality().hash(idList));
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.
@@ -2897,22 +2998,24 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
 
 abstract class _GenericFieldConfig implements GenericFieldConfig {
   const factory _GenericFieldConfig(
-      {@JsonKey(name: 'attribut_label') final String? attributLabel,
-      final String? definition,
-      final bool? hidden,
-      final bool? required,
-      final String? typeWidget,
-      final String? typeUtil,
-      final bool? multiSelect,
-      final String? api,
-      final String? application,
-      final String? keyLabel,
-      final String? keyValue,
-      final bool? multiple,
-      final List<Map<String, dynamic>>? values,
-      final Map<String, dynamic>? default_,
-      final String? designStyle,
-      final String? dataPath}) = _$GenericFieldConfigImpl;
+          {@JsonKey(name: 'attribut_label') final String? attributLabel,
+          final String? definition,
+          final bool? hidden,
+          final bool? required,
+          final String? typeWidget,
+          final String? typeUtil,
+          final bool? multiSelect,
+          final String? api,
+          final String? application,
+          final String? keyLabel,
+          final String? keyValue,
+          final bool? multiple,
+          final List<Map<String, dynamic>>? values,
+          final Map<String, dynamic>? default_,
+          final String? designStyle,
+          final String? dataPath,
+          @JsonKey(name: 'id_list') final dynamic idList}) =
+      _$GenericFieldConfigImpl;
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -2947,6 +3050,9 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   String? get designStyle;
   @override
   String? get dataPath;
+  @override
+  @JsonKey(name: 'id_list')
+  dynamic get idList;
 
   /// Create a copy of GenericFieldConfig
   /// with the given fields replaced by the non-null parameter values.

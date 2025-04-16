@@ -8,6 +8,7 @@ extension TNomenclatureMapper on TNomenclature {
       idType: idType,
       cdNomenclature: cdNomenclature,
       mnemonique: mnemonique,
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,
@@ -24,7 +25,7 @@ extension TNomenclatureMapper on TNomenclature {
       statut: statut,
       idBroader: idBroader,
       hierarchy: hierarchy,
-      active: active ?? false, // Default to false if null
+      active: active, // Default to false if null
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
     );
@@ -36,8 +37,9 @@ extension NomenclatureMapper on Nomenclature {
     return TNomenclature(
       idNomenclature: id,
       idType: idType,
-      cdNomenclature: cdNomenclature ?? '', // Ensure a non-null value
+      cdNomenclature: cdNomenclature, // Required field
       mnemonique: mnemonique ?? '',
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,
@@ -55,7 +57,7 @@ extension NomenclatureMapper on Nomenclature {
       idBroader: idBroader,
       hierarchy: hierarchy,
       active: active ?? true, // Default to true if null
-      metaCreateDate: metaCreateDate != null ? metaUpdateDate! : DateTime.now(),
+      metaCreateDate: metaCreateDate ?? DateTime.now(),
       metaUpdateDate: metaUpdateDate,
     );
   }

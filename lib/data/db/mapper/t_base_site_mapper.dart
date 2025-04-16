@@ -9,7 +9,6 @@ extension TBaseSiteMapper on TBaseSite {
       try {
         return DateTime.parse(date); // ISO8601 format
       } catch (e) {
-        print('Invalid date format: $date');
         return null;
       }
     }

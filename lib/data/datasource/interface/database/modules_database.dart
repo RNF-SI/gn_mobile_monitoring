@@ -15,6 +15,7 @@ abstract class ModulesDatabase {
   Future<void> insertModuleComplements(
       List<ModuleComplement> moduleComplements);
   Future<ModuleComplement?> getModuleComplementById(int moduleId);
+  Future<ModuleComplement?> getModuleComplementByModuleCode(String moduleCode);
   Future<List<ModuleComplement>> getAllModuleComplements();
   Future<void> updateModuleComplement(ModuleComplement moduleComplement);
   Future<void> updateModuleComplementConfiguration(

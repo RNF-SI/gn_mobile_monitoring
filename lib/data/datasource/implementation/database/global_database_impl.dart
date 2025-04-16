@@ -8,9 +8,7 @@ import 'package:path_provider/path_provider.dart';
 class GlobalDatabaseImpl implements GlobalDatabase {
   @override
   Future<void> initDatabase() async {
-    print("Initializing database...");
     await DB.instance.database; // Initialize
-    print("Database initialized successfully.");
   }
 
   @override
@@ -24,9 +22,6 @@ class GlobalDatabaseImpl implements GlobalDatabase {
 
     if (await file.exists()) {
       await file.delete();
-      print("Database file deleted at: $dbPath");
-    } else {
-      print("Database file not found.");
     }
   }
 

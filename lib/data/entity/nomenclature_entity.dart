@@ -3,6 +3,7 @@ class NomenclatureEntity {
   final int idType;
   final String cdNomenclature;
   final String? mnemonique;
+  final String? codeType; // Ajout du champ code_type
   final String? labelDefault;
   final String? definitionDefault;
   final String? labelFr;
@@ -28,6 +29,7 @@ class NomenclatureEntity {
     required this.idType,
     required this.cdNomenclature,
     this.mnemonique,
+    this.codeType,
     this.labelDefault,
     this.definitionDefault,
     this.labelFr,
@@ -55,6 +57,7 @@ class NomenclatureEntity {
       idType: json['id_type'],
       cdNomenclature: json['cd_nomenclature'],
       mnemonique: json['mnemonique'],
+      codeType: json['code_type'],  // Ajout du champ code_type
       labelDefault: json['label_default'],
       definitionDefault: json['definition_default'],
       labelFr: json['label_fr'],
@@ -87,6 +90,7 @@ class NomenclatureEntity {
       'id_type': idType,
       'cd_nomenclature': cdNomenclature,
       'mnemonique': mnemonique,
+      'code_type': codeType,  // Ajout du champ code_type
       'label_default': labelDefault,
       'definition_default': definitionDefault,
       'label_fr': labelFr,
@@ -115,6 +119,7 @@ class NomenclatureEntity {
       idType: db['id_type'],
       cdNomenclature: db['cd_nomenclature'],
       mnemonique: db['mnemonique'],
+      codeType: db['code_type'],  // Ajout du champ code_type
       labelDefault: db['label_default'],
       definitionDefault: db['definition_default'],
       labelFr: db['label_fr'],

@@ -23,8 +23,8 @@ extension TDatasetMapper on TDataset {
       idNomenclatureDataOrigin: idNomenclatureDataOrigin,
       idNomenclatureSourceStatus: idNomenclatureSourceStatus,
       idNomenclatureResourceType: idNomenclatureResourceType,
-      active: active ?? true,
-      validable: validable ?? true,
+      active: active,
+      validable: validable,
       idDigitizer: idDigitizer,
       idTaxaList: idTaxaList,
       metaCreateDate: metaCreateDate,
@@ -37,7 +37,7 @@ extension DatasetMapper on Dataset {
   TDataset toDatabaseEntity() {
     return TDataset(
       idDataset: id,
-      uniqueDatasetId: uniqueDatasetId, // Correct field name
+      uniqueDatasetId: uniqueDatasetId,
       idAcquisitionFramework: idAcquisitionFramework,
       datasetName: datasetName,
       datasetShortname: datasetShortname,
@@ -55,8 +55,8 @@ extension DatasetMapper on Dataset {
       idNomenclatureDataOrigin: idNomenclatureDataOrigin,
       idNomenclatureSourceStatus: idNomenclatureSourceStatus,
       idNomenclatureResourceType: idNomenclatureResourceType,
-      active: active ?? false,
-      validable: validable,
+      active: active ?? true,
+      validable: validable ?? true,
       idDigitizer: idDigitizer,
       idTaxaList: idTaxaList,
       metaCreateDate: metaCreateDate,

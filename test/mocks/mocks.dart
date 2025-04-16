@@ -15,6 +15,7 @@ import 'package:gn_mobile_monitoring/domain/repository/global_database_repositor
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
@@ -24,7 +25,11 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
@@ -77,6 +82,8 @@ class MockLocalStorageRepository extends Mock
 class MockModulesRepository extends Mock implements ModulesRepository {}
 
 class MockSitesRepository extends Mock implements SitesRepository {}
+
+class MockTaxonRepository extends Mock implements TaxonRepository {}
 
 // Domain layer mocks - UseCases
 // Auth
@@ -141,6 +148,15 @@ class MockFetchModulesUseCase extends Mock implements FetchModulesUseCase {}
 
 class MockDownloadModuleDataUseCase extends Mock
     implements DownloadModuleDataUseCase {}
+
+// Nomenclatures
+class MockGetNomenclaturesUseCase extends Mock implements GetNomenclaturesUseCase {}
+
+class MockGetNomenclaturesByTypeCodeUseCase extends Mock implements GetNomenclaturesByTypeCodeUseCase {}
+
+class MockGetNomenclatureByCodeUseCase extends Mock implements GetNomenclatureByCodeUseCase {}
+
+class MockGetModuleNomenclaturesUseCase extends Mock implements GetModuleNomenclaturesUseCase {}
 
 // Sites
 class MockGetSitesUseCase extends Mock implements GetSitesUseCase {}

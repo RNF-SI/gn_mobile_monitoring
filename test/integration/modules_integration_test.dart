@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
 import 'package:gn_mobile_monitoring/data/repository/modules_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
@@ -13,6 +15,9 @@ import 'package:mocktail/mocktail.dart';
 
 import '../mocks/mocks.dart';
 
+class MockTaxonApi extends Mock implements TaxonApi {}
+class MockTaxonDatabase extends Mock implements TaxonDatabase {}
+
 /// Ce test d'intégration teste la chaîne complète depuis le repository jusqu'au viewmodel
 /// pour s'assurer que les données circulent correctement à travers les couches.
 void main() {
@@ -24,20 +29,30 @@ void main() {
   late MockDatasetsDatabase mockDatasetsDatabase;
   late ModulesRepositoryImpl repository;
   late GetModulesUseCaseImpl useCase;
+  late MockTaxonApi mockTaxonApi;
+  late MockTaxonDatabase mockTaxonDatabase;
 
   setUp(() {
     mockGlobalApi = MockGlobalApi();
     mockModulesApi = MockModulesApi();
+    mockTaxonApi = MockTaxonApi();
     mockModulesDatabase = MockModulesDatabase();
     mockNomenclaturesDatabase = MockNomenclaturesDatabase();
     mockDatasetsDatabase = MockDatasetsDatabase();
+    mockTaxonDatabase = MockTaxonDatabase();
 
+    // Mock for TaxonRepository
+    final mockTaxonRepository = MockTaxonRepository();
+    
     repository = ModulesRepositoryImpl(
       mockGlobalApi,
       mockModulesApi,
+      mockTaxonApi,
       mockModulesDatabase,
       mockNomenclaturesDatabase,
       mockDatasetsDatabase,
+      mockTaxonDatabase,
+      mockTaxonRepository,
     );
 
     useCase = GetModulesUseCaseImpl(repository);

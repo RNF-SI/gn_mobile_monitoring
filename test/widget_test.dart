@@ -1,7 +1,6 @@
 // Ce test est un placeholder qui sera remplacé par des tests spécifiques
 // Les tests de widgets devraient normalement être dans le dossier presentation/view
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {

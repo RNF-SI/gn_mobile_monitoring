@@ -20,7 +20,7 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     await db.modulesDao.insertModules(modules);
   }
-  
+
   @override
   Future<void> updateModule(Module module) async {
     final db = await _database;
@@ -62,6 +62,20 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     return await db.modulesDao.getModuleComplementById(moduleId);
   }
   
+  @override
+  Future<ModuleComplement?> getModuleComplementByModuleCode(String moduleCode) async {
+    final db = await _database;
+    // Trouver d'abord le module par son code
+    final module = await db.modulesDao.getModuleByCode(moduleCode);
+    
+    if (module == null) {
+      return null;
+    }
+    
+    // Récupérer ensuite le complément par l'ID du module
+    return await db.modulesDao.getModuleComplementById(module.id);
+  }
+
   @override
   Future<List<ModuleComplement>> getAllModuleComplements() async {
     final db = await _database;
@@ -121,15 +135,15 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   }
 
   @override
-  Future<Module?> getModuleById(int moduleId) {
-    // TODO: implement getModuleById
-    throw UnimplementedError();
+  Future<Module?> getModuleById(int moduleId) async {
+    final db = await _database;
+    return await db.modulesDao.getModuleById(moduleId);
   }
 
   @override
-  Future<List<Module>> getModules() {
-    // TODO: implement getModules
-    throw UnimplementedError();
+  Future<List<Module>> getModules() async {
+    final db = await _database;
+    return await db.modulesDao.getAllModules();
   }
 
   @override

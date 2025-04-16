@@ -20,6 +20,8 @@ mixin _$Nomenclature {
   int get idType => throw _privateConstructorUsedError;
   String get cdNomenclature => throw _privateConstructorUsedError;
   String? get mnemonique => throw _privateConstructorUsedError;
+  String? get codeType =>
+      throw _privateConstructorUsedError; // Ajout du champ code_type
   String? get labelDefault => throw _privateConstructorUsedError;
   String? get definitionDefault => throw _privateConstructorUsedError;
   String? get labelFr => throw _privateConstructorUsedError;
@@ -58,6 +60,7 @@ abstract class $NomenclatureCopyWith<$Res> {
       int idType,
       String cdNomenclature,
       String? mnemonique,
+      String? codeType,
       String? labelDefault,
       String? definitionDefault,
       String? labelFr,
@@ -98,6 +101,7 @@ class _$NomenclatureCopyWithImpl<$Res, $Val extends Nomenclature>
     Object? idType = null,
     Object? cdNomenclature = null,
     Object? mnemonique = freezed,
+    Object? codeType = freezed,
     Object? labelDefault = freezed,
     Object? definitionDefault = freezed,
     Object? labelFr = freezed,
@@ -134,6 +138,10 @@ class _$NomenclatureCopyWithImpl<$Res, $Val extends Nomenclature>
       mnemonique: freezed == mnemonique
           ? _value.mnemonique
           : mnemonique // ignore: cast_nullable_to_non_nullable
+              as String?,
+      codeType: freezed == codeType
+          ? _value.codeType
+          : codeType // ignore: cast_nullable_to_non_nullable
               as String?,
       labelDefault: freezed == labelDefault
           ? _value.labelDefault
@@ -228,6 +236,7 @@ abstract class _$$NomenclatureImplCopyWith<$Res>
       int idType,
       String cdNomenclature,
       String? mnemonique,
+      String? codeType,
       String? labelDefault,
       String? definitionDefault,
       String? labelFr,
@@ -266,6 +275,7 @@ class __$$NomenclatureImplCopyWithImpl<$Res>
     Object? idType = null,
     Object? cdNomenclature = null,
     Object? mnemonique = freezed,
+    Object? codeType = freezed,
     Object? labelDefault = freezed,
     Object? definitionDefault = freezed,
     Object? labelFr = freezed,
@@ -302,6 +312,10 @@ class __$$NomenclatureImplCopyWithImpl<$Res>
       mnemonique: freezed == mnemonique
           ? _value.mnemonique
           : mnemonique // ignore: cast_nullable_to_non_nullable
+              as String?,
+      codeType: freezed == codeType
+          ? _value.codeType
+          : codeType // ignore: cast_nullable_to_non_nullable
               as String?,
       labelDefault: freezed == labelDefault
           ? _value.labelDefault
@@ -391,6 +405,7 @@ class _$NomenclatureImpl implements _Nomenclature {
       required this.idType,
       required this.cdNomenclature,
       this.mnemonique,
+      this.codeType,
       this.labelDefault,
       this.definitionDefault,
       this.labelFr,
@@ -419,6 +434,9 @@ class _$NomenclatureImpl implements _Nomenclature {
   final String cdNomenclature;
   @override
   final String? mnemonique;
+  @override
+  final String? codeType;
+// Ajout du champ code_type
   @override
   final String? labelDefault;
   @override
@@ -460,7 +478,7 @@ class _$NomenclatureImpl implements _Nomenclature {
 
   @override
   String toString() {
-    return 'Nomenclature(id: $id, idType: $idType, cdNomenclature: $cdNomenclature, mnemonique: $mnemonique, labelDefault: $labelDefault, definitionDefault: $definitionDefault, labelFr: $labelFr, definitionFr: $definitionFr, labelEn: $labelEn, definitionEn: $definitionEn, labelEs: $labelEs, definitionEs: $definitionEs, labelDe: $labelDe, definitionDe: $definitionDe, labelIt: $labelIt, definitionIt: $definitionIt, source: $source, statut: $statut, idBroader: $idBroader, hierarchy: $hierarchy, active: $active, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'Nomenclature(id: $id, idType: $idType, cdNomenclature: $cdNomenclature, mnemonique: $mnemonique, codeType: $codeType, labelDefault: $labelDefault, definitionDefault: $definitionDefault, labelFr: $labelFr, definitionFr: $definitionFr, labelEn: $labelEn, definitionEn: $definitionEn, labelEs: $labelEs, definitionEs: $definitionEs, labelDe: $labelDe, definitionDe: $definitionDe, labelIt: $labelIt, definitionIt: $definitionIt, source: $source, statut: $statut, idBroader: $idBroader, hierarchy: $hierarchy, active: $active, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
   }
 
   @override
@@ -474,6 +492,8 @@ class _$NomenclatureImpl implements _Nomenclature {
                 other.cdNomenclature == cdNomenclature) &&
             (identical(other.mnemonique, mnemonique) ||
                 other.mnemonique == mnemonique) &&
+            (identical(other.codeType, codeType) ||
+                other.codeType == codeType) &&
             (identical(other.labelDefault, labelDefault) ||
                 other.labelDefault == labelDefault) &&
             (identical(other.definitionDefault, definitionDefault) ||
@@ -513,6 +533,7 @@ class _$NomenclatureImpl implements _Nomenclature {
         idType,
         cdNomenclature,
         mnemonique,
+        codeType,
         labelDefault,
         definitionDefault,
         labelFr,
@@ -549,6 +570,7 @@ abstract class _Nomenclature implements Nomenclature {
       required final int idType,
       required final String cdNomenclature,
       final String? mnemonique,
+      final String? codeType,
       final String? labelDefault,
       final String? definitionDefault,
       final String? labelFr,
@@ -577,6 +599,8 @@ abstract class _Nomenclature implements Nomenclature {
   String get cdNomenclature;
   @override
   String? get mnemonique;
+  @override
+  String? get codeType; // Ajout du champ code_type
   @override
   String? get labelDefault;
   @override

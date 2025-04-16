@@ -1,0 +1,107 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
+import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case_impl.dart';
+import 'package:mocktail/mocktail.dart';
+
+import '../../mocks/mocks.dart';
+
+void main() {
+  late GetNomenclaturesByTypeCodeUseCase useCase;
+  late MockModulesRepository mockModulesRepository;
+
+  setUp(() {
+    mockModulesRepository = MockModulesRepository();
+    useCase = GetNomenclaturesByTypeCodeUseCaseImpl(mockModulesRepository);
+  });
+
+  group('GetNomenclaturesByTypeCodeUseCase', () {
+    final Map<String, int> typeMappings = {
+      'TYPE_MEDIA': 117,
+      'TYPE_SITE': 116,
+    };
+    
+    final nomenclatures = [
+      const Nomenclature(
+        id: 1,
+        idType: 117,
+        cdNomenclature: "2",
+        labelDefault: "Photo",
+        definitionDefault: "Média de type image",
+      ),
+      const Nomenclature(
+        id: 2,
+        idType: 117,
+        cdNomenclature: "3",
+        labelDefault: "Page web",
+        definitionDefault: "Média de type page web",
+      ),
+      const Nomenclature(
+        id: 3,
+        idType: 116,
+        cdNomenclature: "APO_DALLES",
+        labelDefault: "Dalles à orpins",
+        definitionDefault: "Dalles à orpins",
+      ),
+    ];
+
+    test('should return nomenclatures filtered by type code', () async {
+      // Arrange
+      const typeCode = 'TYPE_MEDIA';
+      when(() => mockModulesRepository.getNomenclatures())
+          .thenAnswer((_) async => nomenclatures);
+      when(() => mockModulesRepository.getNomenclatureTypeMapping())
+          .thenAnswer((_) async => typeMappings);
+      // Ce mock n'est pas nécessaire car le code devrait trouver l'ID dans le mapping,
+      // mais on l'ajoute par précaution
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
+
+      // Act
+      final result = await useCase.execute(typeCode);
+
+      // Assert
+      expect(result.length, equals(2));
+      expect(result.every((e) => e.idType == 117), isTrue);
+      verify(() => mockModulesRepository.getNomenclatures()).called(1);
+      verify(() => mockModulesRepository.getNomenclatureTypeMapping()).called(1);
+      verifyNever(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()));
+    });
+
+    test('should return empty list when type code is not found in mappings', () async {
+      // Arrange
+      const typeCode = 'UNKNOWN_TYPE';
+      when(() => mockModulesRepository.getNomenclatures())
+          .thenAnswer((_) async => nomenclatures);
+      when(() => mockModulesRepository.getNomenclatureTypeMapping())
+          .thenAnswer((_) async => typeMappings);
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
+
+      // Act
+      final result = await useCase.execute(typeCode);
+
+      // Assert
+      expect(result, isEmpty);
+      verify(() => mockModulesRepository.getNomenclatureTypeMapping()).called(1);
+      verify(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(typeCode)).called(1);
+    });
+
+    test('should rethrow exception when repository throws an error', () async {
+      // Arrange
+      const typeCode = 'TYPE_MEDIA';
+      final exception = Exception('Failed to get nomenclature type mappings');
+      when(() => mockModulesRepository.getNomenclatureTypeMapping())
+          .thenThrow(exception);
+      when(() => mockModulesRepository.getNomenclatureTypeIdByMnemonique(any()))
+          .thenAnswer((_) async => null);
+
+      // Act & Assert
+      expect(
+        () => useCase.execute(typeCode),
+        throwsA(equals(exception)),
+      );
+    });
+  });
+}

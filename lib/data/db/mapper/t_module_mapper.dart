@@ -11,9 +11,9 @@ extension TModuleMapper on TModule {
       moduleCode: moduleCode,
       moduleLabel: moduleLabel,
       moduleDesc: moduleDesc,
-      activeFrontend: activeFrontend ?? false, // Default value
-      activeBackend: activeBackend ?? false, // Default value
-      downloaded: downloaded ?? false, // New property, default to false
+      activeFrontend: activeFrontend ?? false,
+      activeBackend: activeBackend ?? false,
+      downloaded: downloaded,
     );
   }
 
@@ -26,7 +26,7 @@ extension TModuleMapper on TModule {
       moduleDesc: moduleDesc,
       activeFrontend: activeFrontend ?? false,
       activeBackend: activeBackend ?? false,
-      downloaded: downloaded ?? false,
+      downloaded: downloaded,
       complement: complement,
       sites: sites,
       sitesGroup: siteGroups, // Attach the fetched site groups
@@ -38,8 +38,8 @@ extension ModuleMapper on Module {
   TModule toDatabaseEntity() {
     return TModule(
       idModule: id,
-      moduleCode: moduleCode ?? '', // Ensure a non-null value
-      moduleLabel: moduleLabel ?? '',
+      moduleCode: moduleCode, // Module code should never be null
+      moduleLabel: moduleLabel,
       moduleDesc: moduleDesc,
       activeFrontend: activeFrontend ?? false,
       activeBackend: activeBackend ?? false,

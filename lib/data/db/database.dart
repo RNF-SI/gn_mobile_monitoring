@@ -2,18 +2,31 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/bib_nomenclatures_types_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/observation_detail_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/taxon_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nomenclatures.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/bib_type_site.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_site_type.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_taxon_liste.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_datasets.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
@@ -26,6 +39,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_permissions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_permissions_available.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_taxrefs.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -63,6 +77,8 @@ part 'database.g.dart';
   TObservationComplements,
   TObservationDetails,
   BibTablesLocations,
+  BibNomenclaturesTypesTable,
+  BibTypeSitesTable,
   TObjects,
   TActions,
   TPermissionsAvailable,
@@ -70,11 +86,22 @@ part 'database.g.dart';
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
   CorObjectModuleTable,
+  CorVisitObserver,
+  CorSiteTypeTable,
+  TBaseVisits,
+  TTaxrefs,
+  BibListesTable,
+  CorTaxonListeTable,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,
   SitesDao,
   TDatasetsDao,
+  VisitesDao,
+  ObservationDao,
+  ObservationDetailDao,
+  BibNomenclaturesTypesDao,
+  TaxonDao,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase._internal() : super(_openConnection());
@@ -96,53 +123,33 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 17; // Update schema version to 17
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (Migrator m) async {
-          print("Executing onCreate migrations...");
           await migration1(m, this);
-          print("Migration 1 completed");
           await migration2(m, this);
-          print("Migration 2 completed");
           await migration3(m, this);
-          print("Migration 3 completed");
           await migration4(m, this);
-          print("Migration 4 completed");
           await migration5(m, this);
-          print("Migration 5 completed");
           await migration6(m, this);
-          print("Migration 6 completed");
           await migration7(m, this);
-          print("Migration 7 completed");
           await migration8(m, this);
-          print("Migration 8 completed");
           await migration9(m, this);
-          print("Migration 9 completed");
           await migration10(m, this);
-          print("Migration 10 completed");
           await migration11(m, this);
-          print("Migration 11 completed");
           await migration12(m, this);
-          print("Migration 12 completed");
           await migration13(m, this);
-          print("Migration 13 completed");
           await migration14(m, this);
-          print("Migration 14 completed");
           await migration15(m, this);
-          print("Migration 15 completed");
           await migration16(m, this);
-          print("Migration 16 completed");
           await migration17(m, this);
-          print("Migration 17 completed");
           await migration18(m, this);
-          print("Migration 18 completed");
           await migration19(m, this);
-          print("Migration 19 completed");
+          await migration20(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          print("Upgrading database from $from to $to...");
           final db = this; // Access the database instance
           for (int i = from + 1; i <= to; i++) {
             switch (i) {
@@ -197,10 +204,15 @@ class AppDatabase extends _$AppDatabase {
               case 18:
                 await migration18(m, db);
                 break;
+              case 19:
+                await migration19(m, db);
+                break;
+              case 20:
+                await migration20(m, db);
+                break;
               default:
                 throw Exception("Unexpected schema version: $i");
             }
-            print("Migration $i applied");
           }
         },
       );
@@ -214,9 +226,6 @@ LazyDatabase _openConnection() {
 
     if (!(await file.exists())) {
       await file.create(recursive: true);
-      print("Database file created at: $dbPath");
-    } else {
-      print("Database file already exists at: $dbPath");
     }
 
     return NativeDatabase(file, logStatements: true);

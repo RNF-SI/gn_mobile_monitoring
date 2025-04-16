@@ -49,9 +49,10 @@ app.*.map.json
 sqlite-db-copy
 
 # Photos splash screen
-assets/photo/splash_screen.jpg
 assets/tables_csv
 .vscode/dart.code-snippets
 .cursorrules
 prompts/
 CLAUDE.md
+config_example_prairies.json
+config_example_ligne_lecture.json

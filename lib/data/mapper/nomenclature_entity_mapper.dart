@@ -8,6 +8,7 @@ extension NomenclatureEntityMapper on NomenclatureEntity {
       idType: idType,
       cdNomenclature: cdNomenclature,
       mnemonique: mnemonique,
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,
@@ -38,6 +39,7 @@ extension DomainNomenclatureEntityMapper on Nomenclature {
       idType: idType,
       cdNomenclature: cdNomenclature,
       mnemonique: mnemonique,
+      codeType: codeType,  // Ajout du champ code_type
       labelDefault: labelDefault,
       definitionDefault: definitionDefault,
       labelFr: labelFr,

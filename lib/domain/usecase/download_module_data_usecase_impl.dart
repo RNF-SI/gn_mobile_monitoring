@@ -11,6 +11,19 @@ class DownloadModuleDataUseCaseImpl implements DownloadModuleDataUseCase {
     int moduleId,
     Function(double) onProgressUpdate,
   ) async {
-    await _modulesRepository.downloadModuleData(moduleId);
+    try {
+      // Mise à jour initiale de la progression
+      onProgressUpdate(0.1);
+      
+      // Téléchargement des données du module (nomenclatures, datasets, etc.)
+      await _modulesRepository.downloadModuleData(moduleId);
+      
+      // Mise à jour finale de la progression
+      onProgressUpdate(1.0);
+    } catch (e) {
+      // En cas d'erreur, mettre à jour la progression à 0
+      onProgressUpdate(0.0);
+      rethrow;
+    }
   }
 }

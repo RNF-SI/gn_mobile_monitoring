@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo_liste.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
@@ -24,7 +24,7 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState =
-        const custom_async_state.State<ModuleInfoListe>.loading();
+        const custom_async_state.State<ModuleInfoList>.loading();
 
     final container = ProviderContainer(
       overrides: [
@@ -52,7 +52,7 @@ void main() {
   testWidgets('ModuleListWidget should display error state correctly',
       (WidgetTester tester) async {
     // Arrange
-    final customState = custom_async_state.State<ModuleInfoListe>.error(
+    final customState = custom_async_state.State<ModuleInfoList>.error(
       Exception('Failed to load modules'),
     );
 
@@ -82,7 +82,7 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final modules = [
-      Module(
+      const Module(
         id: 1,
         moduleCode: 'code1',
         moduleLabel: 'Module 1',
@@ -95,7 +95,7 @@ void main() {
         moduleGroup: 'group1',
         downloaded: true,
       ),
-      Module(
+      const Module(
         id: 2,
         moduleCode: 'code2',
         moduleLabel: 'Module 2',
@@ -120,10 +120,10 @@ void main() {
       );
     }).toList();
 
-    final moduleInfoListe = ModuleInfoListe(values: moduleInfos);
+    final moduleInfoList = ModuleInfoList(values: moduleInfos);
 
     final customState =
-        custom_async_state.State<ModuleInfoListe>.success(moduleInfoListe);
+        custom_async_state.State<ModuleInfoList>.success(moduleInfoList);
 
     final container = ProviderContainer(
       overrides: [

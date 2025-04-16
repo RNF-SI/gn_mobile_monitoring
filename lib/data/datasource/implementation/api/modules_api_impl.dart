@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
-import 'package:gn_mobile_monitoring/data/entity/cor_site_module_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 
@@ -18,8 +17,6 @@ class ModulesApiImpl implements ModulesApi {
   /// Checks if a module has sufficient CRUVED permissions
   /// Returns true if any of the CRUVED values is greater than 0
   bool _hasModulePermissions(Map<String, dynamic> cruved) {
-    if (cruved == null) return false;
-
     // Check if any of the CRUVED values is greater than 0
     return cruved.values.any((value) => value is num && value > 0);
   }
@@ -104,33 +101,6 @@ class ModulesApiImpl implements ModulesApi {
       throw Exception('Network error: ${e.message}');
     } catch (e) {
       throw Exception('Error fetching modules: $e');
-    }
-  }
-
-  @override
-  Future<List<CorSiteModuleEntity>> getCorSiteModules(
-      String token, String moduleCode) async {
-    try {
-      final response = await _dio.get(
-        '/monitorings/list/$moduleCode/site',
-        options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data;
-        return data.map((json) => CorSiteModuleEntity.fromJson(json)).toList();
-      } else {
-        throw Exception(
-            'Failed to load module sites with status code: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      throw Exception('Network error: ${e.message}');
-    } catch (e) {
-      throw Exception('Error fetching module sites: $e');
     }
   }
 }

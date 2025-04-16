@@ -20,10 +20,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<SiteGroup>>.loading();
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -49,10 +51,12 @@ void main() {
     final customState = custom_async_state.State<List<SiteGroup>>.error(
       Exception('Failed to load site groups'),
     );
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -76,10 +80,12 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final customState = const custom_async_state.State<List<SiteGroup>>.init();
+    final emptyList = <SiteGroup>[];
 
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => emptyList),
       ],
     );
 
@@ -103,25 +109,28 @@ void main() {
       (WidgetTester tester) async {
     // Arrange
     final siteGroups = [
-      SiteGroup(
+      const SiteGroup(
         idSitesGroup: 1,
         sitesGroupName: 'Groupe de sites 1',
         sitesGroupDescription: 'Description du groupe 1',
+        sitesGroupCode: 'SG-1',  // Utilisé sitesGroupCode au lieu de uuidSitesGroup
         uuidSitesGroup: 'UUID-1',
       ),
-      SiteGroup(
+      const SiteGroup(
         idSitesGroup: 2,
         sitesGroupName: 'Groupe de sites 2',
         sitesGroupDescription: 'Description du groupe 2',
+        sitesGroupCode: 'SG-2',  // Utilisé sitesGroupCode au lieu de uuidSitesGroup
         uuidSitesGroup: 'UUID-2',
       ),
     ];
 
     final customState = custom_async_state.State<List<SiteGroup>>.success(siteGroups);
-
+    
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 
@@ -139,11 +148,9 @@ void main() {
 
     // Assert
     expect(find.text('Groupe de sites 1'), findsOneWidget);
-    expect(find.text('Description du groupe 1'), findsOneWidget);
-    expect(find.text('UUID-1'), findsOneWidget);
+    expect(find.text('SG-1'), findsOneWidget);  // Vérifie le code et non l'UUID
     expect(find.text('Groupe de sites 2'), findsOneWidget);
-    expect(find.text('Description du groupe 2'), findsOneWidget);
-    expect(find.text('UUID-2'), findsOneWidget);
+    expect(find.text('SG-2'), findsOneWidget);  // Vérifie le code et non l'UUID
   });
 
   testWidgets('SiteGroupListWidget should display empty message when no site groups are available',
@@ -155,6 +162,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 
@@ -188,6 +196,7 @@ void main() {
       overrides: [
         siteGroupListProvider.overrideWithValue(customState),
         siteGroupViewModelStateNotifierProvider.overrideWith((_) => mockNotifier),
+        filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
       ],
     );
 

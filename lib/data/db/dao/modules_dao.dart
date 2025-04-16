@@ -81,7 +81,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
 
   Future<void> markModuleAsDownloaded(int moduleId) async {
     await (update(tModules)..where((tbl) => tbl.idModule.equals(moduleId)))
-        .write(TModulesCompanion(
+        .write(const TModulesCompanion(
       downloaded: Value(true),
     ));
   }
@@ -215,6 +215,13 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   Future<Module?> getModuleIdByLabel(String moduleLabel) async {
     final query = select(tModules)
       ..where((tbl) => tbl.moduleLabel.equals(moduleLabel));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
+  }
+  
+  Future<Module?> getModuleByCode(String moduleCode) async {
+    final query = select(tModules)
+      ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
     return result?.toDomain();
   }

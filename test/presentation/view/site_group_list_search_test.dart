@@ -19,6 +19,7 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           siteGroupListProvider.overrideWithValue(customState),
+          filteredSiteGroupsProvider.overrideWith((_) => siteGroups),
         ],
       );
 

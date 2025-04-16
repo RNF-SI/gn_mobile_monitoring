@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:gn_mobile_monitoring/presentation/model/moduleInfo.dart';
+import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_loading_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -54,10 +54,10 @@ class ModuleDownloadButton extends HookConsumerWidget {
               .stopDownloadModule(moduleInfo);
           break;
         case ModuleDownloadStatus.moduleDownloaded:
-          // Navigate to the ModuleDetailPage
+          // Navigate to the ModuleLoadingPage which will then load the module with its configuration
           Navigator.push(context, MaterialPageRoute<void>(
             builder: (BuildContext context) {
-              return ModuleDetailPage(moduleInfo: moduleInfo);
+              return ModuleLoadingPage(moduleInfo: moduleInfo);
             },
           ));
           break;
@@ -80,7 +80,7 @@ class ModuleDownloadButton extends HookConsumerWidget {
         controller.reverse();
       }
     });
-    
+
     // Observer le statut de synchronisation pour désactiver le bouton pendant la synchronisation
     final syncStatus = ref.watch(syncStatusProvider);
     final isSyncing = syncStatus.isInProgress;
@@ -89,13 +89,15 @@ class ModuleDownloadButton extends HookConsumerWidget {
         animation: controller,
         builder: (context, child) {
           return GestureDetector(
-            onTap: isSyncing 
-              ? null  // Désactiver le tap pendant la synchronisation
-              : () {
-                  _onPressed(context, ref);
-                },
+            onTap: isSyncing
+                ? null // Désactiver le tap pendant la synchronisation
+                : () {
+                    _onPressed(context, ref);
+                  },
             child: Opacity(
-              opacity: isSyncing ? 0.5 : 1.0,  // Réduire l'opacité pendant la synchronisation
+              opacity: isSyncing
+                  ? 0.5
+                  : 1.0, // Réduire l'opacité pendant la synchronisation
               child: Stack(
                 children: [
                   ButtonShapeWidget(
@@ -105,7 +107,7 @@ class ModuleDownloadButton extends HookConsumerWidget {
                     isFetching: _isFetching,
                     isRemoving: _isRemoving,
                     downloadProgress: moduleInfo.downloadProgress,
-                    isDisabled: isSyncing,  // Passer l'état de désactivation
+                    isDisabled: isSyncing, // Passer l'état de désactivation
                   ),
                   if (_isDownloading || _isFetching)
                     Positioned.fill(

@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
@@ -18,7 +17,7 @@ class MockSetUserNameUseCase extends Mock implements SetUserNameFromLocalStorage
 class MockSetTokenUseCase extends Mock implements SetTokenFromLocalStorageUseCase {}
 
 // Test data
-final testUser = User(
+final testUser = const User(
   id: 1,
   name: "Test User",
   email: "test@example.com",

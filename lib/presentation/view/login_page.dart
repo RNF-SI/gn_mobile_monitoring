@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/domain/model/user.dart';
-import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 
 enum Status {
@@ -11,17 +9,13 @@ enum Status {
 Status type = Status.login;
 
 class LoginPage extends StatefulWidget {
-  User? _user;
-
-  LoginPage({super.key});
+  const LoginPage({super.key});
 
   @override
   State<StatefulWidget> createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  late final AuthenticationViewModel _viewModel;
-
   final GlobalKey<FormState> _formKey = GlobalKey();
   final _identifiant = TextEditingController();
   final _password = TextEditingController();
@@ -164,7 +158,8 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                             if (loginStatus.errorDetails != null)
                               Padding(
-                                padding: const EdgeInsets.only(top: 8.0, left: 20, right: 20),
+                                padding: const EdgeInsets.only(
+                                    top: 8.0, left: 20, right: 20),
                                 child: Text(
                                   loginStatus.errorDetails!,
                                   style: const TextStyle(

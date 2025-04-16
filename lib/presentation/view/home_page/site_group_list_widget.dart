@@ -91,11 +91,7 @@ class SiteGroupListWidget extends ConsumerWidget {
             child: ListTile(
               title: Text(siteGroup.sitesGroupName ?? "Nom non défini"),
               subtitle: Text(
-                siteGroup.sitesGroupDescription ?? "Description non disponible",
-              ),
-              trailing: Text(
-                siteGroup.uuidSitesGroup ?? "UUID non défini",
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                siteGroup.sitesGroupCode ?? "Code non disponible",
               ),
             ),
           );

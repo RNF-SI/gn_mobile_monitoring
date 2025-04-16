@@ -201,6 +201,68 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     rethrow;
   }
 
+  // Create the bib_nomenclatures_types table
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_nomenclatures_types_table (
+        id_type INTEGER PRIMARY KEY AUTOINCREMENT,
+        mnemonique TEXT,
+        label_default TEXT,
+        definition_default TEXT,
+        label_fr TEXT,
+        definition_fr TEXT,
+        label_en TEXT,
+        definition_en TEXT,
+        label_es TEXT,
+        definition_es TEXT,
+        label_de TEXT,
+        definition_de TEXT,
+        label_it TEXT,
+        definition_it TEXT,
+        source TEXT,
+        statut TEXT,
+        meta_create_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TIMESTAMP
+      );
+    ''');
+    print("bib_nomenclatures_types_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_nomenclatures_types_table table: $e");
+    rethrow;
+  }
+
+  // Create the bib_type_site table
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_type_site_table (
+        id_nomenclature_type_site INTEGER PRIMARY KEY,
+        config TEXT,
+        FOREIGN KEY (id_nomenclature_type_site) REFERENCES t_nomenclatures (id_nomenclature)
+      );
+    ''');
+    print("bib_type_site_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_type_site table: $e");
+    rethrow;
+  }
+
+  // Create the cor_site_type table for relationships between sites and site types
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_site_type_table (
+        id_base_site INTEGER,
+        id_nomenclature_type_site INTEGER,
+        PRIMARY KEY (id_base_site, id_nomenclature_type_site),
+        FOREIGN KEY (id_base_site) REFERENCES t_base_sites (id_base_site),
+        FOREIGN KEY (id_nomenclature_type_site) REFERENCES bib_type_site (id_nomenclature_type_site)
+      );
+    ''');
+    print("cor_site_type_table table created successfully.");
+  } catch (e) {
+    print("Error creating cor_site_type_table table: $e");
+    rethrow;
+  }
+
   try {
     await db.customStatement('''
     CREATE TABLE t_datasets (
@@ -234,6 +296,126 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
     print("t_datasets table created successfully.");
   } catch (e) {
     print("Error creating t_datasets table: $e");
+    rethrow;
+  }
+
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_base_visits (
+        id_base_visit INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_base_site INTEGER,
+        id_dataset INTEGER NOT NULL,
+        id_module INTEGER NOT NULL,
+        id_digitiser INTEGER,
+        visit_date_min TEXT NOT NULL,
+        visit_date_max TEXT,
+        id_nomenclature_tech_collect_campanule INTEGER,
+        id_nomenclature_grp_typ INTEGER,
+        comments TEXT,
+        uuid_base_visit TEXT,
+        meta_create_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        meta_update_date TEXT DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (id_base_site) REFERENCES t_base_sites (id_base_site),
+        FOREIGN KEY (id_dataset) REFERENCES t_datasets (id_dataset),
+        FOREIGN KEY (id_module) REFERENCES t_modules (id_module),
+        FOREIGN KEY (id_digitiser) REFERENCES t_roles (id_role)
+      );
+    ''');
+    print("t_base_visits table created successfully.");
+  } catch (e) {
+    print("Error creating t_base_visits table: $e");
+    rethrow;
+  }
+
+  // Création de la table cor_visit_observer pour lier les visites et les observateurs
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_visit_observer
+      (
+        id_base_visit integer NOT NULL,
+        id_role integer NOT NULL,
+        unique_id_core_visit_observer TEXT NOT NULL DEFAULT (lower(hex(randomblob(4))) || '-' || lower(hex(randomblob(2))) || '-4' || 
+          substr(lower(hex(randomblob(2))),2) || '-' || 
+          substr('89ab',abs(random()) % 4 + 1, 1) || 
+          substr(lower(hex(randomblob(2))),2) || '-' || 
+          lower(hex(randomblob(6)))),
+        PRIMARY KEY (id_base_visit, id_role),
+        FOREIGN KEY (id_base_visit) REFERENCES t_base_visits (id_base_visit) ON DELETE CASCADE
+      );
+    ''');
+    print("cor_visit_observer table created successfully.");
+  } catch (e) {
+    print("Error creating cor_visit_observer table: $e");
+    rethrow;
+  }
+
+  // Create taxonomic tables
+  try {
+    await db.customStatement('''
+      CREATE TABLE t_taxrefs (
+        cd_nom INTEGER PRIMARY KEY,
+        cd_ref INTEGER,
+        id_statut TEXT,
+        id_habitat INTEGER,
+        id_rang TEXT,
+        regne TEXT,
+        phylum TEXT,
+        classe TEXT,
+        ordre TEXT,
+        famille TEXT,
+        sous_famille TEXT,
+        tribu TEXT,
+        cd_taxsup INTEGER,
+        cd_sup INTEGER,
+        lb_nom TEXT,
+        lb_auteur TEXT,
+        nom_complet TEXT NOT NULL,
+        nom_complet_html TEXT,
+        nom_vern TEXT,
+        nom_valide TEXT,
+        nom_vern_eng TEXT,
+        group1_inpn TEXT,
+        group2_inpn TEXT,
+        group3_inpn TEXT,
+        url TEXT
+      );
+    ''');
+    print("t_taxrefs table created successfully.");
+  } catch (e) {
+    print("Error creating t_taxrefs table: $e");
+    rethrow;
+  }
+
+  try {
+    await db.customStatement('''
+      CREATE TABLE bib_listes_table (
+        id_liste INTEGER PRIMARY KEY,
+        code_liste TEXT,
+        nom_liste TEXT NOT NULL,
+        desc_liste TEXT,
+        regne TEXT,
+        group2_inpn TEXT
+      );
+    ''');
+    print("bib_listes_table table created successfully.");
+  } catch (e) {
+    print("Error creating bib_listes_table table: $e");
+    rethrow;
+  }
+
+  try {
+    await db.customStatement('''
+      CREATE TABLE cor_taxon_liste_table (
+        id_liste INTEGER NOT NULL,
+        cd_nom INTEGER NOT NULL,
+        PRIMARY KEY (id_liste, cd_nom),
+        FOREIGN KEY (id_liste) REFERENCES bib_listes_table (id_liste) ON DELETE CASCADE,
+        FOREIGN KEY (cd_nom) REFERENCES taxrefs (cd_nom) ON DELETE CASCADE
+      );
+    ''');
+    print("cor_taxon_liste_table table created successfully.");
+  } catch (e) {
+    print("Error creating cor_taxon_liste_table table: $e");
     rethrow;
   }
 
