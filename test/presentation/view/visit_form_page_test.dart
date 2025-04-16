@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_modul
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 import 'package:mocktail/mocktail.dart';
@@ -45,6 +46,8 @@ class MockGetUserNameFromLocalStorageUseCase extends Mock
 
 class MockNavigatorObserver extends Mock implements NavigatorObserver {}
 
+class MockDatasetService extends Mock implements DatasetService {}
+
 // Create a proper mock for DynamicFormBuilderState that handles Diagnosticable
 class MockDynamicFormBuilderState extends Mock
     implements DynamicFormBuilderState {
@@ -74,6 +77,7 @@ void main() {
   late MockDeleteVisitUseCase mockDeleteVisitUseCase;
   late MockGetUserIdFromLocalStorageUseCase mockGetUserIdUseCase;
   late MockGetUserNameFromLocalStorageUseCase mockGetUserNameUseCase;
+  late MockDatasetService mockDatasetService;
 
   setUpAll(() {
     registerFallbackValue(FakeRoute());
@@ -161,6 +165,7 @@ void main() {
     mockDeleteVisitUseCase = MockDeleteVisitUseCase();
     mockGetUserIdUseCase = MockGetUserIdFromLocalStorageUseCase();
     mockGetUserNameUseCase = MockGetUserNameFromLocalStorageUseCase();
+    mockDatasetService = MockDatasetService();
 
     // Configure default behavior for mocks
     when(() => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()))
@@ -178,6 +183,8 @@ void main() {
         .thenAnswer((_) async => true);
     when(() => mockDeleteVisitUseCase.execute(any()))
         .thenAnswer((_) async => true);
+    when(() => mockDatasetService.getDatasetsForModule(any()))
+        .thenAnswer((_) async => []);
   });
 
   ProviderScope buildTestProviderScope({required Widget child}) {
@@ -195,6 +202,7 @@ void main() {
                   mockDeleteVisitUseCase,
                   mockGetUserIdUseCase,
                   mockGetUserNameUseCase,
+                  mockDatasetService,
                   params.$1,
                   params.$2,
                 )),
@@ -278,6 +286,7 @@ void main() {
                     mockDeleteVisitUseCase,
                     mockGetUserIdUseCase,
                     mockGetUserNameUseCase,
+                    mockDatasetService,
                     params.$1,
                     params.$2,
                   )),
@@ -327,6 +336,7 @@ void main() {
                     mockDeleteVisitUseCase,
                     mockGetUserIdUseCase,
                     mockGetUserNameUseCase,
+                    mockDatasetService,
                     params.$1,
                     params.$2,
                   )),

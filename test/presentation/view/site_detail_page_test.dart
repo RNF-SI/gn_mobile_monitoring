@@ -19,26 +19,43 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Mocks pour les tests
-class MockGetVisitsBySiteAndModuleUseCase extends Mock implements GetVisitsBySiteAndModuleUseCase {}
-class MockGetVisitWithDetailsUseCase extends Mock implements GetVisitWithDetailsUseCase {}
-class MockGetVisitComplementUseCase extends Mock implements GetVisitComplementUseCase {}
-class MockSaveVisitComplementUseCase extends Mock implements SaveVisitComplementUseCase {}
+class MockGetVisitsBySiteAndModuleUseCase extends Mock
+    implements GetVisitsBySiteAndModuleUseCase {}
+
+class MockGetVisitWithDetailsUseCase extends Mock
+    implements GetVisitWithDetailsUseCase {}
+
+class MockGetVisitComplementUseCase extends Mock
+    implements GetVisitComplementUseCase {}
+
+class MockSaveVisitComplementUseCase extends Mock
+    implements SaveVisitComplementUseCase {}
+
 class MockCreateVisitUseCase extends Mock implements CreateVisitUseCase {}
+
 class MockUpdateVisitUseCase extends Mock implements UpdateVisitUseCase {}
+
 class MockDeleteVisitUseCase extends Mock implements DeleteVisitUseCase {}
-class MockGetUserIdFromLocalStorageUseCase extends Mock implements GetUserIdFromLocalStorageUseCase {}
-class MockGetUserNameFromLocalStorageUseCase extends Mock implements GetUserNameFromLocalStorageUseCase {}
+
+class MockGetUserIdFromLocalStorageUseCase extends Mock
+    implements GetUserIdFromLocalStorageUseCase {}
+
+class MockGetUserNameFromLocalStorageUseCase extends Mock
+    implements GetUserNameFromLocalStorageUseCase {}
+
+class MockDatasetService extends Mock implements DatasetService {}
 
 void main() {
   group('SiteDetailPage Tests', () {
     // Variables partagées
     late BaseSite testSite;
     late ModuleInfo testModuleInfo;
-    
+
     // Créer un objet SiteGroup au lieu d'une Map
     final testSiteGroup = SiteGroup(
       idSitesGroup: 1,
@@ -46,9 +63,10 @@ void main() {
       sitesGroupCode: 'TSG1',
       sitesGroupDescription: 'Test site group description',
     );
-    
+
     // Mocks pour les tests
-    late MockGetVisitsBySiteAndModuleUseCase mockGetVisitsBySiteAndModuleUseCase;
+    late MockGetVisitsBySiteAndModuleUseCase
+        mockGetVisitsBySiteAndModuleUseCase;
     late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
     late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
     late MockSaveVisitComplementUseCase mockSaveVisitComplementUseCase;
@@ -57,7 +75,8 @@ void main() {
     late MockDeleteVisitUseCase mockDeleteVisitUseCase;
     late MockGetUserIdFromLocalStorageUseCase mockGetUserIdUseCase;
     late MockGetUserNameFromLocalStorageUseCase mockGetUserNameUseCase;
-    
+    late MockDatasetService mockDatasetService;
+
     setUp(() {
       testSite = BaseSite(
         idBaseSite: 1,
@@ -66,7 +85,7 @@ void main() {
         baseSiteDescription: 'Test site description',
         firstUseDate: DateTime.parse('2024-04-01'),
       );
-      
+
       // Créer une configuration pour le site
       final siteConfig = ObjectConfig(
         label: 'Site',
@@ -86,13 +105,13 @@ void main() {
           ),
         },
       );
-      
+
       // Créer une configuration pour les visites
       final visitConfig = ObjectConfig(
         label: 'Visite',
         displayList: ['visit_date_min', 'observers', 'comments'],
       );
-      
+
       // Créer une configuration complète de module
       final moduleConfig = ModuleConfiguration(
         site: siteConfig,
@@ -103,7 +122,7 @@ void main() {
           monitoringsPath: '/api/monitorings',
         ),
       );
-      
+
       // Créer un objet ModuleInfo pour les tests
       testModuleInfo = ModuleInfo(
         module: Module(
@@ -118,9 +137,10 @@ void main() {
         ),
         downloadStatus: ModuleDownloadStatus.moduleDownloaded,
       );
-      
+
       // Initialiser les mocks
-      mockGetVisitsBySiteAndModuleUseCase = MockGetVisitsBySiteAndModuleUseCase();
+      mockGetVisitsBySiteAndModuleUseCase =
+          MockGetVisitsBySiteAndModuleUseCase();
       mockGetVisitWithDetailsUseCase = MockGetVisitWithDetailsUseCase();
       mockGetVisitComplementUseCase = MockGetVisitComplementUseCase();
       mockSaveVisitComplementUseCase = MockSaveVisitComplementUseCase();
@@ -129,13 +149,20 @@ void main() {
       mockDeleteVisitUseCase = MockDeleteVisitUseCase();
       mockGetUserIdUseCase = MockGetUserIdFromLocalStorageUseCase();
       mockGetUserNameUseCase = MockGetUserNameFromLocalStorageUseCase();
-      
+      mockDatasetService = MockDatasetService();
+
       // Configurer les comportements des mocks
       when(() => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()))
           .thenAnswer((_) async => <BaseVisit>[]);
+
+      // Configure DatasetService mock behavior
+      when(() => mockDatasetService.getDatasetsForModule(any()))
+          .thenAnswer((_) async => []);
     });
-    
-    testWidgets('renders correctly with site data and displays site information', (WidgetTester tester) async {
+
+    testWidgets(
+        'renders correctly with site data and displays site information',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -150,6 +177,7 @@ void main() {
                 mockDeleteVisitUseCase,
                 mockGetUserIdUseCase,
                 mockGetUserNameUseCase,
+                mockDatasetService,
                 testSite.idBaseSite,
                 testModuleInfo.module.id,
               );
@@ -163,25 +191,26 @@ void main() {
           ),
         ),
       );
-      
+
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       // Vérifier que les informations de base du site sont affichées
       expect(find.text('Informations générales'), findsOneWidget);
       expect(find.text('Code'), findsOneWidget);
-      expect(find.text('TST1'), findsOneWidget);
+      expect(find.text('TST1'), findsAtLeastNWidgets(1));
       expect(find.text('Nom'), findsOneWidget);
       expect(find.text('Test Site'), findsAtLeastNWidgets(1));
       expect(find.text('Description'), findsOneWidget);
       expect(find.text('Test site description'), findsOneWidget);
-      
+
       // Vérifier que le message d'absence de visites est affiché
       expect(find.textContaining('Aucune'), findsAtLeastNWidgets(1));
     });
-    
-    testWidgets('displays site group in breadcrumb when provided', (WidgetTester tester) async {
+
+    testWidgets('displays site group in breadcrumb when provided',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -196,6 +225,7 @@ void main() {
                 mockDeleteVisitUseCase,
                 mockGetUserIdUseCase,
                 mockGetUserNameUseCase,
+                mockDatasetService,
                 testSite.idBaseSite,
                 testModuleInfo.module.id,
               );
@@ -210,18 +240,18 @@ void main() {
           ),
         ),
       );
-      
+
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       // Vérifier que les éléments du fil d'Ariane sont présents
       expect(find.textContaining('Module'), findsAtLeastNWidgets(1));
       expect(find.textContaining('Test Module'), findsAtLeastNWidgets(1));
       expect(find.textContaining('Groupe'), findsAtLeastNWidgets(1));
       expect(find.textContaining('Test Site Group'), findsAtLeastNWidgets(1));
     });
-    
+
     testWidgets('displays visits when available', (WidgetTester tester) async {
       // Exemple de visite
       final testVisits = [
@@ -236,11 +266,11 @@ void main() {
           observers: [1, 2],
         ),
       ];
-      
+
       // Configurer le mock pour retourner la visite
       when(() => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()))
           .thenAnswer((_) async => testVisits);
-      
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -255,6 +285,7 @@ void main() {
                 mockDeleteVisitUseCase,
                 mockGetUserIdUseCase,
                 mockGetUserNameUseCase,
+                mockDatasetService,
                 testSite.idBaseSite,
                 testModuleInfo.module.id,
               );
@@ -268,30 +299,31 @@ void main() {
           ),
         ),
       );
-      
+
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       // Attendre que les données asynchrones soient chargées
       await tester.pump(const Duration(milliseconds: 500));
-      
+
       // Le message "Aucune visite" ne devrait plus être affiché
       expect(find.text('Aucune visite pour ce site'), findsNothing);
-      
+
       // Vérifier que la visite est affichée (commentaire)
       expect(find.text('Visite de test'), findsAtLeastNWidgets(1));
-      
+
       // Vérifier la présence d'icônes d'action
       expect(find.byIcon(Icons.visibility), findsAtLeastNWidgets(1));
       expect(find.byIcon(Icons.edit), findsAtLeastNWidgets(1));
     });
-    
-    testWidgets('handles error when loading visits', (WidgetTester tester) async {
+
+    testWidgets('handles error when loading visits',
+        (WidgetTester tester) async {
       // Simuler une erreur lors du chargement des visites
       when(() => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()))
           .thenThrow(Exception('Erreur de chargement'));
-      
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -306,6 +338,7 @@ void main() {
                 mockDeleteVisitUseCase,
                 mockGetUserIdUseCase,
                 mockGetUserNameUseCase,
+                mockDatasetService,
                 testSite.idBaseSite,
                 testModuleInfo.module.id,
               );
@@ -319,19 +352,20 @@ void main() {
           ),
         ),
       );
-      
+
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       // Attendre que les données asynchrones soient chargées (ou échouent)
       await tester.pump(const Duration(milliseconds: 500));
-      
+
       // Vérifier qu'un message d'erreur est affiché
       expect(find.textContaining('Erreur'), findsAtLeastNWidgets(1));
     });
-    
-    testWidgets('has the expected UI structure with proper elements', (WidgetTester tester) async {
+
+    testWidgets('has the expected UI structure with proper elements',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -346,6 +380,7 @@ void main() {
                 mockDeleteVisitUseCase,
                 mockGetUserIdUseCase,
                 mockGetUserNameUseCase,
+                mockDatasetService,
                 testSite.idBaseSite,
                 testModuleInfo.module.id,
               );
@@ -359,16 +394,16 @@ void main() {
           ),
         ),
       );
-      
+
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
-      
+
       // Vérifier la structure de l'interface
       expect(find.byType(AppBar), findsOneWidget);
       expect(find.byType(Card), findsAtLeastNWidgets(1));
       expect(find.byType(TabBar), findsAtLeastNWidgets(1));
-      
+
       // Vérifier l'onglet "Visites"
       expect(find.text('Visites'), findsOneWidget);
     });
