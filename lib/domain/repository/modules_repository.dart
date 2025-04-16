@@ -22,6 +22,9 @@ abstract class ModulesRepository {
   /// Si la configuration n'est pas disponible, retourne un Module avec les données initiales
   Future<Module> getModuleWithConfig(int moduleId);
   
+  /// Récupère les identifiants de datasets associés à un module
+  Future<List<int>> getDatasetIdsForModule(int moduleId);
+  
   /// Récupère toutes les nomenclatures stockées localement
   Future<List<Nomenclature>> getNomenclatures();
   

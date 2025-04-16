@@ -175,8 +175,9 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // 1. Fetch nomenclatures and datasets
       final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
-      // Process nomenclatures
-      final nomenclatures = (data['nomenclatures'] as List<NomenclatureEntity>)
+      // Process nomenclatures - convert each dynamic map to NomenclatureEntity first
+      final nomenclatures = (data['nomenclatures'] as List<dynamic>)
+          .map((e) => NomenclatureEntity.fromJson(e as Map<String, dynamic>))
           .map((e) => e.toDomain())
           .toList();
 
@@ -199,12 +200,18 @@ class ModulesRepositoryImpl implements ModulesRepository {
       }
 
       // Process datasets
-      final datasets = (data['datasets'] as List<DatasetEntity>)
+      final datasets = (data['datasets'] as List<dynamic>)
+          .map((e) => DatasetEntity.fromJson(e as Map<String, dynamic>))
           .map((e) => e.toDomain())
           .toList();
 
-      await datasetsDatabase.clearDatasets();
+      // Ne pas effacer les datasets existants, juste insérer/mettre à jour
       await datasetsDatabase.insertDatasets(datasets);
+
+      // Associate each dataset with this module
+      for (final dataset in datasets) {
+        await database.associateModuleWithDataset(moduleId, dataset.id);
+      }
 
       // 2. Fetch and store module configuration
       final config = await globalApi.getModuleConfiguration(moduleCode);
@@ -381,6 +388,15 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // Essayer avec le mapping statique en fallback
       final mapping = await getNomenclatureTypeMapping();
       return mapping[mnemonique];
+    }
+  }
+
+  @override
+  Future<List<int>> getDatasetIdsForModule(int moduleId) async {
+    try {
+      return await database.getDatasetIdsForModule(moduleId);
+    } catch (e) {
+      throw Exception('Failed to get datasets for module: $e');
     }
   }
 

@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
@@ -150,5 +151,18 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   Future<Module?> getModuleIdByLabel(String moduleLabel) async {
     final db = await _database;
     return await db.modulesDao.getModuleIdByLabel(moduleLabel);
+  }
+
+  // Module-Dataset relationship operations
+  @override
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId) async {
+    final db = await _database;
+    await db.modulesDao.associateModuleWithDataset(moduleId, datasetId);
+  }
+
+  @override
+  Future<List<int>> getDatasetIdsForModule(int moduleId) async {
+    final db = await _database;
+    return await db.modulesDao.getDatasetIdsForModule(moduleId);
   }
 }

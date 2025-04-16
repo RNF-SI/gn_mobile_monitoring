@@ -10358,6 +10358,200 @@ class CorSiteTypeTableCompanion extends UpdateCompanion<CorSiteType> {
   }
 }
 
+class $CorModuleDatasetTableTable extends CorModuleDatasetTable
+    with TableInfo<$CorModuleDatasetTableTable, CorModuleDataset> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorModuleDatasetTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idModuleMeta =
+      const VerificationMeta('idModule');
+  @override
+  late final GeneratedColumn<int> idModule = GeneratedColumn<int>(
+      'id_module', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idDatasetMeta =
+      const VerificationMeta('idDataset');
+  @override
+  late final GeneratedColumn<int> idDataset = GeneratedColumn<int>(
+      'id_dataset', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [idModule, idDataset];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cor_module_dataset_table';
+  @override
+  VerificationContext validateIntegrity(Insertable<CorModuleDataset> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_module')) {
+      context.handle(_idModuleMeta,
+          idModule.isAcceptableOrUnknown(data['id_module']!, _idModuleMeta));
+    } else if (isInserting) {
+      context.missing(_idModuleMeta);
+    }
+    if (data.containsKey('id_dataset')) {
+      context.handle(_idDatasetMeta,
+          idDataset.isAcceptableOrUnknown(data['id_dataset']!, _idDatasetMeta));
+    } else if (isInserting) {
+      context.missing(_idDatasetMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idModule, idDataset};
+  @override
+  CorModuleDataset map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorModuleDataset(
+      idModule: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_module'])!,
+      idDataset: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_dataset'])!,
+    );
+  }
+
+  @override
+  $CorModuleDatasetTableTable createAlias(String alias) {
+    return $CorModuleDatasetTableTable(attachedDatabase, alias);
+  }
+}
+
+class CorModuleDataset extends DataClass
+    implements Insertable<CorModuleDataset> {
+  final int idModule;
+  final int idDataset;
+  const CorModuleDataset({required this.idModule, required this.idDataset});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_module'] = Variable<int>(idModule);
+    map['id_dataset'] = Variable<int>(idDataset);
+    return map;
+  }
+
+  CorModuleDatasetTableCompanion toCompanion(bool nullToAbsent) {
+    return CorModuleDatasetTableCompanion(
+      idModule: Value(idModule),
+      idDataset: Value(idDataset),
+    );
+  }
+
+  factory CorModuleDataset.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorModuleDataset(
+      idModule: serializer.fromJson<int>(json['idModule']),
+      idDataset: serializer.fromJson<int>(json['idDataset']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idModule': serializer.toJson<int>(idModule),
+      'idDataset': serializer.toJson<int>(idDataset),
+    };
+  }
+
+  CorModuleDataset copyWith({int? idModule, int? idDataset}) =>
+      CorModuleDataset(
+        idModule: idModule ?? this.idModule,
+        idDataset: idDataset ?? this.idDataset,
+      );
+  CorModuleDataset copyWithCompanion(CorModuleDatasetTableCompanion data) {
+    return CorModuleDataset(
+      idModule: data.idModule.present ? data.idModule.value : this.idModule,
+      idDataset: data.idDataset.present ? data.idDataset.value : this.idDataset,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorModuleDataset(')
+          ..write('idModule: $idModule, ')
+          ..write('idDataset: $idDataset')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(idModule, idDataset);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorModuleDataset &&
+          other.idModule == this.idModule &&
+          other.idDataset == this.idDataset);
+}
+
+class CorModuleDatasetTableCompanion extends UpdateCompanion<CorModuleDataset> {
+  final Value<int> idModule;
+  final Value<int> idDataset;
+  final Value<int> rowid;
+  const CorModuleDatasetTableCompanion({
+    this.idModule = const Value.absent(),
+    this.idDataset = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorModuleDatasetTableCompanion.insert({
+    required int idModule,
+    required int idDataset,
+    this.rowid = const Value.absent(),
+  })  : idModule = Value(idModule),
+        idDataset = Value(idDataset);
+  static Insertable<CorModuleDataset> custom({
+    Expression<int>? idModule,
+    Expression<int>? idDataset,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (idModule != null) 'id_module': idModule,
+      if (idDataset != null) 'id_dataset': idDataset,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorModuleDatasetTableCompanion copyWith(
+      {Value<int>? idModule, Value<int>? idDataset, Value<int>? rowid}) {
+    return CorModuleDatasetTableCompanion(
+      idModule: idModule ?? this.idModule,
+      idDataset: idDataset ?? this.idDataset,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idModule.present) {
+      map['id_module'] = Variable<int>(idModule.value);
+    }
+    if (idDataset.present) {
+      map['id_dataset'] = Variable<int>(idDataset.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorModuleDatasetTableCompanion(')
+          ..write('idModule: $idModule, ')
+          ..write('idDataset: $idDataset, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $TTaxrefsTable extends TTaxrefs with TableInfo<$TTaxrefsTable, TTaxref> {
   @override
   final GeneratedDatabase attachedDatabase;
@@ -12047,6 +12241,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CorVisitObserverTable(this);
   late final $CorSiteTypeTableTable corSiteTypeTable =
       $CorSiteTypeTableTable(this);
+  late final $CorModuleDatasetTableTable corModuleDatasetTable =
+      $CorModuleDatasetTableTable(this);
   late final $TTaxrefsTable tTaxrefs = $TTaxrefsTable(this);
   late final $BibListesTableTable bibListesTable = $BibListesTableTable(this);
   late final $CorTaxonListeTableTable corTaxonListeTable =
@@ -12093,6 +12289,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tBaseVisits,
         corVisitObserver,
         corSiteTypeTable,
+        corModuleDatasetTable,
         tTaxrefs,
         bibListesTable,
         corTaxonListeTable
@@ -17335,6 +17532,141 @@ typedef $$CorSiteTypeTableTableProcessedTableManager = ProcessedTableManager<
     ),
     CorSiteType,
     PrefetchHooks Function()>;
+typedef $$CorModuleDatasetTableTableCreateCompanionBuilder
+    = CorModuleDatasetTableCompanion Function({
+  required int idModule,
+  required int idDataset,
+  Value<int> rowid,
+});
+typedef $$CorModuleDatasetTableTableUpdateCompanionBuilder
+    = CorModuleDatasetTableCompanion Function({
+  Value<int> idModule,
+  Value<int> idDataset,
+  Value<int> rowid,
+});
+
+class $$CorModuleDatasetTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorModuleDatasetTableTable> {
+  $$CorModuleDatasetTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnFilters(column));
+}
+
+class $$CorModuleDatasetTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorModuleDatasetTableTable> {
+  $$CorModuleDatasetTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDataset => $composableBuilder(
+      column: $table.idDataset, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CorModuleDatasetTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorModuleDatasetTableTable> {
+  $$CorModuleDatasetTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idModule =>
+      $composableBuilder(column: $table.idModule, builder: (column) => column);
+
+  GeneratedColumn<int> get idDataset =>
+      $composableBuilder(column: $table.idDataset, builder: (column) => column);
+}
+
+class $$CorModuleDatasetTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CorModuleDatasetTableTable,
+    CorModuleDataset,
+    $$CorModuleDatasetTableTableFilterComposer,
+    $$CorModuleDatasetTableTableOrderingComposer,
+    $$CorModuleDatasetTableTableAnnotationComposer,
+    $$CorModuleDatasetTableTableCreateCompanionBuilder,
+    $$CorModuleDatasetTableTableUpdateCompanionBuilder,
+    (
+      CorModuleDataset,
+      BaseReferences<_$AppDatabase, $CorModuleDatasetTableTable,
+          CorModuleDataset>
+    ),
+    CorModuleDataset,
+    PrefetchHooks Function()> {
+  $$CorModuleDatasetTableTableTableManager(
+      _$AppDatabase db, $CorModuleDatasetTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorModuleDatasetTableTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorModuleDatasetTableTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorModuleDatasetTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idModule = const Value.absent(),
+            Value<int> idDataset = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorModuleDatasetTableCompanion(
+            idModule: idModule,
+            idDataset: idDataset,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int idModule,
+            required int idDataset,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorModuleDatasetTableCompanion.insert(
+            idModule: idModule,
+            idDataset: idDataset,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CorModuleDatasetTableTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CorModuleDatasetTableTable,
+        CorModuleDataset,
+        $$CorModuleDatasetTableTableFilterComposer,
+        $$CorModuleDatasetTableTableOrderingComposer,
+        $$CorModuleDatasetTableTableAnnotationComposer,
+        $$CorModuleDatasetTableTableCreateCompanionBuilder,
+        $$CorModuleDatasetTableTableUpdateCompanionBuilder,
+        (
+          CorModuleDataset,
+          BaseReferences<_$AppDatabase, $CorModuleDatasetTableTable,
+              CorModuleDataset>
+        ),
+        CorModuleDataset,
+        PrefetchHooks Function()>;
 typedef $$TTaxrefsTableCreateCompanionBuilder = TTaxrefsCompanion Function({
   Value<int> cdNom,
   Value<int?> cdRef,
@@ -18519,6 +18851,8 @@ class $AppDatabaseManager {
       $$CorVisitObserverTableTableManager(_db, _db.corVisitObserver);
   $$CorSiteTypeTableTableTableManager get corSiteTypeTable =>
       $$CorSiteTypeTableTableTableManager(_db, _db.corSiteTypeTable);
+  $$CorModuleDatasetTableTableTableManager get corModuleDatasetTable =>
+      $$CorModuleDatasetTableTableTableManager(_db, _db.corModuleDatasetTable);
   $$TTaxrefsTableTableManager get tTaxrefs =>
       $$TTaxrefsTableTableManager(_db, _db.tTaxrefs);
   $$BibListesTableTableTableManager get bibListesTable =>

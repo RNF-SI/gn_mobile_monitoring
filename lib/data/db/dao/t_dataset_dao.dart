@@ -14,12 +14,42 @@ class TDatasetsDao extends DatabaseAccessor<AppDatabase>
   TDatasetsDao(this.db) : super(db);
 
   Future<void> insertDatasets(List<Dataset> datasets) async {
-    await batch((batch) {
-      batch.insertAll(
-        db.tDatasets,
-        datasets.map((dataset) => dataset.toDatabaseEntity()).toList(),
+    // Insert datasets one by one with the onConflict strategy
+    for (final dataset in datasets) {
+      final entity = dataset.toDatabaseEntity();
+      await into(db.tDatasets).insert(
+        entity,
+        onConflict: DoUpdate((old) => 
+          TDatasetsCompanion(
+            // Update all fields except primary key in case of conflict
+            uniqueDatasetId: Value(entity.uniqueDatasetId),
+            idAcquisitionFramework: Value(entity.idAcquisitionFramework),
+            datasetName: Value(entity.datasetName),
+            datasetShortname: Value(entity.datasetShortname),
+            datasetDesc: Value(entity.datasetDesc),
+            idNomenclatureDataType: Value(entity.idNomenclatureDataType),
+            keywords: Value(entity.keywords),
+            marineDomain: Value(entity.marineDomain),
+            terrestrialDomain: Value(entity.terrestrialDomain),
+            idNomenclatureDatasetObjectif: Value(entity.idNomenclatureDatasetObjectif),
+            bboxWest: Value(entity.bboxWest),
+            bboxEast: Value(entity.bboxEast),
+            bboxSouth: Value(entity.bboxSouth),
+            bboxNorth: Value(entity.bboxNorth),
+            idNomenclatureCollectingMethod: Value(entity.idNomenclatureCollectingMethod),
+            idNomenclatureDataOrigin: Value(entity.idNomenclatureDataOrigin),
+            idNomenclatureSourceStatus: Value(entity.idNomenclatureSourceStatus),
+            idNomenclatureResourceType: Value(entity.idNomenclatureResourceType),
+            active: Value(entity.active),
+            validable: Value(entity.validable),
+            idDigitizer: Value(entity.idDigitizer),
+            idTaxaList: Value(entity.idTaxaList),
+            // Keep existing metadata rather than overwriting
+          ),
+          target: [db.tDatasets.idDataset],
+        ),
       );
-    });
+    }
   }
 
   Future<List<Dataset>> getAllDatasets() async {

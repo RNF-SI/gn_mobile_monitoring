@@ -33,6 +33,10 @@ abstract class ModulesDatabase {
   Future<void> clearSitesGroupModules(int moduleId);
   Future<void> insertSitesGroupModules(List<SitesGroupModule> siteGroups);
 
+  // Module-Dataset relationship operations
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId);
+  Future<List<int>> getDatasetIdsForModule(int moduleId);
+
   Future<List<Module>> getModules();
   Future<Module?> getModuleById(int moduleId);
   Future<Module?> getModuleIdByLabel(String moduleLabel);
