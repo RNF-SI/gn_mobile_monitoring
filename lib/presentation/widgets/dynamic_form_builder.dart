@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
@@ -296,6 +298,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             description: description);
       case 'TaxonSelector':
         return _buildTaxonField(fieldName, label, isRequired, fieldConfig,
+            description: description);
+      case 'DatasetSelector':
+        return _buildDatasetField(fieldName, label, isRequired, fieldConfig,
             description: description);
       default:
         return _buildTextField(fieldName, label, isRequired,
@@ -975,6 +980,117 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               });
             },
             idListTaxonomy: widget.idListTaxonomy,
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Pour les champs de type dataset
+  Widget _buildDatasetField(String fieldName, String label, bool required,
+      Map<String, dynamic> fieldConfig,
+      {String? description}) {
+    // Récupérer le service de datasets
+    final datasetService = ref.read(datasetServiceProvider);
+    
+    // Obtenir l'ID du module
+    final int moduleId = widget.customConfig?.idModule ?? 0;
+    
+    // Déterminer la valeur initiale
+    int? initialValue;
+    if (_formValues.containsKey(fieldName)) {
+      final value = _formValues[fieldName];
+      if (value is int) {
+        initialValue = value;
+      } else if (value is String && int.tryParse(value) != null) {
+        initialValue = int.parse(value);
+      }
+    }
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          FutureBuilder<List<Dataset>>(
+            future: datasetService.getDatasetsForModule(moduleId),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (snapshot.hasError) {
+                return Text(
+                  'Erreur lors du chargement des datasets: ${snapshot.error}',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                );
+              }
+              
+              final datasets = snapshot.data ?? [];
+              
+              if (datasets.isEmpty) {
+                return Text(
+                  'Aucun dataset disponible pour ce module',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                );
+              }
+              
+              // Si nous avons une seule valeur et aucune valeur initiale, 
+              // sélectionner automatiquement cette valeur
+              if (datasets.length == 1 && initialValue == null) {
+                // Mettre à jour après la construction du widget pour éviter des erreurs
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      _formValues[fieldName] = datasets.first.id;
+                    });
+                  }
+                });
+              }
+              
+              return DropdownButtonFormField<int>(
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                ),
+                value: initialValue,
+                hint: Text('Sélectionner un jeu de données'),
+                items: datasets.map((dataset) {
+                  return DropdownMenuItem<int>(
+                    value: dataset.id,
+                    child: Text(dataset.datasetName),
+                  );
+                }).toList(),
+                validator: required
+                  ? (value) => value == null ? 'Ce champ est requis' : null
+                  : null,
+                onChanged: (value) {
+                  setState(() {
+                    if (value == null) {
+                      _formValues.remove(fieldName);
+                    } else {
+                      _formValues[fieldName] = value;
+                    }
+                  });
+                },
+              );
+            },
           ),
         ],
       ),
