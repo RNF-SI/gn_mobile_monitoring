@@ -56,6 +56,24 @@ class TDatasetsDao extends DatabaseAccessor<AppDatabase>
     final dbDatasets = await select(db.tDatasets).get();
     return dbDatasets.map((e) => e.toDomain()).toList();
   }
+  
+  Future<Dataset?> getDatasetById(int datasetId) async {
+    final query = select(db.tDatasets)
+      ..where((tbl) => tbl.idDataset.equals(datasetId));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
+  }
+  
+  Future<List<Dataset>> getDatasetsByIds(List<int> datasetIds) async {
+    if (datasetIds.isEmpty) {
+      return [];
+    }
+    
+    final query = select(db.tDatasets)
+      ..where((tbl) => tbl.idDataset.isIn(datasetIds));
+    final results = await query.get();
+    return results.map((e) => e.toDomain()).toList();
+  }
 
   Future<void> clearDatasets() async {
     await delete(db.tDatasets).go();

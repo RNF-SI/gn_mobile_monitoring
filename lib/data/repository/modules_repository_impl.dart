@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/data/mapper/module_complement_entity_mapper
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/bib_type_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -397,6 +398,15 @@ class ModulesRepositoryImpl implements ModulesRepository {
       return await database.getDatasetIdsForModule(moduleId);
     } catch (e) {
       throw Exception('Failed to get datasets for module: $e');
+    }
+  }
+
+  @override
+  Future<List<Dataset>> getDatasetsByIds(List<int> datasetIds) async {
+    try {
+      return await datasetsDatabase.getDatasetsByIds(datasetIds);
+    } catch (e) {
+      throw Exception('Failed to get datasets by ids: $e');
     }
   }
 
