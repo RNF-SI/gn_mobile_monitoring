@@ -51,8 +51,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
   void initState() {
     super.initState();
     _isEditMode = widget.visit != null;
-    
-    // Récupérer l'état du bouton depuis le provider dans le prochain frame 
+
+    // Récupérer l'état du bouton depuis le provider dans le prochain frame
     // (car on ne peut pas accéder à ref dans initState)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       setState(() {
@@ -126,9 +126,9 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
     if (visit.observers != null && visit.observers!.isNotEmpty) {
       values['observers'] = visit.observers;
     }
-    
+
     // Ajouter le dataset si disponible
-    if (visit.idDataset != null && visit.idDataset! > 0) {
+    if (visit.idDataset != null && visit.idDataset > 0) {
       values['id_dataset'] = visit.idDataset;
     }
 
@@ -648,7 +648,8 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
                           setState(() {
                             _chainInput = value;
                             // Mettre à jour le provider pour les prochaines saisies
-                            ref.read(chainVisitInputProvider.notifier).state = value;
+                            ref.read(chainVisitInputProvider.notifier).state =
+                                value;
                           });
                         },
                         // Utiliser les propriétés d'affichage de la configuration
