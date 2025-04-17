@@ -7,8 +7,6 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
-import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
-import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_complement_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
@@ -176,19 +174,16 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // 1. Fetch nomenclatures and datasets
       final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
-      // Process nomenclatures - convert each dynamic map to NomenclatureEntity first
-      final nomenclatures = (data['nomenclatures'] as List<dynamic>)
-          .map((e) => NomenclatureEntity.fromJson(e as Map<String, dynamic>))
-          .map((e) => e.toDomain())
-          .toList();
+      // Convert nomenclature entities to domain models
+      final nomenclatures =
+          data.nomenclatures.map((e) => e.toDomain()).toList();
 
       // Insert nomenclatures with duplicate handling
       await nomenclaturesDatabase.insertNomenclatures(nomenclatures);
 
-      // Process nomenclature types - extract from the nomenclatures
-      if (data.containsKey('nomenclatureTypes')) {
-        final typesData = data['nomenclatureTypes'] as List<dynamic>;
-        final nomenclatureTypes = typesData
+      // Process nomenclature types
+      if (data.nomenclatureTypes.isNotEmpty) {
+        final nomenclatureTypes = data.nomenclatureTypes
             .map((typeData) => NomenclatureType(
                   idType: typeData['idType'] as int,
                   mnemonique: typeData['mnemonique'] as String,
@@ -196,15 +191,11 @@ class ModulesRepositoryImpl implements ModulesRepository {
             .toList();
 
         // Don't clear existing types, just add new ones, avoiding duplicates
-        // The insertNomenclatureTypes method will handle duplicate prevention
         await nomenclaturesDatabase.insertNomenclatureTypes(nomenclatureTypes);
       }
 
-      // Process datasets
-      final datasets = (data['datasets'] as List<dynamic>)
-          .map((e) => DatasetEntity.fromJson(e as Map<String, dynamic>))
-          .map((e) => e.toDomain())
-          .toList();
+      // Convert dataset entities to domain models
+      final datasets = data.datasets.map((e) => e.toDomain()).toList();
 
       // Ne pas effacer les datasets existants, juste insérer/mettre à jour
       await datasetsDatabase.insertDatasets(datasets);

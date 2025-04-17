@@ -48,7 +48,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       batch.insertAll(tModules, dbEntities);
     });
   }
-  
+
   Future<void> updateModule(Module module) async {
     final dbEntity = module.toDatabaseEntity();
     await (update(tModules)..where((tbl) => tbl.idModule.equals(module.id)))
@@ -109,10 +109,10 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
 
     return result.toDomain();
   }
-  
+
   Future<List<ModuleComplement>> getAllModuleComplements() async {
     final complements = await select(tModuleComplements).get();
-    
+
     // Handle null configurations by providing empty maps
     return complements.map((result) {
       if (result.configuration == null) {
@@ -220,14 +220,14 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final result = await query.getSingleOrNull();
     return result?.toDomain();
   }
-  
+
   Future<Module?> getModuleByCode(String moduleCode) async {
     final query = select(tModules)
       ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
     return result?.toDomain();
   }
-  
+
   // Module-Dataset relationship operations
   Future<void> associateModuleWithDataset(int moduleId, int datasetId) async {
     try {
@@ -237,24 +237,19 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
           idModule: Value(moduleId),
           idDataset: Value(datasetId),
         ),
-        onConflict: DoUpdate(
-          (old) => CorModuleDatasetTableCompanion.custom(
-            // No need to update anything, just avoid duplicates
-          ),
-          target: [corModuleDatasetTable.idModule, corModuleDatasetTable.idDataset],
-        ),
+        onConflict: DoNothing(), // Just ignore duplicates
       );
     } catch (e) {
       throw Exception('Failed to associate module with dataset: $e');
     }
   }
-  
+
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {
     try {
       final results = await (select(corModuleDatasetTable)
-        ..where((tbl) => tbl.idModule.equals(moduleId)))
-        .get();
-      
+            ..where((tbl) => tbl.idModule.equals(moduleId)))
+          .get();
+
       return results.map((row) => row.idDataset).toList();
     } catch (e) {
       throw Exception('Failed to get datasets for module: $e');
