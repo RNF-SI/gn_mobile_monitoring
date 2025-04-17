@@ -147,6 +147,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       controller.clear();
     });
     setState(() {});
+    
+    // Remonter en haut du formulaire après réinitialisation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        Scrollable.ensureVisible(
+          context, 
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   /// Précharge toutes les nomenclatures nécessaires pour ce formulaire
