@@ -6,6 +6,8 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/repository/modules_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:mocktail/mocktail.dart';
@@ -135,11 +137,14 @@ void main() {
           .thenAnswer((_) async => moduleCode);
 
       when(() => mockGlobalApi.getNomenclaturesAndDatasets(moduleCode))
-          .thenAnswer((_) async => {
-                'nomenclatures': nomenclatureEntities,
-                'nomenclatureTypes': <dynamic>[],
-                'datasets': datasetsJson,
-              });
+          .thenAnswer((_) async => (
+                nomenclatures: nomenclatureEntities
+                    .map((e) => NomenclatureEntity.fromJson(e))
+                    .toList(),
+                nomenclatureTypes: <Map<String, dynamic>>[],
+                datasets:
+                    datasetsJson.map((e) => DatasetEntity.fromJson(e)).toList(),
+              ));
 
       when(() => mockGlobalApi.getModuleConfiguration(moduleCode))
           .thenAnswer((_) async => <String, dynamic>{});
