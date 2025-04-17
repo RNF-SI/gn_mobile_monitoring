@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/visit_complement.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
@@ -16,6 +17,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
     SiteVisitsViewModel,
@@ -37,6 +39,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
   final getUserIdUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
   final getUserNameUseCase =
       ref.watch(getUserNameFromLocalStorageUseCaseProvider);
+  final datasetService = ref.watch(datasetServiceProvider);
 
   return SiteVisitsViewModel(
     getVisitsBySiteAndModuleUseCase,
@@ -48,6 +51,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
     deleteVisitUseCase,
     getUserIdUseCase,
     getUserNameUseCase,
+    datasetService,
     siteId,
     moduleId,
   );
@@ -63,9 +67,13 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final DeleteVisitUseCase _deleteVisitUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final GetUserNameFromLocalStorageUseCase _getUserNameUseCase;
+  final DatasetService _datasetService;
   final int _siteId;
   final int _moduleId;
   bool _mounted = true;
+  
+  // Cache pour les datasets du module courant
+  List<Dataset>? _moduleDatasets;
 
   SiteVisitsViewModel(
     this._getVisitsBySiteAndModuleUseCase,
@@ -77,10 +85,24 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     this._deleteVisitUseCase,
     this._getUserIdUseCase,
     this._getUserNameUseCase,
+    this._datasetService,
     this._siteId,
     this._moduleId,
   ) : super(const AsyncValue.loading()) {
     loadVisits();
+    _loadDatasets();
+  }
+  
+  /// Charge les datasets associés au module courant
+  Future<void> _loadDatasets() async {
+    if (!_mounted) return;
+    
+    try {
+      _moduleDatasets = await _datasetService.getDatasetsForModule(_moduleId);
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des datasets: $e');
+      _moduleDatasets = [];
+    }
   }
 
   /// Charge toutes les visites pour le site courant
@@ -254,6 +276,24 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     }
   }
 
+  /// Récupère les datasets disponibles pour le module courant
+  Future<List<Dataset>> getDatasetsForCurrentModule() async {
+    if (_moduleDatasets == null) {
+      await _loadDatasets();
+    }
+    return _moduleDatasets ?? [];
+  }
+  
+  /// Récupère un dataset par son ID
+  Future<Dataset?> getDatasetById(int datasetId) async {
+    final datasets = await getDatasetsForCurrentModule();
+    try {
+      return datasets.firstWhere((dataset) => dataset.id == datasetId);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Convertit les données brutes du formulaire en format JSON compatible avec BaseVisit
   Future<Map<String, dynamic>> _prepareVisitJsonData(
       Map<String, dynamic> formData, BaseSite site,
@@ -270,15 +310,32 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
         processedFormData[key] = normalizeTimeFormat(value);
       }
     });
+    
+    // Récupérer l'ID du dataset s'il est présent dans le formulaire
+    int datasetId = 0;
+    if (processedFormData.containsKey('id_dataset')) {
+      final value = processedFormData['id_dataset'];
+      if (value is int) {
+        datasetId = value;
+      } else if (value is String && int.tryParse(value) != null) {
+        datasetId = int.parse(value);
+      } else if (value is num) {
+        datasetId = value.toInt();
+      }
+    }
+    
+    // Si aucun dataset n'a été sélectionné et que nous avons des datasets disponibles, utiliser le premier
+    if (datasetId <= 0 && _moduleDatasets != null && _moduleDatasets!.isNotEmpty) {
+      datasetId = _moduleDatasets!.first.id;
+    }
 
     // Créer une structure JSON qui suit le format attendu par BaseVisit.fromJson()
     final Map<String, dynamic> jsonData = {
       // Champs obligatoires avec valeurs par défaut
       'idBaseVisit': visitId ?? 0,
       'idBaseSite': site.idBaseSite,
-      'idDataset':
-          1, // Valeur par défaut ou à récupérer depuis la configuration
-      'idModule': moduleId ?? 1, // Valeur par défaut si non spécifiée
+      'idDataset': datasetId > 0 ? datasetId : 1, // Utiliser l'ID du dataset sélectionné ou par défaut
+      'idModule': moduleId ?? _moduleId, // Utiliser l'ID du module fourni ou celui courant
       'visitDateMin': _formatDateValue(processedFormData['visit_date_min']) ??
           DateTime.now().toIso8601String(),
 
@@ -343,11 +400,11 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   /// Extrait les données spécifiques au module en excluant les champs standard
   Map<String, dynamic> _extractModuleSpecificData(
       Map<String, dynamic> formData) {
-    // Liste des clés à exclure (champs standard)
+    // Liste des clés à exclure (champs standard qui sont déjà traités séparément)
     const standardFields = {
       'id_base_visit',
       'id_base_site',
-      'id_dataset',
+      'id_dataset', // id_dataset est maintenant dans idDataset au niveau BaseVisit
       'id_module',
       'visit_date_min',
       'visit_date_max',

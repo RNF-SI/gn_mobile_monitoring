@@ -27,6 +27,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.da
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
@@ -345,5 +346,13 @@ final getTaxonByCdNomUseCaseProvider = Provider<GetTaxonByCdNomUseCase>(
 final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
   (ref) => SearchTaxonsUseCaseImpl(
     ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+// Provider pour le cas d'utilisation des datasets
+final getDatasetsForModuleUseCaseProvider =
+    Provider<GetDatasetsForModuleUseCase>(
+  (ref) => GetDatasetsForModuleUseCaseImpl(
+    ref.watch(modulesRepositoryProvider),
   ),
 );

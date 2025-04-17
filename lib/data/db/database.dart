@@ -18,6 +18,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_type_site.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_module_dataset.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_type.dart';
@@ -88,6 +89,7 @@ part 'database.g.dart';
   CorObjectModuleTable,
   CorVisitObserver,
   CorSiteTypeTable,
+  CorModuleDatasetTable,
   TBaseVisits,
   TTaxrefs,
   BibListesTable,

@@ -11,4 +11,6 @@ mixin _$ModulesDaoMixin on DatabaseAccessor<AppDatabase> {
       attachedDatabase.corSiteModuleTable;
   $CorSitesGroupModuleTableTable get corSitesGroupModuleTable =>
       attachedDatabase.corSitesGroupModuleTable;
+  $CorModuleDatasetTableTable get corModuleDatasetTable =>
+      attachedDatabase.corModuleDatasetTable;
 }

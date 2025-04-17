@@ -7,13 +7,12 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
-import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
-import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_complement_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/module_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/bib_type_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -175,18 +174,16 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // 1. Fetch nomenclatures and datasets
       final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
-      // Process nomenclatures
-      final nomenclatures = (data['nomenclatures'] as List<NomenclatureEntity>)
-          .map((e) => e.toDomain())
-          .toList();
+      // Convert nomenclature entities to domain models
+      final nomenclatures =
+          data.nomenclatures.map((e) => e.toDomain()).toList();
 
       // Insert nomenclatures with duplicate handling
       await nomenclaturesDatabase.insertNomenclatures(nomenclatures);
 
-      // Process nomenclature types - extract from the nomenclatures
-      if (data.containsKey('nomenclatureTypes')) {
-        final typesData = data['nomenclatureTypes'] as List<dynamic>;
-        final nomenclatureTypes = typesData
+      // Process nomenclature types
+      if (data.nomenclatureTypes.isNotEmpty) {
+        final nomenclatureTypes = data.nomenclatureTypes
             .map((typeData) => NomenclatureType(
                   idType: typeData['idType'] as int,
                   mnemonique: typeData['mnemonique'] as String,
@@ -194,17 +191,19 @@ class ModulesRepositoryImpl implements ModulesRepository {
             .toList();
 
         // Don't clear existing types, just add new ones, avoiding duplicates
-        // The insertNomenclatureTypes method will handle duplicate prevention
         await nomenclaturesDatabase.insertNomenclatureTypes(nomenclatureTypes);
       }
 
-      // Process datasets
-      final datasets = (data['datasets'] as List<DatasetEntity>)
-          .map((e) => e.toDomain())
-          .toList();
+      // Convert dataset entities to domain models
+      final datasets = data.datasets.map((e) => e.toDomain()).toList();
 
-      await datasetsDatabase.clearDatasets();
+      // Ne pas effacer les datasets existants, juste insérer/mettre à jour
       await datasetsDatabase.insertDatasets(datasets);
+
+      // Associate each dataset with this module
+      for (final dataset in datasets) {
+        await database.associateModuleWithDataset(moduleId, dataset.id);
+      }
 
       // 2. Fetch and store module configuration
       final config = await globalApi.getModuleConfiguration(moduleCode);
@@ -381,6 +380,24 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // Essayer avec le mapping statique en fallback
       final mapping = await getNomenclatureTypeMapping();
       return mapping[mnemonique];
+    }
+  }
+
+  @override
+  Future<List<int>> getDatasetIdsForModule(int moduleId) async {
+    try {
+      return await database.getDatasetIdsForModule(moduleId);
+    } catch (e) {
+      throw Exception('Failed to get datasets for module: $e');
+    }
+  }
+
+  @override
+  Future<List<Dataset>> getDatasetsByIds(List<int> datasetIds) async {
+    try {
+      return await datasetsDatabase.getDatasetsByIds(datasetIds);
+    } catch (e) {
+      throw Exception('Failed to get datasets by ids: $e');
     }
   }
 

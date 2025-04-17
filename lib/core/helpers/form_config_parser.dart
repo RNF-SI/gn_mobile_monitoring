@@ -389,6 +389,12 @@ class FormConfigParser {
       return 'TaxonSelector';
     }
 
+    // Vérifier si c'est un champ de dataset (par nom ou par type_util)
+    if (fieldConfig['attribut_name'] == 'id_dataset' || 
+        fieldConfig['type_util'] == 'dataset') {
+      return 'DatasetSelector';
+    }
+
     final String typeWidget = fieldConfig['type_widget']?.toString() ?? 'text';
 
     switch (typeWidget) {
@@ -404,6 +410,8 @@ class FormConfigParser {
         return 'NumberField';
       case 'select':
         return 'DropdownButton';
+      case 'dataset':
+        return 'DatasetSelector';
       case 'datalist':
         // Vérifier si c'est un champ datalist qui est en fait une nomenclature
         if (fieldConfig['api'] != null &&
@@ -481,7 +489,7 @@ class FormConfigParser {
 
     // Liste des champs à exclure (comme dans l'application web)
     final fieldsToExclude = [
-      'id_dataset',
+      // 'id_dataset', // Nous voulons maintenant afficher le champ dataset
       'uuid_base_visit',
       'nb_observations',
       // 'medias', // Le champ media doit être affiché

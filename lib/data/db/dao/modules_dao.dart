@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_mapper.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_module_dataset.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
@@ -16,7 +17,8 @@ part 'modules_dao.g.dart'; // Updated file name
   TModules,
   TModuleComplements,
   CorSiteModuleTable,
-  CorSitesGroupModuleTable
+  CorSitesGroupModuleTable,
+  CorModuleDatasetTable
 ])
 class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   ModulesDao(super.db);
@@ -46,7 +48,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       batch.insertAll(tModules, dbEntities);
     });
   }
-  
+
   Future<void> updateModule(Module module) async {
     final dbEntity = module.toDatabaseEntity();
     await (update(tModules)..where((tbl) => tbl.idModule.equals(module.id)))
@@ -107,10 +109,10 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
 
     return result.toDomain();
   }
-  
+
   Future<List<ModuleComplement>> getAllModuleComplements() async {
     final complements = await select(tModuleComplements).get();
-    
+
     // Handle null configurations by providing empty maps
     return complements.map((result) {
       if (result.configuration == null) {
@@ -218,11 +220,39 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final result = await query.getSingleOrNull();
     return result?.toDomain();
   }
-  
+
   Future<Module?> getModuleByCode(String moduleCode) async {
     final query = select(tModules)
       ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
     return result?.toDomain();
+  }
+
+  // Module-Dataset relationship operations
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId) async {
+    try {
+      // Using insert with onConflict strategy to handle duplicates
+      await into(corModuleDatasetTable).insert(
+        CorModuleDatasetTableCompanion(
+          idModule: Value(moduleId),
+          idDataset: Value(datasetId),
+        ),
+        onConflict: DoNothing(), // Just ignore duplicates
+      );
+    } catch (e) {
+      throw Exception('Failed to associate module with dataset: $e');
+    }
+  }
+
+  Future<List<int>> getDatasetIdsForModule(int moduleId) async {
+    try {
+      final results = await (select(corModuleDatasetTable)
+            ..where((tbl) => tbl.idModule.equals(moduleId)))
+          .get();
+
+      return results.map((row) => row.idDataset).toList();
+    } catch (e) {
+      throw Exception('Failed to get datasets for module: $e');
+    }
   }
 }

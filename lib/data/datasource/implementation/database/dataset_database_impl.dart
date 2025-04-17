@@ -17,6 +17,18 @@ class DatasetsDatabaseImpl implements DatasetsDatabase {
     final db = await _database;
     return await db.tDatasetsDao.getAllDatasets();
   }
+  
+  @override
+  Future<Dataset?> getDatasetById(int datasetId) async {
+    final db = await _database;
+    return await db.tDatasetsDao.getDatasetById(datasetId);
+  }
+  
+  @override
+  Future<List<Dataset>> getDatasetsByIds(List<int> datasetIds) async {
+    final db = await _database;
+    return await db.tDatasetsDao.getDatasetsByIds(datasetIds);
+  }
 
   @override
   Future<void> clearDatasets() async {
