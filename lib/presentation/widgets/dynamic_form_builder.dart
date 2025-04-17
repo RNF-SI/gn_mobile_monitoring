@@ -147,12 +147,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       controller.clear();
     });
     setState(() {});
-    
+
     // Remonter en haut du formulaire après réinitialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (context.mounted) {
         Scrollable.ensureVisible(
-          context, 
+          context,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -622,12 +622,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
+            isExpanded: true,
             value: _formValues[fieldName]?.toString(),
             items: options.map((option) {
               return DropdownMenuItem<String>(
                 value: option.key,
-                child: Text(option.value),
+                child: Text(
+                  option.value,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             validator: required
@@ -996,17 +1001,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       ),
     );
   }
-  
+
   // Pour les champs de type dataset
   Widget _buildDatasetField(String fieldName, String label, bool required,
       Map<String, dynamic> fieldConfig,
       {String? description}) {
     // Récupérer le service de datasets
     final datasetService = ref.read(datasetServiceProvider);
-    
+
     // Obtenir l'ID du module
     final int moduleId = widget.customConfig?.idModule ?? 0;
-    
+
     // Déterminer la valeur initiale
     int? initialValue;
     if (_formValues.containsKey(fieldName)) {
@@ -1017,7 +1022,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         initialValue = int.parse(value);
       }
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -1046,24 +1051,24 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (snapshot.hasError) {
                 return Text(
                   'Erreur lors du chargement des datasets: ${snapshot.error}',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 );
               }
-              
+
               final datasets = snapshot.data ?? [];
-              
+
               if (datasets.isEmpty) {
                 return Text(
                   'Aucun dataset disponible pour ce module',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 );
               }
-              
-              // Si nous avons une seule valeur et aucune valeur initiale, 
+
+              // Si nous avons une seule valeur et aucune valeur initiale,
               // sélectionner automatiquement cette valeur
               if (datasets.length == 1 && initialValue == null) {
                 // Mettre à jour après la construction du widget pour éviter des erreurs
@@ -1075,7 +1080,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   }
                 });
               }
-              
+
               return DropdownButtonFormField<int>(
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -1089,8 +1094,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   );
                 }).toList(),
                 validator: required
-                  ? (value) => value == null ? 'Ce champ est requis' : null
-                  : null,
+                    ? (value) => value == null ? 'Ce champ est requis' : null
+                    : null,
                 onChanged: (value) {
                   setState(() {
                     if (value == null) {
