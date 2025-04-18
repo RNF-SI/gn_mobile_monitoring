@@ -1,4 +1,6 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/hidden_expression_evaluator.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
@@ -11,6 +13,7 @@ final formDataProcessorProvider = Provider<FormDataProcessor>((ref) {
 /// Service pour traiter les données des formulaires avant leur enregistrement
 class FormDataProcessor {
   final Ref ref;
+  final HiddenExpressionEvaluator _expressionEvaluator = HiddenExpressionEvaluator();
 
   FormDataProcessor(this.ref);
 
@@ -99,6 +102,15 @@ class FormDataProcessor {
       }
       // Si c'est déjà un entier, le laisser tel quel
     }
+    
+    // Rechercher tous les champs de type taxonomie qui ne commencent pas par cd_nom
+    // (pour traiter d'autres champs de taxonomie, comme ceux des boutons radio)
+    final taxonFields = processedData.keys
+        .where((key) => key != 'cd_nom' && int.tryParse(processedData[key].toString()) != null)
+        .toList();
+        
+    // Pour ces champs, aucune conversion n'est nécessaire car ils contiennent 
+    // déjà directement le cd_nom (valeur entière)
 
     return processedData;
   }
@@ -191,30 +203,121 @@ class FormDataProcessor {
     // Récupérer le service de taxonomie
     final taxonService = ref.read(taxonServiceProvider.notifier);
 
-    // Si le champ cd_nom existe et est un entier
-    if (processedData.containsKey('cd_nom') && processedData['cd_nom'] is int) {
-      final cdNom = processedData['cd_nom'] as int;
+    // Traiter tous les champs qui contiennent des valeurs de cd_nom
+    for (final key in processedData.keys.toList()) {
+      // Vérifier si la valeur est un entier (cd_nom)
+      if (processedData[key] is int || 
+          (processedData[key] is String && int.tryParse(processedData[key] as String) != null)) {
+        
+        // Convertir en entier si nécessaire
+        final cdNom = processedData[key] is int 
+            ? processedData[key] as int 
+            : int.parse(processedData[key] as String);
 
-      try {
-        // Essayer de récupérer le taxon par son cd_nom
-        final taxon = await taxonService.getTaxonByCdNom(cdNom);
-
-        if (taxon != null) {
-          // Remplacer la valeur entière par l'objet taxon complet
-          // Les formulaires n'ont besoin que de certaines propriétés
-          processedData['cd_nom'] = {
-            'cd_nom': taxon.cdNom,
-            'nom_complet': taxon.nomComplet,
-            'lb_nom': taxon.lbNom,
-            'nom_vern': taxon.nomVern,
-          };
+        // Ne pas traiter les champs qui ne sont pas des cd_nom (par exemple, id_nomenclature_*)
+        if (key != 'cd_nom' && !key.contains('cd_nom')) {
+          // Vérifier si c'est un taxonomie avec boutons radio en recherchant un champ de config
+          // Pour simplifier, nous préservons la valeur entière pour ces champs
+          continue;
         }
-      } catch (e) {
-        print('Erreur lors de la récupération du taxon: $e');
-        // Laisser la valeur entière inchangée en cas d'erreur
+
+        try {
+          // Essayer de récupérer le taxon par son cd_nom
+          final taxon = await taxonService.getTaxonByCdNom(cdNom);
+
+          if (taxon != null) {
+            // Remplacer la valeur entière par l'objet taxon complet
+            // Les formulaires n'ont besoin que de certaines propriétés
+            processedData[key] = {
+              'cd_nom': taxon.cdNom,
+              'nom_complet': taxon.nomComplet,
+              'lb_nom': taxon.lbNom,
+              'nom_vern': taxon.nomVern,
+            };
+          }
+        } catch (e) {
+          print('Erreur lors de la récupération du taxon pour $key: $e');
+          // Laisser la valeur entière inchangée en cas d'erreur
+        }
       }
     }
 
     return processedData;
+  }
+  
+  /// Évalue si un champ doit être masqué en fonction des règles définies
+  /// 
+  /// Parameters:
+  /// - fieldId: L'identifiant du champ à évaluer
+  /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
+  /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'hidden'
+  /// 
+  /// Returns:
+  /// - true si le champ doit être masqué, false sinon
+  bool isFieldHidden(String fieldId, Map<String, dynamic> context, {Map<String, dynamic>? fieldConfig}) {
+    // Si aucune configuration n'est fournie, le champ n'est pas masqué
+    if (fieldConfig == null) {
+      return false;
+    }
+    
+    // Vérifier si le champ a une règle 'hidden'
+    final hiddenValue = fieldConfig['hidden'];
+    
+    // Si la valeur est un booléen, l'utiliser directement
+    if (hiddenValue is bool) {
+      return hiddenValue;
+    }
+    
+    // Si la valeur est une chaîne commençant par (, c'est une expression à évaluer
+    // Note: La syntaxe peut être soit JS `({value}) => ...` ou Dart `(value) => ...`
+    if (hiddenValue is String && (
+        hiddenValue.trim().startsWith('({') || 
+        hiddenValue.trim().startsWith('('))) {
+      // Debug: Afficher l'expression et le contexte pour le dépannage
+      debugPrint('Evaluating hidden expression for $fieldId: $hiddenValue');
+      debugPrint('Context: $context');
+      
+      final result = _expressionEvaluator.evaluateExpression(hiddenValue, context);
+      
+      // Debug: Afficher le résultat
+      debugPrint('Result for $fieldId: $result');
+      
+      // Si l'évaluation échoue, ne pas masquer le champ par défaut
+      return result ?? false;
+    }
+    
+    // Par défaut, ne pas masquer le champ
+    return false;
+  }
+
+  /// Prépare un contexte d'évaluation pour les fonctions hidden
+  /// 
+  /// Cette méthode normalise le contexte en s'assurant que les clés attendues sont présentes
+  /// 
+  /// Parameters:
+  /// - values: Les valeurs actuelles du formulaire
+  /// - metadata: Les métadonnées complémentaires (module, site, etc.)
+  /// 
+  /// Returns:
+  /// - Un Map normalisé contenant les données de contexte
+  Map<String, dynamic> prepareEvaluationContext({
+    required Map<String, dynamic> values,
+    Map<String, dynamic>? metadata,
+  }) {
+    // Créer un contexte de base avec les valeurs du formulaire dans 'value'
+    // Ce format correspond à celui attendu par les fonctions hidden
+    // qui viennent de TypeScript: ({value}) => value.prop
+    final context = <String, dynamic>{
+      'value': Map<String, dynamic>.from(values),
+    };
+    
+    // Ajouter les métadonnées si elles sont fournies
+    if (metadata != null) {
+      context['meta'] = Map<String, dynamic>.from(metadata);
+    } else {
+      context['meta'] = <String, dynamic>{};
+    }
+    
+    return context;
   }
 }

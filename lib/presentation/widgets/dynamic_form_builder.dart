@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
@@ -203,8 +204,60 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return Map<String, dynamic>.from(_formValues);
   }
 
+  // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
+  void updateFormValue(String fieldName, dynamic value) {
+    debugPrint('Updating form value: $fieldName = $value');
+    
+    // Vérifier si c'est un champ critique qui peut affecter la visibilité d'autres champs
+    final isCriticalField = fieldName == 'cd_nom' || 
+                          (fieldName.contains('cd_nom'));
+    
+    setState(() {
+      if (value == null) {
+        _formValues.remove(fieldName);
+      } else {
+        _formValues[fieldName] = value;
+      }
+      
+      if (isCriticalField) {
+        debugPrint('Critical field changed: $fieldName = $value');
+        
+        // Vérification des conditions de visibilité pour les champs qui pourraient être affectés
+        final formDataProcessor = ref.read(formDataProcessorProvider);
+        final evaluationContext = formDataProcessor.prepareEvaluationContext(
+          values: _formValues,
+          metadata: {
+            'bChainInput': widget.chainInput ?? false,
+            'parents': {
+              'site': widget.objectConfig,
+              'module': widget.customConfig?.idModule,
+            },
+            'dataset': widget.customConfig?.idListTaxonomy,
+          },
+        );
+        
+        // Déboguer les conditions de visibilité pour quelques champs importants
+        for (final entry in _unifiedSchema.entries) {
+          if (entry.value.containsKey('hidden') && entry.value['hidden'] != false) {
+            final isHidden = formDataProcessor.isFieldHidden(
+              entry.key, 
+              evaluationContext,
+              fieldConfig: entry.value
+            );
+            debugPrint('Field ${entry.key} hidden condition = $isHidden');
+          }
+        }
+      }
+      
+      // Les conditions de visibilité seront réévaluées lors de la prochaine construction
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Débogage: afficher les valeurs actuelles
+    debugPrint('Building form with values: $_formValues');
+    
     return Form(
       key: _formKey,
       child: Column(
@@ -225,11 +278,50 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
             ),
 
-          // Construire le formulaire dynamiquement
-          ..._buildFormFields(),
+          // Construire le formulaire dynamiquement - la clé ValueKey force la reconstruction
+          // lorsque les valeurs critiques changent
+          ...buildFormFieldsWithKey(),
         ],
       ),
     );
+  }
+  
+  // Construire les champs avec une clé basée sur les valeurs
+  List<Widget> buildFormFieldsWithKey() {
+    // Utiliser une clé basée sur un hash des valeurs les plus importantes 
+    // qui pourraient affecter la visibilité (par exemple cd_nom)
+    // Cette approche force la reconstruction quand ces valeurs changent
+    final keyValues = <String, dynamic>{};
+    
+    // Collecter toutes les valeurs qui pourraient affecter la visibilité d'autres champs
+    
+    // 1. Le cd_nom principal
+    if (_formValues.containsKey('cd_nom')) {
+      keyValues['cd_nom'] = _formValues['cd_nom'];
+    }
+    
+    // 2. Tout autre champ qui pourrait être un cd_nom ou affecter la visibilité
+    for (final key in _formValues.keys) {
+      if (key != 'cd_nom' && (key.contains('cd_nom') || key.contains('espece'))) {
+        keyValues[key] = _formValues[key];
+      }
+    }
+    
+    // Ajouter la valeur actuelle du chainInput
+    keyValues['chainInput'] = widget.chainInput;
+    
+    debugPrint('Form reconstruction key: ${keyValues.toString()}');
+    
+    // Construire les champs normalement
+    final formFields = _buildFormFields();
+    
+    // Envelopper dans un widget avec clé
+    return [
+      KeyedSubtree(
+        key: ValueKey(keyValues.toString()),
+        child: Column(children: formFields),
+      ),
+    ];
   }
 
   List<Widget> _buildFormFields() {
@@ -251,6 +343,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               children: [
                 ...allFields
                     .map((field) => _buildField(field.key, field.value)),
+                // Note: Pour utiliser la version asynchrone, il faudrait utiliser un FutureBuilder par champ,
+                // ce qui complexifierait le code. Nous gardons la version synchrone pour le moment.
+                // À terme, on pourrait envisager de retravailler cette partie pour utiliser la version asynchrone.
               ],
             ),
           ),
@@ -261,7 +356,38 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return formFields;
   }
 
+  // Méthode pour vérifier et construire un champ de formulaire
   Widget _buildField(String fieldName, Map<String, dynamic> fieldConfig) {
+    // Vérifier si le champ doit être masqué selon la configuration
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+
+    // Préparer le contexte d'évaluation avec les valeurs actuelles du formulaire
+    // et les métadonnées disponibles
+    final Map<String, dynamic> evaluationContext =
+        formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+
+    // Évaluer si le champ doit être masqué
+    if (formDataProcessor.isFieldHidden(fieldName, evaluationContext,
+        fieldConfig: fieldConfig)) {
+      return const SizedBox.shrink(); // Ne pas afficher ce champ
+    }
+
+    // Si le champ n'est pas masqué, construire le widget approprié
+    return _buildFieldWidget(fieldName, fieldConfig);
+  }
+
+  // Méthode qui construit le widget approprié pour le champ
+  Widget _buildFieldWidget(String fieldName, Map<String, dynamic> fieldConfig) {
     final String widgetType = fieldConfig['widget_type'];
     final String label = fieldConfig['attribut_label'];
     final bool isRequired = fieldConfig['validations']['required'] == true;
@@ -955,9 +1081,69 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         'required': originalFieldConfig.required,
         'hidden': originalFieldConfig.hidden,
         'id_list': originalFieldConfig.idList,
+        // Transférer les valeurs spécifiques pour les boutons radio
+        if (originalFieldConfig.value != null)
+          'value': originalFieldConfig.value,
+        if (originalFieldConfig.values != null)
+          'values': originalFieldConfig.values,
       });
     }
 
+    // Cas spécial pour les boutons radio de taxonomie
+    if ((mergedConfig['type_widget'] == 'radio' ||
+            mergedConfig['typeWidget'] == 'radio') &&
+        mergedConfig['values'] is List) {
+      final List values = mergedConfig['values'] as List;
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              required ? '$label *' : label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            if (description != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            ...values.map<Widget>((option) {
+              // Extraire la valeur et le libellé
+              final int optionValue =
+                  option is Map ? (option['value'] as int) : (option as int);
+              final String optionLabel = option is Map
+                  ? (option['label'] as String)
+                  : optionValue.toString();
+
+              return RadioListTile<int>(
+                title: Text(optionLabel),
+                value: optionValue,
+                groupValue: initialValue,
+                onChanged: (newValue) {
+                  // Utiliser la méthode spécifique pour mettre à jour les valeurs
+                  // qui garantit la réévaluation des conditions de visibilité
+                  updateFormValue(fieldName, newValue);
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                dense: true,
+              );
+            }).toList(),
+          ],
+        ),
+      );
+    }
+
+    // Cas standard: utiliser le TaxonSelectorWidget
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -987,13 +1173,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             value: initialValue,
             isRequired: required,
             onChanged: (cdNom) {
-              setState(() {
-                if (cdNom == null) {
-                  _formValues.remove(fieldName);
-                } else {
-                  _formValues[fieldName] = cdNom;
-                }
-              });
+              // Utiliser la méthode spécifique pour mettre à jour les valeurs
+              // qui garantit la réévaluation des conditions de visibilité
+              updateFormValue(fieldName, cdNom);
             },
             idListTaxonomy: widget.idListTaxonomy,
           ),
