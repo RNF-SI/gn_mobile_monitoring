@@ -57,6 +57,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
@@ -65,6 +66,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
@@ -222,6 +224,18 @@ final syncRepositoryProvider = Provider<SyncRepository>(
 
 final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
   (ref) => IncrementalSyncAllUseCaseImpl(
+    ref.watch(syncRepositoryProvider),
+  ),
+);
+
+final getLastSyncDateUseCaseProvider = Provider<GetLastSyncDateUseCase>(
+  (ref) => GetLastSyncDateUseCaseImpl(
+    ref.watch(syncRepositoryProvider),
+  ),
+);
+
+final updateLastSyncDateUseCaseProvider = Provider<UpdateLastSyncDateUseCase>(
+  (ref) => UpdateLastSyncDateUseCaseImpl(
     ref.watch(syncRepositoryProvider),
   ),
 );

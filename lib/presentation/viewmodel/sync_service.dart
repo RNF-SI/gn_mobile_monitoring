@@ -5,8 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 
 /// Provider pour le service de synchronisation
@@ -14,14 +16,23 @@ final syncServiceProvider =
     StateNotifierProvider<SyncService, SyncStatus>((ref) {
   final getTokenUseCase = ref.read(getTokenFromLocalStorageUseCaseProvider);
   final syncUseCase = ref.read(incrementalSyncAllUseCaseProvider);
+  final getLastSyncDateUseCase = ref.read(getLastSyncDateUseCaseProvider);
+  final updateLastSyncDateUseCase = ref.read(updateLastSyncDateUseCaseProvider);
 
-  return SyncService(getTokenUseCase, syncUseCase);
+  return SyncService(
+    getTokenUseCase, 
+    syncUseCase,
+    getLastSyncDateUseCase,
+    updateLastSyncDateUseCase,
+  );
 });
 
 /// Service qui gère la synchronisation des données
 class SyncService extends StateNotifier<SyncStatus> {
   final GetTokenFromLocalStorageUseCase _getTokenUseCase;
   final IncrementalSyncAllUseCase _syncUseCase;
+  final GetLastSyncDateUseCase _getLastSyncDateUseCase;
+  final UpdateLastSyncDateUseCase _updateLastSyncDateUseCase;
 
   Timer? _autoSyncTimer;
   bool _isSyncing = false;
@@ -32,12 +43,19 @@ class SyncService extends StateNotifier<SyncStatus> {
   // Date de la dernière synchronisation complète
   DateTime? _lastFullSync;
   
+  // Clé pour la date de dernière synchronisation complète
+  static const String fullSyncKey = 'full_sync';
+  
   // Durée entre deux synchronisations complètes automatiques (1 semaine)
   static const Duration fullSyncInterval = Duration(days: 7);
 
-  SyncService(this._getTokenUseCase, this._syncUseCase)
-      : super(SyncStatus.initial()) {
-    // Initialiser la date de dernière synchro complète (à implémenter avec la persistance)
+  SyncService(
+    this._getTokenUseCase, 
+    this._syncUseCase,
+    this._getLastSyncDateUseCase,
+    this._updateLastSyncDateUseCase,
+  ) : super(SyncStatus.initial()) {
+    // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
     
     // Démarrer le timer pour la synchronisation automatique
@@ -622,18 +640,16 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Initialise la date de dernière synchronisation complète 
-  /// depuis le stockage persistant
+  /// depuis le stockage persistant via le use case
   Future<void> _initLastFullSyncDate() async {
     try {
-      // Cette implémentation devrait utiliser AppMetadataDao pour récupérer la date
-      // Exemple d'implémentation :
-      // final lastSyncStr = await _appMetadataDao.getValue('last_full_sync');
-      // if (lastSyncStr != null) {
-      //   _lastFullSync = DateTime.parse(lastSyncStr);
-      // }
+      // Utiliser le use case pour récupérer la date
+      _lastFullSync = await _getLastSyncDateUseCase.execute(fullSyncKey);
       
-      // Pour l'instant, on utilise simplement DateTime.now() comme point de départ
-      _lastFullSync = DateTime.now().subtract(const Duration(days: 5)); // Pour tester: 5 jours déjà écoulés
+      // Si c'est la première fois, initialiser avec une date qui forcera une synchro complète bientôt
+      if (_lastFullSync == null) {
+        _lastFullSync = DateTime.now().subtract(const Duration(days: 5));
+      }
     } catch (e) {
       debugPrint('Erreur lors de la récupération de la date de dernière synchronisation: $e');
       _lastFullSync = null;
@@ -643,14 +659,14 @@ class SyncService extends StateNotifier<SyncStatus> {
     _updateStateWithTimeRemaining();
   }
   
-  /// Met à jour la date de dernière synchronisation complète
+  /// Met à jour la date de dernière synchronisation complète en utilisant le use case
   Future<void> _updateLastFullSyncDate() async {
-    _lastFullSync = DateTime.now();
+    final now = DateTime.now();
+    _lastFullSync = now;
     
     try {
-      // Cette implémentation devrait utiliser AppMetadataDao pour sauvegarder la date
-      // Exemple d'implémentation :
-      // await _appMetadataDao.setValue('last_full_sync', _lastFullSync.toIso8601String());
+      // Utiliser le use case pour sauvegarder la date
+      await _updateLastSyncDateUseCase.execute(fullSyncKey, now);
     } catch (e) {
       debugPrint('Erreur lors de la sauvegarde de la date de dernière synchronisation: $e');
     }
