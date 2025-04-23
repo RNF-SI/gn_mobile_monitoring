@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
+import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_loading_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
@@ -82,8 +83,8 @@ class ModuleDownloadButton extends HookConsumerWidget {
     });
 
     // Observer le statut de synchronisation pour désactiver le bouton pendant la synchronisation
-    final syncStatus = ref.watch(syncStatusProvider);
-    final isSyncing = syncStatus.isInProgress;
+    final syncStatus = ref.watch(syncServiceProvider);
+    final isSyncing = syncStatus.state == SyncState.inProgress;
 
     return AnimatedBuilder(
         animation: controller,

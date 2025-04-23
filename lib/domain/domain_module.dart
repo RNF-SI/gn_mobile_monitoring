@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/repository/sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -207,11 +209,20 @@ final incrementalSyncSiteGroupsUseCaseProvider =
   ),
 );
 
+final syncRepositoryProvider = Provider<SyncRepository>(
+  (ref) => SyncRepositoryImpl(
+    ref.watch(globalApiProvider),
+    ref.watch(taxonApiProvider),
+    ref.watch(globalDatabaseProvider),
+    ref.watch(taxonDatabaseProvider),
+    modulesRepository: ref.watch(modulesRepositoryProvider),
+    sitesRepository: ref.watch(sitesRepositoryProvider),
+  ),
+);
+
 final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
   (ref) => IncrementalSyncAllUseCaseImpl(
-    ref.watch(incrementalSyncModulesUseCaseProvider),
-    ref.watch(incrementalSyncSitesUseCaseProvider),
-    ref.watch(incrementalSyncSiteGroupsUseCaseProvider),
+    ref.watch(syncRepositoryProvider),
   ),
 );
 

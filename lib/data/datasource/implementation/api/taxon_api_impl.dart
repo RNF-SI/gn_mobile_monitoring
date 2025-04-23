@@ -1,13 +1,16 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 
 class TaxonApiImpl implements TaxonApi {
   final Dio _dio;
+  final Connectivity _connectivity = Connectivity();
 
   TaxonApiImpl()
       : _dio = Dio(BaseOptions(
@@ -125,7 +128,7 @@ class TaxonApiImpl implements TaxonApi {
       url: json['url'],
     );
   }
-  
+
   // Méthode spécifique pour parser les taxons venant de l'endpoint allnamebylist
   Taxon _parseTaxonFromList(Map<String, dynamic> json) {
     return Taxon(
@@ -156,5 +159,136 @@ class TaxonApiImpl implements TaxonApi {
       group1Inpn: null,
       url: null,
     );
+  }
+
+  @override
+  Future<SyncResult> syncTaxons(
+      String token, List<String> downloadedModuleCodes,
+      {DateTime? lastSync}) async {
+    try {
+      // Vérifier la connectivité réseau
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return SyncResult.failure(
+          errorMessage: 'Aucune connexion réseau disponible',
+        );
+      }
+
+      // Récupérer la liste des modules
+      final response = await _dio.get(
+        '/monitorings/modules',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          'Erreur lors de la récupération des modules',
+          statusCode: response.statusCode,
+        );
+      }
+
+      final List<dynamic> modules = response.data;
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+
+      // Ensemble pour stocker les IDs de listes uniques
+      final Set<int> uniqueListIds = {};
+
+      // Extraire les IDs de listes taxonomiques des modules téléchargés
+      for (final moduleData in modules) {
+        try {
+          final String? moduleCode = moduleData['module_code'];
+          if (moduleCode != null &&
+              downloadedModuleCodes.contains(moduleCode) &&
+              moduleData['module_complement'] != null &&
+              moduleData['module_complement']['id_list_taxonomy'] != null) {
+            uniqueListIds
+                .add(moduleData['module_complement']['id_list_taxonomy']);
+          }
+        } catch (e) {
+          print(
+              'Erreur lors de l\'extraction de l\'ID de liste du module ${moduleData['id_module']}: $e');
+          continue;
+        }
+      }
+
+      // Pour chaque liste taxonomique unique
+      for (final listId in uniqueListIds) {
+        try {
+          // Récupérer la liste taxonomique complète
+          final taxonList = await getTaxonList(listId);
+          itemsProcessed++;
+
+          // Récupérer les taxons associés à cette liste
+          final taxons = await getTaxonsByList(listId);
+          itemsProcessed += taxons.length;
+          itemsAdded += taxons.length; // Simplifié pour l'exemple
+        } catch (e) {
+          print('Erreur lors de la synchronisation de la liste $listId: $e');
+          itemsSkipped++;
+          continue;
+        }
+      }
+
+      return SyncResult.success(
+        itemsProcessed: itemsProcessed,
+        itemsAdded: itemsAdded,
+        itemsUpdated: itemsUpdated,
+        itemsSkipped: itemsSkipped,
+      );
+    } on DioException catch (e) {
+      return SyncResult.failure(
+        errorMessage: 'Erreur réseau: ${e.message}',
+      );
+    } catch (e) {
+      return SyncResult.failure(
+        errorMessage: 'Erreur lors de la synchronisation des taxons: $e',
+      );
+    }
+  }
+
+  @override
+  Future<List<Taxon>> searchTaxons(String token, String searchTerm,
+      {int? idListe}) async {
+    try {
+      // Paramètres de recherche
+      final queryParams = <String, dynamic>{
+        'search': searchTerm,
+        'limit': 50,
+      };
+
+      if (idListe != null) {
+        queryParams['id_liste'] = idListe.toString();
+      }
+
+      // Appel API
+      final response = await _dio.get(
+        '/taxonomie/taxref/search',
+        queryParameters: queryParams,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw ApiException(
+          'Erreur lors de la recherche de taxons',
+          statusCode: response.statusCode,
+        );
+      }
+
+      final List<dynamic> data = response.data;
+      return data.map((json) => _parseTaxon(json)).toList();
+    } on DioException catch (e) {
+      throw NetworkException(
+        'Erreur réseau lors de la recherche de taxons: ${e.message}',
+      );
+    } catch (e) {
+      throw ApiException('Erreur lors de la recherche de taxons: $e');
+    }
   }
 }

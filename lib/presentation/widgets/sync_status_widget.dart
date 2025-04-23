@@ -1,117 +1,1127 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:intl/intl.dart';
 
+/// Widget pour afficher le statut de synchronisation
 class SyncStatusWidget extends ConsumerWidget {
-  const SyncStatusWidget({Key? key}) : super(key: key);
+  /// Taille du widget - petit ou grand
+  final bool isSmall;
+
+  /// Permet de définir si le widget est dans un appbar
+  final bool isInAppBar;
+
+  /// Callback appelé lorsqu'on demande une synchronisation manuelle
+  final VoidCallback? onSyncRequested;
+
+  const SyncStatusWidget({
+    super.key,
+    this.isSmall = false,
+    this.isInAppBar = false,
+    this.onSyncRequested,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final syncStatus = ref.watch(syncStatusProvider);
-    
-    // Ne pas afficher ce widget si la synchronisation n'est pas en cours ou terminée récemment
-    if (syncStatus.step == SyncStep.initial) {
-      return const SizedBox.shrink();
+    final syncStatus = ref.watch(syncServiceProvider);
+
+    // Couleur du texte en fonction du contexte
+    final Color textColor = isInAppBar
+        ? Theme.of(context).colorScheme.onPrimary
+        : Theme.of(context).colorScheme.onSurface;
+
+    // Couleur de l'icône en fonction de l'état
+    Color iconColor = textColor;
+    if (syncStatus.state == SyncState.failure) {
+      iconColor = Theme.of(context).colorScheme.error;
+    } else if (syncStatus.state == SyncState.success) {
+      iconColor = Theme.of(context).colorScheme.primary;
+    } else if (syncStatus.state == SyncState.conflictDetected) {
+      iconColor = Theme.of(context).colorScheme.secondary;
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      padding: const EdgeInsets.all(16.0),
-      decoration: BoxDecoration(
-        color: _getBackgroundColor(syncStatus),
-        borderRadius: BorderRadius.circular(8.0),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4.0,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
+    // Icône en fonction de l'état
+    IconData iconData;
+    switch (syncStatus.state) {
+      case SyncState.idle:
+        iconData = Icons.sync;
+        break;
+      case SyncState.inProgress:
+        iconData = Icons.sync;
+        break;
+      case SyncState.success:
+        iconData = Icons.check_circle;
+        break;
+      case SyncState.failure:
+        iconData = Icons.error;
+        break;
+      case SyncState.conflictDetected:
+        iconData = Icons.warning;
+        break;
+    }
+
+    // Version réduite pour l'appbar
+    if (isSmall) {
+      return Tooltip(
+        message: _getTooltip(syncStatus),
+        child: IconButton(
+          icon: Stack(
+            alignment: Alignment.center,
             children: [
-              _getIcon(syncStatus),
-              const SizedBox(width: 12.0),
-              Expanded(
-                child: Text(
-                  syncStatus.message,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16.0,
+              _buildIcon(iconData, iconColor, syncStatus),
+              if (syncStatus.state == SyncState.inProgress &&
+                  syncStatus.currentStep != null &&
+                  syncStatus.progress > 0)
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${(syncStatus.progress * 100).round()}%',
+                        style: TextStyle(
+                          fontSize: 6,
+                          fontWeight: FontWeight.bold,
+                          color:
+                              Theme.of(context).colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              if (syncStatus.isInProgress)
-                const SizedBox(
-                  height: 16,
-                  width: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2.0,
-                    valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8AAC3E)),
-                  ),
-                ),
-              if (syncStatus.step == SyncStep.complete || syncStatus.step == SyncStep.error)
-                IconButton(
-                  icon: const Icon(Icons.close, size: 16.0),
-                  onPressed: () {
-                    ref.read(syncServiceProvider).resetStatus();
-                  },
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
                 ),
             ],
           ),
-          if (syncStatus.errorDetails != null) ...[
-            const SizedBox(height: 8.0),
-            Text(
-              syncStatus.errorDetails!,
-              style: TextStyle(
-                color: Colors.red[700],
-                fontSize: 12.0,
+          onPressed: _onSyncPressed(ref),
+        ),
+      );
+    }
+
+    // Version complète pour ailleurs
+    return Card(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // En-tête avec bouton de synchronisation
+          InkWell(
+            onTap: _onSyncPressed(ref),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  _buildIcon(iconData, iconColor, syncStatus),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getStatusText(syncStatus),
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        if (syncStatus.lastSync != null)
+                          Text(
+                            'Dernière synchronisation: ${_formatDate(syncStatus.lastSync!)}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
+                  ),
+                  // Ajouter un bouton de synchronisation explicite pour indiquer l'action possible
+                  if (syncStatus.state != SyncState.inProgress)
+                    IconButton(
+                      icon: Icon(Icons.refresh,
+                          color: Theme.of(context).colorScheme.primary),
+                      onPressed: _onSyncPressed(ref),
+                      tooltip: 'Lancer la synchronisation',
+                      iconSize: 20,
+                    ),
+                ],
               ),
             ),
-          ],
-          if (syncStatus.isInProgress && syncStatus.progress != null) ...[
-            const SizedBox(height: 8.0),
-            LinearProgressIndicator(
-              value: syncStatus.progress,
-              backgroundColor: Colors.grey[300],
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF8AAC3E)),
+          ),
+          // Barre de progression (uniquement pendant la synchronisation)
+          if (syncStatus.state == SyncState.inProgress)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12.0),
+              child: LinearProgressIndicator(
+                value: syncStatus.progress > 0 ? syncStatus.progress : null,
+              ),
             ),
-          ],
+
+          // Contenu principal
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Informations de progression et détails (pendant la synchronisation ou après)
+                if ((syncStatus.state == SyncState.inProgress ||
+                        syncStatus.additionalInfo != null) &&
+                    (syncStatus.itemsTotal > 0 ||
+                        syncStatus.additionalInfo != null))
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Ligne principale avec l'étape et la progression (uniquement pendant la synchronisation)
+                      if (syncStatus.state == SyncState.inProgress &&
+                          syncStatus.currentStep != null &&
+                          syncStatus.itemsTotal > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: RichText(
+                                  text: TextSpan(
+                                    children: [
+                                      TextSpan(
+                                        text: syncStatus.currentEntityName ??
+                                            _getStepName(
+                                                syncStatus.currentStep!),
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface,
+                                            ),
+                                      ),
+                                      TextSpan(
+                                        text:
+                                            ' • ${syncStatus.itemsProcessed}/${syncStatus.itemsTotal}',
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withOpacity(0.7),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              if (syncStatus.itemsAdded != null ||
+                                  syncStatus.itemsUpdated != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6.0, vertical: 2.0),
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .primary
+                                        .withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(4.0),
+                                  ),
+                                  child: Text(
+                                    '${syncStatus.itemsAdded ?? 0}↑ ${syncStatus.itemsUpdated ?? 0}↻',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 10,
+                                        ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+
+                      // Afficher les informations détaillées si disponibles
+                      if (syncStatus.additionalInfo != null)
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 4.0),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest
+                                .withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(4.0),
+                            border: Border.all(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .outline
+                                  .withOpacity(0.1),
+                              width: 1,
+                            ),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Détails de la synchronisation',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface,
+                                      ),
+                                ),
+                                const SizedBox(height: 8),
+                                _buildSyncSummary(
+                                    context, syncStatus.additionalInfo!),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+
+                // Affichage des erreurs
+                if (syncStatus.state == SyncState.failure &&
+                    syncStatus.errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Erreur:',
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.error,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () => _showErrorDialog(
+                              context, syncStatus.errorMessage!),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  syncStatus.errorMessage!,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color:
+                                            Theme.of(context).colorScheme.error,
+                                      ),
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Affichage des conflits
+                if (syncStatus.state == SyncState.conflictDetected)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Conflits:',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodyMedium
+                              ?.copyWith(
+                                color: Theme.of(context).colorScheme.secondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        InkWell(
+                          onTap: () => _showConflictsDialog(
+                              context, syncStatus.conflicts ?? []),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  '${syncStatus.conflicts?.length ?? 0} conflits détectés',
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .secondary,
+                                      ),
+                                ),
+                              ),
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.secondary,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Color _getBackgroundColor(SyncStatus status) {
-    switch (status.step) {
-      case SyncStep.error:
-        return Colors.red[100]!;
-      case SyncStep.complete:
-        return Colors.green[100]!;
-      default:
-        return Colors.grey[100]!;
+  /// Construit l'icône en fonction de l'état de synchronisation
+  Widget _buildIcon(IconData iconData, Color iconColor, SyncStatus syncStatus) {
+    if (syncStatus.state == SyncState.inProgress) {
+      return SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(iconColor),
+          value: syncStatus.progress > 0 ? syncStatus.progress : null,
+        ),
+      );
+    }
+
+    return Icon(iconData, color: iconColor);
+  }
+
+  /// Retourne le texte d'état de synchronisation
+  String _getStatusText(SyncStatus syncStatus) {
+    switch (syncStatus.state) {
+      case SyncState.idle:
+        return 'En attente de synchronisation';
+      case SyncState.inProgress:
+        if (syncStatus.currentStep != null) {
+          // Utiliser le nom de l'entité personnalisé ou le nom de l'étape par défaut
+          String stepName = syncStatus.currentEntityName ??
+              _getStepName(syncStatus.currentStep!);
+
+          // Afficher la progression numérique si disponible
+          String progress = '';
+          if (syncStatus.itemsTotal > 0) {
+            int progressPercent = (syncStatus.progress * 100).round();
+            progress = ' ($progressPercent%)';
+          }
+
+          // Ajouter des informations concises sur les étapes terminées
+          String completedInfo = '';
+          if (syncStatus.completedSteps.isNotEmpty &&
+              syncStatus.completedSteps.length < 3) {
+            // N'afficher les étapes terminées que s'il y en a peu pour ne pas surcharger
+            completedInfo =
+                ' • ${syncStatus.completedSteps.length} étape${syncStatus.completedSteps.length > 1 ? "s" : ""} terminée${syncStatus.completedSteps.length > 1 ? "s" : ""}';
+          }
+
+          return 'Synchronisation $stepName$progress$completedInfo';
+        }
+        return 'Synchronisation en cours...';
+      case SyncState.success:
+        // En cas de succès, afficher un récapitulatif des éléments traités
+        String summaryInfo = '';
+        if (syncStatus.itemsAdded != null || syncStatus.itemsUpdated != null) {
+          int added = syncStatus.itemsAdded ?? 0;
+          int updated = syncStatus.itemsUpdated ?? 0;
+
+          if (added > 0 && updated > 0) {
+            summaryInfo = ' • $added ajoutés • $updated mis à jour';
+          } else if (added > 0) {
+            summaryInfo = ' • $added ajoutés';
+          } else if (updated > 0) {
+            summaryInfo = ' • $updated mis à jour';
+          }
+        }
+
+        return 'Synchronisation réussie$summaryInfo';
+      case SyncState.failure:
+        return 'Échec de la synchronisation';
+      case SyncState.conflictDetected:
+        int conflictCount = syncStatus.conflicts?.length ?? 0;
+        return 'Conflits détectés ($conflictCount)';
     }
   }
 
-  Widget _getIcon(SyncStatus status) {
-    switch (status.step) {
-      case SyncStep.error:
-        return Icon(Icons.error_outline, color: Colors.red[700]);
-      case SyncStep.complete:
-        return Icon(Icons.check_circle_outline, color: Colors.green[700]);
-      case SyncStep.syncingModules:
-      case SyncStep.syncingSites:
-      case SyncStep.syncingSiteGroups:
-        return const Icon(Icons.sync, color: Color(0xFF8AAC3E));
-      default:
-        return const Icon(Icons.info_outline, color: Colors.grey);
+  /// Retourne le nom de l'étape de synchronisation
+  String _getStepName(SyncStep step) {
+    switch (step) {
+      case SyncStep.configuration:
+        return 'configuration';
+      case SyncStep.nomenclatures:
+        return 'nomenclatures';
+      case SyncStep.taxons:
+        return 'taxons';
+      case SyncStep.observers:
+        return 'observateurs';
+      case SyncStep.modules:
+        return 'modules';
+      case SyncStep.sites:
+        return 'sites';
+      case SyncStep.siteGroups:
+        return 'groupes de sites';
     }
+  }
+
+  /// Retourne le texte d'info-bulle
+  String _getTooltip(SyncStatus syncStatus) {
+    switch (syncStatus.state) {
+      case SyncState.idle:
+        return 'Lancer la synchronisation';
+      case SyncState.inProgress:
+        if (syncStatus.currentStep != null) {
+          // Nom de l'étape actuelle (personnalisé ou par défaut)
+          String stepName = syncStatus.currentEntityName ??
+              _getStepName(syncStatus.currentStep!);
+
+          // Progression détaillée
+          String progress = '';
+          if (syncStatus.itemsTotal > 0) {
+            int percentage = (syncStatus.progress * 100).round();
+            progress = ' - $percentage% terminé';
+          }
+
+          // Statistiques détaillées si disponibles
+          String statsInfo = '';
+          if (syncStatus.itemsAdded != null ||
+              syncStatus.itemsUpdated != null) {
+            int added = syncStatus.itemsAdded ?? 0;
+            int updated = syncStatus.itemsUpdated ?? 0;
+            int skipped = syncStatus.itemsSkipped ?? 0;
+
+            statsInfo =
+                '\nAjoutés: $added | Mis à jour: $updated | Ignorés: $skipped';
+          }
+
+          // Liste des étapes complétées
+          String completedInfo = '';
+          if (syncStatus.completedSteps.isNotEmpty) {
+            final completedNames =
+                syncStatus.completedSteps.map(_getStepName).join(', ');
+            completedInfo = '\nTerminé: $completedNames';
+          }
+
+          // Liste des étapes restantes
+          final allSteps = SyncStep.values;
+          final remainingSteps = allSteps
+              .where((step) =>
+                  !syncStatus.completedSteps.contains(step) &&
+                  step != syncStatus.currentStep)
+              .toList();
+
+          String remainingInfo = '';
+          if (remainingSteps.isNotEmpty) {
+            final stepsNames = remainingSteps.map(_getStepName).join(', ');
+            remainingInfo = '\nEn attente: $stepsNames';
+          }
+
+          // Informations supplémentaires
+          String additionalDetails = '';
+          if (syncStatus.additionalInfo != null) {
+            additionalDetails = '\n${syncStatus.additionalInfo}';
+          }
+
+          return 'Synchronisation de $stepName en cours$progress$statsInfo$completedInfo$remainingInfo$additionalDetails';
+        }
+        return 'Synchronisation en cours';
+      case SyncState.success:
+        // Informations récapitulatives sur les éléments traités
+        String statsInfo = '';
+        if (syncStatus.itemsAdded != null || syncStatus.itemsUpdated != null) {
+          int added = syncStatus.itemsAdded ?? 0;
+          int updated = syncStatus.itemsUpdated ?? 0;
+          int skipped = syncStatus.itemsSkipped ?? 0;
+          int total = added + updated + skipped;
+
+          statsInfo = '\nTotal: $total éléments traités\nAjoutés: $added | Mis à jour: $updated | Ignorés: $skipped';
+        }
+
+        // Liste des objets synchronisés
+        String objectsInfo = '';
+        if (syncStatus.completedSteps.isNotEmpty) {
+          final completedNames =
+              syncStatus.completedSteps.map(_getStepName).join(', ');
+          objectsInfo = '\nSynchronisé: $completedNames';
+        }
+
+        // Informations supplémentaires
+        String additionalDetails = '';
+        if (syncStatus.additionalInfo != null) {
+          additionalDetails = '\n${syncStatus.additionalInfo}';
+        }
+
+        return 'Dernière synchronisation: ${syncStatus.lastSync != null ? _formatDate(syncStatus.lastSync!) : "jamais"}$statsInfo$objectsInfo$additionalDetails';
+      case SyncState.failure:
+        // Liste des étapes terminées
+        String completedInfo = '';
+        if (syncStatus.completedSteps.isNotEmpty) {
+          final completedNames =
+              syncStatus.completedSteps.map(_getStepName).join(', ');
+          completedInfo = '\nTerminé: $completedNames';
+        }
+
+        // Liste des étapes en échec
+        String failedInfo = '';
+        if (syncStatus.failedSteps.isNotEmpty) {
+          final failedNames =
+              syncStatus.failedSteps.map(_getStepName).join(', ');
+          failedInfo = '\nÉchoué: $failedNames';
+        }
+
+        // Informations supplémentaires
+        String additionalDetails = '';
+        if (syncStatus.additionalInfo != null) {
+          additionalDetails = '\n${syncStatus.additionalInfo}';
+        }
+
+        return 'Échec: ${syncStatus.errorMessage ?? "erreur inconnue"}$completedInfo$failedInfo$additionalDetails';
+      case SyncState.conflictDetected:
+        // Plus de détails sur les conflits
+        if (syncStatus.conflicts != null && syncStatus.conflicts!.isNotEmpty) {
+          // Grouper les conflits par type d'entité
+          final conflictsByType = <String, int>{};
+          for (final conflict in syncStatus.conflicts!) {
+            conflictsByType[conflict.entityType] =
+                (conflictsByType[conflict.entityType] ?? 0) + 1;
+          }
+
+          // Formater les détails des conflits
+          final conflictSummary = conflictsByType.entries
+              .map((e) => '${e.value} ${_getEntityTypeName(e.key)}')
+              .join(', ');
+
+          return '${syncStatus.conflicts!.length} conflits détectés\n$conflictSummary';
+        }
+
+        return '${syncStatus.conflicts?.length ?? 0} conflits détectés';
+    }
+  }
+
+  /// Retourne le nom du type d'entité, au pluriel par défaut (pour les statistiques et conflits)
+  String _getEntityTypeName(String entityType, {bool plural = true}) {
+    switch (entityType.toLowerCase()) {
+      case 'module':
+        return plural ? 'modules' : 'Module';
+      case 'site':
+        return plural ? 'sites' : 'Site';
+      case 'sitegroup':
+        return plural ? 'groupes de sites' : 'Groupe de sites';
+      case 'visit':
+        return plural ? 'visites' : 'Visite';
+      case 'observation':
+        return plural ? 'observations' : 'Observation';
+      case 'taxon':
+        return plural ? 'taxons' : 'Taxon';
+      default:
+        return entityType;
+    }
+  }
+
+  /// Formatte une date pour l'affichage
+  String _formatDate(DateTime date) {
+    return DateFormat('dd/MM/yyyy HH:mm').format(date);
+  }
+
+  /// Affiche une boîte de dialogue avec le message d'erreur complet
+  void _showErrorDialog(BuildContext context, String errorMessage) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.error_outline,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(width: 8),
+            const Text('Détails de l\'erreur'),
+          ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Affichage de l'horodatage
+              Text(
+                'Date: ${_formatDate(DateTime.now())}',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              // Message d'erreur avec possibilité de scroller
+              Container(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.of(context).size.height * 0.3,
+                ),
+                child: SingleChildScrollView(
+                  child: Text(
+                    errorMessage,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Affiche une boîte de dialogue avec les détails des conflits
+  void _showConflictsDialog(
+      BuildContext context, List<SyncConflict> conflicts) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(
+              Icons.warning_amber_outlined,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+            const SizedBox(width: 8),
+            const Text('Détails des conflits'),
+          ],
+        ),
+        content: Container(
+          width: double.maxFinite,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.5,
+          ),
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: conflicts.length,
+            itemBuilder: (context, index) {
+              final conflict = conflicts[index];
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8.0),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // En-tête du conflit
+                      Row(
+                        children: [
+                          Icon(
+                            _getEntityIcon(conflict.entityType),
+                            size: 16,
+                            color: Theme.of(context).colorScheme.secondary,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              _getEntityTypeName(conflict.entityType,
+                                  plural: false),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .titleSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                      // Identifiant de l'entité
+                      Text(
+                        'ID: ${conflict.entityId}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                      const SizedBox(height: 8),
+                      // Dates de modification
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Local: ${_formatDate(conflict.localModifiedAt)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Serveur: ${_formatDate(conflict.remoteModifiedAt)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      // Stratégie de résolution
+                      Text(
+                        'Résolution: ${_getResolutionStrategyName(conflict.resolutionStrategy)}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Fermer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Retourne une icône en fonction du type d'entité
+  IconData _getEntityIcon(String entityType) {
+    switch (entityType.toLowerCase()) {
+      case 'module':
+        return Icons.grid_view;
+      case 'site':
+        return Icons.place;
+      case 'sitegroup':
+        return Icons.folder;
+      case 'visit':
+        return Icons.calendar_today;
+      case 'observation':
+        return Icons.visibility;
+      case 'taxon':
+        return Icons.eco;
+      default:
+        return Icons.data_object;
+    }
+  }
+
+  /// Retourne le nom de la stratégie de résolution
+  String _getResolutionStrategyName(ConflictResolutionStrategy strategy) {
+    switch (strategy) {
+      case ConflictResolutionStrategy.serverWins:
+        return 'Serveur prioritaire';
+      case ConflictResolutionStrategy.clientWins:
+        return 'Local prioritaire';
+      case ConflictResolutionStrategy.merge:
+        return 'Fusion';
+      case ConflictResolutionStrategy.userDecision:
+        return 'Décision utilisateur requise';
+    }
+  }
+
+  /// Construit un widget pour afficher le résumé de synchronisation de manière structurée
+  Widget _buildSyncSummary(BuildContext context, String syncSummary) {
+    // Analyser le texte de résumé pour extraire les différentes parties
+    final lines = syncSummary.split('\n');
+
+    // Traiter à la fois le résumé final et le résumé incrémental pendant la synchronisation
+    bool isIncrementalSummary = lines.isNotEmpty && lines[0].contains('Éléments déjà synchronisés');
+    bool isFinalSummary = lines.isNotEmpty && lines[0].contains('Résumé de la synchronisation');
+    
+    if ((isIncrementalSummary || isFinalSummary) && lines.length > 1) {
+      // Extraire les lignes contenant des statistiques (celles commençant par •)
+      final statLines = lines.where((line) => line.trim().startsWith('•'));
+
+      if (statLines.isNotEmpty) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Afficher le titre selon le type de résumé
+            Text(
+              isIncrementalSummary ? 'Éléments déjà synchronisés:' : 'Résumé de la synchronisation:',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Liste des statistiques par type d'élément
+            ...statLines.map<Widget>((line) {
+              // Extraire les parties de la ligne (nom de l'objet et statistiques)
+              final parts = line.split(':');
+              if (parts.length < 2) return _buildSimpleSummaryLine(context, line);
+
+              // Récupérer le nom de l'objet (ex: "• Modules")
+              final objectName = parts[0].trim();
+
+              // Récupérer les statistiques
+              final stats = parts[1].trim();
+
+              // Extraire les chiffres pour les mettre en évidence
+              final statsRegex = RegExp(
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés\)');
+              final match = statsRegex.firstMatch(stats);
+
+              if (match != null) {
+                final total = int.parse(match.group(1) ?? '0');
+                final added = int.parse(match.group(2) ?? '0');
+                final updated = int.parse(match.group(3) ?? '0');
+                final skipped = int.parse(match.group(4) ?? '0');
+
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 8.0),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Entête avec le nom de l'élément (Module, Taxon, etc.)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          borderRadius: const BorderRadius.only(
+                            topLeft: Radius.circular(7),
+                            topRight: Radius.circular(7),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              _getObjectIcon(objectName),
+                              size: 14,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              objectName.replaceAll('•', '').trim(),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Spacer(),
+                            _buildStatChip(context, total, 'total', Colors.blueGrey),
+                          ],
+                        ),
+                      ),
+                      // Détails des statistiques avec badges colorés
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 4,
+                          children: [
+                            // Badge avec icône pour les éléments ajoutés
+                            _buildIconStatBadge(
+                              context, 
+                              added, 
+                              'ajoutés', 
+                              Colors.green, 
+                              Icons.add_circle_outline
+                            ),
+                            // Badge avec icône pour les éléments mis à jour
+                            _buildIconStatBadge(
+                              context, 
+                              updated, 
+                              'mis à jour', 
+                              Colors.blue, 
+                              Icons.update
+                            ),
+                            // Badge avec icône pour les éléments ignorés (si non nul)
+                            if (skipped > 0)
+                              _buildIconStatBadge(
+                                context, 
+                                skipped, 
+                                'ignorés', 
+                                Colors.grey, 
+                                Icons.remove_circle_outline
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              // Fallback si le format n'est pas celui attendu
+              return _buildSimpleSummaryLine(context, line);
+            }),
+          ],
+        );
+      }
+    }
+
+    // Affichage des messages en cours de synchronisation qui ne contiennent pas de statistiques
+    if (lines.isEmpty || (!isIncrementalSummary && !isFinalSummary)) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.info_outline,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                syncSummary,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Fallback pour les autres formats de message
+    return SelectableText(
+      syncSummary,
+      style: Theme.of(context).textTheme.bodySmall,
+    );
+  }
+  
+  /// Retourne une icône appropriée en fonction du nom d'objet
+  IconData _getObjectIcon(String objectName) {
+    final name = objectName.toLowerCase().replaceAll('•', '').trim();
+    if (name.contains('module')) return Icons.extension;
+    if (name.contains('taxon')) return Icons.eco;
+    if (name.contains('site') && name.contains('groupe')) return Icons.folder;
+    if (name.contains('site')) return Icons.place;
+    if (name.contains('nomenclature')) return Icons.list_alt;
+    if (name.contains('observateur')) return Icons.person;
+    if (name.contains('total')) return Icons.all_inclusive;
+    return Icons.data_object;
+  }
+
+  /// Construit un widget pour une ligne de résumé simple
+  Widget _buildSimpleSummaryLine(BuildContext context, String line) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4.0),
+      child: Text(
+        line,
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+    );
+  }
+
+  // Méthode supprimée car remplacée par _buildIconStatBadge et _buildStatChip
+  
+  /// Construit un badge de statistique avec une icône (plus visuel)
+  Widget _buildIconStatBadge(
+      BuildContext context, int value, String label, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$value',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: color.withOpacity(0.9),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  /// Construit une puce de statistique compacte pour l'en-tête
+  Widget _buildStatChip(
+      BuildContext context, int value, String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '$value $label',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: color,
+        ),
+      ),
+    );
+  }
+
+  /// Retourne la fonction à exécuter lors du clic sur le bouton de synchronisation
+  VoidCallback? _onSyncPressed(WidgetRef ref) {
+    final syncStatus = ref.read(syncServiceProvider);
+
+    // Ne pas permettre de lancer une synchronisation si une est déjà en cours
+    if (syncStatus.state == SyncState.inProgress) {
+      return null;
+    }
+
+    // Utiliser le callback externe s'il est fourni
+    if (onSyncRequested != null) {
+      return onSyncRequested;
+    }
+
+    // Sinon, utiliser le service de synchronisation avec tous les types de données
+    return () => ref.read(syncServiceProvider.notifier).syncAll(
+          syncConfiguration: true,
+          syncNomenclatures: true,
+          syncTaxons: true,
+          syncObservers: true,
+          syncModules: true,
+          syncSites: true,
+          syncSiteGroups: true,
+        );
   }
 }

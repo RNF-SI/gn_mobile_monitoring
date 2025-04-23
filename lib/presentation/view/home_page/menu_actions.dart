@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 class MenuActions extends ConsumerWidget {
@@ -10,12 +10,11 @@ class MenuActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
-    final databaseSyncService = ref.read(databaseSyncServiceProvider);
-    final syncService = ref.read(syncServiceProvider);
+    final syncNotifier = ref.read(syncServiceProvider.notifier);
 
     // Observer le statut de synchronisation
-    final syncStatus = ref.watch(syncStatusProvider);
-    final isSyncing = syncStatus.isInProgress;
+    final syncStatus = ref.watch(syncServiceProvider);
+    final isSyncing = syncStatus.state == SyncState.inProgress;
 
     return PopupMenuButton<String>(
       icon: const Icon(Icons.menu), // Menu icon
@@ -25,8 +24,7 @@ class MenuActions extends ConsumerWidget {
         ref,
         context,
         authViewModel,
-        databaseSyncService,
-        syncService,
+        syncNotifier,
       ),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
@@ -57,15 +55,14 @@ class MenuActions extends ConsumerWidget {
     WidgetRef ref,
     BuildContext context,
     authViewModel,
-    databaseSyncService,
-    syncService,
+    SyncService syncService,
   ) async {
     switch (value) {
       case 'sync':
         await _startSync(context, syncService, ref);
         break;
       case 'delete':
-        await _confirmDelete(context, databaseSyncService, syncService);
+        await _confirmDelete(context, syncService);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -76,8 +73,7 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context,
-      DatabaseSyncService databaseSyncService, SyncService syncService) async {
+  Future<void> _confirmDelete(BuildContext context, SyncService syncService) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -97,19 +93,15 @@ class MenuActions extends ConsumerWidget {
       ),
     );
 
+    // La logique de suppression de base de données n'est plus implémentée dans le service
+    // Elle devrait être réimplémentée avec le nouveau système de synchronisation
     if (confirmed == true) {
-      final success = await syncService.deleteAndReinitializeDatabase();
-
-      if (!success) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Erreur lors de la suppression de la base de données'),
-            ),
-          );
-        }
-      }
+      // Cette fonctionnalité devra être réimplémentée
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cette fonctionnalité a été temporairement désactivée avec le nouveau système de synchronisation.'),
+        ),
+      );
     }
   }
 
@@ -164,15 +156,20 @@ class MenuActions extends ConsumerWidget {
   Future<void> _startSync(
       BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
-    final currentStatus = ref.read(syncStatusProvider);
-    if (currentStatus.isInProgress) {
+    final currentStatus = ref.read(syncServiceProvider);
+    if (currentStatus.state == SyncState.inProgress) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Une synchronisation est déjà en cours.')),
       );
       return;
     }
 
-    // Démarrer la synchronisation
-    await syncService.syncAll();
+    // Démarrer la synchronisation avec tous les types de données
+    await syncService.syncAll(
+      syncConfiguration: true,
+      syncNomenclatures: true,
+      syncTaxons: true,
+      syncObservers: true,
+    );
   }
 }

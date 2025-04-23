@@ -14,14 +14,11 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Observer le statut de synchronisation
-    final syncStatus = ref.watch(syncStatusProvider);
-    final isSyncing = syncStatus.isInProgress;
+    final syncStatus = ref.watch(syncServiceProvider);
+    final isSyncing = syncStatus.state == SyncState.inProgress;
 
     // Détermine si l'overlay doit être affiché
-    final showOverlay = syncStatus.step == SyncStep.syncingModules ||
-                      syncStatus.step == SyncStep.syncingSites ||
-                      syncStatus.step == SyncStep.syncingSiteGroups ||
-                      syncStatus.step == SyncStep.deletingDatabase;
+    final showOverlay = syncStatus.state == SyncState.inProgress;
 
     return DefaultTabController(
       length: 3,

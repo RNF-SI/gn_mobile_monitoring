@@ -1,12 +1,16 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
 class GlobalApiImpl implements GlobalApi {
   final Dio _dio;
   final String apiBase = Config.apiBase;
+  final Connectivity _connectivity = Connectivity();
 
   GlobalApiImpl()
       : _dio = Dio(BaseOptions(
@@ -187,6 +191,232 @@ class GlobalApiImpl implements GlobalApi {
     } catch (e) {
       throw Exception(
           'Error fetching nomenclature type with mnemonique $mnemonique: $e');
+    }
+  }
+
+  @override
+  Future<bool> checkConnectivity() async {
+    try {
+      // Vérifier la connectivité réseau
+      final connectivityResult = await _connectivity.checkConnectivity();
+      if (connectivityResult == ConnectivityResult.none) {
+        return false;
+      }
+
+      // Utiliser l'endpoint des types de sites pour vérifier si le serveur est accessible
+      final response = await _dio.get(
+        '$apiBase/monitorings/sites/types',
+        options: Options(
+          validateStatus: (status) => true,
+          sendTimeout: const Duration(seconds: 5),
+          receiveTimeout: const Duration(seconds: 5),
+        ),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      // En cas d'erreur, on considère que le serveur n'est pas accessible
+      return false;
+    }
+  }
+
+  @override
+  Future<SyncResult> syncNomenclaturesAndDatasets(
+    String token,
+    List<String> moduleCodes, {
+    DateTime? lastSync,
+  }) async {
+    try {
+      // Vérifier la connectivité
+      if (!await checkConnectivity()) {
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+      List<String> errors = [];
+      final Map<int, Map<String, dynamic>> allUniqueTypeData = {};
+
+      // Synchroniser les nomenclatures et datasets pour chaque module
+      for (final moduleCode in moduleCodes) {
+        try {
+          final response = await _dio.get(
+            '$apiBase/monitorings/util/init_data/$moduleCode',
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            // Traiter les nomenclatures
+            final nomenclatures =
+                (response.data['nomenclature'] as List<dynamic>)
+                    .map((json) => NomenclatureEntity.fromJson(json))
+                    .toList();
+
+            // Extraire les types de nomenclature uniques
+            for (var nomenclature in nomenclatures) {
+              final idType = nomenclature.idType;
+              if (!allUniqueTypeData.containsKey(idType)) {
+                final mnemonique =
+                    nomenclature.codeType ?? _getMnemoniqueFallback(idType);
+                allUniqueTypeData[idType] = {
+                  'idType': idType,
+                  'mnemonique': mnemonique,
+                };
+              }
+            }
+
+            // Compter les nomenclatures
+            itemsProcessed += nomenclatures.length;
+            if (lastSync == null) {
+              itemsAdded += nomenclatures.length;
+            } else {
+              itemsUpdated += nomenclatures.length;
+            }
+
+            // Traiter les datasets
+            final datasets = (response.data['dataset'] as List<dynamic>)
+                .map((json) => DatasetEntity.fromJson(json))
+                .toList();
+
+            // Compter les datasets
+            itemsProcessed += datasets.length;
+            // Les datasets sont considérés comme des mises à jour
+            // car ils sont liés aux modules déjà téléchargés
+            itemsUpdated += datasets.length;
+          } else {
+            itemsSkipped++;
+            errors
+                .add('Module $moduleCode: Status code ${response.statusCode}');
+          }
+        } catch (e) {
+          itemsSkipped++;
+          errors.add('Module $moduleCode: ${e.toString()}');
+        }
+      }
+
+      // Ajouter les types uniques au compte total
+      itemsProcessed += allUniqueTypeData.length;
+      if (lastSync == null) {
+        itemsAdded += allUniqueTypeData.length;
+      } else {
+        itemsUpdated += allUniqueTypeData.length;
+      }
+
+      if (errors.isNotEmpty) {
+        return SyncResult.failure(
+          errorMessage:
+              'Erreurs lors de la synchronisation:\n${errors.join('\n')}',
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+        );
+      }
+
+      return SyncResult.success(
+        itemsProcessed: itemsProcessed,
+        itemsAdded: itemsAdded,
+        itemsUpdated: itemsUpdated,
+        itemsSkipped: itemsSkipped,
+      );
+    } on DioException catch (e) {
+      return SyncResult.failure(
+        errorMessage: 'Erreur réseau: ${e.message}',
+      );
+    } catch (e) {
+      return SyncResult.failure(
+        errorMessage:
+            'Erreur lors de la synchronisation des nomenclatures et datasets: $e',
+      );
+    }
+  }
+
+  @override
+  @Deprecated('Use syncNomenclaturesAndDatasets instead')
+  Future<SyncResult> syncNomenclatures(
+    String token,
+    List<String> moduleCodes, {
+    DateTime? lastSync,
+  }) async {
+    return syncNomenclaturesAndDatasets(token, moduleCodes, lastSync: lastSync);
+  }
+
+  @override
+  @Deprecated('Use syncNomenclaturesAndDatasets instead')
+  Future<SyncResult> syncDatasets(
+      String token, List<String> moduleCodes) async {
+    return syncNomenclaturesAndDatasets(token, moduleCodes);
+  }
+
+  @override
+  Future<SyncResult> syncConfiguration(
+      String token, List<String> moduleCodes) async {
+    try {
+      // Vérifier la connectivité
+      if (!await checkConnectivity()) {
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+      List<String> errors = [];
+
+      // Synchroniser la configuration pour chaque module
+      for (final moduleCode in moduleCodes) {
+        try {
+          final response = await _dio.get(
+            '$apiBase/monitorings/config/$moduleCode',
+            options: Options(
+              headers: {'Authorization': 'Bearer $token'},
+            ),
+          );
+
+          if (response.statusCode == 200) {
+            itemsProcessed++;
+            // On considère que c'est une mise à jour puisque le module était déjà téléchargé
+            itemsUpdated++;
+          } else {
+            itemsSkipped++;
+            errors
+                .add('Module $moduleCode: Status code ${response.statusCode}');
+          }
+        } catch (e) {
+          itemsSkipped++;
+          errors.add('Module $moduleCode: ${e.toString()}');
+        }
+      }
+
+      if (errors.isNotEmpty) {
+        return SyncResult.failure(
+          errorMessage:
+              'Erreurs lors de la synchronisation:\n${errors.join('\n')}',
+          itemsProcessed: itemsProcessed,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+        );
+      }
+
+      return SyncResult.success(
+        itemsProcessed: itemsProcessed,
+        itemsAdded: itemsAdded,
+        itemsUpdated: itemsUpdated,
+        itemsSkipped: itemsSkipped,
+      );
+    } on DioException catch (e) {
+      return SyncResult.failure(
+        errorMessage: 'Erreur réseau: ${e.message}',
+      );
+    } catch (e) {
+      return SyncResult.failure(
+        errorMessage:
+            'Erreur lors de la synchronisation de la configuration: $e',
+      );
     }
   }
 }
