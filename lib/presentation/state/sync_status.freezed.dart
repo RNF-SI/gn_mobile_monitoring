@@ -40,7 +40,9 @@ mixin _$SyncStatus {
       throw _privateConstructorUsedError; // Nombre d'éléments mis à jour dans l'étape actuelle
   int? get itemsSkipped =>
       throw _privateConstructorUsedError; // Nombre d'éléments ignorés dans l'étape actuelle
-  String? get additionalInfo => throw _privateConstructorUsedError;
+  String? get additionalInfo =>
+      throw _privateConstructorUsedError; // Informations supplémentaires sur la progression
+  String? get nextFullSyncInfo => throw _privateConstructorUsedError;
 
   /// Create a copy of SyncStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -73,7 +75,8 @@ abstract class $SyncStatusCopyWith<$Res> {
       int? itemsAdded,
       int? itemsUpdated,
       int? itemsSkipped,
-      String? additionalInfo});
+      String? additionalInfo,
+      String? nextFullSyncInfo});
 }
 
 /// @nodoc
@@ -109,6 +112,7 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
     Object? itemsUpdated = freezed,
     Object? itemsSkipped = freezed,
     Object? additionalInfo = freezed,
+    Object? nextFullSyncInfo = freezed,
   }) {
     return _then(_value.copyWith(
       state: null == state
@@ -183,6 +187,10 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
           ? _value.additionalInfo
           : additionalInfo // ignore: cast_nullable_to_non_nullable
               as String?,
+      nextFullSyncInfo: freezed == nextFullSyncInfo
+          ? _value.nextFullSyncInfo
+          : nextFullSyncInfo // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -213,7 +221,8 @@ abstract class _$$SyncStatusImplCopyWith<$Res>
       int? itemsAdded,
       int? itemsUpdated,
       int? itemsSkipped,
-      String? additionalInfo});
+      String? additionalInfo,
+      String? nextFullSyncInfo});
 }
 
 /// @nodoc
@@ -247,6 +256,7 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
     Object? itemsUpdated = freezed,
     Object? itemsSkipped = freezed,
     Object? additionalInfo = freezed,
+    Object? nextFullSyncInfo = freezed,
   }) {
     return _then(_$SyncStatusImpl(
       state: null == state
@@ -321,6 +331,10 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
           ? _value.additionalInfo
           : additionalInfo // ignore: cast_nullable_to_non_nullable
               as String?,
+      nextFullSyncInfo: freezed == nextFullSyncInfo
+          ? _value.nextFullSyncInfo
+          : nextFullSyncInfo // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
@@ -346,7 +360,8 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
       this.itemsAdded,
       this.itemsUpdated,
       this.itemsSkipped,
-      this.additionalInfo})
+      this.additionalInfo,
+      this.nextFullSyncInfo})
       : _completedSteps = completedSteps,
         _failedSteps = failedSteps,
         _conflicts = conflicts;
@@ -414,10 +429,13 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
 // Nombre d'éléments ignorés dans l'étape actuelle
   @override
   final String? additionalInfo;
+// Informations supplémentaires sur la progression
+  @override
+  final String? nextFullSyncInfo;
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, additionalInfo: $additionalInfo)';
+    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
   }
 
   @override
@@ -443,7 +461,8 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
       ..add(DiagnosticsProperty('itemsAdded', itemsAdded))
       ..add(DiagnosticsProperty('itemsUpdated', itemsUpdated))
       ..add(DiagnosticsProperty('itemsSkipped', itemsSkipped))
-      ..add(DiagnosticsProperty('additionalInfo', additionalInfo));
+      ..add(DiagnosticsProperty('additionalInfo', additionalInfo))
+      ..add(DiagnosticsProperty('nextFullSyncInfo', nextFullSyncInfo));
   }
 
   @override
@@ -485,30 +504,34 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
             (identical(other.itemsSkipped, itemsSkipped) ||
                 other.itemsSkipped == itemsSkipped) &&
             (identical(other.additionalInfo, additionalInfo) ||
-                other.additionalInfo == additionalInfo));
+                other.additionalInfo == additionalInfo) &&
+            (identical(other.nextFullSyncInfo, nextFullSyncInfo) ||
+                other.nextFullSyncInfo == nextFullSyncInfo));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      state,
-      currentStep,
-      const DeepCollectionEquality().hash(_completedSteps),
-      const DeepCollectionEquality().hash(_failedSteps),
-      itemsProcessed,
-      itemsTotal,
-      progress,
-      errorMessage,
-      lastSync,
-      const DeepCollectionEquality().hash(_conflicts),
-      lastUpdated,
-      currentEntityName,
-      currentEntityTotal,
-      currentEntityProcessed,
-      itemsAdded,
-      itemsUpdated,
-      itemsSkipped,
-      additionalInfo);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        state,
+        currentStep,
+        const DeepCollectionEquality().hash(_completedSteps),
+        const DeepCollectionEquality().hash(_failedSteps),
+        itemsProcessed,
+        itemsTotal,
+        progress,
+        errorMessage,
+        lastSync,
+        const DeepCollectionEquality().hash(_conflicts),
+        lastUpdated,
+        currentEntityName,
+        currentEntityTotal,
+        currentEntityProcessed,
+        itemsAdded,
+        itemsUpdated,
+        itemsSkipped,
+        additionalInfo,
+        nextFullSyncInfo
+      ]);
 
   /// Create a copy of SyncStatus
   /// with the given fields replaced by the non-null parameter values.
@@ -538,7 +561,8 @@ abstract class _SyncStatus implements SyncStatus {
       final int? itemsAdded,
       final int? itemsUpdated,
       final int? itemsSkipped,
-      final String? additionalInfo}) = _$SyncStatusImpl;
+      final String? additionalInfo,
+      final String? nextFullSyncInfo}) = _$SyncStatusImpl;
 
   @override
   SyncState get state;
@@ -578,7 +602,9 @@ abstract class _SyncStatus implements SyncStatus {
   @override
   int? get itemsSkipped; // Nombre d'éléments ignorés dans l'étape actuelle
   @override
-  String? get additionalInfo;
+  String? get additionalInfo; // Informations supplémentaires sur la progression
+  @override
+  String? get nextFullSyncInfo;
 
   /// Create a copy of SyncStatus
   /// with the given fields replaced by the non-null parameter values.
