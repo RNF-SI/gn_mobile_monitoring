@@ -131,6 +131,25 @@ class SyncStatusWidget extends ConsumerWidget {
                             'Dernière synchronisation: ${_formatDate(syncStatus.lastSync!)}',
                             style: Theme.of(context).textTheme.bodySmall,
                           ),
+                        // Ajouter l'info sur la prochaine synchronisation complète
+                        if (syncStatus.nextFullSyncInfo != null) 
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.update, 
+                                size: 12, 
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                syncStatus.nextFullSyncInfo!,
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.9),
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
                       ],
                     ),
                   ),

@@ -48,6 +48,7 @@ class SyncStatus with _$SyncStatus {
     int? itemsUpdated,           // Nombre d'éléments mis à jour dans l'étape actuelle
     int? itemsSkipped,           // Nombre d'éléments ignorés dans l'étape actuelle
     String? additionalInfo,      // Informations supplémentaires sur la progression
+    String? nextFullSyncInfo,     // Informations sur la prochaine synchronisation complète
   }) = _SyncStatus;
 
   /// État initial par défaut
@@ -60,6 +61,7 @@ class SyncStatus with _$SyncStatus {
         itemsTotal: 0,
         progress: 0.0,
         lastUpdated: DateTime.now(),
+        nextFullSyncInfo: null,
       );
 
   /// État lorsque la synchronisation est en cours

@@ -59,7 +59,7 @@ class MenuActions extends ConsumerWidget {
   ) async {
     switch (value) {
       case 'sync':
-        await _startSync(context, syncService, ref);
+        await _showSyncSelectionDialog(context, syncService, ref);
         break;
       case 'delete':
         await _confirmDelete(context, syncService);
@@ -153,7 +153,8 @@ class MenuActions extends ConsumerWidget {
     );
   }
 
-  Future<void> _startSync(
+  /// Affiche un dialogue pour sélectionner les éléments à synchroniser
+  Future<void> _showSyncSelectionDialog(
       BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
     final currentStatus = ref.read(syncServiceProvider);
@@ -163,13 +164,266 @@ class MenuActions extends ConsumerWidget {
       );
       return;
     }
+    
+    // Vérifie si une synchronisation complète est nécessaire
+    final isFullSyncRequired = syncService.isFullSyncNeeded();
+    
+    // Options de synchronisation avec états par défaut
+    bool syncConfiguration = true; // Toujours activé
+    bool syncNomenclatures = true;
+    bool syncTaxons = true;
+    bool syncObservers = true;
+    bool syncModules = true;
+    bool syncSites = true;
+    bool syncSiteGroups = true;
+    
+    // Si une synchronisation complète est requise, on ne peut pas désactiver les options
+    if (!isFullSyncRequired) {
+      final result = await showDialog<Map<String, bool>>(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Synchronisation des données'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Sélectionnez les éléments à synchroniser:',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 8),
+                    if (currentStatus.nextFullSyncInfo != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Theme.of(context).colorScheme.primary,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  currentStatus.nextFullSyncInfo!,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Configuration',
+                      Icons.settings,
+                      true, // Toujours activé et sélectionné
+                      (value) => setState(() => syncConfiguration = value ?? true),
+                      isDisabled: true, // Toujours requis
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Nomenclatures',
+                      Icons.list_alt,
+                      syncNomenclatures,
+                      (value) => setState(() => syncNomenclatures = value ?? true),
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Taxons',
+                      Icons.eco,
+                      syncTaxons,
+                      (value) => setState(() => syncTaxons = value ?? true),
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Observateurs',
+                      Icons.person,
+                      syncObservers,
+                      (value) => setState(() => syncObservers = value ?? true),
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Modules',
+                      Icons.extension,
+                      syncModules,
+                      (value) => setState(() => syncModules = value ?? true),
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Sites',
+                      Icons.place,
+                      syncSites,
+                      (value) => setState(() => syncSites = value ?? true),
+                    ),
+                    _buildSyncCheckboxTile(
+                      context,
+                      'Groupes de sites',
+                      Icons.folder,
+                      syncSiteGroups,
+                      (value) => setState(() => syncSiteGroups = value ?? true),
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Annuler'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop({
+                      'configuration': syncConfiguration,
+                      'nomenclatures': syncNomenclatures,
+                      'taxons': syncTaxons,
+                      'observers': syncObservers,
+                      'modules': syncModules,
+                      'sites': syncSites,
+                      'siteGroups': syncSiteGroups,
+                    }),
+                    child: const Text('Synchroniser'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
 
-    // Démarrer la synchronisation avec tous les types de données
+      if (result != null) {
+        // Extraire les options sélectionnées
+        syncConfiguration = result['configuration'] ?? true;
+        syncNomenclatures = result['nomenclatures'] ?? true;
+        syncTaxons = result['taxons'] ?? true;
+        syncObservers = result['observers'] ?? true;
+        syncModules = result['modules'] ?? true;
+        syncSites = result['sites'] ?? true;
+        syncSiteGroups = result['siteGroups'] ?? true;
+      } else {
+        // Annulation
+        return;
+      }
+    } else {
+      // Afficher un message indiquant qu'une synchronisation complète est nécessaire
+      final doFullSync = await showDialog<bool>(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Synchronisation complète requise'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Une synchronisation complète est nécessaire car:',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '• La dernière synchronisation complète date de plus d\'une semaine',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const Text(
+                  '• Ou c\'est la première utilisation de l\'application',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Tous les éléments seront synchronisés pour assurer la cohérence des données.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Annuler'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Lancer la synchronisation'),
+              ),
+            ],
+          );
+        },
+      );
+      
+      if (doFullSync != true) {
+        return; // L'utilisateur a annulé
+      }
+      // Tous les éléments seront synchronisés
+    }
+
+    // Démarrer la synchronisation avec les options sélectionnées
     await syncService.syncAll(
-      syncConfiguration: true,
-      syncNomenclatures: true,
-      syncTaxons: true,
-      syncObservers: true,
+      syncConfiguration: syncConfiguration,
+      syncNomenclatures: syncNomenclatures,
+      syncTaxons: syncTaxons,
+      syncObservers: syncObservers,
+      syncModules: syncModules,
+      syncSites: syncSites,
+      syncSiteGroups: syncSiteGroups,
+    );
+  }
+  
+  /// Construit une checkbox pour la sélection d'éléments à synchroniser
+  Widget _buildSyncCheckboxTile(
+    BuildContext context,
+    String title,
+    IconData icon,
+    bool value,
+    Function(bool?) onChanged, {
+    bool isDisabled = false,
+  }) {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 2),
+      decoration: BoxDecoration(
+        color: value 
+            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+            : Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+        ),
+      ),
+      child: CheckboxListTile(
+        title: Row(
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: value 
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: value ? FontWeight.bold : FontWeight.normal,
+                color: value 
+                    ? Theme.of(context).colorScheme.onSurface
+                    : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ],
+        ),
+        value: value,
+        onChanged: isDisabled ? null : onChanged,
+        dense: true,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        activeColor: Theme.of(context).colorScheme.primary,
+        checkColor: Theme.of(context).colorScheme.onPrimary,
+      ),
     );
   }
 }

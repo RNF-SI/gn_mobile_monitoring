@@ -28,11 +28,28 @@ class SyncService extends StateNotifier<SyncStatus> {
   
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
   final Map<String, SyncResult> _syncResults = {};
+  
+  // Date de la dernière synchronisation complète
+  DateTime? _lastFullSync;
+  
+  // Durée entre deux synchronisations complètes automatiques (1 semaine)
+  static const Duration fullSyncInterval = Duration(days: 7);
 
   SyncService(this._getTokenUseCase, this._syncUseCase)
       : super(SyncStatus.initial()) {
-    // Démarrer le timer pour la synchronisation automatique (toutes les 30 minutes)
+    // Initialiser la date de dernière synchro complète (à implémenter avec la persistance)
+    _initLastFullSyncDate();
+    
+    // Démarrer le timer pour la synchronisation automatique
     _scheduleAutoSync();
+  }
+
+  /// Démarre une synchronisation complète des données
+  /// Détermine si une synchronisation complète est nécessaire en fonction de la date de dernière synchronisation
+  bool isFullSyncNeeded() {
+    final now = DateTime.now();
+    return _lastFullSync == null || 
+        now.isAfter(_lastFullSync!.add(fullSyncInterval));
   }
 
   /// Démarre une synchronisation complète des données
@@ -44,6 +61,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool isManualSync = true, // Indique si cette synchronisation est déclenchée manuellement
   }) async {
     if (_isSyncing) {
       return state; // Ne pas synchroniser si déjà en cours
@@ -437,12 +455,31 @@ class SyncService extends StateNotifier<SyncStatus> {
         );
       } else {
         // Tout s'est bien passé
+        DateTime now = DateTime.now();
         state = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
-          lastSync: DateTime.now(),
+          lastSync: now,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
         );
+        
+        // Si c'était une synchronisation complète, mettre à jour la date de dernière synchro
+        final isFullSync = _isFullSync(
+          syncConfiguration, 
+          syncNomenclatures, 
+          syncTaxons, 
+          syncObservers,
+          syncModules: syncModules,
+          syncSites: syncSites,
+          syncSiteGroups: syncSiteGroups
+        );
+        
+        if (isFullSync) {
+          await _updateLastFullSyncDate();
+        } else {
+          // Sinon, simplement mettre à jour l'affichage du temps restant
+          _updateStateWithTimeRemaining();
+        }
       }
 
       _isSyncing = false;
@@ -584,9 +621,158 @@ class SyncService extends StateNotifier<SyncStatus> {
     _autoSyncTimer = null;
   }
 
+  /// Initialise la date de dernière synchronisation complète 
+  /// depuis le stockage persistant
+  Future<void> _initLastFullSyncDate() async {
+    try {
+      // Cette implémentation devrait utiliser AppMetadataDao pour récupérer la date
+      // Exemple d'implémentation :
+      // final lastSyncStr = await _appMetadataDao.getValue('last_full_sync');
+      // if (lastSyncStr != null) {
+      //   _lastFullSync = DateTime.parse(lastSyncStr);
+      // }
+      
+      // Pour l'instant, on utilise simplement DateTime.now() comme point de départ
+      _lastFullSync = DateTime.now().subtract(const Duration(days: 5)); // Pour tester: 5 jours déjà écoulés
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération de la date de dernière synchronisation: $e');
+      _lastFullSync = null;
+    }
+    
+    // Mettre à jour l'état pour afficher le temps restant
+    _updateStateWithTimeRemaining();
+  }
+  
+  /// Met à jour la date de dernière synchronisation complète
+  Future<void> _updateLastFullSyncDate() async {
+    _lastFullSync = DateTime.now();
+    
+    try {
+      // Cette implémentation devrait utiliser AppMetadataDao pour sauvegarder la date
+      // Exemple d'implémentation :
+      // await _appMetadataDao.setValue('last_full_sync', _lastFullSync.toIso8601String());
+    } catch (e) {
+      debugPrint('Erreur lors de la sauvegarde de la date de dernière synchronisation: $e');
+    }
+    
+    // Mettre à jour l'état pour afficher le temps restant actualisé
+    _updateStateWithTimeRemaining();
+  }
+  
+  /// Met à jour l'état avec le temps restant avant la prochaine synchronisation complète
+  void _updateStateWithTimeRemaining() {
+    final currentState = state;
+    
+    // Calculer le temps restant
+    String? timeRemaining = _getTimeRemainingText();
+    
+    // Mettre à jour l'état avec le temps restant
+    state = SyncStatus(
+      state: currentState.state,
+      currentStep: currentState.currentStep,
+      completedSteps: currentState.completedSteps,
+      failedSteps: currentState.failedSteps,
+      itemsProcessed: currentState.itemsProcessed,
+      itemsTotal: currentState.itemsTotal,
+      progress: currentState.progress,
+      errorMessage: currentState.errorMessage,
+      lastSync: currentState.lastSync,
+      conflicts: currentState.conflicts,
+      lastUpdated: DateTime.now(),
+      currentEntityName: currentState.currentEntityName,
+      currentEntityTotal: currentState.currentEntityTotal,
+      currentEntityProcessed: currentState.currentEntityProcessed,
+      itemsAdded: currentState.itemsAdded,
+      itemsUpdated: currentState.itemsUpdated,
+      itemsSkipped: currentState.itemsSkipped,
+      additionalInfo: currentState.additionalInfo,
+      nextFullSyncInfo: timeRemaining,
+    );
+  }
+  
+  /// Retourne un texte indiquant le temps restant avant la prochaine synchronisation
+  /// complète automatique
+  String? _getTimeRemainingText() {
+    if (_lastFullSync == null) {
+      return "Synchronisation complète requise";
+    }
+    
+    final now = DateTime.now();
+    final nextFullSync = _lastFullSync!.add(fullSyncInterval);
+    
+    if (now.isAfter(nextFullSync)) {
+      return "Synchronisation complète requise";
+    }
+    
+    final remaining = nextFullSync.difference(now);
+    
+    // Formatage convivial
+    if (remaining.inDays > 1) {
+      return "Synchronisation complète dans ${remaining.inDays} jours";
+    } else if (remaining.inDays == 1) {
+      return "Synchronisation complète demain";
+    } else if (remaining.inHours > 1) {
+      return "Synchronisation complète dans ${remaining.inHours} heures";
+    } else if (remaining.inMinutes > 1) {
+      return "Synchronisation complète dans ${remaining.inMinutes} minutes";
+    } else {
+      return "Synchronisation complète imminente";
+    }
+  }
+
   /// Planifie la prochaine synchronisation automatique
   void _scheduleAutoSync() {
-    startAutoSync();
+    // Vérifier si une synchronisation complète est nécessaire
+    final now = DateTime.now();
+    final isFullSyncNeeded = _lastFullSync == null || 
+        now.isAfter(_lastFullSync!.add(fullSyncInterval));
+    
+    if (isFullSyncNeeded) {
+      // Planifier une synchronisation complète
+      Timer(const Duration(minutes: 5), () => _performFullSync());
+    } else {
+      // Planifier une vérification régulière
+      startAutoSync(period: const Duration(hours: 2));
+    }
+  }
+  
+  /// Vérifie si les paramètres correspondent à une synchronisation complète
+  bool _isFullSync(
+    bool syncConfiguration,
+    bool syncNomenclatures,
+    bool syncTaxons,
+    bool syncObservers, {
+    bool syncModules = true,
+    bool syncSites = true,
+    bool syncSiteGroups = true,
+  }) {
+    return syncConfiguration && 
+           syncNomenclatures && 
+           syncTaxons && 
+           syncObservers && 
+           syncModules && 
+           syncSites && 
+           syncSiteGroups;
+  }
+
+  /// Effectue une synchronisation complète automatique
+  Future<void> _performFullSync() async {
+    if (_isSyncing) return;
+    
+    try {
+      await syncAll(
+        syncConfiguration: true,
+        syncNomenclatures: true,
+        syncTaxons: true,
+        syncObservers: true,
+        syncModules: true,
+        syncSites: true,
+        syncSiteGroups: true,
+        isManualSync: false, // C'est une synchronisation automatique
+      );
+    } catch (e) {
+      debugPrint('Erreur lors de la synchronisation complète automatique: $e');
+    }
   }
 
   /// Récupère la première étape de synchronisation en fonction des paramètres
