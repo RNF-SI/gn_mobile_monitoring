@@ -99,7 +99,10 @@ class SyncStatusWidget extends ConsumerWidget {
                 ),
             ],
           ),
-          onPressed: _onSyncPressed(ref),
+          // Ne pas lancer de synchronisation en cliquant sur l'icône
+          // L'utilisateur doit passer par le menu pour synchroniser
+          onPressed: null,
+          tooltip: 'État de la synchronisation',
         ),
       );
     }
@@ -109,61 +112,59 @@ class SyncStatusWidget extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // En-tête avec bouton de synchronisation
-          InkWell(
-            onTap: _onSyncPressed(ref),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  _buildIcon(iconData, iconColor, syncStatus),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
+          // En-tête avec informations sur la synchronisation
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Row(
+              children: [
+                _buildIcon(iconData, iconColor, syncStatus),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _getStatusText(syncStatus),
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      if (syncStatus.lastSync != null)
                         Text(
-                          _getStatusText(syncStatus),
-                          style: Theme.of(context).textTheme.titleMedium,
+                          'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
+                          style: Theme.of(context).textTheme.bodySmall,
                         ),
-                        if (syncStatus.lastSync != null)
-                          Text(
-                            'Dernière synchronisation: ${_formatDate(syncStatus.lastSync!)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        // Ajouter l'info sur la prochaine synchronisation complète
-                        if (syncStatus.nextFullSyncInfo != null) 
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.update, 
-                                size: 12, 
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                      // Ajouter l'info sur la prochaine synchronisation complète
+                      if (syncStatus.nextFullSyncInfo != null) 
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.update, 
+                              size: 12, 
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              syncStatus.nextFullSyncInfo!,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.9),
+                                fontStyle: FontStyle.italic,
                               ),
-                              const SizedBox(width: 4),
-                              Text(
-                                syncStatus.nextFullSyncInfo!,
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.9),
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ],
-                          ),
-                      ],
+                            ),
+                          ],
+                        ),
+                    ],
+                  ),
+                ),
+                // Afficher juste une icône d'information pour indiquer où trouver la synchronisation
+                if (syncStatus.state != SyncState.inProgress)
+                  Tooltip(
+                    message: 'Utilisez le menu en haut à droite pour synchroniser',
+                    child: Icon(
+                      Icons.menu, 
+                      size: 18,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
                     ),
                   ),
-                  // Ajouter un bouton de synchronisation explicite pour indiquer l'action possible
-                  if (syncStatus.state != SyncState.inProgress)
-                    IconButton(
-                      icon: Icon(Icons.refresh,
-                          color: Theme.of(context).colorScheme.primary),
-                      onPressed: _onSyncPressed(ref),
-                      tooltip: 'Lancer la synchronisation',
-                      iconSize: 20,
-                    ),
-                ],
-              ),
+              ],
             ),
           ),
           // Barre de progression (uniquement pendant la synchronisation)
@@ -1118,29 +1119,6 @@ class SyncStatusWidget extends ConsumerWidget {
     );
   }
 
-  /// Retourne la fonction à exécuter lors du clic sur le bouton de synchronisation
-  VoidCallback? _onSyncPressed(WidgetRef ref) {
-    final syncStatus = ref.read(syncServiceProvider);
-
-    // Ne pas permettre de lancer une synchronisation si une est déjà en cours
-    if (syncStatus.state == SyncState.inProgress) {
-      return null;
-    }
-
-    // Utiliser le callback externe s'il est fourni
-    if (onSyncRequested != null) {
-      return onSyncRequested;
-    }
-
-    // Sinon, utiliser le service de synchronisation avec tous les types de données
-    return () => ref.read(syncServiceProvider.notifier).syncAll(
-          syncConfiguration: true,
-          syncNomenclatures: true,
-          syncTaxons: true,
-          syncObservers: true,
-          syncModules: true,
-          syncSites: true,
-          syncSiteGroups: true,
-        );
-  }
+  // Méthode supprimée car les boutons de synchronisation ont été retirés de l'interface
+  // La synchronisation se fait uniquement via le menu en haut à droite
 }

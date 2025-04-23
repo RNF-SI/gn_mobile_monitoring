@@ -474,10 +474,10 @@ class SyncService extends StateNotifier<SyncStatus> {
       } else {
         // Tout s'est bien passé
         DateTime now = DateTime.now();
+        // On ne définit pas encore lastSync, il sera défini seulement si c'est une synchro complète
         state = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
-          lastSync: now,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
         );
         
@@ -492,11 +492,20 @@ class SyncService extends StateNotifier<SyncStatus> {
           syncSiteGroups: syncSiteGroups
         );
         
+        // Mise à jour de la date de synchronisation complète
         if (isFullSync) {
           await _updateLastFullSyncDate();
+          
+          // Mise à jour du statut avec la nouvelle date de synchronisation
+          state = state.copyWith(
+            lastSync: now, // Afficher la date de dernière synchro seulement si elle était complète
+          );
         } else {
           // Sinon, simplement mettre à jour l'affichage du temps restant
           _updateStateWithTimeRemaining();
+          
+          // Ne pas mettre à jour la date de dernière synchronisation dans l'interface
+          // car ce n'était pas une synchronisation complète
         }
       }
 
