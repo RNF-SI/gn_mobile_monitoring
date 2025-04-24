@@ -58,8 +58,16 @@ class HomePage extends ConsumerWidget {
             ),
           ),
           // Overlay pour bloquer les interactions pendant la synchronisation
+          // Nous plaçons le ModalBarrier en-dessous du widget de synchronisation
           if (showOverlay)
-            Positioned.fill(
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 
+                   kToolbarHeight +        // AppBar height
+                   kTextTabBarHeight +     // TabBar height
+                   96,                     // Hauteur approximative du SyncStatusWidget
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: ModalBarrier(
                 key: const Key('sync-modal-barrier'),
                 color: Colors.black.withOpacity(0.1),
