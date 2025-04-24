@@ -5,17 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case.dart';
@@ -47,6 +51,9 @@ final authenticationViewModelProvider =
     ref.watch(clearUserIdFromLocalStorageUseCaseProvider),
     ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
     ref.watch(clearTokenFromLocalStorageUseCaseProvider),
+    ref.watch(setApiUrlFromLocalStorageUseCaseProvider),
+    ref.watch(getApiUrlFromLocalStorageUseCaseProvider),
+    ref.watch(clearApiUrlFromLocalStorageUseCaseProvider),
     ref.watch(fetchModulesUseCaseProvider),
     ref.watch(fetchSitesUseCaseProvider),
     ref.watch(fetchSiteGroupsUseCaseProvider),
@@ -73,6 +80,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final ClearUserNameFromLocalStorageUseCase
       _clearUserNameFromLocalStorageUseCase;
   final ClearTokenFromLocalStorageUseCase _clearTokenFromLocalStorageUseCase;
+  final SetApiUrlFromLocalStorageUseCase _setApiUrlFromLocalStorageUseCase;
+  final GetApiUrlFromLocalStorageUseCase _getApiUrlFromLocalStorageUseCase;
+  final ClearApiUrlFromLocalStorageUseCase _clearApiUrlFromLocalStorageUseCase;
   final FetchModulesUseCase _fetchModulesUseCase;
   final FetchSitesUseCase _fetchSitesUseCase;
   final FetchSiteGroupsUseCase _fetchSiteGroupsUseCase;
@@ -87,12 +97,29 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._clearUserIdFromLocalStorageUseCase,
     this._clearUserNameFromLocalStorageUseCase,
     this._clearTokenFromLocalStorageUseCase,
+    this._setApiUrlFromLocalStorageUseCase,
+    this._getApiUrlFromLocalStorageUseCase,
+    this._clearApiUrlFromLocalStorageUseCase,
     this._fetchModulesUseCase,
     this._fetchSitesUseCase,
     this._fetchSiteGroupsUseCase,
     this._ref,
   ) : super(const loadingState.State.init()) {
     controller.add(_user);
+    // Load stored API URL at init
+    _loadApiUrl();
+  }
+  
+  // Load API URL from local storage and set in Config
+  Future<void> _loadApiUrl() async {
+    try {
+      final apiUrl = await _getApiUrlFromLocalStorageUseCase.execute();
+      if (apiUrl != null && apiUrl.isNotEmpty) {
+        Config.setStoredApiUrl(apiUrl);
+      }
+    } catch (e) {
+      print('Error loading API URL: $e');
+    }
   }
 
   // For convenience, access to incremental sync use cases through ref
@@ -112,6 +139,26 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
   void _updateLoginStatus(LoginStatusInfo status) {
     _ref.read(loginStatusProvider.notifier).state = status;
+  }
+  
+  // Save API URL to local storage and update Config
+  Future<void> saveApiUrl(String apiUrl) async {
+    try {
+      await _setApiUrlFromLocalStorageUseCase.execute(apiUrl);
+      Config.setStoredApiUrl(apiUrl);
+    } catch (e) {
+      print('Error saving API URL: $e');
+    }
+  }
+  
+  // Get the stored API URL from local storage
+  Future<String?> getStoredApiUrl() async {
+    try {
+      return await _getApiUrlFromLocalStorageUseCase.execute();
+    } catch (e) {
+      print('Error getting API URL: $e');
+      return null;
+    }
   }
 
   Future<void> signInWithEmailAndPassword(
@@ -271,6 +318,11 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       await _clearUserNameFromLocalStorageUseCase.execute();
       await _clearUserIdFromLocalStorageUseCase.execute();
       await _clearTokenFromLocalStorageUseCase.execute();
+      
+      // We don't clear API URL when logging out so it persists between sessions
+      // If you want to clear it, uncomment the line below
+      // await _clearApiUrlFromLocalStorageUseCase.execute();
+      // Config.clearStoredApiUrl();
 
       // Clear any cached user information
       ref.refresh(authStateProvider);

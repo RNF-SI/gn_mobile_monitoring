@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -5,6 +6,7 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   static SharedPreferences? _preferences;
   static const String inProgressCorCyclePlacetteKey =
       'inProgressCorCyclePlacetteIdList';
+  static const String apiUrlKey = 'apiUrl';
 
   static Future init() async {
     _preferences = await SharedPreferences.getInstance();
@@ -75,5 +77,20 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   @override
   Future<String?> getToken() async {
     return _preferences?.getString('token');
+  }
+  
+  @override
+  Future<void> setApiUrl(String apiUrl) async {
+    await _preferences?.setString(apiUrlKey, apiUrl);
+  }
+  
+  @override
+  Future<String?> getApiUrl() async {
+    return _preferences?.getString(apiUrlKey);
+  }
+  
+  @override
+  Future<void> clearApiUrl() async {
+    await _preferences?.remove(apiUrlKey);
   }
 }

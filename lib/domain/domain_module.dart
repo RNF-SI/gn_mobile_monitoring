@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/data/repository/sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -29,6 +30,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.da
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
@@ -83,6 +85,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -161,6 +164,18 @@ final clearUserNameFromLocalStorageUseCaseProvider =
 final clearTokenFromLocalStorageUseCaseProvider =
     Provider<ClearTokenFromLocalStorageUseCase>((ref) =>
         ClearTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final getApiUrlFromLocalStorageUseCaseProvider =
+    Provider<GetApiUrlFromLocalStorageUseCase>((ref) =>
+        GetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final setApiUrlFromLocalStorageUseCaseProvider =
+    Provider<SetApiUrlFromLocalStorageUseCase>((ref) =>
+        SetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final clearApiUrlFromLocalStorageUseCaseProvider =
+    Provider<ClearApiUrlFromLocalStorageUseCase>((ref) =>
+        ClearApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
 
 final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
     (ref) =>

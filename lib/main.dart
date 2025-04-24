@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
@@ -54,7 +56,20 @@ void main() async {
     return stack;
   };
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Initialize local storage
   await LocalStorageRepositoryImpl.init();
+  
+  // Initialize stored API URL if available
+  final localStorageRepository = LocalStorageRepositoryImpl();
+  final apiUrl = await localStorageRepository.getApiUrl();
+  if (apiUrl != null && apiUrl.isNotEmpty) {
+    Config.setStoredApiUrl(apiUrl);
+    print('Using stored API URL: $apiUrl');
+  } else {
+    print('No stored API URL found, login page will use default URL: ${Config.DEFAULT_API_URL}');
+  }
+  
   runApp(
     const ProviderScope(
       child: MainApp(),
