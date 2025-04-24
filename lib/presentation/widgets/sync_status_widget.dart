@@ -6,7 +6,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:intl/intl.dart';
 
 /// Widget pour afficher le statut de synchronisation
-class SyncStatusWidget extends ConsumerWidget {
+class SyncStatusWidget extends ConsumerStatefulWidget {
   /// Taille du widget - petit ou grand
   final bool isSmall;
 
@@ -24,11 +24,19 @@ class SyncStatusWidget extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  SyncStatusWidgetState createState() => SyncStatusWidgetState();
+}
+
+class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
+  // État d'expansion des détails de synchronisation
+  bool _detailsExpanded = true;
+
+  @override
+  Widget build(BuildContext context) {
     final syncStatus = ref.watch(syncServiceProvider);
 
     // Couleur du texte en fonction du contexte
-    final Color textColor = isInAppBar
+    final Color textColor = widget.isInAppBar
         ? Theme.of(context).colorScheme.onPrimary
         : Theme.of(context).colorScheme.onSurface;
 
@@ -63,9 +71,9 @@ class SyncStatusWidget extends ConsumerWidget {
     }
 
     // Version réduite pour l'appbar
-    if (isSmall) {
+    if (widget.isSmall) {
       return Tooltip(
-        message: _getTooltip(syncStatus),
+        message: 'Utilisez le menu en haut à droite pour synchroniser',
         child: IconButton(
           icon: Stack(
             alignment: Alignment.center,
@@ -102,7 +110,6 @@ class SyncStatusWidget extends ConsumerWidget {
           // Ne pas lancer de synchronisation en cliquant sur l'icône
           // L'utilisateur doit passer par le menu pour synchroniser
           onPressed: null,
-          tooltip: 'État de la synchronisation',
         ),
       );
     }
@@ -112,61 +119,74 @@ class SyncStatusWidget extends ConsumerWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // En-tête avec informations sur la synchronisation
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Row(
-              children: [
-                _buildIcon(iconData, iconColor, syncStatus),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        _getStatusText(syncStatus),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
-                      if (syncStatus.lastSync != null)
+          // En-tête cliquable avec informations sur la synchronisation
+          InkWell(
+            onTap: () {
+              setState(() {
+                // Inverser l'état d'expansion des détails au clic
+                _detailsExpanded = !_detailsExpanded;
+              });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Row(
+                children: [
+                  _buildIcon(iconData, iconColor, syncStatus),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
                         Text(
-                          'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
-                          style: Theme.of(context).textTheme.bodySmall,
+                          _getStatusText(syncStatus),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
-                      // Ajouter l'info sur la prochaine synchronisation complète
-                      if (syncStatus.nextFullSyncInfo != null) 
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.update, 
-                              size: 12, 
-                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              syncStatus.nextFullSyncInfo!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.9),
-                                fontStyle: FontStyle.italic,
+                        if (syncStatus.lastSync != null)
+                          Text(
+                            'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        // Ajouter l'info sur la prochaine synchronisation complète
+                        if (syncStatus.nextFullSyncInfo != null)
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.update,
+                                size: 12,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .primary
+                                    .withOpacity(0.7),
                               ),
-                            ),
-                          ],
-                        ),
-                    ],
-                  ),
-                ),
-                // Afficher juste une icône d'information pour indiquer où trouver la synchronisation
-                if (syncStatus.state != SyncState.inProgress)
-                  Tooltip(
-                    message: 'Utilisez le menu en haut à droite pour synchroniser',
-                    child: Icon(
-                      Icons.menu, 
-                      size: 18,
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                              const SizedBox(width: 4),
+                              Text(
+                                syncStatus.nextFullSyncInfo!,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .bodySmall
+                                    ?.copyWith(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.9),
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
                   ),
-              ],
+                  // Afficher icône d'expansion/réduction
+                  Icon(
+                    _detailsExpanded ? Icons.expand_less : Icons.expand_more,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ],
+              ),
             ),
           ),
+
           // Barre de progression (uniquement pendant la synchronisation)
           if (syncStatus.state == SyncState.inProgress)
             Padding(
@@ -176,238 +196,244 @@ class SyncStatusWidget extends ConsumerWidget {
               ),
             ),
 
-          // Contenu principal
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Informations de progression et détails (pendant la synchronisation ou après)
-                if ((syncStatus.state == SyncState.inProgress ||
-                        syncStatus.additionalInfo != null) &&
-                    (syncStatus.itemsTotal > 0 ||
-                        syncStatus.additionalInfo != null))
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Ligne principale avec l'étape et la progression (uniquement pendant la synchronisation)
-                      if (syncStatus.state == SyncState.inProgress &&
-                          syncStatus.currentStep != null &&
-                          syncStatus.itemsTotal > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: RichText(
-                                  text: TextSpan(
-                                    children: [
-                                      TextSpan(
-                                        text: syncStatus.currentEntityName ??
-                                            _getStepName(
-                                                syncStatus.currentStep!),
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface,
-                                            ),
-                                      ),
-                                      TextSpan(
-                                        text:
-                                            ' • ${syncStatus.itemsProcessed}/${syncStatus.itemsTotal}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall
-                                            ?.copyWith(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withOpacity(0.7),
-                                            ),
-                                      ),
-                                    ],
+          // Contenu principal (uniquement si détails sont développés)
+          if (_detailsExpanded)
+            Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Informations de progression et détails (pendant la synchronisation ou après)
+                  if ((syncStatus.state == SyncState.inProgress ||
+                          syncStatus.additionalInfo != null) &&
+                      (syncStatus.itemsTotal > 0 ||
+                          syncStatus.additionalInfo != null))
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Ligne principale avec l'étape et la progression (uniquement pendant la synchronisation)
+                        if (syncStatus.state == SyncState.inProgress &&
+                            syncStatus.currentStep != null &&
+                            syncStatus.itemsTotal > 0)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: RichText(
+                                    text: TextSpan(
+                                      children: [
+                                        TextSpan(
+                                          text: syncStatus.currentEntityName ??
+                                              _getStepName(
+                                                  syncStatus.currentStep!),
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface,
+                                              ),
+                                        ),
+                                        TextSpan(
+                                          text:
+                                              ' • ${syncStatus.itemsProcessed}/${syncStatus.itemsTotal}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(
+                                                color: Theme.of(context)
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withOpacity(0.7),
+                                              ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
-                              ),
-                              if (syncStatus.itemsAdded != null ||
-                                  syncStatus.itemsUpdated != null)
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 6.0, vertical: 2.0),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .primary
-                                        .withOpacity(0.1),
-                                    borderRadius: BorderRadius.circular(4.0),
+                                if (syncStatus.itemsAdded != null ||
+                                    syncStatus.itemsUpdated != null)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 6.0, vertical: 2.0),
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .primary
+                                          .withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(4.0),
+                                    ),
+                                    child: Text(
+                                      '${syncStatus.itemsAdded ?? 0}↑ ${syncStatus.itemsUpdated ?? 0}↻',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .colorScheme
+                                                .primary,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 10,
+                                          ),
+                                    ),
                                   ),
+                              ],
+                            ),
+                          ),
+
+                        // Afficher les informations détaillées si disponibles
+                        if (syncStatus.additionalInfo != null)
+                          Container(
+                            width: double.infinity,
+                            margin: const EdgeInsets.only(bottom: 4.0),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4.0),
+                              border: Border.all(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .outline
+                                    .withOpacity(0.1),
+                                width: 1,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Détails de la synchronisation',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .onSurface,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildSyncSummary(
+                                      context, syncStatus.additionalInfo!),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+
+                  // Affichage des erreurs
+                  if (syncStatus.state == SyncState.failure &&
+                      syncStatus.errorMessage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Erreur:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () => _showErrorDialog(
+                                context, syncStatus.errorMessage!),
+                            child: Row(
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    '${syncStatus.itemsAdded ?? 0}↑ ${syncStatus.itemsUpdated ?? 0}↻',
+                                    syncStatus.errorMessage!,
                                     style: Theme.of(context)
                                         .textTheme
                                         .bodySmall
                                         ?.copyWith(
                                           color: Theme.of(context)
                                               .colorScheme
-                                              .primary,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 10,
+                                              .error,
                                         ),
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                            ],
-                          ),
-                        ),
-
-                      // Afficher les informations détaillées si disponibles
-                      if (syncStatus.additionalInfo != null)
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.only(bottom: 4.0),
-                          decoration: BoxDecoration(
-                            color: Theme.of(context)
-                                .colorScheme
-                                .surfaceContainerHighest
-                                .withOpacity(0.3),
-                            borderRadius: BorderRadius.circular(4.0),
-                            border: Border.all(
-                              color: Theme.of(context)
-                                  .colorScheme
-                                  .outline
-                                  .withOpacity(0.1),
-                              width: 1,
-                            ),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Détails de la synchronisation',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface,
-                                      ),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.error,
                                 ),
-                                const SizedBox(height: 8),
-                                _buildSyncSummary(
-                                    context, syncStatus.additionalInfo!),
                               ],
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                        ],
+                      ),
+                    ),
 
-                // Affichage des erreurs
-                if (syncStatus.state == SyncState.failure &&
-                    syncStatus.errorMessage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Erreur:',
-                          style:
-                              Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                    color: Theme.of(context).colorScheme.error,
-                                    fontWeight: FontWeight.bold,
+                  // Affichage des conflits
+                  if (syncStatus.state == SyncState.conflictDetected)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Conflits:',
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodyMedium
+                                ?.copyWith(
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          const SizedBox(height: 4),
+                          InkWell(
+                            onTap: () => _showConflictsDialog(
+                                context, syncStatus.conflicts ?? []),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    '${syncStatus.conflicts?.length ?? 0} conflits détectés',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .secondary,
+                                        ),
                                   ),
-                        ),
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () => _showErrorDialog(
-                              context, syncStatus.errorMessage!),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  syncStatus.errorMessage!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color:
-                                            Theme.of(context).colorScheme.error,
-                                      ),
-                                  maxLines: 3,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Affichage des conflits
-                if (syncStatus.state == SyncState.conflictDetected)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Conflits:',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodyMedium
-                              ?.copyWith(
-                                color: Theme.of(context).colorScheme.secondary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                        ),
-                        const SizedBox(height: 4),
-                        InkWell(
-                          onTap: () => _showConflictsDialog(
-                              context, syncStatus.conflicts ?? []),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  '${syncStatus.conflicts?.length ?? 0} conflits détectés',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .secondary,
-                                      ),
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 16,
+                                  color:
+                                      Theme.of(context).colorScheme.secondary,
                                 ),
-                              ),
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: Theme.of(context).colorScheme.secondary,
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -502,140 +528,6 @@ class SyncStatusWidget extends ConsumerWidget {
         return 'sites';
       case SyncStep.siteGroups:
         return 'groupes de sites';
-    }
-  }
-
-  /// Retourne le texte d'info-bulle
-  String _getTooltip(SyncStatus syncStatus) {
-    switch (syncStatus.state) {
-      case SyncState.idle:
-        return 'Lancer la synchronisation';
-      case SyncState.inProgress:
-        if (syncStatus.currentStep != null) {
-          // Nom de l'étape actuelle (personnalisé ou par défaut)
-          String stepName = syncStatus.currentEntityName ??
-              _getStepName(syncStatus.currentStep!);
-
-          // Progression détaillée
-          String progress = '';
-          if (syncStatus.itemsTotal > 0) {
-            int percentage = (syncStatus.progress * 100).round();
-            progress = ' - $percentage% terminé';
-          }
-
-          // Statistiques détaillées si disponibles
-          String statsInfo = '';
-          if (syncStatus.itemsAdded != null ||
-              syncStatus.itemsUpdated != null) {
-            int added = syncStatus.itemsAdded ?? 0;
-            int updated = syncStatus.itemsUpdated ?? 0;
-            int skipped = syncStatus.itemsSkipped ?? 0;
-
-            statsInfo =
-                '\nAjoutés: $added | Mis à jour: $updated | Ignorés: $skipped';
-          }
-
-          // Liste des étapes complétées
-          String completedInfo = '';
-          if (syncStatus.completedSteps.isNotEmpty) {
-            final completedNames =
-                syncStatus.completedSteps.map(_getStepName).join(', ');
-            completedInfo = '\nTerminé: $completedNames';
-          }
-
-          // Liste des étapes restantes
-          final allSteps = SyncStep.values;
-          final remainingSteps = allSteps
-              .where((step) =>
-                  !syncStatus.completedSteps.contains(step) &&
-                  step != syncStatus.currentStep)
-              .toList();
-
-          String remainingInfo = '';
-          if (remainingSteps.isNotEmpty) {
-            final stepsNames = remainingSteps.map(_getStepName).join(', ');
-            remainingInfo = '\nEn attente: $stepsNames';
-          }
-
-          // Informations supplémentaires
-          String additionalDetails = '';
-          if (syncStatus.additionalInfo != null) {
-            additionalDetails = '\n${syncStatus.additionalInfo}';
-          }
-
-          return 'Synchronisation de $stepName en cours$progress$statsInfo$completedInfo$remainingInfo$additionalDetails';
-        }
-        return 'Synchronisation en cours';
-      case SyncState.success:
-        // Informations récapitulatives sur les éléments traités
-        String statsInfo = '';
-        if (syncStatus.itemsAdded != null || syncStatus.itemsUpdated != null) {
-          int added = syncStatus.itemsAdded ?? 0;
-          int updated = syncStatus.itemsUpdated ?? 0;
-          int skipped = syncStatus.itemsSkipped ?? 0;
-          int total = added + updated + skipped;
-
-          statsInfo = '\nTotal: $total éléments traités\nAjoutés: $added | Mis à jour: $updated | Ignorés: $skipped';
-        }
-
-        // Liste des objets synchronisés
-        String objectsInfo = '';
-        if (syncStatus.completedSteps.isNotEmpty) {
-          final completedNames =
-              syncStatus.completedSteps.map(_getStepName).join(', ');
-          objectsInfo = '\nSynchronisé: $completedNames';
-        }
-
-        // Informations supplémentaires
-        String additionalDetails = '';
-        if (syncStatus.additionalInfo != null) {
-          additionalDetails = '\n${syncStatus.additionalInfo}';
-        }
-
-        return 'Dernière synchronisation: ${syncStatus.lastSync != null ? _formatDate(syncStatus.lastSync!) : "jamais"}$statsInfo$objectsInfo$additionalDetails';
-      case SyncState.failure:
-        // Liste des étapes terminées
-        String completedInfo = '';
-        if (syncStatus.completedSteps.isNotEmpty) {
-          final completedNames =
-              syncStatus.completedSteps.map(_getStepName).join(', ');
-          completedInfo = '\nTerminé: $completedNames';
-        }
-
-        // Liste des étapes en échec
-        String failedInfo = '';
-        if (syncStatus.failedSteps.isNotEmpty) {
-          final failedNames =
-              syncStatus.failedSteps.map(_getStepName).join(', ');
-          failedInfo = '\nÉchoué: $failedNames';
-        }
-
-        // Informations supplémentaires
-        String additionalDetails = '';
-        if (syncStatus.additionalInfo != null) {
-          additionalDetails = '\n${syncStatus.additionalInfo}';
-        }
-
-        return 'Échec: ${syncStatus.errorMessage ?? "erreur inconnue"}$completedInfo$failedInfo$additionalDetails';
-      case SyncState.conflictDetected:
-        // Plus de détails sur les conflits
-        if (syncStatus.conflicts != null && syncStatus.conflicts!.isNotEmpty) {
-          // Grouper les conflits par type d'entité
-          final conflictsByType = <String, int>{};
-          for (final conflict in syncStatus.conflicts!) {
-            conflictsByType[conflict.entityType] =
-                (conflictsByType[conflict.entityType] ?? 0) + 1;
-          }
-
-          // Formater les détails des conflits
-          final conflictSummary = conflictsByType.entries
-              .map((e) => '${e.value} ${_getEntityTypeName(e.key)}')
-              .join(', ');
-
-          return '${syncStatus.conflicts!.length} conflits détectés\n$conflictSummary';
-        }
-
-        return '${syncStatus.conflicts?.length ?? 0} conflits détectés';
     }
   }
 
@@ -860,9 +752,11 @@ class SyncStatusWidget extends ConsumerWidget {
     final lines = syncSummary.split('\n');
 
     // Traiter à la fois le résumé final et le résumé incrémental pendant la synchronisation
-    bool isIncrementalSummary = lines.isNotEmpty && lines[0].contains('Éléments déjà synchronisés');
-    bool isFinalSummary = lines.isNotEmpty && lines[0].contains('Résumé de la synchronisation');
-    
+    bool isIncrementalSummary =
+        lines.isNotEmpty && lines[0].contains('Éléments déjà synchronisés');
+    bool isFinalSummary =
+        lines.isNotEmpty && lines[0].contains('Résumé de la synchronisation');
+
     if ((isIncrementalSummary || isFinalSummary) && lines.length > 1) {
       // Extraire les lignes contenant des statistiques (celles commençant par •)
       final statLines = lines.where((line) => line.trim().startsWith('•'));
@@ -873,18 +767,22 @@ class SyncStatusWidget extends ConsumerWidget {
           children: [
             // Afficher le titre selon le type de résumé
             Text(
-              isIncrementalSummary ? 'Éléments déjà synchronisés:' : 'Résumé de la synchronisation:',
+              isIncrementalSummary
+                  ? 'Éléments déjà synchronisés:'
+                  : 'Résumé de la synchronisation:',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.primary,
-              ),
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
             ),
             const SizedBox(height: 8),
             // Liste des statistiques par type d'élément
             ...statLines.map<Widget>((line) {
               // Extraire les parties de la ligne (nom de l'objet et statistiques)
               final parts = line.split(':');
-              if (parts.length < 2) return _buildSimpleSummaryLine(context, line);
+              if (parts.length < 2) {
+                return _buildSimpleSummaryLine(context, line);
+              }
 
               // Récupérer le nom de l'objet (ex: "• Modules")
               final objectName = parts[0].trim();
@@ -909,7 +807,10 @@ class SyncStatusWidget extends ConsumerWidget {
                     color: Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
-                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      color: Theme.of(context)
+                          .colorScheme
+                          .outline
+                          .withOpacity(0.2),
                       width: 1,
                     ),
                   ),
@@ -918,9 +819,13 @@ class SyncStatusWidget extends ConsumerWidget {
                     children: [
                       // Entête avec le nom de l'élément (Module, Taxon, etc.)
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+                          color: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withOpacity(0.5),
                           borderRadius: const BorderRadius.only(
                             topLeft: Radius.circular(7),
                             topRight: Radius.circular(7),
@@ -936,12 +841,16 @@ class SyncStatusWidget extends ConsumerWidget {
                             const SizedBox(width: 8),
                             Text(
                               objectName.replaceAll('•', '').trim(),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
                             ),
                             const Spacer(),
-                            _buildStatChip(context, total, 'total', Colors.blueGrey),
+                            _buildStatChip(
+                                context, total, 'total', Colors.blueGrey),
                           ],
                         ),
                       ),
@@ -953,30 +862,15 @@ class SyncStatusWidget extends ConsumerWidget {
                           runSpacing: 4,
                           children: [
                             // Badge avec icône pour les éléments ajoutés
-                            _buildIconStatBadge(
-                              context, 
-                              added, 
-                              'ajoutés', 
-                              Colors.green, 
-                              Icons.add_circle_outline
-                            ),
+                            _buildIconStatBadge(context, added, 'ajoutés',
+                                Colors.green, Icons.add_circle_outline),
                             // Badge avec icône pour les éléments mis à jour
-                            _buildIconStatBadge(
-                              context, 
-                              updated, 
-                              'mis à jour', 
-                              Colors.blue, 
-                              Icons.update
-                            ),
+                            _buildIconStatBadge(context, updated, 'mis à jour',
+                                Colors.blue, Icons.update),
                             // Badge avec icône pour les éléments ignorés (si non nul)
                             if (skipped > 0)
-                              _buildIconStatBadge(
-                                context, 
-                                skipped, 
-                                'ignorés', 
-                                Colors.grey, 
-                                Icons.remove_circle_outline
-                              ),
+                              _buildIconStatBadge(context, skipped, 'ignorés',
+                                  Colors.grey, Icons.remove_circle_outline),
                           ],
                         ),
                       ),
@@ -1017,8 +911,8 @@ class SyncStatusWidget extends ConsumerWidget {
               child: Text(
                 syncSummary,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
               ),
             ),
           ],
@@ -1032,7 +926,7 @@ class SyncStatusWidget extends ConsumerWidget {
       style: Theme.of(context).textTheme.bodySmall,
     );
   }
-  
+
   /// Retourne une icône appropriée en fonction du nom d'objet
   IconData _getObjectIcon(String objectName) {
     final name = objectName.toLowerCase().replaceAll('•', '').trim();
@@ -1057,11 +951,9 @@ class SyncStatusWidget extends ConsumerWidget {
     );
   }
 
-  // Méthode supprimée car remplacée par _buildIconStatBadge et _buildStatChip
-  
   /// Construit un badge de statistique avec une icône (plus visuel)
-  Widget _buildIconStatBadge(
-      BuildContext context, int value, String label, Color color, IconData icon) {
+  Widget _buildIconStatBadge(BuildContext context, int value, String label,
+      Color color, IconData icon) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -1098,7 +990,7 @@ class SyncStatusWidget extends ConsumerWidget {
       ),
     );
   }
-  
+
   /// Construit une puce de statistique compacte pour l'en-tête
   Widget _buildStatChip(
       BuildContext context, int value, String label, Color color) {

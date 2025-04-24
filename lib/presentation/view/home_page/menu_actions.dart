@@ -224,6 +224,36 @@ class MenuActions extends ConsumerWidget {
                           ),
                         ),
                       ),
+                    // Ajouter info sur dernière synchro complète
+                    if (currentStatus.lastSync != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline,
+                                color: Theme.of(context).colorScheme.secondary,
+                                size: 16,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Dernière synchronisation complète: ${_formatDate(currentStatus.lastSync!)}',
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     _buildSyncCheckboxTile(
                       context,
                       'Configuration',
@@ -374,6 +404,18 @@ class MenuActions extends ConsumerWidget {
     );
   }
   
+  /// Formatte une date pour l'affichage
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      // Aujourd'hui
+      return 'Aujourd\'hui à ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    } else {
+      // Autre jour
+      return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} à ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+    }
+  }
+
   /// Construit une checkbox pour la sélection d'éléments à synchroniser
   Widget _buildSyncCheckboxTile(
     BuildContext context,
