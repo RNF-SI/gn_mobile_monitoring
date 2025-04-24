@@ -120,69 +120,100 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         mainAxisSize: MainAxisSize.min,
         children: [
           // En-tête cliquable avec informations sur la synchronisation
-          InkWell(
-            onTap: () {
-              setState(() {
-                // Inverser l'état d'expansion des détails au clic
-                _detailsExpanded = !_detailsExpanded;
-              });
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  _buildIcon(iconData, iconColor, syncStatus),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getStatusText(syncStatus),
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        if (syncStatus.lastSync != null)
-                          Text(
-                            'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        // Ajouter l'info sur la prochaine synchronisation complète
-                        if (syncStatus.nextFullSyncInfo != null)
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.update,
-                                size: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withOpacity(0.7),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                syncStatus.nextFullSyncInfo!,
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withOpacity(0.9),
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                              ),
-                            ],
-                          ),
-                      ],
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () {
+                setState(() {
+                  // Inverser l'état d'expansion des détails au clic
+                  _detailsExpanded = !_detailsExpanded;
+                });
+              },
+              borderRadius: BorderRadius.circular(8),
+              child: Container(
+                decoration: BoxDecoration(
+                  // Fond légèrement coloré pour indiquer qu'il est cliquable
+                  color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
+                  border: Border(
+                    bottom: BorderSide(
+                      color: Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      width: 1,
                     ),
                   ),
-                  // Afficher icône d'expansion/réduction
-                  Icon(
-                    _detailsExpanded ? Icons.expand_less : Icons.expand_more,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ],
+                ),
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    _buildIcon(iconData, iconColor, syncStatus),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getStatusText(syncStatus),
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (syncStatus.lastSync != null)
+                            Text(
+                              'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          // Ajouter l'info sur la prochaine synchronisation complète
+                          if (syncStatus.nextFullSyncInfo != null)
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.update,
+                                  size: 12,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .primary
+                                      .withOpacity(0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  syncStatus.nextFullSyncInfo!,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary
+                                            .withOpacity(0.9),
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                ),
+                              ],
+                            ),
+                          // Instruction discrète pour indiquer que c'est cliquable
+                          Text(
+                            'Cliquez pour ${_detailsExpanded ? 'masquer' : 'afficher'} les détails',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              fontStyle: FontStyle.italic,
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.7),
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Afficher icône d'expansion/réduction
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(
+                        _detailsExpanded ? Icons.expand_less : Icons.expand_more,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
