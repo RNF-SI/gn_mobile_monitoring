@@ -40,6 +40,8 @@ mixin _$SyncStatus {
       throw _privateConstructorUsedError; // Nombre d'éléments mis à jour dans l'étape actuelle
   int? get itemsSkipped =>
       throw _privateConstructorUsedError; // Nombre d'éléments ignorés dans l'étape actuelle
+  int? get itemsDeleted =>
+      throw _privateConstructorUsedError; // Nombre d'éléments supprimés dans l'étape actuelle
   String? get additionalInfo =>
       throw _privateConstructorUsedError; // Informations supplémentaires sur la progression
   String? get nextFullSyncInfo => throw _privateConstructorUsedError;
@@ -75,6 +77,7 @@ abstract class $SyncStatusCopyWith<$Res> {
       int? itemsAdded,
       int? itemsUpdated,
       int? itemsSkipped,
+      int? itemsDeleted,
       String? additionalInfo,
       String? nextFullSyncInfo});
 }
@@ -111,6 +114,7 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
     Object? itemsAdded = freezed,
     Object? itemsUpdated = freezed,
     Object? itemsSkipped = freezed,
+    Object? itemsDeleted = freezed,
     Object? additionalInfo = freezed,
     Object? nextFullSyncInfo = freezed,
   }) {
@@ -183,6 +187,10 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
           ? _value.itemsSkipped
           : itemsSkipped // ignore: cast_nullable_to_non_nullable
               as int?,
+      itemsDeleted: freezed == itemsDeleted
+          ? _value.itemsDeleted
+          : itemsDeleted // ignore: cast_nullable_to_non_nullable
+              as int?,
       additionalInfo: freezed == additionalInfo
           ? _value.additionalInfo
           : additionalInfo // ignore: cast_nullable_to_non_nullable
@@ -221,6 +229,7 @@ abstract class _$$SyncStatusImplCopyWith<$Res>
       int? itemsAdded,
       int? itemsUpdated,
       int? itemsSkipped,
+      int? itemsDeleted,
       String? additionalInfo,
       String? nextFullSyncInfo});
 }
@@ -255,6 +264,7 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
     Object? itemsAdded = freezed,
     Object? itemsUpdated = freezed,
     Object? itemsSkipped = freezed,
+    Object? itemsDeleted = freezed,
     Object? additionalInfo = freezed,
     Object? nextFullSyncInfo = freezed,
   }) {
@@ -327,6 +337,10 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
           ? _value.itemsSkipped
           : itemsSkipped // ignore: cast_nullable_to_non_nullable
               as int?,
+      itemsDeleted: freezed == itemsDeleted
+          ? _value.itemsDeleted
+          : itemsDeleted // ignore: cast_nullable_to_non_nullable
+              as int?,
       additionalInfo: freezed == additionalInfo
           ? _value.additionalInfo
           : additionalInfo // ignore: cast_nullable_to_non_nullable
@@ -341,7 +355,7 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
 
 /// @nodoc
 
-class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
+class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
   const _$SyncStatusImpl(
       {required this.state,
       required this.currentStep,
@@ -360,11 +374,13 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
       this.itemsAdded,
       this.itemsUpdated,
       this.itemsSkipped,
+      this.itemsDeleted,
       this.additionalInfo,
       this.nextFullSyncInfo})
       : _completedSteps = completedSteps,
         _failedSteps = failedSteps,
-        _conflicts = conflicts;
+        _conflicts = conflicts,
+        super._();
 
   @override
   final SyncState state;
@@ -428,6 +444,9 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
   final int? itemsSkipped;
 // Nombre d'éléments ignorés dans l'étape actuelle
   @override
+  final int? itemsDeleted;
+// Nombre d'éléments supprimés dans l'étape actuelle
+  @override
   final String? additionalInfo;
 // Informations supplémentaires sur la progression
   @override
@@ -435,7 +454,7 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
+    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsDeleted: $itemsDeleted, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
   }
 
   @override
@@ -461,6 +480,7 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
       ..add(DiagnosticsProperty('itemsAdded', itemsAdded))
       ..add(DiagnosticsProperty('itemsUpdated', itemsUpdated))
       ..add(DiagnosticsProperty('itemsSkipped', itemsSkipped))
+      ..add(DiagnosticsProperty('itemsDeleted', itemsDeleted))
       ..add(DiagnosticsProperty('additionalInfo', additionalInfo))
       ..add(DiagnosticsProperty('nextFullSyncInfo', nextFullSyncInfo));
   }
@@ -503,6 +523,8 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
                 other.itemsUpdated == itemsUpdated) &&
             (identical(other.itemsSkipped, itemsSkipped) ||
                 other.itemsSkipped == itemsSkipped) &&
+            (identical(other.itemsDeleted, itemsDeleted) ||
+                other.itemsDeleted == itemsDeleted) &&
             (identical(other.additionalInfo, additionalInfo) ||
                 other.additionalInfo == additionalInfo) &&
             (identical(other.nextFullSyncInfo, nextFullSyncInfo) ||
@@ -529,6 +551,7 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
         itemsAdded,
         itemsUpdated,
         itemsSkipped,
+        itemsDeleted,
         additionalInfo,
         nextFullSyncInfo
       ]);
@@ -542,7 +565,7 @@ class _$SyncStatusImpl with DiagnosticableTreeMixin implements _SyncStatus {
       __$$SyncStatusImplCopyWithImpl<_$SyncStatusImpl>(this, _$identity);
 }
 
-abstract class _SyncStatus implements SyncStatus {
+abstract class _SyncStatus extends SyncStatus {
   const factory _SyncStatus(
       {required final SyncState state,
       required final SyncStep? currentStep,
@@ -561,8 +584,10 @@ abstract class _SyncStatus implements SyncStatus {
       final int? itemsAdded,
       final int? itemsUpdated,
       final int? itemsSkipped,
+      final int? itemsDeleted,
       final String? additionalInfo,
       final String? nextFullSyncInfo}) = _$SyncStatusImpl;
+  const _SyncStatus._() : super._();
 
   @override
   SyncState get state;
@@ -601,6 +626,8 @@ abstract class _SyncStatus implements SyncStatus {
   int? get itemsUpdated; // Nombre d'éléments mis à jour dans l'étape actuelle
   @override
   int? get itemsSkipped; // Nombre d'éléments ignorés dans l'étape actuelle
+  @override
+  int? get itemsDeleted; // Nombre d'éléments supprimés dans l'étape actuelle
   @override
   String? get additionalInfo; // Informations supplémentaires sur la progression
   @override

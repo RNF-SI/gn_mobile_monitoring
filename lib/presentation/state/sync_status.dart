@@ -27,6 +27,8 @@ enum SyncState {
 /// Représente le statut d'une opération de synchronisation
 @freezed
 class SyncStatus with _$SyncStatus {
+  const SyncStatus._(); // Constructeur privé pour ajouter des méthodes si nécessaire
+  
   const factory SyncStatus({
     required SyncState state,
     required SyncStep? currentStep,
@@ -47,6 +49,7 @@ class SyncStatus with _$SyncStatus {
     int? itemsAdded,             // Nombre d'éléments ajoutés dans l'étape actuelle
     int? itemsUpdated,           // Nombre d'éléments mis à jour dans l'étape actuelle
     int? itemsSkipped,           // Nombre d'éléments ignorés dans l'étape actuelle
+    int? itemsDeleted,           // Nombre d'éléments supprimés dans l'étape actuelle
     String? additionalInfo,      // Informations supplémentaires sur la progression
     String? nextFullSyncInfo,     // Informations sur la prochaine synchronisation complète
   }) = _SyncStatus;
@@ -76,6 +79,7 @@ class SyncStatus with _$SyncStatus {
     int? itemsAdded,
     int? itemsUpdated,
     int? itemsSkipped,
+    int? itemsDeleted,
     String? additionalInfo,
   }) =>
       SyncStatus(
@@ -93,6 +97,7 @@ class SyncStatus with _$SyncStatus {
         itemsAdded: itemsAdded,
         itemsUpdated: itemsUpdated,
         itemsSkipped: itemsSkipped,
+        itemsDeleted: itemsDeleted,
         additionalInfo: additionalInfo,
       );
 
@@ -104,6 +109,7 @@ class SyncStatus with _$SyncStatus {
     int? itemsAdded,
     int? itemsUpdated,
     int? itemsSkipped,
+    int? itemsDeleted,
     String? additionalInfo,
   }) =>
       SyncStatus(
@@ -119,6 +125,7 @@ class SyncStatus with _$SyncStatus {
         itemsAdded: itemsAdded,
         itemsUpdated: itemsUpdated,
         itemsSkipped: itemsSkipped,
+        itemsDeleted: itemsDeleted,
         additionalInfo: additionalInfo,
       );
 
@@ -153,10 +160,16 @@ class SyncStatus with _$SyncStatus {
     required int itemsProcessed,
     required int itemsTotal,
     String? additionalInfo,
+    int? itemsAdded,
+    int? itemsUpdated,
+    int? itemsSkipped,
+    int? itemsDeleted,
+    String? currentEntityName,
+    SyncStep? currentStep,
   }) =>
       SyncStatus(
         state: SyncState.conflictDetected,
-        currentStep: null,
+        currentStep: currentStep,
         completedSteps: completedSteps,
         failedSteps: const [],
         itemsProcessed: itemsProcessed,
@@ -165,5 +178,10 @@ class SyncStatus with _$SyncStatus {
         conflicts: conflicts,
         lastUpdated: DateTime.now(),
         additionalInfo: additionalInfo,
+        itemsAdded: itemsAdded,
+        itemsUpdated: itemsUpdated,
+        itemsSkipped: itemsSkipped,
+        itemsDeleted: itemsDeleted,
+        currentEntityName: currentEntityName,
       );
 }

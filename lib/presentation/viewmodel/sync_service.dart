@@ -20,7 +20,7 @@ final syncServiceProvider =
   final updateLastSyncDateUseCase = ref.read(updateLastSyncDateUseCaseProvider);
 
   return SyncService(
-    getTokenUseCase, 
+    getTokenUseCase,
     syncUseCase,
     getLastSyncDateUseCase,
     updateLastSyncDateUseCase,
@@ -36,28 +36,28 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   Timer? _autoSyncTimer;
   bool _isSyncing = false;
-  
+
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
   final Map<String, SyncResult> _syncResults = {};
-  
+
   // Date de la dernière synchronisation complète
   DateTime? _lastFullSync;
-  
+
   // Clé pour la date de dernière synchronisation complète
   static const String fullSyncKey = 'full_sync';
-  
+
   // Durée entre deux synchronisations complètes automatiques (1 semaine)
   static const Duration fullSyncInterval = Duration(days: 7);
 
   SyncService(
-    this._getTokenUseCase, 
+    this._getTokenUseCase,
     this._syncUseCase,
     this._getLastSyncDateUseCase,
     this._updateLastSyncDateUseCase,
   ) : super(SyncStatus.initial()) {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
-    
+
     // Démarrer le timer pour la synchronisation automatique
     _scheduleAutoSync();
   }
@@ -66,7 +66,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   /// Détermine si une synchronisation complète est nécessaire en fonction de la date de dernière synchronisation
   bool isFullSyncNeeded() {
     final now = DateTime.now();
-    return _lastFullSync == null || 
+    return _lastFullSync == null ||
         now.isAfter(_lastFullSync!.add(fullSyncInterval));
   }
 
@@ -79,19 +79,24 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
-    bool isManualSync = true, // Indique si cette synchronisation est déclenchée manuellement
+    bool isManualSync =
+        true, // Indique si cette synchronisation est déclenchée manuellement
   }) async {
     if (_isSyncing) {
       return state; // Ne pas synchroniser si déjà en cours
     }
 
     _isSyncing = true;
+    debugPrint('Démarrage de syncAll avec plusieurs éléments');
+    
     // Réinitialiser les résultats au début d'une nouvelle synchronisation complète
     _syncResults.clear();
-    
+
     final List<SyncStep> completedSteps = [];
     final List<SyncStep> failedSteps = [];
-    final List<SyncConflict> conflicts = [];
+    final List<SyncConflict> allConflicts = [];
+    final List<String> errorMessages =
+        []; // Pour collecter les messages d'erreur
     int totalItemsProcessed = 0;
     int totalItemsToProcess = _countTotalSteps(
       syncConfiguration,
@@ -150,10 +155,10 @@ class SyncService extends StateNotifier<SyncStatus> {
           final configResult = await _executeSingleSync(token, 'configuration');
           if (configResult.success) {
             completedSteps.add(SyncStep.configuration);
-            
+
             // Générer un résumé des étapes complétées jusqu'à présent
             final syncSummary = _buildIncrementalSyncSummary(completedSteps);
-            
+
             // Mettre à jour l'état avec le résumé
             state = SyncStatus.inProgress(
               currentStep: SyncStep.configuration,
@@ -179,7 +184,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncNomenclatures && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.nomenclatures,
           completedSteps: completedSteps,
@@ -192,9 +197,48 @@ class SyncService extends StateNotifier<SyncStatus> {
         try {
           final nomResult =
               await _executeSingleSync(token, 'nomenclatures_datasets');
-          if (nomResult.success) {
-            completedSteps.add(SyncStep.nomenclatures);
+
+          // Vérifier pour les conflits spécifiquement
+          if (nomResult.conflicts != null && nomResult.conflicts!.isNotEmpty) {
+            // On a des conflits mais on continue le processus
+            debugPrint(
+                'Des conflits de nomenclatures ont été détectés: ${nomResult.conflicts!.length}');
+
+            // Stocker les conflits pour une utilisation ultérieure
+            allConflicts.addAll(nomResult.conflicts!);
             
+            // Ajouter un message d'erreur pour les nomenclatures
+            if (nomResult.errorMessage != null) {
+              errorMessages.add(nomResult.errorMessage!);
+            }
+
+            // Ajouter quand même l'étape comme complétée
+            completedSteps.add(SyncStep.nomenclatures);
+
+            // Mise à jour avec le nouveau résumé incluant cette étape
+            final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
+
+            // Ajouter une information sur les conflits dans le résumé
+            final conflictInfo = nomResult.errorMessage != null
+                ? "$updatedSummary\n\nDes nomenclatures supprimées sont référencées par d'autres entités."
+                : updatedSummary;
+
+            // Continuer avec l'état en cours - on montrera les conflits à la fin
+            state = SyncStatus.inProgress(
+              currentStep: SyncStep.nomenclatures,
+              completedSteps: completedSteps,
+              itemsProcessed: totalItemsProcessed + 1,
+              itemsTotal: totalItemsToProcess,
+              currentEntityName: "Nomenclatures",
+              itemsAdded: nomResult.itemsAdded,
+              itemsUpdated: nomResult.itemsUpdated,
+              itemsSkipped: nomResult.itemsSkipped,
+              itemsDeleted: nomResult.itemsDeleted,
+              additionalInfo: conflictInfo,
+            );
+          } else if (nomResult.success) {
+            completedSteps.add(SyncStep.nomenclatures);
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -206,16 +250,24 @@ class SyncService extends StateNotifier<SyncStatus> {
               itemsAdded: nomResult.itemsAdded,
               itemsUpdated: nomResult.itemsUpdated,
               itemsSkipped: nomResult.itemsSkipped,
+              itemsDeleted: nomResult.itemsDeleted,
               additionalInfo: updatedSummary,
             );
           } else {
             failedSteps.add(SyncStep.nomenclatures);
+
+            // Ajouter le message d'erreur
+            if (nomResult.errorMessage != null) {
+              errorMessages.add(nomResult.errorMessage!);
+            }
           }
           totalItemsProcessed += 1;
         } catch (e) {
           failedSteps.add(SyncStep.nomenclatures);
           totalItemsProcessed += 1;
           debugPrint('Erreur lors de la synchronisation des nomenclatures: $e');
+          errorMessages
+              .add('Erreur lors de la synchronisation des nomenclatures: $e');
         }
       }
 
@@ -223,7 +275,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncTaxons && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.taxons,
           completedSteps: completedSteps,
@@ -237,7 +289,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           final taxonsResult = await _executeSingleSync(token, 'taxons');
           if (taxonsResult.success) {
             completedSteps.add(SyncStep.taxons);
-            
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -266,7 +318,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncObservers && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.observers,
           completedSteps: completedSteps,
@@ -280,7 +332,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           final observersResult = await _executeSingleSync(token, 'observers');
           if (observersResult.success) {
             completedSteps.add(SyncStep.observers);
-            
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -309,23 +361,24 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncModules && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.modules,
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Modules de suivi",
-          additionalInfo: currentSummary.isNotEmpty ? 
-              currentSummary + "\n\nTéléchargement des modules, formulaires et configurations..." :
-              "Téléchargement des modules, formulaires et configurations...",
+          additionalInfo: currentSummary.isNotEmpty
+              ? currentSummary +
+                  "\n\nTéléchargement des modules, formulaires et configurations..."
+              : "Téléchargement des modules, formulaires et configurations...",
         );
 
         try {
           final modulesResult = await _executeSingleSync(token, 'modules');
           if (modulesResult.success) {
             completedSteps.add(SyncStep.modules);
-            
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -354,23 +407,23 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncSites && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.sites,
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Sites",
-          additionalInfo: currentSummary.isNotEmpty ? 
-              currentSummary + "\n\nTéléchargement des sites..." :
-              "Téléchargement des sites...",
+          additionalInfo: currentSummary.isNotEmpty
+              ? currentSummary + "\n\nTéléchargement des sites..."
+              : "Téléchargement des sites...",
         );
 
         try {
           final sitesResult = await _executeSingleSync(token, 'sites');
           if (sitesResult.success) {
             completedSteps.add(SyncStep.sites);
-            
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -399,16 +452,16 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (syncSiteGroups && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-        
+
         state = SyncStatus.inProgress(
           currentStep: SyncStep.siteGroups,
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Groupes de sites",
-          additionalInfo: currentSummary.isNotEmpty ? 
-              currentSummary + "\n\nTéléchargement des groupes de sites..." :
-              "Téléchargement des groupes de sites...",
+          additionalInfo: currentSummary.isNotEmpty
+              ? currentSummary + "\n\nTéléchargement des groupes de sites..."
+              : "Téléchargement des groupes de sites...",
         );
 
         try {
@@ -416,7 +469,7 @@ class SyncService extends StateNotifier<SyncStatus> {
               await _executeSingleSync(token, 'siteGroups');
           if (siteGroupsResult.success) {
             completedSteps.add(SyncStep.siteGroups);
-            
+
             // Mise à jour avec le nouveau résumé incluant cette étape
             final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
             state = SyncStatus.inProgress(
@@ -446,25 +499,46 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       // Générer un résumé des statistiques de synchronisation
       final syncSummary = getSyncSummary();
-      
+
       // Construire l'état final avec le résumé des statistiques
-      if (conflicts.isNotEmpty) {
+      debugPrint('Synchronisation terminée. Conflits: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
+      
+      if (allConflicts.isNotEmpty) {
+        debugPrint('Affichage des conflits détectés: ${allConflicts.length} conflits');
+        for (var i = 0; i < allConflicts.length; i++) {
+          final conflict = allConflicts[i];
+          debugPrint('Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+        }
+        
         // Des conflits ont été détectés
-        state = SyncStatus.conflictDetected(
-          conflicts: conflicts,
+        final newState = SyncStatus.conflictDetected(
+          conflicts: allConflicts,
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
-          additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
+          additionalInfo: syncSummary.isNotEmpty ? 
+            "$syncSummary\n\nDes conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités." : 
+            "Des conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités.",
         );
-      } else if (failedSteps.isNotEmpty) {
-        // Certaines étapes ont échoué
-        final errorMessages = failedSteps.map((step) {
-          return 'Erreur ${_stepToLabel(step)}';
-        }).join('\n');
+        
+        state = newState;
+        debugPrint('Nouvel état après synchronisation: ${state.state}, avec ${state.conflicts?.length ?? 0} conflits');
+      } else if (failedSteps.isNotEmpty || errorMessages.isNotEmpty) {
+        // Certaines étapes ont échoué ou ont des messages d'erreur
+        String errorMsg;
+
+        if (errorMessages.isNotEmpty) {
+          // Utiliser les messages d'erreur collectés qui sont plus détaillés
+          errorMsg = errorMessages.join('\n');
+        } else {
+          // Retomber sur le comportement par défaut si pas de messages d'erreur
+          errorMsg = failedSteps.map((step) {
+            return 'Erreur ${_stepToLabel(step)}';
+          }).join('\n');
+        }
 
         state = SyncStatus.failure(
-          errorMessage: errorMessages,
+          errorMessage: errorMsg,
           completedSteps: completedSteps,
           failedSteps: failedSteps,
           itemsProcessed: totalItemsProcessed,
@@ -480,30 +554,27 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
         );
-        
+
         // Si c'était une synchronisation complète, mettre à jour la date de dernière synchro
         final isFullSync = _isFullSync(
-          syncConfiguration, 
-          syncNomenclatures, 
-          syncTaxons, 
-          syncObservers,
-          syncModules: syncModules,
-          syncSites: syncSites,
-          syncSiteGroups: syncSiteGroups
-        );
-        
+            syncConfiguration, syncNomenclatures, syncTaxons, syncObservers,
+            syncModules: syncModules,
+            syncSites: syncSites,
+            syncSiteGroups: syncSiteGroups);
+
         // Mise à jour de la date de synchronisation complète
         if (isFullSync) {
           await _updateLastFullSyncDate();
-          
+
           // Mise à jour du statut avec la nouvelle date de synchronisation
           state = state.copyWith(
-            lastSync: now, // Afficher la date de dernière synchro seulement si elle était complète
+            lastSync:
+                now, // Afficher la date de dernière synchro seulement si elle était complète
           );
         } else {
           // Sinon, simplement mettre à jour l'affichage du temps restant
           _updateStateWithTimeRemaining();
-          
+
           // Ne pas mettre à jour la date de dernière synchronisation dans l'interface
           // car ce n'était pas une synchronisation complète
         }
@@ -539,6 +610,8 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   /// Exécute une seule étape de synchronisation
   Future<SyncResult> _executeSingleSync(String token, String stepKey) async {
+    debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
+    
     final Map<String, dynamic> params = {
       'syncConfiguration': false,
       'syncNomenclatures': false,
@@ -589,15 +662,140 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     // Retourner le résultat de cette étape
     if (results.containsKey(stepKey)) {
+      final result = results[stepKey]!;
+
+      // Vérifier si le résultat contient des conflits et les traiter immédiatement
+      if (result.conflicts != null && result.conflicts!.isNotEmpty) {
+        debugPrint(
+            'Conflits détectés lors de l\'étape $stepKey: ${result.conflicts!.length} conflits');
+        
+        // Pour le débogage - afficher plus de détails sur les conflits
+        for (var i = 0; i < result.conflicts!.length; i++) {
+          final conflict = result.conflicts![i];
+          debugPrint('Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+        }
+        
+        // Mise à jour immédiate de l'état avec les conflits
+        // Pour tous les types de synchronisation, pas seulement les nomenclatures
+        String entityName;
+        SyncStep currentStep;
+        
+        switch (stepKey) {
+          case 'nomenclatures_datasets':
+          case 'nomenclatures':
+            entityName = "Nomenclatures";
+            currentStep = SyncStep.nomenclatures;
+            break;
+          case 'taxons':
+            entityName = "Taxons";
+            currentStep = SyncStep.taxons;
+            break;
+          case 'observers':
+            entityName = "Observateurs";
+            currentStep = SyncStep.observers;
+            break;
+          case 'modules':
+            entityName = "Modules";
+            currentStep = SyncStep.modules;
+            break;
+          case 'sites':
+            entityName = "Sites";
+            currentStep = SyncStep.sites;
+            break;
+          case 'siteGroups':
+            entityName = "Groupes de sites";
+            currentStep = SyncStep.siteGroups;
+            break;
+          default:
+            entityName = "Configuration";
+            currentStep = SyncStep.configuration;
+        }
+        
+        // Création du nouvel état
+        final newState = SyncStatus.conflictDetected(
+          conflicts: result.conflicts!,
+          completedSteps: [_getStepFromKey(stepKey)],
+          itemsProcessed: 1,
+          itemsTotal: 1,
+          itemsAdded: result.itemsAdded,
+          itemsUpdated: result.itemsUpdated,
+          itemsSkipped: result.itemsSkipped,
+          itemsDeleted: result.itemsDeleted,
+          additionalInfo: result.errorMessage ?? 
+              "Des références supprimées sont référencées par d'autres entités.",
+          currentEntityName: entityName,
+          currentStep: currentStep,
+        );
+        
+        // Log de l'état avant et après la mise à jour
+        debugPrint('État avant mise à jour: ${state.state.toString()}');
+        state = newState;
+        debugPrint('État après mise à jour: ${state.state.toString()}');
+        debugPrint('Nombre de conflits dans le nouvel état: ${state.conflicts?.length ?? 0}');
+      }
+
+      // Si ce sont des nomenclatures et qu'il y a des conflits, assurons-nous que l'état est correctement mis à jour
+      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets') && 
+          result.conflicts != null && 
+          result.conflicts!.isNotEmpty) {
+        // Forcer une mise à jour de l'état après un court délai pour s'assurer que les changements sont appliqués
+        Future.delayed(const Duration(milliseconds: 100), () {
+          if (state.state != SyncState.conflictDetected) {
+            debugPrint('Forçage de la mise à jour de l\'état pour afficher les conflits de nomenclature');
+            
+            // Créer explicitement un nouvel état avec les conflits
+            final newState = SyncStatus.conflictDetected(
+              conflicts: result.conflicts!,
+              completedSteps: [_getStepFromKey(stepKey)],
+              itemsProcessed: 1,
+              itemsTotal: 1,
+              itemsAdded: result.itemsAdded,
+              itemsUpdated: result.itemsUpdated,
+              itemsSkipped: result.itemsSkipped,
+              itemsDeleted: result.itemsDeleted,
+              additionalInfo: result.errorMessage ?? 
+                  "Des références de nomenclatures supprimées sont toujours utilisées par des entités.",
+              currentEntityName: "Nomenclatures",
+              currentStep: SyncStep.nomenclatures,
+            );
+            
+            state = newState;
+          }
+        });
+      }
+      
       // Stocker le résultat pour une utilisation ultérieure
-      _syncResults[stepKey] = results[stepKey]!;
-      return results[stepKey]!;
+      _syncResults[stepKey] = result;
+      return result;
     } else {
       final failureResult = SyncResult.failure(
         errorMessage: 'Résultat manquant pour l\'étape $stepKey',
       );
       _syncResults[stepKey] = failureResult;
       return failureResult;
+    }
+  }
+  
+  /// Convertit une clé de synchronisation en étape de synchronisation
+  SyncStep _getStepFromKey(String stepKey) {
+    switch (stepKey) {
+      case 'configuration':
+        return SyncStep.configuration;
+      case 'nomenclatures':
+      case 'nomenclatures_datasets':
+        return SyncStep.nomenclatures;
+      case 'taxons':
+        return SyncStep.taxons;
+      case 'observers':
+        return SyncStep.observers;
+      case 'modules':
+        return SyncStep.modules;
+      case 'sites':
+        return SyncStep.sites;
+      case 'siteGroups':
+        return SyncStep.siteGroups;
+      default:
+        return SyncStep.configuration; // Valeur par défaut
     }
   }
 
@@ -648,49 +846,51 @@ class SyncService extends StateNotifier<SyncStatus> {
     _autoSyncTimer = null;
   }
 
-  /// Initialise la date de dernière synchronisation complète 
+  /// Initialise la date de dernière synchronisation complète
   /// depuis le stockage persistant via le use case
   Future<void> _initLastFullSyncDate() async {
     try {
       // Utiliser le use case pour récupérer la date
       _lastFullSync = await _getLastSyncDateUseCase.execute(fullSyncKey);
-      
+
       // Si c'est la première fois, initialiser avec une date qui forcera une synchro complète bientôt
       if (_lastFullSync == null) {
         _lastFullSync = DateTime.now().subtract(const Duration(days: 5));
       }
     } catch (e) {
-      debugPrint('Erreur lors de la récupération de la date de dernière synchronisation: $e');
+      debugPrint(
+          'Erreur lors de la récupération de la date de dernière synchronisation: $e');
       _lastFullSync = null;
     }
-    
+
     // Mettre à jour l'état pour afficher le temps restant
     _updateStateWithTimeRemaining();
   }
-  
+
   /// Met à jour la date de dernière synchronisation complète en utilisant le use case
   Future<void> _updateLastFullSyncDate() async {
     final now = DateTime.now();
     _lastFullSync = now;
-    
+
     try {
       // Utiliser le use case pour sauvegarder la date
       await _updateLastSyncDateUseCase.execute(fullSyncKey, now);
     } catch (e) {
-      debugPrint('Erreur lors de la sauvegarde de la date de dernière synchronisation: $e');
+      debugPrint(
+          'Erreur lors de la sauvegarde de la date de dernière synchronisation: $e');
     }
-    
+
     // Mettre à jour l'état pour afficher le temps restant actualisé
     _updateStateWithTimeRemaining();
   }
-  
+
   /// Met à jour l'état avec le temps restant avant la prochaine synchronisation complète
   void _updateStateWithTimeRemaining() {
     final currentState = state;
-    
+
     // Calculer le temps restant
     String? timeRemaining = _getTimeRemainingText();
-    
+
     // Mettre à jour l'état avec le temps restant
     state = SyncStatus(
       state: currentState.state,
@@ -714,23 +914,23 @@ class SyncService extends StateNotifier<SyncStatus> {
       nextFullSyncInfo: timeRemaining,
     );
   }
-  
+
   /// Retourne un texte indiquant le temps restant avant la prochaine synchronisation
   /// complète automatique
   String? _getTimeRemainingText() {
     if (_lastFullSync == null) {
       return "Synchronisation complète requise";
     }
-    
+
     final now = DateTime.now();
     final nextFullSync = _lastFullSync!.add(fullSyncInterval);
-    
+
     if (now.isAfter(nextFullSync)) {
       return "Synchronisation complète requise";
     }
-    
+
     final remaining = nextFullSync.difference(now);
-    
+
     // Formatage convivial
     if (remaining.inDays > 1) {
       return "Synchronisation complète dans ${remaining.inDays} jours";
@@ -749,9 +949,9 @@ class SyncService extends StateNotifier<SyncStatus> {
   void _scheduleAutoSync() {
     // Vérifier si une synchronisation complète est nécessaire
     final now = DateTime.now();
-    final isFullSyncNeeded = _lastFullSync == null || 
+    final isFullSyncNeeded = _lastFullSync == null ||
         now.isAfter(_lastFullSync!.add(fullSyncInterval));
-    
+
     if (isFullSyncNeeded) {
       // Planifier une synchronisation complète
       Timer(const Duration(minutes: 5), () => _performFullSync());
@@ -760,7 +960,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       startAutoSync(period: const Duration(hours: 2));
     }
   }
-  
+
   /// Vérifie si les paramètres correspondent à une synchronisation complète
   bool _isFullSync(
     bool syncConfiguration,
@@ -771,19 +971,19 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncSites = true,
     bool syncSiteGroups = true,
   }) {
-    return syncConfiguration && 
-           syncNomenclatures && 
-           syncTaxons && 
-           syncObservers && 
-           syncModules && 
-           syncSites && 
-           syncSiteGroups;
+    return syncConfiguration &&
+        syncNomenclatures &&
+        syncTaxons &&
+        syncObservers &&
+        syncModules &&
+        syncSites &&
+        syncSiteGroups;
   }
 
   /// Effectue une synchronisation complète automatique
   Future<void> _performFullSync() async {
     if (_isSyncing) return;
-    
+
     try {
       await syncAll(
         syncConfiguration: true,
@@ -904,73 +1104,77 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'groupes de sites';
     }
   }
-  
+
   /// Génère les statistiques de synchronisation pour une étape donnée
   String _getSyncStatsForStep(String stepKey) {
     if (!_syncResults.containsKey(stepKey)) {
       return "Aucune donnée";
     }
-    
+
     final result = _syncResults[stepKey]!;
-    
+
     if (!result.success) {
       return "Échec";
     }
-    
+
     final syncTotal = result.itemsAdded + result.itemsUpdated;
     return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés)";
   }
-  
+
   /// Génère un résumé des statistiques de synchronisation pour les étapes complétées
   String _buildIncrementalSyncSummary(List<SyncStep> completedSteps) {
     if (completedSteps.isEmpty || _syncResults.isEmpty) {
       return "En cours de synchronisation...";
     }
-    
+
     final List<String> summaryLines = [];
     summaryLines.add("Éléments déjà synchronisés:");
-    
+
     // Synthétiser les statistiques globales
     int totalAdded = 0;
     int totalUpdated = 0;
     int totalSkipped = 0;
-    
+
     // Ajouter les infos pour les modules si terminé
-    if (completedSteps.contains(SyncStep.modules) && _syncResults.containsKey('modules')) {
+    if (completedSteps.contains(SyncStep.modules) &&
+        _syncResults.containsKey('modules')) {
       final stats = _syncResults['modules']!;
       summaryLines.add("• Modules: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded;
       totalUpdated += stats.itemsUpdated;
       totalSkipped += stats.itemsSkipped;
     }
-    
+
     // Ajouter les infos pour les taxons si terminé
-    if (completedSteps.contains(SyncStep.taxons) && _syncResults.containsKey('taxons')) {
+    if (completedSteps.contains(SyncStep.taxons) &&
+        _syncResults.containsKey('taxons')) {
       final stats = _syncResults['taxons']!;
       summaryLines.add("• Taxons: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded;
       totalUpdated += stats.itemsUpdated;
       totalSkipped += stats.itemsSkipped;
     }
-    
+
     // Ajouter les infos pour les sites si terminé
-    if (completedSteps.contains(SyncStep.sites) && _syncResults.containsKey('sites')) {
+    if (completedSteps.contains(SyncStep.sites) &&
+        _syncResults.containsKey('sites')) {
       final stats = _syncResults['sites']!;
       summaryLines.add("• Sites: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded;
       totalUpdated += stats.itemsUpdated;
       totalSkipped += stats.itemsSkipped;
     }
-    
+
     // Ajouter les infos pour les groupes de sites si terminé
-    if (completedSteps.contains(SyncStep.siteGroups) && _syncResults.containsKey('siteGroups')) {
+    if (completedSteps.contains(SyncStep.siteGroups) &&
+        _syncResults.containsKey('siteGroups')) {
       final stats = _syncResults['siteGroups']!;
       summaryLines.add("• Groupes de sites: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded;
       totalUpdated += stats.itemsUpdated;
       totalSkipped += stats.itemsSkipped;
     }
-    
+
     // Ajouter les infos pour les nomenclatures si terminé
     if (completedSteps.contains(SyncStep.nomenclatures)) {
       if (_syncResults.containsKey('nomenclatures_datasets')) {
@@ -987,75 +1191,78 @@ class SyncService extends StateNotifier<SyncStatus> {
         totalSkipped += stats.itemsSkipped;
       }
     }
-    
+
     // Ajouter les infos pour les observateurs si terminé
-    if (completedSteps.contains(SyncStep.observers) && _syncResults.containsKey('observers')) {
+    if (completedSteps.contains(SyncStep.observers) &&
+        _syncResults.containsKey('observers')) {
       final stats = _syncResults['observers']!;
       summaryLines.add("• Observateurs: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded;
       totalUpdated += stats.itemsUpdated;
       totalSkipped += stats.itemsSkipped;
     }
-    
+
     // Si aucune étape complétée n'a d'informations disponibles
     if (summaryLines.length <= 1) {
       return "En cours de synchronisation...";
     }
-    
+
     // Ajouter un résumé total en tête
     if (totalAdded > 0 || totalUpdated > 0) {
-      summaryLines.insert(1, 
-        "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés)"
-      );
+      summaryLines.insert(1,
+          "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés)");
     }
-    
+
     return summaryLines.join("\n");
   }
-  
+
   /// Formate les statistiques de synchronisation pour une étape donnée
   String _formatSyncStats(SyncResult result) {
     if (!result.success) {
       return "Échec";
     }
-    
+
     final syncTotal = result.itemsAdded + result.itemsUpdated;
     return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés)";
   }
-  
+
   /// Génère un résumé complet des statistiques de synchronisation
   String getSyncSummary() {
     final List<String> summaryLines = [];
-    
+
     if (_syncResults.containsKey('modules')) {
       summaryLines.add("• Modules: ${_getSyncStatsForStep('modules')}");
     }
-    
+
     if (_syncResults.containsKey('taxons')) {
       summaryLines.add("• Taxons: ${_getSyncStatsForStep('taxons')}");
     }
-    
+
     if (_syncResults.containsKey('sites')) {
       summaryLines.add("• Sites: ${_getSyncStatsForStep('sites')}");
     }
-    
+
     if (_syncResults.containsKey('siteGroups')) {
-      summaryLines.add("• Groupes de sites: ${_getSyncStatsForStep('siteGroups')}");
+      summaryLines
+          .add("• Groupes de sites: ${_getSyncStatsForStep('siteGroups')}");
     }
-    
+
     if (_syncResults.containsKey('nomenclatures_datasets')) {
-      summaryLines.add("• Nomenclatures: ${_getSyncStatsForStep('nomenclatures_datasets')}");
+      summaryLines.add(
+          "• Nomenclatures: ${_getSyncStatsForStep('nomenclatures_datasets')}");
     } else if (_syncResults.containsKey('nomenclatures')) {
-      summaryLines.add("• Nomenclatures: ${_getSyncStatsForStep('nomenclatures')}");
+      summaryLines
+          .add("• Nomenclatures: ${_getSyncStatsForStep('nomenclatures')}");
     }
-    
+
     if (_syncResults.containsKey('observers')) {
       summaryLines.add("• Observateurs: ${_getSyncStatsForStep('observers')}");
     }
-    
+
     if (summaryLines.isEmpty) {
       return "";
     }
-    
+
     return "Résumé de la synchronisation:\n${summaryLines.join("\n")}";
   }
 
