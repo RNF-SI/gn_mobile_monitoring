@@ -34,6 +34,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
@@ -59,7 +60,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
@@ -68,7 +68,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
@@ -94,6 +93,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
@@ -175,7 +175,8 @@ final setApiUrlFromLocalStorageUseCaseProvider =
 
 final clearApiUrlFromLocalStorageUseCaseProvider =
     Provider<ClearApiUrlFromLocalStorageUseCase>((ref) =>
-        ClearApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        ClearApiUrlFromLocalStorageUseCaseImpl(
+            ref.watch(localStorageProvider)));
 
 final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
     (ref) =>
@@ -231,6 +232,8 @@ final syncRepositoryProvider = Provider<SyncRepository>(
     ref.watch(globalApiProvider),
     ref.watch(taxonApiProvider),
     ref.watch(globalDatabaseProvider),
+    ref.watch(nomenclatureDatabaseProvider),
+    ref.watch(datasetsDatabaseProvider),
     ref.watch(taxonDatabaseProvider),
     modulesRepository: ref.watch(modulesRepositoryProvider),
     sitesRepository: ref.watch(sitesRepositoryProvider),
