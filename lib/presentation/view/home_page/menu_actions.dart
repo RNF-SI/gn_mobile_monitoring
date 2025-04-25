@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 class MenuActions extends ConsumerWidget {
@@ -11,6 +12,7 @@ class MenuActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final syncNotifier = ref.read(syncServiceProvider.notifier);
+    final databaseService = ref.read(databaseServiceProvider.notifier);
 
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
@@ -25,6 +27,7 @@ class MenuActions extends ConsumerWidget {
         context,
         authViewModel,
         syncNotifier,
+        databaseService
       ),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
@@ -56,13 +59,14 @@ class MenuActions extends ConsumerWidget {
     BuildContext context,
     authViewModel,
     SyncService syncService,
+    DatabaseService databaseService,
   ) async {
     switch (value) {
       case 'sync':
         await _showSyncSelectionDialog(context, syncService, ref);
         break;
       case 'delete':
-        await _confirmDelete(context, syncService);
+        await _confirmDelete(context, databaseService);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -73,7 +77,7 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, SyncService syncService) async {
+  Future<void> _confirmDelete(BuildContext context, DatabaseService databaseService) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -93,15 +97,19 @@ class MenuActions extends ConsumerWidget {
       ),
     );
 
-    // La logique de suppression de base de données n'est plus implémentée dans le service
-    // Elle devrait être réimplémentée avec le nouveau système de synchronisation
     if (confirmed == true) {
-      // Cette fonctionnalité devra être réimplémentée
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Cette fonctionnalité a été temporairement désactivée avec le nouveau système de synchronisation.'),
+      await databaseService.deleteAndReinitializeDatabase();
+
+      // Afficher un message à la fin de la suppression
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('La base de données a été supprimée.'),
+        duration: Duration(seconds: 3),
+        behavior: SnackBarBehavior.floating,
+        margin: EdgeInsets.only(bottom: 100.0),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(10)),
         ),
-      );
+      ));
     }
   }
 
