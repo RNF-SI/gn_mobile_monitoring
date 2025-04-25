@@ -839,133 +839,54 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
     showDialog(
       context: context,
-      builder: (context) => DefaultTabController(
-        length: 2,
-        initialIndex: initialIndex,
-        child: Dialog(
-          // Utiliser Dialog au lieu de AlertDialog pour plus de flexibilité
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            height: MediaQuery.of(context).size.height * 0.6,
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // En-tête
-                Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber_outlined,
+      barrierDismissible: true,
+      builder: (context) => Dialog.fullscreen(
+        child: DefaultTabController(
+          length: 2,
+          initialIndex: initialIndex,
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(
+                typeTitle != null
+                    ? 'Conflits de $typeTitle'
+                    : 'Détails des conflits',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              leading: IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              bottom: TabBar(
+                tabs: [
+                  Tab(
+                    icon: const Icon(Icons.compare_arrows),
+                    text: 'Conflits de données (${dataConflicts.length})',
+                  ),
+                  Tab(
+                    icon: Icon(
+                      Icons.error_outline,
                       color: referenceConflicts.isNotEmpty
                           ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.secondary,
-                      size: 24,
+                          : Colors.grey,
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            typeTitle != null
-                                ? 'Conflits de $typeTitle'
-                                : 'Détails des conflits',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                            ),
-                          ),
-                          if (referenceConflicts.isNotEmpty)
-                            Text(
-                              'Références à des éléments supprimés détectées',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.error,
-                                fontStyle: FontStyle.italic,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ],
-                ),
-                const Divider(),
-                // TabBar
-                TabBar(
-                  tabs: [
-                    Tab(
-                      icon: Icon(Icons.compare_arrows),
-                      text: 'Conflits de données (${dataConflicts.length})',
-                    ),
-                    Tab(
-                      icon: Icon(
-                        Icons.error_outline,
-                        color: referenceConflicts.isNotEmpty
-                            ? Theme.of(context).colorScheme.error
-                            : Colors.grey,
-                      ),
-                      text:
-                          'Références supprimées (${referenceConflicts.length})',
-                    ),
-                  ],
-                  labelColor: Theme.of(context).colorScheme.primary,
-                  indicatorColor: referenceConflicts.isNotEmpty
-                      ? Theme.of(context).colorScheme.error
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                // Contenu
-                Expanded(
-                  child: TabBarView(
-                    children: [
-                      // Onglet des conflits de données
-                      _buildConflictsList(context, dataConflicts),
+                    text: 'Références supprimées (${referenceConflicts.length})',
+                  ),
+                ],
+                labelColor: Theme.of(context).colorScheme.primary,
+                indicatorColor: referenceConflicts.isNotEmpty
+                    ? Theme.of(context).colorScheme.error
+                    : Theme.of(context).colorScheme.primary,
+              ),
+            ),
+            body: TabBarView(
+              children: [
+                // Onglet des conflits de données
+                _buildEnhancedConflictsList(context, dataConflicts, ConflictType.dataConflict),
 
-                      // Onglet des conflits de références supprimées
-                      _buildDeletedReferencesList(context, referenceConflicts),
-                    ],
-                  ),
-                ),
-                // Message d'aide et bouton en bas
-                Container(
-                  width: double.infinity,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primaryContainer
-                        .withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        size: 16,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'Cliquez sur un élément pour accéder directement à l\'entité en conflit',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Fermer'),
-                      ),
-                    ],
-                  ),
-                ),
+                // Onglet des conflits de références supprimées
+                _buildEnhancedConflictsList(context, referenceConflicts, ConflictType.deletedReference),
               ],
             ),
           ),
@@ -973,337 +894,398 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       ),
     );
   }
-
-  /// Construit la liste des conflits de données
-  Widget _buildConflictsList(
-      BuildContext context, List<SyncConflict> conflicts) {
+  
+  /// Construit une liste améliorée des conflits avec navigation intégrée
+  Widget _buildEnhancedConflictsList(
+      BuildContext context, List<SyncConflict> conflicts, ConflictType conflictType) {
     if (conflicts.isEmpty) {
       return Center(
-        child: Text(
-          'Aucun conflit de données',
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      );
-    }
-
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: conflicts.length,
-      itemBuilder: (context, index) {
-        final conflict = conflicts[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8.0),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // En-tête du conflit
-                Row(
-                  children: [
-                    Icon(
-                      _getEntityIcon(conflict.entityType),
-                      size: 16,
-                      color: Theme.of(context).colorScheme.secondary,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _getEntityTypeName(conflict.entityType, plural: false),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                    ),
-                  ],
-                ),
-                const Divider(),
-                // Identifiant de l'entité
-                Text(
-                  'ID: ${conflict.entityId}',
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 8),
-                // Dates de modification
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        'Local: ${_formatDate(conflict.localModifiedAt)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        'Serveur: ${_formatDate(conflict.remoteModifiedAt)}',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Stratégie de résolution
-                Text(
-                  'Résolution: ${_getResolutionStrategyName(conflict.resolutionStrategy)}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ],
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              conflictType == ConflictType.dataConflict
+                  ? Icons.check_circle_outline
+                  : Icons.check_circle,
+              size: 64,
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Construit la liste des conflits de références supprimées
-  Widget _buildDeletedReferencesList(
-      BuildContext context, List<SyncConflict> conflicts) {
-    if (conflicts.isEmpty) {
-      return Center(
-        child: Text(
-          'Aucune référence supprimée',
-          style: Theme.of(context).textTheme.bodyMedium,
+            const SizedBox(height: 16),
+            Text(
+              conflictType == ConflictType.dataConflict
+                  ? 'Aucun conflit de données'
+                  : 'Aucune référence supprimée',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
         ),
       );
     }
 
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: conflicts.length,
-      itemBuilder: (context, index) {
-        final conflict = conflicts[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8.0),
-          color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.2),
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // En-tête du conflit
-                Row(
-                  children: [
-                    Icon(
-                      Icons.warning_amber,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        _getEntityTypeName(conflict.entityType, plural: false),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Explications sur les conflits
+          if (conflictType == ConflictType.deletedReference)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.error,
                       ),
-                    ),
-                    // Badge indiquant la disponibilité du chemin de navigation
-                    if (conflict.navigationPath != null)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .primary
-                              .withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Références à des éléments supprimés',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.error,
                         ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ces conflits se produisent lorsque des données locales font référence à des éléments qui ont été supprimés sur le serveur. Vous devez résoudre ces conflits en modifiant les données concernées.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          if (conflictType == ConflictType.dataConflict)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.secondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Conflits de modifications',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.secondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Ces conflits se produisent lorsque les mêmes données ont été modifiées à la fois localement et sur le serveur. La stratégie de résolution détermine quelle version est conservée.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            
+          // Liste des conflits
+          Expanded(
+            child: ListView.builder(
+              itemCount: conflicts.length,
+              itemBuilder: (context, index) {
+                final conflict = conflicts[index];
+                
+                // Détermine si nous avons suffisamment d'informations pour la navigation directe
+                bool canNavigate = conflictType == ConflictType.deletedReference &&
+                    conflict.localData.containsKey('_context');
+                
+                if (!canNavigate && conflictType == ConflictType.deletedReference) {
+                  // Vérifier si nous avons des informations minimales pour la navigation
+                  if (conflict.entityType.toLowerCase() == 'visit' || 
+                      conflict.entityType.toLowerCase() == 'observation' ||
+                      conflict.entityType.toLowerCase() == 'observationdetail') {
+                    canNavigate = true;
+                  }
+                }
+                
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12.0),
+                  clipBehavior: Clip.antiAlias,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    side: BorderSide(
+                      color: conflictType == ConflictType.deletedReference
+                          ? Theme.of(context).colorScheme.error.withOpacity(0.3)
+                          : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      // En-tête avec type d'entité et couleur selon type de conflit
+                      Container(
+                        color: conflictType == ConflictType.deletedReference
+                            ? Theme.of(context).colorScheme.errorContainer.withOpacity(0.2)
+                            : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         child: Row(
-                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Icon(
-                              Icons.navigation,
-                              size: 12,
-                              color: Theme.of(context).colorScheme.primary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Navigation directe',
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).colorScheme.primary,
+                            Expanded(
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    _getEntityIcon(conflict.entityType),
+                                    size: 20,
+                                    color: conflictType == ConflictType.deletedReference
+                                        ? Theme.of(context).colorScheme.error
+                                        : Theme.of(context).colorScheme.secondary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    '${_getEntityTypeName(conflict.entityType, plural: false)} (ID: ${conflict.entityId})',
+                                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
                               ),
+                            ),
+                            if (canNavigate)
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Theme.of(context).colorScheme.primary,
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  iconSize: 14,
+                                  color: Theme.of(context).colorScheme.onPrimary,
+                                  icon: const Icon(Icons.north_east),
+                                  tooltip: 'Naviguer vers l\'élément',
+                                  onPressed: () {
+                                    Navigator.pop(context); // Fermer ce dialogue
+                                    _navigateDirectlyToConflictItem(context, conflict);
+                                  },
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      
+                      // Corps - informations sur le conflit
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Informations sur la référence supprimée
+                            if (conflictType == ConflictType.deletedReference &&
+                                conflict.referencedEntityType != null)
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                margin: const EdgeInsets.only(bottom: 12),
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getEntityIcon(conflict.referencedEntityType!),
+                                      size: 16,
+                                      color: Theme.of(context).colorScheme.error,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        '${_getEntityTypeName(conflict.referencedEntityType!, plural: false)} avec ID ${conflict.referencedEntityId} a été supprimé',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Theme.of(context).colorScheme.error,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                            // Champ concerné par le conflit
+                            if (conflict.affectedField != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.label_outline,
+                                      size: 14,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      'Champ: ',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                      ),
+                                    ),
+                                    Text(
+                                      conflict.affectedField ?? 'Non spécifié',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                            // Dates de modification (pour les conflits de données)
+                            if (conflictType == ConflictType.dataConflict)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.calendar_today_outlined,
+                                          size: 14,
+                                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'Modifications: ',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 13,
+                                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.only(left: 22.0, top: 4.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Local: ${_formatDate(conflict.localModifiedAt)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            'Serveur: ${_formatDate(conflict.remoteModifiedAt)}',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Theme.of(context).colorScheme.onSurface,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              
+                            // Stratégie de résolution
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.merge_type,
+                                  size: 14,
+                                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Résolution: ',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+                                  ),
+                                ),
+                                Text(
+                                  _getResolutionStrategyName(conflict.resolutionStrategy),
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
                             ),
                           ],
                         ),
                       ),
-                  ],
-                ),
-                const Divider(),
-                // Information sur la référence supprimée
-                if (conflict.referencedEntityType != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _getEntityIcon(conflict.referencedEntityType!),
-                          size: 14,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .error
-                              .withOpacity(0.7),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Référence à ${_getEntityTypeName(conflict.referencedEntityType!, plural: false)} ID: ${conflict.referencedEntityId ?? "inconnu"} supprimée',
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                // Champ affecté
-                if (conflict.affectedField != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Text(
-                      'Champ affecté: ${conflict.affectedField}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ),
-
-                // Si le chemin de navigation est disponible, l'afficher
-                if (conflict.navigationPath != null)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Container(
-                      padding: const EdgeInsets.all(8.0),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.surface,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .outline
-                              .withOpacity(0.2),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.link,
-                                size: 12,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                'Chemin de navigation:',
-                                style: Theme.of(context)
-                                    .textTheme
-                                    .bodySmall
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            conflict.navigationPath!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
-                                ?.copyWith(
-                                  fontFamily: 'monospace',
+                      
+                      // Bouton de navigation - Pied de carte
+                      if (canNavigate)
+                        InkWell(
+                          onTap: () {
+                            Navigator.pop(context); // Fermer ce dialogue
+                            _navigateDirectlyToConflictItem(context, conflict);
+                          },
+                          child: Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.edit_outlined,
+                                  size: 16,
                                   color: Theme.of(context).colorScheme.primary,
                                 ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Modifier cet élément',
+                                  style: TextStyle(
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
-                    ),
+                        ),
+                    ],
                   ),
-
-                // Actions possibles
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    ElevatedButton.icon(
-                      icon: Icon(Icons.edit, size: 16),
-                      label: Text('Modifier pour résoudre le conflit'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor:
-                            Theme.of(context).colorScheme.onPrimary,
-                      ),
-                      onPressed: () {
-                        // Fermer le dialogue des conflits
-                        Navigator.of(context).pop();
-
-                        // Construire le chemin de navigation pour résoudre le conflit
-                        _navigateToEditConflict(context, conflict);
-                      },
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  /// Méthode pour naviguer vers l'écran d'édition approprié pour résoudre un conflit
-  void _navigateToEditConflict(BuildContext context, SyncConflict conflict) {
-    _showEnhancedNavigationDialog(context, conflict);
-  }
-
-  /// Construit une étape de navigation numérotée avec un style visuel
-  Widget _buildNavigationStep(
-      BuildContext context, int stepNumber, String instruction) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Affichage du numéro d'étape
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$stepNumber',
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              instruction,
-              style: Theme.of(context).textTheme.bodyMedium,
+                );
+              },
             ),
           ),
         ],
       ),
     );
   }
+
+  // Note: Les anciennes méthodes _buildConflictsList et _buildDeletedReferencesList
+  // ont été remplacées par la méthode plus complète _buildEnhancedConflictsList.
 
   /// Retourne une icône en fonction du type d'entité
   IconData _getEntityIcon(String entityType) {
@@ -1339,12 +1321,13 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     }
   }
 
-  /// Ouvre une boîte de dialogue de navigation améliorée qui guide l'utilisateur
-  /// et tente d'ouvrir directement les éléments lorsque possible
-  Future<void> _showEnhancedNavigationDialog(
+  /// Navigation directe vers l'élément concerné par un conflit
+  /// Sans passer par une interface intermédiaire
+  Future<void> _navigateDirectlyToConflictItem(
       BuildContext context, SyncConflict conflict) async {
     // Extraire les données de contexte
     final Map<String, dynamic> contextInfo = {};
+    bool showLoading = false;
 
     // Récupérer le contexte à partir des données locales
     if (conflict.localData.containsKey('_context')) {
@@ -1369,578 +1352,260 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       }
     }
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Icon(
-              Icons.navigation,
-              color: Theme.of(context).colorScheme.primary,
-              size: 24,
-            ),
-            const SizedBox(width: 8),
-            const Text('Navigation vers l\'élément en conflit'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
+    // Déterminer l'élément cible selon la priorité d'accès:
+    // détail > observation > visite > site > module
+    try {
+      // Montrer un indicateur de chargement
+      showLoading = true;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          content: Row(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .errorContainer
-                      .withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: Theme.of(context).colorScheme.error.withOpacity(0.3),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.warning,
-                          size: 16,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Ce conflit concerne une référence à ${conflict.referencedEntityType} (ID: ${conflict.referencedEntityId}) qui a été supprimée sur le serveur',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (conflict.affectedField != null) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        'Champ concerné: ${conflict.affectedField}',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .error
-                              .withOpacity(0.8),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              const Text(
-                'Pour résoudre ce conflit, vous devez modifier l\'élément qui référence cette valeur supprimée:',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-
-              // Construire les étapes de navigation avec des actions si possible
-              if (contextInfo.containsKey('module_id'))
-                _buildEnhancedNavigationStep(
-                  context,
-                  1,
-                  'Accéder au module ${contextInfo['module'] ?? contextInfo['module_id']}',
-                  onNavigate: () async {
-                    Navigator.pop(context); // Fermer le dialogue
-                    try {
-                      // Utiliser le provider correct pour les modules
-                      final modulesState = ref.read(userModuleListeProvider);
-                      if (modulesState.data != null &&
-                          modulesState.data!.values.isNotEmpty) {
-                        final moduleToOpen = modulesState.data!.values
-                            .where(
-                                (m) => m.module.id == contextInfo['module_id'])
-                            .toList();
-
-                        if (moduleToOpen.isNotEmpty) {
-                          await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ModuleDetailPage(
-                                  moduleInfo: moduleToOpen.first,
-                                ),
-                              ));
-                          return;
-                        }
-                      }
-                      // Si on n'a pas trouvé le module, afficher un message
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text(
-                            'Module ${contextInfo['module_id']} non trouvé, veuillez le sélectionner manuellement'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                      ));
-                    } catch (e) {
-                      debugPrint(
-                          'Erreur lors de la navigation vers le module: $e');
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                        content: Text('Erreur de navigation: $e'),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                      ));
-                    }
-                  },
-                ),
-
-              if (contextInfo.containsKey('site_id'))
-                _buildEnhancedNavigationStep(
-                  context,
-                  contextInfo.containsKey('module_id') ? 2 : 1,
-                  'Accéder au site ${contextInfo['site'] ?? contextInfo['site_id']}',
-                  onNavigate: contextInfo.containsKey('module_id')
-                      ? () async {
-                          Navigator.pop(context); // Fermer le dialogue
-                          try {
-                            // Trouver le module
-                            final modulesState =
-                                ref.read(userModuleListeProvider);
-                            
-                            if (modulesState.data != null) {
-                              final moduleToOpen = modulesState.data!.values
-                                  .where((m) =>
-                                      m.module.id == contextInfo['module_id'])
-                                  .toList();
-
-                              if (moduleToOpen.isNotEmpty) {
-                                // Récupérer le site directement depuis le module
-                                // puisque les modules contiennent déjà leurs sites
-                                final moduleWithSites = moduleToOpen.first.module;
-                                final siteId = contextInfo['site_id'];
-                                final siteToOpen = moduleWithSites.sites
-                                    ?.where((s) => s.idBaseSite == siteId)
-                                    .toList();
-
-                                if (siteToOpen != null && siteToOpen.isNotEmpty) {
-                                  await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SiteDetailPage(
-                                          site: siteToOpen.first,
-                                          moduleInfo: moduleToOpen.first,
-                                        ),
-                                      ));
-                                  return;
-                                }
-                              }
-                            }
-                            
-                            // Si on n'a pas trouvé le site, afficher un message
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  'Site ${contextInfo['site_id']} non trouvé, veuillez le sélectionner manuellement'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          } catch (e) {
-                            debugPrint(
-                                'Erreur lors de la navigation vers le site: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('Erreur de navigation: $e'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          }
-                        }
-                      : null,
-                ),
-
-              if (contextInfo.containsKey('visit'))
-                _buildEnhancedNavigationStep(
-                  context,
-                  (contextInfo.containsKey('module_id') ? 1 : 0) +
-                      (contextInfo.containsKey('site_id') ? 1 : 0) +
-                      1,
-                  'Accéder à la visite ${contextInfo['visit']}',
-                  onNavigate: contextInfo.containsKey('module_id') && contextInfo.containsKey('site_id')
-                      ? () async {
-                          Navigator.pop(context); // Fermer le dialogue
-                          try {
-                            // Trouver le module
-                            final modulesState =
-                                ref.read(userModuleListeProvider);
-                            
-                            if (modulesState.data != null) {
-                              final moduleToOpen = modulesState.data!.values
-                                  .where((m) =>
-                                      m.module.id == contextInfo['module_id'])
-                                  .toList();
-
-                              if (moduleToOpen.isNotEmpty) {
-                                // Récupérer le site directement depuis le module
-                                final moduleWithSites = moduleToOpen.first.module;
-                                final siteId = contextInfo['site_id'];
-                                final siteToOpen = moduleWithSites.sites
-                                    ?.where((s) => s.idBaseSite == siteId)
-                                    .toList();
-
-                                if (siteToOpen != null && siteToOpen.isNotEmpty) {
-                                  // Récupérer la visite via le service
-                                  final siteVisitsViewModel = ref.read(
-                                    siteVisitsViewModelProvider(
-                                      (siteToOpen.first.idBaseSite, moduleToOpen.first.module.id)
-                                    ).notifier
-                                  );
-                                  
-                                  // Charger les détails complets de la visite
-                                  final visitId = contextInfo['visit'];
-                                  try {
-                                    final visit = await siteVisitsViewModel.getVisitWithFullDetails(visitId);
-                                    
-                                    if (visit != null) {
-                                      await Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => VisitDetailPage(
-                                            visit: visit,
-                                            site: siteToOpen.first,
-                                            moduleInfo: moduleToOpen.first,
-                                          ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text('Erreur de chargement de la visite: $e'),
-                                      backgroundColor: Theme.of(context).colorScheme.error,
-                                    ));
-                                  }
-                                }
-                              }
-                            }
-                            
-                            // Si on n'a pas trouvé la visite, afficher un message
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  'Visite ${contextInfo['visit']} non trouvée, veuillez la sélectionner manuellement'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          } catch (e) {
-                            debugPrint(
-                                'Erreur lors de la navigation vers la visite: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('Erreur de navigation: $e'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          }
-                        }
-                      : null,
-                ),
-
-              if (contextInfo.containsKey('observation'))
-                _buildEnhancedNavigationStep(
-                  context,
-                  (contextInfo.containsKey('module_id') ? 1 : 0) +
-                      (contextInfo.containsKey('site_id') ? 1 : 0) +
-                      (contextInfo.containsKey('visit') ? 1 : 0) +
-                      1,
-                  'Accéder à l\'observation ${contextInfo['observation']}',
-                  onNavigate: contextInfo.containsKey('module_id') && 
-                              contextInfo.containsKey('site_id') && 
-                              contextInfo.containsKey('visit')
-                      ? () async {
-                          Navigator.pop(context); // Fermer le dialogue
-                          try {
-                            // Trouver le module
-                            final modulesState =
-                                ref.read(userModuleListeProvider);
-                            
-                            if (modulesState.data != null) {
-                              final moduleToOpen = modulesState.data!.values
-                                  .where((m) =>
-                                      m.module.id == contextInfo['module_id'])
-                                  .toList();
-
-                              if (moduleToOpen.isNotEmpty) {
-                                // Récupérer le site directement depuis le module
-                                final moduleWithSites = moduleToOpen.first.module;
-                                final siteId = contextInfo['site_id'];
-                                final siteToOpen = moduleWithSites.sites
-                                    ?.where((s) => s.idBaseSite == siteId)
-                                    .toList();
-
-                                if (siteToOpen != null && siteToOpen.isNotEmpty) {
-                                  // Récupérer la visite via le service
-                                  final siteVisitsViewModel = ref.read(
-                                    siteVisitsViewModelProvider(
-                                      (siteToOpen.first.idBaseSite, moduleToOpen.first.module.id)
-                                    ).notifier
-                                  );
-                                  
-                                  // Charger les détails complets de la visite
-                                  final visitId = contextInfo['visit'];
-                                  final observationId = contextInfo['observation'];
-                                  
-                                  try {
-                                    final visit = await siteVisitsViewModel.getVisitWithFullDetails(visitId);
-                                    
-                                    if (visit != null) {
-                                      // Récupérer l'observation
-                                      final observationsViewModel = ref.read(
-                                        observationsProvider(visitId).notifier
-                                      );
-                                      
-                                      try {
-                                        final observation = await observationsViewModel.getObservationById(observationId);
-                                        
-                                        if (observation != null) {
-                                          // Obtenir la configuration pour les observations
-                                          final observationConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.observation;
-                                          final customConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.custom;
-                                          final observationDetailConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.observationDetail;
-                                                  
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) => ObservationDetailPage(
-                                                observation: observation,
-                                                visit: visit,
-                                                site: siteToOpen.first,
-                                                moduleInfo: moduleToOpen.first,
-                                                observationConfig: observationConfig,
-                                                customConfig: customConfig,
-                                                observationDetailConfig: observationDetailConfig,
-                                              ),
-                                            ),
-                                          );
-                                          return;
-                                        }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text('Erreur de chargement de l\'observation: $e'),
-                                          backgroundColor: Theme.of(context).colorScheme.error,
-                                        ));
-                                      }
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text('Erreur de chargement de la visite: $e'),
-                                      backgroundColor: Theme.of(context).colorScheme.error,
-                                    ));
-                                  }
-                                }
-                              }
-                            }
-                            
-                            // Si on n'a pas trouvé l'observation, afficher un message
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  'Observation ${contextInfo['observation']} non trouvée, veuillez la sélectionner manuellement'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          } catch (e) {
-                            debugPrint(
-                                'Erreur lors de la navigation vers l\'observation: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('Erreur de navigation: $e'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          }
-                        }
-                      : null,
-                ),
-
-              if (contextInfo.containsKey('detail'))
-                _buildEnhancedNavigationStep(
-                  context,
-                  (contextInfo.containsKey('module_id') ? 1 : 0) +
-                      (contextInfo.containsKey('site_id') ? 1 : 0) +
-                      (contextInfo.containsKey('visit') ? 1 : 0) +
-                      (contextInfo.containsKey('observation') ? 1 : 0) +
-                      1,
-                  'Accéder au détail ${contextInfo['detail']}',
-                  onNavigate: contextInfo.containsKey('module_id') && 
-                              contextInfo.containsKey('site_id') && 
-                              contextInfo.containsKey('visit') &&
-                              contextInfo.containsKey('observation')
-                      ? () async {
-                          Navigator.pop(context); // Fermer le dialogue
-                          try {
-                            // Trouver le module
-                            final modulesState =
-                                ref.read(userModuleListeProvider);
-                            
-                            if (modulesState.data != null) {
-                              final moduleToOpen = modulesState.data!.values
-                                  .where((m) =>
-                                      m.module.id == contextInfo['module_id'])
-                                  .toList();
-
-                              if (moduleToOpen.isNotEmpty) {
-                                // Récupérer le site directement depuis le module
-                                final moduleWithSites = moduleToOpen.first.module;
-                                final siteId = contextInfo['site_id'];
-                                final siteToOpen = moduleWithSites.sites
-                                    ?.where((s) => s.idBaseSite == siteId)
-                                    .toList();
-
-                                if (siteToOpen != null && siteToOpen.isNotEmpty) {
-                                  // Récupérer la visite via le service
-                                  final siteVisitsViewModel = ref.read(
-                                    siteVisitsViewModelProvider(
-                                      (siteToOpen.first.idBaseSite, moduleToOpen.first.module.id)
-                                    ).notifier
-                                  );
-                                  
-                                  // Charger les détails complets de la visite
-                                  final visitId = contextInfo['visit'];
-                                  final observationId = contextInfo['observation'];
-                                  final detailId = contextInfo['detail'];
-                                  
-                                  try {
-                                    final visit = await siteVisitsViewModel.getVisitWithFullDetails(visitId);
-                                    
-                                    if (visit != null) {
-                                      // Récupérer l'observation
-                                      final observationsViewModel = ref.read(
-                                        observationsProvider(visitId).notifier
-                                      );
-                                      
-                                      try {
-                                        final observation = await observationsViewModel.getObservationById(observationId);
-                                        
-                                        if (observation != null) {
-                                          // Obtenir la configuration pour les observations
-                                          final observationConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.observation;
-                                          final customConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.custom;
-                                          final observationDetailConfig = moduleToOpen.first.module.complement
-                                                  ?.configuration?.observationDetail;
-                                                  
-                                          // Accéder au détail
-                                          final observationDetailViewModel = ref.read(
-                                            observationDetailsProvider(observationId).notifier
-                                          );
-                                          
-                                          try {
-                                            final detail = await observationDetailViewModel.getObservationDetailById(detailId);
-                                            
-                                            if (detail != null) {
-                                              // Vérifier que la configuration du détail d'observation est disponible
-                                              if (observationDetailConfig != null) {
-                                                await Navigator.push(
-                                                  context,
-                                                  MaterialPageRoute(
-                                                    builder: (context) => ObservationDetailDetailPage(
-                                                      observationDetail: detail,
-                                                      config: observationDetailConfig,
-                                                      customConfig: customConfig,
-                                                      index: 0, // Index par défaut pour l'affichage
-                                                    ),
-                                                  ),
-                                                );
-                                              } else {
-                                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                                  content: Text('Configuration du détail d\'observation non disponible'),
-                                                  backgroundColor: Theme.of(context).colorScheme.error,
-                                                ));
-                                              }
-                                              return;
-                                            }
-                                          } catch (e) {
-                                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                              content: Text('Erreur de chargement du détail: $e'),
-                                              backgroundColor: Theme.of(context).colorScheme.error,
-                                            ));
-                                          }
-                                        }
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text('Erreur de chargement de l\'observation: $e'),
-                                          backgroundColor: Theme.of(context).colorScheme.error,
-                                        ));
-                                      }
-                                    }
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                      content: Text('Erreur de chargement de la visite: $e'),
-                                      backgroundColor: Theme.of(context).colorScheme.error,
-                                    ));
-                                  }
-                                }
-                              }
-                            }
-                            
-                            // Si on n'a pas trouvé le détail, afficher un message
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(
-                                  'Détail ${contextInfo['detail']} non trouvé, veuillez le sélectionner manuellement'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          } catch (e) {
-                            debugPrint(
-                                'Erreur lors de la navigation vers le détail: $e');
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text('Erreur de navigation: $e'),
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.error,
-                            ));
-                          }
-                        }
-                      : null,
-                ),
-
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .primaryContainer
-                      .withOpacity(0.3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    const Expanded(
-                      child: Text(
-                        'Les étapes cliquables tentent d\'ouvrir directement l\'élément concerné. Sinon, naviguez manuellement.',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              const Text("Chargement des données..."),
             ],
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Fermer'),
+      );
+
+      // Si nous avons un module_id, c'est notre point de départ
+      if (contextInfo.containsKey('module_id')) {
+        final modulesState = ref.read(userModuleListeProvider);
+        
+        if (modulesState.data != null) {
+          final moduleToOpen = modulesState.data!.values
+              .where((m) => m.module.id == contextInfo['module_id'])
+              .toList();
+
+          if (moduleToOpen.isNotEmpty) {
+            // Récupérer le module
+            final moduleInfo = moduleToOpen.first;
+            final moduleWithSites = moduleInfo.module;
+            
+            // Si nous avons un site_id
+            if (contextInfo.containsKey('site_id')) {
+              final siteId = contextInfo['site_id'];
+              final siteToOpen = moduleWithSites.sites
+                  ?.where((s) => s.idBaseSite == siteId)
+                  .toList();
+
+              if (siteToOpen != null && siteToOpen.isNotEmpty) {
+                final site = siteToOpen.first;
+                
+                // Si nous avons une visite
+                if (contextInfo.containsKey('visit')) {
+                  final visitId = contextInfo['visit'];
+                  final siteVisitsViewModel = ref.read(
+                    siteVisitsViewModelProvider(
+                      (site.idBaseSite, moduleInfo.module.id)
+                    ).notifier
+                  );
+                  
+                  try {
+                    final visit = await siteVisitsViewModel.getVisitWithFullDetails(visitId);
+                    
+                    if (visit != null) {
+                      // Si nous avons une observation
+                      if (contextInfo.containsKey('observation')) {
+                        final observationId = contextInfo['observation'];
+                        final observationsViewModel = ref.read(
+                          observationsProvider(visitId).notifier
+                        );
+                        
+                        try {
+                          final observation = await observationsViewModel.getObservationById(observationId);
+                          
+                          if (observation != null) {
+                            // Obtenir la configuration pour les observations
+                            final observationConfig = moduleInfo.module.complement
+                                  ?.configuration?.observation;
+                            final customConfig = moduleInfo.module.complement
+                                  ?.configuration?.custom;
+                            final observationDetailConfig = moduleInfo.module.complement
+                                  ?.configuration?.observationDetail;
+                                  
+                            // Si nous avons un détail d'observation
+                            if (contextInfo.containsKey('detail')) {
+                              final detailId = contextInfo['detail'];
+                              final observationDetailViewModel = ref.read(
+                                observationDetailsProvider(observationId).notifier
+                              );
+                              
+                              try {
+                                final detail = await observationDetailViewModel.getObservationDetailById(detailId);
+                                
+                                if (detail != null && observationDetailConfig != null) {
+                                  // Fermer l'indicateur de chargement
+                                  if (showLoading) {
+                                    Navigator.of(context).pop();
+                                    showLoading = false;
+                                  }
+                                  
+                                  // Naviguer vers le détail d'observation
+                                  await Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => ObservationDetailDetailPage(
+                                        observationDetail: detail,
+                                        config: observationDetailConfig,
+                                        customConfig: customConfig,
+                                        index: 0,
+                                      ),
+                                    ),
+                                  );
+                                  return;
+                                }
+                              } catch (e) {
+                                debugPrint('Erreur lors du chargement du détail: $e');
+                              }
+                            }
+                            
+                            // Si pas de détail ou erreur, naviguer vers l'observation
+                            if (showLoading) {
+                              Navigator.of(context).pop();
+                              showLoading = false;
+                            }
+                            
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ObservationDetailPage(
+                                  observation: observation,
+                                  visit: visit,
+                                  site: site,
+                                  moduleInfo: moduleInfo,
+                                  observationConfig: observationConfig,
+                                  customConfig: customConfig,
+                                  observationDetailConfig: observationDetailConfig,
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                        } catch (e) {
+                          debugPrint('Erreur lors du chargement de l\'observation: $e');
+                        }
+                      }
+                      
+                      // Si pas d'observation ou erreur, naviguer vers la visite
+                      if (showLoading) {
+                        Navigator.of(context).pop();
+                        showLoading = false;
+                      }
+                      
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => VisitDetailPage(
+                            visit: visit,
+                            site: site,
+                            moduleInfo: moduleInfo,
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                  } catch (e) {
+                    debugPrint('Erreur lors du chargement de la visite: $e');
+                  }
+                }
+                
+                // Si pas de visite ou erreur, naviguer vers le site
+                if (showLoading) {
+                  Navigator.of(context).pop();
+                  showLoading = false;
+                }
+                
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteDetailPage(
+                      site: site,
+                      moduleInfo: moduleInfo,
+                    ),
+                  ),
+                );
+                return;
+              }
+            }
+            
+            // Si pas de site ou erreur, naviguer vers le module
+            if (showLoading) {
+              Navigator.of(context).pop();
+              showLoading = false;
+            }
+            
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: moduleInfo,
+                ),
+              ),
+            );
+            return;
+          }
+        }
+      }
+      
+      // Si nous arrivons ici, c'est que la navigation a échoué
+      if (showLoading) {
+        Navigator.of(context).pop();
+        showLoading = false;
+      }
+      
+      // Afficher un message d'erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Impossible d\'accéder directement à l\'élément (${_determineMainEntityName(conflict, contextInfo)})',
+            style: const TextStyle(fontSize: 14),
           ),
-        ],
-      ),
-    );
+          backgroundColor: Theme.of(context).colorScheme.error,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'OK',
+            textColor: Theme.of(context).colorScheme.onError,
+            onPressed: () {},
+          ),
+        ),
+      );
+      
+    } catch (e) {
+      // En cas d'erreur, fermer l'indicateur de chargement
+      if (showLoading) {
+        Navigator.of(context).pop();
+      }
+      
+      // Afficher un message d'erreur
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Erreur lors de la navigation: $e'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+        ),
+      );
+    }
+  }
+  
+  /// Détermine le nom de l'entité principale à partir du conflit et du contexte
+  String _determineMainEntityName(SyncConflict conflict, Map<String, dynamic> contextInfo) {
+    if (contextInfo.containsKey('detail')) {
+      return 'Détail ${contextInfo['detail']}';
+    } else if (contextInfo.containsKey('observation')) {
+      return 'Observation ${contextInfo['observation']}';
+    } else if (contextInfo.containsKey('visit')) {
+      return 'Visite ${contextInfo['visit']}';
+    } else if (contextInfo.containsKey('site_id')) {
+      return 'Site ${contextInfo['site_id']}';
+    } else if (contextInfo.containsKey('module_id')) {
+      return 'Module ${contextInfo['module_id']}';
+    } else {
+      return '${conflict.entityType} ${conflict.entityId}';
+    }
   }
 
   /// Construit une étape de navigation numérotée avec un style visuel et une action optionnelle
