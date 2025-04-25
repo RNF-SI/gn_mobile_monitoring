@@ -1,8 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
@@ -13,6 +19,8 @@ class SyncRepositoryImpl implements SyncRepository {
   final GlobalApi _globalApi;
   final TaxonApi _taxonApi;
   final GlobalDatabase _globalDatabase;
+  final NomenclaturesDatabase _nomenclaturesDatabase;
+  final DatasetsDatabase _datasetsDatabase;
   final TaxonDatabase _taxonDatabase;
 
   // Repositories pour la délégation des tâches de synchronisation
@@ -23,6 +31,8 @@ class SyncRepositoryImpl implements SyncRepository {
     this._globalApi,
     this._taxonApi,
     this._globalDatabase,
+    this._nomenclaturesDatabase,
+    this._datasetsDatabase,
     this._taxonDatabase, {
     required ModulesRepository modulesRepository,
     required SitesRepository sitesRepository,
@@ -102,57 +112,11 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<SyncResult> syncNomenclatures(String token,
       {DateTime? lastSync}) async {
-    try {
-      // Vérifier la connectivité
-      final isConnected = await checkConnectivity();
-      if (!isConnected) {
-        return SyncResult.failure(
-          errorMessage: 'Pas de connexion Internet',
-        );
-      }
-
-      // Récupérer la liste des modules téléchargés
-      final downloadedModules = await _modulesRepository.getModulesFromLocal();
-      final downloadedModuleCodes = downloadedModules
-          .where((module) => module.downloaded == true)
-          .map((module) => module.moduleCode)
-          .whereType<String>()
-          .toList();
-
-      if (downloadedModuleCodes.isEmpty) {
-        return SyncResult.success(
-          itemsProcessed: 0,
-          itemsAdded: 0,
-          itemsUpdated: 0,
-          itemsSkipped: 0,
-        );
-      }
-
-      // Récupérer la date de dernière synchronisation si non spécifiée
-      final effectiveLastSync =
-          lastSync ?? await getLastSyncDate('nomenclatures');
-
-      // Télécharger les nomenclatures depuis l'API pour les modules téléchargés
-      final result = await _globalApi.syncNomenclatures(
-        token,
-        downloadedModuleCodes,
-        lastSync: effectiveLastSync,
-      );
-
-      // Mettre à jour la date de synchronisation
-      if (result.success) {
-        await updateLastSyncDate('nomenclatures', DateTime.now());
-      }
-
-      return result;
-    } catch (e) {
-      debugPrint('Erreur lors de la synchronisation des nomenclatures: $e');
-      return SyncResult.failure(
-        errorMessage: 'Erreur lors de la synchronisation des nomenclatures: $e',
-      );
-    }
+    // Déléguer à la méthode complète qui gère à la fois les nomenclatures et les datasets
+    return syncNomenclaturesAndDatasets(token, lastSync: lastSync);
   }
 
+  // Méthode pour synchroniser à la fois les nomenclatures et les datasets
   @override
   Future<SyncResult> syncNomenclaturesAndDatasets(String token,
       {DateTime? lastSync}) async {
@@ -182,23 +146,176 @@ class SyncRepositoryImpl implements SyncRepository {
         );
       }
 
-      // Récupérer la date de dernière synchronisation si non spécifiée
-      final effectiveLastSync =
-          lastSync ?? await getLastSyncDate('nomenclatures');
+      // Récupérer la date de dernière synchronisation si nécessaire
+      // Note: Actuellement non utilisée, mais gardée pour une utilisation future
+      // avec des filtres de date côté API
+      // final effectiveLastSync = lastSync ?? await getLastSyncDate('nomenclatures');
 
-      // Télécharger les nomenclatures et datasets depuis l'API pour les modules téléchargés
-      final result = await _globalApi.syncNomenclaturesAndDatasets(
-        token,
-        downloadedModuleCodes,
-        lastSync: effectiveLastSync,
-      );
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+      int itemsDeleted = 0;
+      List<String> errors = [];
+      final conflicts = <String, List<String>>{};
 
-      // Mettre à jour la date de synchronisation
-      if (result.success) {
-        await updateLastSyncDate('nomenclatures', DateTime.now());
+      // Récupérer les nomenclatures existantes dans la base de données
+      final existingNomenclatures =
+          await _nomenclaturesDatabase.getAllNomenclatures();
+      final existingNomenclatureIds =
+          existingNomenclatures.map((n) => n.id).toSet();
+      final serverNomenclatureIds = <int>{};
+
+      // Synchroniser les nomenclatures et datasets pour chaque module
+      for (final moduleCode in downloadedModuleCodes) {
+        try {
+          // Récupérer les nomenclatures et datasets du module
+          final data = await _globalApi.getNomenclaturesAndDatasets(moduleCode);
+
+          // Convertir les nomenclatures entities en domain models
+          final nomenclatures =
+              data.nomenclatures.map((e) => e.toDomain()).toList();
+
+          // Collecter tous les IDs de nomenclatures du serveur
+          serverNomenclatureIds.addAll(nomenclatures.map((n) => n.id));
+
+          // Les nomenclatures seront automatiquement mises à jour ou insérées
+          await _nomenclaturesDatabase.insertNomenclatures(nomenclatures);
+
+          // Déterminer combien ont été ajoutées vs. mises à jour
+          final insertedCount = nomenclatures
+              .where((n) => !existingNomenclatureIds.contains(n.id))
+              .length;
+          final updatedCount = nomenclatures.length - insertedCount;
+
+          // Traiter les types de nomenclature
+          if (data.nomenclatureTypes.isNotEmpty) {
+            // Convertir les types de nomenclature
+            final types = data.nomenclatureTypes
+                .map((typeData) => NomenclatureType(
+                      idType: typeData['idType'] as int,
+                      mnemonique: typeData['mnemonique'] as String,
+                    ))
+                .toList();
+
+            // Insérer ou mettre à jour les types
+            await _nomenclaturesDatabase.insertNomenclatureTypes(types);
+          }
+
+          // Convertir et traiter les datasets
+          final datasets = data.datasets.map((e) => e.toDomain()).toList();
+          await _datasetsDatabase.insertDatasets(datasets);
+
+          // Mettre à jour les compteurs
+          itemsProcessed += nomenclatures.length +
+              datasets.length +
+              data.nomenclatureTypes.length;
+          itemsAdded += insertedCount;
+          itemsUpdated += updatedCount + data.datasets.length;
+        } catch (e) {
+          itemsSkipped++;
+          errors.add('Module $moduleCode: ${e.toString()}');
+          debugPrint(
+              'Erreur lors de la synchronisation du module $moduleCode: $e');
+        }
       }
 
-      return result;
+      // Identifier les nomenclatures qui existent dans la base locale mais pas sur le serveur
+      // Ces nomenclatures ont été supprimées sur le serveur et doivent être supprimées localement
+      final deletedNomenclatureIds =
+          existingNomenclatureIds.difference(serverNomenclatureIds);
+
+      // Vérifier et traiter les nomenclatures supprimées
+      final nomenclatureConflictsMap = <int, List<SyncConflict>>{};
+
+      for (final nomenclatureId in deletedNomenclatureIds) {
+        try {
+          // Vérifier si cette nomenclature est référencée par des observations, visites, etc.
+          final nomenclatureConflicts = await _nomenclaturesDatabase
+              .checkNomenclatureReferences(nomenclatureId);
+
+          if (nomenclatureConflicts.isEmpty) {
+            // Aucun conflit - supprimer la nomenclature en toute sécurité
+            await _nomenclaturesDatabase.deleteNomenclature(nomenclatureId);
+            itemsDeleted++;
+          } else {
+            // Des références existent - enregistrer les conflits
+            nomenclatureConflictsMap[nomenclatureId] = nomenclatureConflicts;
+            // Ne pas incrémenter itemsSkipped pour les conflits
+            // itemsSkipped++;
+
+            // Construire un message d'erreur plus détaillé avec les références
+            final affectedEntitiesStr = nomenclatureConflicts
+                .map((c) => '${c.entityType}:${c.entityId}')
+                .take(3)
+                .join(', ');
+
+            final moreEntities = nomenclatureConflicts.length > 3
+                ? " (+ ${nomenclatureConflicts.length - 3} autres)"
+                : "";
+
+            errors.add(
+                'Nomenclature $nomenclatureId: Impossible de supprimer - référencée par $affectedEntitiesStr$moreEntities');
+          }
+        } catch (e) {
+          itemsSkipped++;
+          errors.add(
+              'Nomenclature $nomenclatureId: Erreur lors de la suppression: ${e.toString()}');
+          debugPrint(
+              'Erreur lors de la suppression de la nomenclature $nomenclatureId: $e');
+        }
+      }
+
+      // Si des conflits ont été détectés, les inclure dans le résultat
+      if (nomenclatureConflictsMap.isNotEmpty) {
+        // Convertir tous les conflits en une seule liste plate
+        final allConflicts = <SyncConflict>[];
+        nomenclatureConflictsMap.forEach((id, conflicts) {
+          allConflicts.addAll(conflicts);
+        });
+
+        // Mettre à jour la date de synchronisation
+        await updateLastSyncDate('nomenclatures', DateTime.now());
+
+        // Ajouter un log pour le débogage
+        debugPrint('Création d\'un SyncResult.withConflicts avec ${allConflicts.length} conflits');
+        
+        // Retourner un résultat de type conflit
+        return SyncResult.withConflicts(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+          itemsFailed: errors.length,
+          conflicts: allConflicts,
+          errorMessage:
+              'Des nomenclatures supprimées sont référencées par des entités:\n${errors.join('\n')}',
+        );
+      }
+
+      // Mettre à jour la date de synchronisation
+      await updateLastSyncDate('nomenclatures', DateTime.now());
+
+      if (errors.isNotEmpty) {
+        return SyncResult.failure(
+          errorMessage:
+              'Erreurs lors de la synchronisation:\n${errors.join('\n')}',
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      }
+
+      return SyncResult.success(
+        itemsProcessed: itemsProcessed,
+        itemsAdded: itemsAdded,
+        itemsUpdated: itemsUpdated,
+        itemsSkipped: itemsSkipped,
+        itemsDeleted: itemsDeleted,
+      );
     } catch (e) {
       debugPrint(
           'Erreur lors de la synchronisation des nomenclatures et datasets: $e');
@@ -278,7 +395,8 @@ class SyncRepositoryImpl implements SyncRepository {
       try {
         // Récupérer l'état avant la synchronisation pour les métriques
         final taxonsBefore = await _taxonDatabase.getAllTaxons();
-        final taxonListsBefore = await _taxonDatabase.getAllTaxonLists();
+        // Note: taxonListsBefore pourrait être utilisé pour des métriques détaillées plus tard
+        // await _taxonDatabase.getAllTaxonLists();
 
         // Télécharger les taxons depuis l'API
         final result = await _taxonApi.syncTaxons(
@@ -293,7 +411,8 @@ class SyncRepositoryImpl implements SyncRepository {
 
           // Récupérer l'état après la synchronisation pour les métriques
           final taxonsAfter = await _taxonDatabase.getAllTaxons();
-          final taxonListsAfter = await _taxonDatabase.getAllTaxonLists();
+          // Note: taxonListsAfter pourrait être utilisé pour des métriques détaillées plus tard
+          // await _taxonDatabase.getAllTaxonLists();
 
           // Calculer les métriques de synchronisation
           final itemsTotal = taxonsAfter.length;
@@ -349,8 +468,8 @@ class SyncRepositoryImpl implements SyncRepository {
         );
       }
 
-      // Récupérer la date de dernière synchronisation
-      final effectiveLastSync = lastSync ?? await getLastSyncDate('modules');
+      // Récupérer la date de dernière synchronisation (non utilisée ici mais préparée pour implémentations futures)
+      // final effectiveLastSync = lastSync ?? await getLastSyncDate('modules');
 
       try {
         // Récupérer l'état avant la synchronisation pour les métriques
@@ -405,8 +524,8 @@ class SyncRepositoryImpl implements SyncRepository {
         );
       }
 
-      // Récupérer la date de dernière synchronisation
-      final effectiveLastSync = lastSync ?? await getLastSyncDate('sites');
+      // Récupérer la date de dernière synchronisation (non utilisée actuellement)
+      // final effectiveLastSync = lastSync ?? await getLastSyncDate('sites');
 
       try {
         // Récupérer les sites avant la synchronisation pour les métriques
@@ -463,8 +582,8 @@ class SyncRepositoryImpl implements SyncRepository {
         );
       }
 
-      // Récupérer la date de dernière synchronisation
-      final effectiveLastSync = lastSync ?? await getLastSyncDate('siteGroups');
+      // Récupérer la date de dernière synchronisation (pour une utilisation future)
+      // final effectiveLastSync = lastSync ?? await getLastSyncDate('siteGroups');
 
       try {
         // Récupérer les groupes de sites avant la synchronisation pour les métriques
