@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_list_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
@@ -17,7 +17,7 @@ class HomePage extends ConsumerWidget {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
     //Rafraichir les status de téléchargement des modules
-    ref.read(databaseSyncServiceProvider).refreshModulesDownloadedStatus();
+    ref.read(databaseSyncServiceProvider).refreshAllLists();
 
     final isSyncing = syncStatus.state == SyncState.inProgress;
 
@@ -65,10 +65,10 @@ class HomePage extends ConsumerWidget {
           // Nous plaçons le ModalBarrier en-dessous du widget de synchronisation
           if (showOverlay)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 
-                   kToolbarHeight +        // AppBar height
-                   kTextTabBarHeight +     // TabBar height
-                   96,                     // Hauteur approximative du SyncStatusWidget
+              top: MediaQuery.of(context).padding.top +
+                  kToolbarHeight + // AppBar height
+                  kTextTabBarHeight + // TabBar height
+                  96, // Hauteur approximative du SyncStatusWidget
               left: 0,
               right: 0,
               bottom: 0,
