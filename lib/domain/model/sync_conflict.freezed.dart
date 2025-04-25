@@ -26,6 +26,15 @@ mixin _$SyncConflict {
       throw _privateConstructorUsedError;
   Map<String, dynamic>? get resolvedData => throw _privateConstructorUsedError;
   String? get resolutionComment => throw _privateConstructorUsedError;
+  ConflictType get conflictType =>
+      throw _privateConstructorUsedError; // Pour les références supprimées, on stocke des informations sur l'entité référencée
+  String? get referencedEntityType =>
+      throw _privateConstructorUsedError; // Type de l'entité supprimée (nomenclature, taxon, etc.)
+  String? get referencedEntityId =>
+      throw _privateConstructorUsedError; // ID de l'entité supprimée
+  String? get affectedField =>
+      throw _privateConstructorUsedError; // Champ affecté par la suppression
+  String? get navigationPath => throw _privateConstructorUsedError;
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.
@@ -49,7 +58,12 @@ abstract class $SyncConflictCopyWith<$Res> {
       DateTime remoteModifiedAt,
       ConflictResolutionStrategy resolutionStrategy,
       Map<String, dynamic>? resolvedData,
-      String? resolutionComment});
+      String? resolutionComment,
+      ConflictType conflictType,
+      String? referencedEntityType,
+      String? referencedEntityId,
+      String? affectedField,
+      String? navigationPath});
 }
 
 /// @nodoc
@@ -76,6 +90,11 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
     Object? resolutionStrategy = null,
     Object? resolvedData = freezed,
     Object? resolutionComment = freezed,
+    Object? conflictType = null,
+    Object? referencedEntityType = freezed,
+    Object? referencedEntityId = freezed,
+    Object? affectedField = freezed,
+    Object? navigationPath = freezed,
   }) {
     return _then(_value.copyWith(
       entityId: null == entityId
@@ -114,6 +133,26 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
           ? _value.resolutionComment
           : resolutionComment // ignore: cast_nullable_to_non_nullable
               as String?,
+      conflictType: null == conflictType
+          ? _value.conflictType
+          : conflictType // ignore: cast_nullable_to_non_nullable
+              as ConflictType,
+      referencedEntityType: freezed == referencedEntityType
+          ? _value.referencedEntityType
+          : referencedEntityType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referencedEntityId: freezed == referencedEntityId
+          ? _value.referencedEntityId
+          : referencedEntityId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      affectedField: freezed == affectedField
+          ? _value.affectedField
+          : affectedField // ignore: cast_nullable_to_non_nullable
+              as String?,
+      navigationPath: freezed == navigationPath
+          ? _value.navigationPath
+          : navigationPath // ignore: cast_nullable_to_non_nullable
+              as String?,
     ) as $Val);
   }
 }
@@ -135,7 +174,12 @@ abstract class _$$SyncConflictImplCopyWith<$Res>
       DateTime remoteModifiedAt,
       ConflictResolutionStrategy resolutionStrategy,
       Map<String, dynamic>? resolvedData,
-      String? resolutionComment});
+      String? resolutionComment,
+      ConflictType conflictType,
+      String? referencedEntityType,
+      String? referencedEntityId,
+      String? affectedField,
+      String? navigationPath});
 }
 
 /// @nodoc
@@ -160,6 +204,11 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
     Object? resolutionStrategy = null,
     Object? resolvedData = freezed,
     Object? resolutionComment = freezed,
+    Object? conflictType = null,
+    Object? referencedEntityType = freezed,
+    Object? referencedEntityId = freezed,
+    Object? affectedField = freezed,
+    Object? navigationPath = freezed,
   }) {
     return _then(_$SyncConflictImpl(
       entityId: null == entityId
@@ -198,13 +247,33 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
           ? _value.resolutionComment
           : resolutionComment // ignore: cast_nullable_to_non_nullable
               as String?,
+      conflictType: null == conflictType
+          ? _value.conflictType
+          : conflictType // ignore: cast_nullable_to_non_nullable
+              as ConflictType,
+      referencedEntityType: freezed == referencedEntityType
+          ? _value.referencedEntityType
+          : referencedEntityType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referencedEntityId: freezed == referencedEntityId
+          ? _value.referencedEntityId
+          : referencedEntityId // ignore: cast_nullable_to_non_nullable
+              as String?,
+      affectedField: freezed == affectedField
+          ? _value.affectedField
+          : affectedField // ignore: cast_nullable_to_non_nullable
+              as String?,
+      navigationPath: freezed == navigationPath
+          ? _value.navigationPath
+          : navigationPath // ignore: cast_nullable_to_non_nullable
+              as String?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$SyncConflictImpl implements _SyncConflict {
+class _$SyncConflictImpl extends _SyncConflict {
   const _$SyncConflictImpl(
       {required this.entityId,
       required this.entityType,
@@ -214,10 +283,16 @@ class _$SyncConflictImpl implements _SyncConflict {
       required this.remoteModifiedAt,
       required this.resolutionStrategy,
       final Map<String, dynamic>? resolvedData,
-      this.resolutionComment})
+      this.resolutionComment,
+      this.conflictType = ConflictType.dataConflict,
+      this.referencedEntityType,
+      this.referencedEntityId,
+      this.affectedField,
+      this.navigationPath})
       : _localData = localData,
         _remoteData = remoteData,
-        _resolvedData = resolvedData;
+        _resolvedData = resolvedData,
+        super._();
 
   @override
   final String entityId;
@@ -257,10 +332,25 @@ class _$SyncConflictImpl implements _SyncConflict {
 
   @override
   final String? resolutionComment;
+  @override
+  @JsonKey()
+  final ConflictType conflictType;
+// Pour les références supprimées, on stocke des informations sur l'entité référencée
+  @override
+  final String? referencedEntityType;
+// Type de l'entité supprimée (nomenclature, taxon, etc.)
+  @override
+  final String? referencedEntityId;
+// ID de l'entité supprimée
+  @override
+  final String? affectedField;
+// Champ affecté par la suppression
+  @override
+  final String? navigationPath;
 
   @override
   String toString() {
-    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment)';
+    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment, conflictType: $conflictType, referencedEntityType: $referencedEntityType, referencedEntityId: $referencedEntityId, affectedField: $affectedField, navigationPath: $navigationPath)';
   }
 
   @override
@@ -285,7 +375,17 @@ class _$SyncConflictImpl implements _SyncConflict {
             const DeepCollectionEquality()
                 .equals(other._resolvedData, _resolvedData) &&
             (identical(other.resolutionComment, resolutionComment) ||
-                other.resolutionComment == resolutionComment));
+                other.resolutionComment == resolutionComment) &&
+            (identical(other.conflictType, conflictType) ||
+                other.conflictType == conflictType) &&
+            (identical(other.referencedEntityType, referencedEntityType) ||
+                other.referencedEntityType == referencedEntityType) &&
+            (identical(other.referencedEntityId, referencedEntityId) ||
+                other.referencedEntityId == referencedEntityId) &&
+            (identical(other.affectedField, affectedField) ||
+                other.affectedField == affectedField) &&
+            (identical(other.navigationPath, navigationPath) ||
+                other.navigationPath == navigationPath));
   }
 
   @override
@@ -299,7 +399,12 @@ class _$SyncConflictImpl implements _SyncConflict {
       remoteModifiedAt,
       resolutionStrategy,
       const DeepCollectionEquality().hash(_resolvedData),
-      resolutionComment);
+      resolutionComment,
+      conflictType,
+      referencedEntityType,
+      referencedEntityId,
+      affectedField,
+      navigationPath);
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.
@@ -310,7 +415,7 @@ class _$SyncConflictImpl implements _SyncConflict {
       __$$SyncConflictImplCopyWithImpl<_$SyncConflictImpl>(this, _$identity);
 }
 
-abstract class _SyncConflict implements SyncConflict {
+abstract class _SyncConflict extends SyncConflict {
   const factory _SyncConflict(
       {required final String entityId,
       required final String entityType,
@@ -320,7 +425,13 @@ abstract class _SyncConflict implements SyncConflict {
       required final DateTime remoteModifiedAt,
       required final ConflictResolutionStrategy resolutionStrategy,
       final Map<String, dynamic>? resolvedData,
-      final String? resolutionComment}) = _$SyncConflictImpl;
+      final String? resolutionComment,
+      final ConflictType conflictType,
+      final String? referencedEntityType,
+      final String? referencedEntityId,
+      final String? affectedField,
+      final String? navigationPath}) = _$SyncConflictImpl;
+  const _SyncConflict._() : super._();
 
   @override
   String get entityId;
@@ -340,6 +451,18 @@ abstract class _SyncConflict implements SyncConflict {
   Map<String, dynamic>? get resolvedData;
   @override
   String? get resolutionComment;
+  @override
+  ConflictType
+      get conflictType; // Pour les références supprimées, on stocke des informations sur l'entité référencée
+  @override
+  String?
+      get referencedEntityType; // Type de l'entité supprimée (nomenclature, taxon, etc.)
+  @override
+  String? get referencedEntityId; // ID de l'entité supprimée
+  @override
+  String? get affectedField; // Champ affecté par la suppression
+  @override
+  String? get navigationPath;
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.

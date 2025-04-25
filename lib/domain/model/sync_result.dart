@@ -13,6 +13,7 @@ class SyncResult with _$SyncResult {
     required int itemsSkipped,
     required int itemsFailed,
     required DateTime syncTime,
+    @Default(0) int itemsDeleted,
     String? errorMessage,
     List<SyncConflict>? conflicts,
   }) = _SyncResult;
@@ -23,6 +24,7 @@ class SyncResult with _$SyncResult {
     required int itemsUpdated,
     required int itemsSkipped,
     int itemsFailed = 0,
+    int itemsDeleted = 0,
   }) => SyncResult(
     success: true,
     itemsProcessed: itemsProcessed,
@@ -30,6 +32,7 @@ class SyncResult with _$SyncResult {
     itemsUpdated: itemsUpdated,
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
+    itemsDeleted: itemsDeleted,
     syncTime: DateTime.now(),
   );
 
@@ -40,6 +43,7 @@ class SyncResult with _$SyncResult {
     int itemsUpdated = 0,
     int itemsSkipped = 0,
     int itemsFailed = 0,
+    int itemsDeleted = 0,
   }) => SyncResult(
     success: false,
     itemsProcessed: itemsProcessed,
@@ -47,6 +51,7 @@ class SyncResult with _$SyncResult {
     itemsUpdated: itemsUpdated,
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
+    itemsDeleted: itemsDeleted,
     syncTime: DateTime.now(),
     errorMessage: errorMessage,
   );
@@ -57,7 +62,9 @@ class SyncResult with _$SyncResult {
     required int itemsUpdated,
     required int itemsSkipped,
     required int itemsFailed,
+    int itemsDeleted = 0,
     required List<SyncConflict> conflicts,
+    String? errorMessage,
   }) => SyncResult(
     success: true,
     itemsProcessed: itemsProcessed,
@@ -65,7 +72,9 @@ class SyncResult with _$SyncResult {
     itemsUpdated: itemsUpdated,
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
+    itemsDeleted: itemsDeleted,
     syncTime: DateTime.now(),
     conflicts: conflicts,
+    errorMessage: errorMessage,
   );
 }

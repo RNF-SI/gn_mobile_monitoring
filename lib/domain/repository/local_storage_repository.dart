@@ -12,4 +12,9 @@ abstract class LocalStorageRepository {
   Future<bool> getIsLoggedIn();
   Future<void> setToken(String token);
   Future<String?> getToken();
+  
+  // API URL management
+  Future<void> setApiUrl(String apiUrl);
+  Future<String?> getApiUrl();
+  Future<void> clearApiUrl();
 }

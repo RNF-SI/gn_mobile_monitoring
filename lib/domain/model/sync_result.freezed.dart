@@ -23,6 +23,7 @@ mixin _$SyncResult {
   int get itemsSkipped => throw _privateConstructorUsedError;
   int get itemsFailed => throw _privateConstructorUsedError;
   DateTime get syncTime => throw _privateConstructorUsedError;
+  int get itemsDeleted => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
   List<SyncConflict>? get conflicts => throw _privateConstructorUsedError;
 
@@ -47,6 +48,7 @@ abstract class $SyncResultCopyWith<$Res> {
       int itemsSkipped,
       int itemsFailed,
       DateTime syncTime,
+      int itemsDeleted,
       String? errorMessage,
       List<SyncConflict>? conflicts});
 }
@@ -73,6 +75,7 @@ class _$SyncResultCopyWithImpl<$Res, $Val extends SyncResult>
     Object? itemsSkipped = null,
     Object? itemsFailed = null,
     Object? syncTime = null,
+    Object? itemsDeleted = null,
     Object? errorMessage = freezed,
     Object? conflicts = freezed,
   }) {
@@ -105,6 +108,10 @@ class _$SyncResultCopyWithImpl<$Res, $Val extends SyncResult>
           ? _value.syncTime
           : syncTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      itemsDeleted: null == itemsDeleted
+          ? _value.itemsDeleted
+          : itemsDeleted // ignore: cast_nullable_to_non_nullable
+              as int,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
           : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -133,6 +140,7 @@ abstract class _$$SyncResultImplCopyWith<$Res>
       int itemsSkipped,
       int itemsFailed,
       DateTime syncTime,
+      int itemsDeleted,
       String? errorMessage,
       List<SyncConflict>? conflicts});
 }
@@ -157,6 +165,7 @@ class __$$SyncResultImplCopyWithImpl<$Res>
     Object? itemsSkipped = null,
     Object? itemsFailed = null,
     Object? syncTime = null,
+    Object? itemsDeleted = null,
     Object? errorMessage = freezed,
     Object? conflicts = freezed,
   }) {
@@ -189,6 +198,10 @@ class __$$SyncResultImplCopyWithImpl<$Res>
           ? _value.syncTime
           : syncTime // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      itemsDeleted: null == itemsDeleted
+          ? _value.itemsDeleted
+          : itemsDeleted // ignore: cast_nullable_to_non_nullable
+              as int,
       errorMessage: freezed == errorMessage
           ? _value.errorMessage
           : errorMessage // ignore: cast_nullable_to_non_nullable
@@ -212,6 +225,7 @@ class _$SyncResultImpl implements _SyncResult {
       required this.itemsSkipped,
       required this.itemsFailed,
       required this.syncTime,
+      this.itemsDeleted = 0,
       this.errorMessage,
       final List<SyncConflict>? conflicts})
       : _conflicts = conflicts;
@@ -231,6 +245,9 @@ class _$SyncResultImpl implements _SyncResult {
   @override
   final DateTime syncTime;
   @override
+  @JsonKey()
+  final int itemsDeleted;
+  @override
   final String? errorMessage;
   final List<SyncConflict>? _conflicts;
   @override
@@ -244,7 +261,7 @@ class _$SyncResultImpl implements _SyncResult {
 
   @override
   String toString() {
-    return 'SyncResult(success: $success, itemsProcessed: $itemsProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsFailed: $itemsFailed, syncTime: $syncTime, errorMessage: $errorMessage, conflicts: $conflicts)';
+    return 'SyncResult(success: $success, itemsProcessed: $itemsProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsFailed: $itemsFailed, syncTime: $syncTime, itemsDeleted: $itemsDeleted, errorMessage: $errorMessage, conflicts: $conflicts)';
   }
 
   @override
@@ -265,6 +282,8 @@ class _$SyncResultImpl implements _SyncResult {
                 other.itemsFailed == itemsFailed) &&
             (identical(other.syncTime, syncTime) ||
                 other.syncTime == syncTime) &&
+            (identical(other.itemsDeleted, itemsDeleted) ||
+                other.itemsDeleted == itemsDeleted) &&
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             const DeepCollectionEquality()
@@ -281,6 +300,7 @@ class _$SyncResultImpl implements _SyncResult {
       itemsSkipped,
       itemsFailed,
       syncTime,
+      itemsDeleted,
       errorMessage,
       const DeepCollectionEquality().hash(_conflicts));
 
@@ -302,6 +322,7 @@ abstract class _SyncResult implements SyncResult {
       required final int itemsSkipped,
       required final int itemsFailed,
       required final DateTime syncTime,
+      final int itemsDeleted,
       final String? errorMessage,
       final List<SyncConflict>? conflicts}) = _$SyncResultImpl;
 
@@ -319,6 +340,8 @@ abstract class _SyncResult implements SyncResult {
   int get itemsFailed;
   @override
   DateTime get syncTime;
+  @override
+  int get itemsDeleted;
   @override
   String? get errorMessage;
   @override
