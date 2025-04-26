@@ -137,7 +137,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 setState(() {
                   _detailsExpanded = !_detailsExpanded;
                 });
-                
+
                 // Si on a également une erreur, l'afficher
                 if (syncStatus.state == SyncState.failure &&
                     syncStatus.errorMessage != null) {
@@ -205,44 +205,52 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                 ),
                               ],
                             ),
-                          
+
                           // Afficher les conflits s'il y en a - avec un bouton dédié
                           if (syncStatus.state == SyncState.conflictDetected &&
                               syncStatus.conflicts != null)
-                            syncStatus.conflicts!.isNotEmpty 
-                              ? ElevatedButton.icon(
-                                  onPressed: () => _showConflictsDialog(
-                                      context, syncStatus.conflicts ?? []),
-                                  icon: Icon(
-                                    Icons.warning_amber_outlined,
-                                    size: 14,
-                                    color: Theme.of(context).colorScheme.onErrorContainer,
-                                  ),
-                                  label: Text(
-                                    'Résoudre ${syncStatus.conflicts!.length} référence(s) manquante(s)',
+                            syncStatus.conflicts!.isNotEmpty
+                                ? ElevatedButton.icon(
+                                    onPressed: () => _showConflictsDialog(
+                                        context, syncStatus.conflicts ?? []),
+                                    icon: Icon(
+                                      Icons.warning_amber_outlined,
+                                      size: 14,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onErrorContainer,
+                                    ),
+                                    label: Text(
+                                      'Résoudre ${syncStatus.conflicts!.length} référence(s) manquante(s)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onErrorContainer,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context)
+                                          .colorScheme
+                                          .errorContainer,
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 6),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                    ),
+                                  )
+                                : Text(
+                                    'Aucune référence manquante détectée',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w500,
+                                      fontStyle: FontStyle.italic,
                                       fontSize: 13,
-                                      color: Theme.of(context).colorScheme.onErrorContainer,
+                                      color:
+                                          Theme.of(context).colorScheme.primary,
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).colorScheme.errorContainer,
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                  ),
-                                )
-                              : Text(
-                                  'Aucune référence manquante détectée',
-                                  style: TextStyle(
-                                    fontStyle: FontStyle.italic,
-                                    fontSize: 13,
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
-                                ),
-                          
+
                           // Instruction discrète pour indiquer que c'est cliquable
                           Text(
                             'Cliquez pour ${_detailsExpanded ? 'masquer' : 'afficher'} les détails',
@@ -374,7 +382,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 ),
               ),
             ),
-            
+
           // Affichage des détails de synchronisation (quand _detailsExpanded = true)
           if (_detailsExpanded && syncStatus.additionalInfo != null)
             Padding(
@@ -411,9 +419,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                 .bodySmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .onSurface,
+                                  color:
+                                      Theme.of(context).colorScheme.onSurface,
                                 ),
                           ),
                           const SizedBox(height: 8),
@@ -432,8 +439,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   // Construit l'icône animée ou statique selon l'état
-  Widget _buildIcon(
-      IconData iconData, Color iconColor, SyncStatus syncStatus) {
+  Widget _buildIcon(IconData iconData, Color iconColor, SyncStatus syncStatus) {
     // Animer l'icône si synchro en cours
     if (syncStatus.state == SyncState.inProgress) {
       return RotationTransition(
@@ -555,7 +561,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     ConflictNavigationService.navigateDirectlyToConflictItem(
         context, conflict, ref);
   }
-  
+
   /// Retourne le nom du type d'entité, au pluriel par défaut (pour les statistiques et conflits)
   String _getEntityTypeName(String entityType, {bool plural = true}) {
     switch (entityType.toLowerCase()) {
@@ -575,7 +581,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         return entityType;
     }
   }
-  
+
   /// Convertit une catégorie de données en type d'entité pour les conflits
   String _getCategoryType(String category) {
     category = category.toLowerCase();
@@ -602,7 +608,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
     return category;
   }
-  
+
   /// Construit un widget pour afficher le résumé de synchronisation de manière structurée
   Widget _buildSyncSummary(BuildContext context, String syncSummary) {
     // Analyser le texte de résumé pour extraire les différentes parties
@@ -872,14 +878,12 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                           ),
                           const SizedBox(width: 8.0),
 
-                          // Supprimés (s'il y en a)
-                          if ((stats['deleted'] as int) > 0)
-                            _buildStatIndicator(
-                              context,
-                              'Supprimés',
-                              stats['deleted'] as int,
-                              Theme.of(context).colorScheme.error,
-                            ),
+                          _buildStatIndicator(
+                            context,
+                            'Supprimés',
+                            stats['deleted'] as int,
+                            Theme.of(context).colorScheme.error,
+                          ),
                         ],
                       ),
 
@@ -964,7 +968,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       style: Theme.of(context).textTheme.bodyMedium,
     );
   }
-  
+
   /// Construit un indicateur visuel pour une statistique de synchronisation
   Widget _buildStatIndicator(
       BuildContext context, String label, int value, Color color) {
