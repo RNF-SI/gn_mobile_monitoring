@@ -1118,7 +1118,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     final syncTotal = result.itemsAdded + result.itemsUpdated;
-    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés)";
+    final deletedPart = result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
+    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
   }
 
   /// Génère un résumé des statistiques de synchronisation pour les étapes complétées
@@ -1209,8 +1210,20 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     // Ajouter un résumé total en tête
     if (totalAdded > 0 || totalUpdated > 0) {
+      // Variables pour collecter les statistiques totales
+      int totalDeleted = 0;
+      
+      // Parcourir les résultats pour collecter le total des suppressions
+      for (var step in completedSteps) {
+        final stepKey = _stepToKey(step);
+        if (_syncResults.containsKey(stepKey)) {
+          totalDeleted += _syncResults[stepKey]!.itemsDeleted;
+        }
+      }
+      
+      final deletedPart = totalDeleted > 0 ? ", $totalDeleted supprimés" : "";
       summaryLines.insert(1,
-          "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés)");
+          "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés$deletedPart)");
     }
 
     return summaryLines.join("\n");
@@ -1223,7 +1236,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     final syncTotal = result.itemsAdded + result.itemsUpdated;
-    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés)";
+    final deletedPart = result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
+    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
   }
 
   /// Génère un résumé complet des statistiques de synchronisation
