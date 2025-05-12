@@ -10,6 +10,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 
 /// Provider pour le service de synchronisation
 final syncServiceProvider =
@@ -57,9 +58,6 @@ class SyncService extends StateNotifier<SyncStatus> {
   ) : super(SyncStatus.initial()) {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
-
-    // Démarrer le timer pour la synchronisation automatique
-    _scheduleAutoSync();
   }
 
   /// Démarre une synchronisation complète des données
@@ -71,7 +69,8 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Démarre une synchronisation complète des données
-  Future<SyncStatus> syncAll({
+  Future<SyncStatus> syncAll(
+    WidgetRef ref, {
     bool syncConfiguration = true,
     bool syncNomenclatures = true,
     bool syncTaxons = true,
@@ -88,7 +87,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     _isSyncing = true;
     debugPrint('Démarrage de syncAll avec plusieurs éléments');
-    
+
     // Réinitialiser les résultats au début d'une nouvelle synchronisation complète
     _syncResults.clear();
 
@@ -181,6 +180,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       }
 
       // Synchroniser les nomenclatures
+      bool nomenclatureStepDone = false;
       if (syncNomenclatures && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
@@ -206,7 +206,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
             // Stocker les conflits pour une utilisation ultérieure
             allConflicts.addAll(nomResult.conflicts!);
-            
+
             // Ajouter un message d'erreur pour les nomenclatures
             if (nomResult.errorMessage != null) {
               errorMessages.add(nomResult.errorMessage!);
@@ -262,6 +262,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             }
           }
           totalItemsProcessed += 1;
+          nomenclatureStepDone = true;
         } catch (e) {
           failedSteps.add(SyncStep.nomenclatures);
           totalItemsProcessed += 1;
@@ -269,6 +270,11 @@ class SyncService extends StateNotifier<SyncStatus> {
           errorMessages
               .add('Erreur lors de la synchronisation des nomenclatures: $e');
         }
+      }
+
+      // Invalider le cache des nomenclatures si la synchro a été faite
+      if (nomenclatureStepDone) {
+        ref.read(nomenclatureServiceProvider.notifier).clearCache();
       }
 
       // Synchroniser les taxons
@@ -501,28 +507,32 @@ class SyncService extends StateNotifier<SyncStatus> {
       final syncSummary = getSyncSummary();
 
       // Construire l'état final avec le résumé des statistiques
-      debugPrint('Synchronisation terminée. Conflits: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
-      
+      debugPrint(
+          'Synchronisation terminée. Conflits: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
+
       if (allConflicts.isNotEmpty) {
-        debugPrint('Affichage des conflits détectés: ${allConflicts.length} conflits');
+        debugPrint(
+            'Affichage des conflits détectés: ${allConflicts.length} conflits');
         for (var i = 0; i < allConflicts.length; i++) {
           final conflict = allConflicts[i];
-          debugPrint('Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+          debugPrint(
+              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
         }
-        
+
         // Des conflits ont été détectés
         final newState = SyncStatus.conflictDetected(
           conflicts: allConflicts,
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
-          additionalInfo: syncSummary.isNotEmpty ? 
-            "$syncSummary\n\nDes conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités." : 
-            "Des conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités.",
+          additionalInfo: syncSummary.isNotEmpty
+              ? "$syncSummary\n\nDes conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités."
+              : "Des conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités.",
         );
-        
+
         state = newState;
-        debugPrint('Nouvel état après synchronisation: ${state.state}, avec ${state.conflicts?.length ?? 0} conflits');
+        debugPrint(
+            'Nouvel état après synchronisation: ${state.state}, avec ${state.conflicts?.length ?? 0} conflits');
       } else if (failedSteps.isNotEmpty || errorMessages.isNotEmpty) {
         // Certaines étapes ont échoué ou ont des messages d'erreur
         String errorMsg;
@@ -611,7 +621,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   /// Exécute une seule étape de synchronisation
   Future<SyncResult> _executeSingleSync(String token, String stepKey) async {
     debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
-    
+
     final Map<String, dynamic> params = {
       'syncConfiguration': false,
       'syncNomenclatures': false,
@@ -668,18 +678,19 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (result.conflicts != null && result.conflicts!.isNotEmpty) {
         debugPrint(
             'Conflits détectés lors de l\'étape $stepKey: ${result.conflicts!.length} conflits');
-        
+
         // Pour le débogage - afficher plus de détails sur les conflits
         for (var i = 0; i < result.conflicts!.length; i++) {
           final conflict = result.conflicts![i];
-          debugPrint('Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+          debugPrint(
+              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
         }
-        
+
         // Mise à jour immédiate de l'état avec les conflits
         // Pour tous les types de synchronisation, pas seulement les nomenclatures
         String entityName;
         SyncStep currentStep;
-        
+
         switch (stepKey) {
           case 'nomenclatures_datasets':
           case 'nomenclatures':
@@ -710,7 +721,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             entityName = "Configuration";
             currentStep = SyncStep.configuration;
         }
-        
+
         // Création du nouvel état
         final newState = SyncStatus.conflictDetected(
           conflicts: result.conflicts!,
@@ -721,28 +732,30 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsUpdated: result.itemsUpdated,
           itemsSkipped: result.itemsSkipped,
           itemsDeleted: result.itemsDeleted,
-          additionalInfo: result.errorMessage ?? 
+          additionalInfo: result.errorMessage ??
               "Des références supprimées sont référencées par d'autres entités.",
           currentEntityName: entityName,
           currentStep: currentStep,
         );
-        
+
         // Log de l'état avant et après la mise à jour
         debugPrint('État avant mise à jour: ${state.state.toString()}');
         state = newState;
         debugPrint('État après mise à jour: ${state.state.toString()}');
-        debugPrint('Nombre de conflits dans le nouvel état: ${state.conflicts?.length ?? 0}');
+        debugPrint(
+            'Nombre de conflits dans le nouvel état: ${state.conflicts?.length ?? 0}');
       }
 
       // Si ce sont des nomenclatures et qu'il y a des conflits, assurons-nous que l'état est correctement mis à jour
-      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets') && 
-          result.conflicts != null && 
+      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets') &&
+          result.conflicts != null &&
           result.conflicts!.isNotEmpty) {
         // Forcer une mise à jour de l'état après un court délai pour s'assurer que les changements sont appliqués
         Future.delayed(const Duration(milliseconds: 100), () {
           if (state.state != SyncState.conflictDetected) {
-            debugPrint('Forçage de la mise à jour de l\'état pour afficher les conflits de nomenclature');
-            
+            debugPrint(
+                'Forçage de la mise à jour de l\'état pour afficher les conflits de nomenclature');
+
             // Créer explicitement un nouvel état avec les conflits
             final newState = SyncStatus.conflictDetected(
               conflicts: result.conflicts!,
@@ -753,17 +766,17 @@ class SyncService extends StateNotifier<SyncStatus> {
               itemsUpdated: result.itemsUpdated,
               itemsSkipped: result.itemsSkipped,
               itemsDeleted: result.itemsDeleted,
-              additionalInfo: result.errorMessage ?? 
+              additionalInfo: result.errorMessage ??
                   "Des références de nomenclatures supprimées sont toujours utilisées par des entités.",
               currentEntityName: "Nomenclatures",
               currentStep: SyncStep.nomenclatures,
             );
-            
+
             state = newState;
           }
         });
       }
-      
+
       // Stocker le résultat pour une utilisation ultérieure
       _syncResults[stepKey] = result;
       return result;
@@ -775,7 +788,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       return failureResult;
     }
   }
-  
+
   /// Convertit une clé de synchronisation en étape de synchronisation
   SyncStep _getStepFromKey(String stepKey) {
     switch (stepKey) {
@@ -835,9 +848,10 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Démarre la synchronisation automatique
-  void startAutoSync({Duration period = const Duration(minutes: 30)}) {
+  void startAutoSync(WidgetRef ref,
+      {Duration period = const Duration(minutes: 30)}) {
     _autoSyncTimer?.cancel();
-    _autoSyncTimer = Timer.periodic(period, (_) => syncAll());
+    _autoSyncTimer = Timer.periodic(period, (_) => syncAll(ref));
   }
 
   /// Arrête la synchronisation automatique
@@ -946,7 +960,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Planifie la prochaine synchronisation automatique
-  void _scheduleAutoSync() {
+  void _scheduleAutoSync(WidgetRef ref) {
     // Vérifier si une synchronisation complète est nécessaire
     final now = DateTime.now();
     final isFullSyncNeeded = _lastFullSync == null ||
@@ -954,10 +968,10 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     if (isFullSyncNeeded) {
       // Planifier une synchronisation complète
-      Timer(const Duration(minutes: 5), () => _performFullSync());
+      Timer(const Duration(minutes: 5), () => _performFullSync(ref));
     } else {
       // Planifier une vérification régulière
-      startAutoSync(period: const Duration(hours: 2));
+      startAutoSync(ref, period: const Duration(hours: 2));
     }
   }
 
@@ -981,11 +995,12 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Effectue une synchronisation complète automatique
-  Future<void> _performFullSync() async {
+  Future<void> _performFullSync(WidgetRef ref) async {
     if (_isSyncing) return;
 
     try {
       await syncAll(
+        ref,
         syncConfiguration: true,
         syncNomenclatures: true,
         syncTaxons: true,
@@ -1118,7 +1133,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     final syncTotal = result.itemsAdded + result.itemsUpdated;
-    final deletedPart = result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
+    final deletedPart =
+        result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
     return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
   }
 
@@ -1212,7 +1228,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (totalAdded > 0 || totalUpdated > 0) {
       // Variables pour collecter les statistiques totales
       int totalDeleted = 0;
-      
+
       // Parcourir les résultats pour collecter le total des suppressions
       for (var step in completedSteps) {
         final stepKey = _stepToKey(step);
@@ -1220,7 +1236,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           totalDeleted += _syncResults[stepKey]!.itemsDeleted;
         }
       }
-      
+
       final deletedPart = totalDeleted > 0 ? ", $totalDeleted supprimés" : "";
       summaryLines.insert(1,
           "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés$deletedPart)");
@@ -1236,7 +1252,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     final syncTotal = result.itemsAdded + result.itemsUpdated;
-    final deletedPart = result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
+    final deletedPart =
+        result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
     return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
   }
 

@@ -22,13 +22,7 @@ class MenuActions extends ConsumerWidget {
       icon: const Icon(Icons.menu), // Menu icon
       enabled: !isSyncing, // Désactiver le menu pendant la synchronisation
       onSelected: (value) => _handleMenuSelection(
-        value,
-        ref,
-        context,
-        authViewModel,
-        syncNotifier,
-        databaseService
-      ),
+          value, ref, context, authViewModel, syncNotifier, databaseService),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(Icons.sync, 'Synchroniser les données', 'sync'),
         _buildMenuItem(
@@ -77,7 +71,8 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, DatabaseService databaseService) async {
+  Future<void> _confirmDelete(
+      BuildContext context, DatabaseService databaseService) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -172,10 +167,10 @@ class MenuActions extends ConsumerWidget {
       );
       return;
     }
-    
+
     // Vérifie si une synchronisation complète est nécessaire
     final isFullSyncRequired = syncService.isFullSyncNeeded();
-    
+
     // Options de synchronisation avec états par défaut
     bool syncConfiguration = true; // Toujours activé
     bool syncNomenclatures = true;
@@ -184,7 +179,7 @@ class MenuActions extends ConsumerWidget {
     bool syncModules = true;
     bool syncSites = true;
     bool syncSiteGroups = true;
-    
+
     // Si une synchronisation complète est requise, on ne peut pas désactiver les options
     if (!isFullSyncRequired) {
       final result = await showDialog<Map<String, bool>>(
@@ -208,7 +203,10 @@ class MenuActions extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .primary
+                                .withOpacity(0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.all(8),
@@ -223,9 +221,14 @@ class MenuActions extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   currentStatus.nextFullSyncInfo!,
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.primary,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      ),
                                 ),
                               ),
                             ],
@@ -238,7 +241,10 @@ class MenuActions extends ConsumerWidget {
                         padding: const EdgeInsets.only(bottom: 16.0),
                         child: Container(
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceVariant
+                                .withOpacity(0.3),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           padding: const EdgeInsets.all(8),
@@ -253,9 +259,14 @@ class MenuActions extends ConsumerWidget {
                               Expanded(
                                 child: Text(
                                   'Dernière synchronisation complète: ${_formatDate(currentStatus.lastSync!)}',
-                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                                  ),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .bodySmall
+                                      ?.copyWith(
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurfaceVariant,
+                                      ),
                                 ),
                               ),
                             ],
@@ -267,7 +278,8 @@ class MenuActions extends ConsumerWidget {
                       'Configuration',
                       Icons.settings,
                       true, // Toujours activé et sélectionné
-                      (value) => setState(() => syncConfiguration = value ?? true),
+                      (value) =>
+                          setState(() => syncConfiguration = value ?? true),
                       isDisabled: true, // Toujours requis
                     ),
                     _buildSyncCheckboxTile(
@@ -275,7 +287,8 @@ class MenuActions extends ConsumerWidget {
                       'Nomenclatures',
                       Icons.list_alt,
                       syncNomenclatures,
-                      (value) => setState(() => syncNomenclatures = value ?? true),
+                      (value) =>
+                          setState(() => syncNomenclatures = value ?? true),
                     ),
                     _buildSyncCheckboxTile(
                       context,
@@ -393,7 +406,7 @@ class MenuActions extends ConsumerWidget {
           );
         },
       );
-      
+
       if (doFullSync != true) {
         return; // L'utilisateur a annulé
       }
@@ -401,21 +414,24 @@ class MenuActions extends ConsumerWidget {
     }
 
     // Démarrer la synchronisation avec les options sélectionnées
-    await syncService.syncAll(
-      syncConfiguration: syncConfiguration,
-      syncNomenclatures: syncNomenclatures,
-      syncTaxons: syncTaxons,
-      syncObservers: syncObservers,
-      syncModules: syncModules,
-      syncSites: syncSites,
-      syncSiteGroups: syncSiteGroups,
-    );
+    await ref.read(syncServiceProvider.notifier).syncAll(
+          ref,
+          syncConfiguration: syncConfiguration,
+          syncNomenclatures: syncNomenclatures,
+          syncTaxons: syncTaxons,
+          syncObservers: syncObservers,
+          syncModules: syncModules,
+          syncSites: syncSites,
+          syncSiteGroups: syncSiteGroups,
+        );
   }
-  
+
   /// Formatte une date pour l'affichage
   String _formatDate(DateTime date) {
     final now = DateTime.now();
-    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+    if (date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day) {
       // Aujourd'hui
       return 'Aujourd\'hui à ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     } else {
@@ -436,7 +452,7 @@ class MenuActions extends ConsumerWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 2),
       decoration: BoxDecoration(
-        color: value 
+        color: value
             ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
             : Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(8),
@@ -450,7 +466,7 @@ class MenuActions extends ConsumerWidget {
             Icon(
               icon,
               size: 18,
-              color: value 
+              color: value
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
             ),
@@ -460,7 +476,7 @@ class MenuActions extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: value ? FontWeight.bold : FontWeight.normal,
-                color: value 
+                color: value
                     ? Theme.of(context).colorScheme.onSurface
                     : Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
               ),
