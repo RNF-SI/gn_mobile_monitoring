@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
+import 'package:gn_mobile_monitoring/core/helpers/json_parser_helper.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/base_visit_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/cor_visit_observer_mapper.dart';
@@ -75,21 +76,11 @@ class VisitRepositoryImpl implements VisitRepository {
       if (complementDb != null &&
           complementDb.data != null &&
           complementDb.data!.isNotEmpty) {
-        try {
-          // Tenter d'abord le parsing JSON standard
-          dataMap = jsonDecode(complementDb.data!) as Map<String, dynamic>;
-        } catch (e) {
-          debugPrint('Erreur lors du parsing JSON standard: $e');
-          // Si le parsing JSON échoue, essayer le parsing personnalisé
-          try {
-            final content = complementDb.data!.trim();
-            if (content.startsWith('{') && content.endsWith('}')) {
-              dataMap =
-                  _parseKeyValuePairs(content.substring(1, content.length - 1));
-            }
-          } catch (e2) {
-            debugPrint('Erreur lors du parsing personnalisé: $e2');
-          }
+        // Utiliser le parseur JSON robuste qui gère les cas spéciaux
+        dataMap = JsonParserHelper.parseRobust(complementDb.data);
+        
+        if (dataMap == null) {
+          debugPrint('Échec de tous les parsings pour: ${complementDb.data}');
         }
       }
 
@@ -161,24 +152,13 @@ class VisitRepositoryImpl implements VisitRepository {
     if (complementDb != null &&
         complementDb.data != null &&
         complementDb.data!.isNotEmpty) {
-      try {
-        // Essayer d'abord le parsing JSON standard
-        dataMap = jsonDecode(complementDb.data!) as Map<String, dynamic>;
-      } catch (e) {
-        debugPrint('Erreur lors du décodage JSON standard: $e');
-        // Si le parsing JSON standard échoue, essayer l'approche de parsing personnalisée
-        try {
-          if (complementDb.data!.trim().startsWith('{') && 
-              complementDb.data!.trim().endsWith('}')) {
-            // Extraction du contenu entre accolades
-            final content = complementDb.data!.trim().substring(1, complementDb.data!.trim().length - 1);
-            // Utiliser notre méthode de parsing personnalisée
-            dataMap = _parseKeyValuePairs(content);
-          }
-        } catch (e2) {
-          debugPrint('Échec du parsing personnalisé: $e2');
-          // Laisser dataMap à null
-        }
+      // Utiliser le parseur JSON robuste qui gère les cas spéciaux
+      dataMap = JsonParserHelper.parseRobust(complementDb.data);
+      
+      if (dataMap == null) {
+        debugPrint('Échec de tous les parsings pour: ${complementDb.data}');
+      } else {
+        debugPrint('Parsing réussi pour les données de visite');
       }
     }
 
