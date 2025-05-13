@@ -101,6 +101,11 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     return result;
   }
   
+  /// Récupère les observations qui référencent un taxon spécifique par cd_nom
+  Future<List<TObservation>> getObservationsByCdNom(int cdNom) async {
+    return (select(tObservations)..where((o) => o.cdNom.equals(cdNom))).get();
+  }
+  
   /// Vérifie récursivement si un objet JSON contient une référence à la nomenclature
   bool _checkNomenclatureReference(dynamic data, int nomenclatureId) {
     if (data is Map<String, dynamic>) {

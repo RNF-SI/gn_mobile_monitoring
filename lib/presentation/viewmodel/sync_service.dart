@@ -40,6 +40,9 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
   final Map<String, SyncResult> _syncResults = {};
+  
+  // Liste globale de tous les conflits pour les retrouver même après changement d'état
+  final List<SyncConflict> allConflicts = [];
 
   // Date de la dernière synchronisation complète
   DateTime? _lastFullSync;
@@ -292,8 +295,10 @@ class SyncService extends StateNotifier<SyncStatus> {
         );
 
         try {
+          debugPrint('SyncService - Démarrage de la synchronisation des taxons');
           final taxonsResult = await _executeSingleSync(token, 'taxons');
           if (taxonsResult.success) {
+            debugPrint('SyncService - Synchronisation des taxons réussie avec ${taxonsResult.itemsAdded} ajouts et ${taxonsResult.itemsUpdated} mises à jour');
             completedSteps.add(SyncStep.taxons);
 
             // Mise à jour avec le nouveau résumé incluant cette étape
@@ -310,6 +315,7 @@ class SyncService extends StateNotifier<SyncStatus> {
               additionalInfo: updatedSummary,
             );
           } else {
+            debugPrint('SyncService - Échec de la synchronisation des taxons: ${taxonsResult.errorMessage}');
             failedSteps.add(SyncStep.taxons);
           }
           totalItemsProcessed += 1;
@@ -507,6 +513,13 @@ class SyncService extends StateNotifier<SyncStatus> {
       final syncSummary = getSyncSummary();
 
       // Construire l'état final avec le résumé des statistiques
+      // IMPORTANT: Les conflits peuvent être perdus ou remplacés dans l'état, vérifions dans notre collection globale
+      if (_syncResults.containsKey('taxons') && _syncResults['taxons']!.conflicts != null && _syncResults['taxons']!.conflicts!.isNotEmpty) {
+        debugPrint('Récupération de ${_syncResults["taxons"]!.conflicts!.length} conflits du résultat de synchronisation des taxons');
+        // Assurons-nous que tous les conflits sont bien dans notre liste globale
+        allConflicts.addAll(_syncResults['taxons']!.conflicts!);
+      }
+
       debugPrint(
           'Synchronisation terminée. Conflits: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
 
@@ -516,9 +529,24 @@ class SyncService extends StateNotifier<SyncStatus> {
         for (var i = 0; i < allConflicts.length; i++) {
           final conflict = allConflicts[i];
           debugPrint(
-              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}, Path=${conflict.navigationPath ?? "null"}');
         }
 
+        // Déterminer le message adapté selon le type de conflit
+        String conflictMessage = "Des conflits ont été détectés";
+        final hasTaxonConflicts = allConflicts.any((c) => c.referencedEntityType == 'taxon');
+        final hasNomenclatureConflicts = allConflicts.any((c) => c.referencedEntityType == 'nomenclature');
+        
+        if (hasTaxonConflicts && hasNomenclatureConflicts) {
+          conflictMessage += ": Certains taxons et nomenclatures supprimés sont encore référencés par des entités.";
+        } else if (hasTaxonConflicts) {
+          conflictMessage += ": Certains taxons supprimés sont encore référencés par des observations.";
+        } else if (hasNomenclatureConflicts) {
+          conflictMessage += ": Certaines nomenclatures supprimées sont encore référencées par des entités.";
+        } else {
+          conflictMessage += ": Certaines entités supprimées sont encore référencées par d'autres entités.";
+        }
+        
         // Des conflits ont été détectés
         final newState = SyncStatus.conflictDetected(
           conflicts: allConflicts,
@@ -526,8 +554,8 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary.isNotEmpty
-              ? "$syncSummary\n\nDes conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités."
-              : "Des conflits ont été détectés: Certaines nomenclatures supprimées sont encore référencées par des entités.",
+              ? "$syncSummary\n\n$conflictMessage"
+              : conflictMessage,
         );
 
         state = newState;
@@ -683,7 +711,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         for (var i = 0; i < result.conflicts!.length; i++) {
           final conflict = result.conflicts![i];
           debugPrint(
-              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}');
+              'Conflit $i: Type=${conflict.conflictType}, EntityType=${conflict.entityType}, EntityId=${conflict.entityId}, Path=${conflict.navigationPath}');
         }
 
         // Mise à jour immédiate de l'état avec les conflits
@@ -744,17 +772,25 @@ class SyncService extends StateNotifier<SyncStatus> {
         debugPrint('État après mise à jour: ${state.state.toString()}');
         debugPrint(
             'Nombre de conflits dans le nouvel état: ${state.conflicts?.length ?? 0}');
+        
+        // IMPORTANT: Ajouter les conflits à la liste globale pour pouvoir les retrouver
+        // dans le résultat final même si l'état est ensuite modifié
+        if (result.conflicts != null && result.conflicts!.isNotEmpty) {
+          // Cette ligne est critique pour s'assurer que les conflits sont propagés au processus principal
+          allConflicts.addAll(result.conflicts!);
+          debugPrint('Ajout de ${result.conflicts!.length} conflits au total, maintenant ${allConflicts.length} conflits');
+        }
       }
 
       // Si ce sont des nomenclatures et qu'il y a des conflits, assurons-nous que l'état est correctement mis à jour
-      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets') &&
+      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets' || stepKey == 'taxons') &&
           result.conflicts != null &&
           result.conflicts!.isNotEmpty) {
         // Forcer une mise à jour de l'état après un court délai pour s'assurer que les changements sont appliqués
         Future.delayed(const Duration(milliseconds: 100), () {
           if (state.state != SyncState.conflictDetected) {
             debugPrint(
-                'Forçage de la mise à jour de l\'état pour afficher les conflits de nomenclature');
+                'Forçage de la mise à jour de l\'état pour afficher les conflits');
 
             // Créer explicitement un nouvel état avec les conflits
             final newState = SyncStatus.conflictDetected(
@@ -767,9 +803,9 @@ class SyncService extends StateNotifier<SyncStatus> {
               itemsSkipped: result.itemsSkipped,
               itemsDeleted: result.itemsDeleted,
               additionalInfo: result.errorMessage ??
-                  "Des références de nomenclatures supprimées sont toujours utilisées par des entités.",
-              currentEntityName: "Nomenclatures",
-              currentStep: SyncStep.nomenclatures,
+                  "Des références supprimées sont toujours utilisées par des entités.",
+              currentEntityName: stepKey == "taxons" ? "Taxons" : "Nomenclatures",
+              currentStep: stepKey == "taxons" ? SyncStep.taxons : SyncStep.nomenclatures,
             );
 
             state = newState;

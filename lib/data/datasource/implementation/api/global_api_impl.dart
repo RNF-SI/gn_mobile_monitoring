@@ -32,6 +32,10 @@ class GlobalApiImpl implements GlobalApi {
           await _dio.get('$apiBase/monitorings/util/init_data/$moduleName');
 
       if (response.statusCode == 200) {
+        // Log the response for debugging
+        print('Response from $apiBase/monitorings/util/init_data/$moduleName:');
+        print('Nomenclature count: ${(response.data['nomenclature'] as List<dynamic>).length}');
+        
         final nomenclatures = (response.data['nomenclature'] as List<dynamic>)
             .map((json) => NomenclatureEntity.fromJson(json))
             .toList();

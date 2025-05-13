@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
@@ -28,11 +29,21 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
   Future<void> insertNomenclatures(List<Nomenclature> nomenclatures) async {
     final db = await _database;
 
+    debugPrint('Reçu ${nomenclatures.length} nomenclatures à synchroniser');
+
+    if (nomenclatures.isEmpty) {
+      debugPrint('Aucune nomenclature à synchroniser');
+      return;
+    }
+
     // Get existing nomenclatures to avoid duplicates
     final existingNomenclatures =
         await db.tNomenclaturesDao.getAllNomenclatures();
     final existingNomenclatureIds =
         existingNomenclatures.map((n) => n.id).toSet();
+
+    debugPrint(
+        'État actuel: ${existingNomenclatures.length} nomenclatures en base');
 
     // Filter out nomenclatures that already exist
     final newNomenclatures = nomenclatures
@@ -46,14 +57,31 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             (nomenclature) => existingNomenclatureIds.contains(nomenclature.id))
         .toList();
 
+    debugPrint('${newNomenclatures.length} nouvelles nomenclatures à insérer');
+    debugPrint('${nomenclaturesToUpdate.length} nomenclatures à mettre à jour');
+
     // Insert new nomenclatures
     if (newNomenclatures.isNotEmpty) {
       await db.tNomenclaturesDao.insertNomenclatures(newNomenclatures);
+      debugPrint(
+          'Insertion de ${newNomenclatures.length} nouvelles nomenclatures terminée');
+
+      // Log some details about the first few nomenclatures for debugging
+      for (var i = 0; i < min(newNomenclatures.length, 3); i++) {
+        final n = newNomenclatures[i];
+        debugPrint(
+            '  Ajouté: ID=${n.id}, Label=${n.labelDefault}, Type=${n.idType}');
+      }
     }
 
     // Update existing nomenclatures
     for (final nomenclature in nomenclaturesToUpdate) {
       await db.tNomenclaturesDao.updateNomenclature(nomenclature);
+    }
+
+    if (nomenclaturesToUpdate.isNotEmpty) {
+      debugPrint(
+          'Mise à jour de ${nomenclaturesToUpdate.length} nomenclatures terminée');
     }
   }
 

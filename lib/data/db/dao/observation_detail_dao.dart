@@ -45,9 +45,14 @@ class ObservationDetailDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
   
+  /// Récupère tous les détails d'observation
+  Future<List<TObservationDetail>> getAllObservationDetails() async {
+    return await (select(tObservationDetails)).get();
+  }
+
   /// Récupère les détails d'observation qui font référence à une nomenclature spécifique
   Future<List<TObservationDetail>> getObservationDetailsByNomenclatureId(int nomenclatureId) async {
-    final allDetails = await (select(tObservationDetails)).get();
+    final allDetails = await getAllObservationDetails();
     final result = <TObservationDetail>[];
     
     for (final detail in allDetails) {

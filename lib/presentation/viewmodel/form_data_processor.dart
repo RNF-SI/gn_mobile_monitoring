@@ -19,6 +19,8 @@ class FormDataProcessor {
 
   /// Convertit les valeurs de nomenclature au format d'ID attendu par le backend
   ///
+  /// Garantit que toutes les nomenclatures (id_nomenclature_*) sont stockées comme des entiers.
+  /// 
   /// Exemple de conversion:
   /// Entrée:
   /// ```json
@@ -44,51 +46,77 @@ class FormDataProcessor {
     final processedData = Map<String, dynamic>.from(formData);
 
     // TRAITEMENT DES NOMENCLATURES
-    // Rechercher les champs de nomenclature (commençant par id_nomenclature_)
+    // Rechercher TOUS les champs de nomenclature (commençant par id_nomenclature_)
     final nomenclatureFields = processedData.keys
-        .where((key) =>
-            key.startsWith('id_nomenclature_') &&
-            processedData[key] is Map<String, dynamic>)
+        .where((key) => key.startsWith('id_nomenclature_'))
         .toList();
 
-    // Pour chaque champ de nomenclature, extraire l'ID et remplacer l'objet par cet ID
+    // Pour chaque champ de nomenclature, s'assurer qu'il est converti en entier
     for (final fieldName in nomenclatureFields) {
-      final fieldValue = processedData[fieldName] as Map<String, dynamic>;
-
-      // Version 1: Si l'ID est directement disponible dans l'objet (version la plus fiable)
-      if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
-        final id = fieldValue['id'];
-        // Assurer que c'est un entier
-        processedData[fieldName] =
-            id is int ? id : int.tryParse(id.toString()) ?? 0;
+      final fieldValue = processedData[fieldName];
+      
+      // Cas 1: Valeur déjà au format entier
+      if (fieldValue is int) {
+        // Rien à faire, déjà au bon format
         continue;
       }
-
-      // Version 2: Utiliser le code de nomenclature pour rechercher l'ID
-      final codeType = fieldValue['code_nomenclature_type'] as String?;
-      final cdNomenclature = fieldValue['cd_nomenclature'] as String?;
-
-      if (codeType != null && cdNomenclature != null) {
-        // Récupérer les nomenclatures pour ce type
-        final nomenclatureService =
-            ref.read(nomenclatureServiceProvider.notifier);
-        final nomenclatures =
-            await nomenclatureService.getNomenclaturesByTypeCode(codeType);
-
-        try {
-          // Rechercher la nomenclature correspondante
-          final nomenclature = nomenclatures.firstWhere(
-            (n) => n.cdNomenclature == cdNomenclature && n.codeType == codeType,
-          );
-
-          // Utiliser l'ID de la nomenclature trouvée
-          processedData[fieldName] = nomenclature.id;
-        } catch (e) {
-          // Si la nomenclature n'est pas trouvée, laisser l'objet tel quel
-          // ou donner une valeur par défaut selon le besoin
-          print('Erreur lors de la recherche de la nomenclature: $e');
-          // Laisser inchangé par défaut
+      
+      // Cas 2: Valeur au format chaîne mais représentant un entier
+      if (fieldValue is String) {
+        final parsedInt = int.tryParse(fieldValue);
+        if (parsedInt != null) {
+          processedData[fieldName] = parsedInt;
+          continue;
         }
+      }
+      
+      // Cas 3: Valeur au format Map
+      if (fieldValue is Map<String, dynamic>) {
+        // Version 1: Si l'ID est directement disponible dans l'objet (version la plus fiable)
+        if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
+          final id = fieldValue['id'];
+          // Assurer que c'est un entier
+          processedData[fieldName] =
+              id is int ? id : int.tryParse(id.toString()) ?? 0;
+          continue;
+        }
+
+        // Version 2: Utiliser le code de nomenclature pour rechercher l'ID
+        final codeType = fieldValue['code_nomenclature_type'] as String?;
+        final cdNomenclature = fieldValue['cd_nomenclature'] as String?;
+
+        if (codeType != null && cdNomenclature != null) {
+          // Récupérer les nomenclatures pour ce type
+          final nomenclatureService =
+              ref.read(nomenclatureServiceProvider.notifier);
+          final nomenclatures =
+              await nomenclatureService.getNomenclaturesByTypeCode(codeType);
+
+          try {
+            // Rechercher la nomenclature correspondante
+            final nomenclature = nomenclatures.firstWhere(
+              (n) => n.cdNomenclature == cdNomenclature && n.codeType == codeType,
+            );
+
+            // Utiliser l'ID de la nomenclature trouvée
+            processedData[fieldName] = nomenclature.id;
+          } catch (e) {
+            // En cas d'erreur, utiliser une valeur par défaut
+            processedData[fieldName] = 0;
+            print('Erreur lors de la recherche de la nomenclature: $e');
+          }
+        } else {
+          // Si nous n'avons pas les informations nécessaires, utiliser 0 comme valeur par défaut
+          processedData[fieldName] = 0;
+          print('Informations insuffisantes pour la nomenclature $fieldName');
+        }
+      }
+      
+      // Cas 4: Valeur nulle ou d'un autre type
+      if (fieldValue == null || (!(fieldValue is int) && !(fieldValue is Map) && !(fieldValue is String))) {
+        // Utiliser 0 comme valeur par défaut ou null selon votre convention
+        processedData[fieldName] = 0;
+        print('Valeur de nomenclature non reconnue pour $fieldName: $fieldValue');
       }
     }
 
