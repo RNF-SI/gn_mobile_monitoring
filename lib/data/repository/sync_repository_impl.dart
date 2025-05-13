@@ -10,6 +10,8 @@ import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
+import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
+import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
@@ -169,13 +171,17 @@ class SyncRepositoryImpl implements SyncRepository {
       // Synchroniser les nomenclatures et datasets pour chaque module
       for (final moduleCode in downloadedModuleCodes) {
         try {
+          debugPrint('Synchronisation du module $moduleCode');
+          
           // Récupérer les nomenclatures et datasets du module
           final data = await _globalApi.getNomenclaturesAndDatasets(moduleCode);
 
           // Convertir les nomenclatures entities en domain models
           final nomenclatures =
               data.nomenclatures.map((e) => e.toDomain()).toList();
-
+          
+          debugPrint('Module $moduleCode: ${nomenclatures.length} nomenclatures reçues');
+          
           // Collecter tous les IDs de nomenclatures du serveur
           serverNomenclatureIds.addAll(nomenclatures.map((n) => n.id));
 
@@ -278,8 +284,9 @@ class SyncRepositoryImpl implements SyncRepository {
         await updateLastSyncDate('nomenclatures', DateTime.now());
 
         // Ajouter un log pour le débogage
-        debugPrint('Création d\'un SyncResult.withConflicts avec ${allConflicts.length} conflits');
-        
+        debugPrint(
+            'Création d\'un SyncResult.withConflicts avec ${allConflicts.length} conflits');
+
         // Retourner un résultat de type conflit
         return SyncResult.withConflicts(
           itemsProcessed: itemsProcessed,
@@ -364,9 +371,11 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<SyncResult> syncTaxons(String token, {DateTime? lastSync}) async {
     try {
+      debugPrint('SyncRepositoryImpl.syncTaxons - Début de la synchronisation des taxons');
       // Vérifier la connectivité
       final isConnected = await checkConnectivity();
       if (!isConnected) {
+        debugPrint('SyncRepositoryImpl.syncTaxons - Pas de connexion Internet');
         return SyncResult.failure(
           errorMessage: 'Pas de connexion Internet',
         );
@@ -391,47 +400,346 @@ class SyncRepositoryImpl implements SyncRepository {
 
       // Récupérer la date de dernière synchronisation si non spécifiée
       final effectiveLastSync = lastSync ?? await getLastSyncDate('taxons');
+      debugPrint('SyncRepositoryImpl.syncTaxons - Date de dernière synchronisation: ${effectiveLastSync?.toIso8601String() ?? "jamais"}');
 
       try {
         // Récupérer l'état avant la synchronisation pour les métriques
         final taxonsBefore = await _taxonDatabase.getAllTaxons();
-        // Note: taxonListsBefore pourrait être utilisé pour des métriques détaillées plus tard
-        // await _taxonDatabase.getAllTaxonLists();
+        final taxonListsBefore = await _taxonDatabase.getAllTaxonLists();
+        debugPrint('SyncRepositoryImpl.syncTaxons - État avant synchronisation: ${taxonsBefore.length} taxons, ${taxonListsBefore.length} listes');
 
+        // Stocker les IDs existants pour comparer après synchronisation
+        final existingTaxonIds = taxonsBefore.map((t) => t.cdNom).toSet();
+        final existingListIds = taxonListsBefore.map((l) => l.idListe).toSet();
+
+        // Stocker les IDs server pour comparer et gérer les suppressions
+        final serverTaxonIds = <int>{};
+        final serverListIds = <int>{};
+
+        // Récupérer les IDs de listes taxonomiques pour les modules téléchargés
+        final taxonomyListIds = <int>[];
+        for (final moduleCode in downloadedModuleCodes) {
+          try {
+            final module = await _modulesRepository.getModuleByCode(moduleCode);
+            if (module != null) {
+              final taxonomyListId = await _modulesRepository.getModuleTaxonomyListId(module.id);
+              if (taxonomyListId != null) {
+                taxonomyListIds.add(taxonomyListId);
+                debugPrint('SyncRepositoryImpl.syncTaxons - Module $moduleCode: ID liste taxonomique $taxonomyListId trouvé');
+              } else {
+                debugPrint('SyncRepositoryImpl.syncTaxons - Module $moduleCode: Aucun ID liste taxonomique trouvé');
+              }
+            }
+          } catch (e) {
+            debugPrint('SyncRepositoryImpl.syncTaxons - Erreur lors de la récupération de l\'ID liste taxonomique pour le module $moduleCode: $e');
+          }
+        }
+        
+        debugPrint('SyncRepositoryImpl.syncTaxons - ${taxonomyListIds.length} listes taxonomiques uniques à synchroniser: $taxonomyListIds');
+        
         // Télécharger les taxons depuis l'API
-        final result = await _taxonApi.syncTaxons(
+        debugPrint('SyncRepositoryImpl.syncTaxons - Appel à l\'API pour synchroniser les taxons');
+        final result = await _taxonApi.syncTaxonsFromAPI(
           token,
           downloadedModuleCodes,
+          taxonomyListIds,
           lastSync: effectiveLastSync,
         );
 
-        if (result.success) {
+        if (result.success && result.data != null) {
+          debugPrint('SyncRepositoryImpl.syncTaxons - Données reçues avec succès de l\'API');
+          // Traiter les données retournées par l'API
+          final data = result.data!;
+
+          // Récupérer les listes taxonomiques
+          if (data.containsKey('taxon_lists')) {
+            final List<TaxonList> taxonLists = data['taxon_lists'];
+            debugPrint('SyncRepositoryImpl.syncTaxons - ${taxonLists.length} listes taxonomiques reçues');
+
+            // Mettre à jour les IDs de serveur pour comparaison
+            serverListIds.addAll(taxonLists.map((l) => l.idListe));
+
+            // Sauvegarder les listes taxonomiques
+            await _taxonDatabase.saveTaxonLists(taxonLists);
+            debugPrint('SyncRepositoryImpl.syncTaxons - Listes taxonomiques sauvegardées dans la base de données');
+          } else {
+            debugPrint('SyncRepositoryImpl.syncTaxons - Aucune liste taxonomique trouvée dans les données');
+          }
+
+          // Récupérer les taxons
+          if (data.containsKey('taxons')) {
+            final List<Taxon> taxons = data['taxons'];
+            debugPrint('SyncRepositoryImpl.syncTaxons - ${taxons.length} taxons reçus');
+
+            // Éliminer les doublons potentiels par cd_nom
+            final Map<int, Taxon> uniqueTaxons = {};
+            for (final taxon in taxons) {
+              uniqueTaxons[taxon.cdNom] = taxon;
+              serverTaxonIds.add(taxon.cdNom);
+            }
+            debugPrint('SyncRepositoryImpl.syncTaxons - ${uniqueTaxons.length} taxons uniques après déduplication');
+
+            // Sauvegarder les taxons unique
+            await _taxonDatabase.saveTaxons(uniqueTaxons.values.toList());
+            debugPrint('SyncRepositoryImpl.syncTaxons - Taxons sauvegardés dans la base de données');
+          } else {
+            debugPrint('SyncRepositoryImpl.syncTaxons - Aucun taxon trouvé dans les données');
+          }
+
+          // Traiter les associations liste-taxons
+          if (data.containsKey('list_to_taxon_map')) {
+            final Map<int, List<int>> listToTaxonMap =
+                data['list_to_taxon_map'];
+            debugPrint('SyncRepositoryImpl.syncTaxons - ${listToTaxonMap.length} mappings liste-taxons reçus');
+
+            // Pour chaque liste, sauvegarder les associations
+            for (final entry in listToTaxonMap.entries) {
+              final listId = entry.key;
+              final taxonIds = entry.value;
+              debugPrint('SyncRepositoryImpl.syncTaxons - Traitement de la liste $listId avec ${taxonIds.length} taxons');
+
+              // Sauvegarder les relations taxon-liste
+              await _taxonDatabase.saveTaxonsToList(listId, taxonIds);
+              debugPrint('SyncRepositoryImpl.syncTaxons - Relations liste-taxons sauvegardées pour la liste $listId');
+            }
+          } else {
+            debugPrint('SyncRepositoryImpl.syncTaxons - Aucune association liste-taxons trouvée dans les données');
+          }
+
+          // Identifier les taxons qui ont été supprimés dans le cadre des listes taxonomiques
+          final Set<int> previousListTaxonIds = <int>{};
+          
+          // Map pour suivre quels taxons ont été complètement supprimés
+          final Set<int> deletedTaxonIds = <int>{};
+          
+          // Map pour suivre de quelles listes chaque taxon a été supprimé
+          final Map<int, Set<int>> taxonRemovedFromLists = <int, Set<int>>{};
+
+          // Pour chaque liste retournée par l'API, récupérer les taxons qui lui étaient associés avant
+          if (data.containsKey('taxon_lists') &&
+              data.containsKey('list_to_taxon_map')) {
+            final List<TaxonList> taxonLists = data['taxon_lists'];
+            final Map<int, List<int>> listToTaxonMap =
+                data['list_to_taxon_map'];
+
+            // 1. Pour chaque liste, identifier les taxons qui ont été supprimés de cette liste
+            for (final list in taxonLists) {
+              debugPrint('Analyse des taxons pour la liste taxonomique ${list.idListe}');
+              
+              // Récupérer les taxons qui étaient précédemment dans cette liste
+              final taxonsInListBefore =
+                  await _taxonDatabase.getTaxonsByListId(list.idListe);
+              final previousTaxonsInList =
+                  taxonsInListBefore.map((t) => t.cdNom).toSet();
+              
+              debugPrint('Liste ${list.idListe}: ${previousTaxonsInList.length} taxons avant synchronisation');
+
+              // Les taxons actuels dans cette liste selon le serveur
+              final currentTaxonsInList =
+                  Set<int>.from(listToTaxonMap[list.idListe] ?? []);
+              
+              debugPrint('Liste ${list.idListe}: ${currentTaxonsInList.length} taxons après synchronisation');
+              
+
+              // Les taxons qui étaient dans cette liste mais n'y sont plus
+              final taxonsRemovedFromList =
+                  previousTaxonsInList.difference(currentTaxonsInList);
+              
+              debugPrint('Liste ${list.idListe}: ${taxonsRemovedFromList.length} taxons supprimés de cette liste');
+              if (taxonsRemovedFromList.isNotEmpty) {
+                debugPrint('Liste ${list.idListe} - Taxons supprimés: ${taxonsRemovedFromList.join(', ')}');
+              }
+
+              // Ajouter ces taxons à la liste des candidats pour suppression
+              previousListTaxonIds.addAll(taxonsRemovedFromList);
+              
+              // Pour chaque taxon supprimé de cette liste, l'ajouter au map de suivi
+              for (final cdNom in taxonsRemovedFromList) {
+                if (!taxonRemovedFromLists.containsKey(cdNom)) {
+                  taxonRemovedFromLists[cdNom] = <int>{};
+                }
+                taxonRemovedFromLists[cdNom]!.add(list.idListe);
+                debugPrint('Taxon $cdNom a été supprimé de la liste ${list.idListe}');
+              }
+            }
+
+            // 2. Pour chaque taxon identifié comme supprimé de certaines listes,
+            // vérifier s'il est encore présent dans au moins une liste
+            for (final cdNom in previousListTaxonIds) {
+              // Vérifier si ce taxon existe encore dans d'autres listes
+              bool existsInAnyCurrentList = false;
+
+              for (final listEntry in listToTaxonMap.entries) {
+                if (listEntry.value.contains(cdNom)) {
+                  existsInAnyCurrentList = true;
+                  break;
+                }
+              }
+
+              // Si le taxon n'existe plus dans aucune liste, le marquer comme complètement supprimé
+              if (!existsInAnyCurrentList) {
+                deletedTaxonIds.add(cdNom);
+                debugPrint('Taxon $cdNom a été complètement supprimé (n\'existe plus dans aucune liste)');
+              }
+            }
+          } else {
+            debugPrint('Aucune liste taxonomique ou mapping liste-taxon trouvé dans les données');
+          }
+          
+          debugPrint('Taxons totalement supprimés à traiter: ${deletedTaxonIds.length}');
+          if (deletedTaxonIds.isNotEmpty) {
+            debugPrint('IDs des taxons totalement supprimés: ${deletedTaxonIds.join(', ')}');
+          }
+          
+          debugPrint('Taxons partiellement supprimés de listes: ${taxonRemovedFromLists.length}');
+          if (taxonRemovedFromLists.isNotEmpty) {
+            for (final entry in taxonRemovedFromLists.entries) {
+              debugPrint('Taxon ${entry.key} supprimé des listes: ${entry.value.join(', ')}');
+            }
+          }
+
+          int itemsDeleted = 0;
+          final allConflicts = <SyncConflict>[];
+
+
+          if (deletedTaxonIds.isNotEmpty) {
+            debugPrint(
+                'Vérification de ${deletedTaxonIds.length} taxons réellement supprimés sur le serveur');
+
+            // Pour chaque taxon supprimé sur le serveur
+            // Vérifier les références avant de supprimer
+            for (final cdNom in deletedTaxonIds) {
+              debugPrint('Traitement de la suppression du taxon $cdNom');
+              final conflicts = await _taxonDatabase
+                  .checkTaxonReferencesInDatabaseObservations(cdNom);
+
+              if (conflicts.isEmpty) {
+                // Pas de conflit - supprimer le taxon
+                await _taxonDatabase.deleteTaxon(cdNom);
+                itemsDeleted++;
+                debugPrint('Taxon $cdNom supprimé sans conflit');
+              } else {
+                // Des références existent - ajouter aux conflits
+                allConflicts.addAll(conflicts);
+                debugPrint(
+                    'Taxon $cdNom a ${conflicts.length} références - conflit détecté');
+              }
+            }
+          }
+          
+          // Traiter les taxons qui ont été supprimés de certaines listes mais existent encore dans d'autres
+          for (final entry in taxonRemovedFromLists.entries) {
+            final cdNom = entry.key;
+            final removedFromLists = entry.value;
+            
+            // Ne traiter que les taxons qui n'ont pas déjà été supprimés complètement
+            if (!deletedTaxonIds.contains(cdNom)) {
+              debugPrint('Vérification des références pour le taxon $cdNom supprimé de ${removedFromLists.length} liste(s)');
+              
+              // Vérifier les références en tenant compte des listes spécifiques
+              final conflicts = await _taxonDatabase
+                  .checkTaxonReferencesInDatabaseObservations(cdNom, removedFromListIds: removedFromLists);
+              
+              if (conflicts.isNotEmpty) {
+                allConflicts.addAll(conflicts);
+                debugPrint('Taxon $cdNom a ${conflicts.length} références dans les listes supprimées - conflits détectés');
+              }
+            }
+          }
+
           // Mettre à jour la date de synchronisation
           await updateLastSyncDate('taxons', DateTime.now());
 
-          // Récupérer l'état après la synchronisation pour les métriques
+          // Récupérer l'état après la synchronisation pour des métriques plus précises
           final taxonsAfter = await _taxonDatabase.getAllTaxons();
-          // Note: taxonListsAfter pourrait être utilisé pour des métriques détaillées plus tard
-          // await _taxonDatabase.getAllTaxonLists();
+          final taxonListsAfter = await _taxonDatabase.getAllTaxonLists();
+          
+          // Récupérer les ID des taxons avant la synchronisation
+          final beforeTaxonIds = taxonsBefore.map((t) => t.cdNom).toSet();
+          
+          // Récupérer les ID des taxons après la synchronisation
+          final afterTaxonIds = taxonsAfter.map((t) => t.cdNom).toSet();
+          
+          // Calculer le nombre réel de nouveaux taxons
+          final newTaxonIds = afterTaxonIds.difference(beforeTaxonIds);
+          final int realNewTaxons = newTaxonIds.length;
+          
+          debugPrint('SyncRepositoryImpl.syncTaxons - ${realNewTaxons} nouveaux taxons ajoutés à la base de données');
+          if (realNewTaxons > 0) {
+            debugPrint('SyncRepositoryImpl.syncTaxons - Nouveaux taxons: ${newTaxonIds.join(', ')}');
+          }
+          
+          // Comptons également les associations entre taxons et listes qui ont été créées
+          int totalAssociationsCreated = 0;
+          
+          // Pour chaque liste taxonomique
+          if (data.containsKey('list_to_taxon_map')) {
+            final Map<int, List<int>> listToTaxonMap = data['list_to_taxon_map'];
+            
+            for (final entry in listToTaxonMap.entries) {
+              final listId = entry.key;
+              final newTaxonIds = entry.value;
+              
+              // Récupérer les taxons qui étaient déjà dans cette liste avant la synchronisation
+              final previousTaxonsInList = await _taxonDatabase.getTaxonsByListId(listId);
+              final previousTaxonIds = previousTaxonsInList.map((t) => t.cdNom).toSet();
+              
+              // Compter combien de nouvelles associations ont été créées
+              final newAssociations = newTaxonIds.where((id) => !previousTaxonIds.contains(id)).length;
+              totalAssociationsCreated += newAssociations;
+              
+              // Identifier spécifiquement les nouveaux ID de taxons pour cette liste
+              final newTaxonsInThisList = newTaxonIds.where((id) => !previousTaxonIds.contains(id)).toList();
+              
+              debugPrint('SyncRepositoryImpl.syncTaxons - ${newAssociations} nouvelles associations créées pour la liste $listId');
+              if (newTaxonsInThisList.isNotEmpty) {
+                debugPrint('SyncRepositoryImpl.syncTaxons - Taxons ajoutés à la liste $listId: ${newTaxonsInThisList.join(', ')}');
+              }
+            }
+          }
 
-          // Calculer les métriques de synchronisation
-          final itemsTotal = taxonsAfter.length;
-          final itemsAdded = taxonsAfter.length - taxonsBefore.length;
-          // Une estimation des mises à jour
-          final itemsUpdated = taxonsBefore.length -
-              (taxonsBefore.length > taxonsAfter.length
-                  ? taxonsBefore.length - taxonsAfter.length
-                  : 0);
+          // Calculer les métriques de synchronisation réelles
+          final int itemsProcessed = result.itemsProcessed;
+          
+          // Le nombre total d'éléments ajoutés inclut à la fois les nouveaux taxons et les nouvelles associations
+          final int itemsAdded = realNewTaxons + totalAssociationsCreated;
+          
+          // Calculer le nombre de taxons mis à jour (les taxons qui existaient déjà mais ont été modifiés)
+          // Dans ce cas, itemsUpdated est le nombre total de taxons traités moins les nouveaux taxons
+          final int itemsUpdated = data.containsKey('taxons') ? 
+              (data['taxons'] as List<Taxon>).length - realNewTaxons : 0;
+          
+          final int itemsSkipped = result.itemsSkipped;
+          
+          debugPrint('SyncRepositoryImpl.syncTaxons - Statistiques finales: $realNewTaxons nouveaux taxons, $itemsUpdated taxons mis à jour, $totalAssociationsCreated nouvelles associations taxon-liste, $itemsDeleted taxons supprimés');
 
-          return SyncResult.success(
-            itemsProcessed: itemsTotal,
-            itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
-            itemsUpdated: itemsUpdated,
-            itemsSkipped: result.itemsSkipped,
-          );
+          // Si des conflits ont été détectés, les inclure dans le résultat
+          if (allConflicts.isNotEmpty) {
+            debugPrint('Retour de ${allConflicts.length} conflits de taxons');
+            return SyncResult.withConflicts(
+              itemsProcessed: itemsProcessed,
+              itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
+              itemsUpdated: itemsUpdated,
+              itemsSkipped: itemsSkipped,
+              itemsDeleted: itemsDeleted,
+              itemsFailed: allConflicts.length,
+              conflicts: allConflicts,
+              errorMessage:
+                  'Des taxons supprimés sont référencés par des observations',
+            );
+          } else {
+            return SyncResult.success(
+              itemsProcessed: itemsProcessed,
+              itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
+              itemsUpdated: itemsUpdated,
+              itemsSkipped: itemsSkipped,
+              itemsDeleted: itemsDeleted,
+            );
+          }
+        } else {
+          // Si pas de données ou échec de la synchronisation
+          return result;
         }
-
-        return result;
       } catch (e) {
         debugPrint('Erreur lors de la synchronisation des taxons: $e');
         return SyncResult.failure(
