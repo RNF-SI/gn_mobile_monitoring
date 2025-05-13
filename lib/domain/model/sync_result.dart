@@ -16,6 +16,7 @@ class SyncResult with _$SyncResult {
     @Default(0) int itemsDeleted,
     String? errorMessage,
     List<SyncConflict>? conflicts,
+    Map<String, dynamic>? data,
   }) = _SyncResult;
 
   factory SyncResult.success({
@@ -25,6 +26,7 @@ class SyncResult with _$SyncResult {
     required int itemsSkipped,
     int itemsFailed = 0,
     int itemsDeleted = 0,
+    Map<String, dynamic>? data,
   }) => SyncResult(
     success: true,
     itemsProcessed: itemsProcessed,
@@ -34,6 +36,7 @@ class SyncResult with _$SyncResult {
     itemsFailed: itemsFailed,
     itemsDeleted: itemsDeleted,
     syncTime: DateTime.now(),
+    data: data,
   );
 
   factory SyncResult.failure({
@@ -65,6 +68,7 @@ class SyncResult with _$SyncResult {
     int itemsDeleted = 0,
     required List<SyncConflict> conflicts,
     String? errorMessage,
+    Map<String, dynamic>? data,
   }) => SyncResult(
     success: true,
     itemsProcessed: itemsProcessed,
@@ -76,5 +80,6 @@ class SyncResult with _$SyncResult {
     syncTime: DateTime.now(),
     conflicts: conflicts,
     errorMessage: errorMessage,
+    data: data,
   );
 }

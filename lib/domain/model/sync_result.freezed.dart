@@ -26,6 +26,7 @@ mixin _$SyncResult {
   int get itemsDeleted => throw _privateConstructorUsedError;
   String? get errorMessage => throw _privateConstructorUsedError;
   List<SyncConflict>? get conflicts => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
   /// Create a copy of SyncResult
   /// with the given fields replaced by the non-null parameter values.
@@ -50,7 +51,8 @@ abstract class $SyncResultCopyWith<$Res> {
       DateTime syncTime,
       int itemsDeleted,
       String? errorMessage,
-      List<SyncConflict>? conflicts});
+      List<SyncConflict>? conflicts,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -78,6 +80,7 @@ class _$SyncResultCopyWithImpl<$Res, $Val extends SyncResult>
     Object? itemsDeleted = null,
     Object? errorMessage = freezed,
     Object? conflicts = freezed,
+    Object? data = freezed,
   }) {
     return _then(_value.copyWith(
       success: null == success
@@ -120,6 +123,10 @@ class _$SyncResultCopyWithImpl<$Res, $Val extends SyncResult>
           ? _value.conflicts
           : conflicts // ignore: cast_nullable_to_non_nullable
               as List<SyncConflict>?,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -142,7 +149,8 @@ abstract class _$$SyncResultImplCopyWith<$Res>
       DateTime syncTime,
       int itemsDeleted,
       String? errorMessage,
-      List<SyncConflict>? conflicts});
+      List<SyncConflict>? conflicts,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -168,6 +176,7 @@ class __$$SyncResultImplCopyWithImpl<$Res>
     Object? itemsDeleted = null,
     Object? errorMessage = freezed,
     Object? conflicts = freezed,
+    Object? data = freezed,
   }) {
     return _then(_$SyncResultImpl(
       success: null == success
@@ -210,6 +219,10 @@ class __$$SyncResultImplCopyWithImpl<$Res>
           ? _value._conflicts
           : conflicts // ignore: cast_nullable_to_non_nullable
               as List<SyncConflict>?,
+      data: freezed == data
+          ? _value._data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -227,8 +240,10 @@ class _$SyncResultImpl implements _SyncResult {
       required this.syncTime,
       this.itemsDeleted = 0,
       this.errorMessage,
-      final List<SyncConflict>? conflicts})
-      : _conflicts = conflicts;
+      final List<SyncConflict>? conflicts,
+      final Map<String, dynamic>? data})
+      : _conflicts = conflicts,
+        _data = data;
 
   @override
   final bool success;
@@ -259,9 +274,19 @@ class _$SyncResultImpl implements _SyncResult {
     return EqualUnmodifiableListView(value);
   }
 
+  final Map<String, dynamic>? _data;
+  @override
+  Map<String, dynamic>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
   @override
   String toString() {
-    return 'SyncResult(success: $success, itemsProcessed: $itemsProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsFailed: $itemsFailed, syncTime: $syncTime, itemsDeleted: $itemsDeleted, errorMessage: $errorMessage, conflicts: $conflicts)';
+    return 'SyncResult(success: $success, itemsProcessed: $itemsProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsFailed: $itemsFailed, syncTime: $syncTime, itemsDeleted: $itemsDeleted, errorMessage: $errorMessage, conflicts: $conflicts, data: $data)';
   }
 
   @override
@@ -287,7 +312,8 @@ class _$SyncResultImpl implements _SyncResult {
             (identical(other.errorMessage, errorMessage) ||
                 other.errorMessage == errorMessage) &&
             const DeepCollectionEquality()
-                .equals(other._conflicts, _conflicts));
+                .equals(other._conflicts, _conflicts) &&
+            const DeepCollectionEquality().equals(other._data, _data));
   }
 
   @override
@@ -302,7 +328,8 @@ class _$SyncResultImpl implements _SyncResult {
       syncTime,
       itemsDeleted,
       errorMessage,
-      const DeepCollectionEquality().hash(_conflicts));
+      const DeepCollectionEquality().hash(_conflicts),
+      const DeepCollectionEquality().hash(_data));
 
   /// Create a copy of SyncResult
   /// with the given fields replaced by the non-null parameter values.
@@ -324,7 +351,8 @@ abstract class _SyncResult implements SyncResult {
       required final DateTime syncTime,
       final int itemsDeleted,
       final String? errorMessage,
-      final List<SyncConflict>? conflicts}) = _$SyncResultImpl;
+      final List<SyncConflict>? conflicts,
+      final Map<String, dynamic>? data}) = _$SyncResultImpl;
 
   @override
   bool get success;
@@ -346,6 +374,8 @@ abstract class _SyncResult implements SyncResult {
   String? get errorMessage;
   @override
   List<SyncConflict>? get conflicts;
+  @override
+  Map<String, dynamic>? get data;
 
   /// Create a copy of SyncResult
   /// with the given fields replaced by the non-null parameter values.
