@@ -215,4 +215,17 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
       throw Exception("Failed to clear cor_taxon_liste: ${e.toString()}");
     }
   }
+  
+  /// Supprime un taxon par son cd_nom, ainsi que ses références
+  Future<void> deleteTaxon(int cdNom) async {
+    try {
+      // Supprimer le taxon
+      await (delete(tTaxrefs)..where((t) => t.cdNom.equals(cdNom))).go();
+      
+      // Supprimer les références dans cor_taxon_liste
+      await (delete(corTaxonListeTable)..where((t) => t.cdNom.equals(cdNom))).go();
+    } catch (e) {
+      throw Exception("Failed to delete taxon with cd_nom $cdNom: ${e.toString()}");
+    }
+  }
 }

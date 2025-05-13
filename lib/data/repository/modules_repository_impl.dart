@@ -496,6 +496,24 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
+  Future<Module?> getModuleByCode(String moduleCode) async {
+    try {
+      return await database.getModuleByCode(moduleCode);
+    } catch (e) {
+      throw Exception('Failed to get module by code: $e');
+    }
+  }
+
+  @override
+  Future<int?> getModuleTaxonomyListId(int moduleId) async {
+    try {
+      return await database.getModuleTaxonomyListId(moduleId);
+    } catch (e) {
+      throw Exception('Failed to get taxonomy list ID for module: $e');
+    }
+  }
+
+  @override
   Future<ModuleConfiguration> getModuleConfiguration(String moduleCode) async {
     try {
       // Récupérer la configuration depuis l'API globale
