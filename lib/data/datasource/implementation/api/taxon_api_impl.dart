@@ -1,5 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
@@ -23,19 +24,49 @@ class TaxonApiImpl implements TaxonApi {
   @override
   Future<List<Taxon>> getTaxonsByList(int idListe) async {
     try {
-      final response = await _dio.get(
-        '/taxhub/api/taxref/allnamebylist/$idListe',
-      );
+      debugPrint('Récupération des taxons pour la liste $idListe avec pagination');
+      
+      List<Taxon> allTaxons = [];
+      int currentPage = 1;
+      int limit = 100; // Augmenter la limite pour réduire le nombre de requêtes
+      bool hasMoreData = true;
+      
+      while (hasMoreData) {
+        debugPrint('Récupération de la page $currentPage (limite=$limit) pour la liste $idListe');
+        
+        final response = await _dio.get(
+          '/taxhub/api/taxref/allnamebylist/$idListe',
+          queryParameters: {
+            'limit': limit,
+            'page': currentPage,
+          },
+        );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> parsed = response.data;
-        return parsed.map((json) => _parseTaxonFromList(json)).toList();
+        if (response.statusCode == 200) {
+          final List<dynamic> parsed = response.data;
+          final pageTaxons = parsed.map((json) => _parseTaxonFromList(json)).toList();
+          
+          allTaxons.addAll(pageTaxons);
+          debugPrint('Reçu ${pageTaxons.length} taxons sur la page $currentPage pour la liste $idListe');
+          
+          // Si nous avons reçu moins de résultats que la limite, nous avons atteint la fin
+          if (pageTaxons.length < limit) {
+            hasMoreData = false;
+            debugPrint('Fin de la pagination pour la liste $idListe, total: ${allTaxons.length} taxons');
+          } else {
+            // Sinon, passer à la page suivante
+            currentPage++;
+          }
+        } else {
+          throw ApiException(
+            'Failed to load taxons for list $idListe on page $currentPage',
+            statusCode: response.statusCode,
+          );
+        }
       }
-
-      throw ApiException(
-        'Failed to load taxons for list $idListe',
-        statusCode: response.statusCode,
-      );
+      
+      debugPrint('Total de ${allTaxons.length} taxons récupérés pour la liste $idListe');
+      return allTaxons;
     } on DioException catch (e) {
       throw NetworkException(
           'Network error while fetching taxons for list $idListe: ${e.message}');
@@ -162,83 +193,135 @@ class TaxonApiImpl implements TaxonApi {
   }
 
   @override
-  Future<SyncResult> syncTaxons(
-      String token, List<String> downloadedModuleCodes,
+  Future<SyncResult> syncTaxonsFromAPI(
+      String token, List<String> downloadedModuleCodes, List<int> taxonomyListIds,
       {DateTime? lastSync}) async {
     try {
+      debugPrint('syncTaxonsFromAPI - Début de la synchronisation des taxons pour ${downloadedModuleCodes.length} modules avec ${taxonomyListIds.length} listes taxonomiques');
       // Vérifier la connectivité réseau
       final connectivityResult = await _connectivity.checkConnectivity();
       if (connectivityResult == ConnectivityResult.none) {
+        debugPrint('syncTaxonsFromAPI - Aucune connexion réseau disponible');
         return SyncResult.failure(
           errorMessage: 'Aucune connexion réseau disponible',
         );
       }
 
-      // Récupérer la liste des modules
-      final response = await _dio.get(
-        '/monitorings/modules',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode != 200) {
-        throw ApiException(
-          'Erreur lors de la récupération des modules',
-          statusCode: response.statusCode,
-        );
-      }
-
-      final List<dynamic> modules = response.data;
       int itemsProcessed = 0;
       int itemsAdded = 0;
       int itemsUpdated = 0;
       int itemsSkipped = 0;
 
-      // Ensemble pour stocker les IDs de listes uniques
-      final Set<int> uniqueListIds = {};
+      // Collections pour stocker les données à passer au repository
+      final List<TaxonList> taxonLists = [];
+      final List<Taxon> allTaxons = [];
+      final Map<int, List<int>> listToTaxonMap = {};
 
-      // Extraire les IDs de listes taxonomiques des modules téléchargés
-      for (final moduleData in modules) {
-        try {
-          final String? moduleCode = moduleData['module_code'];
-          if (moduleCode != null &&
-              downloadedModuleCodes.contains(moduleCode) &&
-              moduleData['module_complement'] != null &&
-              moduleData['module_complement']['id_list_taxonomy'] != null) {
-            uniqueListIds
-                .add(moduleData['module_complement']['id_list_taxonomy']);
-          }
-        } catch (e) {
-          print(
-              'Erreur lors de l\'extraction de l\'ID de liste du module ${moduleData['id_module']}: $e');
-          continue;
-        }
-      }
+      // Utiliser directement les IDs de listes taxonomiques fournis
+      final Set<int> uniqueListIds = taxonomyListIds.toSet();
+      debugPrint('syncTaxonsFromAPI - ${uniqueListIds.length} listes taxonomiques uniques à traiter: $uniqueListIds');
 
       // Pour chaque liste taxonomique unique
       for (final listId in uniqueListIds) {
         try {
+          debugPrint('syncTaxonsFromAPI - Traitement de la liste taxonomique $listId');
           // Récupérer la liste taxonomique complète
+          debugPrint('syncTaxonsFromAPI - Récupération des détails de la liste $listId');
           final taxonList = await getTaxonList(listId);
+          taxonLists.add(taxonList); // Ajouter à la collection
+          debugPrint('syncTaxonsFromAPI - Liste $listId récupérée: ${taxonList.nomListe}');
           itemsProcessed++;
 
           // Récupérer les taxons associés à cette liste
+          debugPrint('syncTaxonsFromAPI - Récupération des taxons pour la liste $listId');
           final taxons = await getTaxonsByList(listId);
+          debugPrint('syncTaxonsFromAPI - ${taxons.length} taxons récupérés pour la liste $listId');
+          
+          allTaxons.addAll(taxons); // Ajouter à la collection globale
+
+          // Stocker la relation liste-taxons
+          listToTaxonMap[listId] = taxons.map((t) => t.cdNom).toList();
+          debugPrint('syncTaxonsFromAPI - Relation liste-taxons stockée pour la liste $listId avec ${taxons.length} taxons');
+
           itemsProcessed += taxons.length;
-          itemsAdded += taxons.length; // Simplifié pour l'exemple
+          itemsAdded += taxons
+              .length; // Approximation avant traitement réel dans le repository
         } catch (e) {
-          print('Erreur lors de la synchronisation de la liste $listId: $e');
+          debugPrint('syncTaxonsFromAPI - Erreur lors de la synchronisation de la liste $listId: $e');
           itemsSkipped++;
           continue;
         }
       }
 
+      // Sauvegarder les listes taxonomiques
+      for (final list in taxonLists) {
+        try {
+          // Logique pour sauvegarder en base de données
+          // (sera réalisée dans le repository)
+        } catch (e) {
+          print('Erreur lors de la sauvegarde de la liste ${list.idListe}: $e');
+          itemsSkipped++;
+        }
+      }
+
+      // Sauvegarder tous les taxons
+      try {
+        // Éliminer les doublons potentiels par cd_nom
+        final Map<int, Taxon> uniqueTaxons = {};
+        for (final taxon in allTaxons) {
+          uniqueTaxons[taxon.cdNom] = taxon;
+        }
+
+        // Logique pour sauvegarder en base de données
+        // (sera réalisée dans le repository)
+        itemsAdded = uniqueTaxons.length;
+      } catch (e) {
+        print('Erreur lors de la sauvegarde des taxons: $e');
+        itemsSkipped++;
+      }
+
+      // Sauvegarder les associations liste-taxons
+      for (final entry in listToTaxonMap.entries) {
+        try {
+          final listId = entry.key;
+          final taxonIds = entry.value;
+
+          // Logique pour sauvegarder les relations en base de données
+          // (sera réalisée dans le repository)
+        } catch (e) {
+          print(
+              'Erreur lors de la sauvegarde des relations pour la liste ${entry.key}: $e');
+          itemsSkipped++;
+        }
+      }
+
+      // Éliminer les doublons potentiels par cd_nom
+      final Map<int, Taxon> uniqueTaxons = {};
+      for (final taxon in allTaxons) {
+        uniqueTaxons[taxon.cdNom] = taxon;
+      }
+      
+      // Mettre à jour les statistiques après déduplication
+      final List<Taxon> uniqueTaxonsList = uniqueTaxons.values.toList();
+      debugPrint('syncTaxonsFromAPI - ${uniqueTaxonsList.length} taxons uniques après déduplication (sur ${allTaxons.length} taxons au total)');
+      
+      // Le décompte précis des ajouts sera fait dans le repository en comparant avec les données existantes
+      // Ici, on envoie juste le count total pour aider au diagnostic
+      debugPrint('syncTaxonsFromAPI - Fin de la synchronisation des taxons - retour avec succès');
+      debugPrint('syncTaxonsFromAPI - Résumé: ${taxonLists.length} listes taxonomiques, ${uniqueTaxonsList.length} taxons, ${listToTaxonMap.length} relations liste-taxons');
+      
+      // Important: On retourne le nombre réel de taxons renvoyés par les API, qu'il y ait une date de dernière synchro ou non
       return SyncResult.success(
         itemsProcessed: itemsProcessed,
-        itemsAdded: itemsAdded,
-        itemsUpdated: itemsUpdated,
+        itemsAdded: uniqueTaxonsList.length, // Nombre brut sans tenir compte de lastSync
+        itemsUpdated: 0, // Les mises à jour seront calculées dans le repository
         itemsSkipped: itemsSkipped,
+        data: {
+          'taxon_lists': taxonLists,
+          'taxons': uniqueTaxonsList,
+          'list_to_taxon_map': listToTaxonMap,
+          'raw_taxon_count': uniqueTaxonsList.length, // Information additionnelle
+        },
       );
     } on DioException catch (e) {
       return SyncResult.failure(
