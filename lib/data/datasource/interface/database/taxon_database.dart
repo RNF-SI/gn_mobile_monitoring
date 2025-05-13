@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
@@ -22,15 +23,23 @@ abstract class TaxonDatabase {
   // Relations
   Future<void> saveTaxonsToList(int idListe, List<int> cdNoms);
   Future<void> clearCorTaxonListe();
-  
+
   // Methods added for synchronization
-  
+
   /// Sauvegarde les taxons avec gestion des résultats de synchronisation
   Future<SyncResult> saveTaxonsWithSync(List<Map<String, dynamic>> taxons);
-  
+
   /// Récupère les taxons qui n'ont pas encore été synchronisés
   Future<List<Taxon>> getPendingTaxons();
-  
+
   /// Marque un taxon comme synchronisé
   Future<void> markTaxonSynced(int cdNom, DateTime syncDate);
+
+  /// Vérifie si un taxon est référencé par des entités (observations, visites, etc.)
+  /// et retourne les conflits potentiels si suppression
+  Future<List<SyncConflict>> checkTaxonReferencesInDatabaseObservations(
+      int cdNom, {Set<int>? removedFromListIds});
+
+  /// Supprime un taxon de la base de données
+  Future<void> deleteTaxon(int cdNom);
 }

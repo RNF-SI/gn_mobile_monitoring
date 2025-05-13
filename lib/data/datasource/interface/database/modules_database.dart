@@ -37,7 +37,11 @@ abstract class ModulesDatabase {
   Future<void> associateModuleWithDataset(int moduleId, int datasetId);
   Future<List<int>> getDatasetIdsForModule(int moduleId);
 
+  // Configuration operations
+  Future<int?> getModuleTaxonomyListId(int moduleId);
+
   Future<List<Module>> getModules();
   Future<Module?> getModuleById(int moduleId);
   Future<Module?> getModuleIdByLabel(String moduleLabel);
+  Future<Module?> getModuleByCode(String moduleCode);
 }

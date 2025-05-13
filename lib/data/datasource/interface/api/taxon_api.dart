@@ -10,8 +10,8 @@ abstract class TaxonApi {
   // Methods added for synchronization
 
   /// Récupère les taxons modifiés depuis la dernière synchronisation
-  Future<SyncResult> syncTaxons(
-      String token, List<String> downloadedModuleCodes,
+  Future<SyncResult> syncTaxonsFromAPI(
+      String token, List<String> downloadedModuleCodes, List<int> taxonomyListIds,
       {DateTime? lastSync});
 
   /// Recherche des taxons correspondant à un terme
