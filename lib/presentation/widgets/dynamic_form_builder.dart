@@ -1002,6 +1002,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildNomenclatureField(String fieldName, String label, bool required,
       Map<String, dynamic> fieldConfig,
       {String? description}) {
+    
+    // Vérifier et corriger les valeurs de nomenclature
+    if (_formValues.containsKey(fieldName)) {
+      final value = _formValues[fieldName];
+      
+      // Si la valeur est un entier, la convertir en map
+      if (value is int) {
+        _formValues[fieldName] = {'id': value};
+      }
+    }
+    
     // Construire un widget de sélection de nomenclature
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -1028,7 +1039,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           NomenclatureSelectorWidget(
             label: label,
             fieldConfig: fieldConfig,
-            value: _formValues[fieldName] as Map<String, dynamic>?,
+            value: _formValues[fieldName] is Map<String, dynamic> 
+                ? _formValues[fieldName] as Map<String, dynamic> 
+                : (_formValues[fieldName] is int 
+                    ? {'id': _formValues[fieldName]} 
+                    : null),
             isRequired: required,
             onChanged: (value) {
               setState(() {
