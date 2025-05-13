@@ -37,7 +37,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
   final int? idListTaxonomy;
 
   const DynamicFormBuilder({
-    Key? key,
+    super.key,
     required this.objectConfig,
     this.customConfig,
     this.initialValues,
@@ -46,7 +46,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
     this.onChainInputChanged,
     this.displayProperties,
     this.idListTaxonomy,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<DynamicFormBuilder> createState() => DynamicFormBuilderState();
@@ -208,9 +208,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void updateFormValue(String fieldName, dynamic value) {
     debugPrint('Updating form value: $fieldName = $value');
     
-    // Vérifier si c'est un champ critique qui peut affecter la visibilité d'autres champs
-    final isCriticalField = fieldName == 'cd_nom' || 
-                          (fieldName.contains('cd_nom'));
+    // Déterminer dynamiquement si c'est un champ critique en analysant le schéma
+    final isCriticalField = _isCriticalField(fieldName);
     
     setState(() {
       if (value == null) {
@@ -236,15 +235,19 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           },
         );
         
-        // Déboguer les conditions de visibilité pour quelques champs importants
+        // Ne débogue qu'un nombre limité de champs pour éviter une boucle infinie de logs
+        int debuggedFields = 0;
         for (final entry in _unifiedSchema.entries) {
           if (entry.value.containsKey('hidden') && entry.value['hidden'] != false) {
-            final isHidden = formDataProcessor.isFieldHidden(
-              entry.key, 
-              evaluationContext,
-              fieldConfig: entry.value
-            );
-            debugPrint('Field ${entry.key} hidden condition = $isHidden');
+            if (debuggedFields < 5) { // Limiter à 5 champs maximum
+              final isHidden = formDataProcessor.isFieldHidden(
+                entry.key, 
+                evaluationContext,
+                fieldConfig: entry.value
+              );
+              debugPrint('Field ${entry.key} hidden condition = $isHidden');
+              debuggedFields++;
+            }
           }
         }
       }
@@ -252,11 +255,43 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       // Les conditions de visibilité seront réévaluées lors de la prochaine construction
     });
   }
+  
+  /// Détermine si un champ est critique (peut affecter la visibilité d'autres champs)
+  bool _isCriticalField(String fieldName) {
+    // 1. Les champs de taxonomie sont toujours critiques
+    if (fieldName == 'cd_nom' || fieldName.contains('cd_nom')) {
+      return true;
+    }
+    
+    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés 
+    // dans les expressions 'hidden' d'autres champs
+    final Set<String> referencedFields = {};
+    
+    for (final entry in _unifiedSchema.entries) {
+      if (entry.value.containsKey('hidden') && entry.value['hidden'] is String) {
+        final String hiddenExpr = entry.value['hidden'] as String;
+        
+        // Analyser l'expression pour trouver les noms de champs référencés
+        // Pattern: value['nom_du_champ']
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]");
+        final matches = fieldRefPattern.allMatches(hiddenExpr);
+        
+        for (final match in matches) {
+          if (match.groupCount >= 1) {
+            referencedFields.add(match.group(1)!);
+          }
+        }
+      }
+    }
+    
+    // 3. Vérifier si le champ courant est référencé dans des expressions hidden
+    return referencedFields.contains(fieldName);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Débogage: afficher les valeurs actuelles
-    debugPrint('Building form with values: $_formValues');
+    // Débogage: limiter les logs pour éviter la surcharge
+    // debugPrint('Building form with values: $_formValues');
     
     return Form(
       key: _formKey,
@@ -288,40 +323,74 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   
   // Construire les champs avec une clé basée sur les valeurs
   List<Widget> buildFormFieldsWithKey() {
-    // Utiliser une clé basée sur un hash des valeurs les plus importantes 
-    // qui pourraient affecter la visibilité (par exemple cd_nom)
+    // Utiliser une clé basée sur un hash des valeurs des champs critiques
     // Cette approche force la reconstruction quand ces valeurs changent
     final keyValues = <String, dynamic>{};
     
-    // Collecter toutes les valeurs qui pourraient affecter la visibilité d'autres champs
+    // Identifier tous les champs critiques qui pourraient affecter la visibilité
+    final Set<String> criticalFields = _getAllCriticalFields();
     
-    // 1. Le cd_nom principal
-    if (_formValues.containsKey('cd_nom')) {
-      keyValues['cd_nom'] = _formValues['cd_nom'];
-    }
-    
-    // 2. Tout autre champ qui pourrait être un cd_nom ou affecter la visibilité
-    for (final key in _formValues.keys) {
-      if (key != 'cd_nom' && (key.contains('cd_nom') || key.contains('espece'))) {
-        keyValues[key] = _formValues[key];
+    // Collecter les valeurs des champs critiques pour la clé
+    for (final fieldName in criticalFields) {
+      if (_formValues.containsKey(fieldName)) {
+        keyValues[fieldName] = _formValues[fieldName];
       }
     }
     
     // Ajouter la valeur actuelle du chainInput
     keyValues['chainInput'] = widget.chainInput;
     
-    debugPrint('Form reconstruction key: ${keyValues.toString()}');
-    
     // Construire les champs normalement
     final formFields = _buildFormFields();
+    
+    // Clé unique basée sur les valeurs importantes
+    // Convertir en string de manière déterministe pour éviter les rebuilds inutiles
+    final entriesList = keyValues.entries.toList();
+    entriesList.sort((a, b) => a.key.compareTo(b.key));
+    final keyString = entriesList
+        .map((e) => '${e.key}:${e.value}')
+        .join(',');
     
     // Envelopper dans un widget avec clé
     return [
       KeyedSubtree(
-        key: ValueKey(keyValues.toString()),
+        key: ValueKey(keyString),
         child: Column(children: formFields),
       ),
     ];
+  }
+  
+  /// Identifie tous les champs critiques qui pourraient affecter la visibilité
+  Set<String> _getAllCriticalFields() {
+    final Set<String> criticalFields = {};
+    
+    // 1. Les champs de taxonomie sont toujours critiques
+    for (final key in _formValues.keys) {
+      if (key == 'cd_nom' || key.contains('cd_nom') || key.contains('espece')) {
+        criticalFields.add(key);
+      }
+    }
+    
+    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés 
+    // dans les expressions 'hidden' d'autres champs
+    for (final entry in _unifiedSchema.entries) {
+      if (entry.value.containsKey('hidden') && entry.value['hidden'] is String) {
+        final String hiddenExpr = entry.value['hidden'] as String;
+        
+        // Analyser l'expression pour trouver les noms de champs référencés
+        // Pattern: value['nom_du_champ']
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]");
+        final matches = fieldRefPattern.allMatches(hiddenExpr);
+        
+        for (final match in matches) {
+          if (match.groupCount >= 1) {
+            criticalFields.add(match.group(1)!);
+          }
+        }
+      }
+    }
+    
+    return criticalFields;
   }
 
   List<Widget> _buildFormFields() {
@@ -888,7 +957,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
     // Initialiser la valeur si elle n'existe pas ou n'est pas une liste
-    if (_formValues[fieldName] == null || !(_formValues[fieldName] is List)) {
+    if (_formValues[fieldName] == null || _formValues[fieldName] is! List) {
       _formValues[fieldName] = <int>[];
     }
 
@@ -968,7 +1037,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
               color:
-                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(4.0),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
@@ -1152,7 +1221,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 activeColor: Theme.of(context).colorScheme.primary,
                 dense: true,
               );
-            }).toList(),
+            }),
           ],
         ),
       );

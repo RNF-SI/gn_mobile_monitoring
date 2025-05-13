@@ -53,6 +53,8 @@ class HiddenExpressionEvaluator {
       // Évaluer l'expression en fonction de son type
       return _evaluateExpressionBody(body, params, context);
     } catch (e) {
+      // Log l'erreur pour faciliter le débogage
+      debugPrint('Erreur lors de l\'évaluation de l\'expression: $e');
       return null;
     }
   }

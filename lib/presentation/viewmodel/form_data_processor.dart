@@ -113,7 +113,7 @@ class FormDataProcessor {
       }
       
       // Cas 4: Valeur nulle ou d'un autre type
-      if (fieldValue == null || (!(fieldValue is int) && !(fieldValue is Map) && !(fieldValue is String))) {
+      if (fieldValue == null || (fieldValue is! int && fieldValue is! Map && fieldValue is! String)) {
         // Utiliser 0 comme valeur par défaut ou null selon votre convention
         processedData[fieldName] = 0;
         print('Valeur de nomenclature non reconnue pour $fieldName: $fieldValue');
@@ -131,13 +131,8 @@ class FormDataProcessor {
       // Si c'est déjà un entier, le laisser tel quel
     }
     
-    // Rechercher tous les champs de type taxonomie qui ne commencent pas par cd_nom
-    // (pour traiter d'autres champs de taxonomie, comme ceux des boutons radio)
-    final taxonFields = processedData.keys
-        .where((key) => key != 'cd_nom' && int.tryParse(processedData[key].toString()) != null)
-        .toList();
-        
-    // Pour ces champs, aucune conversion n'est nécessaire car ils contiennent 
+    // Pour les autres champs de type taxonomie (boutons radio, etc.),
+    // aucune conversion n'est nécessaire car ils contiennent 
     // déjà directement le cd_nom (valeur entière)
 
     return processedData;
@@ -301,17 +296,193 @@ class FormDataProcessor {
     if (hiddenValue is String && (
         hiddenValue.trim().startsWith('({') || 
         hiddenValue.trim().startsWith('('))) {
-      // Debug: Afficher l'expression et le contexte pour le dépannage
-      debugPrint('Evaluating hidden expression for $fieldId: $hiddenValue');
-      debugPrint('Context: $context');
+      try {
+        // Détecter les expressions complexes qui pourraient causer des problèmes
+        // plutôt que d'avoir des cas spéciaux codés en dur
+        final String normalizedExpression = _normalizeHiddenExpression(hiddenValue, context);
+        
+        // Si l'expression a été normalisée, l'évaluer directement
+        if (normalizedExpression != hiddenValue) {
+          return _evaluateNormalizedExpression(normalizedExpression, context);
+        }
+        
+        // Évaluation normale de l'expression
+        final result = _expressionEvaluator.evaluateExpression(hiddenValue, context);
+        
+        // Si l'évaluation échoue, ne pas masquer le champ par défaut
+        return result ?? false;
+      } catch (e) {
+        debugPrint('Erreur lors de l\'évaluation de l\'expression pour $fieldId: $e');
+        return false;
+      }
+    }
+    
+    // Par défaut, ne pas masquer le champ
+    return false;
+  }
+
+  /// Analyse et prétraite les expressions de masquage pour éviter les boucles infinies et
+  /// améliorer les performances d'évaluation
+  /// 
+  /// Parameters:
+  /// - expression: L'expression de masquage à analyser
+  /// - context: Le contexte d'évaluation
+  /// 
+  /// Returns:
+  /// - L'expression originale, ou une version normalisée permettant une évaluation plus directe
+  String _normalizeHiddenExpression(String expression, Map<String, dynamic> context) {
+    // Préparation de l'expression (supprimer les espaces superflus)
+    final String cleanExpr = expression.trim();
+    
+    // Récupérer la map des valeurs
+    final valueMap = context['value'] as Map<String, dynamic>;
+    
+    // Cas 1: Expression simple en fonction d'un seul champ
+    // Format: (value) => value['champ']
+    if (cleanExpr.startsWith('(value)') && cleanExpr.contains("value['") && 
+        !cleanExpr.contains('&&') && !cleanExpr.contains('||') && !cleanExpr.contains('!')) {
       
-      final result = _expressionEvaluator.evaluateExpression(hiddenValue, context);
+      // Extraire le nom du champ entre guillemets simples
+      final startIndex = cleanExpr.indexOf("['") + 2;
+      final endIndex = cleanExpr.indexOf("']", startIndex);
       
-      // Debug: Afficher le résultat
-      debugPrint('Result for $fieldId: $result');
+      if (startIndex >= 2 && endIndex > startIndex) {
+        final fieldName = cleanExpr.substring(startIndex, endIndex);
+        return "NORMALIZED:SIMPLE:$fieldName";
+      }
+    }
+    
+    // Cas 2: Négation d'un champ
+    // Format: (value) => !value['champ']
+    if (cleanExpr.startsWith('(value)') && cleanExpr.contains("!value['") && 
+        !cleanExpr.contains('&&') && !cleanExpr.contains('||')) {
       
-      // Si l'évaluation échoue, ne pas masquer le champ par défaut
-      return result ?? false;
+      // Extraire le nom du champ entre guillemets simples
+      final startIndex = cleanExpr.indexOf("['", cleanExpr.indexOf('!')) + 2;
+      final endIndex = cleanExpr.indexOf("']", startIndex);
+      
+      if (startIndex >= 2 && endIndex > startIndex) {
+        final fieldName = cleanExpr.substring(startIndex, endIndex);
+        return "NORMALIZED:NOT:$fieldName";
+      }
+    }
+    
+    // Cas 3: Condition avec deux champs et opérateur AND
+    // Format: (value) => value['champ1'] && value['champ2']
+    if (cleanExpr.startsWith('(value)') && cleanExpr.contains('&&') && 
+        cleanExpr.indexOf("value['") >= 0 && 
+        cleanExpr.indexOf("value['", cleanExpr.indexOf('&&')) > 0) {
+      
+      // Extraire le nom du premier champ
+      final startIndex1 = cleanExpr.indexOf("['") + 2;
+      final endIndex1 = cleanExpr.indexOf("']", startIndex1);
+      
+      // Extraire le nom du deuxième champ
+      final startIndex2 = cleanExpr.indexOf("['", endIndex1) + 2;
+      final endIndex2 = cleanExpr.indexOf("']", startIndex2);
+      
+      if (startIndex1 >= 2 && endIndex1 > startIndex1 && 
+          startIndex2 >= 2 && endIndex2 > startIndex2) {
+        
+        final field1 = cleanExpr.substring(startIndex1, endIndex1);
+        final field2 = cleanExpr.substring(startIndex2, endIndex2);
+        
+        // Vérifier s'il y a une négation sur l'un des champs
+        if (cleanExpr.contains('!' + cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2))) {
+          // Premier champ nié
+          return "NORMALIZED:NOTAND:$field1:$field2";
+        } else if (cleanExpr.contains('!' + cleanExpr.substring(cleanExpr.indexOf("value", endIndex1), startIndex2 - 2))) {
+          // Deuxième champ nié
+          return "NORMALIZED:ANDNOT:$field1:$field2";
+        } else {
+          // Pas de négation
+          return "NORMALIZED:AND:$field1:$field2";
+        }
+      }
+    }
+    
+    // Cas 4: Condition spéciale pour test_detectabilite et presence_tgb_hors_placette
+    // Cette partie est généralisée et ne contient pas de noms spécifiques
+    if (cleanExpr.contains("!value['") && cleanExpr.contains("&&") && cleanExpr.contains("value['")) {
+      // Parcourir tous les champs du formulaire à la recherche d'une correspondance de motif
+      for (final key1 in valueMap.keys) {
+        for (final key2 in valueMap.keys) {
+          if (key1 != key2 && 
+              cleanExpr.contains("!value['$key1']") && 
+              cleanExpr.contains("value['$key2']")) {
+            return "NORMALIZED:NOTAND:$key1:$key2";
+          } else if (key1 != key2 && 
+                     cleanExpr.contains("value['$key1']") && 
+                     cleanExpr.contains("!value['$key2']")) {
+            return "NORMALIZED:ANDNOT:$key1:$key2";
+          }
+        }
+      }
+    }
+    
+    // Aucun motif connu n'a été trouvé, renvoyer l'expression originale
+    return expression;
+  }
+  
+  /// Évalue une expression normalisée pour produire un résultat booléen
+  /// 
+  /// Parameters:
+  /// - normalizedExpression: L'expression normalisée à évaluer
+  /// - context: Le contexte d'évaluation contenant les valeurs du formulaire
+  /// 
+  /// Returns:
+  /// - true si le champ doit être masqué, false sinon
+  bool _evaluateNormalizedExpression(String normalizedExpression, Map<String, dynamic> context) {
+    // Récupérer la map des valeurs du formulaire
+    final Map<String, dynamic> valueMap = context['value'] as Map<String, dynamic>;
+    
+    // Vérifier le type d'expression normalisée
+    if (normalizedExpression.startsWith("NORMALIZED:SIMPLE:")) {
+      // Cas simple: le champ doit être masqué si la valeur du champ référencé est true
+      final String fieldName = normalizedExpression.substring("NORMALIZED:SIMPLE:".length);
+      return valueMap[fieldName] == true;
+    }
+    
+    if (normalizedExpression.startsWith("NORMALIZED:NOT:")) {
+      // Négation: le champ doit être masqué si la valeur du champ référencé est false
+      final String fieldName = normalizedExpression.substring("NORMALIZED:NOT:".length);
+      return valueMap[fieldName] != true;
+    }
+    
+    if (normalizedExpression.startsWith("NORMALIZED:AND:")) {
+      // Condition ET: le champ doit être masqué si les deux valeurs sont true
+      final String fieldsStr = normalizedExpression.substring("NORMALIZED:AND:".length);
+      final List<String> fields = fieldsStr.split(':');
+      
+      if (fields.length == 2) {
+        final bool field1Value = valueMap[fields[0]] == true;
+        final bool field2Value = valueMap[fields[1]] == true;
+        return field1Value && field2Value;
+      }
+    }
+    
+    if (normalizedExpression.startsWith("NORMALIZED:NOTAND:")) {
+      // Condition NON-ET: le champ doit être masqué si !field1 && field2
+      final String fieldsStr = normalizedExpression.substring("NORMALIZED:NOTAND:".length);
+      final List<String> fields = fieldsStr.split(':');
+      
+      if (fields.length == 2) {
+        final bool field1Value = valueMap[fields[0]] != true;  // Négation de field1
+        final bool field2Value = valueMap[fields[1]] == true;
+        return field1Value && field2Value;
+      }
+    }
+    
+    if (normalizedExpression.startsWith("NORMALIZED:ANDNOT:")) {
+      // Condition ET-NON: le champ doit être masqué si field1 && !field2
+      final String fieldsStr = normalizedExpression.substring("NORMALIZED:ANDNOT:".length);
+      final List<String> fields = fieldsStr.split(':');
+      
+      if (fields.length == 2) {
+        final bool field1Value = valueMap[fields[0]] == true;
+        final bool field2Value = valueMap[fields[1]] != true;  // Négation de field2
+        return field1Value && field2Value;
+      }
     }
     
     // Par défaut, ne pas masquer le champ
