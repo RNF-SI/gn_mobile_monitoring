@@ -27,7 +27,7 @@ class AuthChecker extends ConsumerWidget {
         }
       },
       loading: () => const LoadingScreen(),
-      error: (e, trace) => ErrorScreen(e.toString()),
+      error: (e, trace) => ErrorScreen.simple(e),
     );
   }
 }
