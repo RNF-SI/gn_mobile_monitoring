@@ -15,7 +15,7 @@ class ErrorScreen extends StatelessWidget {
   final IconData icon;
 
   const ErrorScreen({
-    Key? key,
+    super.key,
     this.title = 'Une erreur s\'est produite',
     required this.message,
     this.error,
@@ -23,7 +23,7 @@ class ErrorScreen extends StatelessWidget {
     this.onRetry,
     this.onGoBack,
     this.icon = Icons.error_outline,
-  }) : super(key: key);
+  });
 
   /// Constructeur pratique pour les cas d'erreur simple
   ErrorScreen.simple(
@@ -117,8 +117,8 @@ class ErrorScreen extends StatelessWidget {
               if (error != null && stackTrace != null) ...[
                 const SizedBox(height: 24),
                 _TechnicalDetailsExpansion(
-                  error: error,
-                  stackTrace: stackTrace,
+                  error: error!,
+                  stackTrace: stackTrace!,
                 ),
               ],
             ],
