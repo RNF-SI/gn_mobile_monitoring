@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
@@ -100,7 +102,17 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     // Ajouter les données complémentaires si disponibles
     if (module.complement?.data != null) {
-      data.addAll(module.complement!.data as Map<String, dynamic>);
+      // Le champ data est de type String?, nous devons donc le parser en JSON
+      try {
+        final Map<String, dynamic> parsedData = 
+            module.complement!.data != null ? 
+            Map<String, dynamic>.from(json.decode(module.complement!.data!)) : 
+            {};
+        data.addAll(parsedData);
+      } catch (e) {
+        // En cas d'erreur de parsing, on ignore silencieusement
+        print('Erreur de parsing des données complémentaires: $e');
+      }
     }
 
     return data;
