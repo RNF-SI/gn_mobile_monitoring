@@ -414,7 +414,7 @@ class MenuActions extends ConsumerWidget {
     }
 
     // Démarrer la synchronisation avec les options sélectionnées
-    await ref.read(syncServiceProvider.notifier).syncAll(
+    await ref.read(syncServiceProvider.notifier).syncFromServer(
           ref,
           syncConfiguration: syncConfiguration,
           syncNomenclatures: syncNomenclatures,

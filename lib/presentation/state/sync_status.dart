@@ -6,6 +6,8 @@ part 'sync_status.freezed.dart';
 
 /// Représente les différentes étapes du processus de synchronisation
 enum SyncStep {
+  // === Étapes de synchronisation DESCENDANTE (serveur -> appareil) ===
+  // Ces étapes sont pour le téléchargement des données depuis le serveur
   configuration,
   nomenclatures,
   taxons,
@@ -13,6 +15,13 @@ enum SyncStep {
   modules,
   sites,
   siteGroups,
+  
+  // === Étapes de synchronisation ASCENDANTE (appareil -> serveur) ===
+  // Ces étapes sont pour l'envoi des données vers le serveur
+  // Une fois envoyées et confirmées par le serveur, les données sont supprimées localement
+  visitsToServer,
+  observationsToServer,
+  observationDetailsToServer,
 }
 
 /// Représente les différents états de synchronisation

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
@@ -25,6 +26,7 @@ final syncServiceProvider =
     syncUseCase,
     getLastSyncDateUseCase,
     updateLastSyncDateUseCase,
+    ref.read(syncRepositoryProvider),
   );
 });
 
@@ -40,9 +42,12 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
   final Map<String, SyncResult> _syncResults = {};
-  
+
   // Liste globale de tous les conflits pour les retrouver même après changement d'état
   final List<SyncConflict> allConflicts = [];
+
+  // Repository pour la synchronisation
+  final SyncRepository _syncRepository;
 
   // Date de la dernière synchronisation complète
   DateTime? _lastFullSync;
@@ -58,6 +63,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     this._syncUseCase,
     this._getLastSyncDateUseCase,
     this._updateLastSyncDateUseCase,
+    this._syncRepository,
   ) : super(SyncStatus.initial()) {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
@@ -71,8 +77,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         now.isAfter(_lastFullSync!.add(fullSyncInterval));
   }
 
-  /// Démarre une synchronisation complète des données
-  Future<SyncStatus> syncAll(
+  /// Démarre une synchronisation complète des données (téléchargement depuis le serveur)
+  /// Ce type de synchronisation est pour récupérer les données du serveur vers l'appareil mobile
+  Future<SyncStatus> syncFromServer(
     WidgetRef ref, {
     bool syncConfiguration = true,
     bool syncNomenclatures = true,
@@ -81,8 +88,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
-    bool isManualSync =
-        true, // Indique si cette synchronisation est déclenchée manuellement
+    bool isManualSync = true, // Indique si cette synchronisation est déclenchée manuellement
   }) async {
     if (_isSyncing) {
       return state; // Ne pas synchroniser si déjà en cours
@@ -96,7 +102,8 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     final List<SyncStep> completedSteps = [];
     final List<SyncStep> failedSteps = [];
-    final List<SyncConflict> allConflicts = [];
+    // On n'utilise pas ici une liste de conflits locale
+    // car nous utilisons la liste globale allConflicts de la classe
     final List<String> errorMessages =
         []; // Pour collecter les messages d'erreur
     int totalItemsProcessed = 0;
@@ -295,10 +302,12 @@ class SyncService extends StateNotifier<SyncStatus> {
         );
 
         try {
-          debugPrint('SyncService - Démarrage de la synchronisation des taxons');
+          debugPrint(
+              'SyncService - Démarrage de la synchronisation des taxons');
           final taxonsResult = await _executeSingleSync(token, 'taxons');
           if (taxonsResult.success) {
-            debugPrint('SyncService - Synchronisation des taxons réussie avec ${taxonsResult.itemsAdded} ajouts et ${taxonsResult.itemsUpdated} mises à jour');
+            debugPrint(
+                'SyncService - Synchronisation des taxons réussie avec ${taxonsResult.itemsAdded} ajouts et ${taxonsResult.itemsUpdated} mises à jour');
             completedSteps.add(SyncStep.taxons);
 
             // Mise à jour avec le nouveau résumé incluant cette étape
@@ -315,7 +324,8 @@ class SyncService extends StateNotifier<SyncStatus> {
               additionalInfo: updatedSummary,
             );
           } else {
-            debugPrint('SyncService - Échec de la synchronisation des taxons: ${taxonsResult.errorMessage}');
+            debugPrint(
+                'SyncService - Échec de la synchronisation des taxons: ${taxonsResult.errorMessage}');
             failedSteps.add(SyncStep.taxons);
           }
           totalItemsProcessed += 1;
@@ -381,8 +391,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Modules de suivi",
           additionalInfo: currentSummary.isNotEmpty
-              ? currentSummary +
-                  "\n\nTéléchargement des modules, formulaires et configurations..."
+              ? "$currentSummary\n\nTéléchargement des modules, formulaires et configurations..."
               : "Téléchargement des modules, formulaires et configurations...",
         );
 
@@ -427,7 +436,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Sites",
           additionalInfo: currentSummary.isNotEmpty
-              ? currentSummary + "\n\nTéléchargement des sites..."
+              ? "$currentSummary\n\nTéléchargement des sites..."
               : "Téléchargement des sites...",
         );
 
@@ -472,7 +481,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Groupes de sites",
           additionalInfo: currentSummary.isNotEmpty
-              ? currentSummary + "\n\nTéléchargement des groupes de sites..."
+              ? "$currentSummary\n\nTéléchargement des groupes de sites..."
               : "Téléchargement des groupes de sites...",
         );
 
@@ -507,15 +516,17 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
       }
 
-      // La synchronisation des observations sera ajoutée dans une future version
 
       // Générer un résumé des statistiques de synchronisation
       final syncSummary = getSyncSummary();
 
       // Construire l'état final avec le résumé des statistiques
       // IMPORTANT: Les conflits peuvent être perdus ou remplacés dans l'état, vérifions dans notre collection globale
-      if (_syncResults.containsKey('taxons') && _syncResults['taxons']!.conflicts != null && _syncResults['taxons']!.conflicts!.isNotEmpty) {
-        debugPrint('Récupération de ${_syncResults["taxons"]!.conflicts!.length} conflits du résultat de synchronisation des taxons');
+      if (_syncResults.containsKey('taxons') &&
+          _syncResults['taxons']!.conflicts != null &&
+          _syncResults['taxons']!.conflicts!.isNotEmpty) {
+        debugPrint(
+            'Récupération de ${_syncResults["taxons"]!.conflicts!.length} conflits du résultat de synchronisation des taxons');
         // Assurons-nous que tous les conflits sont bien dans notre liste globale
         allConflicts.addAll(_syncResults['taxons']!.conflicts!);
       }
@@ -534,19 +545,25 @@ class SyncService extends StateNotifier<SyncStatus> {
 
         // Déterminer le message adapté selon le type de conflit
         String conflictMessage = "Des conflits ont été détectés";
-        final hasTaxonConflicts = allConflicts.any((c) => c.referencedEntityType == 'taxon');
-        final hasNomenclatureConflicts = allConflicts.any((c) => c.referencedEntityType == 'nomenclature');
-        
+        final hasTaxonConflicts =
+            allConflicts.any((c) => c.referencedEntityType == 'taxon');
+        final hasNomenclatureConflicts =
+            allConflicts.any((c) => c.referencedEntityType == 'nomenclature');
+
         if (hasTaxonConflicts && hasNomenclatureConflicts) {
-          conflictMessage += ": Certains taxons et nomenclatures supprimés sont encore référencés par des entités.";
+          conflictMessage +=
+              ": Certains taxons et nomenclatures supprimés sont encore référencés par des entités.";
         } else if (hasTaxonConflicts) {
-          conflictMessage += ": Certains taxons supprimés sont encore référencés par des observations.";
+          conflictMessage +=
+              ": Certains taxons supprimés sont encore référencés par des observations.";
         } else if (hasNomenclatureConflicts) {
-          conflictMessage += ": Certaines nomenclatures supprimées sont encore référencées par des entités.";
+          conflictMessage +=
+              ": Certaines nomenclatures supprimées sont encore référencées par des entités.";
         } else {
-          conflictMessage += ": Certaines entités supprimées sont encore référencées par d'autres entités.";
+          conflictMessage +=
+              ": Certaines entités supprimées sont encore référencées par d'autres entités.";
         }
-        
+
         // Des conflits ont été détectés
         final newState = SyncStatus.conflictDetected(
           conflicts: allConflicts,
@@ -647,7 +664,8 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Exécute une seule étape de synchronisation
-  Future<SyncResult> _executeSingleSync(String token, String stepKey) async {
+  Future<SyncResult> _executeSingleSync(String token, String stepKey,
+      {String? moduleCode}) async {
     debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
 
     final Map<String, dynamic> params = {
@@ -658,6 +676,9 @@ class SyncService extends StateNotifier<SyncStatus> {
       'syncModules': false,
       'syncSites': false,
       'syncSiteGroups': false,
+      'syncVisitsToServer': false,
+      'syncObservationsToServer': false,
+      'syncObservationDetailsToServer': false,
     };
 
     // Activer uniquement l'étape spécifiée
@@ -684,9 +705,52 @@ class SyncService extends StateNotifier<SyncStatus> {
       case 'siteGroups':
         params['syncSiteGroups'] = true;
         break;
+      case 'visitsToServer':
+        params['syncVisitsToServer'] = true;
+        break;
+      case 'observationsToServer':
+        params['syncObservationsToServer'] = true;
+        break;
+      case 'observationDetailsToServer':
+        params['syncObservationDetailsToServer'] = true;
+        break;
     }
 
-    // Exécuter la synchronisation pour cette étape uniquement
+    // Si c'est une synchronisation de données vers le serveur, utiliser un cas spécial
+    if (params['syncVisitsToServer'] ||
+        params['syncObservationsToServer'] ||
+        params['syncObservationDetailsToServer']) {
+      if (moduleCode == null) {
+        return SyncResult.failure(
+          errorMessage: 'Module code is required for server upload operations',
+        );
+      }
+
+      SyncResult result;
+      if (params['syncVisitsToServer']) {
+        result = await _syncRepository.syncVisitsToServer(token, moduleCode);
+      } else if (params['syncObservationsToServer']) {
+        // Normalement, pour syncObservationsToServer, il faudrait un ID de visite
+        // Mais comme on ne l'a pas ici, on enverra une erreur
+        return SyncResult.failure(
+          errorMessage:
+              'Visit ID is required for observation upload operations',
+        );
+      } else {
+        // Normalement, pour syncObservationDetailsToServer, il faudrait un ID d'observation
+        // Mais comme on ne l'a pas ici, on enverra une erreur
+        return SyncResult.failure(
+          errorMessage:
+              'Observation ID is required for observation detail upload operations',
+        );
+      }
+
+      // Stocker le résultat et le retourner
+      _syncResults[stepKey] = result;
+      return result;
+    }
+
+    // Pour les autres types de synchronisation, utiliser le cas normal
     final results = await _syncUseCase.execute(
       token,
       syncConfiguration: params['syncConfiguration'],
@@ -745,6 +809,18 @@ class SyncService extends StateNotifier<SyncStatus> {
             entityName = "Groupes de sites";
             currentStep = SyncStep.siteGroups;
             break;
+          case 'visitsToServer':
+            entityName = "Visites (envoi)";
+            currentStep = SyncStep.visitsToServer;
+            break;
+          case 'observationsToServer':
+            entityName = "Observations (envoi)";
+            currentStep = SyncStep.observationsToServer;
+            break;
+          case 'observationDetailsToServer':
+            entityName = "Détails d'observations (envoi)";
+            currentStep = SyncStep.observationDetailsToServer;
+            break;
           default:
             entityName = "Configuration";
             currentStep = SyncStep.configuration;
@@ -772,18 +848,21 @@ class SyncService extends StateNotifier<SyncStatus> {
         debugPrint('État après mise à jour: ${state.state.toString()}');
         debugPrint(
             'Nombre de conflits dans le nouvel état: ${state.conflicts?.length ?? 0}');
-        
+
         // IMPORTANT: Ajouter les conflits à la liste globale pour pouvoir les retrouver
         // dans le résultat final même si l'état est ensuite modifié
         if (result.conflicts != null && result.conflicts!.isNotEmpty) {
           // Cette ligne est critique pour s'assurer que les conflits sont propagés au processus principal
           allConflicts.addAll(result.conflicts!);
-          debugPrint('Ajout de ${result.conflicts!.length} conflits au total, maintenant ${allConflicts.length} conflits');
+          debugPrint(
+              'Ajout de ${result.conflicts!.length} conflits au total, maintenant ${allConflicts.length} conflits');
         }
       }
 
       // Si ce sont des nomenclatures et qu'il y a des conflits, assurons-nous que l'état est correctement mis à jour
-      if ((stepKey == 'nomenclatures' || stepKey == 'nomenclatures_datasets' || stepKey == 'taxons') &&
+      if ((stepKey == 'nomenclatures' ||
+              stepKey == 'nomenclatures_datasets' ||
+              stepKey == 'taxons') &&
           result.conflicts != null &&
           result.conflicts!.isNotEmpty) {
         // Forcer une mise à jour de l'état après un court délai pour s'assurer que les changements sont appliqués
@@ -804,8 +883,11 @@ class SyncService extends StateNotifier<SyncStatus> {
               itemsDeleted: result.itemsDeleted,
               additionalInfo: result.errorMessage ??
                   "Des références supprimées sont toujours utilisées par des entités.",
-              currentEntityName: stepKey == "taxons" ? "Taxons" : "Nomenclatures",
-              currentStep: stepKey == "taxons" ? SyncStep.taxons : SyncStep.nomenclatures,
+              currentEntityName:
+                  stepKey == "taxons" ? "Taxons" : "Nomenclatures",
+              currentStep: stepKey == "taxons"
+                  ? SyncStep.taxons
+                  : SyncStep.nomenclatures,
             );
 
             state = newState;
@@ -843,6 +925,12 @@ class SyncService extends StateNotifier<SyncStatus> {
         return SyncStep.sites;
       case 'siteGroups':
         return SyncStep.siteGroups;
+      case 'visitsToServer':
+        return SyncStep.visitsToServer;
+      case 'observationsToServer':
+        return SyncStep.observationsToServer;
+      case 'observationDetailsToServer':
+        return SyncStep.observationDetailsToServer;
       default:
         return SyncStep.configuration; // Valeur par défaut
     }
@@ -887,7 +975,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   void startAutoSync(WidgetRef ref,
       {Duration period = const Duration(minutes: 30)}) {
     _autoSyncTimer?.cancel();
-    _autoSyncTimer = Timer.periodic(period, (_) => syncAll(ref));
+    _autoSyncTimer = Timer.periodic(period, (_) => syncFromServer(ref));
   }
 
   /// Arrête la synchronisation automatique
@@ -995,7 +1083,9 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
   }
 
-  /// Planifie la prochaine synchronisation automatique
+  // Cette méthode est commentée car elle n'est pas utilisée actuellement
+  // Elle pourrait être utilisée à l'avenir pour implémenter la synchronisation automatique
+  /*
   void _scheduleAutoSync(WidgetRef ref) {
     // Vérifier si une synchronisation complète est nécessaire
     final now = DateTime.now();
@@ -1008,6 +1098,155 @@ class SyncService extends StateNotifier<SyncStatus> {
     } else {
       // Planifier une vérification régulière
       startAutoSync(ref, period: const Duration(hours: 2));
+    }
+  }
+  */
+  
+  /// Démarre la synchronisation des données vers le serveur (envoi des données locales)
+  /// Ce type de synchronisation est pour envoyer les données de l'appareil mobile vers le serveur
+  /// Les données sont supprimées de l'appareil seulement après confirmation de réception par le serveur
+  Future<SyncStatus> syncToServer(
+    WidgetRef ref, {
+    required String moduleCode,
+    bool isManualSync = true,
+  }) async {
+    if (_isSyncing) {
+      return state; // Ne pas synchroniser si déjà en cours
+    }
+
+    _isSyncing = true;
+    debugPrint('Démarrage de syncToServer pour le module $moduleCode');
+
+    // Réinitialiser les résultats au début d'une nouvelle synchronisation
+    _syncResults.clear();
+
+    final List<SyncStep> completedSteps = [];
+    final List<SyncStep> failedSteps = [];
+    // N'utilisons pas de liste locale pour les conflits
+    final List<String> errorMessages = [];
+    int totalItemsProcessed = 0;
+    int totalItemsToProcess = 1; // Une seule étape pour cette synchronisation
+
+    try {
+      final token = await _getTokenUseCase.execute();
+
+      if (token == null) {
+        _isSyncing = false;
+        final newState = SyncStatus.failure(
+          errorMessage: 'Utilisateur non connecté',
+          completedSteps: [],
+          failedSteps: [],
+          itemsProcessed: 0,
+          itemsTotal: 0,
+        );
+        state = newState;
+        return newState;
+      }
+
+      // Initialiser le statut de synchronisation
+      state = SyncStatus.inProgress(
+        currentStep: SyncStep.visitsToServer,
+        completedSteps: [],
+        itemsProcessed: 0,
+        itemsTotal: totalItemsToProcess,
+        currentEntityName: "Visites (envoi)",
+      );
+
+      try {
+        debugPrint('Démarrage de la synchronisation des visites vers le serveur');
+        
+        final result = await _executeSingleSync(token, 'visitsToServer', moduleCode: moduleCode);
+        
+        // Ajouter les statistiques
+        if (result.success) {
+          completedSteps.add(SyncStep.visitsToServer);
+          
+          // Mettre à jour avec le nouveau résumé incluant cette étape
+          final updatedSummary = "Synchronisation des visites terminée avec succès:\n"
+              "• ${result.itemsAdded} visites envoyées\n"
+              "• ${result.itemsDeleted} visites supprimées localement";
+              
+          state = SyncStatus.inProgress(
+            currentStep: SyncStep.visitsToServer,
+            completedSteps: completedSteps,
+            itemsProcessed: 1,
+            itemsTotal: totalItemsToProcess,
+            currentEntityName: "Visites (envoi)",
+            itemsAdded: result.itemsAdded,
+            itemsUpdated: result.itemsUpdated,
+            itemsSkipped: result.itemsSkipped,
+            itemsDeleted: result.itemsDeleted,
+            additionalInfo: updatedSummary,
+          );
+          
+          debugPrint('Synchronisation des visites vers le serveur terminée avec succès');
+          debugPrint('Statistiques: ${result.itemsAdded} ajoutées, ${result.itemsDeleted} supprimées');
+        } else {
+          failedSteps.add(SyncStep.visitsToServer);
+          if (result.errorMessage != null) {
+            errorMessages.add('Visites: ${result.errorMessage}');
+          }
+          debugPrint('Échec de la synchronisation des visites vers le serveur: ${result.errorMessage}');
+        }
+        totalItemsProcessed += 1;
+      } catch (e) {
+        failedSteps.add(SyncStep.visitsToServer);
+        totalItemsProcessed += 1;
+        debugPrint('Erreur lors de la synchronisation des visites vers le serveur: $e');
+        errorMessages.add('Erreur: $e');
+      }
+
+      // Générer un résumé des statistiques de synchronisation
+      final syncSummary = getSyncSummary();
+
+      // Mettre à jour la date de dernière synchronisation
+      if (isManualSync && completedSteps.isNotEmpty) {
+        await _updateLastSyncDateUseCase.execute(fullSyncKey, DateTime.now());
+        _lastFullSync = DateTime.now();
+      }
+
+      // Construire l'état final
+      SyncStatus newState;
+
+      if (errorMessages.isNotEmpty || failedSteps.isNotEmpty) {
+        // Des erreurs se sont produites
+        newState = SyncStatus.failure(
+          errorMessage: errorMessages.isNotEmpty
+              ? errorMessages.join('\n')
+              : "Des erreurs se sont produites lors de la synchronisation",
+          completedSteps: completedSteps,
+          failedSteps: failedSteps,
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          additionalInfo: syncSummary,
+        );
+      } else {
+        // Tout s'est bien passé
+        newState = SyncStatus.success(
+          completedSteps: completedSteps,
+          itemsProcessed: totalItemsProcessed,
+          additionalInfo: syncSummary,
+        );
+      }
+
+      state = newState;
+      _isSyncing = false;
+      return newState;
+    } catch (e) {
+      // Gérer les erreurs globales
+      debugPrint('Erreur générale lors de la synchronisation ascendante: $e');
+      
+      final newState = SyncStatus.failure(
+        errorMessage: 'Erreur lors de la synchronisation ascendante: $e',
+        completedSteps: completedSteps,
+        failedSteps: failedSteps,
+        itemsProcessed: totalItemsProcessed,
+        itemsTotal: totalItemsToProcess,
+      );
+
+      state = newState;
+      _isSyncing = false;
+      return newState;
     }
   }
 
@@ -1035,7 +1274,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (_isSyncing) return;
 
     try {
-      await syncAll(
+      await syncFromServer(
         ref,
         syncConfiguration: true,
         syncNomenclatures: true,
@@ -1060,6 +1299,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncVisitsToServer = false,
   }) {
     if (syncConfiguration) return SyncStep.configuration;
     if (syncNomenclatures) return SyncStep.nomenclatures;
@@ -1068,6 +1308,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) return SyncStep.modules;
     if (syncSites) return SyncStep.sites;
     if (syncSiteGroups) return SyncStep.siteGroups;
+    if (syncVisitsToServer) return SyncStep.visitsToServer;
 
     return SyncStep.configuration; // Valeur par défaut
   }
@@ -1081,6 +1322,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncVisitsToServer = false,
   }) {
     int count = 0;
     if (syncConfiguration) count++;
@@ -1090,6 +1332,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) count++;
     if (syncSites) count++;
     if (syncSiteGroups) count++;
+    if (syncVisitsToServer) count++;
 
     return count;
   }
@@ -1103,6 +1346,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncVisitsToServer = false,
   }) {
     final steps = <SyncStep>[];
     if (syncConfiguration) steps.add(SyncStep.configuration);
@@ -1112,6 +1356,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) steps.add(SyncStep.modules);
     if (syncSites) steps.add(SyncStep.sites);
     if (syncSiteGroups) steps.add(SyncStep.siteGroups);
+    if (syncVisitsToServer) steps.add(SyncStep.visitsToServer);
 
     return steps;
   }
@@ -1133,6 +1378,12 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'siteGroups';
+      case SyncStep.visitsToServer:
+        return 'visitsToServer';
+      case SyncStep.observationsToServer:
+        return 'observationsToServer';
+      case SyncStep.observationDetailsToServer:
+        return 'observationDetailsToServer';
     }
   }
 
@@ -1153,6 +1404,12 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'groupes de sites';
+      case SyncStep.visitsToServer:
+        return 'envoi des visites';
+      case SyncStep.observationsToServer:
+        return 'envoi des observations';
+      case SyncStep.observationDetailsToServer:
+        return 'envoi des détails d\'observation';
     }
   }
 
