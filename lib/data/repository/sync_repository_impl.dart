@@ -1083,108 +1083,98 @@ class SyncRepositoryImpl implements SyncRepository {
               // Convertir l'entité en domaine en utilisant directement le mapper
               // Si l'entité contient des observateurs problématiques, les prétraiter
               BaseVisit visitModel;
-              // L'entité est toujours de type BaseVisitEntity, donc cette vérification est inutile
-              {
-                // Vérifier si les observateurs doivent être prétraités
-                // Prétraitement des observateurs pour éviter les erreurs
-                List<int> safeObservers = [];
-                if (visit.observers != null) {
-                  logger.i(
-                      "Prétraitement des observateurs : ${visit.observers!.length} observateurs trouvés",
-                      tag: "sync");
 
-                  for (var o in visit.observers!) {
-                    if (o is int) {
-                      // Cas 1: si o est déjà un entier, l'ajouter directement
-                      logger.i("Observateur déjà au format int: $o",
-                          tag: "sync");
-                      safeObservers.add(o);
-                    } else {
-                      // Cas 2: o est un autre type d'objet
-                      logger.i("Observateur de type: ${o.runtimeType}",
-                          tag: "sync");
+              // Vérifier si les observateurs doivent être prétraités
+              // Prétraitement des observateurs pour éviter les erreurs
+              List<int> safeObservers = [];
+              if (visit.observers != null) {
+                logger.i(
+                    "Prétraitement des observateurs : ${visit.observers!.length} observateurs trouvés",
+                    tag: "sync");
+
+                for (var o in visit.observers!) {
+                  if (o is int) {
+                    // Cas 1: si o est déjà un entier, l'ajouter directement
+                    logger.i("Observateur déjà au format int: $o", tag: "sync");
+                    safeObservers.add(o);
+                  } else {
+                    // Cas 2: o est un autre type d'objet
+                    logger.i("Observateur de type: ${o.runtimeType}",
+                        tag: "sync");
+                    try {
+                      // Accéder de manière dynamique et sécurisée aux propriétés
+                      dynamic observerId;
+
+                      // Tester si l'objet ressemble à un CorVisitObserverEntity ou VisitObserver
                       try {
-                        // Accéder de manière dynamique et sécurisée aux propriétés
-                        dynamic observerId;
+                        // Essayer d'accéder à la propriété idRole avec dynamic pour éviter les erreurs de compilation
+                        final dynamic obj = o;
+                        if (obj.idRole != null) {
+                          observerId = obj.idRole;
+                          logger.i("idRole trouvé: $observerId", tag: "sync");
+                        }
+                      } catch (_) {
+                        // Ignorer les erreurs si la propriété n'existe pas
+                      }
 
-                        // Tester si l'objet ressemble à un CorVisitObserverEntity ou VisitObserver
+                      // Si idRole n'a pas fonctionné, essayer id
+                      if (observerId == null) {
                         try {
-                          // Essayer d'accéder à la propriété idRole avec dynamic pour éviter les erreurs de compilation
                           final dynamic obj = o;
-                          if (obj.idRole != null) {
-                            observerId = obj.idRole;
-                            logger.i("idRole trouvé: $observerId", tag: "sync");
+                          if (obj.id != null) {
+                            observerId = obj.id;
+                            logger.i("id trouvé: $observerId", tag: "sync");
                           }
                         } catch (_) {
                           // Ignorer les erreurs si la propriété n'existe pas
                         }
-
-                        // Si idRole n'a pas fonctionné, essayer id
-                        if (observerId == null) {
-                          try {
-                            final dynamic obj = o;
-                            if (obj.id != null) {
-                              observerId = obj.id;
-                              logger.i("id trouvé: $observerId", tag: "sync");
-                            }
-                          } catch (_) {
-                            // Ignorer les erreurs si la propriété n'existe pas
-                          }
-                        }
-
-                        // Utilisier l'ID récupéré s'il est valide
-                        if (observerId is int) {
-                          safeObservers.add(observerId);
-                          logger.i("Ajout de l'observateur id: $observerId",
-                              tag: "sync");
-                        } else {
-                          logger.e(
-                              "Impossible de trouver un ID valide pour l'observateur: $o",
-                              tag: "sync");
-                        }
-                      } catch (e) {
-                        logger.e(
-                            "Erreur lors de l'extraction de l'id observateur: $e",
-                            tag: "sync",
-                            error: e);
                       }
+
+                      // Utilisier l'ID récupéré s'il est valide
+                      if (observerId is int) {
+                        safeObservers.add(observerId);
+                        logger.i("Ajout de l'observateur id: $observerId",
+                            tag: "sync");
+                      } else {
+                        logger.e(
+                            "Impossible de trouver un ID valide pour l'observateur: $o",
+                            tag: "sync");
+                      }
+                    } catch (e) {
+                      logger.e(
+                          "Erreur lors de l'extraction de l'id observateur: $e",
+                          tag: "sync",
+                          error: e);
                     }
                   }
-
-                  logger.i(
-                      "Prétraitement terminé: ${safeObservers.length} observateurs valides trouvés",
-                      tag: "sync");
                 }
-                // Créer une nouvelle entité avec des observateurs sécurisés
-                final safeEntity = BaseVisitEntity(
-                  idBaseVisit: visit.idBaseVisit,
-                  idBaseSite: visit.idBaseSite,
-                  idDataset: visit.idDataset,
-                  idModule: visit.idModule,
-                  idDigitiser: visit.idDigitiser,
-                  visitDateMin: visit.visitDateMin,
-                  visitDateMax: visit.visitDateMax,
-                  idNomenclatureTechCollectCampanule:
-                      visit.idNomenclatureTechCollectCampanule,
-                  idNomenclatureGrpTyp: visit.idNomenclatureGrpTyp,
-                  comments: visit.comments,
-                  uuidBaseVisit: visit.uuidBaseVisit,
-                  metaCreateDate: visit.metaCreateDate,
-                  metaUpdateDate: visit.metaUpdateDate,
-                  observers: safeObservers,
-                  data: visit.data,
-                );
 
-                // Convertir l'entité sécurisée en modèle de domaine
-                visitModel = safeEntity.toDomain();
-              } else {
-                // Si le type n'est pas BaseVisitEntity, c'est une erreur
-                logger.e(
-                    "Erreur de type: l'objet visit n'est pas du type BaseVisitEntity",
+                logger.i(
+                    "Prétraitement terminé: ${safeObservers.length} observateurs valides trouvés",
                     tag: "sync");
-                throw Exception(
-                    "Type d'objet non supporté pour la conversion: ${visit.runtimeType}");
               }
+              // Créer une nouvelle entité avec des observateurs sécurisés
+              final safeEntity = BaseVisitEntity(
+                idBaseVisit: visit.idBaseVisit,
+                idBaseSite: visit.idBaseSite,
+                idDataset: visit.idDataset,
+                idModule: visit.idModule,
+                idDigitiser: visit.idDigitiser,
+                visitDateMin: visit.visitDateMin,
+                visitDateMax: visit.visitDateMax,
+                idNomenclatureTechCollectCampanule:
+                    visit.idNomenclatureTechCollectCampanule,
+                idNomenclatureGrpTyp: visit.idNomenclatureGrpTyp,
+                comments: visit.comments,
+                uuidBaseVisit: visit.uuidBaseVisit,
+                metaCreateDate: visit.metaCreateDate,
+                metaUpdateDate: visit.metaUpdateDate,
+                observers: safeObservers,
+                data: visit.data,
+              );
+
+              // Convertir l'entité sécurisée en modèle de domaine
+              visitModel = safeEntity.toDomain();
 
               serverResponse =
                   await _globalApi.sendVisit(token, moduleCode, visitModel);
