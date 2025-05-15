@@ -60,3 +60,4 @@ config_example_lichen.json
 config_example_apollons.json
 config_example_ecrevisse.json
 config_example_chiro.json
+app_logs.txt
