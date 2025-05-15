@@ -12,6 +12,9 @@ class ObservationDetail with _$ObservationDetail {
     /// Identifiant de l'observation parente
     int? idObservation,
 
+    /// Identifiant du module
+    int? idModule,
+
     /// UUID unique du détail d'observation
     String? uuidObservationDetail,
 
