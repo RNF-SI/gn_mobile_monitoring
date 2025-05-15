@@ -208,9 +208,8 @@ class TaxonApiImpl implements TaxonApi {
       }
 
       int itemsProcessed = 0;
-      // Variables utilisées pour le suivi des statistiques de synchronisation
-      // int itemsAdded = 0;
-      // int itemsUpdated = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
       int itemsSkipped = 0;
 
       // Collections pour stocker les données à passer au repository
@@ -245,8 +244,7 @@ class TaxonApiImpl implements TaxonApi {
           debugPrint('syncTaxonsFromAPI - Relation liste-taxons stockée pour la liste $listId avec ${taxons.length} taxons');
 
           itemsProcessed += taxons.length;
-          itemsAdded += taxons
-              .length; // Approximation avant traitement réel dans le repository
+          itemsAdded += taxons.length; // Approximation avant traitement réel dans le repository
         } catch (e) {
           debugPrint('syncTaxonsFromAPI - Erreur lors de la synchronisation de la liste $listId: $e');
           itemsSkipped++;
