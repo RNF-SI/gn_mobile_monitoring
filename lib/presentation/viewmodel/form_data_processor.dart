@@ -101,8 +101,8 @@ class FormDataProcessor {
             // Utiliser l'ID de la nomenclature trouvée
             processedData[fieldName] = nomenclature.id;
           } catch (e) {
-            // En cas d'erreur, utiliser une valeur par défaut
-            processedData[fieldName] = 0;
+            // En cas d'erreur, conserver les données originales
+            // Ne pas modifier processedData[fieldName]
             print('Erreur lors de la recherche de la nomenclature: $e');
           }
         } else {
