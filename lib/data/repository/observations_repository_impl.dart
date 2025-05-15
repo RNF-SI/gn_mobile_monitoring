@@ -33,8 +33,8 @@ class ObservationsRepositoryImpl implements ObservationsRepository {
   Future<bool> updateObservation(Observation observation) async {
     try {
       final entity = observation.toEntity();
-      await _observationsDatabase.saveObservation(entity);
-      return true;
+      final result = await _observationsDatabase.saveObservation(entity);
+      return result > 0; // Return true only if at least one row was affected
     } catch (e) {
       return false;
     }
