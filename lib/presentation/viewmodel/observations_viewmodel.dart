@@ -9,6 +9,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_ca
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
+import 'package:uuid/uuid.dart';
 
 /// Provider pour accéder aux observations pour une visite spécifique
 final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
@@ -121,12 +122,16 @@ class ObservationsViewModel
       final processedData =
           await _formDataProcessor.processFormData(specificData);
 
+      // Générer un UUID pour l'observation
+      final uuid = _generateUuid();
+      
       // Préparer l'objet Observation à partir des données du formulaire
       final observation = Observation(
         idObservation: 0, // Nouvel ID généré par la BDD
         idBaseVisit: _visitId,
         cdNom: formData['cd_nom'] is int ? formData['cd_nom'] : null,
         comments: formData['comments']?.toString(),
+        uuidObservation: uuid, // Inclure l'UUID généré
         data: processedData,
       );
 
@@ -141,6 +146,12 @@ class ObservationsViewModel
       debugPrint('Erreur lors de la création de l\'observation: $e');
       rethrow;
     }
+  }
+  
+  /// Génère un UUID v4 pour les observations
+  String _generateUuid() {
+    const uuid = Uuid();
+    return uuid.v4(); // Génère un UUID v4 comme "f47ac10b-58cc-4372-a567-0e02b2c3d479"
   }
 
   /// Met à jour une observation existante
@@ -161,6 +172,9 @@ class ObservationsViewModel
           await _formDataProcessor.processFormData(specificData);
 
       // Créer une nouvelle observation avec les données mises à jour
+      // S'assurer que l'UUID est défini
+      String uuid = existingObservation.uuidObservation ?? _generateUuid();
+      
       final updatedObservation = Observation(
         idObservation: observationId,
         idBaseVisit: _visitId,
@@ -169,7 +183,7 @@ class ObservationsViewModel
             : existingObservation.cdNom,
         comments:
             formData['comments']?.toString() ?? existingObservation.comments,
-        uuidObservation: existingObservation.uuidObservation,
+        uuidObservation: uuid,
         metaCreateDate: existingObservation.metaCreateDate,
         metaUpdateDate: DateTime.now().toIso8601String(),
         data: processedData,
