@@ -53,6 +53,7 @@ dependencies:
   path: ^1.8.3
   package_info_plus: ^8.3.0
   url_launcher: ^6.2.5
+  uuid: ^4.4.0
   # Ajout pour le système de rapports d'erreurs
 
 dev_dependencies:
