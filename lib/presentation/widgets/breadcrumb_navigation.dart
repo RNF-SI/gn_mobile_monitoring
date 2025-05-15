@@ -23,14 +23,14 @@ class BreadcrumbNavigation extends StatelessWidget {
   
   /// Constructeur
   const BreadcrumbNavigation({
-    Key? key,
+    super.key,
     required this.items,
     this.textStyle,
     this.separatorColor,
     this.isVertical = false,
     this.separatorIcon = Icons.chevron_right,
     this.scrollable = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

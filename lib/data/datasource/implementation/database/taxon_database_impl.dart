@@ -224,8 +224,8 @@ class TaxonDatabaseImpl implements TaxonDatabase {
           final site = visit != null && visit.idBaseSite != null
               ? await db.sitesDao.getSiteById(visit.idBaseSite!)
               : null;
-          final module = visit?.idModule != null
-              ? await db.modulesDao.getModuleById(visit!.idModule!)
+          final module = visit != null && visit.idModule != null
+              ? await db.modulesDao.getModuleById(visit.idModule)
               : null;
 
           // Vérifier si le module existe et récupérer son ID de liste taxonomique
@@ -368,8 +368,8 @@ class TaxonDatabaseImpl implements TaxonDatabase {
               final site = visit?.idBaseSite != null
                   ? await db.sitesDao.getSiteById(visit!.idBaseSite!)
                   : null;
-              final module = visit?.idModule != null
-                  ? await db.modulesDao.getModuleById(visit!.idModule!)
+              final module = visit != null && visit.idModule != null
+                  ? await db.modulesDao.getModuleById(visit.idModule)
                   : null;
 
               // Construire une route avec tous les éléments du contexte

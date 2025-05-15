@@ -1083,7 +1083,8 @@ class SyncRepositoryImpl implements SyncRepository {
               // Convertir l'entité en domaine en utilisant directement le mapper
               // Si l'entité contient des observateurs problématiques, les prétraiter
               BaseVisit visitModel;
-              if (visit is BaseVisitEntity) {
+              // L'entité est toujours de type BaseVisitEntity, donc cette vérification est inutile
+              {
                 // Vérifier si les observateurs doivent être prétraités
                 // Prétraitement des observateurs pour éviter les erreurs
                 List<int> safeObservers = [];

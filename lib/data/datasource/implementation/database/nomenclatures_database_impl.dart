@@ -134,8 +134,8 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             final site = visit != null
                 ? await db.sitesDao.getSiteById(visit.idBaseSite!)
                 : null;
-            final module = visit?.idModule != null
-                ? await db.modulesDao.getModuleById(visit!.idModule!)
+            final module = visit != null && visit.idModule != null
+                ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
             // Construire une route avec tous les éléments du contexte
@@ -201,8 +201,8 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             final site = visit != null
                 ? await db.sitesDao.getSiteById(visit.idBaseSite!)
                 : null;
-            final module = visit?.idModule != null
-                ? await db.modulesDao.getModuleById(visit!.idModule!)
+            final module = visit != null && visit.idModule != null
+                ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
             // Construire une route avec tous les éléments du contexte
@@ -269,8 +269,8 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             final site = visit != null
                 ? await db.sitesDao.getSiteById(visit.idBaseSite!)
                 : null;
-            final module = visit?.idModule != null
-                ? await db.modulesDao.getModuleById(visit!.idModule!)
+            final module = visit != null && visit.idModule != null
+                ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
             // Construire une route avec tous les éléments du contexte

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 
 /// Classe utilitaire pour le parsing JSON robuste
 /// Permet de gérer les formats JSON malformés ou non-standards

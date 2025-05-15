@@ -21,13 +21,13 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
   final bool isRequired;
 
   const NomenclatureSelectorWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.fieldConfig,
     required this.onChanged,
     this.value,
     this.isRequired = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

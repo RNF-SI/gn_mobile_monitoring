@@ -1,15 +1,11 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 /// Provider pour le service de synchronisation testable
@@ -32,18 +28,12 @@ final testableSyncServiceProvider =
 /// Service de synchronisation qui étend SyncService mais permet un meilleur test
 class TestableSyncService extends SyncService {
   TestableSyncService(
-    GetTokenFromLocalStorageUseCase getTokenUseCase,
-    IncrementalSyncAllUseCase syncUseCase,
-    GetLastSyncDateUseCase getLastSyncDateUseCase,
-    UpdateLastSyncDateUseCase updateLastSyncDateUseCase,
-    SyncRepository syncRepository,
-  ) : super(
-          getTokenUseCase,
-          syncUseCase,
-          getLastSyncDateUseCase,
-          updateLastSyncDateUseCase,
-          syncRepository,
-        );
+    super.getTokenUseCase,
+    super.syncUseCase,
+    super.getLastSyncDateUseCase,
+    super.updateLastSyncDateUseCase,
+    super.syncRepository,
+  );
         
   // Override pour les tests - toujours retourne true
   @override

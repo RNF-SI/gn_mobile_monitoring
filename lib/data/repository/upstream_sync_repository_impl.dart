@@ -32,6 +32,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         _observationDetailsRepository = observationDetailsRepository;
 
   /// Vérifie la connectivité avec le serveur
+  @override
   Future<bool> checkConnectivity() async {
     try {
       return await _globalApi.checkConnectivity();
@@ -42,6 +43,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   }
 
   /// Récupère la date de dernière synchronisation
+  @override
   Future<DateTime?> getLastSyncDate(String entityType) async {
     try {
       return await _globalDatabase.getLastSyncDate(entityType);
@@ -53,6 +55,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   }
 
   /// Met à jour la date de dernière synchronisation
+  @override
   Future<void> updateLastSyncDate(String entityType, DateTime syncDate) async {
     try {
       await _globalDatabase.updateLastSyncDate(entityType, syncDate);

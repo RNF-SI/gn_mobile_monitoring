@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:isolate';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 
 /// Gestionnaire d'erreurs global pour l'application.

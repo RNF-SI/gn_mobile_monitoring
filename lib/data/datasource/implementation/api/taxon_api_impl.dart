@@ -208,8 +208,9 @@ class TaxonApiImpl implements TaxonApi {
       }
 
       int itemsProcessed = 0;
-      int itemsAdded = 0;
-      int itemsUpdated = 0;
+      // Variables utilisées pour le suivi des statistiques de synchronisation
+      // int itemsAdded = 0;
+      // int itemsUpdated = 0;
       int itemsSkipped = 0;
 
       // Collections pour stocker les données à passer au repository
@@ -283,8 +284,9 @@ class TaxonApiImpl implements TaxonApi {
       // Sauvegarder les associations liste-taxons
       for (final entry in listToTaxonMap.entries) {
         try {
-          final listId = entry.key;
-          final taxonIds = entry.value;
+          // Variables utilisées pour le suivi des relations liste-taxons
+          // final listId = entry.key;
+          // final taxonIds = entry.value;
 
           // Logique pour sauvegarder les relations en base de données
           // (sera réalisée dans le repository)

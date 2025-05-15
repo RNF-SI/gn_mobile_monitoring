@@ -45,6 +45,7 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
         _sitesRepository = sitesRepository;
 
   /// Vérifie la connectivité
+  @override
   Future<bool> checkConnectivity() async {
     try {
       return await _globalApi.checkConnectivity();
@@ -55,6 +56,7 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
   }
 
   /// Récupère la date de dernière synchronisation
+  @override
   Future<DateTime?> getLastSyncDate(String entityType) async {
     try {
       return await _globalDatabase.getLastSyncDate(entityType);
@@ -66,6 +68,7 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
   }
 
   /// Met à jour la date de dernière synchronisation
+  @override
   Future<void> updateLastSyncDate(String entityType, DateTime syncDate) async {
     try {
       await _globalDatabase.updateLastSyncDate(entityType, syncDate);

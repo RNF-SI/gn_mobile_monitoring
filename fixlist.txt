@@ -1,0 +1,36 @@
+1. lib/config/config.dart:9:23: Renommer DEFAULT_API_URL en defaultApiUrl (fait)
+
+2. lib/core/errors/app_logger.dart: Supprimer les imports inutilisés:
+   - dart:convert
+   - package:intl/intl.dart
+
+3. lib/core/errors/error_handler.dart: Supprimer l'import inutile:
+   - package:flutter/material.dart 
+
+4. lib/core/helpers/hidden_expression_evaluator.dart: Supprimer ou utiliser les variables hasAsBool
+
+5. lib/core/helpers/json_parser_helper.dart: Supprimer l'import inutile:
+   - package:flutter/foundation.dart
+
+6. lib/data/datasource/implementation/api/global_api_impl.dart:
+   - Ligne 215: Corriger la vérification de connectivité
+   - Ligne 450, 479: Corriger les comparaisons nullité
+
+7. lib/data/datasource/implementation/api/taxon_api_impl.dart:
+   - Ligne 203: Corriger la vérification de connectivité
+   - Supprimer/utiliser les variables non utilisées: itemsAdded, itemsUpdated, listId, taxonIds
+
+8. lib/data/datasource/implementation/database/modules_database_impl.dart: Supprimer les imports inutilisés:
+   - dart:convert
+   - package:drift/drift.dart
+
+9. lib/data/datasource/implementation/database/nomenclatures_database_impl.dart:
+   - Corriger l'opérateur null-aware (137, 160, 272)
+   - Supprimer les assertions non-null inutiles (138, 273, etc.)
+
+10. lib/data/datasource/implementation/database/taxon_database_impl.dart:
+    - Corriger les assertions non-null inutiles (228, 372)
+
+11. lib/data/repository/sync_repository_impl.dart, upstream_sync_repository_impl.dart, downstream_sync_repository_impl.dart:
+    - Ajouter les annotations @override manquantes
+    - Corriger les vérifications de type inutiles

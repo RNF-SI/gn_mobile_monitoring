@@ -157,12 +157,11 @@ class HiddenExpressionEvaluator {
   bool? _evaluateBracketAccess(String expr, List<String> params, Map<String, dynamic> context) {
     // Prétraitement: retirer le "as bool" ou autres casts
     String cleanExpr = expr;
-    bool hasAsBool = false;
     
     if (cleanExpr.contains(' as ')) {
       final parts = cleanExpr.split(' as ');
       cleanExpr = parts[0].trim();
-      hasAsBool = parts[1].trim() == 'bool';
+      // Anciennement: hasAsBool = parts[1].trim() == 'bool';
     }
     
     // Exemple: value['test_detectabilite']
@@ -283,10 +282,8 @@ class HiddenExpressionEvaluator {
   /// Évalue une expression avec un opérateur de comparaison
   bool? _evaluateComparison(String expr, List<String> params, Map<String, dynamic> context) {
     // Traiter le cas spécial "as bool" qui peut être présent à la fin de l'expression
-    bool hasAsBool = false;
     if (expr.endsWith(' as bool')) {
       expr = expr.substring(0, expr.length - 8).trim();
-      hasAsBool = true;
     }
     
     // Détecter quel opérateur est utilisé

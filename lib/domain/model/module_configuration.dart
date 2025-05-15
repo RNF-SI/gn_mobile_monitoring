@@ -654,7 +654,7 @@ class ObjectConfig with _$ObjectConfig {
       if (value is! Map) return {};
       try {
         final result = <String, GenericFieldConfig>{};
-        (value as Map).forEach((k, v) {
+        value.forEach((k, v) {
           if (v is Map<String, dynamic>) {
             result[k.toString()] = GenericFieldConfig.fromJson(v);
           } else {
@@ -673,7 +673,7 @@ class ObjectConfig with _$ObjectConfig {
       if (value is! Map) return {};
       try {
         final result = <String, TypeSiteConfig>{};
-        (value as Map).forEach((k, v) {
+        value.forEach((k, v) {
           if (v is Map<String, dynamic>) {
             result[k.toString()] = TypeSiteConfig.fromJson(v);
           } else {
