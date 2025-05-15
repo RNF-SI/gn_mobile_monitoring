@@ -17,7 +17,11 @@ class AuthenticationApiImpl implements AuthenticationApi {
 
     var apiBase = Config.apiBase;
     try {
-      Response response = await Dio().post(
+      Response response = await Dio(BaseOptions(
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 60),
+          sendTimeout: const Duration(seconds: 60),
+        )).post(
         "$apiBase/auth/login",
         options: Options(headers: {
           HttpHeaders.contentTypeHeader: "application/json",
