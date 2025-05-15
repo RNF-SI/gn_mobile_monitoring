@@ -111,9 +111,34 @@ part 'database.g.dart';
   AppMetadataDao,
 ])
 class AppDatabase extends _$AppDatabase {
+  // DAO qui peuvent être remplacés par des mocks pour les tests
+  // Mock pour l'AppMetadataDao qui peut être remplacé pour les tests
+  AppMetadataDao? _appMetadataDao;
+  
+  @override
+  AppMetadataDao get appMetadataDao {
+    // Si un DAO a été injecté, l'utiliser (pour les tests)
+    if (_appMetadataDao != null) {
+      return _appMetadataDao!;
+    }
+    // Sinon, utiliser la version générée par drift
+    return super.appMetadataDao;
+  }
+  
+  /// Setter pour injecter un mock pour les tests
+  set appMetadataDao(AppMetadataDao? dao) {
+    _appMetadataDao = dao;
+  }
+
   AppDatabase._internal() : super(_openConnection());
 
   static AppDatabase? _instance;
+  static bool _isTesting = false;
+
+  // Indique si l'application est en cours de test
+  static void setTestingMode(bool testing) {
+    _isTesting = testing;
+  }
 
   // Singleton accessor
   static Future<AppDatabase> getInstance() async {
@@ -127,6 +152,14 @@ class AppDatabase extends _$AppDatabase {
       await _instance!.close();
       _instance = null;
     }
+  }
+  
+  // Obtient une instance de test préconfigurée avec des mocks
+  static Future<AppDatabase> getTestInstance() async {
+    setTestingMode(true);
+    await resetInstance();
+    final instance = await getInstance();
+    return instance;
   }
 
   @override
