@@ -582,7 +582,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                           customConfig: widget.moduleInfo?.module.complement
                               ?.configuration?.custom,
                           observationDetailConfig: widget.moduleInfo?.module
-                              .complement?.configuration?.observation,
+                              .complement?.configuration?.observationDetail,
                           isNewObservation: false,
                         ),
                       ),
@@ -696,6 +696,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
           customConfig:
               widget.moduleInfo?.module.complement?.configuration?.custom,
           moduleId: widget.moduleInfo?.module.id,
+          // Ajouter la configuration des détails d'observation
+          observationDetailConfig: 
+              widget.moduleInfo?.module.complement?.configuration?.observationDetail,
           // Passer les informations pour le fil d'Ariane
           moduleName: moduleName,
           siteLabel: siteLabel,
@@ -752,6 +755,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
               customConfig:
                   widget.moduleInfo?.module.complement?.configuration?.custom,
               moduleId: widget.moduleInfo?.module.id,
+              // Ajouter la configuration des détails d'observation
+              observationDetailConfig: 
+                  widget.moduleInfo?.module.complement?.configuration?.observationDetail,
               observation: observation,
               // Passer les informations pour le fil d'Ariane
               moduleName: moduleName,

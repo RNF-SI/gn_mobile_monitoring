@@ -384,7 +384,9 @@ class ObservationDetailPageBaseState
 
   @override
   Widget? buildChildrenContent() {
-    if (widget.observationDetailConfig == null || _observationDetails.isEmpty) {
+    // Si la configuration des détails d'observation existe, afficher la section
+    // même si la liste est vide (pour pouvoir ajouter de nouveaux détails)
+    if (widget.observationDetailConfig == null) {
       return null;
     }
 

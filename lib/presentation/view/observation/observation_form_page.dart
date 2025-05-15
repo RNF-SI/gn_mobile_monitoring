@@ -395,8 +395,16 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                 .getObservationById(newObservationId);
 
             if (newObservation != null && mounted) {
-              // Rediriger vers la page de détail de l'observation
-              if (mounted && widget.visit != null && widget.site != null) {
+              // Vérifier si le module a une configuration pour les détails d'observation
+              if (widget.observationDetailConfig != null && mounted) {
+                setState(() {
+                  _isLoading = false;
+                });
+                // Demander à l'utilisateur s'il veut ajouter un détail d'observation
+                _promptForObservationDetail(newObservationId, newObservation);
+              } 
+              // Sinon, rediriger vers la page de détail de l'observation
+              else if (mounted && widget.visit != null && widget.site != null) {
                 setState(() {
                   _isLoading = false;
                 });
@@ -471,5 +479,72 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
         ),
       );
     }
+  }
+  
+  /// Affiche une boite de dialogue pour demander à l'utilisateur s'il veut ajouter un détail d'observation
+  void _promptForObservationDetail(int observationId, Observation observation) {
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ajouter un détail d\'observation ?'),
+        content: const Text('Voulez-vous ajouter un détail d\'observation maintenant ?'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Fermer la boite de dialogue
+              
+              // Naviguer vers la page détail de l'observation
+              if (widget.visit != null && widget.site != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ObservationDetailPage(
+                      observation: observation,
+                      visit: widget.visit!,
+                      site: widget.site!,
+                      moduleInfo: widget.moduleInfo,
+                      fromSiteGroup: widget.fromSiteGroup,
+                      observationConfig: widget.observationConfig,
+                      customConfig: widget.customConfig,
+                      observationDetailConfig: widget.observationDetailConfig,
+                      isNewObservation: true,
+                    ),
+                  ),
+                );
+              } else {
+                Navigator.pop(context); // Retour à la page précédente
+              }
+            },
+            child: const Text('Non'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Fermer la boite de dialogue
+              
+              // Naviguer vers le formulaire de détail d'observation
+              if (widget.observationDetailConfig != null) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ObservationDetailFormPage(
+                      observationDetail: widget.observationDetailConfig!,
+                      observation: observation,
+                      customConfig: widget.customConfig,
+                      visit: widget.visit,
+                      site: widget.site,
+                      moduleInfo: widget.moduleInfo,
+                      fromSiteGroup: widget.fromSiteGroup,
+                    ),
+                  ),
+                );
+              }
+            },
+            child: const Text('Oui'),
+          ),
+        ],
+      ),
+    );
   }
 }
