@@ -80,7 +80,7 @@ void main() async {
       Config.setStoredApiUrl(apiUrl);
       AppLogger().i('Using stored API URL: $apiUrl', tag: 'CONFIG');
     } else {
-      AppLogger().i('No stored API URL found, login page will use default URL: ${Config.DEFAULT_API_URL}', tag: 'CONFIG');
+      AppLogger().i('No stored API URL found, login page will use default URL: ${Config.defaultApiUrl}', tag: 'CONFIG');
     }
     
     // Lancer l'application avec le provider error listener

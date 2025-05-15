@@ -43,7 +43,7 @@ class _LoginPageState extends State<LoginPage> {
           _apiUrl.text = apiUrl;
         } else {
           // Utiliser l'URL par défaut si aucune n'est stockée
-          _apiUrl.text = Config.DEFAULT_API_URL;
+          _apiUrl.text = Config.defaultApiUrl;
         }
       });
     });
@@ -97,7 +97,9 @@ class _LoginPageState extends State<LoginPage> {
 
                       await auth.signInWithEmailAndPassword(
                           _identifiant.text, _password.text, context, ref);
-                      loading();
+                      if (mounted) {
+                        loading();
+                      }
                     }
                   }
 
@@ -192,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
                                 fillColor: const Color(0xFFF4F1E4),
                                 filled: true,
                                 labelText: 'URL de l\'API',
-                                hintText: Config.DEFAULT_API_URL,
+                                hintText: Config.defaultApiUrl,
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(10),
                                   borderSide: const BorderSide(
