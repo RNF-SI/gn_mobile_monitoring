@@ -16,9 +16,9 @@ class TaxonApiImpl implements TaxonApi {
   TaxonApiImpl()
       : _dio = Dio(BaseOptions(
           baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 60),
-          sendTimeout: const Duration(seconds: 60),
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les listes de taxons volumineuses
+          sendTimeout: const Duration(seconds: 120),
         ));
 
   @override

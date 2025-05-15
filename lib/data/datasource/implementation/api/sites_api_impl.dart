@@ -19,9 +19,9 @@ class SitesApiImpl implements SitesApi {
   SitesApiImpl()
       : _dio = Dio(BaseOptions(
           baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 30),
-          receiveTimeout: const Duration(seconds: 60),
-          sendTimeout: const Duration(seconds: 60),
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les grosses quantités de données
+          sendTimeout: const Duration(seconds: 120),
         ));
 
   @override
@@ -79,10 +79,10 @@ class SitesApiImpl implements SitesApi {
 
   @override
   Future<List<Map<String, dynamic>>> fetchDetailedSitesData(
-      String token) async {
+      String moduleCode, String token) async {
     try {
       final response = await _dio.get(
-        '/monitorings/list/apollons/site',
+        '/monitorings/list/$moduleCode/site',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -94,7 +94,7 @@ class SitesApiImpl implements SitesApi {
       }
 
       throw ApiException(
-        'Failed to fetch detailed sites data',
+        'Failed to fetch detailed sites data for module $moduleCode',
         statusCode: response.statusCode,
       );
     } on DioException catch (e) {
@@ -158,7 +158,7 @@ class SitesApiImpl implements SitesApi {
 
       // 2. Fetch detailed data for all sites
       final detailedResponse = await _dio.get(
-        '/monitorings/list/apollons/site',
+        '/monitorings/list/$moduleCode/site',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
