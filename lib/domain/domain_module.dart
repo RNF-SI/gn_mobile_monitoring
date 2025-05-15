@@ -1,7 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:gn_mobile_monitoring/data/repository/sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/composite_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/downstream_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
@@ -227,8 +231,9 @@ final incrementalSyncSiteGroupsUseCaseProvider =
   ),
 );
 
-final syncRepositoryProvider = Provider<SyncRepository>(
-  (ref) => SyncRepositoryImpl(
+// Fournisseur pour le repository de synchronisation descendante (serveur vers appareil)
+final downstreamSyncRepositoryProvider = Provider<DownstreamSyncRepository>(
+  (ref) => DownstreamSyncRepositoryImpl(
     ref.watch(globalApiProvider),
     ref.watch(taxonApiProvider),
     ref.watch(globalDatabaseProvider),
@@ -237,6 +242,25 @@ final syncRepositoryProvider = Provider<SyncRepository>(
     ref.watch(taxonDatabaseProvider),
     modulesRepository: ref.watch(modulesRepositoryProvider),
     sitesRepository: ref.watch(sitesRepositoryProvider),
+  ),
+);
+
+// Fournisseur pour le repository de synchronisation ascendante (appareil vers serveur)
+final upstreamSyncRepositoryProvider = Provider<UpstreamSyncRepository>(
+  (ref) => UpstreamSyncRepositoryImpl(
+    ref.watch(globalApiProvider),
+    ref.watch(globalDatabaseProvider),
+    visitRepository: ref.watch(visitRepositoryProvider),
+    observationsRepository: ref.watch(observationsRepositoryProvider),
+    observationDetailsRepository: ref.watch(observationDetailsRepositoryImplProvider),
+  ),
+);
+
+// Fournisseur pour le repository de synchronisation composite (façade)
+final syncRepositoryProvider = Provider<SyncRepository>(
+  (ref) => CompositeSyncRepositoryImpl(
+    downstreamRepo: ref.watch(downstreamSyncRepositoryProvider),
+    upstreamRepo: ref.watch(upstreamSyncRepositoryProvider),
   ),
 );
 

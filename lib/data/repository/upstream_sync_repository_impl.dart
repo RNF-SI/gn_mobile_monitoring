@@ -1,0 +1,509 @@
+import 'package:flutter/foundation.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
+import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
+import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
+
+/// Implémentation du repository de synchronisation ascendante (appareil vers serveur)
+class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
+  final GlobalApi _globalApi;
+  final GlobalDatabase _globalDatabase;
+  final VisitRepository _visitRepository;
+  final ObservationsRepository _observationsRepository;
+  final ObservationDetailsRepository _observationDetailsRepository;
+
+  final AppLogger _logger = AppLogger();
+
+  UpstreamSyncRepositoryImpl(
+    this._globalApi,
+    this._globalDatabase, {
+    required VisitRepository visitRepository,
+    required ObservationsRepository observationsRepository,
+    required ObservationDetailsRepository observationDetailsRepository,
+  })  : _visitRepository = visitRepository,
+        _observationsRepository = observationsRepository,
+        _observationDetailsRepository = observationDetailsRepository;
+
+  /// Vérifie la connectivité avec le serveur
+  Future<bool> checkConnectivity() async {
+    try {
+      return await _globalApi.checkConnectivity();
+    } catch (e) {
+      debugPrint('Erreur lors de la vérification de la connectivité: $e');
+      return false;
+    }
+  }
+
+  /// Récupère la date de dernière synchronisation
+  Future<DateTime?> getLastSyncDate(String entityType) async {
+    try {
+      return await _globalDatabase.getLastSyncDate(entityType);
+    } catch (e) {
+      debugPrint(
+          'Erreur lors de la récupération de la date de synchronisation: $e');
+      return null;
+    }
+  }
+
+  /// Met à jour la date de dernière synchronisation
+  Future<void> updateLastSyncDate(String entityType, DateTime syncDate) async {
+    try {
+      await _globalDatabase.updateLastSyncDate(entityType, syncDate);
+    } catch (e) {
+      debugPrint(
+          'Erreur lors de la mise à jour de la date de synchronisation: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<SyncResult> syncVisitsToServer(String token, String moduleCode) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsSkipped = 0;
+      int itemsDeleted = 0;
+      List<String> errors = [];
+
+      try {
+        StringBuffer logBuffer = StringBuffer();
+        logBuffer.writeln('\n==================================================================');
+        logBuffer.writeln('[SYNC_REPO] DÉBUT SYNCHRONISATION ASCENDANTE - MODULE: $moduleCode');
+        logBuffer.writeln('==================================================================');
+
+        // Récupérer toutes les visites
+        final visits = await _visitRepository.getAllVisits();
+        logBuffer.writeln('Total des visites dans la base: ${visits.length}');
+        
+        // Afficher les détails de chaque visite pour le débogage
+        if (visits.isNotEmpty) {
+          logBuffer.writeln('\nDÉTAILS DES VISITES:');
+          for (var visit in visits) {
+            logBuffer.writeln('- ID: ${visit.idBaseVisit}');
+            logBuffer.writeln('  Site: ${visit.idBaseSite}');
+            logBuffer.writeln('  Date: ${visit.visitDateMin}');
+            logBuffer.writeln('  ---');
+          }
+        }
+        
+        // Écrire dans le fichier log via AppLogger
+        _logger.i(logBuffer.toString(), tag: 'sync');
+
+        // Si aucune visite, renvoyer un succès vide
+        if (visits.isEmpty) {
+          _logger.i('AUCUNE VISITE TROUVÉE - SYNCHRONISATION TERMINÉE\n', tag: 'sync');
+          return SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+          );
+        }
+
+        // Pour chaque visite, envoyer la visite et toutes ses observations
+        for (final visitEntity in visits) {
+          try {
+            _logger.i('Traitement de la visite ID: ${visitEntity.idBaseVisit}', tag: 'sync');
+            
+            // Récupérer tous les détails de la visite
+            final visit = await _visitRepository.getVisitWithFullDetails(visitEntity.idBaseVisit);
+            
+            // 1. Envoyer la visite au serveur
+            Map<String, dynamic> serverResponse;
+            try {
+              // Convertir l'entité en domaine en utilisant directement le mapper 
+              BaseVisit visitModel;
+              
+              // Prétraitement des observateurs pour éviter les erreurs
+              List<int> safeObservers = [];
+              if (visit.observers != null) {
+                _logger.i("Prétraitement des observateurs : ${visit.observers!.length} observateurs trouvés", tag: "sync");
+                
+                for (var o in visit.observers!) {
+                  if (o is int) {
+                    // Cas 1: si o est déjà un entier, l'ajouter directement
+                    _logger.i("Observateur déjà au format int: $o", tag: "sync");
+                    safeObservers.add(o);
+                  } else {
+                    // Cas 2: o est un autre type d'objet
+                    _logger.i("Observateur de type: ${o.runtimeType}", tag: "sync");
+                    try {
+                      // Accéder de manière dynamique et sécurisée aux propriétés
+                      dynamic observerId;
+                      
+                      // Tester si l'objet ressemble à un CorVisitObserverEntity ou VisitObserver
+                      try {
+                        // Essayer d'accéder à la propriété idRole avec dynamic pour éviter les erreurs de compilation
+                        final dynamic obj = o;
+                        if (obj.idRole != null) {
+                          observerId = obj.idRole;
+                          _logger.i("idRole trouvé: $observerId", tag: "sync");
+                        }
+                      } catch (_) {
+                        // Ignorer les erreurs si la propriété n'existe pas
+                      }
+                      
+                      // Si idRole n'a pas fonctionné, essayer id
+                      if (observerId == null) {
+                        try {
+                          final dynamic obj = o;
+                          if (obj.id != null) {
+                            observerId = obj.id;
+                            _logger.i("id trouvé: $observerId", tag: "sync");
+                          }
+                        } catch (_) {
+                          // Ignorer les erreurs si la propriété n'existe pas
+                        }
+                      }
+                      
+                      // Utilisier l'ID récupéré s'il est valide
+                      if (observerId is int) {
+                        safeObservers.add(observerId);
+                        _logger.i("Ajout de l'observateur id: $observerId", tag: "sync");
+                      } else {
+                        _logger.e("Impossible de trouver un ID valide pour l'observateur: $o", tag: "sync");
+                      }
+                    } catch (e) {
+                      _logger.e("Erreur lors de l'extraction de l'id observateur: $e", tag: "sync", error: e);
+                    }
+                  }
+                }
+                
+                _logger.i("Prétraitement terminé: ${safeObservers.length} observateurs valides trouvés", tag: "sync");
+              }
+              
+              // Créer une nouvelle entité avec des observateurs sécurisés
+              final safeEntity = BaseVisitEntity(
+                idBaseVisit: visit.idBaseVisit,
+                idBaseSite: visit.idBaseSite,
+                idDataset: visit.idDataset,
+                idModule: visit.idModule,
+                idDigitiser: visit.idDigitiser,
+                visitDateMin: visit.visitDateMin,
+                visitDateMax: visit.visitDateMax,
+                idNomenclatureTechCollectCampanule: visit.idNomenclatureTechCollectCampanule,
+                idNomenclatureGrpTyp: visit.idNomenclatureGrpTyp,
+                comments: visit.comments,
+                uuidBaseVisit: visit.uuidBaseVisit,
+                metaCreateDate: visit.metaCreateDate,
+                metaUpdateDate: visit.metaUpdateDate,
+                observers: safeObservers,
+                data: visit.data,
+              );
+              
+              // Convertir l'entité sécurisée en modèle de domaine
+              visitModel = safeEntity.toDomain();
+
+              serverResponse = await _globalApi.sendVisit(token, moduleCode, visitModel);
+
+              final serverId = serverResponse['id'] ?? serverResponse['ID'];
+              if (serverId == null) {
+                throw Exception('Réponse du serveur invalide pour la visite');
+              }
+
+              _logger.i('Visite envoyée avec succès, ID serveur: $serverId', tag: 'sync');
+              itemsAdded++;
+            } catch (e) {
+              _logger.e('Erreur lors de l\'envoi de la visite: $e', tag: 'sync', error: e);
+              errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+              itemsSkipped++;
+              continue; // Passer à la visite suivante
+            }
+            
+            // 2. Récupérer et envoyer toutes les observations associées à cette visite
+            final observationsResult = await syncObservationsToServer(token, moduleCode, visitEntity.idBaseVisit);
+            
+            // 3. Si tout a réussi, supprimer la visite localement
+            if (observationsResult.success && errors.isEmpty) {
+              await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
+              itemsDeleted++;
+              _logger.i('Visite et observations supprimées avec succès', tag: 'sync');
+            } else {
+              // Ajouter les erreurs des observations à la liste d'erreurs
+              if (observationsResult.errorMessage != null) {
+                _logger.e('Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}', tag: 'sync');
+                errors.add('Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
+              }
+              itemsSkipped++;
+            }
+            
+            itemsProcessed++;
+          } catch (e) {
+            _logger.e('Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e', tag: 'sync', error: e);
+            errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        // Mettre à jour la date de synchronisation
+        await updateLastSyncDate('visitsToServer', DateTime.now());
+
+        if (errors.isNotEmpty) {
+          return SyncResult.failure(
+            errorMessage:
+                'Erreurs lors de la synchronisation des visites:\n${errors.join('\n')}',
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded,
+            itemsUpdated: 0, // Pas de mise à jour, seulement ajout/suppression
+            itemsSkipped: itemsSkipped,
+            itemsDeleted: itemsDeleted,
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: 0,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      } catch (e) {
+        debugPrint('Erreur lors de la synchronisation des visites: $e');
+        return SyncResult.failure(
+          errorMessage: 'Erreur lors de la synchronisation des visites: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur générale lors de la synchronisation des visites: $e');
+      return SyncResult.failure(
+        errorMessage: 'Erreur lors de la synchronisation des visites: $e',
+      );
+    }
+  }
+
+  @override
+  Future<SyncResult> syncObservationsToServer(String token, String moduleCode, int visitId) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsSkipped = 0;
+      int itemsDeleted = 0;
+      List<String> errors = [];
+
+      try {
+        // Récupérer toutes les observations pour cette visite
+        final observations = await _observationsRepository.getObservationsByVisitId(visitId);
+        
+        // Si aucune observation, renvoyer un succès vide
+        if (observations.isEmpty) {
+          debugPrint('Aucune observation trouvée pour la visite $visitId');
+          return SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+          );
+        }
+
+        // Pour chaque observation, envoyer l'observation et tous ses détails
+        for (final observation in observations) {
+          try {
+            debugPrint('Traitement de l\'observation ID: ${observation.idObservation}');
+            
+            // 1. Envoyer l'observation au serveur
+            Map<String, dynamic> serverResponse;
+            try {
+              serverResponse = await _globalApi.sendObservation(token, moduleCode, observation);
+              
+              final serverId = serverResponse['id'] ?? serverResponse['ID'];
+              if (serverId == null) {
+                throw Exception('Réponse du serveur invalide pour l\'observation');
+              }
+              
+              debugPrint('Observation envoyée avec succès, ID serveur: $serverId');
+              itemsAdded++;
+            } catch (e) {
+              debugPrint('Erreur lors de l\'envoi de l\'observation: $e');
+              errors.add('Observation ${observation.idObservation}: $e');
+              itemsSkipped++;
+              continue; // Passer à l'observation suivante
+            }
+            
+            // 2. Récupérer et envoyer tous les détails associés à cette observation
+            if (observation.idObservation != null) {
+              final detailsResult = await syncObservationDetailsToServer(
+                token, moduleCode, observation.idObservation!);
+              
+              // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
+              if (!detailsResult.success && detailsResult.errorMessage != null) {
+                errors.add('Détails de l\'observation ${observation.idObservation}: ${detailsResult.errorMessage}');
+                itemsSkipped++;
+                continue;
+              }
+            }
+            
+            // 3. Si tout a réussi, supprimer l'observation localement
+            if (errors.isEmpty && observation.idObservation != null) {
+              await _observationsRepository.deleteObservation(observation.idObservation!);
+              itemsDeleted++;
+              debugPrint('Observation supprimée avec succès');
+            }
+            
+            itemsProcessed++;
+          } catch (e) {
+            debugPrint('Erreur lors du traitement de l\'observation ${observation.idObservation}: $e');
+            errors.add('Observation ${observation.idObservation}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        if (errors.isNotEmpty) {
+          return SyncResult.failure(
+            errorMessage:
+                'Erreurs lors de la synchronisation des observations:\n${errors.join('\n')}',
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded,
+            itemsUpdated: 0,
+            itemsSkipped: itemsSkipped,
+            itemsDeleted: itemsDeleted,
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: 0,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      } catch (e) {
+        debugPrint('Erreur lors de la synchronisation des observations: $e');
+        return SyncResult.failure(
+          errorMessage: 'Erreur lors de la synchronisation des observations: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur générale lors de la synchronisation des observations: $e');
+      return SyncResult.failure(
+        errorMessage: 'Erreur lors de la synchronisation des observations: $e',
+      );
+    }
+  }
+
+  @override
+  Future<SyncResult> syncObservationDetailsToServer(String token, String moduleCode, int observationId) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsSkipped = 0;
+      int itemsDeleted = 0;
+      List<String> errors = [];
+
+      try {
+        // Récupérer tous les détails pour cette observation
+        final details = await _observationDetailsRepository.getObservationDetailsByObservationId(observationId);
+        
+        // Si aucun détail, renvoyer un succès vide
+        if (details.isEmpty) {
+          debugPrint('Aucun détail trouvé pour l\'observation $observationId');
+          return SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+          );
+        }
+
+        // Pour chaque détail, l'envoyer au serveur
+        for (final detail in details) {
+          try {
+            debugPrint('Traitement du détail ID: ${detail.idObservationDetail}');
+            
+            // Envoyer le détail au serveur
+            Map<String, dynamic> serverResponse;
+            try {
+              serverResponse = await _globalApi.sendObservationDetail(token, moduleCode, detail);
+              
+              final serverId = serverResponse['id'] ?? serverResponse['ID'];
+              if (serverId == null) {
+                throw Exception('Réponse du serveur invalide pour le détail d\'observation');
+              }
+              
+              debugPrint('Détail d\'observation envoyé avec succès, ID serveur: $serverId');
+              itemsAdded++;
+            } catch (e) {
+              debugPrint('Erreur lors de l\'envoi du détail d\'observation: $e');
+              errors.add('Détail ${detail.idObservationDetail}: $e');
+              itemsSkipped++;
+              continue; // Passer au détail suivant
+            }
+            
+            // Si tout a réussi, supprimer le détail localement
+            if (detail.idObservationDetail != null) {
+              await _observationDetailsRepository.deleteObservationDetail(detail.idObservationDetail!);
+              itemsDeleted++;
+              debugPrint('Détail d\'observation supprimé avec succès');
+            }
+            
+            itemsProcessed++;
+          } catch (e) {
+            debugPrint('Erreur lors du traitement du détail ${detail.idObservationDetail}: $e');
+            errors.add('Détail ${detail.idObservationDetail}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        if (errors.isNotEmpty) {
+          return SyncResult.failure(
+            errorMessage:
+                'Erreurs lors de la synchronisation des détails d\'observation:\n${errors.join('\n')}',
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded,
+            itemsUpdated: 0,
+            itemsSkipped: itemsSkipped,
+            itemsDeleted: itemsDeleted,
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: 0,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      } catch (e) {
+        debugPrint('Erreur lors de la synchronisation des détails d\'observation: $e');
+        return SyncResult.failure(
+          errorMessage: 'Erreur lors de la synchronisation des détails d\'observation: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur générale lors de la synchronisation des détails d\'observation: $e');
+      return SyncResult.failure(
+        errorMessage: 'Erreur lors de la synchronisation des détails d\'observation: $e',
+      );
+    }
+  }
+}
