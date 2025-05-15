@@ -1,5 +1,8 @@
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
 abstract class GlobalApi {
@@ -53,4 +56,19 @@ abstract class GlobalApi {
     List<String> moduleCodes, {
     DateTime? lastSync,
   });
+  
+  // Methods for sending data to server
+  
+  /// Envoie une visite au serveur
+  /// Returns the created visit's server ID if successful
+  Future<Map<String, dynamic>> sendVisit(String token, String moduleCode, BaseVisit visit);
+  
+  /// Envoie une observation au serveur
+  /// Returns the created observation's server ID if successful
+  Future<Map<String, dynamic>> sendObservation(String token, String moduleCode, Observation observation);
+  
+  /// Envoie un détail d'observation au serveur
+  /// Returns the created observation detail's server ID if successful
+  Future<Map<String, dynamic>> sendObservationDetail(
+      String token, String moduleCode, ObservationDetail detail);
 }
