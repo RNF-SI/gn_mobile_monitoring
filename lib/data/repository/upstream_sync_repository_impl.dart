@@ -5,7 +5,6 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_d
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
-import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
@@ -147,61 +146,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                     tag: "sync");
 
                 for (var o in visit.observers!) {
-                  if (o is int) {
-                    // Cas 1: si o est déjà un entier, l'ajouter directement
-                    _logger.i("Observateur déjà au format int: $o",
-                        tag: "sync");
-                    safeObservers.add(o);
-                  } else {
-                    // Cas 2: o est un autre type d'objet
-                    _logger.i("Observateur de type: ${o.runtimeType}",
-                        tag: "sync");
-                    try {
-                      // Accéder de manière dynamique et sécurisée aux propriétés
-                      dynamic observerId;
-
-                      // Tester si l'objet ressemble à un CorVisitObserverEntity ou VisitObserver
-                      try {
-                        // Essayer d'accéder à la propriété idRole avec dynamic pour éviter les erreurs de compilation
-                        final dynamic obj = o;
-                        if (obj.idRole != null) {
-                          observerId = obj.idRole;
-                          _logger.i("idRole trouvé: $observerId", tag: "sync");
-                        }
-                      } catch (_) {
-                        // Ignorer les erreurs si la propriété n'existe pas
-                      }
-
-                      // Si idRole n'a pas fonctionné, essayer id
-                      if (observerId == null) {
-                        try {
-                          final dynamic obj = o;
-                          if (obj.id != null) {
-                            observerId = obj.id;
-                            _logger.i("id trouvé: $observerId", tag: "sync");
-                          }
-                        } catch (_) {
-                          // Ignorer les erreurs si la propriété n'existe pas
-                        }
-                      }
-
-                      // Utilisier l'ID récupéré s'il est valide
-                      if (observerId is int) {
-                        safeObservers.add(observerId);
-                        _logger.i("Ajout de l'observateur id: $observerId",
-                            tag: "sync");
-                      } else {
-                        _logger.e(
-                            "Impossible de trouver un ID valide pour l'observateur: $o",
-                            tag: "sync");
-                      }
-                    } catch (e) {
-                      _logger.e(
-                          "Erreur lors de l'extraction de l'id observateur: $e",
-                          tag: "sync",
-                          error: e);
-                    }
-                  }
+                  _logger.i("Observateur déjà au format int: $o", tag: "sync");
+                  safeObservers.add(o);
                 }
 
                 _logger.i(
@@ -411,28 +357,31 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // 2. Récupérer et envoyer tous les détails associés à cette observation
             if (observation.idObservation != null) {
               // Récupérer l'ID serveur de l'observation depuis la réponse
-              final serverObservationId = serverResponse['id'] ?? serverResponse['ID'];
+              final serverObservationId =
+                  serverResponse['id'] ?? serverResponse['ID'];
               if (serverObservationId == null) {
-                throw Exception('ID serveur de l\'observation non trouvé dans la réponse');
+                throw Exception(
+                    'ID serveur de l\'observation non trouvé dans la réponse');
               }
-              
-              _logger.i('Envoi des détails pour l\'observation local=${observation.idObservation}, serveur=$serverObservationId', tag: 'sync');
-              
+
+              _logger.i(
+                  'Envoi des détails pour l\'observation local=${observation.idObservation}, serveur=$serverObservationId',
+                  tag: 'sync');
+
               // Vérifier la réponse du serveur pour les champs importants
               if (serverResponse.containsKey('properties')) {
                 final properties = serverResponse['properties'];
                 if (properties is Map) {
-                  _logger.i('Propriétés de l\'observation dans la réponse du serveur: $properties', tag: 'sync');
+                  _logger.i(
+                      'Propriétés de l\'observation dans la réponse du serveur: $properties',
+                      tag: 'sync');
                 }
               }
-              
+
               // Passer l'ID serveur de l'observation pour les détails
               final detailsResult = await syncObservationDetailsToServer(
-                token, 
-                moduleCode, 
-                observation.idObservation!,
-                serverObservationId: serverObservationId
-              );
+                  token, moduleCode, observation.idObservation,
+                  serverObservationId: serverObservationId);
 
               // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
               if (!detailsResult.success &&
@@ -447,7 +396,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // 3. Si tout a réussi, supprimer l'observation localement
             if (errors.isEmpty && observation.idObservation != null) {
               await _observationsRepository
-                  .deleteObservation(observation.idObservation!);
+                  .deleteObservation(observation.idObservation);
               itemsDeleted++;
               debugPrint('Observation supprimée avec succès');
             }
@@ -498,7 +447,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
   @override
   Future<SyncResult> syncObservationDetailsToServer(
-      String token, String moduleCode, int observationId, {int? serverObservationId}) async {
+      String token, String moduleCode, int observationId,
+      {int? serverObservationId}) async {
     try {
       // Vérifier la connectivité
       final isConnected = await checkConnectivity();
@@ -507,10 +457,12 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           errorMessage: 'Pas de connexion Internet',
         );
       }
-      
+
       // Utiliser l'ID serveur de l'observation s'il est fourni (sinon utiliser l'ID local)
       final effectiveObservationId = serverObservationId ?? observationId;
-      _logger.i('Synchronisation des détails d\'observation: ID observation local = $observationId, ID observation serveur = $effectiveObservationId', tag: 'sync');
+      _logger.i(
+          'Synchronisation des détails d\'observation: ID observation local = $observationId, ID observation serveur = $effectiveObservationId',
+          tag: 'sync');
 
       int itemsProcessed = 0;
       int itemsAdded = 0;
@@ -525,7 +477,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
         // Si aucun détail, renvoyer un succès vide
         if (details.isEmpty) {
-          _logger.i('Aucun détail trouvé pour l\'observation $observationId', tag: 'sync');
+          _logger.i('Aucun détail trouvé pour l\'observation $observationId',
+              tag: 'sync');
           return SyncResult.success(
             itemsProcessed: 0,
             itemsAdded: 0,
@@ -535,27 +488,37 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         }
 
         // Log pour le débogage
-        _logger.i('${details.length} détails trouvés pour l\'observation $observationId', tag: 'sync');
+        _logger.i(
+            '${details.length} détails trouvés pour l\'observation $observationId',
+            tag: 'sync');
         for (final detail in details) {
-          _logger.i('Détail ${detail.idObservationDetail} - données: ${detail.data}', tag: 'sync');
+          _logger.i(
+              'Détail ${detail.idObservationDetail} - données: ${detail.data}',
+              tag: 'sync');
         }
 
         // Pour chaque détail, l'envoyer au serveur
         for (final detail in details) {
           try {
-            _logger.i('Traitement du détail ID: ${detail.idObservationDetail}', tag: 'sync');
+            _logger.i('Traitement du détail ID: ${detail.idObservationDetail}',
+                tag: 'sync');
 
             // Vérifier la présence des champs clés dans les données
             if (detail.data.containsKey('denombrement')) {
-              _logger.i('Champ "denombrement" présent dans les données: ${detail.data['denombrement']} (${detail.data['denombrement'].runtimeType})', tag: 'sync');
+              _logger.i(
+                  'Champ "denombrement" présent dans les données: ${detail.data['denombrement']} (${detail.data['denombrement'].runtimeType})',
+                  tag: 'sync');
             } else {
               _logger.w('Champ "denombrement" ABSENT des données', tag: 'sync');
             }
-            
+
             if (detail.data.containsKey('hauteur_strate')) {
-              _logger.i('Champ "hauteur_strate" présent dans les données: ${detail.data['hauteur_strate']} (${detail.data['hauteur_strate'].runtimeType})', tag: 'sync');
+              _logger.i(
+                  'Champ "hauteur_strate" présent dans les données: ${detail.data['hauteur_strate']} (${detail.data['hauteur_strate'].runtimeType})',
+                  tag: 'sync');
             } else {
-              _logger.w('Champ "hauteur_strate" ABSENT des données', tag: 'sync');
+              _logger.w('Champ "hauteur_strate" ABSENT des données',
+                  tag: 'sync');
             }
 
             // Envoyer le détail au serveur avec l'ID d'observation serveur
@@ -564,21 +527,26 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               // Créer une version modifiée du détail avec l'ID d'observation serveur
               // IMPORTANT: Nous utilisons ici l'ID serveur de l'observation, pas l'ID local
               final detailWithServerObservationId = detail.copyWith(
-                idObservation: effectiveObservationId,  // Utiliser l'ID serveur ici!
+                idObservation:
+                    effectiveObservationId, // Utiliser l'ID serveur ici!
               );
-              
-              _logger.i('Envoi du détail avec ID observation serveur = $effectiveObservationId', tag: 'sync');
-              
+
+              _logger.i(
+                  'Envoi du détail avec ID observation serveur = $effectiveObservationId',
+                  tag: 'sync');
+
               // Vérifier les données avant l'envoi
-              _logger.i('Données avant envoi: ${detailWithServerObservationId.data}', tag: 'sync');
-              
+              _logger.i(
+                  'Données avant envoi: ${detailWithServerObservationId.data}',
+                  tag: 'sync');
+
               // Envoyer la requête au serveur
               serverResponse = await _globalApi.sendObservationDetail(
                   token, moduleCode, detailWithServerObservationId);
 
               // Vérifier la réponse du serveur
               _logger.i('Réponse du serveur: $serverResponse', tag: 'sync');
-              
+
               final serverId = serverResponse['id'] ?? serverResponse['ID'];
               if (serverId == null) {
                 throw Exception(
@@ -590,23 +558,32 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 final properties = serverResponse['properties'];
                 if (properties is Map) {
                   if (properties.containsKey('denombrement')) {
-                    _logger.i('Champ "denombrement" dans la réponse: ${properties['denombrement']}', tag: 'sync');
+                    _logger.i(
+                        'Champ "denombrement" dans la réponse: ${properties['denombrement']}',
+                        tag: 'sync');
                   } else {
-                    _logger.w('Champ "denombrement" ABSENT de la réponse', tag: 'sync');
+                    _logger.w('Champ "denombrement" ABSENT de la réponse',
+                        tag: 'sync');
                   }
-                  
+
                   if (properties.containsKey('hauteur_strate')) {
-                    _logger.i('Champ "hauteur_strate" dans la réponse: ${properties['hauteur_strate']}', tag: 'sync');
+                    _logger.i(
+                        'Champ "hauteur_strate" dans la réponse: ${properties['hauteur_strate']}',
+                        tag: 'sync');
                   } else {
-                    _logger.w('Champ "hauteur_strate" ABSENT de la réponse', tag: 'sync');
+                    _logger.w('Champ "hauteur_strate" ABSENT de la réponse',
+                        tag: 'sync');
                   }
                 }
               }
 
-              _logger.i('Détail d\'observation envoyé avec succès, ID serveur: $serverId', tag: 'sync');
+              _logger.i(
+                  'Détail d\'observation envoyé avec succès, ID serveur: $serverId',
+                  tag: 'sync');
               itemsAdded++;
             } catch (e) {
-              _logger.e('Erreur lors de l\'envoi du détail d\'observation: $e', tag: 'sync', error: e);
+              _logger.e('Erreur lors de l\'envoi du détail d\'observation: $e',
+                  tag: 'sync', error: e);
               errors.add('Détail ${detail.idObservationDetail}: $e');
               itemsSkipped++;
               continue; // Passer au détail suivant
@@ -614,23 +591,30 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Si tout a réussi, supprimer le détail localement
             if (detail.idObservationDetail != null) {
-              _logger.i('Suppression du détail local: ${detail.idObservationDetail}', tag: 'sync');
+              _logger.i(
+                  'Suppression du détail local: ${detail.idObservationDetail}',
+                  tag: 'sync');
               await _observationDetailsRepository
                   .deleteObservationDetail(detail.idObservationDetail!);
               itemsDeleted++;
-              _logger.i('Détail d\'observation supprimé avec succès', tag: 'sync');
+              _logger.i('Détail d\'observation supprimé avec succès',
+                  tag: 'sync');
             }
 
             itemsProcessed++;
           } catch (e) {
-            _logger.e('Erreur lors du traitement du détail ${detail.idObservationDetail}: $e', tag: 'sync', error: e);
+            _logger.e(
+                'Erreur lors du traitement du détail ${detail.idObservationDetail}: $e',
+                tag: 'sync',
+                error: e);
             errors.add('Détail ${detail.idObservationDetail}: $e');
             itemsSkipped++;
           }
         }
 
         if (errors.isNotEmpty) {
-          _logger.e('Erreurs lors de la synchronisation: ${errors.join(", ")}', tag: 'sync');
+          _logger.e('Erreurs lors de la synchronisation: ${errors.join(", ")}',
+              tag: 'sync');
           return SyncResult.failure(
             errorMessage:
                 'Erreurs lors de la synchronisation des détails d\'observation:\n${errors.join('\n')}',
@@ -642,7 +626,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           );
         }
 
-        _logger.i('Synchronisation des détails d\'observation réussie: $itemsProcessed traités, $itemsAdded ajoutés', tag: 'sync');
+        _logger.i(
+            'Synchronisation des détails d\'observation réussie: $itemsProcessed traités, $itemsAdded ajoutés',
+            tag: 'sync');
         return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
@@ -651,14 +637,20 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           itemsDeleted: itemsDeleted,
         );
       } catch (e) {
-        _logger.e('Erreur lors de la synchronisation des détails d\'observation: $e', tag: 'sync', error: e);
+        _logger.e(
+            'Erreur lors de la synchronisation des détails d\'observation: $e',
+            tag: 'sync',
+            error: e);
         return SyncResult.failure(
           errorMessage:
               'Erreur lors de la synchronisation des détails d\'observation: $e',
         );
       }
     } catch (e) {
-      _logger.e('Erreur générale lors de la synchronisation des détails d\'observation: $e', tag: 'sync', error: e);
+      _logger.e(
+          'Erreur générale lors de la synchronisation des détails d\'observation: $e',
+          tag: 'sync',
+          error: e);
       return SyncResult.failure(
         errorMessage:
             'Erreur lors de la synchronisation des détails d\'observation: $e',
