@@ -192,6 +192,20 @@ class _ObservationDetailFormPageState
       });
 
       try {
+        // Récupérer les données du formulaire dynamique
+        if (_formBuilderKey.currentState != null) {
+          // Fusionner les données du formulaire dynamique avec les autres données
+          final formBuilderData = _formBuilderKey.currentState!.getFormValues();
+          _formData = {..._formData, ...formBuilderData};
+          debugPrint('Données du formulaire: ${_formData.length} entrées');
+        }
+        
+        // S'assurer que l'ID observation est correctement défini
+        if (widget.observation?.idObservation != null) {
+          _formData['id_observation'] = widget.observation!.idObservation;
+          debugPrint('ID Observation défini: ${widget.observation!.idObservation}');
+        }
+        
         // Créer ou modifier un détail d'observation
         final observationDetail = ObservationDetail(
           idObservationDetail: widget.existingDetail?.idObservationDetail,
@@ -200,6 +214,7 @@ class _ObservationDetailFormPageState
           data: _formData,
         );
 
+        debugPrint('Sauvegarde du détail d\'observation...');
         // Sauvegarder le détail d'observation
         final result = await ref
             .read(observationDetailsProvider(
@@ -209,6 +224,7 @@ class _ObservationDetailFormPageState
 
         if (mounted) {
           if (result > 0) {
+            debugPrint('Détail d\'observation sauvegardé avec ID: $result');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Détail d\'observation enregistré avec succès'),
@@ -216,6 +232,7 @@ class _ObservationDetailFormPageState
             );
 
             if (!_chainInput) {
+              debugPrint('Mode normal: navigation vers la page de détail');
               // Récupérer le détail d'observation créé/mis à jour
               final updatedDetail = await ref
                   .read(observationDetailsProvider(
@@ -226,6 +243,7 @@ class _ObservationDetailFormPageState
               if (updatedDetail != null &&
                   mounted &&
                   widget.observationDetail != null) {
+                debugPrint('Détail récupéré, navigation vers la page de détail');
                 // Naviguer vers la page de détail du détail d'observation
                 Navigator.pushReplacement(
                   context,
@@ -240,6 +258,7 @@ class _ObservationDetailFormPageState
                 );
               }
             } else {
+              debugPrint('Mode enchaînement: réinitialisation du formulaire');
               // En mode enchaînement, réinitialiser le formulaire
               _formKey.currentState?.reset();
               _formBuilderKey.currentState?.resetForm();
@@ -264,6 +283,7 @@ class _ObservationDetailFormPageState
               );
             }
           } else {
+            debugPrint('Erreur: ID de détail non valide retourné: $result');
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text(
@@ -276,7 +296,9 @@ class _ObservationDetailFormPageState
             });
           }
         }
-      } catch (e) {
+      } catch (e, stackTrace) {
+        debugPrint('Erreur lors de la sauvegarde: $e');
+        debugPrint('Stack trace: $stackTrace');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
