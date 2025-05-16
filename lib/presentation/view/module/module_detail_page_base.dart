@@ -1,12 +1,17 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class ModuleDetailPageBase extends DetailPage {
@@ -100,7 +105,17 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     // Ajouter les données complémentaires si disponibles
     if (module.complement?.data != null) {
-      data.addAll(module.complement!.data as Map<String, dynamic>);
+      // Le champ data est de type String?, nous devons donc le parser en JSON
+      try {
+        final Map<String, dynamic> parsedData = 
+            module.complement!.data != null ? 
+            Map<String, dynamic>.from(json.decode(module.complement!.data!)) : 
+            {};
+        data.addAll(parsedData);
+      } catch (e) {
+        // En cas d'erreur de parsing, on ignore silencieusement
+        print('Erreur de parsing des données complémentaires: $e');
+      }
     }
 
     return data;
@@ -378,6 +393,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       title: Text(getTitle()),
       // Afficher un indicateur de chargement dans l'AppBar si configuration en cours
       actions: [
+        // Bouton de synchronisation ascendante
+        IconButton(
+          icon: const Icon(Icons.upload),
+          tooltip: 'Envoyer les données vers le serveur',
+          onPressed: _synchronizeDataToServer,
+        ),
         if (isConfiguringModule)
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -392,6 +413,228 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           ),
       ],
     );
+  }
+  
+  // Méthode pour lancer la synchronisation ascendante
+  void _synchronizeDataToServer() {
+    final moduleCode = widget.moduleInfo.module.moduleCode;
+    if (moduleCode == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Code du module non disponible')),
+      );
+      return;
+    }
+    
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Synchronisation vers le serveur'),
+          content: const Text(
+            'Voulez-vous envoyer les données de ce module vers le serveur?\n\n'
+            'Cette action enverra toutes les nouvelles visites et observations '
+            'de ce module qui n\'ont pas encore été synchronisées.'
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _startUploadSync(moduleCode);
+              },
+              child: const Text('Synchroniser'),
+            ),
+          ],
+        );
+      }
+    );
+  }
+  
+  // Démarrer la synchronisation vers le serveur
+  Future<void> _startUploadSync(String moduleCode) async {
+    // Ce code est exécuté dans le widget consumer parent
+    final rootContext = context.findRootAncestorStateOfType<ConsumerState>()?.context;
+    
+    if (rootContext == null) {
+      return;
+    }
+    
+    // Récupérer le WidgetRef du consumer parent
+    final ref = context.findAncestorStateOfType<ConsumerState>()?.ref;
+    
+    if (ref == null) {
+      return;
+    }
+
+    // Afficher un message de chargement
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Envoi des données en cours...'),
+          duration: Duration(seconds: 1),
+        ),
+      );
+    }
+    
+    // Ajouter des logs console très visibles pour faciliter la copie
+    print('\n==================================================================');
+    print('DEBUT SYNCHRONISATION ASCENDANTE - MODULE: $moduleCode');
+    print('==================================================================');
+    print('TIMESTAMP: ${DateTime.now().toIso8601String()}');
+    
+    try {
+      final syncService = ref.read(syncServiceProvider.notifier);
+      
+      // Capturer l'heure de début
+      final startTime = DateTime.now();
+      
+      // Lancer la synchronisation ascendante
+      final result = await syncService.syncToServer(
+        ref,
+        moduleCode: moduleCode,
+        isManualSync: true,
+      );
+      
+      // Calculer la durée
+      final duration = DateTime.now().difference(startTime);
+      
+      // Log très détaillé du résultat
+      print('\n==================================================================');
+      print('RESULTAT SYNCHRONISATION: ${result.state}');
+      print('==================================================================');
+      print('État: ${result.state}');
+      print('Messages: ${result.errorMessage ?? "Aucun message d\'erreur"}');
+      print('Informations additionnelles: ${result.additionalInfo ?? "Aucune info additionnelle"}');
+      print('Éléments traités: ${result.itemsProcessed}');
+      print('Éléments ajoutés: ${result.itemsAdded}');
+      print('Éléments mis à jour: ${result.itemsUpdated}');
+      print('Éléments ignorés: ${result.itemsSkipped}');
+      print('Éléments supprimés: ${result.itemsDeleted}');
+      print('Durée de l\'opération: ${duration.inSeconds} secondes');
+      print('==================================================================');
+    
+      // Vérifier si le widget est toujours monté avant d'utiliser le contexte
+      if (!mounted) return;
+
+      // Afficher un dialogue détaillé en cas d'échec
+      if (result.state == SyncState.failure) {
+        // Afficher un dialogue avec les détails complets
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Erreur de synchronisation'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Message: ${result.errorMessage ?? "Aucun message d\'erreur"}'),
+                  const SizedBox(height: 12),
+                  if (result.additionalInfo != null) ...[
+                    const Text('Informations supplémentaires:', 
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Text(result.additionalInfo!),
+                  ],
+                  const SizedBox(height: 16),
+                  const Text('Veuillez copier ces informations pour les transmettre aux développeurs.'),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Fermer'),
+              ),
+            ],
+          ),
+        );
+      }
+      
+      // Afficher le résultat
+      if (result.state == SyncState.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Synchronisation réussie'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else if (result.state == SyncState.failure) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: ${result.errorMessage ?? "Échec de la synchronisation"}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else if (result.state == SyncState.conflictDetected) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Des conflits ont été détectés'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      // Capturer et afficher toute exception non gérée
+      print('\n==================================================================');
+      print('ERREUR SYNCHRONISATION ASCENDANTE');
+      print('==================================================================');
+      print('Type d\'erreur: ${e.runtimeType}');
+      print('Message: $e');
+      print('\nSTACK TRACE:');
+      print(stackTrace);
+      print('==================================================================');
+      
+      // Vérifier si le widget est toujours monté avant d'utiliser le contexte
+      if (!mounted) return;
+      
+      // Afficher un dialogue avec les détails de l'erreur
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Exception lors de la synchronisation'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Type d\'erreur: ${e.runtimeType}'),
+                const SizedBox(height: 8),
+                Text('Message: $e'),
+                const SizedBox(height: 16),
+                const Text('Stack trace:', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text(stackTrace.toString(), style: const TextStyle(fontSize: 12)),
+                const SizedBox(height: 16),
+                const SelectableText(
+                  'Ces informations ont été enregistrées dans les logs de la console. '
+                  'Veuillez les copier pour les transmettre aux développeurs.',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Exception: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    }
   }
 
   @override

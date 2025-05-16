@@ -22,6 +22,9 @@ mixin _$ObservationDetail {
   /// Identifiant de l'observation parente
   int? get idObservation => throw _privateConstructorUsedError;
 
+  /// Identifiant du module
+  int? get idModule => throw _privateConstructorUsedError;
+
   /// UUID unique du détail d'observation
   String? get uuidObservationDetail => throw _privateConstructorUsedError;
 
@@ -44,6 +47,7 @@ abstract class $ObservationDetailCopyWith<$Res> {
   $Res call(
       {int? idObservationDetail,
       int? idObservation,
+      int? idModule,
       String? uuidObservationDetail,
       Map<String, dynamic> data});
 }
@@ -65,6 +69,7 @@ class _$ObservationDetailCopyWithImpl<$Res, $Val extends ObservationDetail>
   $Res call({
     Object? idObservationDetail = freezed,
     Object? idObservation = freezed,
+    Object? idModule = freezed,
     Object? uuidObservationDetail = freezed,
     Object? data = null,
   }) {
@@ -76,6 +81,10 @@ class _$ObservationDetailCopyWithImpl<$Res, $Val extends ObservationDetail>
       idObservation: freezed == idObservation
           ? _value.idObservation
           : idObservation // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idModule: freezed == idModule
+          ? _value.idModule
+          : idModule // ignore: cast_nullable_to_non_nullable
               as int?,
       uuidObservationDetail: freezed == uuidObservationDetail
           ? _value.uuidObservationDetail
@@ -100,6 +109,7 @@ abstract class _$$ObservationDetailImplCopyWith<$Res>
   $Res call(
       {int? idObservationDetail,
       int? idObservation,
+      int? idModule,
       String? uuidObservationDetail,
       Map<String, dynamic> data});
 }
@@ -119,6 +129,7 @@ class __$$ObservationDetailImplCopyWithImpl<$Res>
   $Res call({
     Object? idObservationDetail = freezed,
     Object? idObservation = freezed,
+    Object? idModule = freezed,
     Object? uuidObservationDetail = freezed,
     Object? data = null,
   }) {
@@ -130,6 +141,10 @@ class __$$ObservationDetailImplCopyWithImpl<$Res>
       idObservation: freezed == idObservation
           ? _value.idObservation
           : idObservation // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idModule: freezed == idModule
+          ? _value.idModule
+          : idModule // ignore: cast_nullable_to_non_nullable
               as int?,
       uuidObservationDetail: freezed == uuidObservationDetail
           ? _value.uuidObservationDetail
@@ -149,6 +164,7 @@ class _$ObservationDetailImpl implements _ObservationDetail {
   const _$ObservationDetailImpl(
       {this.idObservationDetail,
       this.idObservation,
+      this.idModule,
       this.uuidObservationDetail,
       final Map<String, dynamic> data = const {}})
       : _data = data;
@@ -160,6 +176,10 @@ class _$ObservationDetailImpl implements _ObservationDetail {
   /// Identifiant de l'observation parente
   @override
   final int? idObservation;
+
+  /// Identifiant du module
+  @override
+  final int? idModule;
 
   /// UUID unique du détail d'observation
   @override
@@ -179,7 +199,7 @@ class _$ObservationDetailImpl implements _ObservationDetail {
 
   @override
   String toString() {
-    return 'ObservationDetail(idObservationDetail: $idObservationDetail, idObservation: $idObservation, uuidObservationDetail: $uuidObservationDetail, data: $data)';
+    return 'ObservationDetail(idObservationDetail: $idObservationDetail, idObservation: $idObservation, idModule: $idModule, uuidObservationDetail: $uuidObservationDetail, data: $data)';
   }
 
   @override
@@ -191,6 +211,8 @@ class _$ObservationDetailImpl implements _ObservationDetail {
                 other.idObservationDetail == idObservationDetail) &&
             (identical(other.idObservation, idObservation) ||
                 other.idObservation == idObservation) &&
+            (identical(other.idModule, idModule) ||
+                other.idModule == idModule) &&
             (identical(other.uuidObservationDetail, uuidObservationDetail) ||
                 other.uuidObservationDetail == uuidObservationDetail) &&
             const DeepCollectionEquality().equals(other._data, _data));
@@ -201,6 +223,7 @@ class _$ObservationDetailImpl implements _ObservationDetail {
       runtimeType,
       idObservationDetail,
       idObservation,
+      idModule,
       uuidObservationDetail,
       const DeepCollectionEquality().hash(_data));
 
@@ -218,6 +241,7 @@ abstract class _ObservationDetail implements ObservationDetail {
   const factory _ObservationDetail(
       {final int? idObservationDetail,
       final int? idObservation,
+      final int? idModule,
       final String? uuidObservationDetail,
       final Map<String, dynamic> data}) = _$ObservationDetailImpl;
 
@@ -228,6 +252,10 @@ abstract class _ObservationDetail implements ObservationDetail {
   /// Identifiant de l'observation parente
   @override
   int? get idObservation;
+
+  /// Identifiant du module
+  @override
+  int? get idModule;
 
   /// UUID unique du détail d'observation
   @override

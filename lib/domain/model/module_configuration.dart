@@ -13,7 +13,8 @@ class ModuleConfiguration with _$ModuleConfiguration {
     Map<String, String?>? displayFieldNames,
     ModuleConfig? module,
     ObjectConfig? observation,
-    ObjectConfig? observationDetail, // Nouvelle propriété pour les détails d'observation
+    ObjectConfig?
+        observationDetail, // Nouvelle propriété pour les détails d'observation
     ObjectConfig? site,
     ObjectConfig? sitesGroup,
     dynamic synthese,
@@ -28,26 +29,28 @@ class ModuleConfiguration with _$ModuleConfiguration {
       if (value is Map<String, dynamic>) return value;
       return {};
     }
-    
+
     // Helper function to safely convert to Map for string fields
     Map<String, String?>? toSafeStringMap(dynamic value) {
       if (value == null) return null;
       if (value is! Map) return {};
       try {
-        return (value as Map<String, dynamic>).map((k, v) => MapEntry(k, v?.toString()));
+        return (value as Map<String, dynamic>)
+            .map((k, v) => MapEntry(k, v?.toString()));
       } catch (e) {
         return {};
       }
     }
-    
+
     return ModuleConfiguration(
-      custom: json['custom'] != null && json['custom'] is Map 
+      custom: json['custom'] != null && json['custom'] is Map
           ? CustomConfig.fromJson(toSafeMap(json['custom'])!)
           : null,
       data: json['data'] != null && json['data'] is Map
           ? DataConfig.fromJson(toSafeMap(json['data'])!)
           : null,
-      defaultDisplayFieldNames: toSafeStringMap(json['default_display_field_names']),
+      defaultDisplayFieldNames:
+          toSafeStringMap(json['default_display_field_names']),
       displayFieldNames: toSafeStringMap(json['display_field_names']),
       module: json['module'] != null && json['module'] is Map
           ? ModuleConfig.fromJson(toSafeMap(json['module'])!)
@@ -56,7 +59,8 @@ class ModuleConfiguration with _$ModuleConfiguration {
           ? ObjectConfig.fromJson(toSafeMap(json['observation'])!)
           : null,
       // Ajout du parsing de observation_detail
-      observationDetail: json['observation_detail'] != null && json['observation_detail'] is Map
+      observationDetail: json['observation_detail'] != null &&
+              json['observation_detail'] is Map
           ? ObjectConfig.fromJson(toSafeMap(json['observation_detail'])!)
           : null,
       site: json['site'] != null && json['site'] is Map
@@ -87,7 +91,8 @@ extension ModuleConfigurationX on ModuleConfiguration {
         if (module != null) 'module': module?.toJson(),
         if (observation != null) 'observation': observation?.toJson(),
         // Ajout de l'observation_detail à la sérialisation
-        if (observationDetail != null) 'observation_detail': observationDetail?.toJson(),
+        if (observationDetail != null)
+          'observation_detail': observationDetail?.toJson(),
         if (site != null) 'site': site?.toJson(),
         if (sitesGroup != null) 'sites_group': sitesGroup?.toJson(),
         if (synthese != null) 'synthese': synthese,
@@ -123,7 +128,7 @@ class CustomConfig with _$CustomConfig {
       if (value is num) return value != 0;
       return null;
     }
-    
+
     // Safe conversion helper for int
     int? toInt(dynamic value) {
       if (value == null) return null;
@@ -132,18 +137,18 @@ class CustomConfig with _$CustomConfig {
       if (value is double) return value.toInt();
       return null;
     }
-    
+
     // Safe conversion helper for string
     String? toString(dynamic value) {
       if (value == null) return null;
       return value.toString();
     }
-    
+
     // Safe conversion helper for TypeSite list
     List<TypeSite>? toTypeSiteList(dynamic value) {
       if (value == null) return null;
       if (value is! List) return [];
-      
+
       try {
         return value.map((e) {
           if (e is Map<String, dynamic>) {
@@ -156,7 +161,7 @@ class CustomConfig with _$CustomConfig {
         return [];
       }
     }
-    
+
     return CustomConfig(
       drawSitesGroup: toBool(json['__MODULE.B_DRAW_SITES_GROUP']),
       synthese: toBool(json['__MODULE.B_SYNTHESE']),
@@ -165,7 +170,8 @@ class CustomConfig with _$CustomConfig {
       idListTaxonomy: toInt(json['__MODULE.ID_LIST_TAXONOMY']),
       idModule: toInt(json['__MODULE.ID_MODULE']),
       moduleCode: toString(json['__MODULE.MODULE_CODE']),
-      taxonomyDisplayFieldName: toString(json['__MODULE.TAXONOMY_DISPLAY_FIELD_NAME']),
+      taxonomyDisplayFieldName:
+          toString(json['__MODULE.TAXONOMY_DISPLAY_FIELD_NAME']),
       typesSite: toTypeSiteList(json['__MODULE.TYPES_SITE']),
       monitoringsPath: toString(json['__MONITORINGS_PATH']),
     );
@@ -462,10 +468,11 @@ class GenericFieldConfig with _$GenericFieldConfig {
     String? keyValue,
     bool? multiple,
     List<Map<String, dynamic>>? values,
+    Map<String, dynamic>? value,
     Map<String, dynamic>? default_,
     String? designStyle,
     String? dataPath,
-    @JsonKey(name: 'id_list') dynamic idList, // Peut être un entier ou une chaîne
+    @JsonKey(name: 'id_list') dynamic idList,
   }) = _GenericFieldConfig;
 
   factory GenericFieldConfig.fromJson(Map<String, dynamic> json) {
@@ -485,10 +492,11 @@ class GenericFieldConfig with _$GenericFieldConfig {
       values: (json['values'] as List<dynamic>?)
           ?.map((e) => e as Map<String, dynamic>)
           .toList(),
+      value: json['value'] as Map<String, dynamic>?,
       default_: json['default'] as Map<String, dynamic>?,
       designStyle: json['designStyle'] as String?,
       dataPath: json['data_path'] as String?,
-      idList: json['id_list'], // Peut être un entier ou une chaîne
+      idList: json['id_list'],
     );
   }
 }
@@ -574,7 +582,7 @@ class ObjectConfig with _$ObjectConfig {
       if (value is num) return value != 0;
       return null;
     }
-    
+
     int? toInt(dynamic value) {
       if (value == null) return null;
       if (value is int) return value;
@@ -582,12 +590,12 @@ class ObjectConfig with _$ObjectConfig {
       if (value is double) return value.toInt();
       return null;
     }
-    
+
     String? toString(dynamic value) {
       if (value == null) return null;
       return value.toString();
     }
-    
+
     // Safe conversion for string lists
     List<String>? toStringList(dynamic value) {
       if (value == null) return null;
@@ -598,7 +606,7 @@ class ObjectConfig with _$ObjectConfig {
         return [];
       }
     }
-    
+
     // Safe conversion for ExportConfig list
     List<ExportConfig>? toExportConfigList(dynamic value) {
       if (value == null) return null;
@@ -615,7 +623,7 @@ class ObjectConfig with _$ObjectConfig {
         return [];
       }
     }
-    
+
     // Safe conversion for SortConfig list
     List<SortConfig>? toSortConfigList(dynamic value) {
       if (value == null) return null;
@@ -632,21 +640,21 @@ class ObjectConfig with _$ObjectConfig {
         return [];
       }
     }
-    
+
     // Safe conversion for Map
     Map<String, dynamic>? toSafeMap(dynamic value) {
       if (value == null) return null;
       if (value is Map<String, dynamic>) return value;
       return {};
     }
-    
+
     // Safe conversion for GenericFieldConfig map
     Map<String, GenericFieldConfig>? toGenericFieldConfigMap(dynamic value) {
       if (value == null) return null;
       if (value is! Map) return {};
       try {
         final result = <String, GenericFieldConfig>{};
-        (value as Map).forEach((k, v) {
+        value.forEach((k, v) {
           if (v is Map<String, dynamic>) {
             result[k.toString()] = GenericFieldConfig.fromJson(v);
           } else {
@@ -658,14 +666,14 @@ class ObjectConfig with _$ObjectConfig {
         return {};
       }
     }
-    
+
     // Safe conversion for TypeSiteConfig map
     Map<String, TypeSiteConfig>? toTypeSiteConfigMap(dynamic value) {
       if (value == null) return null;
       if (value is! Map) return {};
       try {
         final result = <String, TypeSiteConfig>{};
-        (value as Map).forEach((k, v) {
+        value.forEach((k, v) {
           if (v is Map<String, dynamic>) {
             result[k.toString()] = TypeSiteConfig.fromJson(v);
           } else {
@@ -677,7 +685,7 @@ class ObjectConfig with _$ObjectConfig {
         return {};
       }
     }
-    
+
     return ObjectConfig(
       chained: toBool(json['chained']),
       childrenTypes: toStringList(json['children_types']),

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_observation_details.dart';
@@ -41,5 +43,63 @@ class ObservationDetailDao extends DatabaseAccessor<AppDatabase>
     return await (delete(tObservationDetails)
           ..where((tbl) => tbl.idObservation.equals(observationId)))
         .go();
+  }
+  
+  /// Récupère tous les détails d'observation
+  Future<List<TObservationDetail>> getAllObservationDetails() async {
+    return await (select(tObservationDetails)).get();
+  }
+
+  /// Récupère les détails d'observation qui font référence à une nomenclature spécifique
+  Future<List<TObservationDetail>> getObservationDetailsByNomenclatureId(int nomenclatureId) async {
+    final allDetails = await getAllObservationDetails();
+    final result = <TObservationDetail>[];
+    
+    for (final detail in allDetails) {
+      if (detail.data != null) {
+        try {
+          final Map<String, dynamic> dataMap = jsonDecode(detail.data!);
+          // Vérifier si le champ data contient une référence à la nomenclature
+          final hasReference = _checkNomenclatureReference(dataMap, nomenclatureId);
+          if (hasReference) {
+            result.add(detail);
+          }
+        } catch (e) {
+          // Ignorer les erreurs de parsing JSON
+        }
+      }
+    }
+    
+    return result;
+  }
+  
+  /// Vérifie récursivement si un objet JSON contient une référence à la nomenclature
+  bool _checkNomenclatureReference(dynamic data, int nomenclatureId) {
+    if (data is Map<String, dynamic>) {
+      // Chercher directement les clés qui pourraient contenir une nomenclature
+      for (final entry in data.entries) {
+        if (entry.key.toLowerCase().contains('id_nomenclature') && 
+            entry.value is int && 
+            entry.value == nomenclatureId) {
+          return true;
+        }
+        
+        // Récursion sur les objets imbriqués
+        if (entry.value is Map || entry.value is List) {
+          if (_checkNomenclatureReference(entry.value, nomenclatureId)) {
+            return true;
+          }
+        }
+      }
+    } else if (data is List) {
+      // Récursion sur chaque élément de la liste
+      for (final item in data) {
+        if (_checkNomenclatureReference(item, nomenclatureId)) {
+          return true;
+        }
+      }
+    }
+    
+    return false;
   }
 }

@@ -23,6 +23,12 @@ abstract class ModulesRepository {
   /// Si la configuration n'est pas disponible, retourne un Module avec les données initiales
   Future<Module> getModuleWithConfig(int moduleId);
   
+  /// Récupère un module par son code
+  Future<Module?> getModuleByCode(String moduleCode);
+  
+  /// Récupère l'ID de la liste taxonomique associée à un module
+  Future<int?> getModuleTaxonomyListId(int moduleId);
+  
   /// Récupère les identifiants de datasets associés à un module
   Future<List<int>> getDatasetIdsForModule(int moduleId);
   

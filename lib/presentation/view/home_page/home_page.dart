@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.da
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/site_list_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
@@ -14,14 +15,14 @@ class HomePage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Observer le statut de synchronisation
-    final syncStatus = ref.watch(syncStatusProvider);
-    final isSyncing = syncStatus.isInProgress;
+    final syncStatus = ref.watch(syncServiceProvider);
+    //Rafraichir les status de téléchargement des modules
+    ref.read(databaseSyncServiceProvider).refreshAllLists();
+
+    final isSyncing = syncStatus.state == SyncState.inProgress;
 
     // Détermine si l'overlay doit être affiché
-    final showOverlay = syncStatus.step == SyncStep.syncingModules ||
-                      syncStatus.step == SyncStep.syncingSites ||
-                      syncStatus.step == SyncStep.syncingSiteGroups ||
-                      syncStatus.step == SyncStep.deletingDatabase;
+    final showOverlay = syncStatus.state == SyncState.inProgress;
 
     return DefaultTabController(
       length: 3,
@@ -61,8 +62,16 @@ class HomePage extends ConsumerWidget {
             ),
           ),
           // Overlay pour bloquer les interactions pendant la synchronisation
+          // Nous plaçons le ModalBarrier en-dessous du widget de synchronisation
           if (showOverlay)
-            Positioned.fill(
+            Positioned(
+              top: MediaQuery.of(context).padding.top +
+                  kToolbarHeight + // AppBar height
+                  kTextTabBarHeight + // TabBar height
+                  96, // Hauteur approximative du SyncStatusWidget
+              left: 0,
+              right: 0,
+              bottom: 0,
               child: ModalBarrier(
                 key: const Key('sync-modal-barrier'),
                 color: Colors.black.withOpacity(0.1),

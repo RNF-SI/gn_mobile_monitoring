@@ -46,4 +46,21 @@ class TNomenclaturesDao extends DatabaseAccessor<AppDatabase>
       throw Exception("Failed to update nomenclature: ${e.toString()}");
     }
   }
+  
+  Future<void> deleteNomenclature(int nomenclatureId) async {
+    try {
+      await (delete(tNomenclatures)
+            ..where((t) => t.idNomenclature.equals(nomenclatureId)))
+          .go();
+    } catch (e) {
+      throw Exception("Failed to delete nomenclature: ${e.toString()}");
+    }
+  }
+  
+  Future<Nomenclature?> getNomenclatureById(int nomenclatureId) async {
+    final dbNomenclature = await (select(tNomenclatures)
+          ..where((t) => t.idNomenclature.equals(nomenclatureId)))
+        .getSingleOrNull();
+    return dbNomenclature?.toDomain();
+  }
 }

@@ -19,7 +19,7 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
   final int? idListTaxonomy;
 
   const TaxonSelectorWidget({
-    Key? key,
+    super.key,
     required this.moduleId,
     required this.onChanged,
     this.label = 'Taxon',
@@ -28,7 +28,7 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
     this.isRequired = false,
     this.displayMode = 'nom_vern,lb_nom',
     this.idListTaxonomy,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<TaxonSelectorWidget> createState() =>

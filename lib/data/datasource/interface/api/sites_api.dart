@@ -7,8 +7,8 @@ abstract class SitesApi {
   Future<List<BaseSiteEntity>> fetchSitesForModule(
       String moduleCode, String token);
 
-  /// Fetches detailed sites data from the complete API endpoint
-  Future<List<Map<String, dynamic>>> fetchDetailedSitesData(String token);
+  /// Fetches detailed sites data from the complete API endpoint for a specific module
+  Future<List<Map<String, dynamic>>> fetchDetailedSitesData(String moduleCode, String token);
 
   /// Fetches sites for a specific module with detailed information
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(

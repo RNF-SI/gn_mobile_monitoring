@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_module_complement_mapper.dart';
@@ -226,6 +228,95 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
     return result?.toDomain();
+  }
+
+  // Méthode d'aide pour convertir différents types de valeurs en int
+  int? _parseIdListTaxonomy(dynamic value) {
+    if (value == null) return null;
+    
+    // Si c'est déjà un int, le retourner directement
+    if (value is int) return value;
+    
+    // Si c'est une String, essayer de la convertir en int
+    if (value is String) {
+      try {
+        return int.parse(value);
+      } catch (_) {
+        print('Impossible de convertir "$value" en entier');
+        return null;
+      }
+    }
+    
+    // Si c'est un double, le convertir en int
+    if (value is double) return value.toInt();
+    
+    // Si c'est un Map, vérifier s'il a une propriété 'id' ou 'idListe' ou 'id_liste'
+    if (value is Map) {
+      if (value.containsKey('id')) return _parseIdListTaxonomy(value['id']);
+      if (value.containsKey('idListe')) return _parseIdListTaxonomy(value['idListe']);
+      if (value.containsKey('id_liste')) return _parseIdListTaxonomy(value['id_liste']);
+    }
+    
+    print('Type de valeur non supporté pour id_list_taxonomy: ${value.runtimeType}');
+    return null;
+  }
+
+  Future<int?> getModuleTaxonomyListId(int moduleId) async {
+    try {
+      // Récupérer le module complement
+      final moduleComplement = await getModuleComplementById(moduleId);
+      if (moduleComplement?.configuration != null) {
+        try {
+          // La configuration peut être soit une Map<String, dynamic>, soit une chaîne JSON, soit un ModuleConfiguration
+          Map<String, dynamic> configJson;
+          
+          if (moduleComplement!.configuration is String) {
+            // Si c'est déjà une chaîne JSON, la parser
+            configJson = jsonDecode(moduleComplement.configuration as String) as Map<String, dynamic>;
+          } else if (moduleComplement.configuration is Map<String, dynamic>) {
+            // Si c'est déjà une Map, l'utiliser directement
+            configJson = moduleComplement.configuration as Map<String, dynamic>;
+          } else {
+            // Si c'est un autre type (comme ModuleConfiguration), on va chercher directement dans la base de données
+            final result = await (select(tModuleComplements)..where((t) => t.idModule.equals(moduleId))).getSingleOrNull();
+            if (result?.configuration == null) return null;
+            
+            configJson = jsonDecode(result!.configuration!) as Map<String, dynamic>;
+          }
+
+          // Chercher d'abord dans custom.__MODULE.ID_LIST_TAXONOMY
+          if (configJson.containsKey('custom') && configJson['custom'] is Map) {
+            final customConfig = configJson['custom'] as Map<String, dynamic>;
+            if (customConfig.containsKey('__MODULE.ID_LIST_TAXONOMY')) {
+              final idListTaxonomy = customConfig['__MODULE.ID_LIST_TAXONOMY'];
+              return _parseIdListTaxonomy(idListTaxonomy);
+            }
+          }
+
+          // Chercher ensuite dans module.id_list_taxonomy
+          if (configJson.containsKey('module') && configJson['module'] is Map) {
+            final moduleConfig = configJson['module'] as Map<String, dynamic>;
+            if (moduleConfig.containsKey('id_list_taxonomy')) {
+              final idListTaxonomy = moduleConfig['id_list_taxonomy'];
+              return _parseIdListTaxonomy(idListTaxonomy);
+            }
+          }
+          
+          // Chercher directement dans la racine du JSON (pour les configurations plus simples)
+          if (configJson.containsKey('id_list_taxonomy')) {
+            final idListTaxonomy = configJson['id_list_taxonomy'];
+            return _parseIdListTaxonomy(idListTaxonomy);
+          }
+        } catch (e) {
+          print(
+              'Erreur de parsing de la configuration du module $moduleId: $e');
+        }
+      }
+      return null;
+    } catch (e) {
+      print('Erreur lors de la récupération de l\'ID de liste taxonomique: $e');
+      return null;
+    }
   }
 
   // Module-Dataset relationship operations

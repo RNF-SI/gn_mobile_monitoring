@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
@@ -36,7 +37,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
   final int? idListTaxonomy;
 
   const DynamicFormBuilder({
-    Key? key,
+    super.key,
     required this.objectConfig,
     this.customConfig,
     this.initialValues,
@@ -45,7 +46,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
     this.onChainInputChanged,
     this.displayProperties,
     this.idListTaxonomy,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<DynamicFormBuilder> createState() => DynamicFormBuilderState();
@@ -147,6 +148,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       controller.clear();
     });
     setState(() {});
+
+    // Remonter en haut du formulaire après réinitialisation
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.mounted) {
+        Scrollable.ensureVisible(
+          context,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
   }
 
   /// Précharge toutes les nomenclatures nécessaires pour ce formulaire
@@ -192,8 +204,95 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return Map<String, dynamic>.from(_formValues);
   }
 
+  // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
+  void updateFormValue(String fieldName, dynamic value) {
+    debugPrint('Updating form value: $fieldName = $value');
+    
+    // Déterminer dynamiquement si c'est un champ critique en analysant le schéma
+    final isCriticalField = _isCriticalField(fieldName);
+    
+    setState(() {
+      if (value == null) {
+        _formValues.remove(fieldName);
+      } else {
+        _formValues[fieldName] = value;
+      }
+      
+      if (isCriticalField) {
+        debugPrint('Critical field changed: $fieldName = $value');
+        
+        // Vérification des conditions de visibilité pour les champs qui pourraient être affectés
+        final formDataProcessor = ref.read(formDataProcessorProvider);
+        final evaluationContext = formDataProcessor.prepareEvaluationContext(
+          values: _formValues,
+          metadata: {
+            'bChainInput': widget.chainInput ?? false,
+            'parents': {
+              'site': widget.objectConfig,
+              'module': widget.customConfig?.idModule,
+            },
+            'dataset': widget.customConfig?.idListTaxonomy,
+          },
+        );
+        
+        // Ne débogue qu'un nombre limité de champs pour éviter une boucle infinie de logs
+        int debuggedFields = 0;
+        for (final entry in _unifiedSchema.entries) {
+          if (entry.value.containsKey('hidden') && entry.value['hidden'] != false) {
+            if (debuggedFields < 5) { // Limiter à 5 champs maximum
+              final isHidden = formDataProcessor.isFieldHidden(
+                entry.key, 
+                evaluationContext,
+                fieldConfig: entry.value
+              );
+              debugPrint('Field ${entry.key} hidden condition = $isHidden');
+              debuggedFields++;
+            }
+          }
+        }
+      }
+      
+      // Les conditions de visibilité seront réévaluées lors de la prochaine construction
+    });
+  }
+  
+  /// Détermine si un champ est critique (peut affecter la visibilité d'autres champs)
+  bool _isCriticalField(String fieldName) {
+    // 1. Les champs de taxonomie sont toujours critiques
+    if (fieldName == 'cd_nom' || fieldName.contains('cd_nom')) {
+      return true;
+    }
+    
+    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés 
+    // dans les expressions 'hidden' d'autres champs
+    final Set<String> referencedFields = {};
+    
+    for (final entry in _unifiedSchema.entries) {
+      if (entry.value.containsKey('hidden') && entry.value['hidden'] is String) {
+        final String hiddenExpr = entry.value['hidden'] as String;
+        
+        // Analyser l'expression pour trouver les noms de champs référencés
+        // Pattern: value['nom_du_champ']
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]");
+        final matches = fieldRefPattern.allMatches(hiddenExpr);
+        
+        for (final match in matches) {
+          if (match.groupCount >= 1) {
+            referencedFields.add(match.group(1)!);
+          }
+        }
+      }
+    }
+    
+    // 3. Vérifier si le champ courant est référencé dans des expressions hidden
+    return referencedFields.contains(fieldName);
+  }
+
   @override
   Widget build(BuildContext context) {
+    // Débogage: limiter les logs pour éviter la surcharge
+    // debugPrint('Building form with values: $_formValues');
+    
     return Form(
       key: _formKey,
       child: Column(
@@ -214,11 +313,84 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
             ),
 
-          // Construire le formulaire dynamiquement
-          ..._buildFormFields(),
+          // Construire le formulaire dynamiquement - la clé ValueKey force la reconstruction
+          // lorsque les valeurs critiques changent
+          ...buildFormFieldsWithKey(),
         ],
       ),
     );
+  }
+  
+  // Construire les champs avec une clé basée sur les valeurs
+  List<Widget> buildFormFieldsWithKey() {
+    // Utiliser une clé basée sur un hash des valeurs des champs critiques
+    // Cette approche force la reconstruction quand ces valeurs changent
+    final keyValues = <String, dynamic>{};
+    
+    // Identifier tous les champs critiques qui pourraient affecter la visibilité
+    final Set<String> criticalFields = _getAllCriticalFields();
+    
+    // Collecter les valeurs des champs critiques pour la clé
+    for (final fieldName in criticalFields) {
+      if (_formValues.containsKey(fieldName)) {
+        keyValues[fieldName] = _formValues[fieldName];
+      }
+    }
+    
+    // Ajouter la valeur actuelle du chainInput
+    keyValues['chainInput'] = widget.chainInput;
+    
+    // Construire les champs normalement
+    final formFields = _buildFormFields();
+    
+    // Clé unique basée sur les valeurs importantes
+    // Convertir en string de manière déterministe pour éviter les rebuilds inutiles
+    final entriesList = keyValues.entries.toList();
+    entriesList.sort((a, b) => a.key.compareTo(b.key));
+    final keyString = entriesList
+        .map((e) => '${e.key}:${e.value}')
+        .join(',');
+    
+    // Envelopper dans un widget avec clé
+    return [
+      KeyedSubtree(
+        key: ValueKey(keyString),
+        child: Column(children: formFields),
+      ),
+    ];
+  }
+  
+  /// Identifie tous les champs critiques qui pourraient affecter la visibilité
+  Set<String> _getAllCriticalFields() {
+    final Set<String> criticalFields = {};
+    
+    // 1. Les champs de taxonomie sont toujours critiques
+    for (final key in _formValues.keys) {
+      if (key == 'cd_nom' || key.contains('cd_nom') || key.contains('espece')) {
+        criticalFields.add(key);
+      }
+    }
+    
+    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés 
+    // dans les expressions 'hidden' d'autres champs
+    for (final entry in _unifiedSchema.entries) {
+      if (entry.value.containsKey('hidden') && entry.value['hidden'] is String) {
+        final String hiddenExpr = entry.value['hidden'] as String;
+        
+        // Analyser l'expression pour trouver les noms de champs référencés
+        // Pattern: value['nom_du_champ']
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]");
+        final matches = fieldRefPattern.allMatches(hiddenExpr);
+        
+        for (final match in matches) {
+          if (match.groupCount >= 1) {
+            criticalFields.add(match.group(1)!);
+          }
+        }
+      }
+    }
+    
+    return criticalFields;
   }
 
   List<Widget> _buildFormFields() {
@@ -240,6 +412,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               children: [
                 ...allFields
                     .map((field) => _buildField(field.key, field.value)),
+                // Note: Pour utiliser la version asynchrone, il faudrait utiliser un FutureBuilder par champ,
+                // ce qui complexifierait le code. Nous gardons la version synchrone pour le moment.
+                // À terme, on pourrait envisager de retravailler cette partie pour utiliser la version asynchrone.
               ],
             ),
           ),
@@ -250,7 +425,38 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return formFields;
   }
 
+  // Méthode pour vérifier et construire un champ de formulaire
   Widget _buildField(String fieldName, Map<String, dynamic> fieldConfig) {
+    // Vérifier si le champ doit être masqué selon la configuration
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+
+    // Préparer le contexte d'évaluation avec les valeurs actuelles du formulaire
+    // et les métadonnées disponibles
+    final Map<String, dynamic> evaluationContext =
+        formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+
+    // Évaluer si le champ doit être masqué
+    if (formDataProcessor.isFieldHidden(fieldName, evaluationContext,
+        fieldConfig: fieldConfig)) {
+      return const SizedBox.shrink(); // Ne pas afficher ce champ
+    }
+
+    // Si le champ n'est pas masqué, construire le widget approprié
+    return _buildFieldWidget(fieldName, fieldConfig);
+  }
+
+  // Méthode qui construit le widget approprié pour le champ
+  Widget _buildFieldWidget(String fieldName, Map<String, dynamic> fieldConfig) {
     final String widgetType = fieldConfig['widget_type'];
     final String label = fieldConfig['attribut_label'];
     final bool isRequired = fieldConfig['validations']['required'] == true;
@@ -611,12 +817,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
+            isExpanded: true,
             value: _formValues[fieldName]?.toString(),
             items: options.map((option) {
               return DropdownMenuItem<String>(
                 value: option.key,
-                child: Text(option.value),
+                child: Text(
+                  option.value,
+                  overflow: TextOverflow.ellipsis,
+                ),
               );
             }).toList(),
             validator: required
@@ -746,7 +957,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
     // Initialiser la valeur si elle n'existe pas ou n'est pas une liste
-    if (_formValues[fieldName] == null || !(_formValues[fieldName] is List)) {
+    if (_formValues[fieldName] == null || _formValues[fieldName] is! List) {
       _formValues[fieldName] = <int>[];
     }
 
@@ -826,7 +1037,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             padding: const EdgeInsets.all(12.0),
             decoration: BoxDecoration(
               color:
-                  Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
               borderRadius: BorderRadius.circular(4.0),
               border: Border.all(
                 color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
@@ -860,6 +1071,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildNomenclatureField(String fieldName, String label, bool required,
       Map<String, dynamic> fieldConfig,
       {String? description}) {
+    
+    // Vérifier et corriger les valeurs de nomenclature
+    if (_formValues.containsKey(fieldName)) {
+      final value = _formValues[fieldName];
+      
+      // Si la valeur est un entier, la convertir en map
+      if (value is int) {
+        _formValues[fieldName] = {'id': value};
+      }
+    }
+    
     // Construire un widget de sélection de nomenclature
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -886,7 +1108,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           NomenclatureSelectorWidget(
             label: label,
             fieldConfig: fieldConfig,
-            value: _formValues[fieldName] as Map<String, dynamic>?,
+            value: _formValues[fieldName] is Map<String, dynamic> 
+                ? _formValues[fieldName] as Map<String, dynamic> 
+                : (_formValues[fieldName] is int 
+                    ? {'id': _formValues[fieldName]} 
+                    : null),
             isRequired: required,
             onChanged: (value) {
               setState(() {
@@ -939,9 +1165,69 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         'required': originalFieldConfig.required,
         'hidden': originalFieldConfig.hidden,
         'id_list': originalFieldConfig.idList,
+        // Transférer les valeurs spécifiques pour les boutons radio
+        if (originalFieldConfig.value != null)
+          'value': originalFieldConfig.value,
+        if (originalFieldConfig.values != null)
+          'values': originalFieldConfig.values,
       });
     }
 
+    // Cas spécial pour les boutons radio de taxonomie
+    if ((mergedConfig['type_widget'] == 'radio' ||
+            mergedConfig['typeWidget'] == 'radio') &&
+        mergedConfig['values'] is List) {
+      final List values = mergedConfig['values'] as List;
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              required ? '$label *' : label,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
+            if (description != null)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              ),
+            const SizedBox(height: 8),
+            ...values.map<Widget>((option) {
+              // Extraire la valeur et le libellé
+              final int optionValue =
+                  option is Map ? (option['value'] as int) : (option as int);
+              final String optionLabel = option is Map
+                  ? (option['label'] as String)
+                  : optionValue.toString();
+
+              return RadioListTile<int>(
+                title: Text(optionLabel),
+                value: optionValue,
+                groupValue: initialValue,
+                onChanged: (newValue) {
+                  // Utiliser la méthode spécifique pour mettre à jour les valeurs
+                  // qui garantit la réévaluation des conditions de visibilité
+                  updateFormValue(fieldName, newValue);
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+                dense: true,
+              );
+            }),
+          ],
+        ),
+      );
+    }
+
+    // Cas standard: utiliser le TaxonSelectorWidget
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -971,13 +1257,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             value: initialValue,
             isRequired: required,
             onChanged: (cdNom) {
-              setState(() {
-                if (cdNom == null) {
-                  _formValues.remove(fieldName);
-                } else {
-                  _formValues[fieldName] = cdNom;
-                }
-              });
+              // Utiliser la méthode spécifique pour mettre à jour les valeurs
+              // qui garantit la réévaluation des conditions de visibilité
+              updateFormValue(fieldName, cdNom);
             },
             idListTaxonomy: widget.idListTaxonomy,
           ),
@@ -985,17 +1267,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       ),
     );
   }
-  
+
   // Pour les champs de type dataset
   Widget _buildDatasetField(String fieldName, String label, bool required,
       Map<String, dynamic> fieldConfig,
       {String? description}) {
     // Récupérer le service de datasets
     final datasetService = ref.read(datasetServiceProvider);
-    
+
     // Obtenir l'ID du module
     final int moduleId = widget.customConfig?.idModule ?? 0;
-    
+
     // Déterminer la valeur initiale
     int? initialValue;
     if (_formValues.containsKey(fieldName)) {
@@ -1006,7 +1288,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         initialValue = int.parse(value);
       }
     }
-    
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Column(
@@ -1035,24 +1317,24 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
-              
+
               if (snapshot.hasError) {
                 return Text(
                   'Erreur lors du chargement des datasets: ${snapshot.error}',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 );
               }
-              
+
               final datasets = snapshot.data ?? [];
-              
+
               if (datasets.isEmpty) {
                 return Text(
                   'Aucun dataset disponible pour ce module',
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 );
               }
-              
-              // Si nous avons une seule valeur et aucune valeur initiale, 
+
+              // Si nous avons une seule valeur et aucune valeur initiale,
               // sélectionner automatiquement cette valeur
               if (datasets.length == 1 && initialValue == null) {
                 // Mettre à jour après la construction du widget pour éviter des erreurs
@@ -1064,7 +1346,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   }
                 });
               }
-              
+
               return DropdownButtonFormField<int>(
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
@@ -1078,8 +1360,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   );
                 }).toList(),
                 validator: required
-                  ? (value) => value == null ? 'Ce champ est requis' : null
-                  : null,
+                    ? (value) => value == null ? 'Ce champ est requis' : null
+                    : null,
                 onChanged: (value) {
                   setState(() {
                     if (value == null) {

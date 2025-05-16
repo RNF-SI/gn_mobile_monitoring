@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:gn_mobile_monitoring/core/helpers/ts_to_dart_converter.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
@@ -207,6 +208,96 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       // 2. Fetch and store module configuration
       final config = await globalApi.getModuleConfiguration(moduleCode);
+      
+      // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
+      try {
+        // Variable pour compter le nombre total de fonctions converties
+        int totalConverted = 0;
+        
+        // Fonction pour remplacer les fonctions hidden de JavaScript par du Dart
+        void replaceHiddenFunctions(Map<String, dynamic> configSection) {
+          // Pour les champs génériques
+          if (configSection.containsKey('generic') && configSection['generic'] is Map) {
+            final generic = configSection['generic'] as Map<String, dynamic>;
+            
+            for (final entry in generic.entries) {
+              final fieldId = entry.key;
+              final fieldConfig = entry.value;
+              
+              if (fieldConfig is Map<String, dynamic> && 
+                  fieldConfig.containsKey('hidden') && 
+                  fieldConfig['hidden'] is String && 
+                  fieldConfig['hidden'].toString().startsWith('({')) {
+                try {
+                  final jsFunction = fieldConfig['hidden'].toString();
+                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
+                  
+                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
+                  fieldConfig['hidden'] = dartFunction;
+                  totalConverted++;
+                  print('Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
+                } catch (e) {
+                  print('Error converting hidden function for field $fieldId: $e');
+                }
+              }
+            }
+          }
+          
+          // Pour les champs spécifiques
+          if (configSection.containsKey('specific') && configSection['specific'] is Map) {
+            final specific = configSection['specific'] as Map<String, dynamic>;
+            
+            for (final entry in specific.entries) {
+              final fieldId = entry.key;
+              final fieldConfig = entry.value;
+              
+              if (fieldConfig is Map<String, dynamic> && 
+                  fieldConfig.containsKey('hidden') && 
+                  fieldConfig['hidden'] is String && 
+                  fieldConfig['hidden'].toString().startsWith('({')) {
+                try {
+                  final jsFunction = fieldConfig['hidden'].toString();
+                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
+                  
+                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
+                  fieldConfig['hidden'] = dartFunction;
+                  totalConverted++;
+                  print('Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
+                } catch (e) {
+                  print('Error converting hidden function for specific field $fieldId: $e');
+                }
+              }
+            }
+          }
+        }
+        
+        // Parcourir les sections principales du module pour remplacer les fonctions hidden
+        final objectTypes = [
+          'module',
+          'site',
+          'sites_group',
+          'visit',
+          'observation',
+          'observation_detail'
+        ];
+        
+        for (final objectType in objectTypes) {
+          if (config.containsKey(objectType) && config[objectType] is Map<String, dynamic>) {
+            final prevCount = totalConverted;
+            replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
+            final convertedInSection = totalConverted - prevCount;
+            
+            if (convertedInSection > 0) {
+              print('Converted $convertedInSection hidden functions in $objectType section');
+            }
+          }
+        }
+        
+        print('Total hidden functions converted in module configuration: $totalConverted');
+      } catch (e) {
+        print('Erreur lors de la conversion des fonctions hidden: $e');
+        // Continuer malgré les erreurs de conversion
+      }
 
       // Convert the Map to a properly formatted JSON string
       final jsonConfig = json.encode(config);
@@ -299,6 +390,9 @@ class ModulesRepositoryImpl implements ModulesRepository {
       } catch (taxonError) {
         print('Error processing taxonomy lists: $taxonError');
       }
+
+      // Les fonctions hidden sont maintenant traitées directement lors du rendu
+      // des formulaires, nous n'avons plus besoin de les extraire ici
 
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);
@@ -398,6 +492,24 @@ class ModulesRepositoryImpl implements ModulesRepository {
       return await datasetsDatabase.getDatasetsByIds(datasetIds);
     } catch (e) {
       throw Exception('Failed to get datasets by ids: $e');
+    }
+  }
+
+  @override
+  Future<Module?> getModuleByCode(String moduleCode) async {
+    try {
+      return await database.getModuleByCode(moduleCode);
+    } catch (e) {
+      throw Exception('Failed to get module by code: $e');
+    }
+  }
+
+  @override
+  Future<int?> getModuleTaxonomyListId(int moduleId) async {
+    try {
+      return await database.getModuleTaxonomyListId(moduleId);
+    } catch (e) {
+      throw Exception('Failed to get taxonomy list ID for module: $e');
     }
   }
 

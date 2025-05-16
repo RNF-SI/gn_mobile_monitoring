@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
@@ -82,6 +82,17 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     return await db.modulesDao.getAllModuleComplements();
   }
+  
+  @override
+  Future<int?> getModuleTaxonomyListId(int moduleId) async {
+    try {
+      final db = await _database;
+      return await db.modulesDao.getModuleTaxonomyListId(moduleId);
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération de l\'ID de liste taxonomique: $e');
+      return null;
+    }
+  }
 
   @override
   Future<void> updateModuleComplement(ModuleComplement moduleComplement) async {
@@ -151,6 +162,12 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   Future<Module?> getModuleIdByLabel(String moduleLabel) async {
     final db = await _database;
     return await db.modulesDao.getModuleIdByLabel(moduleLabel);
+  }
+  
+  @override
+  Future<Module?> getModuleByCode(String moduleCode) async {
+    final db = await _database;
+    return await db.modulesDao.getModuleByCode(moduleCode);
   }
 
   // Module-Dataset relationship operations

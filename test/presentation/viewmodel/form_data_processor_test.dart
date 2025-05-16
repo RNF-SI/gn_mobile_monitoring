@@ -143,7 +143,14 @@ void main() {
       final result = await formDataProcessor.processFormData(formData);
       
       // Assert
-      expect(result, equals(formData));
+      // Le comportement actuel préserve la valeur originale si la nomenclature n'est pas trouvée
+      expect(result, equals({
+        'id_nomenclature_test': {
+          'code_nomenclature_type': 'TEST',
+          'cd_nomenclature': 'UNKNOWN_CODE',
+          'label': 'Test Value'
+        }
+      }));
       verify(() => mockNomenclatureService.getNomenclaturesByTypeCode('TEST')).called(1);
     });
   });

@@ -10,8 +10,9 @@ class ModulesApiImpl implements ModulesApi {
   ModulesApiImpl()
       : _dio = Dio(BaseOptions(
           baseUrl: Config.apiBase,
-          connectTimeout: const Duration(milliseconds: 5000),
-          receiveTimeout: const Duration(milliseconds: 3000),
+          connectTimeout: const Duration(seconds: 60),
+          receiveTimeout: const Duration(seconds: 120), // 2 minutes
+          sendTimeout: const Duration(seconds: 60),
         ));
 
   /// Checks if a module has sufficient CRUVED permissions

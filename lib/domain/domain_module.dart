@@ -1,5 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/repository/composite_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/downstream_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
+import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
@@ -27,9 +34,11 @@ import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.da
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
@@ -79,6 +88,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/save_observation_detail_use_
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -87,6 +97,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
@@ -158,6 +169,19 @@ final clearTokenFromLocalStorageUseCaseProvider =
     Provider<ClearTokenFromLocalStorageUseCase>((ref) =>
         ClearTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
 
+final getApiUrlFromLocalStorageUseCaseProvider =
+    Provider<GetApiUrlFromLocalStorageUseCase>((ref) =>
+        GetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final setApiUrlFromLocalStorageUseCaseProvider =
+    Provider<SetApiUrlFromLocalStorageUseCase>((ref) =>
+        SetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+final clearApiUrlFromLocalStorageUseCaseProvider =
+    Provider<ClearApiUrlFromLocalStorageUseCase>((ref) =>
+        ClearApiUrlFromLocalStorageUseCaseImpl(
+            ref.watch(localStorageProvider)));
+
 final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
     (ref) =>
         DownloadModuleDataUseCaseImpl(ref.watch(modulesRepositoryProvider)));
@@ -207,11 +231,54 @@ final incrementalSyncSiteGroupsUseCaseProvider =
   ),
 );
 
+// Fournisseur pour le repository de synchronisation descendante (serveur vers appareil)
+final downstreamSyncRepositoryProvider = Provider<DownstreamSyncRepository>(
+  (ref) => DownstreamSyncRepositoryImpl(
+    ref.watch(globalApiProvider),
+    ref.watch(taxonApiProvider),
+    ref.watch(globalDatabaseProvider),
+    ref.watch(nomenclatureDatabaseProvider),
+    ref.watch(datasetsDatabaseProvider),
+    ref.watch(taxonDatabaseProvider),
+    modulesRepository: ref.watch(modulesRepositoryProvider),
+    sitesRepository: ref.watch(sitesRepositoryProvider),
+  ),
+);
+
+// Fournisseur pour le repository de synchronisation ascendante (appareil vers serveur)
+final upstreamSyncRepositoryProvider = Provider<UpstreamSyncRepository>(
+  (ref) => UpstreamSyncRepositoryImpl(
+    ref.watch(globalApiProvider),
+    ref.watch(globalDatabaseProvider),
+    visitRepository: ref.watch(visitRepositoryProvider),
+    observationsRepository: ref.watch(observationsRepositoryProvider),
+    observationDetailsRepository: ref.watch(observationDetailsRepositoryImplProvider),
+  ),
+);
+
+// Fournisseur pour le repository de synchronisation composite (façade)
+final syncRepositoryProvider = Provider<SyncRepository>(
+  (ref) => CompositeSyncRepositoryImpl(
+    downstreamRepo: ref.watch(downstreamSyncRepositoryProvider),
+    upstreamRepo: ref.watch(upstreamSyncRepositoryProvider),
+  ),
+);
+
 final incrementalSyncAllUseCaseProvider = Provider<IncrementalSyncAllUseCase>(
   (ref) => IncrementalSyncAllUseCaseImpl(
-    ref.watch(incrementalSyncModulesUseCaseProvider),
-    ref.watch(incrementalSyncSitesUseCaseProvider),
-    ref.watch(incrementalSyncSiteGroupsUseCaseProvider),
+    ref.watch(syncRepositoryProvider),
+  ),
+);
+
+final getLastSyncDateUseCaseProvider = Provider<GetLastSyncDateUseCase>(
+  (ref) => GetLastSyncDateUseCaseImpl(
+    ref.watch(syncRepositoryProvider),
+  ),
+);
+
+final updateLastSyncDateUseCaseProvider = Provider<UpdateLastSyncDateUseCase>(
+  (ref) => UpdateLastSyncDateUseCaseImpl(
+    ref.watch(syncRepositoryProvider),
   ),
 );
 

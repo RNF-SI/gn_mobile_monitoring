@@ -2570,6 +2570,7 @@ mixin _$GenericFieldConfig {
   String? get keyValue => throw _privateConstructorUsedError;
   bool? get multiple => throw _privateConstructorUsedError;
   List<Map<String, dynamic>>? get values => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get value => throw _privateConstructorUsedError;
   Map<String, dynamic>? get default_ => throw _privateConstructorUsedError;
   String? get designStyle => throw _privateConstructorUsedError;
   String? get dataPath => throw _privateConstructorUsedError;
@@ -2603,6 +2604,7 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       String? keyValue,
       bool? multiple,
       List<Map<String, dynamic>>? values,
+      Map<String, dynamic>? value,
       Map<String, dynamic>? default_,
       String? designStyle,
       String? dataPath,
@@ -2637,6 +2639,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
     Object? keyValue = freezed,
     Object? multiple = freezed,
     Object? values = freezed,
+    Object? value = freezed,
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
@@ -2695,6 +2698,10 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
           ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
               as List<Map<String, dynamic>>?,
+      value: freezed == value
+          ? _value.value
+          : value // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
       default_: freezed == default_
           ? _value.default_
           : default_ // ignore: cast_nullable_to_non_nullable
@@ -2737,6 +2744,7 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       String? keyValue,
       bool? multiple,
       List<Map<String, dynamic>>? values,
+      Map<String, dynamic>? value,
       Map<String, dynamic>? default_,
       String? designStyle,
       String? dataPath,
@@ -2769,6 +2777,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
     Object? keyValue = freezed,
     Object? multiple = freezed,
     Object? values = freezed,
+    Object? value = freezed,
     Object? default_ = freezed,
     Object? designStyle = freezed,
     Object? dataPath = freezed,
@@ -2827,6 +2836,10 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           ? _value._values
           : values // ignore: cast_nullable_to_non_nullable
               as List<Map<String, dynamic>>?,
+      value: freezed == value
+          ? _value._value
+          : value // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
       default_: freezed == default_
           ? _value._default_
           : default_ // ignore: cast_nullable_to_non_nullable
@@ -2864,11 +2877,13 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       this.keyValue,
       this.multiple,
       final List<Map<String, dynamic>>? values,
+      final Map<String, dynamic>? value,
       final Map<String, dynamic>? default_,
       this.designStyle,
       this.dataPath,
       @JsonKey(name: 'id_list') this.idList})
       : _values = values,
+        _value = value,
         _default_ = default_;
 
   @override
@@ -2906,6 +2921,16 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
     return EqualUnmodifiableListView(value);
   }
 
+  final Map<String, dynamic>? _value;
+  @override
+  Map<String, dynamic>? get value {
+    final value = _value;
+    if (value == null) return null;
+    if (_value is EqualUnmodifiableMapView) return _value;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
   final Map<String, dynamic>? _default_;
   @override
   Map<String, dynamic>? get default_ {
@@ -2926,7 +2951,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
 
   @override
   String toString() {
-    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
+    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, value: $value, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
   }
 
   @override
@@ -2957,6 +2982,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
             (identical(other.multiple, multiple) ||
                 other.multiple == multiple) &&
             const DeepCollectionEquality().equals(other._values, _values) &&
+            const DeepCollectionEquality().equals(other._value, _value) &&
             const DeepCollectionEquality().equals(other._default_, _default_) &&
             (identical(other.designStyle, designStyle) ||
                 other.designStyle == designStyle) &&
@@ -2981,6 +3007,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       keyValue,
       multiple,
       const DeepCollectionEquality().hash(_values),
+      const DeepCollectionEquality().hash(_value),
       const DeepCollectionEquality().hash(_default_),
       designStyle,
       dataPath,
@@ -3011,6 +3038,7 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
           final String? keyValue,
           final bool? multiple,
           final List<Map<String, dynamic>>? values,
+          final Map<String, dynamic>? value,
           final Map<String, dynamic>? default_,
           final String? designStyle,
           final String? dataPath,
@@ -3044,6 +3072,8 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   bool? get multiple;
   @override
   List<Map<String, dynamic>>? get values;
+  @override
+  Map<String, dynamic>? get value;
   @override
   Map<String, dynamic>? get default_;
   @override

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/app_metadata_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/bib_nomenclatures_types_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
@@ -14,6 +15,8 @@ import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nomenclatures.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/021_create_app_metadata_table.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/app_metadata.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_tables_locations.dart';
@@ -94,6 +97,7 @@ part 'database.g.dart';
   TTaxrefs,
   BibListesTable,
   CorTaxonListeTable,
+  AppMetadataTable,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,
@@ -104,11 +108,37 @@ part 'database.g.dart';
   ObservationDetailDao,
   BibNomenclaturesTypesDao,
   TaxonDao,
+  AppMetadataDao,
 ])
 class AppDatabase extends _$AppDatabase {
+  // DAO qui peuvent être remplacés par des mocks pour les tests
+  // Mock pour l'AppMetadataDao qui peut être remplacé pour les tests
+  AppMetadataDao? _appMetadataDao;
+  
+  @override
+  AppMetadataDao get appMetadataDao {
+    // Si un DAO a été injecté, l'utiliser (pour les tests)
+    if (_appMetadataDao != null) {
+      return _appMetadataDao!;
+    }
+    // Sinon, utiliser la version générée par drift
+    return super.appMetadataDao;
+  }
+  
+  /// Setter pour injecter un mock pour les tests
+  set appMetadataDao(AppMetadataDao? dao) {
+    _appMetadataDao = dao;
+  }
+
   AppDatabase._internal() : super(_openConnection());
 
   static AppDatabase? _instance;
+  static bool _isTesting = false;
+
+  // Indique si l'application est en cours de test
+  static void setTestingMode(bool testing) {
+    _isTesting = testing;
+  }
 
   // Singleton accessor
   static Future<AppDatabase> getInstance() async {
@@ -123,9 +153,17 @@ class AppDatabase extends _$AppDatabase {
       _instance = null;
     }
   }
+  
+  // Obtient une instance de test préconfigurée avec des mocks
+  static Future<AppDatabase> getTestInstance() async {
+    setTestingMode(true);
+    await resetInstance();
+    final instance = await getInstance();
+    return instance;
+  }
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -150,6 +188,7 @@ class AppDatabase extends _$AppDatabase {
           await migration18(m, this);
           await migration19(m, this);
           await migration20(m, this);
+          await migration21(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           final db = this; // Access the database instance
@@ -211,6 +250,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 20:
                 await migration20(m, db);
+                break;
+              case 21:
+                await migration21(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");

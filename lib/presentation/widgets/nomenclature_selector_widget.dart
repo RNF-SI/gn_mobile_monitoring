@@ -21,13 +21,13 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
   final bool isRequired;
 
   const NomenclatureSelectorWidget({
-    Key? key,
+    super.key,
     required this.label,
     required this.fieldConfig,
     required this.onChanged,
     this.value,
     this.isRequired = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -35,11 +35,28 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
     if (typeCode == null) {
       return const Text('Type de nomenclature non spécifié');
     }
-
-    final cdNomenclature = value != null
-        ? value!['cd_nomenclature'] as String?
-        : FormConfigParser.getSelectedNomenclatureCode(fieldConfig);
-
+    
+    
+    // Gestion des différents formats de valeur de nomenclature
+    String? cdNomenclature;
+    int? nomenclatureId;
+    
+    if (value != null) {
+      // Si c'est une Map, extraire cd_nomenclature ou id
+      if (value!.containsKey('cd_nomenclature')) {
+        cdNomenclature = value!['cd_nomenclature'] as String?;
+      }
+      if (value!.containsKey('id')) {
+        nomenclatureId = value!['id'] as int?;
+      }
+    }
+    
+    // Si aucune valeur n'est trouvée, utiliser la valeur par défaut de la configuration
+    if (cdNomenclature == null && nomenclatureId == null) {
+      cdNomenclature = FormConfigParser.getSelectedNomenclatureCode(fieldConfig);
+    }
+    
+    
     final nomenclaturesAsync = ref.watch(nomenclaturesByTypeProvider(typeCode));
 
     return nomenclaturesAsync.when(
@@ -60,6 +77,16 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
         final nomenclatureMap = {
           for (var n in nomenclatures) n.cdNomenclature: n
         };
+        
+        // Si nous avons uniquement un ID et pas de cd_nomenclature, essayer de le trouver
+        if (nomenclatureId != null && cdNomenclature == null) {
+          // Trouver la nomenclature par ID
+          final matchingNomenclature = nomenclatures.where((n) => n.id == nomenclatureId).firstOrNull;
+          if (matchingNomenclature != null) {
+            cdNomenclature = matchingNomenclature.cdNomenclature;
+          } else {
+          }
+        }
         
         for (final nomenclature in nomenclatures) {
           final label = nomenclature.labelFr ??
