@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -137,8 +139,16 @@ class ObservationDetailViewModel
   /// Sauvegarde un détail d'observation
   Future<int> saveObservationDetail(ObservationDetail detail) async {
     try {
+      debugPrint('Sauvegarde d\'un détail d\'observation: ID=${detail.idObservationDetail}, ID Observation=${detail.idObservation}');
+      debugPrint('Données avant traitement: ${detail.data.length} entrées, clés: ${detail.data.keys.join(', ')}');
+      
       // Traiter les données pour convertir les nomenclatures en ID
       final processedData = await _formDataProcessor.processFormData(detail.data);
+      
+      debugPrint('Données après traitement: ${processedData.length} entrées, clés: ${processedData.keys.join(', ')}');
+      
+      // Vérifier si les données contiennent des valeurs non-sérialisables
+      _validateJsonData(processedData);
       
       // Créer un nouvel objet avec les données traitées
       final processedDetail = detail.copyWith(data: processedData);
@@ -146,12 +156,82 @@ class ObservationDetailViewModel
       // Sauvegarder le détail d'observation avec les données traitées
       final result = await _saveObservationDetailUseCase.execute(processedDetail);
       
+      debugPrint('Détail d\'observation sauvegardé avec ID: $result');
+      
       // Recharger les détails après la sauvegarde
       await loadObservationDetails();
       return result;
-    } catch (e) {
+    } catch (e, stackTrace) {
       debugPrint('Erreur lors de la sauvegarde du détail d\'observation: $e');
+      debugPrint('Stack trace: $stackTrace');
       rethrow;
+    }
+  }
+  
+  /// Valide que les données peuvent être sérialisées en JSON
+  void _validateJsonData(Map<String, dynamic> data) {
+    try {
+      // Tenter de sérialiser les données
+      final jsonString = jsonEncode(data);
+      debugPrint('Validation JSON réussie: ${jsonString.length} caractères');
+    } catch (e) {
+      debugPrint('ERREUR: Les données ne peuvent pas être sérialisées en JSON: $e');
+      
+      // Identifier les champs problématiques
+      for (final entry in data.entries) {
+        try {
+          final json = jsonEncode({entry.key: entry.value});
+        } catch (entryError) {
+          debugPrint('Champ problématique: ${entry.key}, valeur: ${entry.value}, type: ${entry.value.runtimeType}');
+          
+          // Si la valeur est un objet complexe, tenter de l'analyser en profondeur
+          if (entry.value is Map) {
+            _analyzeMapForJsonIssues(entry.key, entry.value as Map);
+          } else if (entry.value is List) {
+            _analyzeListForJsonIssues(entry.key, entry.value as List);
+          }
+        }
+      }
+    }
+  }
+  
+  /// Analyse un Map pour trouver des problèmes de sérialisation JSON
+  void _analyzeMapForJsonIssues(String path, Map map) {
+    for (final key in map.keys) {
+      final value = map[key];
+      final currentPath = '$path.$key';
+      
+      try {
+        jsonEncode({key.toString(): value});
+      } catch (e) {
+        debugPrint('Problème à: $currentPath, valeur: $value, type: ${value.runtimeType}');
+        
+        if (value is Map) {
+          _analyzeMapForJsonIssues(currentPath, value);
+        } else if (value is List) {
+          _analyzeListForJsonIssues(currentPath, value);
+        }
+      }
+    }
+  }
+  
+  /// Analyse une Liste pour trouver des problèmes de sérialisation JSON
+  void _analyzeListForJsonIssues(String path, List list) {
+    for (int i = 0; i < list.length; i++) {
+      final value = list[i];
+      final currentPath = '$path[$i]';
+      
+      try {
+        jsonEncode([value]);
+      } catch (e) {
+        debugPrint('Problème à: $currentPath, valeur: $value, type: ${value.runtimeType}');
+        
+        if (value is Map) {
+          _analyzeMapForJsonIssues(currentPath, value);
+        } else if (value is List) {
+          _analyzeListForJsonIssues(currentPath, value);
+        }
+      }
     }
   }
 
