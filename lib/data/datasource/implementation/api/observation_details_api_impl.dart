@@ -11,15 +11,16 @@ import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 class ObservationDetailsApiImpl implements ObservationDetailsApi {
   final Dio _dio;
   final String apiBase = Config.apiBase;
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
 
-  ObservationDetailsApiImpl()
-      : _dio = Dio(BaseOptions(
+  ObservationDetailsApiImpl({Dio? dio, Connectivity? connectivity})
+      : _dio = dio ?? Dio(BaseOptions(
           baseUrl: Config.apiBase,
           connectTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 180), // 3 minutes
           sendTimeout: const Duration(seconds: 60),
-        ));
+        )),
+        _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendObservationDetail(
@@ -29,8 +30,8 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       final logger = AppLogger();
 
       // Vérifier la connectivité
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) || connectivityResults.isEmpty) {
         logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
             tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');
@@ -300,10 +301,17 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
+      // Ajouter skip_synthese=true comme paramètre global pour tous les modules
+      // Cette approche permet d'éviter les erreurs de synchronisation avec la synthèse
+      String endpoint =
+          '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true';
+      logger.i(
+          '[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation',
+          tag: 'sync');
+
       // Envoyer la requête
-      // Utiliser l'URL correcte selon les spécifications du backend: /monitorings/object/<module_code>/observation_detail
       final response = await _dio.post(
-        '$apiBase/monitorings/object/$moduleCode/observation_detail',
+        endpoint,
         data: requestBody,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},

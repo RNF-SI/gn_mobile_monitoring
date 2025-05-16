@@ -12,15 +12,16 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 class VisitsApiImpl implements VisitsApi {
   final Dio _dio;
   final String apiBase = Config.apiBase;
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
 
-  VisitsApiImpl()
-      : _dio = Dio(BaseOptions(
+  VisitsApiImpl({Dio? dio, Connectivity? connectivity})
+      : _dio = dio ?? Dio(BaseOptions(
           baseUrl: Config.apiBase,
           connectTimeout: const Duration(seconds: 60),
           receiveTimeout: const Duration(seconds: 180), // 3 minutes
           sendTimeout: const Duration(seconds: 60),
-        ));
+        )),
+        _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendVisit(
@@ -30,8 +31,8 @@ class VisitsApiImpl implements VisitsApi {
       final logger = AppLogger();
 
       // Vérifier la connectivité
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) || connectivityResults.isEmpty) {
         logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
             tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');

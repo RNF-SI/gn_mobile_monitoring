@@ -1,18 +1,14 @@
-import 'dart:convert';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
-import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
-import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
-import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
@@ -23,21 +19,29 @@ import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 class GlobalApiImpl implements GlobalApi {
   final Dio _dio;
   final String apiBase = Config.apiBase;
-  final Connectivity _connectivity = Connectivity();
+  final Connectivity _connectivity;
   final VisitsApi _visitsApi;
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
 
-  GlobalApiImpl()
-      : _dio = Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 180), // 3 minutes
-          sendTimeout: const Duration(seconds: 60),
-        )),
-        _visitsApi = VisitsApiImpl(),
-        _observationsApi = ObservationsApiImpl(),
-        _observationDetailsApi = ObservationDetailsApiImpl();
+  GlobalApiImpl({
+    Dio? dio,
+    Connectivity? connectivity,
+    VisitsApi? visitsApi,
+    ObservationsApi? observationsApi,
+    ObservationDetailsApi? observationDetailsApi,
+  })  : _dio = dio ??
+            Dio(BaseOptions(
+              baseUrl: Config.apiBase,
+              connectTimeout: const Duration(seconds: 60),
+              receiveTimeout: const Duration(seconds: 180), // 3 minutes
+              sendTimeout: const Duration(seconds: 60),
+            )),
+        _connectivity = connectivity ?? Connectivity(),
+        _visitsApi = visitsApi ?? VisitsApiImpl(),
+        _observationsApi = observationsApi ?? ObservationsApiImpl(),
+        _observationDetailsApi =
+            observationDetailsApi ?? ObservationDetailsApiImpl();
 
   @override
   Future<
@@ -92,7 +96,8 @@ class GlobalApiImpl implements GlobalApi {
             'Failed to fetch data for module $moduleName. Status code: ${response.statusCode}');
       }
     } catch (e) {
-      throw Exception('Error fetching data for module $moduleName: $e');
+      throw Exception(
+          'Error fetching data for module $moduleName: ${e.toString()}');
     }
   }
 
@@ -223,8 +228,9 @@ class GlobalApiImpl implements GlobalApi {
   Future<bool> checkConnectivity() async {
     try {
       // Vérifier la connectivité réseau
-      final connectivityResult = await _connectivity.checkConnectivity();
-      if (connectivityResult == ConnectivityResult.none) {
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) ||
+          connectivityResults.isEmpty) {
         return false;
       }
 
