@@ -85,12 +85,27 @@ class CompositeSyncRepositoryImpl implements SyncRepository {
   }
 
   @override
-  Future<SyncResult> syncObservationsToServer(String token, String moduleCode, int visitId) {
-    return _upstreamRepo.syncObservationsToServer(token, moduleCode, visitId);
+  Future<SyncResult> syncObservationsToServer(
+    String token, 
+    String moduleCode, 
+    int visitId, 
+    {int? serverVisitId}
+  ) {
+    return _upstreamRepo.syncObservationsToServer(token, moduleCode, visitId, serverVisitId: serverVisitId);
   }
 
   @override
-  Future<SyncResult> syncObservationDetailsToServer(String token, String moduleCode, int observationId) {
-    return _upstreamRepo.syncObservationDetailsToServer(token, moduleCode, observationId);
+  Future<SyncResult> syncObservationDetailsToServer(
+    String token, 
+    String moduleCode, 
+    int observationId, 
+    {int? serverObservationId}
+  ) {
+    return _upstreamRepo.syncObservationDetailsToServer(
+      token, 
+      moduleCode, 
+      observationId,
+      serverObservationId: serverObservationId
+    );
   }
 }
