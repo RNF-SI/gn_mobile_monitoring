@@ -157,7 +157,7 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
                 'module_id': module?.id ?? 0,
                 'site': site?.baseSiteName ?? 'Inconnu',
                 'site_id': site?.idBaseSite ?? 0,
-                'visit': visit?.idBaseVisit ?? 0,
+                'visit': visit.idBaseVisit ?? 0,
                 'observation': observation.idObservation,
               }
             };
