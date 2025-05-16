@@ -666,12 +666,6 @@ class GlobalApiImpl implements GlobalApi {
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
-      // Sécurité supplémentaire: créer une copie nettoyée de l'observation
-      // pour éviter les erreurs de type lors de la sérialisation
-      Observation cleanObservation = _sanitizeObservation(observation);
-
-      // Utiliser cette observation nettoyée pour la suite du traitement
-      observation = cleanObservation;
 
       // Préparer le corps de la requête selon le format attendu par l'API
       // Selon le backend: le format attendu est
@@ -1043,21 +1037,6 @@ class GlobalApiImpl implements GlobalApi {
             'Traitement de ${detail.data.length} champs de données complémentaires',
             tag: 'sync');
 
-        // Vérification spécifique pour le champ hauteur_strate
-        if (detail.data.containsKey('hauteur_strate')) {
-          final hauteurStrate = detail.data['hauteur_strate'];
-          logger.i(
-              'DIAGNOSTIC hauteur_strate: valeur=${hauteurStrate} (${hauteurStrate.runtimeType})',
-              tag: 'sync');
-          logger.i(
-              'DIAGNOSTIC isNumericField: ' +
-                  (_isNumericField('hauteur_strate') ? 'true' : 'false'),
-              tag: 'sync');
-        } else {
-          logger.w('DIAGNOSTIC hauteur_strate: ABSENT des données d\'entrée',
-              tag: 'sync');
-        }
-
         try {
           // Utiliser directement notre map de propriétés qui est déjà du bon type
           final Map<String, dynamic> properties =
@@ -1095,82 +1074,7 @@ class GlobalApiImpl implements GlobalApi {
                   properties[key] = value;
                 }
               }
-              // Cas 2: Traiter spécifiquement les champs de type numérique
-              else if (value is String && _isNumericField(key)) {
-                // Tenter de convertir en nombre pour certains champs connus
-                if (value.isNotEmpty) {
-                  // Pour gérer les deux formats numériques - entier ou décimal
-                  if (value.contains('.')) {
-                    // Décimal
-                    double? doubleValue = double.tryParse(value);
-                    if (doubleValue != null) {
-                      properties[key] = doubleValue;
-                      logger.i(
-                          'Conversion de $key: $value (String) -> $doubleValue (double)',
-                          tag: 'sync');
-                    } else {
-                      // Même si la conversion échoue, on garde la valeur texte
-                      properties[key] = value;
-                      logger.i(
-                          'Échec de conversion en double, conservation de la valeur texte pour $key: $value',
-                          tag: 'sync');
-                    }
-                  } else {
-                    // Entier
-                    int? intValue = int.tryParse(value);
-                    if (intValue != null) {
-                      properties[key] = intValue;
-                      logger.i(
-                          'Conversion de $key: $value (String) -> $intValue (int)',
-                          tag: 'sync');
-                    } else {
-                      // Même si la conversion échoue, on garde la valeur texte
-                      properties[key] = value;
-                      logger.i(
-                          'Échec de conversion en int, conservation de la valeur texte pour $key: $value',
-                          tag: 'sync');
-                    }
-                  }
-                } else {
-                  // Pour les chaînes vides dans les champs numériques, utiliser null
-                  properties[key] = null;
-                  logger.i(
-                      'Champ $key vide, envoi de null au lieu d\'une chaîne vide',
-                      tag: 'sync');
-                }
-              }
-              // Nouveau cas: Traitement spécial pour "hauteur_strate" et autres champs mixtes
-              else if (key == "hauteur_strate" ||
-                  key.contains("strate") ||
-                  key.contains("hauteur")) {
-                try {
-                  // Toujours traiter comme chaîne de caractères, jamais tenter de convertir en nombre
-                  logger.i(
-                      'Traitement spécial de $key comme chaîne de caractères: $value',
-                      tag: 'sync');
-
-                  // Forcer la conversion en chaîne pour éviter les problèmes de type
-                  final String strValue = value.toString();
-                  properties[key] = strValue;
-                  logger.i(
-                      'Champ $key ajouté avec succès comme chaîne: "$strValue"',
-                      tag: 'sync');
-                } catch (e) {
-                  logger.e('Erreur lors du traitement spécial de $key: $e',
-                      tag: 'sync', error: e);
-                }
-              }
-              // Cas 3: Traiter les valeurs booléennes
-              else if (value is String &&
-                  (value.toLowerCase() == 'true' ||
-                      value.toLowerCase() == 'false')) {
-                final boolValue = value.toLowerCase() == 'true';
-                properties[key] = boolValue;
-                logger.i(
-                    'Conversion de $key: $value (String) -> $boolValue (bool)',
-                    tag: 'sync');
-              }
-              // Cas 4: Traiter les objets/listes en vérifiant si c'est du JSON sérialisé
+              // Cas 2: Traiter les objets/listes en vérifiant si c'est du JSON sérialisé
               else if (value is String &&
                   value.trim().startsWith('{') &&
                   value.trim().endsWith('}')) {
@@ -1185,12 +1089,22 @@ class GlobalApiImpl implements GlobalApi {
                   properties[key] = value;
                 }
               }
-              // Cas 5: Valeur null
+              // Cas 3: Traiter les valeurs booléennes
+              else if (value is String &&
+                  (value.toLowerCase() == 'true' ||
+                      value.toLowerCase() == 'false')) {
+                final boolValue = value.toLowerCase() == 'true';
+                properties[key] = boolValue;
+                logger.i(
+                    'Conversion de $key: $value (String) -> $boolValue (bool)',
+                    tag: 'sync');
+              }
+              // Cas 4: Valeur null
               else if (value == null) {
                 properties[key] = null;
                 logger.i('Champ $key est null', tag: 'sync');
               }
-              // Cas par défaut: conserver la valeur telle quelle
+              // Cas par défaut: conserver la valeur telle quelle (String, int, double, etc.)
               else {
                 properties[key] = value;
                 logger.i(
@@ -1221,71 +1135,8 @@ class GlobalApiImpl implements GlobalApi {
         logger.i('Corps final de la requête:', tag: 'sync');
         logger.i(JsonEncoder.withIndent('  ').convert(requestBody),
             tag: 'sync');
-
-        // Vérification finale pour hauteur_strate
-        if (requestBody.containsKey('properties')) {
-          final properties = requestBody['properties'] as Map;
-          if (properties.containsKey('hauteur_strate')) {
-            final value = properties['hauteur_strate'];
-            logger.i(
-                'VÉRIFICATION FINALE: hauteur_strate est présent avec valeur=$value (${value?.runtimeType})',
-                tag: 'sync');
-          } else {
-            logger.e(
-                'VÉRIFICATION FINALE: hauteur_strate est ABSENT des propriétés!',
-                tag: 'sync');
-
-            // Tentative d'ajout direct en dernière chance
-            if (detail.data.containsKey('hauteur_strate')) {
-              try {
-                // Obtenir une référence au Map typé correctement
-                final properties =
-                    requestBody['properties'] as Map<String, dynamic>;
-                // Ajouter le champ
-                properties['hauteur_strate'] =
-                    detail.data['hauteur_strate'].toString();
-                logger.i(
-                    'CORRECTION: Ajout direct de hauteur_strate="${detail.data['hauteur_strate']}"',
-                    tag: 'sync');
-              } catch (e) {
-                logger.e('ÉCHEC de la correction pour hauteur_strate: $e',
-                    tag: 'sync', error: e);
-              }
-            }
-          }
-        }
       } catch (e) {
         logger.e('Erreur lors de l\'encodage JSON du corps de la requête: $e',
-            tag: 'sync', error: e);
-      }
-
-      // Vérifier le traitement des champs spécifiques
-      try {
-        if (detail.data.containsKey('denombrement')) {
-          final properties = requestBody['properties'] as Map;
-          if (properties.containsKey('denombrement')) {
-            logger.i(
-                'Champ "denombrement" dans la requête: ${properties['denombrement']} (${properties['denombrement']?.runtimeType})',
-                tag: 'sync');
-          } else {
-            logger.w('Champ "denombrement" ABSENT de la requête finale',
-                tag: 'sync');
-          }
-        }
-
-        if (detail.data.containsKey('hauteur_strate')) {
-          final properties = requestBody['properties'] as Map;
-          if (properties.containsKey('hauteur_strate')) {
-            logger.i(
-                'Champ "hauteur_strate" dans la requête: ${properties['hauteur_strate']} (${properties['hauteur_strate']?.runtimeType})',
-                tag: 'sync');
-          } else {
-            logger.w('Champ "hauteur_strate" ABSENT de la requête finale',
-                tag: 'sync');
-          }
-        }
-      } catch (e) {
-        logger.e('Erreur lors de la vérification des champs spécifiques: $e',
             tag: 'sync', error: e);
       }
 
@@ -1368,18 +1219,6 @@ class GlobalApiImpl implements GlobalApi {
 
         logger.i('Analyse détaillée de la réponse du serveur:', tag: 'sync');
 
-        // Log des champs que nous suivons spécifiquement
-        logger.i('ANALYSE DES CHAMPS DE SUIVI DANS LA RÉPONSE:', tag: 'sync');
-        if (detail.data.containsKey('denombrement')) {
-          logger.i(
-              '  - Champ "denombrement" était dans les données d\'entrée: ${detail.data['denombrement']}',
-              tag: 'sync');
-        }
-        if (detail.data.containsKey('hauteur_strate')) {
-          logger.i(
-              '  - Champ "hauteur_strate" était dans les données d\'entrée: ${detail.data['hauteur_strate']}',
-              tag: 'sync');
-        }
         // Log des informations essentielles
         if (serverResponse.containsKey('id') ||
             serverResponse.containsKey('ID')) {
@@ -1395,41 +1234,9 @@ class GlobalApiImpl implements GlobalApi {
           if (properties is Map) {
             logger.i('Propriétés trouvées dans la réponse: $properties',
                 tag: 'sync');
-
-            // Vérifier les champs spécifiques
-            if (properties.containsKey('denombrement')) {
-              logger.i(
-                  'Champ "denombrement" dans les propriétés: ${properties['denombrement']} (${properties['denombrement']?.runtimeType})',
-                  tag: 'sync');
-            } else {
-              logger.w('Champ "denombrement" ABSENT des propriétés',
-                  tag: 'sync');
-            }
-
-            if (properties.containsKey('hauteur_strate')) {
-              logger.i(
-                  'Champ "hauteur_strate" dans les propriétés: ${properties['hauteur_strate']} (${properties['hauteur_strate']?.runtimeType})',
-                  tag: 'sync');
-            } else {
-              logger.w('Champ "hauteur_strate" ABSENT des propriétés',
-                  tag: 'sync');
-            }
           }
         } else {
           logger.w('Pas de champ "properties" dans la réponse', tag: 'sync');
-        }
-
-        // Vérifier si les champs sont au niveau supérieur
-        if (serverResponse.containsKey('denombrement')) {
-          logger.i(
-              'Champ "denombrement" trouvé au niveau supérieur: ${serverResponse['denombrement']}',
-              tag: 'sync');
-        }
-
-        if (serverResponse.containsKey('hauteur_strate')) {
-          logger.i(
-              'Champ "hauteur_strate" trouvé au niveau supérieur: ${serverResponse['hauteur_strate']}',
-              tag: 'sync');
         }
 
         // Vérifier tous les champs pour trouver où pourraient être les données
@@ -1513,172 +1320,5 @@ class GlobalApiImpl implements GlobalApi {
 
       rethrow;
     }
-  }
-
-  /// Méthode utilitaire pour nettoyer et convertir les types de données d'une observation
-  /// avant de l'envoyer à l'API pour éviter les erreurs de type
-  Observation _sanitizeObservation(Observation observation) {
-    // Créer une copie des données pour éviter de modifier l'original
-    Map<String, dynamic> cleanData = {};
-
-    // Traiter les données complémentaires
-    if (observation.data != null) {
-      observation.data!.forEach((key, value) {
-        // Convertir les ids numériques en string en int si possible
-        if (key.startsWith('id_') && value is String) {
-          try {
-            int? intValue = int.tryParse(value);
-            if (intValue != null) {
-              cleanData[key] = intValue;
-              debugPrint(
-                  'Nettoyage: Conversion de $key: $value (String) -> $intValue (int)');
-            } else {
-              cleanData[key] = value;
-            }
-          } catch (e) {
-            // En cas d'erreur, garder la valeur d'origine
-            cleanData[key] = value;
-            debugPrint('Erreur lors de la conversion de $key: $e');
-          }
-        }
-        // Traiter les champs numériques connus
-        else if (value is String && _isNumericField(key)) {
-          try {
-            // Essayer d'abord de convertir en entier
-            int? intValue = int.tryParse(value);
-            if (intValue != null) {
-              cleanData[key] = intValue;
-              debugPrint(
-                  'Nettoyage: Conversion de $key: $value (String) -> $intValue (int)');
-            }
-            // Sinon, essayer de convertir en décimal
-            else {
-              double? doubleValue = double.tryParse(value);
-              if (doubleValue != null) {
-                cleanData[key] = doubleValue;
-                debugPrint(
-                    'Nettoyage: Conversion de $key: $value (String) -> $doubleValue (double)');
-              } else {
-                cleanData[key] = value;
-              }
-            }
-          } catch (e) {
-            // En cas d'erreur, garder la valeur d'origine
-            cleanData[key] = value;
-            debugPrint('Erreur lors de la conversion de $key: $e');
-          }
-        } else {
-          // Conserver la valeur telle quelle
-          cleanData[key] = value;
-        }
-      });
-    }
-
-    // Créer une nouvelle instance d'Observation avec les données nettoyées
-    return Observation(
-      idObservation: observation.idObservation,
-      idBaseVisit: observation.idBaseVisit,
-      cdNom: observation.cdNom,
-      comments: observation.comments,
-      uuidObservation: observation.uuidObservation,
-      metaCreateDate: observation.metaCreateDate,
-      metaUpdateDate: observation.metaUpdateDate,
-      data: cleanData,
-    );
-  }
-
-  /// Détermine si un champ est de type numérique en fonction de son nom
-  ///
-  /// Cette méthode vise à identifier les champs numériques courants dans les
-  /// observations et détails d'observation pour une conversion de type appropriée.
-  bool _isNumericField(String fieldName) {
-    // Liste de noms de champs spécifiques à NE PAS traiter comme numériques
-    const List<String> nonNumericExceptions = [
-      'hauteur_strate', // Texte descriptif comme "entre 25 et 50 cm"
-    ];
-
-    // Vérifier d'abord les exceptions explicites
-    for (final exception in nonNumericExceptions) {
-      if (fieldName.toLowerCase() == exception.toLowerCase()) {
-        return false; // C'est une exception explicite, ne pas traiter comme numérique
-      }
-    }
-
-    // Liste de noms de champs connus pour contenir des valeurs numériques
-    const List<String> knownNumericFields = [
-      'denombrement', // Comptage d'individus
-      'abondance', // Valeur d'abondance
-      'surface', // Surface en m²
-      'profondeur', // Profondeur en mètres
-      'longueur', // Longueur en mètres
-      'largeur', // Largeur en mètres
-      'diametre', // Diamètre en cm
-      'hauteur', // Hauteur en mètres (mais pas hauteur_strate qui est traité séparément)
-      'age', // Âge en années
-      'poids', // Poids en kg ou g
-      'nombre', // Nombre générique
-      'quantite', // Quantité générique
-      'taille', // Taille en cm ou m
-      'pourcentage', // Pourcentage
-      'count', // Comptage
-      'amount', // Montant
-      'value', // Valeur générique
-      'latitude', // Coordonnée latitude
-      'longitude', // Coordonnée longitude
-      'altitude', // Altitude en mètres
-      'coefficient', // Coefficient numérique
-      'volume', // Volume
-      'temperature', // Température
-      'ph', // pH
-      'densite', // Densité
-      'precision', // Précision de mesure
-    ];
-
-    // Vérifier si le nom du champ contient exactement un des termes numériques connus
-    for (final numericField in knownNumericFields) {
-      if (fieldName.toLowerCase() == numericField.toLowerCase()) {
-        return true;
-      }
-    }
-
-    // Pour les noms composés, être plus prudent et vérifier qu'aucune partie ne correspond à une exception
-    if (fieldName.contains('_')) {
-      for (final exception in nonNumericExceptions) {
-        if (fieldName.toLowerCase().contains(exception.toLowerCase())) {
-          return false; // Contient une partie qui est une exception
-        }
-      }
-    }
-
-    // Vérifier les terminaisons communes pour les champs numériques
-    final numericSuffixes = [
-      '_count',
-      '_number',
-      '_value',
-      '_qty',
-      '_nb',
-      '_num',
-      '_val'
-    ];
-    for (final suffix in numericSuffixes) {
-      if (fieldName.toLowerCase().endsWith(suffix)) {
-        return true;
-      }
-    }
-
-    // Vérifier les préfixes communs pour les champs numériques
-    final numericPrefixes = ['nb_', 'num_', 'count_', 'val_', 'qty_'];
-    for (final prefix in numericPrefixes) {
-      if (fieldName.toLowerCase().startsWith(prefix)) {
-        return true;
-      }
-    }
-
-    // Pour les champs avec "denombrement", les traiter comme numériques
-    if (fieldName.toLowerCase().contains('denombrement')) {
-      return true;
-    }
-
-    return false;
   }
 }
