@@ -437,28 +437,33 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> sendVisit(
       String token, String moduleCode, BaseVisit visit) async {
     try {
-      // Importer AppLogger et créer l'instance 
+      // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Vérifier la connectivité
       if (!await checkConnectivity()) {
-        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible', tag: 'sync');
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
       // Vérification des champs obligatoires
       if (visit.idDataset == null) {
-        logger.e('[API] ERREUR: id_dataset manquant pour la visite', tag: 'sync');
-        throw ArgumentError('Le champ id_dataset est requis pour envoyer une visite');
+        logger.e('[API] ERREUR: id_dataset manquant pour la visite',
+            tag: 'sync');
+        throw ArgumentError(
+            'Le champ id_dataset est requis pour envoyer une visite');
       }
-      
+
       if (visit.idBaseSite == null) {
-        logger.e('[API] ERREUR: id_base_site manquant pour la visite', tag: 'sync');
-        throw ArgumentError('Le champ id_base_site est requis pour envoyer une visite');
+        logger.e('[API] ERREUR: id_base_site manquant pour la visite',
+            tag: 'sync');
+        throw ArgumentError(
+            'Le champ id_base_site est requis pour envoyer une visite');
       }
 
       // Préparer le corps de la requête selon le format attendu par l'API
-      // Selon le backend: le format attendu est 
+      // Selon le backend: le format attendu est
       // {
       //    "properties": {
       //      "id_module": "...",  <-- Cette propriété est nécessaire
@@ -471,15 +476,16 @@ class GlobalApiImpl implements GlobalApi {
           'id_base_site': visit.idBaseSite,
           'visit_date_min': visit.visitDateMin,
           'observers': visit.observers ?? [],
-          'id_dataset': visit.idDataset, // Ajout de l'id_dataset requis par le backend
+          'id_dataset':
+              visit.idDataset, // Ajout de l'id_dataset requis par le backend
         },
       };
-      
+
       // Ajouter l'ID du module s'il est disponible dans le modèle
       if (visit.idModule != null) {
         requestBody['properties']['id_module'] = visit.idModule;
       }
-      
+
       // Ajouter module_code au niveau supérieur du corps de la requête
       // pour éviter les conflits de type avec les propriétés
       debugPrint('Ajout du moduleCode pour la visite: $moduleCode');
@@ -490,13 +496,14 @@ class GlobalApiImpl implements GlobalApi {
       if (visit.data != null && visit.data!.isNotEmpty) {
         // Créer un nouveau champ 'data' séparé pour stocker les données complémentaires
         requestBody['data'] = {};
-        
+
         // Copier manuellement chaque entrée pour éviter les incompatibilités de type
         visit.data!.forEach((key, value) {
           requestBody['data'][key] = value;
         });
-        
-        debugPrint('Données complémentaires ajoutées à la visite: ${requestBody['data']}');
+
+        debugPrint(
+            'Données complémentaires ajoutées à la visite: ${requestBody['data']}');
       }
 
       // Ajouter d'autres propriétés selon nécessité
@@ -519,23 +526,27 @@ class GlobalApiImpl implements GlobalApi {
 
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
       logBuffer.writeln('[API] ENVOI VISITE AU SERVEUR');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
       logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit');
       logBuffer.writeln('MÉTHODE: POST');
-      
+
       // Afficher de façon sécurisée le token (juste les premiers caractères)
       if (token.length > 10) {
-        logBuffer.writeln('HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
       } else {
         logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
       }
-      
+
       logBuffer.writeln('BODY:');
-      logBuffer.writeln('------------------------------------------------------------------');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
       logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
-      
+
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
@@ -555,14 +566,16 @@ class GlobalApiImpl implements GlobalApi {
       // Log de la réponse
       logBuffer = StringBuffer();
       logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
-      logBuffer.writeln('------------------------------------------------------------------');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
       if (response.data is Map || response.data is List) {
         logBuffer.writeln(JsonEncoder.withIndent('  ').convert(response.data));
       } else {
         logBuffer.writeln(response.data.toString());
       }
-      logBuffer.writeln('==================================================================');
-      
+      logBuffer.writeln(
+          '==================================================================');
+
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
@@ -575,12 +588,14 @@ class GlobalApiImpl implements GlobalApi {
     } on DioException catch (e) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Log détaillé pour le débogage Dio
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
       logBuffer.writeln('[API] ERREUR DIO LORS DE L\'ENVOI DE LA VISITE');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
       logBuffer.writeln('Type: ${e.type}');
       logBuffer.writeln('Message: ${e.message}');
       logBuffer.writeln('URL: ${e.requestOptions.uri}');
@@ -591,7 +606,8 @@ class GlobalApiImpl implements GlobalApi {
         logBuffer.writeln('Status code: ${e.response?.statusCode}');
         if (e.response?.data != null) {
           if (e.response?.data is Map || e.response?.data is List) {
-            logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(e.response?.data));
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
           } else {
             logBuffer.writeln(e.response?.data.toString());
           }
@@ -602,7 +618,8 @@ class GlobalApiImpl implements GlobalApi {
       logBuffer.writeln('Connect timeout: ${e.requestOptions.connectTimeout}');
       logBuffer.writeln('Receive timeout: ${e.requestOptions.receiveTimeout}');
       logBuffer.writeln('Send timeout: ${e.requestOptions.sendTimeout}');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
 
       // Écrire dans le fichier log via AppLogger
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
@@ -612,20 +629,24 @@ class GlobalApiImpl implements GlobalApi {
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Log détaillé pour le débogage général
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
       logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DE LA VISITE');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
       logBuffer.writeln('Type: ${e.runtimeType}');
       logBuffer.writeln('Message: $e');
       logBuffer.writeln('\nSTACK TRACE:');
       logBuffer.writeln(stackTrace);
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
 
       // Écrire dans le fichier log via AppLogger
-      logger.e(logBuffer.toString(), tag: 'sync', error: e, stackTrace: stackTrace);
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
 
       rethrow;
     }
@@ -635,17 +656,25 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> sendObservation(
       String token, String moduleCode, Observation observation) async {
     try {
-      // Importer AppLogger et créer l'instance 
+      // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Vérifier la connectivité
       if (!await checkConnectivity()) {
-        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible', tag: 'sync');
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
+      // Sécurité supplémentaire: créer une copie nettoyée de l'observation
+      // pour éviter les erreurs de type lors de la sérialisation
+      Observation cleanObservation = _sanitizeObservation(observation);
+
+      // Utiliser cette observation nettoyée pour la suite du traitement
+      observation = cleanObservation;
+
       // Préparer le corps de la requête selon le format attendu par l'API
-      // Selon le backend: le format attendu est 
+      // Selon le backend: le format attendu est
       // {
       //    "properties": {
       //      "id_module": "...",  <-- Cette propriété est nécessaire
@@ -654,15 +683,25 @@ class GlobalApiImpl implements GlobalApi {
       // }
       final Map<String, dynamic> requestBody = {
         'properties': {
-          'id_base_visit': observation.idBaseVisit,
+          // Assurer que id_base_visit est bien un entier
+          'id_base_visit': observation.idBaseVisit != null
+              ? int.parse(observation.idBaseVisit.toString())
+              : null,
         },
       };
-      
+
       // Ajouter l'UUID s'il est disponible (toujours inclure cette donnée importante pour tous les modules)
+      // Mais gérer ce champ différemment car il semble causer des problèmes de type
       if (observation.uuidObservation != null) {
-        requestBody['properties']['uuid_observation'] = observation.uuidObservation;
+        // Au lieu d'ajouter directement à properties, l'ajouter au niveau supérieur du requestBody
+        // pour éviter les conflits de type dans la section properties
+        requestBody['uuid_observation'] = observation.uuidObservation;
+
+        // Ajouter un log pour déboguer
+        debugPrint(
+            'UUID observation ajouté au niveau supérieur: ${observation.uuidObservation}');
       }
-      
+
       // Ajouter le module_code dans un champ séparé du corps de la requête
       // Plutôt que comme une propriété directe qui cause un conflit de type
       debugPrint('Utilisation du moduleCode pour l\'observation: $moduleCode');
@@ -671,7 +710,9 @@ class GlobalApiImpl implements GlobalApi {
 
       // Ajouter le cd_nom s'il est disponible
       if (observation.cdNom != null) {
-        requestBody['properties']['cd_nom'] = observation.cdNom;
+        // S'assurer que cd_nom est bien un entier
+        requestBody['properties']['cd_nom'] =
+            int.parse(observation.cdNom.toString());
       }
 
       // Ajouter les commentaires s'ils sont disponibles
@@ -685,42 +726,74 @@ class GlobalApiImpl implements GlobalApi {
         // Créer un nouveau champ 'data' séparé pour stocker les données complémentaires
         // au lieu de les ajouter directement aux propriétés
         requestBody['data'] = {};
-        
-        // Copier manuellement chaque entrée pour éviter les incompatibilités de type
+
+        // Copier manuellement chaque entrée en convertissant les types si nécessaire
         observation.data!.forEach((key, value) {
-          requestBody['data'][key] = value;
+          // Pour les champs qui commencent par 'id_' et qui peuvent être des entiers
+          if (key.startsWith('id_') && value is String) {
+            // Essayer de convertir en entier si c'est une chaîne numérique
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              requestBody['data'][key] = intValue;
+              debugPrint(
+                  'Conversion de $key: $value (String) -> $intValue (int)');
+            } else {
+              requestBody['data'][key] = value;
+            }
+          } else if (key == 'cd_nom' && value is String) {
+            // Cas spécial pour cd_nom qui doit être un entier
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              requestBody['data'][key] = intValue;
+              debugPrint(
+                  'Conversion de cd_nom: $value (String) -> $intValue (int)');
+            } else {
+              requestBody['data'][key] = value;
+            }
+          } else {
+            // Conserver la valeur telle quelle pour les autres cas
+            requestBody['data'][key] = value;
+          }
         });
-        
+
         debugPrint('Données complémentaires ajoutées: ${requestBody['data']}');
       }
 
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
       logBuffer.writeln('[API] ENVOI OBSERVATION AU SERVEUR');
-      logBuffer.writeln('==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/observation');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer
+          .writeln('URL: $apiBase/monitorings/object/$moduleCode/observation');
       logBuffer.writeln('MÉTHODE: POST');
-      
+
       // Afficher de façon sécurisée le token (juste les premiers caractères)
       if (token.length > 10) {
-        logBuffer.writeln('HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
       } else {
         logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
       }
-      
+
       logBuffer.writeln('BODY:');
-      logBuffer.writeln('------------------------------------------------------------------');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
       logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
-      
+
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Ajouter skip_synthese=true comme paramètre global pour tous les modules
       // Cette approche permet d'éviter les erreurs de synchronisation avec la synthèse
-      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation?skip_synthese=true';
-      logger.i('[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation', tag: 'sync');
-      
+      String endpoint =
+          '$apiBase/monitorings/object/$moduleCode/observation?skip_synthese=true';
+      logger.i(
+          '[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation',
+          tag: 'sync');
+
       // Envoyer la requête
       final response = await _dio.post(
         endpoint,
@@ -736,19 +809,22 @@ class GlobalApiImpl implements GlobalApi {
       // Log de la réponse
       logBuffer = StringBuffer();
       logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
-      logBuffer.writeln('------------------------------------------------------------------');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
       if (response.data is Map || response.data is List) {
         logBuffer.writeln(JsonEncoder.withIndent('  ').convert(response.data));
       } else {
         logBuffer.writeln(response.data.toString());
       }
-      logBuffer.writeln('==================================================================');
-      
+      logBuffer.writeln(
+          '==================================================================');
+
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        logger.i('Observation envoyée avec succès: ${response.data}', tag: 'sync');
+        logger.i('Observation envoyée avec succès: ${response.data}',
+            tag: 'sync');
         return response.data as Map<String, dynamic>;
       } else {
         throw Exception(
@@ -757,12 +833,14 @@ class GlobalApiImpl implements GlobalApi {
     } on DioException catch (e) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Log détaillé pour le débogage Dio
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
       logBuffer.writeln('[API] ERREUR DIO LORS DE L\'ENVOI DE L\'OBSERVATION');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
       logBuffer.writeln('Type: ${e.type}');
       logBuffer.writeln('Message: ${e.message}');
       logBuffer.writeln('URL: ${e.requestOptions.uri}');
@@ -773,7 +851,8 @@ class GlobalApiImpl implements GlobalApi {
         logBuffer.writeln('Status code: ${e.response?.statusCode}');
         if (e.response?.data != null) {
           if (e.response?.data is Map || e.response?.data is List) {
-            logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(e.response?.data));
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
           } else {
             logBuffer.writeln(e.response?.data.toString());
           }
@@ -784,31 +863,37 @@ class GlobalApiImpl implements GlobalApi {
       logBuffer.writeln('Connect timeout: ${e.requestOptions.connectTimeout}');
       logBuffer.writeln('Receive timeout: ${e.requestOptions.receiveTimeout}');
       logBuffer.writeln('Send timeout: ${e.requestOptions.sendTimeout}');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
 
       // Écrire dans le fichier log via AppLogger
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
-      
+
       throw NetworkException(
           'Erreur réseau lors de l\'envoi de l\'observation: ${e.message}');
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
-      
+
       // Log détaillé pour le débogage général
       StringBuffer logBuffer = StringBuffer();
-      logBuffer.writeln('\n==================================================================');
-      logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DE L\'OBSERVATION');
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer
+          .writeln('[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DE L\'OBSERVATION');
+      logBuffer.writeln(
+          '==================================================================');
       logBuffer.writeln('Type: ${e.runtimeType}');
       logBuffer.writeln('Message: $e');
       logBuffer.writeln('\nSTACK TRACE:');
       logBuffer.writeln(stackTrace);
-      logBuffer.writeln('==================================================================');
+      logBuffer.writeln(
+          '==================================================================');
 
       // Écrire dans le fichier log via AppLogger
-      logger.e(logBuffer.toString(), tag: 'sync', error: e, stackTrace: stackTrace);
-      
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
+
       rethrow;
     }
   }
@@ -817,52 +902,433 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> sendObservationDetail(
       String token, String moduleCode, ObservationDetail detail) async {
     try {
+      // Importer AppLogger et créer l'instance
+      final logger = AppLogger();
+
       // Vérifier la connectivité
       if (!await checkConnectivity()) {
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
       // Vérifier que l'ID de l'observation est présent
       if (detail.idObservation == null) {
+        logger.e(
+            '[API] ERREUR: id_observation manquant pour le détail d\'observation',
+            tag: 'sync');
         throw ArgumentError(
             'L\'ID de l\'observation est requis pour envoyer un détail d\'observation');
       }
 
       // Préparer le corps de la requête selon le format attendu par l'API
-      // Selon le backend: le format attendu est 
+      // D'après l'analyse de la réponse serveur, les données devraient être dans properties
       // {
       //    "properties": {
-      //      "id_module": "...",  <-- Cette propriété est nécessaire
+      //      "id_observation": "...",
+      //      "hauteur_strate": "...",
+      //      "denombrement": "...",
       //      ... autres propriétés
       //    }
       // }
-      final Map<String, dynamic> requestBody = {
-        'properties': {
-          'id_observation': detail.idObservation,
-        },
-      };
-      
-      // Ajouter le module_code dans un champ séparé du corps de la requête
-      // Plutôt que comme une propriété directe qui cause un conflit de type
-      debugPrint('Utilisation du moduleCode pour le détail d\'observation: $moduleCode');
-      // Ajouter module_code au niveau supérieur du corps de la requête
-      requestBody['module_code'] = moduleCode;
 
-      // Ajouter les données complémentaires en utilisant une approche itérative
-      // pour éviter les problèmes de type
-      if (detail.data.isNotEmpty) {
-        // Créer un nouveau champ 'data' séparé pour stocker les données complémentaires
-        requestBody['data'] = {};
-        
-        // Copier manuellement chaque entrée pour éviter les incompatibilités de type
-        detail.data.forEach((key, value) {
-          requestBody['data'][key] = value;
-        });
-        
-        debugPrint('Données complémentaires ajoutées au détail: ${requestBody['data']}');
+      // Imprimer le type d'idObservation pour le diagnostic
+      logger.i('Type de idObservation: ${detail.idObservation.runtimeType}',
+          tag: 'sync');
+
+      // Créer un nouveau Map avec les bonnes contraintes de type
+      final Map<String, dynamic> properties = {};
+      // Ajouter l'ID d'observation manuellement
+      properties['id_observation'] = detail.idObservation;
+
+      // Créer la structure complète du requestBody
+      final Map<String, dynamic> requestBody = {
+        'properties': properties,
+        'module_code': moduleCode,
+      };
+
+      // Log détaillé pour examiner l'objet detail
+      logger.i('Examen de l\'objet ObservationDetail:', tag: 'sync');
+      logger.i('  - idObservationDetail: ${detail.idObservationDetail}',
+          tag: 'sync');
+      logger.i('  - idObservation: ${detail.idObservation}', tag: 'sync');
+      logger.i('  - idModule: ${detail.idModule}', tag: 'sync');
+      logger.i('  - uuidObservationDetail: ${detail.uuidObservationDetail}',
+          tag: 'sync');
+      logger.i('  - Nombre de champs dans data: ${detail.data.length}',
+          tag: 'sync');
+
+      // Examen détaillé de tous les champs de données pour le débogage
+      logger.i('Examen détaillé de tous les champs de données:', tag: 'sync');
+      detail.data.forEach((key, value) {
+        logger.i('  - Champ "$key": $value (${value?.runtimeType})',
+            tag: 'sync');
+      });
+
+      // Ajouter l'UUID s'il est disponible - VERSION CORRIGÉE
+      if (detail.uuidObservationDetail != null) {
+        try {
+          logger.i(
+              'UUID original: ${detail.uuidObservationDetail} (${detail.uuidObservationDetail.runtimeType})',
+              tag: 'sync');
+
+          // Convertir l'UUID en chaîne hexadécimale si c'est une liste d'entiers
+          String uuidValue;
+          if (detail.uuidObservationDetail is List<int>) {
+            // Convertir la liste d'entiers en chaîne hexadécimale
+            uuidValue = (detail.uuidObservationDetail as List<int>)
+                .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                .join('');
+            logger.i('UUID converti de List<int> à String: $uuidValue',
+                tag: 'sync');
+          } else if (detail.uuidObservationDetail is String) {
+            // Si c'est une chaîne qui ressemble à une liste
+            if (detail.uuidObservationDetail.toString().startsWith('[') &&
+                detail.uuidObservationDetail.toString().endsWith(']')) {
+              try {
+                // Extraire les nombres de la chaîne
+                final String listString =
+                    detail.uuidObservationDetail.toString();
+                final String numbersOnly =
+                    listString.substring(1, listString.length - 1);
+                final List<String> parts = numbersOnly.split(', ');
+                final List<int> bytes = parts.map((p) => int.parse(p)).toList();
+
+                // Convertir en format hexadécimal
+                uuidValue = bytes
+                    .map((b) => b.toRadixString(16).padLeft(2, '0'))
+                    .join('');
+                logger.i(
+                    'UUID converti de String "[n1, n2, ...]" à format hex: $uuidValue',
+                    tag: 'sync');
+              } catch (e) {
+                // Si échec, utiliser directement la chaîne
+                uuidValue = detail.uuidObservationDetail.toString();
+                logger.i(
+                    'Échec de conversion de liste, utilisation de la chaîne brute: $uuidValue',
+                    tag: 'sync');
+              }
+            } else {
+              // Utiliser directement la chaîne si elle n'a pas l'air d'être une liste
+              uuidValue = detail.uuidObservationDetail as String;
+              logger.i('UUID déjà en String: $uuidValue', tag: 'sync');
+            }
+          } else {
+            // Convertir en chaîne pour tous les autres types
+            uuidValue = detail.uuidObservationDetail.toString();
+            logger.w(
+                'UUID de type inattendu (${detail.uuidObservationDetail.runtimeType}), converti en chaîne: $uuidValue',
+                tag: 'sync');
+          }
+
+          // Ajouter l'UUID au format chaîne dans les propriétés
+          final properties = requestBody['properties'] as Map<String, dynamic>;
+          properties['uuid_observation_detail'] = uuidValue;
+          logger.i('UUID détail observation ajouté avec succès: $uuidValue',
+              tag: 'sync');
+        } catch (e, stackTrace) {
+          // Capturer explicitement l'erreur pour plus de détails
+          logger.e('ERREUR lors de l\'ajout de l\'UUID: $e',
+              tag: 'sync', error: e, stackTrace: stackTrace);
+
+          // Continuer sans ajouter l'UUID plutôt que de faire échouer toute la requête
+          logger.w('Continuation sans l\'UUID pour éviter l\'échec complet',
+              tag: 'sync');
+        }
       }
 
-      debugPrint('Envoi du détail d\'observation au serveur: $requestBody');
+      // Traiter les données complémentaires avec gestion sécurisée des types
+      if (detail.data.isNotEmpty) {
+        logger.i(
+            'Traitement de ${detail.data.length} champs de données complémentaires',
+            tag: 'sync');
+
+        // Vérification spécifique pour le champ hauteur_strate
+        if (detail.data.containsKey('hauteur_strate')) {
+          final hauteurStrate = detail.data['hauteur_strate'];
+          logger.i(
+              'DIAGNOSTIC hauteur_strate: valeur=${hauteurStrate} (${hauteurStrate.runtimeType})',
+              tag: 'sync');
+          logger.i(
+              'DIAGNOSTIC isNumericField: ' +
+                  (_isNumericField('hauteur_strate') ? 'true' : 'false'),
+              tag: 'sync');
+        } else {
+          logger.w('DIAGNOSTIC hauteur_strate: ABSENT des données d\'entrée',
+              tag: 'sync');
+        }
+
+        try {
+          // Utiliser directement notre map de propriétés qui est déjà du bon type
+          final Map<String, dynamic> properties =
+              requestBody['properties'] as Map<String, dynamic>;
+          logger.i('Type de properties: ${properties.runtimeType}',
+              tag: 'sync');
+
+          // Copier les champs directement dans properties, car c'est là que le serveur les attend
+          for (final entry in detail.data.entries) {
+            final key = entry.key;
+            final value = entry.value;
+
+            try {
+              // Ne pas dupliquer id_observation qui est déjà défini
+              if (key == 'id_observation') {
+                logger.i(
+                    'Ignorer le champ $key car déjà défini dans properties',
+                    tag: 'sync');
+                continue; // Skip this field
+              }
+
+              logger.i(
+                  'Traitement du champ $key: $value (${value?.runtimeType})',
+                  tag: 'sync');
+
+              // Cas 1: Pour les champs qui commencent par 'id_' (nomenclatures et ID) - convertir en int
+              if (key.startsWith('id_') && value is String) {
+                int? intValue = int.tryParse(value);
+                if (intValue != null) {
+                  properties[key] = intValue;
+                  logger.i(
+                      'Conversion de $key: $value (String) -> $intValue (int)',
+                      tag: 'sync');
+                } else {
+                  properties[key] = value;
+                }
+              }
+              // Cas 2: Traiter spécifiquement les champs de type numérique
+              else if (value is String && _isNumericField(key)) {
+                // Tenter de convertir en nombre pour certains champs connus
+                if (value.isNotEmpty) {
+                  // Pour gérer les deux formats numériques - entier ou décimal
+                  if (value.contains('.')) {
+                    // Décimal
+                    double? doubleValue = double.tryParse(value);
+                    if (doubleValue != null) {
+                      properties[key] = doubleValue;
+                      logger.i(
+                          'Conversion de $key: $value (String) -> $doubleValue (double)',
+                          tag: 'sync');
+                    } else {
+                      // Même si la conversion échoue, on garde la valeur texte
+                      properties[key] = value;
+                      logger.i(
+                          'Échec de conversion en double, conservation de la valeur texte pour $key: $value',
+                          tag: 'sync');
+                    }
+                  } else {
+                    // Entier
+                    int? intValue = int.tryParse(value);
+                    if (intValue != null) {
+                      properties[key] = intValue;
+                      logger.i(
+                          'Conversion de $key: $value (String) -> $intValue (int)',
+                          tag: 'sync');
+                    } else {
+                      // Même si la conversion échoue, on garde la valeur texte
+                      properties[key] = value;
+                      logger.i(
+                          'Échec de conversion en int, conservation de la valeur texte pour $key: $value',
+                          tag: 'sync');
+                    }
+                  }
+                } else {
+                  // Pour les chaînes vides dans les champs numériques, utiliser null
+                  properties[key] = null;
+                  logger.i(
+                      'Champ $key vide, envoi de null au lieu d\'une chaîne vide',
+                      tag: 'sync');
+                }
+              }
+              // Nouveau cas: Traitement spécial pour "hauteur_strate" et autres champs mixtes
+              else if (key == "hauteur_strate" ||
+                  key.contains("strate") ||
+                  key.contains("hauteur")) {
+                try {
+                  // Toujours traiter comme chaîne de caractères, jamais tenter de convertir en nombre
+                  logger.i(
+                      'Traitement spécial de $key comme chaîne de caractères: $value',
+                      tag: 'sync');
+
+                  // Forcer la conversion en chaîne pour éviter les problèmes de type
+                  final String strValue = value.toString();
+                  properties[key] = strValue;
+                  logger.i(
+                      'Champ $key ajouté avec succès comme chaîne: "$strValue"',
+                      tag: 'sync');
+                } catch (e) {
+                  logger.e('Erreur lors du traitement spécial de $key: $e',
+                      tag: 'sync', error: e);
+                }
+              }
+              // Cas 3: Traiter les valeurs booléennes
+              else if (value is String &&
+                  (value.toLowerCase() == 'true' ||
+                      value.toLowerCase() == 'false')) {
+                final boolValue = value.toLowerCase() == 'true';
+                properties[key] = boolValue;
+                logger.i(
+                    'Conversion de $key: $value (String) -> $boolValue (bool)',
+                    tag: 'sync');
+              }
+              // Cas 4: Traiter les objets/listes en vérifiant si c'est du JSON sérialisé
+              else if (value is String &&
+                  value.trim().startsWith('{') &&
+                  value.trim().endsWith('}')) {
+                try {
+                  // Tenter de parser comme JSON
+                  final jsonValue = jsonDecode(value);
+                  properties[key] = jsonValue;
+                  logger.i('Conversion de $key: JSON String -> Objet',
+                      tag: 'sync');
+                } catch (_) {
+                  // En cas d'échec, conserver la valeur d'origine
+                  properties[key] = value;
+                }
+              }
+              // Cas 5: Valeur null
+              else if (value == null) {
+                properties[key] = null;
+                logger.i('Champ $key est null', tag: 'sync');
+              }
+              // Cas par défaut: conserver la valeur telle quelle
+              else {
+                properties[key] = value;
+                logger.i(
+                    'Valeur conservée telle quelle pour $key: $value (${value.runtimeType})',
+                    tag: 'sync');
+              }
+            } catch (e) {
+              logger.e('Erreur lors du traitement du champ $key: $e',
+                  tag: 'sync', error: e);
+              // Continuer avec les autres champs pour ne pas bloquer toute la synchronisation
+            }
+          }
+
+          // Vérifier que toutes les valeurs sont de types compatibles avec JSON
+          logger.i('Vérification des types dans properties avant envoi:',
+              tag: 'sync');
+          properties.forEach((key, value) {
+            logger.i('  - $key: $value (${value?.runtimeType})', tag: 'sync');
+          });
+        } catch (e, stackTrace) {
+          logger.e('Erreur lors du traitement des données complémentaires: $e',
+              tag: 'sync', error: e, stackTrace: stackTrace);
+        }
+      }
+
+      // Log final du corps de la requête
+      try {
+        logger.i('Corps final de la requête:', tag: 'sync');
+        logger.i(JsonEncoder.withIndent('  ').convert(requestBody),
+            tag: 'sync');
+
+        // Vérification finale pour hauteur_strate
+        if (requestBody.containsKey('properties')) {
+          final properties = requestBody['properties'] as Map;
+          if (properties.containsKey('hauteur_strate')) {
+            final value = properties['hauteur_strate'];
+            logger.i(
+                'VÉRIFICATION FINALE: hauteur_strate est présent avec valeur=$value (${value?.runtimeType})',
+                tag: 'sync');
+          } else {
+            logger.e(
+                'VÉRIFICATION FINALE: hauteur_strate est ABSENT des propriétés!',
+                tag: 'sync');
+
+            // Tentative d'ajout direct en dernière chance
+            if (detail.data.containsKey('hauteur_strate')) {
+              try {
+                // Obtenir une référence au Map typé correctement
+                final properties =
+                    requestBody['properties'] as Map<String, dynamic>;
+                // Ajouter le champ
+                properties['hauteur_strate'] =
+                    detail.data['hauteur_strate'].toString();
+                logger.i(
+                    'CORRECTION: Ajout direct de hauteur_strate="${detail.data['hauteur_strate']}"',
+                    tag: 'sync');
+              } catch (e) {
+                logger.e('ÉCHEC de la correction pour hauteur_strate: $e',
+                    tag: 'sync', error: e);
+              }
+            }
+          }
+        }
+      } catch (e) {
+        logger.e('Erreur lors de l\'encodage JSON du corps de la requête: $e',
+            tag: 'sync', error: e);
+      }
+
+      // Vérifier le traitement des champs spécifiques
+      try {
+        if (detail.data.containsKey('denombrement')) {
+          final properties = requestBody['properties'] as Map;
+          if (properties.containsKey('denombrement')) {
+            logger.i(
+                'Champ "denombrement" dans la requête: ${properties['denombrement']} (${properties['denombrement']?.runtimeType})',
+                tag: 'sync');
+          } else {
+            logger.w('Champ "denombrement" ABSENT de la requête finale',
+                tag: 'sync');
+          }
+        }
+
+        if (detail.data.containsKey('hauteur_strate')) {
+          final properties = requestBody['properties'] as Map;
+          if (properties.containsKey('hauteur_strate')) {
+            logger.i(
+                'Champ "hauteur_strate" dans la requête: ${properties['hauteur_strate']} (${properties['hauteur_strate']?.runtimeType})',
+                tag: 'sync');
+          } else {
+            logger.w('Champ "hauteur_strate" ABSENT de la requête finale',
+                tag: 'sync');
+          }
+        }
+      } catch (e) {
+        logger.e('Erreur lors de la vérification des champs spécifiques: $e',
+            tag: 'sync', error: e);
+      }
+
+      // Créer un champ data vide pour la compatibilité avec certaines API (au cas où)
+      requestBody['data'] = {};
+
+      // // Ajouter un champ additional_data à properties pour éviter les problèmes de compatibilité
+      // try {
+      //   final properties = requestBody['properties'] as Map;
+      //   if (!properties.containsKey('additional_data')) {
+      //     properties['additional_data'] = {};
+      //     logger.i('Ajout du champ "additional_data" vide pour compatibilité', tag: 'sync');
+      //   }
+      // } catch (e) {
+      //   logger.e('Erreur lors de l\'ajout de additional_data: $e', tag: 'sync', error: e);
+      // }
+
+      // Log détaillé pour le débogage
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ENVOI DÉTAIL D\'OBSERVATION AU SERVEUR');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln(
+          'URL: $apiBase/monitorings/object/$moduleCode/observation_detail');
+      logBuffer.writeln('MÉTHODE: POST');
+
+      // Afficher de façon sécurisée le token (juste les premiers caractères)
+      if (token.length > 10) {
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+      } else {
+        logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
+      }
+
+      logBuffer.writeln('BODY:');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+
+      // Écrire dans le fichier log via AppLogger
+      logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
       // Utiliser l'URL correcte selon les spécifications du backend: /monitorings/object/<module_code>/observation_detail
@@ -871,29 +1337,348 @@ class GlobalApiImpl implements GlobalApi {
         data: requestBody,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
+          // Augmenter les timeouts pour éviter les erreurs ETIMEDOUT
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
         ),
       );
 
+      // Log de la réponse
+      logBuffer = StringBuffer();
+      logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      if (response.data is Map || response.data is List) {
+        logBuffer.writeln(JsonEncoder.withIndent('  ').convert(response.data));
+      } else {
+        logBuffer.writeln(response.data.toString());
+      }
+      logBuffer.writeln(
+          '==================================================================');
+
+      // Écrire dans le fichier log via AppLogger
+      logger.i(logBuffer.toString(), tag: 'sync');
+
       if (response.statusCode == 201 || response.statusCode == 200) {
-        debugPrint(
-            'Détail d\'observation envoyé avec succès: ${response.data}');
-        return response.data as Map<String, dynamic>;
+        logger.i('Détail d\'observation envoyé avec succès: ${response.data}',
+            tag: 'sync');
+
+        // Analyse détaillée de la réponse du serveur
+        final serverResponse = response.data as Map<String, dynamic>;
+
+        logger.i('Analyse détaillée de la réponse du serveur:', tag: 'sync');
+
+        // Log des champs que nous suivons spécifiquement
+        logger.i('ANALYSE DES CHAMPS DE SUIVI DANS LA RÉPONSE:', tag: 'sync');
+        if (detail.data.containsKey('denombrement')) {
+          logger.i(
+              '  - Champ "denombrement" était dans les données d\'entrée: ${detail.data['denombrement']}',
+              tag: 'sync');
+        }
+        if (detail.data.containsKey('hauteur_strate')) {
+          logger.i(
+              '  - Champ "hauteur_strate" était dans les données d\'entrée: ${detail.data['hauteur_strate']}',
+              tag: 'sync');
+        }
+        // Log des informations essentielles
+        if (serverResponse.containsKey('id') ||
+            serverResponse.containsKey('ID')) {
+          final id = serverResponse['id'] ?? serverResponse['ID'];
+          logger.i('ID dans la réponse: $id', tag: 'sync');
+        } else {
+          logger.w('Aucun ID trouvé dans la réponse', tag: 'sync');
+        }
+
+        // Vérifier les propriétés
+        if (serverResponse.containsKey('properties')) {
+          final properties = serverResponse['properties'];
+          if (properties is Map) {
+            logger.i('Propriétés trouvées dans la réponse: $properties',
+                tag: 'sync');
+
+            // Vérifier les champs spécifiques
+            if (properties.containsKey('denombrement')) {
+              logger.i(
+                  'Champ "denombrement" dans les propriétés: ${properties['denombrement']} (${properties['denombrement']?.runtimeType})',
+                  tag: 'sync');
+            } else {
+              logger.w('Champ "denombrement" ABSENT des propriétés',
+                  tag: 'sync');
+            }
+
+            if (properties.containsKey('hauteur_strate')) {
+              logger.i(
+                  'Champ "hauteur_strate" dans les propriétés: ${properties['hauteur_strate']} (${properties['hauteur_strate']?.runtimeType})',
+                  tag: 'sync');
+            } else {
+              logger.w('Champ "hauteur_strate" ABSENT des propriétés',
+                  tag: 'sync');
+            }
+          }
+        } else {
+          logger.w('Pas de champ "properties" dans la réponse', tag: 'sync');
+        }
+
+        // Vérifier si les champs sont au niveau supérieur
+        if (serverResponse.containsKey('denombrement')) {
+          logger.i(
+              'Champ "denombrement" trouvé au niveau supérieur: ${serverResponse['denombrement']}',
+              tag: 'sync');
+        }
+
+        if (serverResponse.containsKey('hauteur_strate')) {
+          logger.i(
+              'Champ "hauteur_strate" trouvé au niveau supérieur: ${serverResponse['hauteur_strate']}',
+              tag: 'sync');
+        }
+
+        // Vérifier tous les champs pour trouver où pourraient être les données
+        logger.i('Liste de tous les champs de premier niveau dans la réponse:',
+            tag: 'sync');
+        serverResponse.keys.forEach((key) {
+          logger.i(
+              '- Champ "$key": ${serverResponse[key]} (${serverResponse[key]?.runtimeType})',
+              tag: 'sync');
+        });
+
+        return serverResponse;
       } else {
         throw Exception(
             'Erreur lors de l\'envoi du détail d\'observation. Status code: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      debugPrint(
-          'Erreur DIO lors de l\'envoi du détail d\'observation: ${e.message}');
+      // Importer AppLogger et créer l'instance
+      final logger = AppLogger();
+
+      // Log détaillé pour le débogage Dio
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln(
+          '[API] ERREUR DIO LORS DE L\'ENVOI DU DÉTAIL D\'OBSERVATION');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.type}');
+      logBuffer.writeln('Message: ${e.message}');
+      logBuffer.writeln('URL: ${e.requestOptions.uri}');
+      logBuffer.writeln('Méthode: ${e.requestOptions.method}');
+
       if (e.response != null) {
-        debugPrint('Réponse d\'erreur: ${e.response?.data}');
+        logBuffer.writeln('\nRÉPONSE ERREUR:');
+        logBuffer.writeln('Status code: ${e.response?.statusCode}');
+        if (e.response?.data != null) {
+          if (e.response?.data is Map || e.response?.data is List) {
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
+          } else {
+            logBuffer.writeln(e.response?.data.toString());
+          }
+        }
       }
+
+      logBuffer.writeln('\nREQUEST OPTIONS:');
+      logBuffer.writeln('Connect timeout: ${e.requestOptions.connectTimeout}');
+      logBuffer.writeln('Receive timeout: ${e.requestOptions.receiveTimeout}');
+      logBuffer.writeln('Send timeout: ${e.requestOptions.sendTimeout}');
+      logBuffer.writeln(
+          '==================================================================');
+
+      // Écrire dans le fichier log via AppLogger
+      logger.e(logBuffer.toString(), tag: 'sync', error: e);
+
       throw NetworkException(
           'Erreur réseau lors de l\'envoi du détail d\'observation: ${e.message}');
-    } catch (e) {
-      debugPrint(
-          'Erreur générale lors de l\'envoi du détail d\'observation: $e');
+    } catch (e, stackTrace) {
+      // Importer AppLogger et créer l'instance
+      final logger = AppLogger();
+
+      // Log détaillé pour le débogage général
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln(
+          '[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DU DÉTAIL D\'OBSERVATION');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.runtimeType}');
+      logBuffer.writeln('Message: $e');
+      logBuffer.writeln('\nSTACK TRACE:');
+      logBuffer.writeln(stackTrace);
+      logBuffer.writeln(
+          '==================================================================');
+
+      // Écrire dans le fichier log via AppLogger
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
+
       rethrow;
     }
+  }
+
+  /// Méthode utilitaire pour nettoyer et convertir les types de données d'une observation
+  /// avant de l'envoyer à l'API pour éviter les erreurs de type
+  Observation _sanitizeObservation(Observation observation) {
+    // Créer une copie des données pour éviter de modifier l'original
+    Map<String, dynamic> cleanData = {};
+
+    // Traiter les données complémentaires
+    if (observation.data != null) {
+      observation.data!.forEach((key, value) {
+        // Convertir les ids numériques en string en int si possible
+        if (key.startsWith('id_') && value is String) {
+          try {
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              cleanData[key] = intValue;
+              debugPrint(
+                  'Nettoyage: Conversion de $key: $value (String) -> $intValue (int)');
+            } else {
+              cleanData[key] = value;
+            }
+          } catch (e) {
+            // En cas d'erreur, garder la valeur d'origine
+            cleanData[key] = value;
+            debugPrint('Erreur lors de la conversion de $key: $e');
+          }
+        }
+        // Traiter les champs numériques connus
+        else if (value is String && _isNumericField(key)) {
+          try {
+            // Essayer d'abord de convertir en entier
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              cleanData[key] = intValue;
+              debugPrint(
+                  'Nettoyage: Conversion de $key: $value (String) -> $intValue (int)');
+            }
+            // Sinon, essayer de convertir en décimal
+            else {
+              double? doubleValue = double.tryParse(value);
+              if (doubleValue != null) {
+                cleanData[key] = doubleValue;
+                debugPrint(
+                    'Nettoyage: Conversion de $key: $value (String) -> $doubleValue (double)');
+              } else {
+                cleanData[key] = value;
+              }
+            }
+          } catch (e) {
+            // En cas d'erreur, garder la valeur d'origine
+            cleanData[key] = value;
+            debugPrint('Erreur lors de la conversion de $key: $e');
+          }
+        } else {
+          // Conserver la valeur telle quelle
+          cleanData[key] = value;
+        }
+      });
+    }
+
+    // Créer une nouvelle instance d'Observation avec les données nettoyées
+    return Observation(
+      idObservation: observation.idObservation,
+      idBaseVisit: observation.idBaseVisit,
+      cdNom: observation.cdNom,
+      comments: observation.comments,
+      uuidObservation: observation.uuidObservation,
+      metaCreateDate: observation.metaCreateDate,
+      metaUpdateDate: observation.metaUpdateDate,
+      data: cleanData,
+    );
+  }
+
+  /// Détermine si un champ est de type numérique en fonction de son nom
+  ///
+  /// Cette méthode vise à identifier les champs numériques courants dans les
+  /// observations et détails d'observation pour une conversion de type appropriée.
+  bool _isNumericField(String fieldName) {
+    // Liste de noms de champs spécifiques à NE PAS traiter comme numériques
+    const List<String> nonNumericExceptions = [
+      'hauteur_strate', // Texte descriptif comme "entre 25 et 50 cm"
+    ];
+
+    // Vérifier d'abord les exceptions explicites
+    for (final exception in nonNumericExceptions) {
+      if (fieldName.toLowerCase() == exception.toLowerCase()) {
+        return false; // C'est une exception explicite, ne pas traiter comme numérique
+      }
+    }
+
+    // Liste de noms de champs connus pour contenir des valeurs numériques
+    const List<String> knownNumericFields = [
+      'denombrement', // Comptage d'individus
+      'abondance', // Valeur d'abondance
+      'surface', // Surface en m²
+      'profondeur', // Profondeur en mètres
+      'longueur', // Longueur en mètres
+      'largeur', // Largeur en mètres
+      'diametre', // Diamètre en cm
+      'hauteur', // Hauteur en mètres (mais pas hauteur_strate qui est traité séparément)
+      'age', // Âge en années
+      'poids', // Poids en kg ou g
+      'nombre', // Nombre générique
+      'quantite', // Quantité générique
+      'taille', // Taille en cm ou m
+      'pourcentage', // Pourcentage
+      'count', // Comptage
+      'amount', // Montant
+      'value', // Valeur générique
+      'latitude', // Coordonnée latitude
+      'longitude', // Coordonnée longitude
+      'altitude', // Altitude en mètres
+      'coefficient', // Coefficient numérique
+      'volume', // Volume
+      'temperature', // Température
+      'ph', // pH
+      'densite', // Densité
+      'precision', // Précision de mesure
+    ];
+
+    // Vérifier si le nom du champ contient exactement un des termes numériques connus
+    for (final numericField in knownNumericFields) {
+      if (fieldName.toLowerCase() == numericField.toLowerCase()) {
+        return true;
+      }
+    }
+
+    // Pour les noms composés, être plus prudent et vérifier qu'aucune partie ne correspond à une exception
+    if (fieldName.contains('_')) {
+      for (final exception in nonNumericExceptions) {
+        if (fieldName.toLowerCase().contains(exception.toLowerCase())) {
+          return false; // Contient une partie qui est une exception
+        }
+      }
+    }
+
+    // Vérifier les terminaisons communes pour les champs numériques
+    final numericSuffixes = [
+      '_count',
+      '_number',
+      '_value',
+      '_qty',
+      '_nb',
+      '_num',
+      '_val'
+    ];
+    for (final suffix in numericSuffixes) {
+      if (fieldName.toLowerCase().endsWith(suffix)) {
+        return true;
+      }
+    }
+
+    // Vérifier les préfixes communs pour les champs numériques
+    final numericPrefixes = ['nb_', 'num_', 'count_', 'val_', 'qty_'];
+    for (final prefix in numericPrefixes) {
+      if (fieldName.toLowerCase().startsWith(prefix)) {
+        return true;
+      }
+    }
+
+    // Pour les champs avec "denombrement", les traiter comme numériques
+    if (fieldName.toLowerCase().contains('denombrement')) {
+      return true;
+    }
+
+    return false;
   }
 }
