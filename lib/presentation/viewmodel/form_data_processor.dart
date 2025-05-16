@@ -125,20 +125,11 @@ class FormDataProcessor {
             debugPrint(
                 '  $fieldName: Nomenclature trouvée avec id=${nomenclature.id}');
           } catch (e) {
-            // En cas d'erreur, essayer de récupérer l'ID numérique depuis cd_nomenclature
+            // En cas d'erreur, conserver la valeur originale (ne pas modifier)
             debugPrint(
                 '  $fieldName: Erreur lors de la recherche de la nomenclature: $e');
-
-            final numericId = int.tryParse(cdNomenclature);
-            if (numericId != null) {
-              processedData[fieldName] = numericId;
-              debugPrint(
-                  '  $fieldName: Utilisation de cdNomenclature comme ID: $numericId');
-            } else {
-              // Conserver une valeur par défaut (0)
-              processedData[fieldName] = 0;
-              debugPrint('  $fieldName: Utilisation de la valeur par défaut 0');
-            }
+            debugPrint('  $fieldName: Conservation de la valeur originale');
+            // Ne pas modifier processedData[fieldName], garder la valeur originale
           }
         } else {
           // Si nous n'avons pas les informations nécessaires, utiliser 0 comme valeur par défaut
@@ -309,6 +300,7 @@ class FormDataProcessor {
                 foundNomenclature.cdNomenclature,
           };
         }
+        // Si aucune nomenclature n'est trouvée, conserver l'ID tel quel
       } catch (e) {
         print('Erreur lors de la conversion de l\'ID en objet: $e');
         // Laisser inchangé en cas d'erreur
