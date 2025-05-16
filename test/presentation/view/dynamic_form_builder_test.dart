@@ -4,7 +4,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/helpers/hidden_expression_evaluator.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
@@ -412,7 +411,7 @@ void main() {
                             },
                           ),
                           customConfig: testCustomConfig,
-                          initialValues: {'test_field': 'Test Value'},
+                          initialValues: const {'test_field': 'Test Value'},
                           onSubmit: (values) {
                             submitCalled = true;
                             submittedValues = values;
@@ -686,7 +685,6 @@ class SimpleMockFormDataProcessor implements FormDataProcessor {
   // Pas besoin d'implémenter cette propriété dans les tests
   Ref get ref => throw UnimplementedError();
   
-  @override
   // Nous n'avons pas besoin d'exposer cette propriété car nous surchargeons isFieldHidden
   HiddenExpressionEvaluator get expressionEvaluator => _expressionEvaluator;
 }

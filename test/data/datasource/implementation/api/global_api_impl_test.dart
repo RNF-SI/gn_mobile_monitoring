@@ -2,7 +2,6 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
-import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/global_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
@@ -377,41 +376,4 @@ void main() {
       });
     });
   });
-}
-
-// Classe testable qui permet l'injection de dépendances
-class GlobalApiImplTestable extends GlobalApiImpl {
-  final Dio _mockDio;
-  final Connectivity _mockConnectivity;
-  final VisitsApi _mockVisitsApi;
-  final ObservationsApi _mockObservationsApi;
-  final ObservationDetailsApi _mockObservationDetailsApi;
-
-  GlobalApiImplTestable({
-    required Dio dio,
-    required Connectivity connectivity,
-    required VisitsApi visitsApi,
-    required ObservationsApi observationsApi,
-    required ObservationDetailsApi observationDetailsApi,
-  })  : _mockDio = dio,
-        _mockConnectivity = connectivity,
-        _mockVisitsApi = visitsApi,
-        _mockObservationsApi = observationsApi,
-        _mockObservationDetailsApi = observationDetailsApi,
-        super();
-
-  @override
-  Dio get _dio => _mockDio;
-
-  @override
-  Connectivity get _connectivity => _mockConnectivity;
-
-  @override
-  VisitsApi get _visitsApi => _mockVisitsApi;
-
-  @override
-  ObservationsApi get _observationsApi => _mockObservationsApi;
-
-  @override
-  ObservationDetailsApi get _observationDetailsApi => _mockObservationDetailsApi;
 }

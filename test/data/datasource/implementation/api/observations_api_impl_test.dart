@@ -258,17 +258,3 @@ void main() {
     });
   });
 }
-
-// ✓ Classe d'aide pour tester avec dépendances injectées
-class ObservationsApiImplWithDeps extends ObservationsApiImpl {
-  final Dio _mockDio;
-  final Connectivity _mockConnectivity;
-
-  ObservationsApiImplWithDeps(this._mockDio, this._mockConnectivity) : super();
-
-  @override
-  Dio get _dio => _mockDio;
-
-  @override
-  Connectivity get _connectivity => _mockConnectivity;
-}
