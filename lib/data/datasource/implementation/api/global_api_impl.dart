@@ -492,18 +492,17 @@ class GlobalApiImpl implements GlobalApi {
       requestBody['module_code'] = moduleCode;
 
       // Ajouter les données complémentaires si disponibles
-      // En utilisant une approche itérative pour éviter les problèmes de type
+      // Les placer directement dans properties, pas dans un champ data séparé
       if (visit.data != null && visit.data!.isNotEmpty) {
-        // Créer un nouveau champ 'data' séparé pour stocker les données complémentaires
-        requestBody['data'] = {};
-
+        final properties = requestBody['properties'] as Map<String, dynamic>;
+        
         // Copier manuellement chaque entrée pour éviter les incompatibilités de type
         visit.data!.forEach((key, value) {
-          requestBody['data'][key] = value;
+          properties[key] = value;
         });
 
         debugPrint(
-            'Données complémentaires ajoutées à la visite: ${requestBody['data']}');
+            'Données complémentaires ajoutées aux properties de la visite: ${visit.data}');
       }
 
       // Ajouter d'autres propriétés selon nécessité
@@ -717,9 +716,9 @@ class GlobalApiImpl implements GlobalApi {
       // Ajouter les données complémentaires si disponibles
       // En utilisant une approche itérative pour éviter les problèmes de type
       if (observation.data != null && observation.data!.isNotEmpty) {
-        // Créer un nouveau champ 'data' séparé pour stocker les données complémentaires
-        // au lieu de les ajouter directement aux propriétés
-        requestBody['data'] = {};
+        // Ajouter les données complémentaires directement dans properties
+        // car c'est là que l'API GeoNature s'attend à les trouver
+        final properties = requestBody['properties'] as Map<String, dynamic>;
 
         // Copier manuellement chaque entrée en convertissant les types si nécessaire
         observation.data!.forEach((key, value) {
@@ -728,29 +727,29 @@ class GlobalApiImpl implements GlobalApi {
             // Essayer de convertir en entier si c'est une chaîne numérique
             int? intValue = int.tryParse(value);
             if (intValue != null) {
-              requestBody['data'][key] = intValue;
+              properties[key] = intValue;
               debugPrint(
                   'Conversion de $key: $value (String) -> $intValue (int)');
             } else {
-              requestBody['data'][key] = value;
+              properties[key] = value;
             }
           } else if (key == 'cd_nom' && value is String) {
             // Cas spécial pour cd_nom qui doit être un entier
             int? intValue = int.tryParse(value);
             if (intValue != null) {
-              requestBody['data'][key] = intValue;
+              properties[key] = intValue;
               debugPrint(
                   'Conversion de cd_nom: $value (String) -> $intValue (int)');
             } else {
-              requestBody['data'][key] = value;
+              properties[key] = value;
             }
           } else {
             // Conserver la valeur telle quelle pour les autres cas
-            requestBody['data'][key] = value;
+            properties[key] = value;
           }
         });
 
-        debugPrint('Données complémentaires ajoutées: ${requestBody['data']}');
+        debugPrint('Données complémentaires ajoutées dans properties: $properties');
       }
 
       // Log détaillé pour le débogage
