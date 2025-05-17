@@ -11,9 +11,11 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/taxon_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
@@ -55,6 +57,7 @@ class ObservationDetailPageBaseState
   bool _isLoadingTaxon = false;
   List<ObservationDetail> _observationDetails = [];
   bool _isLoadingDetails = false;
+  Observation? _fullObservation; // Observation avec toutes les données
 
   @override
   ObjectConfig? get objectConfig => widget.observationConfig;
@@ -67,7 +70,7 @@ class ObservationDetailPageBaseState
       objectConfig?.displayProperties ?? objectConfig?.displayList;
 
   @override
-  Map<String, dynamic> get objectData => widget.observation.data ?? {};
+  Map<String, dynamic> get objectData => (_fullObservation ?? widget.observation).data ?? {};
 
   @override
   String get propertiesTitle => 'Données spécifiques de l\'observation';
@@ -82,7 +85,30 @@ class ObservationDetailPageBaseState
   @override
   void initState() {
     super.initState();
+    // Initialiser avec l'observation passée en paramètre
+    _fullObservation = widget.observation;
     // Le chargement se fera une fois que le service aura été injecté par la classe parent
+  }
+  
+  // Charger les détails de l'observation depuis la base de données
+  void _loadObservationData() async {
+    final observationsViewModel = widget.ref.read(
+      observationsProvider(widget.visit.idBaseVisit).notifier
+    );
+    
+    final updatedObservation = await observationsViewModel
+        .getObservationById(widget.observation.idObservation);
+    
+    if (updatedObservation != null && mounted) {
+      // Mettre à jour l'état local avec l'observation rechargée
+      setState(() {
+        _fullObservation = updatedObservation;
+      });
+      
+      // Recharger le taxon et les détails d'observation
+      _loadTaxonData();
+      _loadObservationDetails();
+    }
   }
 
   // Cette méthode sera appelée après l'injection des dépendances
@@ -91,11 +117,20 @@ class ObservationDetailPageBaseState
     _loadObservationDetails();
   }
 
+  // Méthode pour mettre à jour l'observation depuis la page parent
+  void updateObservation(Observation newObservation) {
+    setState(() {
+      // Forcer la reconstruction du widget avec la nouvelle observation
+    });
+    _loadTaxonData();
+  }
+
   // Service d'accès aux taxons (pourra être injecté par la classe parente)
   late TaxonService taxonService;
 
   Future<void> _loadTaxonData() async {
-    if (widget.observation.cdNom != null) {
+    final observation = _fullObservation ?? widget.observation;
+    if (observation.cdNom != null) {
       setState(() {
         _isLoadingTaxon = true;
       });
@@ -103,7 +138,7 @@ class ObservationDetailPageBaseState
       try {
         // Utiliser le service injecté
         final taxon =
-            await taxonService.getTaxonByCdNom(widget.observation.cdNom!);
+            await taxonService.getTaxonByCdNom(observation.cdNom!);
 
         if (mounted) {
           setState(() {
@@ -129,9 +164,10 @@ class ObservationDetailPageBaseState
     });
 
     try {
+      final observation = _fullObservation ?? widget.observation;
       // Récupérer les détails d'observation via le ViewModel
       final detailsProvider =
-          observationDetailsProvider(widget.observation.idObservation);
+          observationDetailsProvider(observation.idObservation);
 
       // Forcer un chargement initial si nécessaire
       await widget.ref.read(detailsProvider.notifier).loadObservationDetails();
@@ -241,7 +277,7 @@ class ObservationDetailPageBaseState
         BreadcrumbItem(
           label: observationLabel,
           value: _taxon?.lbNom ??
-              'Observation ${widget.observation.idObservation}',
+              'Observation ${(_fullObservation ?? widget.observation).idObservation}',
         ),
       );
     }
@@ -279,7 +315,7 @@ class ObservationDetailPageBaseState
                     observationConfig: widget.observationConfig!,
                     customConfig: widget.customConfig,
                     moduleId: widget.moduleInfo?.module.id,
-                    observation: widget.observation,
+                    observation: _fullObservation ?? widget.observation,
                     moduleName: moduleName,
                     siteLabel: siteLabel,
                     siteName: siteName,
@@ -288,7 +324,13 @@ class ObservationDetailPageBaseState
                   ),
                 ),
               ).then((_) {
-                // On pourrait rafraîchir les données ici si nécessaire
+                // Rafraîchir les données après édition
+                widget.ref
+                    .read(observationsProvider(widget.visit.idBaseVisit).notifier)
+                    .loadObservations();
+                
+                // Recharger les données de l'observation
+                _loadObservationData();
               });
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -332,19 +374,19 @@ class ObservationDetailPageBaseState
                           TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 16),
                   _buildInfoRow(
-                      'ID', widget.observation.idObservation.toString()),
+                      'ID', (_fullObservation ?? widget.observation).idObservation.toString()),
                   _buildInfoRow('Date d\'observation',
                       formatDateString(widget.visit.visitDateMin)),
                   _buildInfoRow(
                       'Date de création',
-                      widget.observation.metaCreateDate != null
-                          ? formatDateString(widget.observation.metaCreateDate!)
+                      (_fullObservation ?? widget.observation).metaCreateDate != null
+                          ? formatDateString((_fullObservation ?? widget.observation).metaCreateDate!)
                           : 'Non spécifiée'),
-                  if (widget.observation.metaUpdateDate != null &&
-                      widget.observation.metaUpdateDate !=
-                          widget.observation.metaCreateDate)
+                  if ((_fullObservation ?? widget.observation).metaUpdateDate != null &&
+                      (_fullObservation ?? widget.observation).metaUpdateDate !=
+                          (_fullObservation ?? widget.observation).metaCreateDate)
                     _buildInfoRow('Dernière modification',
-                        formatDateString(widget.observation.metaUpdateDate!)),
+                        formatDateString((_fullObservation ?? widget.observation).metaUpdateDate!)),
                 ],
               ),
             ),
@@ -353,8 +395,8 @@ class ObservationDetailPageBaseState
           const SizedBox(height: 16),
 
           // Commentaires
-          if (widget.observation.comments != null &&
-              widget.observation.comments!.isNotEmpty)
+          if ((_fullObservation ?? widget.observation).comments != null &&
+              (_fullObservation ?? widget.observation).comments!.isNotEmpty)
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -365,7 +407,7 @@ class ObservationDetailPageBaseState
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
-                    Text(widget.observation.comments ?? 'Aucun commentaire'),
+                    Text((_fullObservation ?? widget.observation).comments ?? 'Aucun commentaire'),
                   ],
                 ),
               ),
@@ -374,8 +416,8 @@ class ObservationDetailPageBaseState
           const SizedBox(height: 16),
 
           // Données spécifiques
-          if (widget.observation.data != null &&
-              widget.observation.data!.isNotEmpty)
+          if ((_fullObservation ?? widget.observation).data != null &&
+              (_fullObservation ?? widget.observation).data!.isNotEmpty)
             buildPropertiesWidget(),
         ],
       ),
@@ -599,7 +641,7 @@ class ObservationDetailPageBaseState
       MaterialPageRoute(
         builder: (context) => ObservationDetailFormPage(
           observationDetail: widget.observationDetailConfig,
-          observation: widget.observation,
+          observation: _fullObservation ?? widget.observation,
           customConfig: widget.customConfig,
         ),
       ),
@@ -623,7 +665,7 @@ class ObservationDetailPageBaseState
       MaterialPageRoute(
         builder: (context) => ObservationDetailFormPage(
           observationDetail: widget.observationDetailConfig,
-          observation: widget.observation,
+          observation: _fullObservation ?? widget.observation,
           customConfig: widget.customConfig,
           existingDetail: detail,
         ),
@@ -661,7 +703,7 @@ class ObservationDetailPageBaseState
   void _deleteObservationDetail(ObservationDetail detail) async {
     try {
       final detailsProvider =
-          observationDetailsProvider(widget.observation.idObservation);
+          observationDetailsProvider((_fullObservation ?? widget.observation).idObservation);
 
       // Vérifier si l'ID existe
       if (detail.idObservationDetail == null) {
@@ -723,8 +765,8 @@ class ObservationDetailPageBaseState
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 16),
               Text(
-                widget.observation.cdNom != null
-                    ? 'Taxon non trouvé (CD_NOM: ${widget.observation.cdNom})'
+                (_fullObservation ?? widget.observation).cdNom != null
+                    ? 'Taxon non trouvé (CD_NOM: ${(_fullObservation ?? widget.observation).cdNom})'
                     : 'Aucun taxon associé',
                 style: TextStyle(
                   color: Colors.grey[600],
