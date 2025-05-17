@@ -178,8 +178,12 @@ class ConflictCardWidget extends ConsumerWidget {
                       color: Theme.of(context).colorScheme.onPrimary,
                       icon: const Icon(Icons.north_east),
                       tooltip: 'Naviguer vers l\'élément',
-                      onPressed: () {
-                        ConflictNavigationService.navigateDirectlyToConflictItem(context, conflict, ref);
+                      onPressed: () async {
+                        final result = await ConflictNavigationService.navigateDirectlyToConflictItem(context, conflict, ref);
+                        if (result && context.mounted) {
+                          // Si l'élément a été modifié, fermer le dialogue et forcer un rafraîchissement
+                          Navigator.of(context).pop(true);
+                        }
                       },
                     ),
                   ),
@@ -385,8 +389,12 @@ class ConflictCardWidget extends ConsumerWidget {
           // Bouton de navigation - Pied de carte
           if (canNavigate)
             InkWell(
-              onTap: () {
-                ConflictNavigationService.navigateDirectlyToConflictItem(context, conflict, ref);
+              onTap: () async {
+                final result = await ConflictNavigationService.navigateDirectlyToConflictItem(context, conflict, ref);
+                if (result && context.mounted) {
+                  // Si l'élément a été modifié, fermer le dialogue et forcer un rafraîchissement
+                  Navigator.of(context).pop(true);
+                }
               },
               child: Container(
                 width: double.infinity,
