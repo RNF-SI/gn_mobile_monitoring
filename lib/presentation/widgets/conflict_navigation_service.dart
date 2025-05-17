@@ -61,7 +61,8 @@ class ConflictNavigationService {
   }
 
   /// Navigation directe vers l'élément en conflit
-  static Future<void> navigateDirectlyToConflictItem(
+  /// Retourne true si l'élément a été modifié
+  static Future<bool> navigateDirectlyToConflictItem(
       BuildContext context, SyncConflict conflict, WidgetRef ref) async {
     // Extraire les données de contexte
     final Map<String, dynamic> contextInfo = {};
@@ -287,8 +288,8 @@ class ConflictNavigationService {
                                   hideLoadingIndicator();
 
                                   // Naviguer vers le détail d'observation
-                                  if (!context.mounted) return;
-                                  await Navigator.push(
+                                  if (!context.mounted) return false;
+                                  final result = await Navigator.push<bool>(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) =>
@@ -300,7 +301,7 @@ class ConflictNavigationService {
                                       ),
                                     ),
                                   );
-                                  return;
+                                  return result ?? false;
                                 }
                               } catch (e) {
                                 debugPrint(
@@ -311,8 +312,8 @@ class ConflictNavigationService {
                             // Si pas de détail ou erreur, naviguer vers l'observation
                             hideLoadingIndicator();
 
-                            if (!context.mounted) return;
-                            await Navigator.push(
+                            if (!context.mounted) return false;
+                            final result = await Navigator.push<bool>(
                               context,
                               MaterialPageRoute(
                                 builder: (context) => ObservationDetailPage(
@@ -327,7 +328,7 @@ class ConflictNavigationService {
                                 ),
                               ),
                             );
-                            return;
+                            return result ?? false;
                           }
                         } catch (e) {
                           debugPrint(
@@ -338,8 +339,8 @@ class ConflictNavigationService {
                       // Si pas d'observation ou erreur, naviguer vers la visite
                       hideLoadingIndicator();
 
-                      if (!context.mounted) return;
-                      await Navigator.push(
+                      if (!context.mounted) return false;
+                      final result = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
                           builder: (context) => VisitDetailPage(
@@ -349,7 +350,7 @@ class ConflictNavigationService {
                           ),
                         ),
                       );
-                      return;
+                      return result ?? false;
                     }
                   } catch (e) {
                     debugPrint('Erreur lors du chargement de la visite: $e');
@@ -359,8 +360,8 @@ class ConflictNavigationService {
                 // Si pas de visite ou erreur, naviguer vers le site
                 hideLoadingIndicator();
 
-                if (!context.mounted) return;
-                await Navigator.push(
+                if (!context.mounted) return false;
+                final result = await Navigator.push<bool>(
                   context,
                   MaterialPageRoute(
                     builder: (context) => SiteDetailPage(
@@ -369,7 +370,7 @@ class ConflictNavigationService {
                     ),
                   ),
                 );
-                return;
+                return result ?? false;
               }
             }
           }
@@ -387,8 +388,8 @@ class ConflictNavigationService {
         // Naviguer vers le module (cas par défaut)
         hideLoadingIndicator();
 
-        if (!context.mounted) return;
-        await Navigator.push(
+        if (!context.mounted) return false;
+        final result = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
             builder: (context) => ModuleDetailPage(
@@ -396,11 +397,11 @@ class ConflictNavigationService {
             ),
           ),
         );
-        return;
+        return result ?? false;
       }
 
       // Si on arrive ici, on n'a pas réussi à naviguer
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
       hideLoadingIndicator();
 
       // Afficher un message d'erreur
@@ -422,7 +423,7 @@ class ConflictNavigationService {
       );
     } catch (e) {
       hideLoadingIndicator();
-      if (!context.mounted) return;
+      if (!context.mounted) return false;
 
       // Afficher une erreur générique
       ScaffoldMessenger.of(context).showSnackBar(
@@ -436,5 +437,6 @@ class ConflictNavigationService {
         ),
       );
     }
+    return false;
   }
 }
