@@ -128,7 +128,6 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
     for (final key in result.keys.toList()) {
       if (key.startsWith('id_nomenclature_')) {
         final value = result[key];
-        
 
         // Cas 1: La valeur est un entier - la convertir en Map pour NomenclatureSelectorWidget
         if (value is int) {
@@ -138,8 +137,10 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
         // Cas 2: La valeur est une Map, la garder telle quelle
         else if (value is Map) {
           // Vérifier que la Map contient soit un 'id', soit un 'cd_nomenclature'
-          if (!value.containsKey('id') && !value.containsKey('cd_nomenclature')) {
-            debugPrint('WARNING: Nomenclature Map without id or cd_nomenclature: $key: $value');
+          if (!value.containsKey('id') &&
+              !value.containsKey('cd_nomenclature')) {
+            debugPrint(
+                'WARNING: Nomenclature Map without id or cd_nomenclature: $key: $value');
           }
           // Garder la valeur Map intacte
         }
@@ -149,7 +150,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
           if (intValue != null) {
             result[key] = {'id': intValue};
           } else {
-            print('WARNING: String nomenclature value cannot be parsed to int: $value');
+            print(
+                'WARNING: String nomenclature value cannot be parsed to int: $value');
             // Utiliser une valeur par défaut prudente
             result[key] = {'id': 0};
           }
@@ -158,7 +160,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
         else if (value == null) {
           // Laisser la valeur nulle
         } else {
-          print('WARNING: Unhandled nomenclature value type for $key: ${value.runtimeType}');
+          print(
+              'WARNING: Unhandled nomenclature value type for $key: ${value.runtimeType}');
           // Utiliser une valeur par défaut prudente
           result[key] = {'id': 0};
         }
@@ -167,7 +170,6 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
 
     return result;
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -250,8 +252,9 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                     key: _formBuilderKey,
                     objectConfig: widget.observationConfig,
                     customConfig: widget.customConfig,
-                    initialValues:
-                        _initialValues != null ? _normalizeNomenclatureValues(_initialValues!) : {},
+                    initialValues: _initialValues != null
+                        ? _normalizeNomenclatureValues(_initialValues!)
+                        : {},
                     chainInput: _chainInput,
                     onChainInputChanged: (value) {
                       setState(() {
@@ -357,7 +360,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                 setState(() {
                   _isLoading = false;
                 });
-                Navigator.pop(context);
+                // Navigator.pop(context, true);
+                Navigator.pop(context, true);
               }
             }
           } else {
@@ -402,7 +406,7 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                 });
                 // Demander à l'utilisateur s'il veut ajouter un détail d'observation
                 _promptForObservationDetail(newObservationId, newObservation);
-              } 
+              }
               // Sinon, rediriger vers la page de détail de l'observation
               else if (mounted && widget.visit != null && widget.site != null) {
                 setState(() {
@@ -428,7 +432,8 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                 setState(() {
                   _isLoading = false;
                 });
-                Navigator.pop(context);
+                // Navigator.pop(context, true);
+                Navigator.pop(context, true);
               }
             }
           } else {
@@ -480,21 +485,22 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
       );
     }
   }
-  
+
   /// Affiche une boite de dialogue pour demander à l'utilisateur s'il veut ajouter un détail d'observation
   void _promptForObservationDetail(int observationId, Observation observation) {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Ajouter un détail d\'observation ?'),
-        content: const Text('Voulez-vous ajouter un détail d\'observation maintenant ?'),
+        content: const Text(
+            'Voulez-vous ajouter un détail d\'observation maintenant ?'),
         actions: [
           TextButton(
             onPressed: () {
               Navigator.of(context).pop(); // Fermer la boite de dialogue
-              
+
               // Naviguer vers la page détail de l'observation
               if (widget.visit != null && widget.site != null) {
                 Navigator.pushReplacement(
@@ -514,7 +520,7 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                   ),
                 );
               } else {
-                Navigator.pop(context); // Retour à la page précédente
+                Navigator.pop(context, true); // Retour à la page précédente
               }
             },
             child: const Text('Non'),
@@ -522,7 +528,7 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
           FilledButton(
             onPressed: () {
               Navigator.of(context).pop(); // Fermer la boite de dialogue
-              
+
               // Naviguer vers le formulaire de détail d'observation
               if (widget.observationDetailConfig != null) {
                 Navigator.pushReplacement(

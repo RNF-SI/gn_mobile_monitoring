@@ -261,7 +261,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
           });
 
           if (success) {
-            Navigator.pop(context);
+            Navigator.pop(context, true);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Visite supprimée avec succès'),
@@ -523,7 +523,7 @@ class VisitFormPageState extends ConsumerState<VisitFormPage> {
             backgroundColor: Colors.orange,
           ),
         );
-        Navigator.pop(context);
+        Navigator.pop(context, true);
       }
     }
   }

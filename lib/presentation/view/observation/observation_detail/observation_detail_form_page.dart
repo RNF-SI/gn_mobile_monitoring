@@ -245,17 +245,23 @@ class _ObservationDetailFormPageState
                   widget.observationDetail != null) {
                 debugPrint('Détail récupéré, navigation vers la page de détail');
                 // Naviguer vers la page de détail du détail d'observation
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ObservationDetailDetailPage(
-                      observationDetail: updatedDetail,
-                      config: widget.observationDetail!,
-                      customConfig: widget.customConfig,
-                      index: result, // Utiliser l'ID comme index
+                if (widget.existingDetail != null) {
+                  // Si on édite un détail existant, retourner true
+                  Navigator.pop(context, true);
+                } else {
+                  // Si on crée un nouveau détail, naviguer vers la page de détail
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ObservationDetailDetailPage(
+                        observationDetail: updatedDetail,
+                        config: widget.observationDetail!,
+                        customConfig: widget.customConfig,
+                        index: result, // Utiliser l'ID comme index
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               }
             } else {
               debugPrint('Mode enchaînement: réinitialisation du formulaire');
