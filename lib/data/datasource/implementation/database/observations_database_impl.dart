@@ -46,24 +46,64 @@ class ObservationsDatabaseImpl implements ObservationsDatabase {
   }
 
   @override
-  Future<int> saveObservation(ObservationEntity observation) async {
+  Future<int> createObservation(ObservationEntity observation) async {
     final db = await _database;
-    // Insérer/mettre à jour l'observation
+    // Insérer la nouvelle observation
     final observationId = await db.observationDao
-        .insertOrUpdateObservation(observation.toCompanion());
+        .insertObservation(observation.toCompanion());
 
-    // Mettre à jour l'ID de l'observation si c'est une insertion
-    final entity = observation.idObservation == 0
-        ? observation.copyWith(idObservation: observationId)
-        : observation;
-
-    // Insérer/mettre à jour les données complémentaires
-    if (entity.data != null && entity.data!.isNotEmpty) {
+    // Insérer les données complémentaires si nécessaire (relation 1:1)
+    if (observation.data != null && observation.data!.isNotEmpty) {
+      final entity = observation.copyWith(idObservation: observationId);
       await db.observationDao
-          .insertOrUpdateObservationComplement(entity.toComplementCompanion());
+          .insertObservationComplement(entity.toComplementCompanion());
     }
+    // Note: Pas besoin de supprimer car c'est une création, il n'y a pas de complément existant
 
     return observationId;
+  }
+
+  @override
+  Future<bool> updateObservation(ObservationEntity observation) async {
+    final db = await _database;
+    
+    // Vérifier que l'observation a un ID valide
+    if (observation.idObservation == 0) {
+      throw ArgumentError('Cannot update observation without valid ID');
+    }
+
+    // Mettre à jour l'observation
+    final observationUpdated = await db.observationDao
+        .updateObservation(observation.toCompanion());
+
+    if (!observationUpdated) {
+      return false;
+    }
+
+    // Gérer les données complémentaires (relation 1:1)
+    final existingComplement = await db.observationDao
+        .getObservationComplementById(observation.idObservation);
+    
+    if (observation.data != null && observation.data!.isNotEmpty) {
+      // Si on a des données à sauvegarder
+      if (existingComplement != null) {
+        // Mettre à jour les compléments existants
+        await db.observationDao
+            .updateObservationComplement(observation.toComplementCompanion());
+      } else {
+        // Insérer de nouveaux compléments
+        await db.observationDao
+            .insertObservationComplement(observation.toComplementCompanion());
+      }
+    } else {
+      // Si les données sont vides mais qu'un complément existe, le supprimer
+      if (existingComplement != null) {
+        await db.observationDao
+            .deleteObservationComplement(observation.idObservation);
+      }
+    }
+
+    return true;
   }
 
   @override

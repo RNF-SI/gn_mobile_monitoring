@@ -34,17 +34,69 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
         .getSingleOrNull();
   }
 
-  /// Insère ou met à jour une observation
-  Future<int> insertOrUpdateObservation(
-      TObservationsCompanion observation) async {
-    return await into(tObservations).insertOnConflictUpdate(observation);
+  /// Insère une nouvelle observation
+  Future<int> insertObservation(TObservationsCompanion observation) async {
+    return await into(tObservations).insert(observation);
+  }
+
+  /// Met à jour une observation existante
+  Future<bool> updateObservation(TObservationsCompanion observation) async {
+    // Vérifier que l'ID est présent
+    if (!observation.idObservation.present || observation.idObservation.value == 0) {
+      throw ArgumentError('Observation ID must be provided for update');
+    }
+    
+    final updated = await (update(tObservations)
+      ..where((tbl) => tbl.idObservation.equals(observation.idObservation.value!)))
+      .write(observation);
+    
+    return updated > 0;
   }
 
   /// Insère ou met à jour les données complémentaires d'une observation
   Future<int> insertOrUpdateObservationComplement(
       TObservationComplementsCompanion complement) async {
-    return await into(tObservationComplements)
-        .insertOnConflictUpdate(complement);
+    // Si l'ID observation est présent, on vérifie s'il existe déjà
+    if (complement.idObservation.present && complement.idObservation.value != 0) {
+      final existing = await (select(tObservationComplements)
+        ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+        .getSingleOrNull();
+      
+      if (existing != null) {
+        // Update si existe déjà
+        final updated = await (update(tObservationComplements)
+          ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+          .write(complement);
+        return updated > 0 ? complement.idObservation.value! : 0;
+      } else {
+        // Insert si n'existe pas
+        return await into(tObservationComplements).insert(complement);
+      }
+    } else {
+      // Insert par défaut
+      return await into(tObservationComplements).insert(complement);
+    }
+  }
+
+  /// Insère de nouvelles données complémentaires pour une observation
+  Future<int> insertObservationComplement(
+      TObservationComplementsCompanion complement) async {
+    return await into(tObservationComplements).insert(complement);
+  }
+
+  /// Met à jour les données complémentaires existantes d'une observation
+  Future<bool> updateObservationComplement(
+      TObservationComplementsCompanion complement) async {
+    // Vérifier que l'ID observation est présent
+    if (!complement.idObservation.present || complement.idObservation.value == 0) {
+      throw ArgumentError('Observation ID must be provided for update');
+    }
+    
+    final updated = await (update(tObservationComplements)
+      ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+      .write(complement);
+    
+    return updated > 0;
   }
 
   /// Supprime une observation

@@ -8,8 +8,11 @@ abstract class ObservationsDatabase {
   /// Récupère une observation par son ID
   Future<ObservationEntity?> getObservationById(int observationId);
   
-  /// Sauvegarde une observation (insère ou met à jour)
-  Future<int> saveObservation(ObservationEntity observation);
+  /// Crée une nouvelle observation
+  Future<int> createObservation(ObservationEntity observation);
+  
+  /// Met à jour une observation existante
+  Future<bool> updateObservation(ObservationEntity observation);
   
   /// Supprime une observation
   Future<bool> deleteObservation(int observationId);

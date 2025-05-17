@@ -26,15 +26,14 @@ class ObservationsRepositoryImpl implements ObservationsRepository {
   @override
   Future<int> createObservation(Observation observation) async {
     final entity = observation.toEntity();
-    return _observationsDatabase.saveObservation(entity);
+    return _observationsDatabase.createObservation(entity);
   }
 
   @override
   Future<bool> updateObservation(Observation observation) async {
     try {
       final entity = observation.toEntity();
-      final result = await _observationsDatabase.saveObservation(entity);
-      return result > 0; // Return true only if at least one row was affected
+      return await _observationsDatabase.updateObservation(entity);
     } catch (e) {
       return false;
     }
