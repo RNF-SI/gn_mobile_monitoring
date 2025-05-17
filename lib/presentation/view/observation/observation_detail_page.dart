@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page_base.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 
 class ObservationDetailPage extends ConsumerStatefulWidget {
@@ -40,14 +41,27 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
 class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
   final GlobalKey<ObservationDetailPageBaseState> _baseKey =
       GlobalKey<ObservationDetailPageBaseState>();
+  late Observation _currentObservation;
 
   @override
   void initState() {
     super.initState();
+    _currentObservation = widget.observation;
     // Nous utilisons un callback après le build pour s'assurer que le widget est monté
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _injectDependencies();
     });
+  }
+
+  @override
+  void didUpdateWidget(ObservationDetailPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Si l'observation a changé, recharger les données
+    if (oldWidget.observation.idObservation != widget.observation.idObservation ||
+        oldWidget.observation.data != widget.observation.data) {
+      _currentObservation = widget.observation;
+      _loadLatestObservation();
+    }
   }
 
   void _injectDependencies() {
@@ -61,12 +75,38 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
     }
   }
 
+  Future<void> _loadLatestObservation() async {
+    try {
+      // Utiliser le provider des observations pour obtenir la dernière version
+      final observationsViewModel = ref.read(
+        observationsProvider(widget.visit.idBaseVisit).notifier,
+      );
+      
+      final updatedObservation = await observationsViewModel
+          .getObservationById(widget.observation.idObservation);
+      
+      if (updatedObservation != null && mounted) {
+        setState(() {
+          _currentObservation = updatedObservation;
+        });
+        
+        // Mettre à jour la page de base avec la nouvelle observation
+        final baseState = _baseKey.currentState;
+        if (baseState != null) {
+          baseState.updateObservation(updatedObservation);
+        }
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement de l\'observation: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ObservationDetailPageBase(
       key: _baseKey,
       ref: ref,
-      observation: widget.observation,
+      observation: _currentObservation,
       visit: widget.visit,
       site: widget.site,
       moduleInfo: widget.moduleInfo,
