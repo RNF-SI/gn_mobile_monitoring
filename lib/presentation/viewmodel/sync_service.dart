@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
@@ -44,7 +44,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   final Map<String, SyncResult> _syncResults = {};
 
   // Liste globale de tous les conflits pour les retrouver même après changement d'état
-  final List<SyncConflict> allConflicts = [];
+  final List<domain.SyncConflict> allConflicts = [];
 
   // Repository pour la synchronisation
   final SyncRepository _syncRepository;
@@ -531,8 +531,26 @@ class SyncService extends StateNotifier<SyncStatus> {
         allConflicts.addAll(_syncResults['taxons']!.conflicts!);
       }
 
+      // Dédupliquer les conflits basés sur une clé unique
+      // La clé sera composée du type d'entité, de l'ID d'entité, du champ affecté et du type de conflit
+      final Map<String, domain.SyncConflict> uniqueConflicts = {};
+      for (final conflict in allConflicts) {
+        final key = '${conflict.entityType}_${conflict.entityId}_${conflict.affectedField ?? "NA"}_${conflict.conflictType.name}_${conflict.referencedEntityType ?? "NA"}_${conflict.referencedEntityId ?? "NA"}';
+        // Ajouter seulement si la clé n'existe pas déjà
+        if (!uniqueConflicts.containsKey(key)) {
+          uniqueConflicts[key] = conflict;
+          debugPrint('Ajout du conflit unique: $key');
+        } else {
+          debugPrint('Conflit dupliqué ignoré: $key');
+        }
+      }
+      
+      // Remplacer la liste des conflits par les conflits uniques
+      allConflicts.clear();
+      allConflicts.addAll(uniqueConflicts.values);
+
       debugPrint(
-          'Synchronisation terminée. Conflits: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
+          'Synchronisation terminée. Conflits uniques: ${allConflicts.length}, Messages d\'erreur: ${errorMessages.length}');
 
       if (allConflicts.isNotEmpty) {
         debugPrint(
@@ -937,7 +955,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Résout un conflit de synchronisation
-  Future<void> resolveConflict(SyncConflict conflict) async {
+  Future<void> resolveConflict(domain.SyncConflict conflict) async {
     if (_isSyncing) {
       return; // Ne pas résoudre les conflits pendant la synchronisation
     }
@@ -947,8 +965,10 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       // Mettre à jour l'état
       final conflicts = state.conflicts ?? [];
-      final remainingConflicts =
-          conflicts.where((c) => c.entityId != conflict.entityId).toList();
+      final remainingConflicts = conflicts
+          .cast<domain.SyncConflict>()
+          .where((c) => c.entityId != conflict.entityId)
+          .toList();
 
       if (remainingConflicts.isEmpty) {
         // Tous les conflits sont résolus

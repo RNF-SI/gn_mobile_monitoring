@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/core/helpers/entity_name_helper.dart';
+import 'package:gn_mobile_monitoring/core/helpers/string_formatter.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_navigation_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/conflict_resolution_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 
 /// Widget représentant une carte de conflit individuelle
 class ConflictCardWidget extends ConsumerWidget {
   /// Le conflit à afficher
-  final SyncConflict conflict;
+  final domain.SyncConflict conflict;
   
   /// Type de conflit (données ou référence supprimée)
-  final ConflictType conflictType;
+  final domain.ConflictType conflictType;
 
   const ConflictCardWidget({
     super.key,
@@ -17,10 +21,35 @@ class ConflictCardWidget extends ConsumerWidget {
     required this.conflictType,
   });
 
+  /// Obtenir le nom d'une entité supprimée (notamment pour les nomenclatures)
+  Future<String> _getDeletedEntityName(WidgetRef ref, domain.SyncConflict conflict) async {
+    if (conflict.referencedEntityType?.toLowerCase() == 'nomenclature' &&
+        conflict.referencedEntityId != null) {
+      final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+      try {
+        final id = int.tryParse(conflict.referencedEntityId!);
+        if (id != null) {
+          final name = await nomenclatureService.getNomenclatureNameById(id);
+          if (!name.contains('non trouvée')) {
+            return name;
+          }
+        }
+      } catch (e) {
+        // Fallback si erreur
+      }
+    }
+    return '${StringFormatter.capitalizeFirst(conflict.referencedEntityType ?? "")} (ID: ${conflict.referencedEntityId ?? "?"})';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // Détermine si nous avons suffisamment d'informations pour la navigation directe
     bool canNavigate = true;
+    
+    // Vérifier si le conflit a été résolu via le service de résolution
+    final resolutionService = ref.watch(conflictResolutionProvider.notifier);
+    final resolutionState = resolutionService.getResolutionState(conflict);
+    final isResolved = resolutionState?.isResolved ?? conflict.isResolved;
     
     // Déterminer le type d'entité principale pour l'affichage
     String entityType = 'inconnu';
@@ -102,11 +131,11 @@ class ConflictCardWidget extends ConsumerWidget {
       }
     } else {
       // Utiliser les champs entity si le navigationPath n'est pas disponible
-      entityType = getEntityTypeName(conflict.entityType, false);
+      entityType = EntityNameHelper.getEntityTypeName(conflict.entityType, false);
       entityId = conflict.entityId;
       
       // Pour les conflits de référence, ajouter des informations si disponible
-      if (conflictType == ConflictType.deletedReference && 
+      if (conflictType == domain.ConflictType.deletedReference && 
           conflict.referencedEntityType != null &&
           conflict.referencedEntityId != null) {
         
@@ -127,9 +156,11 @@ class ConflictCardWidget extends ConsumerWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-          color: conflictType == ConflictType.deletedReference
-            ? Theme.of(context).colorScheme.error.withOpacity(0.3)
-            : Theme.of(context).colorScheme.outline.withOpacity(0.2),
+          color: isResolved
+            ? Colors.green.withOpacity(0.5)
+            : conflictType == domain.ConflictType.deletedReference
+              ? Theme.of(context).colorScheme.error.withOpacity(0.3)
+              : Theme.of(context).colorScheme.outline.withOpacity(0.2),
           width: 1,
         ),
       ),
@@ -138,9 +169,11 @@ class ConflictCardWidget extends ConsumerWidget {
         children: [
           // En-tête avec type d'entité et couleur selon type de conflit
           Container(
-            color: conflictType == ConflictType.deletedReference
-              ? Theme.of(context).colorScheme.errorContainer.withOpacity(0.2)
-              : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
+            color: isResolved
+              ? Colors.green.withOpacity(0.1)
+              : conflictType == domain.ConflictType.deletedReference
+                ? Theme.of(context).colorScheme.errorContainer.withOpacity(0.2)
+                : Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -149,20 +182,36 @@ class ConflictCardWidget extends ConsumerWidget {
                   child: Row(
                     children: [
                       Icon(
-                        getEntityIcon(entityType),
+                        isResolved
+                          ? Icons.check_circle
+                          : EntityNameHelper.getEntityIcon(entityType),
                         size: 20,
-                        color: conflictType == ConflictType.deletedReference
-                          ? Theme.of(context).colorScheme.error
-                          : Theme.of(context).colorScheme.secondary,
+                        color: isResolved
+                          ? Colors.green
+                          : conflictType == domain.ConflictType.deletedReference
+                            ? Theme.of(context).colorScheme.error
+                            : Theme.of(context).colorScheme.secondary,
                       ),
                       const SizedBox(width: 8),
                       Expanded(
-                        child: Text(
-                          '$entityType (ID: $entityId)',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          overflow: TextOverflow.ellipsis,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '$entityType (ID: $entityId)',
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (isResolved && resolutionState?.resolutionType != null)
+                              Text(
+                                'Résolu : ${resolutionState!.resolutionType}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                          ],
                         ),
                       ),
                     ],
@@ -238,7 +287,7 @@ class ConflictCardWidget extends ConsumerWidget {
                   ),
                 
                 // Informations sur la référence supprimée
-                if (conflictType == ConflictType.deletedReference &&
+                if (conflictType == domain.ConflictType.deletedReference &&
                     conflict.referencedEntityType != null)
                   Container(
                     padding: const EdgeInsets.all(8),
@@ -254,14 +303,14 @@ class ConflictCardWidget extends ConsumerWidget {
                     child: Row(
                       children: [
                         Icon(
-                          getEntityIcon(conflict.referencedEntityType ?? ''),
+                          EntityNameHelper.getEntityIcon(conflict.referencedEntityType ?? ''),
                           size: 16,
                           color: Theme.of(context).colorScheme.error,
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            '${getEntityTypeName(conflict.referencedEntityType ?? '', false)} avec ID ${conflict.referencedEntityId} a été supprimé',
+                            '${EntityNameHelper.getEntityTypeName(conflict.referencedEntityType ?? '', false)} avec ID ${conflict.referencedEntityId} a été supprimé',
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
@@ -293,19 +342,71 @@ class ConflictCardWidget extends ConsumerWidget {
                             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
                           ),
                         ),
-                        Text(
-                          conflict.affectedField ?? 'Non spécifié',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context).colorScheme.onSurface,
+                        Expanded(
+                          child: Text(
+                            StringFormatter.formatFieldName(conflict.affectedField),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
                   
+                // Affichage des infos de référence supprimée
+                if (conflictType == domain.ConflictType.deletedReference &&
+                    conflict.referencedEntityType != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8.0),
+                    child: FutureBuilder<String>(
+                      future: _getDeletedEntityName(ref, conflict),
+                      builder: (context, snapshot) {
+                        return Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                            border: Border.all(
+                              color: Theme.of(context).colorScheme.error.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.delete_outline,
+                                size: 16,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Référence supprimée: ',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Theme.of(context).colorScheme.error,
+                                ),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  snapshot.data ?? 'Chargement...',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Theme.of(context).colorScheme.onSurface,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
                 // Dates de modification (pour les conflits de données)
-                if (conflictType == ConflictType.dataConflict)
+                if (conflictType == domain.ConflictType.dataConflict)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
                     child: Column(
@@ -335,7 +436,7 @@ class ConflictCardWidget extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Local: ${_formatDate(conflict.localModifiedAt)}',
+                                'Local: ${StringFormatter.formatDate(conflict.localModifiedAt)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.onSurface,
@@ -343,7 +444,7 @@ class ConflictCardWidget extends ConsumerWidget {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Serveur: ${_formatDate(conflict.remoteModifiedAt)}',
+                                'Serveur: ${StringFormatter.formatDate(conflict.remoteModifiedAt)}',
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Theme.of(context).colorScheme.onSurface,
@@ -425,64 +526,21 @@ class ConflictCardWidget extends ConsumerWidget {
     );
   }
 
-  /// Retourne le nom du type d'entité, au pluriel par défaut (pour les statistiques et conflits)
-  String getEntityTypeName(String entityType, bool plural) {
-    switch (entityType.toLowerCase()) {
-      case 'module':
-        return plural ? 'modules' : 'Module';
-      case 'site':
-        return plural ? 'sites' : 'Site';
-      case 'sitegroup':
-        return plural ? 'groupes de sites' : 'Groupe de sites';
-      case 'visit':
-        return plural ? 'visites' : 'Visite';
-      case 'observation':
-        return plural ? 'observations' : 'Observation';
-      case 'taxon':
-        return plural ? 'taxons' : 'Taxon';
-      default:
-        return entityType;
-    }
-  }
-
-  /// Retourne une icône en fonction du type d'entité
-  IconData getEntityIcon(String entityType) {
-    switch (entityType.toLowerCase()) {
-      case 'module':
-        return Icons.grid_view;
-      case 'site':
-        return Icons.place;
-      case 'sitegroup':
-        return Icons.folder;
-      case 'visit':
-        return Icons.calendar_today;
-      case 'observation':
-        return Icons.visibility;
-      case 'taxon':
-        return Icons.eco;
-      default:
-        return Icons.data_object;
-    }
-  }
 
   /// Retourne le nom de la stratégie de résolution
-  String _getResolutionStrategyName(ConflictResolutionStrategy strategy) {
+  String _getResolutionStrategyName(domain.ConflictResolutionStrategy strategy) {
     switch (strategy) {
-      case ConflictResolutionStrategy.serverWins:
+      case domain.ConflictResolutionStrategy.serverWins:
         return 'Serveur prioritaire';
-      case ConflictResolutionStrategy.clientWins:
+      case domain.ConflictResolutionStrategy.clientWins:
         return 'Local prioritaire';
-      case ConflictResolutionStrategy.merge:
+      case domain.ConflictResolutionStrategy.merge:
         return 'Fusion';
-      case ConflictResolutionStrategy.userDecision:
+      case domain.ConflictResolutionStrategy.userDecision:
         return 'Décision utilisateur requise';
     }
   }
 
-  /// Formatte une date pour l'affichage
-  String _formatDate(DateTime date) {
-    return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-  }
   
   /// Extrait toutes les entités d'un chemin de navigation au format /type/id/type/id
   Map<String, String> _extractEntitiesFromPath(String path) {
@@ -549,14 +607,14 @@ class ConflictCardWidget extends ConsumerWidget {
             padding: EdgeInsets.zero,
             labelPadding: const EdgeInsets.symmetric(horizontal: 6, vertical: 0),
             label: Text(
-              '${getEntityTypeName(type, false)} ${entities[type]}',
+              '${EntityNameHelper.getEntityTypeName(type, false)} ${entities[type]}',
               style: TextStyle(
                 fontSize: 11,
                 color: Theme.of(context).colorScheme.onSurface,
               ),
             ),
             avatar: Icon(
-              getEntityIcon(type),
+              EntityNameHelper.getEntityIcon(type),
               size: 12,
               color: Theme.of(context).colorScheme.primary,
             ),

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_card_widget.dart';
 
 /// Widget pour afficher la boîte de dialogue des conflits
 class ConflictDialogWidget extends ConsumerWidget {
   /// Liste des conflits à afficher
-  final List<SyncConflict> conflicts;
+  final List<domain.SyncConflict> conflicts;
 
   /// Titre spécifique pour le type de conflit (optionnel)
   final String? typeTitle;
@@ -21,7 +21,7 @@ class ConflictDialogWidget extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Dans notre application, tous les conflits sont des références supprimées
     final referenceConflicts = conflicts
-        .where((c) => c.conflictType == ConflictType.deletedReference)
+        .where((c) => c.conflictType == domain.ConflictType.deletedReference)
         .toList();
 
     return Dialog.fullscreen(
@@ -142,7 +142,7 @@ class ConflictDialogWidget extends ConsumerWidget {
                     final conflict = referenceConflicts[index];
                     return ConflictCardWidget(
                       conflict: conflict,
-                      conflictType: ConflictType.deletedReference,
+                      conflictType: domain.ConflictType.deletedReference,
                     );
                   },
                 ),

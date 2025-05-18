@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_dialog_widget.dart';
@@ -529,7 +529,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
   /// Affiche une boîte de dialogue avec les conflits filtrés par type
   void _showConflictsByType(
-      BuildContext context, String conflictType, List<SyncConflict> conflicts) {
+      BuildContext context, String conflictType, List<domain.SyncConflict> conflicts) {
     // Filtrer uniquement les conflits par type référencé
     final typeConflicts =
         conflicts.where((c) => c.referencedEntityType == conflictType).toList();
@@ -544,7 +544,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   /// Affiche une boîte de dialogue avec les détails des conflits
-  void _showConflictsDialog(BuildContext context, List<SyncConflict> conflicts,
+  void _showConflictsDialog(BuildContext context, List<domain.SyncConflict> conflicts,
       {String? typeTitle}) {
     showDialog(
       context: context,
@@ -557,7 +557,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
   /// Navigation directe vers l'élément en conflit
   Future<void> _navigateDirectlyToConflictItem(
-      BuildContext context, SyncConflict conflict) async {
+      BuildContext context, domain.SyncConflict conflict) async {
     ConflictNavigationService.navigateDirectlyToConflictItem(
         context, conflict, ref);
   }
@@ -627,7 +627,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     final conflicts = syncStatus.conflicts ?? [];
 
     // Organiser les conflits par type d'entité
-    final conflictsByEntityType = <String, List<SyncConflict>>{};
+    final conflictsByEntityType = <String, List<domain.SyncConflict>>{};
 
     if (hasConflicts) {
       for (final conflict in conflicts) {

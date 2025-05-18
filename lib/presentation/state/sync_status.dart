@@ -1,8 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 
 part 'sync_status.freezed.dart';
+
+// Type alias for freezed generation
+typedef SyncConflict = domain.SyncConflict;
 
 /// Représente les différentes étapes du processus de synchronisation
 enum SyncStep {

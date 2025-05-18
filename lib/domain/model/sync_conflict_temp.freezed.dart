@@ -3,7 +3,7 @@
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
-part of 'sync_conflict.dart';
+part of 'sync_conflict_temp.dart';
 
 // **************************************************************************
 // FreezedGenerator
@@ -26,32 +26,13 @@ mixin _$SyncConflict {
       throw _privateConstructorUsedError;
   Map<String, dynamic>? get resolvedData => throw _privateConstructorUsedError;
   String? get resolutionComment => throw _privateConstructorUsedError;
-  ConflictType get conflictType =>
-      throw _privateConstructorUsedError; // Pour les références supprimées, on stocke des informations sur l'entité référencée
-  String? get referencedEntityType =>
-      throw _privateConstructorUsedError; // Type de l'entité supprimée (nomenclature, taxon, etc.)
-  String? get referencedEntityId =>
-      throw _privateConstructorUsedError; // ID de l'entité supprimée
-  String? get affectedField =>
-      throw _privateConstructorUsedError; // Champ affecté par la suppression
-  String? get navigationPath =>
-      throw _privateConstructorUsedError; // Chemin de navigation pour résoudre le conflit
-  bool get isResolved =>
-      throw _privateConstructorUsedError; // Indique si le conflit a été géré
-  String? get resolutionType =>
-      throw _privateConstructorUsedError; // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
-// Nouvelles propriétés pour la gestion améliorée des conflits
-  SyncOperation? get operation =>
-      throw _privateConstructorUsedError; // Opération qui a causé le conflit
-  String? get message =>
-      throw _privateConstructorUsedError; // Message détaillé du conflit
-  ConflictSeverity? get severity =>
-      throw _privateConstructorUsedError; // Sévérité du conflit
-  String? get localValue =>
-      throw _privateConstructorUsedError; // Valeur locale spécifique en conflit
-  String? get remoteValue =>
-      throw _privateConstructorUsedError; // Valeur distante spécifique en conflit
-  int? get referencesCount => throw _privateConstructorUsedError;
+  ConflictType get conflictType => throw _privateConstructorUsedError;
+  String? get referencedEntityType => throw _privateConstructorUsedError;
+  String? get referencedEntityId => throw _privateConstructorUsedError;
+  String? get affectedField => throw _privateConstructorUsedError;
+  String? get navigationPath => throw _privateConstructorUsedError;
+  bool get isResolved => throw _privateConstructorUsedError;
+  String? get resolutionType => throw _privateConstructorUsedError;
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.
@@ -82,13 +63,7 @@ abstract class $SyncConflictCopyWith<$Res> {
       String? affectedField,
       String? navigationPath,
       bool isResolved,
-      String? resolutionType,
-      SyncOperation? operation,
-      String? message,
-      ConflictSeverity? severity,
-      String? localValue,
-      String? remoteValue,
-      int? referencesCount});
+      String? resolutionType});
 }
 
 /// @nodoc
@@ -122,12 +97,6 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
     Object? navigationPath = freezed,
     Object? isResolved = null,
     Object? resolutionType = freezed,
-    Object? operation = freezed,
-    Object? message = freezed,
-    Object? severity = freezed,
-    Object? localValue = freezed,
-    Object? remoteValue = freezed,
-    Object? referencesCount = freezed,
   }) {
     return _then(_value.copyWith(
       entityId: null == entityId
@@ -194,30 +163,6 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
           ? _value.resolutionType
           : resolutionType // ignore: cast_nullable_to_non_nullable
               as String?,
-      operation: freezed == operation
-          ? _value.operation
-          : operation // ignore: cast_nullable_to_non_nullable
-              as SyncOperation?,
-      message: freezed == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String?,
-      severity: freezed == severity
-          ? _value.severity
-          : severity // ignore: cast_nullable_to_non_nullable
-              as ConflictSeverity?,
-      localValue: freezed == localValue
-          ? _value.localValue
-          : localValue // ignore: cast_nullable_to_non_nullable
-              as String?,
-      remoteValue: freezed == remoteValue
-          ? _value.remoteValue
-          : remoteValue // ignore: cast_nullable_to_non_nullable
-              as String?,
-      referencesCount: freezed == referencesCount
-          ? _value.referencesCount
-          : referencesCount // ignore: cast_nullable_to_non_nullable
-              as int?,
     ) as $Val);
   }
 }
@@ -246,13 +191,7 @@ abstract class _$$SyncConflictImplCopyWith<$Res>
       String? affectedField,
       String? navigationPath,
       bool isResolved,
-      String? resolutionType,
-      SyncOperation? operation,
-      String? message,
-      ConflictSeverity? severity,
-      String? localValue,
-      String? remoteValue,
-      int? referencesCount});
+      String? resolutionType});
 }
 
 /// @nodoc
@@ -284,12 +223,6 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
     Object? navigationPath = freezed,
     Object? isResolved = null,
     Object? resolutionType = freezed,
-    Object? operation = freezed,
-    Object? message = freezed,
-    Object? severity = freezed,
-    Object? localValue = freezed,
-    Object? remoteValue = freezed,
-    Object? referencesCount = freezed,
   }) {
     return _then(_$SyncConflictImpl(
       entityId: null == entityId
@@ -356,37 +289,13 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
           ? _value.resolutionType
           : resolutionType // ignore: cast_nullable_to_non_nullable
               as String?,
-      operation: freezed == operation
-          ? _value.operation
-          : operation // ignore: cast_nullable_to_non_nullable
-              as SyncOperation?,
-      message: freezed == message
-          ? _value.message
-          : message // ignore: cast_nullable_to_non_nullable
-              as String?,
-      severity: freezed == severity
-          ? _value.severity
-          : severity // ignore: cast_nullable_to_non_nullable
-              as ConflictSeverity?,
-      localValue: freezed == localValue
-          ? _value.localValue
-          : localValue // ignore: cast_nullable_to_non_nullable
-              as String?,
-      remoteValue: freezed == remoteValue
-          ? _value.remoteValue
-          : remoteValue // ignore: cast_nullable_to_non_nullable
-              as String?,
-      referencesCount: freezed == referencesCount
-          ? _value.referencesCount
-          : referencesCount // ignore: cast_nullable_to_non_nullable
-              as int?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$SyncConflictImpl extends _SyncConflict {
+class _$SyncConflictImpl implements _SyncConflict {
   const _$SyncConflictImpl(
       {required this.entityId,
       required this.entityType,
@@ -403,17 +312,10 @@ class _$SyncConflictImpl extends _SyncConflict {
       this.affectedField,
       this.navigationPath,
       this.isResolved = false,
-      this.resolutionType,
-      this.operation,
-      this.message,
-      this.severity,
-      this.localValue,
-      this.remoteValue,
-      this.referencesCount})
+      this.resolutionType})
       : _localData = localData,
         _remoteData = remoteData,
-        _resolvedData = resolvedData,
-        super._();
+        _resolvedData = resolvedData;
 
   @override
   final String entityId;
@@ -456,48 +358,23 @@ class _$SyncConflictImpl extends _SyncConflict {
   @override
   @JsonKey()
   final ConflictType conflictType;
-// Pour les références supprimées, on stocke des informations sur l'entité référencée
   @override
   final String? referencedEntityType;
-// Type de l'entité supprimée (nomenclature, taxon, etc.)
   @override
   final String? referencedEntityId;
-// ID de l'entité supprimée
   @override
   final String? affectedField;
-// Champ affecté par la suppression
   @override
   final String? navigationPath;
-// Chemin de navigation pour résoudre le conflit
   @override
   @JsonKey()
   final bool isResolved;
-// Indique si le conflit a été géré
   @override
   final String? resolutionType;
-// Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
-// Nouvelles propriétés pour la gestion améliorée des conflits
-  @override
-  final SyncOperation? operation;
-// Opération qui a causé le conflit
-  @override
-  final String? message;
-// Message détaillé du conflit
-  @override
-  final ConflictSeverity? severity;
-// Sévérité du conflit
-  @override
-  final String? localValue;
-// Valeur locale spécifique en conflit
-  @override
-  final String? remoteValue;
-// Valeur distante spécifique en conflit
-  @override
-  final int? referencesCount;
 
   @override
   String toString() {
-    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment, conflictType: $conflictType, referencedEntityType: $referencedEntityType, referencedEntityId: $referencedEntityId, affectedField: $affectedField, navigationPath: $navigationPath, isResolved: $isResolved, resolutionType: $resolutionType, operation: $operation, message: $message, severity: $severity, localValue: $localValue, remoteValue: $remoteValue, referencesCount: $referencesCount)';
+    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment, conflictType: $conflictType, referencedEntityType: $referencedEntityType, referencedEntityId: $referencedEntityId, affectedField: $affectedField, navigationPath: $navigationPath, isResolved: $isResolved, resolutionType: $resolutionType)';
   }
 
   @override
@@ -536,46 +413,28 @@ class _$SyncConflictImpl extends _SyncConflict {
             (identical(other.isResolved, isResolved) ||
                 other.isResolved == isResolved) &&
             (identical(other.resolutionType, resolutionType) ||
-                other.resolutionType == resolutionType) &&
-            (identical(other.operation, operation) ||
-                other.operation == operation) &&
-            (identical(other.message, message) || other.message == message) &&
-            (identical(other.severity, severity) ||
-                other.severity == severity) &&
-            (identical(other.localValue, localValue) ||
-                other.localValue == localValue) &&
-            (identical(other.remoteValue, remoteValue) ||
-                other.remoteValue == remoteValue) &&
-            (identical(other.referencesCount, referencesCount) ||
-                other.referencesCount == referencesCount));
+                other.resolutionType == resolutionType));
   }
 
   @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        entityId,
-        entityType,
-        const DeepCollectionEquality().hash(_localData),
-        const DeepCollectionEquality().hash(_remoteData),
-        localModifiedAt,
-        remoteModifiedAt,
-        resolutionStrategy,
-        const DeepCollectionEquality().hash(_resolvedData),
-        resolutionComment,
-        conflictType,
-        referencedEntityType,
-        referencedEntityId,
-        affectedField,
-        navigationPath,
-        isResolved,
-        resolutionType,
-        operation,
-        message,
-        severity,
-        localValue,
-        remoteValue,
-        referencesCount
-      ]);
+  int get hashCode => Object.hash(
+      runtimeType,
+      entityId,
+      entityType,
+      const DeepCollectionEquality().hash(_localData),
+      const DeepCollectionEquality().hash(_remoteData),
+      localModifiedAt,
+      remoteModifiedAt,
+      resolutionStrategy,
+      const DeepCollectionEquality().hash(_resolvedData),
+      resolutionComment,
+      conflictType,
+      referencedEntityType,
+      referencedEntityId,
+      affectedField,
+      navigationPath,
+      isResolved,
+      resolutionType);
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.
@@ -586,7 +445,7 @@ class _$SyncConflictImpl extends _SyncConflict {
       __$$SyncConflictImplCopyWithImpl<_$SyncConflictImpl>(this, _$identity);
 }
 
-abstract class _SyncConflict extends SyncConflict {
+abstract class _SyncConflict implements SyncConflict {
   const factory _SyncConflict(
       {required final String entityId,
       required final String entityType,
@@ -603,14 +462,7 @@ abstract class _SyncConflict extends SyncConflict {
       final String? affectedField,
       final String? navigationPath,
       final bool isResolved,
-      final String? resolutionType,
-      final SyncOperation? operation,
-      final String? message,
-      final ConflictSeverity? severity,
-      final String? localValue,
-      final String? remoteValue,
-      final int? referencesCount}) = _$SyncConflictImpl;
-  const _SyncConflict._() : super._();
+      final String? resolutionType}) = _$SyncConflictImpl;
 
   @override
   String get entityId;
@@ -631,35 +483,19 @@ abstract class _SyncConflict extends SyncConflict {
   @override
   String? get resolutionComment;
   @override
-  ConflictType
-      get conflictType; // Pour les références supprimées, on stocke des informations sur l'entité référencée
+  ConflictType get conflictType;
   @override
-  String?
-      get referencedEntityType; // Type de l'entité supprimée (nomenclature, taxon, etc.)
+  String? get referencedEntityType;
   @override
-  String? get referencedEntityId; // ID de l'entité supprimée
+  String? get referencedEntityId;
   @override
-  String? get affectedField; // Champ affecté par la suppression
+  String? get affectedField;
   @override
-  String? get navigationPath; // Chemin de navigation pour résoudre le conflit
+  String? get navigationPath;
   @override
-  bool get isResolved; // Indique si le conflit a été géré
+  bool get isResolved;
   @override
-  String?
-      get resolutionType; // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
-// Nouvelles propriétés pour la gestion améliorée des conflits
-  @override
-  SyncOperation? get operation; // Opération qui a causé le conflit
-  @override
-  String? get message; // Message détaillé du conflit
-  @override
-  ConflictSeverity? get severity; // Sévérité du conflit
-  @override
-  String? get localValue; // Valeur locale spécifique en conflit
-  @override
-  String? get remoteValue; // Valeur distante spécifique en conflit
-  @override
-  int? get referencesCount;
+  String? get resolutionType;
 
   /// Create a copy of SyncConflict
   /// with the given fields replaced by the non-null parameter values.
