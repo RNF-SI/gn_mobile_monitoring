@@ -127,9 +127,11 @@ final taxonRepositoryProvider =
 
 final visitsApiProvider = Provider<VisitsApi>((_) => VisitsApiImpl());
 
-final observationsApiProvider = Provider<ObservationsApi>((_) => ObservationsApiImpl());
+final observationsApiProvider =
+    Provider<ObservationsApi>((_) => ObservationsApiImpl());
 
-final observationDetailsApiProvider = Provider<ObservationDetailsApi>((_) => ObservationDetailsApiImpl());
+final observationDetailsApiProvider =
+    Provider<ObservationDetailsApi>((_) => ObservationDetailsApiImpl());
 
 final modulesRepositoryProvider =
     Provider<ModulesRepository>((ref) => ModulesRepositoryImpl(
