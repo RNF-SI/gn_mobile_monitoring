@@ -47,4 +47,7 @@ abstract class VisitesDatabase {
   /// Replace all observers for a visit
   Future<void> replaceVisitObservers(
       int visitId, List<CorVisitObserverCompanion> observers);
+      
+  /// Get all visits for a specific site
+  Future<List<TBaseVisit>> getVisitsBySite(int siteId);
 }

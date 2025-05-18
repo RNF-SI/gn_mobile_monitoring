@@ -163,4 +163,24 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     return await db.sitesDao.getSitesByModuleId(moduleId);
   }
+  
+  @override
+  Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
+    final db = await _database;
+    // For now, return all sites - we'll need to implement proper filtering
+    // when the table relationships are available
+    return await db.sitesDao.getAllSites();
+  }
+  
+  @override
+  Future<void> insertSite(BaseSite site) async {
+    final db = await _database;
+    await db.sitesDao.insertSites([site]);
+  }
+  
+  @override
+  Future<void> insertSiteGroup(SiteGroup siteGroup) async {
+    final db = await _database;
+    await db.sitesDao.insertGroups([siteGroup]);
+  }
 }

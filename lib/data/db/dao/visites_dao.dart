@@ -20,6 +20,9 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
             ..where((t) =>
                 t.idBaseSite.equals(siteId) & t.idModule.equals(moduleId)))
           .get();
+          
+  Future<List<TBaseVisit>> getVisitsBySite(int siteId) =>
+      (select(tBaseVisits)..where((t) => t.idBaseSite.equals(siteId))).get();
 
   Future<TBaseVisit> getVisitById(int id) =>
       (select(tBaseVisits)..where((t) => t.idBaseVisit.equals(id))).getSingle();
