@@ -18,6 +18,8 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_v
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ObservationDetailPageBase extends DetailPage {
@@ -31,6 +33,7 @@ class ObservationDetailPageBase extends DetailPage {
   final CustomConfig? customConfig;
   final ObjectConfig? observationDetailConfig;
   final bool isNewObservation;
+  final SyncConflict? currentConflict; // Conflit en cours de résolution
 
   const ObservationDetailPageBase({
     super.key,
@@ -44,6 +47,7 @@ class ObservationDetailPageBase extends DetailPage {
     this.customConfig,
     this.observationDetailConfig,
     this.isNewObservation = false,
+    this.currentConflict,
   });
 
   @override
@@ -357,6 +361,9 @@ class ObservationDetailPageBaseState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Afficher le bandeau de conflit si présent
+          if (widget.currentConflict != null)
+            ConflictInfoBanner(conflict: widget.currentConflict!),
           // Taxon Information
           _buildTaxonInfoCard(),
 

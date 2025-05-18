@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page_base.dart';
 
@@ -13,6 +14,7 @@ class VisitDetailPage extends ConsumerStatefulWidget {
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup; // Information sur un éventuel groupe parent
   final bool isNewVisit;
+  final SyncConflict? currentConflict;
 
   const VisitDetailPage({
     super.key,
@@ -21,6 +23,7 @@ class VisitDetailPage extends ConsumerStatefulWidget {
     this.moduleInfo,
     this.fromSiteGroup,
     this.isNewVisit = false,
+    this.currentConflict,
   });
 
   @override
@@ -37,6 +40,7 @@ class _VisitDetailPageState extends ConsumerState<VisitDetailPage> {
       moduleInfo: widget.moduleInfo,
       fromSiteGroup: widget.fromSiteGroup,
       isNewVisit: widget.isNewVisit,
+      currentConflict: widget.currentConflict,
     );
   }
 }

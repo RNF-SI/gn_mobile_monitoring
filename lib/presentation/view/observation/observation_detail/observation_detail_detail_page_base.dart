@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -11,6 +12,7 @@ class ObservationDetailDetailPageBase extends DetailPage {
   final ObjectConfig config;
   final CustomConfig? customConfig;
   final int index;
+  final SyncConflict? currentConflict;
 
   const ObservationDetailDetailPageBase({
     super.key,
@@ -19,6 +21,7 @@ class ObservationDetailDetailPageBase extends DetailPage {
     required this.config,
     this.customConfig,
     required this.index,
+    this.currentConflict,
   });
 
   @override

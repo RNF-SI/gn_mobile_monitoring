@@ -9,6 +9,8 @@ import 'package:gn_mobile_monitoring/presentation/view/observation/observation_d
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
 
 // Provider pour le statut du bouton "Enchainer les saisies"
@@ -33,6 +35,7 @@ class ObservationFormPage extends ConsumerStatefulWidget {
   final BaseSite? site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
+  final SyncConflict? currentConflict;
 
   const ObservationFormPage({
     super.key,
@@ -51,6 +54,7 @@ class ObservationFormPage extends ConsumerStatefulWidget {
     this.moduleInfo,
     this.fromSiteGroup,
     this.observationDetailConfig,
+    this.currentConflict,
   });
 
   @override
@@ -247,6 +251,11 @@ class ObservationFormPageState extends ConsumerState<ObservationFormPage> {
                       ),
                     ),
                   const SizedBox(height: 16),
+                  
+                  // Afficher le bandeau de conflit si présent
+                  if (widget.currentConflict != null)
+                    ConflictInfoBanner(conflict: widget.currentConflict!),
+                  
                   // Formulaire dynamique basé sur la configuration
                   DynamicFormBuilder(
                     key: _formBuilderKey,

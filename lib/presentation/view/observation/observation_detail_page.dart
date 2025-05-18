@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page_base.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
@@ -18,6 +19,7 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
   final ObjectConfig? observationConfig;
   final CustomConfig? customConfig;
   final ObjectConfig? observationDetailConfig;
+  final SyncConflict? currentConflict;
   final bool isNewObservation;
 
   const ObservationDetailPage({
@@ -31,6 +33,7 @@ class ObservationDetailPage extends ConsumerStatefulWidget {
     this.customConfig,
     this.observationDetailConfig,
     this.isNewObservation = false,
+    this.currentConflict,
   });
 
   @override
@@ -115,6 +118,7 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
       customConfig: widget.customConfig,
       observationDetailConfig: widget.observationDetailConfig,
       isNewObservation: widget.isNewObservation,
+      currentConflict: widget.currentConflict,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page_base.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
@@ -9,12 +10,14 @@ class SiteDetailPage extends ConsumerStatefulWidget {
   final BaseSite site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
+  final SyncConflict? currentConflict;
 
   const SiteDetailPage({
     super.key,
     required this.site,
     this.moduleInfo,
     this.fromSiteGroup,
+    this.currentConflict,
   });
 
   @override
@@ -55,6 +58,7 @@ class _SiteDetailPageState extends ConsumerState<SiteDetailPage> {
       site: widget.site,
       moduleInfo: widget.moduleInfo,
       fromSiteGroup: widget.fromSiteGroup,
+      currentConflict: widget.currentConflict,
     );
   }
 }

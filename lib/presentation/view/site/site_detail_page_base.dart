@@ -8,18 +8,21 @@ import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
   final BaseSite site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
+  final SyncConflict? currentConflict;
 
   const SiteDetailPageBase({
     super.key,
@@ -27,6 +30,7 @@ class SiteDetailPageBase extends DetailPage {
     required this.site,
     this.moduleInfo,
     this.fromSiteGroup,
+    this.currentConflict,
   });
 
   @override
@@ -235,6 +239,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Afficher le bandeau de conflit si présent
+          if (widget.currentConflict != null)
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: ConflictInfoBanner(conflict: widget.currentConflict!),
+            ),
           // Propriétés du site - non expandable et taille intrinsèque
           Padding(
             padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),

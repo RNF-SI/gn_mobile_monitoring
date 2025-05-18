@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
@@ -14,6 +15,7 @@ import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
 
 /// Page de détail de visite basée sur la classe DetailPage
 class VisitDetailPageBase extends DetailPage {
@@ -23,6 +25,7 @@ class VisitDetailPageBase extends DetailPage {
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
   final bool isNewVisit;
+  final SyncConflict? currentConflict;
 
   const VisitDetailPageBase({
     super.key,
@@ -32,6 +35,7 @@ class VisitDetailPageBase extends DetailPage {
     this.moduleInfo,
     this.fromSiteGroup,
     this.isNewVisit = false,
+    this.currentConflict,
   });
 
   @override
@@ -288,6 +292,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Afficher le bandeau de conflit si présent
+          if (widget.currentConflict != null)
+            ConflictInfoBanner(conflict: widget.currentConflict!),
           // Carte d'informations générales
           Card(
             child: Padding(
