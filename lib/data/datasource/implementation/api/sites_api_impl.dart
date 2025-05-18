@@ -20,7 +20,8 @@ class SitesApiImpl implements SitesApi {
       : _dio = Dio(BaseOptions(
           baseUrl: Config.apiBase,
           connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les grosses quantités de données
+          receiveTimeout: const Duration(
+              seconds: 300), // 5 minutes pour les grosses quantités de données
           sendTimeout: const Duration(seconds: 120),
         ));
 
