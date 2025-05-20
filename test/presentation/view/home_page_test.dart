@@ -5,8 +5,6 @@ import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
-import 'package:gn_mobile_monitoring/presentation/view/home_page/site_group_list_widget.dart';
-import 'package:gn_mobile_monitoring/presentation/view/home_page/site_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
@@ -41,17 +39,6 @@ class MockModuleListWidget extends Mock implements ModuleListWidget {
       super.toString();
 }
 
-class MockSiteGroupListWidget extends Mock implements SiteGroupListWidget {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      super.toString();
-}
-
-class MockSiteListWidget extends Mock implements SiteListWidget {
-  @override
-  String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
-      super.toString();
-}
 
 class MockMenuActions extends Mock implements MenuActions {
   @override
@@ -111,58 +98,27 @@ void main() {
     await tester.pump();
   }
 
-  testWidgets('HomePage should display TabController with 3 tabs',
+  testWidgets('HomePage should display only modules without tabs',
       (WidgetTester tester) async {
     await pumpHomePage(tester);
 
     expect(find.text('Mes Données'), findsOneWidget);
-    expect(find.text('Modules'), findsOneWidget);
-    expect(find.text('Groupes de Sites'), findsOneWidget);
-    expect(find.text('Sites'), findsOneWidget);
-
-    expect(find.byType(Tab), findsNWidgets(3));
-    expect(find.byType(TabBar), findsOneWidget);
-    expect(find.byType(TabBarView), findsOneWidget);
-  });
-
-  testWidgets('HomePage should display ModuleListWidget on first tab',
-      (WidgetTester tester) async {
-    await pumpHomePage(tester);
-
-    // Le premier onglet (Modules) devrait être actif par défaut
+    
+    // No tabs should be present
+    expect(find.byType(Tab), findsNothing);
+    expect(find.byType(TabBar), findsNothing);
+    expect(find.byType(TabBarView), findsNothing);
+    
+    // Only ModuleListWidget should be visible
     expect(find.byType(ModuleListWidget), findsOneWidget);
-    expect(find.byType(SiteGroupListWidget), findsNothing);
-    expect(find.byType(SiteListWidget), findsNothing);
   });
 
-  testWidgets('HomePage should display SiteGroupListWidget on second tab',
+  testWidgets('HomePage should display ModuleListWidget directly',
       (WidgetTester tester) async {
     await pumpHomePage(tester);
 
-    // Tap sur le deuxième onglet (Groupes de Sites)
-    await tester.tap(find.text('Groupes de Sites'));
-    await tester.pump();
-    await tester
-        .pump(const Duration(milliseconds: 300)); // Attendre l'animation
-
-    expect(find.byType(ModuleListWidget), findsNothing);
-    expect(find.byType(SiteGroupListWidget), findsOneWidget);
-    expect(find.byType(SiteListWidget), findsNothing);
-  });
-
-  testWidgets('HomePage should display SiteListWidget on third tab',
-      (WidgetTester tester) async {
-    await pumpHomePage(tester);
-
-    // Tap sur le troisième onglet (Sites)
-    await tester.tap(find.text('Sites'));
-    await tester.pump();
-    await tester
-        .pump(const Duration(milliseconds: 300)); // Attendre l'animation
-
-    expect(find.byType(ModuleListWidget), findsNothing);
-    expect(find.byType(SiteGroupListWidget), findsNothing);
-    expect(find.byType(SiteListWidget), findsOneWidget);
+    // ModuleListWidget doit être visible directement (pas d'onglets)
+    expect(find.byType(ModuleListWidget), findsOneWidget);
   });
 
   testWidgets('HomePage should display SyncStatusWidget',
@@ -207,7 +163,7 @@ void main() {
     expect(find.byType(ModalBarrier), findsWidgets);
   });
 
-  testWidgets('HomePage should not allow tab changes when syncing',
+  testWidgets('HomePage should not allow interactions when syncing',
       (WidgetTester tester) async {
     final syncingStatus = SyncStatus.inProgress(
       currentStep: SyncStep.modules,
@@ -220,21 +176,17 @@ void main() {
 
     await pumpHomePage(tester, syncingStatus);
 
-    // Find the Tab widget instead of just the text
-    final tabFinder = find.ancestor(
-      of: find.text('Groupes de Sites'),
-      matching: find.byType(Tab),
-    );
-
-    // Try to tap on the tab
-    if (tabFinder.evaluate().isNotEmpty) {
-      await tester.tap(tabFinder, warnIfMissed: false);
+    // Try to interact with the page (no tabs to switch anymore)
+    // Find a module item if it exists
+    final moduleItem = find.byType(ListTile);
+    
+    if (moduleItem.evaluate().isNotEmpty) {
+      await tester.tap(moduleItem.first, warnIfMissed: false);
       await tester.pump();
     }
 
-    // Verify we're still on the first tab
+    // Verify we're still on the same page (no navigation occurred)
     expect(find.byType(ModuleListWidget), findsOneWidget);
-    expect(find.byType(SiteGroupListWidget), findsNothing);
   });
 
   testWidgets('HomePage should show modal barrier when deleting database',

@@ -20,7 +20,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
@@ -146,8 +146,8 @@ class MockGetModulesUseCase extends Mock implements GetModulesUseCase {}
 
 class MockFetchModulesUseCase extends Mock implements FetchModulesUseCase {}
 
-class MockDownloadModuleDataUseCase extends Mock
-    implements DownloadModuleDataUseCase {}
+class MockDownloadCompleteModuleUseCase extends Mock
+    implements DownloadCompleteModuleUseCase {}
 
 // Nomenclatures
 class MockGetNomenclaturesUseCase extends Mock implements GetNomenclaturesUseCase {}

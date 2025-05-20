@@ -18,20 +18,24 @@ class MockBuildContext extends Mock implements BuildContext {}
 void main() {
   late ProviderContainer container;
   late MockGetModulesUseCase mockGetModulesUseCase;
-  late MockDownloadModuleDataUseCase mockDownloadModuleDataUseCase;
+  late MockDownloadCompleteModuleUseCase mockDownloadCompleteModuleUseCase;
+  late MockGetTokenFromLocalStorageUseCase mockGetTokenFromLocalStorageUseCase;
   late MockBuildContext mockContext;
 
   setUp(() {
     mockGetModulesUseCase = MockGetModulesUseCase();
-    mockDownloadModuleDataUseCase = MockDownloadModuleDataUseCase();
+    mockDownloadCompleteModuleUseCase = MockDownloadCompleteModuleUseCase();
+    mockGetTokenFromLocalStorageUseCase = MockGetTokenFromLocalStorageUseCase();
     mockContext = MockBuildContext();
 
     container = ProviderContainer(
       overrides: [
         // Override the providers with mocks
         getModulesUseCaseProvider.overrideWithValue(mockGetModulesUseCase),
-        downloadModuleDataUseCaseProvider
-            .overrideWithValue(mockDownloadModuleDataUseCase),
+        downloadCompleteModuleUseCaseProvider
+            .overrideWithValue(mockDownloadCompleteModuleUseCase),
+        getTokenFromLocalStorageUseCaseProvider
+            .overrideWithValue(mockGetTokenFromLocalStorageUseCase),
       ],
     );
 
@@ -53,7 +57,8 @@ void main() {
     // Act - Créez un nouveau ViewModel (cela va déclencher loadModules)
     final userModulesViewModel = UserModulesViewModel(
       mockGetModulesUseCase,
-      mockDownloadModuleDataUseCase,
+      mockDownloadCompleteModuleUseCase,
+      mockGetTokenFromLocalStorageUseCase,
       const AsyncValue<ModuleInfoList>.data(ModuleInfoList(values: [])),
     );
 
@@ -170,11 +175,15 @@ void main() {
         .thenAnswer((_) async => [mockModule]);
     await userModulesViewModel.loadModules();
 
+    // Mock token retrieval
+    when(() => mockGetTokenFromLocalStorageUseCase.execute())
+        .thenAnswer((_) async => 'test-token');
+
     // Mock download usecase
-    when(() => mockDownloadModuleDataUseCase.execute(any(), any()))
+    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any()))
         .thenAnswer((invocation) async {
       final progressCallback =
-          invocation.positionalArguments[1] as Function(double);
+          invocation.positionalArguments[2] as Function(double);
       // Simulate progress updates
       progressCallback(0.3);
       progressCallback(0.7);
@@ -225,8 +234,12 @@ void main() {
         .thenAnswer((_) async => [mockModule]);
     await userModulesViewModel.loadModules();
 
+    // Mock token retrieval
+    when(() => mockGetTokenFromLocalStorageUseCase.execute())
+        .thenAnswer((_) async => 'test-token');
+
     // Mock download usecase to throw error
-    when(() => mockDownloadModuleDataUseCase.execute(any(), any()))
+    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any()))
         .thenThrow(Exception('Download failed'));
 
     // Act
