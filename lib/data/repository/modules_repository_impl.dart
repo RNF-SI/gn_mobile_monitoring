@@ -19,6 +19,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
@@ -30,6 +31,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final DatasetsDatabase datasetsDatabase;
   final TaxonDatabase? taxonDatabase;
   final TaxonRepository taxonRepository;
+  final SitesRepository sitesRepository;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -40,6 +42,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.datasetsDatabase,
     this.taxonDatabase,
     this.taxonRepository,
+    this.sitesRepository,
   );
 
   @override
@@ -140,9 +143,21 @@ class ModulesRepositoryImpl implements ModulesRepository {
         print('Added ${modulesToAdd.length} new modules to the database');
       }
 
-      // Update existing modules
+      // Update existing modules but preserve downloaded status
       for (final moduleToUpdate in modulesToUpdate) {
-        await database.updateModule(moduleToUpdate);
+        // Récupérer le module existant pour connaître son statut 'downloaded'
+        final existingModule = await database.getModuleById(moduleToUpdate.id);
+
+        if (existingModule != null && existingModule.downloaded == true) {
+          // Si le module était déjà marqué comme téléchargé, préserver ce statut
+          final updatedModule = moduleToUpdate.copyWith(downloaded: true);
+          await database.updateModule(updatedModule);
+          print(
+              'Preserved downloaded status for module ${moduleToUpdate.moduleCode ?? moduleToUpdate.id}');
+        } else {
+          // Sinon, mettre à jour normalement
+          await database.updateModule(moduleToUpdate);
+        }
       }
 
       // Add new module complements
@@ -167,7 +182,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
-  Future<void> downloadModuleData(int moduleId) async {
+  Future<void> downloadCompleteModule(int moduleId, String token) async {
     try {
       final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
@@ -208,69 +223,77 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       // 2. Fetch and store module configuration
       final config = await globalApi.getModuleConfiguration(moduleCode);
-      
+
       // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
       try {
         // Variable pour compter le nombre total de fonctions converties
         int totalConverted = 0;
-        
+
         // Fonction pour remplacer les fonctions hidden de JavaScript par du Dart
         void replaceHiddenFunctions(Map<String, dynamic> configSection) {
           // Pour les champs génériques
-          if (configSection.containsKey('generic') && configSection['generic'] is Map) {
+          if (configSection.containsKey('generic') &&
+              configSection['generic'] is Map) {
             final generic = configSection['generic'] as Map<String, dynamic>;
-            
+
             for (final entry in generic.entries) {
               final fieldId = entry.key;
               final fieldConfig = entry.value;
-              
-              if (fieldConfig is Map<String, dynamic> && 
-                  fieldConfig.containsKey('hidden') && 
-                  fieldConfig['hidden'] is String && 
+
+              if (fieldConfig is Map<String, dynamic> &&
+                  fieldConfig.containsKey('hidden') &&
+                  fieldConfig['hidden'] is String &&
                   fieldConfig['hidden'].toString().startsWith('({')) {
                 try {
                   final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
-                  
+                  final dartFunction =
+                      TsToDartConverter.convertToDart(jsFunction);
+
                   // Remplacer la fonction JS par la fonction Dart directement dans la configuration
                   fieldConfig['hidden'] = dartFunction;
                   totalConverted++;
-                  print('Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
+                  print(
+                      'Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
                 } catch (e) {
-                  print('Error converting hidden function for field $fieldId: $e');
+                  print(
+                      'Error converting hidden function for field $fieldId: $e');
                 }
               }
             }
           }
-          
+
           // Pour les champs spécifiques
-          if (configSection.containsKey('specific') && configSection['specific'] is Map) {
+          if (configSection.containsKey('specific') &&
+              configSection['specific'] is Map) {
             final specific = configSection['specific'] as Map<String, dynamic>;
-            
+
             for (final entry in specific.entries) {
               final fieldId = entry.key;
               final fieldConfig = entry.value;
-              
-              if (fieldConfig is Map<String, dynamic> && 
-                  fieldConfig.containsKey('hidden') && 
-                  fieldConfig['hidden'] is String && 
+
+              if (fieldConfig is Map<String, dynamic> &&
+                  fieldConfig.containsKey('hidden') &&
+                  fieldConfig['hidden'] is String &&
                   fieldConfig['hidden'].toString().startsWith('({')) {
                 try {
                   final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
-                  
+                  final dartFunction =
+                      TsToDartConverter.convertToDart(jsFunction);
+
                   // Remplacer la fonction JS par la fonction Dart directement dans la configuration
                   fieldConfig['hidden'] = dartFunction;
                   totalConverted++;
-                  print('Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
+                  print(
+                      'Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
                 } catch (e) {
-                  print('Error converting hidden function for specific field $fieldId: $e');
+                  print(
+                      'Error converting hidden function for specific field $fieldId: $e');
                 }
               }
             }
           }
         }
-        
+
         // Parcourir les sections principales du module pour remplacer les fonctions hidden
         final objectTypes = [
           'module',
@@ -280,20 +303,23 @@ class ModulesRepositoryImpl implements ModulesRepository {
           'observation',
           'observation_detail'
         ];
-        
+
         for (final objectType in objectTypes) {
-          if (config.containsKey(objectType) && config[objectType] is Map<String, dynamic>) {
+          if (config.containsKey(objectType) &&
+              config[objectType] is Map<String, dynamic>) {
             final prevCount = totalConverted;
             replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
             final convertedInSection = totalConverted - prevCount;
-            
+
             if (convertedInSection > 0) {
-              print('Converted $convertedInSection hidden functions in $objectType section');
+              print(
+                  'Converted $convertedInSection hidden functions in $objectType section');
             }
           }
         }
-        
-        print('Total hidden functions converted in module configuration: $totalConverted');
+
+        print(
+            'Total hidden functions converted in module configuration: $totalConverted');
       } catch (e) {
         print('Erreur lors de la conversion des fonctions hidden: $e');
         // Continuer malgré les erreurs de conversion
@@ -339,11 +365,19 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
             relevantSiteTypes.add(bibTypeSite);
 
-            // Store the nomenclature info if it's not already in the nomenclatures list
-            final nomenclatureInfo = siteTypeData;
-            if (!nomenclatures.any((n) => n.id == int.parse(siteTypeId))) {
+            // Find if this nomenclature already exists in the database
+            final existingNomenclatures =
+                await nomenclaturesDatabase.getAllNomenclatures();
+            bool nomenclatureExists = existingNomenclatures.any((n) =>
+                n.id == siteTypeData['id_nomenclature'] ||
+                (n.idType == 116 &&
+                    n.cdNomenclature == siteTypeData['cd_nomenclature']));
+
+            if (!nomenclatureExists) {
+              // Create and add the nomenclature if it doesn't exist
+              final nomenclatureInfo = siteTypeData['nomenclature'];
               final nomenclature = Nomenclature(
-                id: int.parse(siteTypeId),
+                id: siteTypeData['id_nomenclature'],
                 idType: 116, // TYPE_SITE
                 cdNomenclature:
                     nomenclatureInfo['cd_nomenclature'] as String? ?? '',
@@ -374,11 +408,14 @@ class ModulesRepositoryImpl implements ModulesRepository {
           }
         }
 
-        // Save the site types to the database
-        // if (relevantSiteTypes.isNotEmpty) {
-        //   await nomenclaturesDatabase.clearBibTypeSites();
-        //   await nomenclaturesDatabase.insertBibTypeSites(relevantSiteTypes);
-        // }
+        // Si vous avez besoin de sauvegarder les types de sites dans la base de données,
+        // décommentez le code ci-dessous :
+        /*
+        if (relevantSiteTypes.isNotEmpty) {
+          await nomenclaturesDatabase.clearBibTypeSites();
+          await nomenclaturesDatabase.insertBibTypeSites(relevantSiteTypes);
+        }
+        */
       }
 
       // 4. Download module taxons from configuration
@@ -396,23 +433,30 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);
+
+      // 5. Download sites for the module
+      await sitesRepository.fetchSitesForModule(moduleCode, token);
+
+      // 6. Download site groups for the module
+      await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
     } catch (e) {
       throw Exception('Failed to download module data: $e');
     }
   }
 
   @override
-  Future<Module> getModuleWithConfig(int moduleId) async {
-    // Fetch module and complement from database
-    final module = await database.getModuleById(moduleId);
+  Future<Module> getCompleteModule(int moduleId) async {
+    // Récupère le module complet avec ses relations depuis la base de données
+    // La méthode getModuleWithRelationsById récupère automatiquement :
+    // - Le module de base
+    // - Les sites associés
+    // - Les groupes de sites
+    // - Les compléments de module (configuration de base)
+    final module = await database.getModuleWithRelationsById(moduleId);
     final complement = await database.getModuleComplementById(moduleId);
 
-    // If module is null, throw an exception
-    if (module == null) {
-      throw Exception('Module not found with ID: $moduleId');
-    }
-
-    // Return module with complement if it exists
+    // Retourner le module avec ses compléments mis à jour si disponibles
+    // Le module a déjà un complément, mais on veut s'assurer qu'il a la dernière version
     return module.copyWith(complement: complement);
   }
 
@@ -492,6 +536,31 @@ class ModulesRepositoryImpl implements ModulesRepository {
       return await datasetsDatabase.getDatasetsByIds(datasetIds);
     } catch (e) {
       throw Exception('Failed to get datasets by ids: $e');
+    }
+  }
+
+  @override
+  Future<Module> getModuleById(int moduleId) async {
+    try {
+      final module = await database.getModuleById(moduleId);
+
+      if (module == null) {
+        throw Exception('Module not found with ID: $moduleId');
+      }
+
+      return module;
+    } catch (e) {
+      throw Exception('Failed to get module by id: $e');
+    }
+  }
+
+  @override
+  Future<Module> getModuleWithRelationsById(int moduleId) async {
+    try {
+      // Cette méthode charge le module avec toutes ses relations (sites et groupes de sites)
+      return await database.getModuleWithRelationsById(moduleId);
+    } catch (e) {
+      throw Exception('Failed to get module with relations by id: $e');
     }
   }
 
