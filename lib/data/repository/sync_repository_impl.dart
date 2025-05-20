@@ -3,7 +3,9 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dar
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/repository/composite_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/downstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
@@ -33,6 +35,8 @@ class SyncRepositoryImpl implements SyncRepository {
     required VisitRepository visitRepository,
     required ObservationsRepository observationsRepository,
     required ObservationDetailsRepository observationDetailsRepository,
+    required VisitesDatabase visitesDatabase,
+    required ObservationsDatabase observationsDatabase,
   }) : _compositeSync = CompositeSyncRepositoryImpl(
           downstreamRepo: DownstreamSyncRepositoryImpl(
             globalApi,
@@ -41,6 +45,8 @@ class SyncRepositoryImpl implements SyncRepository {
             nomenclaturesDatabase,
             datasetsDatabase,
             taxonDatabase,
+            visitesDatabase: visitesDatabase,
+            observationsDatabase: observationsDatabase,
             modulesRepository: modulesRepository,
             sitesRepository: sitesRepository,
           ),
@@ -109,8 +115,7 @@ class SyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<SyncResult> syncObservationsToServer(
-          String token, String moduleCode, int visitId,
-          {int? serverVisitId}) =>
+          String token, String moduleCode, int visitId, {int? serverVisitId}) =>
       _compositeSync.syncObservationsToServer(token, moduleCode, visitId,
           serverVisitId: serverVisitId);
 
