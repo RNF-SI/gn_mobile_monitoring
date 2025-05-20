@@ -69,11 +69,13 @@ class CompositeSyncRepositoryImpl implements SyncRepository {
 
   @override
   Future<SyncResult> syncSites(String token, {DateTime? lastSync}) {
+    // Toujours utiliser le repository downstream pour la cohérence de l'architecture
     return _downstreamRepo.syncSites(token, lastSync: lastSync);
   }
 
   @override
   Future<SyncResult> syncSiteGroups(String token, {DateTime? lastSync}) {
+    // Toujours utiliser le repository downstream pour la cohérence de l'architecture
     return _downstreamRepo.syncSiteGroups(token, lastSync: lastSync);
   }
 
