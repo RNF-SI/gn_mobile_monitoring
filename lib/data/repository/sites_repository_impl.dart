@@ -1,6 +1,7 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_group_entity_mapper.dart';
@@ -9,20 +10,29 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 
 class SitesRepositoryImpl implements SitesRepository {
   final SitesApi api;
   final SitesDatabase database;
   final ModulesDatabase modulesDatabase;
+  final VisitesDatabase visitesDatabase;
 
-  SitesRepositoryImpl(this.api, this.database, this.modulesDatabase);
+  SitesRepositoryImpl(
+      this.api, this.database, this.modulesDatabase, this.visitesDatabase);
 
   @override
   Future<void> fetchSitesAndSiteModules(String token) async {
     try {
-      // First get all modules from the database
-      final modules = await modulesDatabase.getAllModules();
+      // Récupérer uniquement les modules marqués comme téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      if (modules.isEmpty) {
+        print('Aucun module téléchargé trouvé, récupération des sites ignorée');
+        return;
+      }
 
       // Map to store unique sites based on their ID
       final Map<int, BaseSite> uniqueSites = {};
@@ -30,7 +40,9 @@ class SitesRepositoryImpl implements SitesRepository {
       // Store site complements that we'll save to the database
       final Map<int, SiteComplement> siteComplements = {};
 
-      // For each module, fetch its sites
+      // Pour chaque module téléchargé, récupérer ses sites
+      print(
+          'Récupération des sites pour ${modules.length} modules téléchargés');
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
@@ -95,8 +107,14 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<void> incrementalSyncSitesAndSiteModules(String token) async {
     try {
-      // First get all modules from the database
-      final modules = await modulesDatabase.getAllModules();
+      // Récupérer uniquement les modules marqués comme téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      if (modules.isEmpty) {
+        print(
+            'Aucun module téléchargé trouvé, synchronisation des sites ignorée');
+        return;
+      }
 
       // Get existing sites to determine what's new
       final existingSites = await database.getAllSites();
@@ -108,9 +126,6 @@ class SitesRepositoryImpl implements SitesRepository {
           .map((sm) => '${sm.idSite}_${sm.idModule}')
           .toSet();
 
-      // Get existing site complements
-      final existingSiteComplements = await database.getAllSiteComplements();
-
       // Maps to store sites and complements data
       final Map<int, BaseSite> remoteSites = {};
       final Map<String, SiteModule> remoteSiteModuleMap = {};
@@ -118,10 +133,16 @@ class SitesRepositoryImpl implements SitesRepository {
       final Set<int> remotelyAccessibleSiteIds = {};
 
       // For each module, fetch its sites with detailed information
+      print(
+          'Synchronisation des sites pour ${modules.length} modules téléchargés');
+
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
         try {
+          print(
+              'Fetching sites for module: ${module.moduleCode} (${module.moduleLabel})');
+
           // Fetch enriched sites data for this module
           final enrichedData =
               await api.fetchEnrichedSitesForModule(module.moduleCode!, token);
@@ -132,6 +153,9 @@ class SitesRepositoryImpl implements SitesRepository {
 
           final List<SiteComplement> moduleSiteComplements =
               (enrichedData['site_complements'] as List).cast<SiteComplement>();
+
+          print(
+              'Found ${enrichedSites.length} sites for module ${module.moduleCode}');
 
           // Process all sites from remote API
           for (final siteJson in enrichedSites) {
@@ -159,14 +183,23 @@ class SitesRepositoryImpl implements SitesRepository {
         }
       }
 
+      // Track site IDs that are associated with downloaded modules
+      final Set<int> downloadedModuleSiteIds = {};
+      for (final module in modules) {
+        final siteModulesForThisModule =
+            existingSiteModules.where((sm) => sm.idModule == module.id);
+        downloadedModuleSiteIds
+            .addAll(siteModulesForThisModule.map((sm) => sm.idSite));
+      }
+
       // 1. Identify sites to ADD (exist remotely but not locally)
       final sitesToAdd = remoteSites.values
           .where((s) => !existingSiteIds.contains(s.idBaseSite))
           .toList();
 
-      // 2. Identify sites to DELETE (exist locally but no longer accessible)
-      final sitesToDelete = existingSites
-          .where((s) => !remotelyAccessibleSiteIds.contains(s.idBaseSite))
+      // 2. Identify sites to DELETE (exist locally in downloaded modules but no longer accessible remotely)
+      final sitesToDelete = downloadedModuleSiteIds
+          .where((siteId) => !remotelyAccessibleSiteIds.contains(siteId))
           .toList();
 
       // 3. Identify sites to UPDATE (exist both locally and remotely)
@@ -180,7 +213,12 @@ class SitesRepositoryImpl implements SitesRepository {
         return !existingSiteModuleKeys.contains(key);
       }).toList();
 
+      // Only delete site-module relationships for downloaded modules
       final siteModulesToDelete = existingSiteModules.where((sm) {
+        // Only consider relationships for downloaded modules
+        if (!modules.any((m) => m.id == sm.idModule)) {
+          return false;
+        }
         final key = '${sm.idSite}_${sm.idModule}';
         return !remoteSiteModuleMap.containsKey(key);
       }).toList();
@@ -188,64 +226,440 @@ class SitesRepositoryImpl implements SitesRepository {
       // 5. Identify site complements to ADD or UPDATE
       final siteComplementsToProcess = remoteSiteComplements.values.toList();
 
+      print(
+          'À ajouter: ${sitesToAdd.length} sites, ${siteModulesToAdd.length} relations site-module');
+      print(
+          'Sites à supprimer des modules téléchargés: ${sitesToDelete.length}');
+      print('Relations site-module à supprimer: ${siteModulesToDelete.length}');
+      print('À mettre à jour: ${sitesToUpdate.length} sites');
+      print(
+          'Compléments de sites à traiter: ${siteComplementsToProcess.length}');
+
       // 6. Perform database operations
 
-      // Delete sites and site-module relationships first
-      for (final siteToDelete in sitesToDelete) {
-        await database.deleteSite(siteToDelete.idBaseSite);
+      // Delete site-module relationships first
+      for (final relationship in siteModulesToDelete) {
+        await database.deleteSiteModule(
+            relationship.idSite, relationship.idModule);
       }
 
-      for (final siteModuleToDelete in siteModulesToDelete) {
-        await database.deleteSiteModule(
-            siteModuleToDelete.idSite, siteModuleToDelete.idModule);
+      // Now check which sites can be completely deleted (no remaining module associations)
+      for (final siteId in sitesToDelete) {
+        // IMPORTANT: Vérifier d'abord s'il y a des visites pour ce site
+        final visits = await visitesDatabase.getVisitsBySite(siteId);
+
+        if (visits.isNotEmpty) {
+          // Si le site a des visites, on ne le supprime pas et on génère un conflit
+          print(
+              'Site $siteId has ${visits.length} visit(s) and cannot be deleted');
+
+          // NOTE: Si vous utilisez un système de gestion de conflits,
+          // vous devriez ajouter un conflit ici avec les informations adéquates
+          // comme dans l'implémentation `incrementalSyncSitesWithConflictHandling`
+
+          // Restaurer la relation site-module pour éviter des problèmes
+          // Pour chaque module téléchargé auquel ce site était lié
+          for (final module in modules) {
+            final existingRelation = existingSiteModules
+                .where((sm) => sm.idSite == siteId && sm.idModule == module.id)
+                .toList();
+
+            if (existingRelation.isNotEmpty) {
+              // Réinsérer la relation pour s'assurer que le site reste visible
+              await database.insertSiteModule(SiteModule(
+                idSite: siteId,
+                idModule: module.id,
+              ));
+              print(
+                  'Restored site-module relationship for site $siteId and module ${module.id} due to existing visits');
+            }
+          }
+
+          continue; // Passer au site suivant
+        }
+
+        // Check if the site is still linked to any module
+        final remainingSiteModules =
+            await database.getSiteModulesBySiteId(siteId);
+
+        if (remainingSiteModules.isEmpty) {
+          // This site isn't linked to any module anymore, completely remove it
+          await database.deleteSite(siteId);
+          // Also delete its complement if it exists
+          await database.deleteSiteComplement(siteId);
+        }
       }
 
       // Add new sites
       if (sitesToAdd.isNotEmpty) {
         await database.insertSites(sitesToAdd);
-        print('Added ${sitesToAdd.length} new sites to the database');
-      }
-
-      // Update existing sites
-      for (final siteToUpdate in sitesToUpdate) {
-        await database.updateSite(siteToUpdate);
       }
 
       // Add new site-module relationships
       if (siteModulesToAdd.isNotEmpty) {
         await database.insertSiteModules(siteModulesToAdd);
-        print(
-            'Added ${siteModulesToAdd.length} new site-module relationships to the database');
       }
 
-      // Process site complements - clear and re-add all for simplicity
+      // Update existing sites
+      for (final site in sitesToUpdate) {
+        await database.updateSite(site);
+      }
+
+      // Add or update site complements
       if (siteComplementsToProcess.isNotEmpty) {
-        await database.clearSiteComplements();
         await database.insertSiteComplements(siteComplementsToProcess);
-        print('Processed ${siteComplementsToProcess.length} site complements');
       }
 
-      print('Removed ${sitesToDelete.length} sites no longer accessible');
       print(
-          'Removed ${siteModulesToDelete.length} site-module relationships no longer valid');
-      print('Updated ${sitesToUpdate.length} existing sites');
+          'Synchronisation incrémentale des sites terminée pour tous les modules téléchargés');
     } catch (error) {
-      print('Error incrementally syncing sites: $error');
+      print('Erreur lors de la synchronisation des sites: $error');
       throw Exception('Failed to incrementally sync sites');
+    }
+  }
+
+  @override
+  Future<SyncResult> incrementalSyncSitesWithConflictHandling(
+      String token) async {
+    // Variables pour les métriques et conflits
+    final List<SyncConflict> allConflicts = [];
+    int itemsProcessed = 0;
+    int itemsAdded = 0;
+    int itemsUpdated = 0;
+    int itemsDeleted = 0;
+    int itemsSkipped = 0;
+
+    try {
+      // Récupérer tous les modules téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      // Traiter chaque module individuellement
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
+
+        print('=== Synchronisation du module ${module.moduleCode} ===');
+
+        // 1. Récupérer les sites LOCAUX pour CE MODULE spécifiquement
+        final localSiteModules =
+            await database.getSiteModulesByModuleId(module.id);
+        final localSiteIdsForModule =
+            localSiteModules.map((sm) => sm.idSite).toSet();
+
+        // Récupérer les détails des sites locaux pour ce module
+        final localSitesForModule = <BaseSite>[];
+        for (final siteId in localSiteIdsForModule) {
+          final site = await database.getSiteById(siteId);
+          if (site != null) {
+            localSitesForModule.add(site);
+          }
+        }
+
+        print(
+            'Sites locaux pour le module ${module.moduleCode}: ${localSitesForModule.length}');
+
+        // 2. Récupérer les sites DISTANTS pour CE MODULE
+        Map<String, dynamic> remoteSitesData;
+        List<BaseSite> remoteSites;
+        List<SiteComplement> remoteSiteComplements;
+
+        try {
+          remoteSitesData =
+              await api.fetchEnrichedSitesForModule(module.moduleCode!, token);
+          final List<Map<String, dynamic>> enrichedSites =
+              (remoteSitesData['enriched_sites'] as List)
+                  .cast<Map<String, dynamic>>();
+
+          remoteSites = enrichedSites
+              .map((json) => BaseSiteEntity.fromJson(json).toDomain())
+              .toList();
+
+          remoteSiteComplements = (remoteSitesData['site_complements'] as List)
+              .cast<SiteComplement>();
+
+          print(
+              'Sites distants pour le module ${module.moduleCode}: ${remoteSites.length}');
+        } catch (e) {
+          print(
+              'Erreur lors de la récupération des sites pour le module ${module.moduleCode}: $e');
+          continue;
+        }
+
+        // 3. Créer les ensembles d'IDs pour la comparaison
+        final remoteSiteIds = remoteSites.map((s) => s.idBaseSite).toSet();
+
+        // 4. Identifier les changements pour CE MODULE
+
+        // Sites à ajouter : existent sur le serveur mais pas localement pour ce module
+        final sitesToAdd = remoteSites
+            .where((s) => !localSiteIdsForModule.contains(s.idBaseSite))
+            .toList();
+
+        // Sites à supprimer : existent localement pour ce module mais plus sur le serveur
+        final sitesToDelete = localSitesForModule
+            .where((s) => !remoteSiteIds.contains(s.idBaseSite))
+            .toList();
+
+        // Sites à mettre à jour : existent des deux côtés
+        final sitesToUpdate = remoteSites
+            .where((s) => localSiteIdsForModule.contains(s.idBaseSite))
+            .toList();
+
+        print(
+            'Module ${module.moduleCode} - À ajouter: ${sitesToAdd.length}, À supprimer: ${sitesToDelete.length}, À mettre à jour: ${sitesToUpdate.length}');
+
+        // 5. Gérer les suppressions avec détection de conflits
+        for (final site in sitesToDelete) {
+          // Vérifier s'il y a des visites pour ce site
+          final visits = await visitesDatabase.getVisitsBySite(site.idBaseSite);
+
+          if (visits.isNotEmpty) {
+            // Créer un conflit
+            final conflict = SyncConflict(
+              conflictType: ConflictType.deletedReference,
+              entityType: 'site',
+              entityId: site.idBaseSite.toString(),
+              affectedField: null,
+              localValue: null,
+              remoteValue: null,
+              localModifiedAt: DateTime.now(),
+              remoteModifiedAt: DateTime.now(),
+              resolutionStrategy: ConflictResolutionStrategy.userDecision,
+              message:
+                  'Site "${site.baseSiteName}" supprimé du module ${module.moduleCode} mais a ${visits.length} visite(s)',
+              localData: {
+                'siteId': site.idBaseSite,
+                'siteName': site.baseSiteName,
+                'moduleCode': module.moduleCode,
+                'moduleName': module.moduleLabel,
+                'visitCount': visits.length,
+                'lastVisitDate':
+                    visits.isNotEmpty ? visits.first.visitDateMin : null,
+              },
+              remoteData: {},
+              severity: ConflictSeverity.high,
+              navigationPath: '/module/${module.id}/site/${site.idBaseSite}',
+              referencedEntityType: 'visit',
+              referencedEntityId:
+                  visits.isNotEmpty ? visits.first.idBaseVisit.toString() : '',
+              referencesCount: visits.length,
+            );
+            allConflicts.add(conflict);
+            itemsSkipped++;
+          } else {
+            // Supprimer la relation site-module
+            await database.deleteSiteModule(site.idBaseSite, module.id);
+
+            // Vérifier si le site est encore lié à d'autres modules téléchargés
+            final allSiteModules = await database.getAllSiteModules();
+            final siteStillLinkedToOtherModules = allSiteModules.any((sm) =>
+                sm.idSite == site.idBaseSite && sm.idModule != module.id);
+
+            if (!siteStillLinkedToOtherModules) {
+              // Le site n'est lié à aucun autre module, on peut le supprimer
+              await database.deleteSite(site.idBaseSite);
+              itemsDeleted++;
+            } else {
+              // Le site est encore lié à d'autres modules, on ne le supprime pas
+              print(
+                  'Site ${site.idBaseSite} still linked to other modules, not deleting');
+            }
+          }
+        }
+
+        // 6. Ajouter les nouveaux sites
+        for (final site in sitesToAdd) {
+          // Vérifier si le site existe déjà dans la base (pour un autre module)
+          final existingSite = await database.getSiteById(site.idBaseSite);
+
+          if (existingSite == null) {
+            // Le site n'existe pas du tout, l'ajouter
+            await database.insertSites([site]);
+          }
+
+          // Créer la relation site-module
+          await database.insertSiteModule(SiteModule(
+            idSite: site.idBaseSite,
+            idModule: module.id,
+          ));
+          itemsAdded++;
+        }
+
+        // 7. Mettre à jour les sites existants
+        for (final site in sitesToUpdate) {
+          await database.updateSite(site);
+          itemsUpdated++;
+        }
+
+        // 8. Gérer les site complements pour ce module
+        final existingComplements = await database.getAllSiteComplements();
+        final existingComplementsMap = Map.fromEntries(
+            existingComplements.map((c) => MapEntry(c.idBaseSite, c)));
+
+        for (final complement in remoteSiteComplements) {
+          final existing = existingComplementsMap[complement.idBaseSite];
+          if (existing == null || existing != complement) {
+            // Insérer ou mettre à jour le complément
+            await database.insertSiteComplements([complement]);
+          }
+        }
+
+        itemsProcessed += remoteSites.length;
+      }
+
+      print('=== Résumé de la synchronisation ===');
+      print(
+          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Conflits: ${allConflicts.length}');
+
+      if (allConflicts.isNotEmpty) {
+        return SyncResult.withConflicts(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsDeleted: itemsDeleted,
+          itemsSkipped: itemsSkipped,
+          itemsFailed: 0,
+          conflicts: allConflicts,
+          errorMessage:
+              'Certains sites ont des références locales dans différents modules',
+        );
+      } else {
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsDeleted: itemsDeleted,
+          itemsSkipped: itemsSkipped,
+        );
+      }
+    } catch (error) {
+      print('Erreur lors de la synchronisation module par module: $error');
+      return SyncResult.failure(
+        errorMessage: 'Erreur: $error',
+      );
+    }
+  }
+
+  @override
+  Future<void> fetchSitesForModule(String moduleCode, String token) async {
+    try {
+      // Récupérer le module par son code
+      final module = await modulesDatabase.getModuleByCode(moduleCode);
+      if (module == null) {
+        throw Exception('Module $moduleCode not found');
+      }
+
+      // Récupérer les sites enrichis pour ce module
+      final enrichedData =
+          await api.fetchEnrichedSitesForModule(moduleCode, token);
+
+      final List<Map<String, dynamic>> enrichedSites =
+          (enrichedData['enriched_sites'] as List).cast<Map<String, dynamic>>();
+
+      final List<SiteComplement> moduleSiteComplements =
+          (enrichedData['site_complements'] as List).cast<SiteComplement>();
+
+      // Traiter les sites
+      for (final siteJson in enrichedSites) {
+        final site = BaseSiteEntity.fromJson(siteJson);
+        final domainSite = site.toDomain();
+
+        // Vérifier si le site existe déjà
+        final existingSite = await database.getSiteById(domainSite.idBaseSite);
+
+        if (existingSite == null) {
+          // Le site n'existe pas, l'ajouter
+          await database.insertSites([domainSite]);
+        } else {
+          // Le site existe, le mettre à jour
+          await database.updateSite(domainSite);
+        }
+
+        // Créer la relation site-module (même si elle existe déjà, ça ne fait pas de doublon)
+        await database.insertSiteModule(SiteModule(
+          idSite: domainSite.idBaseSite,
+          idModule: module.id,
+        ));
+      }
+
+      // Traiter les compléments de sites
+      for (final complement in moduleSiteComplements) {
+        await database.insertSiteComplements([complement]);
+      }
+
+      print('Fetched ${enrichedSites.length} sites for module $moduleCode');
+    } catch (error) {
+      print('Error fetching sites for module $moduleCode: $error');
+      throw Exception('Failed to fetch sites for module $moduleCode');
+    }
+  }
+
+  @override
+  Future<void> fetchSiteGroupsForModule(String moduleCode, String token) async {
+    try {
+      // Récupérer le module par son code
+      final module = await modulesDatabase.getModuleByCode(moduleCode);
+      if (module == null) {
+        throw Exception('Module $moduleCode not found');
+      }
+
+      // Récupérer les groupes de sites pour ce module
+      final siteGroups = await api.fetchSiteGroupsForModule(moduleCode, token);
+
+      for (final siteGroup in siteGroups) {
+        final domainSiteGroup = siteGroup.siteGroup.toDomain();
+
+        // Vérifier si le groupe existe déjà
+        final existingGroups = await database.getAllSiteGroups();
+        final existingGroup = existingGroups.firstWhere(
+          (g) => g.idSitesGroup == domainSiteGroup.idSitesGroup,
+          orElse: () => const SiteGroup(
+            idSitesGroup: -1,
+          ),
+        );
+
+        if (existingGroup.idSitesGroup == -1) {
+          // Le groupe n'existe pas, l'ajouter
+          await database.insertSiteGroups([domainSiteGroup]);
+        } else {
+          // Le groupe existe, le mettre à jour
+          await database.updateSiteGroup(domainSiteGroup);
+        }
+
+        // Créer la relation groupe-module
+        await database.insertSiteGroupModules([
+          SitesGroupModule(
+            idSitesGroup: domainSiteGroup.idSitesGroup,
+            idModule: module.id,
+          )
+        ]);
+      }
+
+      print('Fetched ${siteGroups.length} site groups for module $moduleCode');
+    } catch (error) {
+      print('Error fetching site groups for module $moduleCode: $error');
+      throw Exception('Failed to fetch site groups for module $moduleCode');
     }
   }
 
   @override
   Future<void> fetchSiteGroupsAndSitesGroupModules(String token) async {
     try {
-      // First get all modules from the database
-      final modules = await modulesDatabase.getAllModules();
+      // Récupérer uniquement les modules téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      if (modules.isEmpty) {
+        print(
+            'Aucun module téléchargé trouvé, récupération des groupes de sites ignorée');
+        return;
+      }
 
       // Maps to store unique site groups and the relationships to modules
       final Map<int, SiteGroup> uniqueSiteGroups = {};
       final List<SitesGroupModule> sitesGroupModules = [];
 
-      // For each module, fetch its site groups
+      // Pour chaque module téléchargé, récupérer ses groupes de sites
+      print(
+          'Récupération des groupes de sites pour ${modules.length} modules téléchargés');
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
@@ -290,13 +704,19 @@ class SitesRepositoryImpl implements SitesRepository {
   Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(
       String token) async {
     try {
-      // First get all modules from the database
-      final modules = await modulesDatabase.getAllModules();
+      // Récupérer uniquement les modules marqués comme téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      if (modules.isEmpty) {
+        print(
+            'Aucun module téléchargé trouvé, synchronisation des groupes de sites ignorée');
+        return;
+      }
 
       // Get existing site groups to determine what's new
       final existingSiteGroups = await database.getAllSiteGroups();
       final existingSiteGroupIds =
-          existingSiteGroups.map((g) => g.idSitesGroup).toSet();
+          existingSiteGroups.map((sg) => sg.idSitesGroup).toSet();
 
       // Get existing site group modules to determine what relationships are new
       final existingSiteGroupModules = await database.getAllSiteGroupModules();
@@ -304,19 +724,28 @@ class SitesRepositoryImpl implements SitesRepository {
           .map((sgm) => '${sgm.idSitesGroup}_${sgm.idModule}')
           .toSet();
 
-      // Maps to store site groups data
+      // Maps to store site groups and relationships data
       final Map<int, SiteGroup> remoteSiteGroups = {};
       final Map<String, SitesGroupModule> remoteSiteGroupModuleMap = {};
       final Set<int> remotelyAccessibleSiteGroupIds = {};
 
       // For each module, fetch its site groups
+      print(
+          'Synchronisation des groupes de sites pour ${modules.length} modules téléchargés');
+
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
         try {
+          print(
+              'Fetching site groups for module: ${module.moduleCode} (${module.moduleLabel})');
+
           // Fetch site groups for this module
           final siteGroups =
               await api.fetchSiteGroupsForModule(module.moduleCode!, token);
+
+          print(
+              'Found ${siteGroups.length} site groups for module ${module.moduleCode}');
 
           // Process all site groups from remote API
           for (final siteGroup in siteGroups) {
@@ -339,15 +768,24 @@ class SitesRepositoryImpl implements SitesRepository {
         }
       }
 
+      // Track site group IDs that are associated with downloaded modules
+      final Set<int> downloadedModuleSiteGroupIds = {};
+      for (final module in modules) {
+        final siteGroupModulesForThisModule =
+            existingSiteGroupModules.where((sgm) => sgm.idModule == module.id);
+        downloadedModuleSiteGroupIds.addAll(
+            siteGroupModulesForThisModule.map((sgm) => sgm.idSitesGroup));
+      }
+
       // 1. Identify site groups to ADD (exist remotely but not locally)
       final siteGroupsToAdd = remoteSiteGroups.values
           .where((sg) => !existingSiteGroupIds.contains(sg.idSitesGroup))
           .toList();
 
-      // 2. Identify site groups to DELETE (exist locally but no longer accessible)
-      final siteGroupsToDelete = existingSiteGroups
-          .where(
-              (sg) => !remotelyAccessibleSiteGroupIds.contains(sg.idSitesGroup))
+      // 2. Identify site groups to DELETE (exist locally in downloaded modules but no longer accessible remotely)
+      final siteGroupsToDelete = downloadedModuleSiteGroupIds
+          .where((siteGroupId) =>
+              !remotelyAccessibleSiteGroupIds.contains(siteGroupId))
           .toList();
 
       // 3. Identify site groups to UPDATE (exist both locally and remotely)
@@ -355,57 +793,113 @@ class SitesRepositoryImpl implements SitesRepository {
           .where((sg) => existingSiteGroupIds.contains(sg.idSitesGroup))
           .toList();
 
-      // 4. Identify site group-module relationships to ADD and DELETE
+      // 4. Identify site-group-module relationships to ADD and DELETE
       final siteGroupModulesToAdd =
           remoteSiteGroupModuleMap.values.where((sgm) {
         final key = '${sgm.idSitesGroup}_${sgm.idModule}';
         return !existingSiteGroupModuleKeys.contains(key);
       }).toList();
 
+      // Only delete site-group-module relationships for downloaded modules
       final siteGroupModulesToDelete = existingSiteGroupModules.where((sgm) {
+        // Only consider relationships for downloaded modules
+        if (!modules.any((m) => m.id == sgm.idModule)) {
+          return false;
+        }
         final key = '${sgm.idSitesGroup}_${sgm.idModule}';
         return !remoteSiteGroupModuleMap.containsKey(key);
       }).toList();
 
+      print(
+          'À ajouter: ${siteGroupsToAdd.length} groupes de sites, ${siteGroupModulesToAdd.length} relations groupe-module');
+      print(
+          'Groupes de sites à supprimer des modules téléchargés: ${siteGroupsToDelete.length}');
+      print(
+          'Relations groupe-module à supprimer: ${siteGroupModulesToDelete.length}');
+      print('À mettre à jour: ${siteGroupsToUpdate.length} groupes de sites');
+
       // 5. Perform database operations
 
-      // Delete site groups and site group-module relationships first
-      for (final siteGroupToDelete in siteGroupsToDelete) {
-        await database.deleteSiteGroup(siteGroupToDelete.idSitesGroup);
+      // Delete site-group-module relationships first
+      for (final relationship in siteGroupModulesToDelete) {
+        await database.deleteSiteGroupModule(
+            relationship.idSitesGroup, relationship.idModule);
       }
 
-      for (final siteGroupModuleToDelete in siteGroupModulesToDelete) {
-        await database.deleteSiteGroupModule(
-            siteGroupModuleToDelete.idSitesGroup,
-            siteGroupModuleToDelete.idModule);
+      // Now check which site groups can be completely deleted (no remaining module associations)
+      for (final siteGroupId in siteGroupsToDelete) {
+        // IMPORTANT: Vérifier d'abord s'il y a des sites liés à ce groupe qui ont des visites
+        final sitesInGroup = await database.getSitesBySiteGroup(siteGroupId);
+        bool hasVisits = false;
+
+        // Vérifier si l'un des sites du groupe a des visites
+        for (final site in sitesInGroup) {
+          final visits = await visitesDatabase.getVisitsBySite(site.idBaseSite);
+          if (visits.isNotEmpty) {
+            hasVisits = true;
+            print(
+                'Site group $siteGroupId contains site ${site.idBaseSite} with ${visits.length} visit(s) and cannot be deleted');
+            break;
+          }
+        }
+
+        if (hasVisits) {
+          // Si le groupe contient des sites avec des visites, on ne le supprime pas
+
+          // Restaurer la relation groupe-module pour éviter des problèmes
+          // Pour chaque module téléchargé auquel ce groupe était lié
+          for (final module in modules) {
+            final existingRelation = existingSiteGroupModules
+                .where((sgm) =>
+                    sgm.idSitesGroup == siteGroupId &&
+                    sgm.idModule == module.id)
+                .toList();
+
+            if (existingRelation.isNotEmpty) {
+              // Réinsérer la relation pour s'assurer que le groupe reste visible
+              await database.insertSiteGroupModules([
+                SitesGroupModule(
+                  idSitesGroup: siteGroupId,
+                  idModule: module.id,
+                )
+              ]);
+              print(
+                  'Restored site-group-module relationship for site group $siteGroupId and module ${module.id} due to existing visits in contained sites');
+            }
+          }
+
+          continue; // Passer au groupe suivant
+        }
+
+        // Check if the site group is still linked to any module
+        final remainingSiteGroupModules =
+            await database.getSiteGroupModulesBySiteGroupId(siteGroupId);
+
+        if (remainingSiteGroupModules.isEmpty) {
+          // This site group isn't linked to any module anymore, completely remove it
+          await database.deleteSiteGroup(siteGroupId);
+        }
       }
 
       // Add new site groups
       if (siteGroupsToAdd.isNotEmpty) {
         await database.insertSiteGroups(siteGroupsToAdd);
-        print(
-            'Added ${siteGroupsToAdd.length} new site groups to the database');
+      }
+
+      // Add new site-group-module relationships
+      if (siteGroupModulesToAdd.isNotEmpty) {
+        await database.insertSiteGroupModules(siteGroupModulesToAdd);
       }
 
       // Update existing site groups
-      for (final siteGroupToUpdate in siteGroupsToUpdate) {
-        await database.updateSiteGroup(siteGroupToUpdate);
-      }
-
-      // Add new site group-module relationships
-      if (siteGroupModulesToAdd.isNotEmpty) {
-        await database.insertSiteGroupModules(siteGroupModulesToAdd);
-        print(
-            'Added ${siteGroupModulesToAdd.length} new site group-module relationships to the database');
+      for (final siteGroup in siteGroupsToUpdate) {
+        await database.updateSiteGroup(siteGroup);
       }
 
       print(
-          'Removed ${siteGroupsToDelete.length} site groups no longer accessible');
-      print(
-          'Removed ${siteGroupModulesToDelete.length} site group-module relationships no longer valid');
-      print('Updated ${siteGroupsToUpdate.length} existing site groups');
+          'Synchronisation incrémentale des groupes de sites terminée pour tous les modules téléchargés');
     } catch (error) {
-      print('Error incrementally syncing site groups: $error');
+      print('Erreur lors de la synchronisation des groupes de sites: $error');
       throw Exception('Failed to incrementally sync site groups');
     }
   }
@@ -431,23 +925,25 @@ class SitesRepositoryImpl implements SitesRepository {
       throw Exception('Failed to get site groups');
     }
   }
-  
+
   @override
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
     try {
       // Fetch sites that have the given site group ID in their complements
       final allSites = await database.getAllSites();
       final allComplements = await database.getAllSiteComplements();
-      
+
       // Map of site complements by site ID for easy lookup
-      final complementsMap = {for (var comp in allComplements) comp.idBaseSite: comp};
-      
+      final complementsMap = {
+        for (var comp in allComplements) comp.idBaseSite: comp
+      };
+
       // Filter sites that belong to the specified site group
       final filteredSites = allSites.where((site) {
         final complement = complementsMap[site.idBaseSite];
         return complement != null && complement.idSitesGroup == siteGroupId;
       }).toList();
-      
+
       return filteredSites;
     } catch (error) {
       print('Error getting sites by site group: $error');
