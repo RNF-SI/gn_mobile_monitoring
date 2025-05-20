@@ -25,8 +25,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase_impl.dart';
@@ -40,10 +40,14 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_id_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
@@ -182,9 +186,10 @@ final clearApiUrlFromLocalStorageUseCaseProvider =
         ClearApiUrlFromLocalStorageUseCaseImpl(
             ref.watch(localStorageProvider)));
 
-final downloadModuleDataUseCaseProvider = Provider<DownloadModuleDataUseCase>(
-    (ref) =>
-        DownloadModuleDataUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+final downloadCompleteModuleUseCaseProvider = Provider<DownloadCompleteModuleUseCase>(
+    (ref) => DownloadCompleteModuleUseCaseImpl(
+        ref.watch(modulesRepositoryProvider),
+    ));
 
 final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
     (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
@@ -242,6 +247,8 @@ final downstreamSyncRepositoryProvider = Provider<DownstreamSyncRepository>(
     ref.watch(taxonDatabaseProvider),
     modulesRepository: ref.watch(modulesRepositoryProvider),
     sitesRepository: ref.watch(sitesRepositoryProvider),
+    visitesDatabase: ref.watch(visitDatabaseProvider),
+    observationsDatabase: ref.watch(observationsDatabaseProvider),
   ),
 );
 
@@ -359,9 +366,19 @@ final deleteObservationDetailsByObservationIdUseCaseProvider =
       ref.watch(observationDetailsRepositoryImplProvider)),
 );
 
-// UseCase pour récupérer un module avec sa configuration complète
-final getModuleWithConfigUseCaseProvider = Provider<GetModuleWithConfigUseCase>(
-  (ref) => GetModuleWithConfigUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+// UseCase pour récupérer un module complet depuis la base locale
+final getCompleteModuleUseCaseProvider = Provider<GetCompleteModuleUseCase>(
+  (ref) => GetCompleteModuleUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+);
+
+// UseCase pour récupérer toutes les nomenclatures
+final getNomenclaturesUseCaseProvider = Provider<GetNomenclaturesUseCase>(
+  (ref) => GetNomenclaturesUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+);
+
+// UseCase pour récupérer une nomenclature par son ID
+final getNomenclatureByIdUseCaseProvider = Provider<GetNomenclatureByIdUseCase>(
+  (ref) => GetNomenclatureByIdUseCaseImpl(ref.watch(getNomenclaturesUseCaseProvider)),
 );
 
 // UseCase pour récupérer les sites associés à un groupe de sites
