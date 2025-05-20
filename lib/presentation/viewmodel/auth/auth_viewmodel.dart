@@ -11,13 +11,9 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
@@ -55,8 +51,6 @@ final authenticationViewModelProvider =
     ref.watch(getApiUrlFromLocalStorageUseCaseProvider),
     ref.watch(clearApiUrlFromLocalStorageUseCaseProvider),
     ref.watch(fetchModulesUseCaseProvider),
-    ref.watch(fetchSitesUseCaseProvider),
-    ref.watch(fetchSiteGroupsUseCaseProvider),
     ref,
   );
 });
@@ -84,8 +78,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final GetApiUrlFromLocalStorageUseCase _getApiUrlFromLocalStorageUseCase;
   final ClearApiUrlFromLocalStorageUseCase _clearApiUrlFromLocalStorageUseCase;
   final FetchModulesUseCase _fetchModulesUseCase;
-  final FetchSitesUseCase _fetchSitesUseCase;
-  final FetchSiteGroupsUseCase _fetchSiteGroupsUseCase;
   final Ref _ref;
 
   AuthenticationViewModel(
@@ -101,8 +93,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._getApiUrlFromLocalStorageUseCase,
     this._clearApiUrlFromLocalStorageUseCase,
     this._fetchModulesUseCase,
-    this._fetchSitesUseCase,
-    this._fetchSiteGroupsUseCase,
     this._ref,
   ) : super(const loadingState.State.init()) {
     controller.add(_user);
@@ -125,12 +115,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   // For convenience, access to incremental sync use cases through ref
   IncrementalSyncModulesUseCase get _incrementalSyncModulesUseCase =>
       _ref.read(incrementalSyncModulesUseCaseProvider);
-
-  IncrementalSyncSitesUseCase get _incrementalSyncSitesUseCase =>
-      _ref.read(incrementalSyncSitesUseCaseProvider);
-
-  IncrementalSyncSiteGroupsUseCase get _incrementalSyncSiteGroupsUseCase =>
-      _ref.read(incrementalSyncSiteGroupsUseCaseProvider);
 
   GetModulesUseCase get _getModulesUseCase =>
       _ref.read(getModulesUseCaseProvider);
@@ -196,13 +180,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
               _updateLoginStatus(LoginStatusInfo.incrementalSyncModules);
               await _incrementalSyncModulesUseCase.execute(user.token);
 
-              // Then incremental sync sites
-              _updateLoginStatus(LoginStatusInfo.incrementalSyncSites);
-              await _incrementalSyncSitesUseCase.execute(user.token);
-
-              // Then incremental sync site groups
-              _updateLoginStatus(LoginStatusInfo.incrementalSyncSiteGroups);
-              await _incrementalSyncSiteGroupsUseCase.execute(user.token);
+              // Sites are now synchronized with individual modules, not here anymore
             } else {
               print("Empty database. Performing full initial sync...");
 
@@ -210,13 +188,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
               _updateLoginStatus(LoginStatusInfo.fetchingModules);
               await _fetchModulesUseCase.execute(user.token);
 
-              // Then fetch sites
-              _updateLoginStatus(LoginStatusInfo.fetchingSites);
-              await _fetchSitesUseCase.execute(user.token);
-
-              // Then fetch site groups
-              _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
-              await _fetchSiteGroupsUseCase.execute(user.token);
+              // Sites are now downloaded with individual modules, not here anymore
             }
           } catch (e) {
             print('Error during data sync: $e');
