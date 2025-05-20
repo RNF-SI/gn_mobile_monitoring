@@ -1,5 +1,5 @@
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -46,15 +46,15 @@ class ModuleDetailViewModelState {
 
 // ViewModel pour la page de détail du module
 class ModuleDetailViewModel extends StateNotifier<ModuleDetailViewModelState> {
-  final GetModuleWithConfigUseCase _getModuleWithConfigUseCase;
+  final GetCompleteModuleUseCase _getCompleteModuleUseCase;
 
-  ModuleDetailViewModel(this._getModuleWithConfigUseCase)
+  ModuleDetailViewModel(this._getCompleteModuleUseCase)
       : super(ModuleDetailViewModelState.loading());
 
   Future<void> loadModuleWithConfig(int moduleId) async {
     try {
       state = ModuleDetailViewModelState.loading();
-      final module = await _getModuleWithConfigUseCase.execute(moduleId);
+      final module = await _getCompleteModuleUseCase.execute(moduleId);
       state = ModuleDetailViewModelState.loaded(module);
     } catch (e) {
       state = ModuleDetailViewModelState.error(e.toString());
@@ -66,8 +66,8 @@ class ModuleDetailViewModel extends StateNotifier<ModuleDetailViewModelState> {
 final moduleDetailViewModelProvider = StateNotifierProvider.autoDispose
     .family<ModuleDetailViewModel, ModuleDetailViewModelState, int>(
   (ref, moduleId) {
-    final getModuleWithConfigUseCase = ref.watch(getModuleWithConfigUseCaseProvider);
-    final viewModel = ModuleDetailViewModel(getModuleWithConfigUseCase);
+    final getCompleteModuleUseCase = ref.watch(getCompleteModuleUseCaseProvider);
+    final viewModel = ModuleDetailViewModel(getCompleteModuleUseCase);
     viewModel.loadModuleWithConfig(moduleId);
     return viewModel;
   },

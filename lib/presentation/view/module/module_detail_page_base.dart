@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
@@ -50,7 +50,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   Module? _updatedModule;
 
   // Injection du use case pour respecter la Clean Architecture
-  late GetModuleWithConfigUseCase getModuleWithConfigUseCase;
+  late GetCompleteModuleUseCase getCompleteModuleUseCase;
 
   @override
   ObjectConfig? get objectConfig {
@@ -137,28 +137,29 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Toujours charger la configuration complète du module quand la propriété est injectée
   }
 
-  // Méthode pour charger le module avec sa configuration complète
-  Future<void> loadModuleWithConfig() async {
+  // Méthode pour charger le module complet avec toutes ses données associées
+  Future<void> loadCompleteModule() async {
     try {
-      // Utiliser le use case injecté par le widget parent
-      final moduleWithConfig =
-          await getModuleWithConfigUseCase.execute(widget.moduleInfo.module.id);
+      // Utiliser le use case injecté par le widget parent pour récupérer le module complet
+      // Cela inclut : configuration, sites, groupes de sites et données complémentaires
+      final completeModule =
+          await getCompleteModuleUseCase.execute(widget.moduleInfo.module.id);
 
       // Vérifier si la configuration est bien présente
       final bool hasConfiguration =
-          moduleWithConfig.complement?.configuration != null;
+          completeModule.complement?.configuration != null;
 
       // Mettre à jour le ModuleInfo
       if (mounted) {
         setState(() {
-          // Stocker le module mis à jour avec sa configuration dans la variable de classe
-          _updatedModule = moduleWithConfig;
+          // Stocker le module complet dans la variable de classe
+          _updatedModule = completeModule;
 
           // Marquer la configuration comme chargée
           _configurationLoaded = hasConfiguration;
           _isInitialLoading = false;
 
-          // Mettre à jour l'interface
+          // Mettre à jour l'interface avec les nouvelles données
           _updateChildrenTypesFromConfig();
           _initializeTabController();
           _loadSitesIfAvailable();

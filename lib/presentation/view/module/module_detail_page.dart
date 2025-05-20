@@ -31,10 +31,10 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage> {
         _moduleDetailPageBaseStateKey.currentState;
     if (moduleDetailPageBaseState != null) {
       // Injection du use case provenant du provider
-      moduleDetailPageBaseState.getModuleWithConfigUseCase =
-          ref.read(getModuleWithConfigUseCaseProvider);
-      // Démarrer le chargement de la configuration
-      moduleDetailPageBaseState.loadModuleWithConfig();
+      moduleDetailPageBaseState.getCompleteModuleUseCase =
+          ref.read(getCompleteModuleUseCaseProvider);
+      // Démarrer le chargement du module complet (incluant sites et configuration)
+      moduleDetailPageBaseState.loadCompleteModule();
     }
   }
 
