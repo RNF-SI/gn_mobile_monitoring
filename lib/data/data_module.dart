@@ -86,6 +86,7 @@ final sitesRepositoryProvider =
           ref.watch(sitesApiProvider),
           ref.watch(siteDatabaseProvider),
           ref.watch(moduleDatabaseProvider),
+          ref.watch(visitDatabaseProvider),
         ));
 
 final visitDatabaseProvider =
@@ -143,4 +144,5 @@ final modulesRepositoryProvider =
           ref.watch(datasetsDatabaseProvider),
           ref.watch(taxonDatabaseProvider),
           ref.watch(taxonRepositoryProvider),
+          ref.watch(sitesRepositoryProvider),
         ));

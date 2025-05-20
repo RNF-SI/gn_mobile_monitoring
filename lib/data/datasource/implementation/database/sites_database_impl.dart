@@ -55,6 +55,12 @@ class SitesDatabaseImpl implements SitesDatabase {
   }
 
   @override
+  Future<void> deleteSiteComplement(int siteId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSiteComplement(siteId);
+  }
+
+  @override
   Future<List<SiteComplement>> getAllSiteComplements() async {
     final db = await _database;
     return await db.sitesDao.getAllComplements();
@@ -132,6 +138,12 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     return await db.sitesDao.getGroupsByModuleId(moduleId);
   }
+  
+  @override
+  Future<List<SitesGroupModule>> getSiteGroupModulesBySiteGroupId(int siteGroupId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteGroupModulesBySiteGroupId(siteGroupId);
+  }
 
   /// CorSitesModules
   @override
@@ -165,6 +177,12 @@ class SitesDatabaseImpl implements SitesDatabase {
   }
   
   @override
+  Future<List<SiteModule>> getSiteModulesBySiteId(int siteId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteModulesBySiteId(siteId);
+  }
+  
+  @override
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
     final db = await _database;
     // For now, return all sites - we'll need to implement proper filtering
@@ -182,5 +200,23 @@ class SitesDatabaseImpl implements SitesDatabase {
   Future<void> insertSiteGroup(SiteGroup siteGroup) async {
     final db = await _database;
     await db.sitesDao.insertGroups([siteGroup]);
+  }
+  
+  @override
+  Future<List<SiteModule>> getSiteModulesByModuleId(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteModulesByModuleId(moduleId);
+  }
+  
+  @override
+  Future<void> insertSiteModule(SiteModule siteModule) async {
+    final db = await _database;
+    await db.sitesDao.insertSiteModule(siteModule);
+  }
+  
+  @override
+  Future<BaseSite?> getSiteById(int siteId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteById(siteId);
   }
 }

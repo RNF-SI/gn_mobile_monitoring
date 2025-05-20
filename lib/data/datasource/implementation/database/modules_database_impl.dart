@@ -38,7 +38,7 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   Future<String> getModuleCodeFromIdModule(int moduleId) async {
     final db = await _database;
     final module = await db.modulesDao.getModuleById(moduleId);
-    return module.moduleCode ?? ''; // Ensure non-null string
+    return module!.moduleCode ?? ''; // Ensure non-null string
   }
 
   @override
@@ -62,17 +62,18 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     return await db.modulesDao.getModuleComplementById(moduleId);
   }
-  
+
   @override
-  Future<ModuleComplement?> getModuleComplementByModuleCode(String moduleCode) async {
+  Future<ModuleComplement?> getModuleComplementByModuleCode(
+      String moduleCode) async {
     final db = await _database;
     // Trouver d'abord le module par son code
     final module = await db.modulesDao.getModuleByCode(moduleCode);
-    
+
     if (module == null) {
       return null;
     }
-    
+
     // Récupérer ensuite le complément par l'ID du module
     return await db.modulesDao.getModuleComplementById(module.id);
   }
@@ -82,14 +83,15 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     return await db.modulesDao.getAllModuleComplements();
   }
-  
+
   @override
   Future<int?> getModuleTaxonomyListId(int moduleId) async {
     try {
       final db = await _database;
       return await db.modulesDao.getModuleTaxonomyListId(moduleId);
     } catch (e) {
-      debugPrint('Erreur lors de la récupération de l\'ID de liste taxonomique: $e');
+      debugPrint(
+          'Erreur lors de la récupération de l\'ID de liste taxonomique: $e');
       return null;
     }
   }
@@ -149,7 +151,16 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   @override
   Future<Module?> getModuleById(int moduleId) async {
     final db = await _database;
+    // Utilise la méthode qui récupère uniquement les informations de base du module
     return await db.modulesDao.getModuleById(moduleId);
+  }
+
+  @override
+  Future<Module> getModuleWithRelationsById(int moduleId) async {
+    final db = await _database;
+    // Utilise la méthode qui récupère le module complet avec toutes ses relations
+    // (sites, groupes de sites, etc.)
+    return await db.modulesDao.getModuleWithRelationsById(moduleId);
   }
 
   @override
@@ -157,13 +168,19 @@ class ModuleDatabaseImpl implements ModulesDatabase {
     final db = await _database;
     return await db.modulesDao.getAllModules();
   }
+  
+  @override
+  Future<List<Module>> getDownloadedModules() async {
+    final db = await _database;
+    return await db.modulesDao.getDownloadedModules();
+  }
 
   @override
   Future<Module?> getModuleIdByLabel(String moduleLabel) async {
     final db = await _database;
     return await db.modulesDao.getModuleIdByLabel(moduleLabel);
   }
-  
+
   @override
   Future<Module?> getModuleByCode(String moduleCode) async {
     final db = await _database;

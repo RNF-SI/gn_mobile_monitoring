@@ -53,9 +53,11 @@ class SitesApiImpl implements SitesApi {
       final List<BaseSiteEntity> moduleSites = [];
 
       // Extract site IDs from the module response
+      print('Module data keys: ${moduleData.keys}');
       if (moduleData['children'] != null &&
           moduleData['children']['site'] != null) {
         final sitesList = moduleData['children']['site'] as List;
+        print('Found ${sitesList.length} sites in module $moduleCode');
         for (var site in sitesList) {
           final siteData = site as Map<String, dynamic>;
           final properties = siteData['properties'] as Map<String, dynamic>;
@@ -92,6 +94,7 @@ class SitesApiImpl implements SitesApi {
       }
 
       final List<dynamic> allSitesData = detailedResponse.data;
+      print('Found ${allSitesData.length} detailed sites from /monitorings/list/$moduleCode/site');
       final Map<int, Map<String, dynamic>> detailedSitesMap = {};
       final List<Map<String, dynamic>> enrichedSites = [];
       final List<SiteComplement> siteComplements = [];
