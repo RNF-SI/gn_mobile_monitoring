@@ -15,6 +15,7 @@ abstract class SitesDatabase {
   /// Methods for handling `TSiteComplements`.
   Future<void> clearSiteComplements();
   Future<void> insertSiteComplements(List<SiteComplement> complements);
+  Future<void> deleteSiteComplement(int siteId);
   Future<List<SiteComplement>> getAllSiteComplements();
 
   /// Methods for handling `TSitesGroups`.
@@ -33,6 +34,7 @@ abstract class SitesDatabase {
   Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId);
   Future<List<SitesGroupModule>> getAllSiteGroupModules();
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId);
+  Future<List<SitesGroupModule>> getSiteGroupModulesBySiteGroupId(int siteGroupId);
 
   /// Methods for handling CorSitesModules
   Future<void> clearAllSiteModules();
@@ -40,6 +42,7 @@ abstract class SitesDatabase {
   Future<void> deleteSiteModule(int siteId, int moduleId);
   Future<List<SiteModule>> getAllSiteModules();
   Future<List<BaseSite>> getSitesByModuleId(int moduleId);
+  Future<List<SiteModule>> getSiteModulesBySiteId(int siteId);
   
   /// Get sites by site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
@@ -49,4 +52,13 @@ abstract class SitesDatabase {
   
   /// Insert a single site group
   Future<void> insertSiteGroup(SiteGroup siteGroup);
+  
+  /// Get site modules by module ID
+  Future<List<SiteModule>> getSiteModulesByModuleId(int moduleId);
+  
+  /// Insert a single site-module relationship
+  Future<void> insertSiteModule(SiteModule siteModule);
+  
+  /// Get a site by its ID
+  Future<BaseSite?> getSiteById(int siteId);
 }
