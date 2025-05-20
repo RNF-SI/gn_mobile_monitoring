@@ -98,6 +98,17 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
       throw Exception("Failed to clear site complements: ${e.toString()}");
     }
   }
+  
+  // Delete a site complement
+  Future<void> deleteSiteComplement(int siteId) async {
+    try {
+      await (delete(tSiteComplements)
+            ..where((tbl) => tbl.idBaseSite.equals(siteId)))
+          .go();
+    } catch (e) {
+      throw Exception("Failed to delete site complement for site $siteId: ${e.toString()}");
+    }
+  }
 
   /// Operations for TSitesGroups
 
@@ -192,6 +203,18 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     final results = await query.map((row) => row.readTable(tSitesGroups)).get();
     return results.map((e) => e.toDomain()).toList();
   }
+  
+  Future<List<SitesGroupModule>> getSiteGroupModulesBySiteGroupId(int siteGroupId) async {
+    final query = select(corSitesGroupModuleTable)
+      ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId));
+    final results = await query.get();
+    return results
+        .map((e) => SitesGroupModule(
+              idSitesGroup: e.idSitesGroup,
+              idModule: e.idModule,
+            ))
+        .toList();
+  }
 
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
     final query = select(corSiteModuleTable).join([
@@ -219,6 +242,11 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
       batch.insertAll(corSiteModuleTable, dbEntities);
     });
   }
+  
+  Future<void> insertSiteModule(SiteModule module) async {
+    final dbEntity = module.toDatabaseEntity();
+    await into(corSiteModuleTable).insert(dbEntity);
+  }
 
   Future<void> deleteSiteModule(int siteId, int moduleId) async {
     await (delete(corSiteModuleTable)
@@ -233,5 +261,29 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     } catch (e) {
       throw Exception("Failed to clear site modules: ${e.toString()}");
     }
+  }
+  
+  Future<List<SiteModule>> getSiteModulesByModuleId(int moduleId) async {
+    final query = select(corSiteModuleTable)
+      ..where((tbl) => tbl.idModule.equals(moduleId));
+    final results = await query.get();
+    return results
+        .map((e) => SiteModule(
+              idSite: e.idBaseSite,
+              idModule: e.idModule,
+            ))
+        .toList();
+  }
+  
+  Future<List<SiteModule>> getSiteModulesBySiteId(int siteId) async {
+    final query = select(corSiteModuleTable)
+      ..where((tbl) => tbl.idBaseSite.equals(siteId));
+    final results = await query.get();
+    return results
+        .map((e) => SiteModule(
+              idSite: e.idBaseSite,
+              idModule: e.idModule,
+            ))
+        .toList();
   }
 }
