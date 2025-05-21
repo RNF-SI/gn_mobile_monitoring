@@ -555,16 +555,6 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
-  Future<Module> getModuleWithRelationsById(int moduleId) async {
-    try {
-      // Cette méthode charge le module avec toutes ses relations (sites et groupes de sites)
-      return await database.getModuleWithRelationsById(moduleId);
-    } catch (e) {
-      throw Exception('Failed to get module with relations by id: $e');
-    }
-  }
-
-  @override
   Future<Module?> getModuleByCode(String moduleCode) async {
     try {
       return await database.getModuleByCode(moduleCode);
