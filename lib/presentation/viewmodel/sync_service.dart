@@ -97,8 +97,9 @@ class SyncService extends StateNotifier<SyncStatus> {
     _isSyncing = true;
     debugPrint('Démarrage de syncAll avec plusieurs éléments');
 
-    // Réinitialiser les résultats au début d'une nouvelle synchronisation complète
+    // Réinitialiser les résultats et conflits au début d'une nouvelle synchronisation complète
     _syncResults.clear();
+    allConflicts.clear(); // Vider la liste des conflits pour éviter les conflits fantômes
 
     final List<SyncStep> completedSteps = [];
     final List<SyncStep> failedSteps = [];
@@ -685,6 +686,28 @@ class SyncService extends StateNotifier<SyncStatus> {
   Future<SyncResult> _executeSingleSync(String token, String stepKey,
       {String? moduleCode}) async {
     debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
+    
+    // Nettoyer les conflits existants pour ce type d'entité au début de la synchronisation
+    // pour éviter que d'anciens conflits persistent après résolution manuelle
+    switch (stepKey) {
+      case 'sites':
+        allConflicts.removeWhere((conflict) => conflict.entityType == 'site');
+        debugPrint('Nettoyage des anciens conflits de sites');
+        break;
+      case 'siteGroups':
+        allConflicts.removeWhere((conflict) => conflict.entityType == 'siteGroup');
+        debugPrint('Nettoyage des anciens conflits de groupes de sites');
+        break;
+      case 'nomenclatures':
+      case 'nomenclatures_datasets':
+        allConflicts.removeWhere((conflict) => conflict.referencedEntityType == 'nomenclature');
+        debugPrint('Nettoyage des anciens conflits de nomenclatures');
+        break;
+      case 'taxons':
+        allConflicts.removeWhere((conflict) => conflict.referencedEntityType == 'taxon');
+        debugPrint('Nettoyage des anciens conflits de taxons');
+        break;
+    }
 
     final Map<String, dynamic> params = {
       'syncConfiguration': false,
@@ -951,6 +974,22 @@ class SyncService extends StateNotifier<SyncStatus> {
         return SyncStep.observationDetailsToServer;
       default:
         return SyncStep.configuration; // Valeur par défaut
+    }
+  }
+
+  /// Nettoie tous les conflits en mémoire (utile après résolution manuelle)
+  void clearAllConflicts() {
+    allConflicts.clear();
+    debugPrint('Tous les conflits ont été supprimés du cache');
+  }
+
+  /// Nettoie les conflits d'un type spécifique (utile après résolution manuelle)
+  void clearConflictsForEntityType(String entityType) {
+    final initialCount = allConflicts.length;
+    allConflicts.removeWhere((conflict) => conflict.entityType == entityType);
+    final removedCount = initialCount - allConflicts.length;
+    if (removedCount > 0) {
+      debugPrint('$removedCount conflit(s) de type $entityType supprimé(s) du cache');
     }
   }
 

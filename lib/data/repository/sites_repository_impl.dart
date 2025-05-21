@@ -114,11 +114,11 @@ class SitesRepositoryImpl implements SitesRepository {
 
         // 5. Gérer les suppressions avec détection de conflits
         for (final site in sitesToDelete) {
-          // Vérifier s'il y a des visites pour ce site
+          // Re-vérifier s'il y a encore des visites (elles pourraient avoir été supprimées depuis le dernier conflit)
           final visits = await visitesDatabase.getVisitsBySite(site.idBaseSite);
 
           if (visits.isNotEmpty) {
-            // Créer un conflit
+            // Créer un conflit seulement s'il y a encore des visites
             final conflict = SyncConflict(
               conflictType: ConflictType.deletedReference,
               entityType: 'site',
@@ -150,7 +150,11 @@ class SitesRepositoryImpl implements SitesRepository {
             );
             allConflicts.add(conflict);
             itemsSkipped++;
+            print('Conflit maintenu pour le site ${site.idBaseSite} : ${visits.length} visite(s) toujours présente(s)');
           } else {
+            // Plus de visites - le conflit peut être résolu automatiquement
+            print('Site ${site.idBaseSite} : plus de visites, suppression automatique du site');
+            
             // Supprimer la relation site-module
             await database.deleteSiteModule(site.idBaseSite, module.id);
 
@@ -163,6 +167,7 @@ class SitesRepositoryImpl implements SitesRepository {
               // Le site n'est lié à aucun autre module, on peut le supprimer
               await database.deleteSite(site.idBaseSite);
               itemsDeleted++;
+              print('Site ${site.idBaseSite} complètement supprimé');
             } else {
               // Le site est encore lié à d'autres modules, on ne le supprime pas
               print(
@@ -460,8 +465,10 @@ class SitesRepositoryImpl implements SitesRepository {
               'Groupes de sites distants pour le module ${module.moduleCode}: ${remoteSiteGroups.length}');
         } catch (e) {
           print(
-              'Erreur lors de la récupération des groupes de sites pour le module ${module.moduleCode}: $e');
-          continue;
+              'Module ${module.moduleCode}: Aucun groupe de sites trouvé ou erreur API - $e');
+          // Si le module n'a pas de groupes de sites, traiter comme une liste vide
+          remoteSiteGroups = [];
+          // Ne pas faire continue, traiter comme un cas normal avec 0 groupe
         }
 
         // 3. Créer les ensembles d'IDs pour la comparaison
