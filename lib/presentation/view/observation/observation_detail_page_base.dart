@@ -345,6 +345,12 @@ class ObservationDetailPageBaseState
             }
           },
         ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () {
+            _showDeleteObservationConfirmationDialog();
+          },
+        ),
       ],
     );
   }
@@ -876,5 +882,81 @@ class ObservationDetailPageBaseState
         ],
       ),
     );
+  }
+
+  /// Affiche la boîte de dialogue de confirmation pour la suppression de l'observation
+  void _showDeleteObservationConfirmationDialog() async {
+    // Compter les détails d'observation associés
+    final detailsCount = _observationDetails.length;
+    
+    String message = 'Êtes-vous sûr de vouloir supprimer cette observation ?';
+    if (detailsCount > 0) {
+      message += '\n\nAttention : Les $detailsCount détail(s) d\'observation associé(s) seront également supprimé(s).';
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmer la suppression'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.red,
+            ),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await _deleteObservation();
+    }
+  }
+
+  /// Supprime l'observation actuelle
+  Future<void> _deleteObservation() async {
+    try {
+      final observationsViewModel = widget.ref.read(
+        observationsProvider(widget.visit.idBaseVisit).notifier,
+      );
+
+      final success = await observationsViewModel.deleteObservation(
+        (_fullObservation ?? widget.observation).idObservation,
+      );
+
+      if (mounted) {
+        if (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Observation supprimée avec succès')),
+          );
+          
+          // Retourner à la page précédente (visite) après suppression
+          Navigator.of(context).pop();
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Échec de la suppression de l\'observation'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la suppression: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

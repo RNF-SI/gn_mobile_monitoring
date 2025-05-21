@@ -272,8 +272,115 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             }
           },
         ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _showDeleteConfirmationDialog(),
+        ),
       ],
     );
+  }
+
+  /// Affiche le dialogue de confirmation pour la suppression de la visite
+  void _showDeleteConfirmationDialog() async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.visit.idModule)).notifier);
+    
+    // Compter les observations de cette visite
+    final observationCount = await siteVisitsViewModel
+        .getObservationCountForVisit(widget.visit.idBaseVisit!);
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la visite'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Voulez-vous vraiment supprimer cette visite ?'),
+            if (observationCount > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        observationCount == 1
+                            ? 'Cette action supprimera également 1 observation et tous ses détails associés.'
+                            : 'Cette action supprimera également $observationCount observations et tous leurs détails associés.',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteVisit();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Supprime la visite et navigue vers la page précédente
+  void _deleteVisit() async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.visit.idModule)).notifier);
+    
+    try {
+      final success = await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit!);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visite supprimée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Retourner à la page précédente
+        Navigator.of(context).pop();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la suppression de la visite'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override

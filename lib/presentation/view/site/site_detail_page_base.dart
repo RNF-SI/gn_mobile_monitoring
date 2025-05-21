@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
@@ -514,6 +515,15 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                     minHeight: 40,
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                  tooltip: 'Supprimer',
+                  onPressed: () => _showDeleteVisitConfirmationDialog(visit),
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                ),
               ],
             ),
           );
@@ -642,5 +652,110 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
       widget.ref.invalidate(siteVisitsViewModelProvider(params));
     });
+  }
+
+  /// Affiche le dialogue de confirmation pour la suppression d'une visite depuis la liste
+  void _showDeleteVisitConfirmationDialog(BaseVisit visit) async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+    
+    // Compter les observations de cette visite
+    final observationCount = await siteVisitsViewModel
+        .getObservationCountForVisit(visit.idBaseVisit!);
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la visite'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Voulez-vous vraiment supprimer la visite du ${
+              formatDateString(visit.visitDateMin)
+            } ?'),
+            if (observationCount > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        observationCount == 1
+                            ? 'Cette action supprimera également 1 observation et tous ses détails associés.'
+                            : 'Cette action supprimera également $observationCount observations et tous leurs détails associés.',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteVisitFromList(visit);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Supprime une visite depuis la liste
+  void _deleteVisitFromList(BaseVisit visit) async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+    
+    try {
+      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit!);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visite supprimée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Pas besoin de navigation car on reste sur la même page
+        // Le ViewModel va automatiquement rafraîchir la liste
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la suppression de la visite'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
