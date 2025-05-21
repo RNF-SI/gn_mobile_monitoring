@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
@@ -29,6 +30,8 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
       ref.watch(getVisitsBySiteAndModuleUseCaseProvider);
   final getVisitWithDetailsUseCase =
       ref.watch(getVisitWithDetailsUseCaseProvider);
+  final getObservationsByVisitIdUseCase =
+      ref.watch(getObservationsByVisitIdUseCaseProvider);
   final getVisitComplementUseCase =
       ref.watch(getVisitComplementUseCaseProvider);
   final saveVisitComplementUseCase =
@@ -44,6 +47,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
   return SiteVisitsViewModel(
     getVisitsBySiteAndModuleUseCase,
     getVisitWithDetailsUseCase,
+    getObservationsByVisitIdUseCase,
     getVisitComplementUseCase,
     saveVisitComplementUseCase,
     createVisitUseCase,
@@ -60,6 +64,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
 class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final GetVisitsBySiteAndModuleUseCase _getVisitsBySiteAndModuleUseCase;
   final GetVisitWithDetailsUseCase _getVisitWithDetailsUseCase;
+  final GetObservationsByVisitIdUseCase _getObservationsByVisitIdUseCase;
   final GetVisitComplementUseCase _getVisitComplementUseCase;
   final SaveVisitComplementUseCase _saveVisitComplementUseCase;
   final CreateVisitUseCase _createVisitUseCase;
@@ -78,6 +83,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   SiteVisitsViewModel(
     this._getVisitsBySiteAndModuleUseCase,
     this._getVisitWithDetailsUseCase,
+    this._getObservationsByVisitIdUseCase,
     this._getVisitComplementUseCase,
     this._saveVisitComplementUseCase,
     this._createVisitUseCase,
@@ -212,6 +218,17 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     } catch (e) {
       debugPrint('Erreur lors de la mise à jour de la visite: $e');
       throw Exception(e.toString());
+    }
+  }
+
+  /// Compte le nombre d'observations d'une visite
+  Future<int> getObservationCountForVisit(int visitId) async {
+    try {
+      final observations = await _getObservationsByVisitIdUseCase.execute(visitId);
+      return observations.length;
+    } catch (e) {
+      debugPrint('Erreur lors du comptage des observations: $e');
+      return 0;
     }
   }
 
