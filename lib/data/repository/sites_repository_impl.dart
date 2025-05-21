@@ -406,6 +406,223 @@ class SitesRepositoryImpl implements SitesRepository {
   }
 
   @override
+  Future<SyncResult> incrementalSyncSiteGroupsWithConflictHandling(
+      String token) async {
+    // Variables pour les métriques et conflits
+    final List<SyncConflict> allConflicts = [];
+    int itemsProcessed = 0;
+    int itemsAdded = 0;
+    int itemsUpdated = 0;
+    int itemsDeleted = 0;
+    int itemsSkipped = 0;
+
+    try {
+      // Récupérer uniquement les modules téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
+
+      if (modules.isEmpty) {
+        print(
+            'Aucun module téléchargé trouvé, synchronisation des groupes de sites ignorée');
+        return SyncResult.success(
+          itemsProcessed: 0,
+          itemsAdded: 0,
+          itemsUpdated: 0,
+          itemsSkipped: 0,
+        );
+      }
+
+      // Traiter chaque module individuellement
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
+
+        print('=== Synchronisation groupes de sites module ${module.moduleCode} ===');
+
+        // 1. Récupérer les groupes de sites LOCAUX pour CE MODULE spécifiquement
+        final localSiteGroupsForModule = await database.getSiteGroupsByModuleId(module.id);
+        final localSiteGroupIdsForModule =
+            localSiteGroupsForModule.map((sg) => sg.idSitesGroup).toSet();
+
+        print(
+            'Groupes de sites locaux pour le module ${module.moduleCode}: ${localSiteGroupsForModule.length}');
+
+        // 2. Récupérer les groupes de sites DISTANTS pour CE MODULE
+        List<SiteGroup> remoteSiteGroups;
+
+        try {
+          final siteGroups =
+              await api.fetchSiteGroupsForModule(module.moduleCode!, token);
+
+          remoteSiteGroups = siteGroups
+              .map((sg) => sg.siteGroup.toDomain())
+              .toList();
+
+          print(
+              'Groupes de sites distants pour le module ${module.moduleCode}: ${remoteSiteGroups.length}');
+        } catch (e) {
+          print(
+              'Erreur lors de la récupération des groupes de sites pour le module ${module.moduleCode}: $e');
+          continue;
+        }
+
+        // 3. Créer les ensembles d'IDs pour la comparaison
+        final remoteSiteGroupIds = remoteSiteGroups.map((sg) => sg.idSitesGroup).toSet();
+
+        // 4. Identifier les changements pour CE MODULE
+
+        // Groupes de sites à ajouter : existent sur le serveur mais pas localement pour ce module
+        final siteGroupsToAdd = remoteSiteGroups
+            .where((sg) => !localSiteGroupIdsForModule.contains(sg.idSitesGroup))
+            .toList();
+
+        // Groupes de sites à supprimer : existent localement pour ce module mais plus sur le serveur
+        final siteGroupsToDelete = localSiteGroupsForModule
+            .where((sg) => !remoteSiteGroupIds.contains(sg.idSitesGroup))
+            .toList();
+
+        // Groupes de sites à mettre à jour : existent des deux côtés
+        final siteGroupsToUpdate = remoteSiteGroups
+            .where((sg) => localSiteGroupIdsForModule.contains(sg.idSitesGroup))
+            .toList();
+
+        print(
+            'Module ${module.moduleCode} - À ajouter: ${siteGroupsToAdd.length}, À supprimer: ${siteGroupsToDelete.length}, À mettre à jour: ${siteGroupsToUpdate.length}');
+
+        // 5. Gérer les suppressions avec détection de conflits
+        for (final siteGroup in siteGroupsToDelete) {
+          // Vérifier s'il y a des sites dans ce groupe qui ont des visites
+          final sitesInGroup = await database.getSitesBySiteGroup(siteGroup.idSitesGroup);
+          bool hasVisits = false;
+          int totalVisits = 0;
+
+          // Vérifier si l'un des sites du groupe a des visites
+          for (final site in sitesInGroup) {
+            final visits = await visitesDatabase.getVisitsBySite(site.idBaseSite);
+            if (visits.isNotEmpty) {
+              hasVisits = true;
+              totalVisits += visits.length;
+            }
+          }
+
+          if (hasVisits) {
+            // Créer un conflit
+            final conflict = SyncConflict(
+              conflictType: ConflictType.deletedReference,
+              entityType: 'siteGroup',
+              entityId: siteGroup.idSitesGroup.toString(),
+              affectedField: null,
+              localValue: null,
+              remoteValue: null,
+              localModifiedAt: DateTime.now(),
+              remoteModifiedAt: DateTime.now(),
+              resolutionStrategy: ConflictResolutionStrategy.userDecision,
+              message:
+                  'Groupe de sites "${siteGroup.sitesGroupName ?? siteGroup.idSitesGroup.toString()}" supprimé du module ${module.moduleCode} mais contient ${sitesInGroup.length} site(s) avec $totalVisits visite(s)',
+              localData: {
+                'siteGroupId': siteGroup.idSitesGroup,
+                'siteGroupName': siteGroup.sitesGroupName,
+                'moduleCode': module.moduleCode,
+                'moduleName': module.moduleLabel,
+                'siteCount': sitesInGroup.length,
+                'visitCount': totalVisits,
+              },
+              remoteData: {},
+              severity: ConflictSeverity.high,
+              navigationPath: '/module/${module.id}/siteGroup/${siteGroup.idSitesGroup}',
+              referencedEntityType: 'site',
+              referencedEntityId:
+                  sitesInGroup.isNotEmpty ? sitesInGroup.first.idBaseSite.toString() : '',
+              referencesCount: sitesInGroup.length + totalVisits,
+            );
+            allConflicts.add(conflict);
+            itemsSkipped++;
+          } else {
+            // Supprimer la relation groupe-module
+            await database.deleteSiteGroupModule(siteGroup.idSitesGroup, module.id);
+
+            // Vérifier si le groupe est encore lié à d'autres modules téléchargés
+            final allSiteGroupModules = await database.getAllSiteGroupModules();
+            final groupStillLinkedToOtherModules = allSiteGroupModules.any((sgm) =>
+                sgm.idSitesGroup == siteGroup.idSitesGroup && sgm.idModule != module.id);
+
+            if (!groupStillLinkedToOtherModules) {
+              // Le groupe n'est lié à aucun autre module, on peut le supprimer
+              await database.deleteSiteGroup(siteGroup.idSitesGroup);
+              itemsDeleted++;
+            } else {
+              // Le groupe est encore lié à d'autres modules, on ne le supprime pas
+              print(
+                  'Site group ${siteGroup.idSitesGroup} still linked to other modules, not deleting');
+            }
+          }
+        }
+
+        // 6. Ajouter les nouveaux groupes de sites
+        for (final siteGroup in siteGroupsToAdd) {
+          // Vérifier si le groupe existe déjà dans la base (pour un autre module)
+          final existingSiteGroups = await database.getAllSiteGroups();
+          final existingGroup = existingSiteGroups.firstWhere(
+            (g) => g.idSitesGroup == siteGroup.idSitesGroup,
+            orElse: () => const SiteGroup(idSitesGroup: -1),
+          );
+
+          if (existingGroup.idSitesGroup == -1) {
+            // Le groupe n'existe pas du tout, l'ajouter
+            await database.insertSiteGroups([siteGroup]);
+          }
+
+          // Créer la relation groupe-module
+          await database.insertSiteGroupModules([
+            SitesGroupModule(
+              idSitesGroup: siteGroup.idSitesGroup,
+              idModule: module.id,
+            )
+          ]);
+          itemsAdded++;
+        }
+
+        // 7. Mettre à jour les groupes existants
+        for (final siteGroup in siteGroupsToUpdate) {
+          await database.updateSiteGroup(siteGroup);
+          itemsUpdated++;
+        }
+
+        itemsProcessed += remoteSiteGroups.length;
+      }
+
+      print('=== Résumé de la synchronisation des groupes de sites ===');
+      print(
+          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Conflits: ${allConflicts.length}');
+
+      if (allConflicts.isNotEmpty) {
+        return SyncResult.withConflicts(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsDeleted: itemsDeleted,
+          itemsSkipped: itemsSkipped,
+          itemsFailed: 0,
+          conflicts: allConflicts,
+          errorMessage:
+              'Certains groupes de sites ont des références locales dans différents modules',
+        );
+      } else {
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsDeleted: itemsDeleted,
+          itemsSkipped: itemsSkipped,
+        );
+      }
+    } catch (error) {
+      print('Erreur lors de la synchronisation des groupes de sites par module: $error');
+      return SyncResult.failure(
+        errorMessage: 'Erreur: $error',
+      );
+    }
+  }
+
+  @override
   Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(
       String token) async {
     try {

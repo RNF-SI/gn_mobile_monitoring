@@ -920,76 +920,18 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
         );
       }
 
-      // Variables pour les métriques et conflits
-      final List<SyncConflict> allConflicts = [];
-      final List<String> errors = [];
-
       try {
-        // Récupérer les groupes de sites avant la synchronisation pour les métriques
-        final siteGroupsBefore = await _sitesRepository.getSiteGroups();
-        final siteGroupsBeforeIds =
-            siteGroupsBefore.map((sg) => sg.idSitesGroup).toSet();
+        // Utiliser la nouvelle méthode qui gère les conflits
+        final result = await _sitesRepository
+            .incrementalSyncSiteGroupsWithConflictHandling(token);
 
-        // Déléguer la synchronisation au repository spécialisé
-        await _sitesRepository
-            .incrementalSyncSiteGroupsAndSitesGroupModules(token);
-
-        // Récupérer les groupes de sites après la synchronisation pour les métriques
-        final siteGroupsAfter = await _sitesRepository.getSiteGroups();
-        final siteGroupsAfterIds =
-            siteGroupsAfter.map((sg) => sg.idSitesGroup).toSet();
-
-        // Identifier les groupes supprimés
-        final deletedGroupIds =
-            siteGroupsBeforeIds.difference(siteGroupsAfterIds);
-
-        // Pour chaque groupe supprimé, vérifier s'il y a des conflits
-        for (final groupId in deletedGroupIds) {
-          // Vérifier si le groupe a des références dans d'autres entités
-          final conflicts = await _checkSiteGroupReferences(groupId);
-          if (conflicts.isNotEmpty) {
-            allConflicts.addAll(conflicts);
-            // Restaurer le groupe si conflit
-            final oldGroup =
-                siteGroupsBefore.firstWhere((sg) => sg.idSitesGroup == groupId);
-            // Utiliser insertSiteGroups avec une liste contenant un seul groupe
-            await (_sitesRepository as dynamic).insertSiteGroups([oldGroup]);
-            errors.add(
-                'Groupe de sites $groupId a des références - conflit détecté');
-          }
+        // Mettre à jour la date de synchronisation si succès ou conflits
+        if (result.success ||
+            (result.conflicts != null && result.conflicts!.isNotEmpty)) {
+          await updateLastSyncDate('siteGroups', DateTime.now());
         }
 
-        // Calculer les métriques de synchronisation
-        final itemsTotal = siteGroupsAfter.length;
-        final itemsAdded =
-            siteGroupsAfterIds.difference(siteGroupsBeforeIds).length;
-        final itemsUpdated =
-            siteGroupsBeforeIds.intersection(siteGroupsAfterIds).length;
-        final itemsDeleted = deletedGroupIds.length - allConflicts.length;
-
-        // Mettre à jour la date de synchronisation
-        await updateLastSyncDate('siteGroups', DateTime.now());
-
-        if (allConflicts.isNotEmpty) {
-          return SyncResult.withConflicts(
-            itemsProcessed: itemsTotal,
-            itemsAdded: itemsAdded,
-            itemsUpdated: itemsUpdated,
-            itemsDeleted: itemsDeleted,
-            itemsSkipped: allConflicts.length,
-            itemsFailed: errors.length,
-            conflicts: allConflicts,
-            errorMessage: errors.isEmpty ? null : errors.join(' | '),
-          );
-        } else {
-          return SyncResult.success(
-            itemsProcessed: itemsTotal,
-            itemsAdded: itemsAdded,
-            itemsUpdated: itemsUpdated,
-            itemsDeleted: itemsDeleted,
-            itemsSkipped: 0,
-          );
-        }
+        return result;
       } catch (e) {
         debugPrint(
             'Erreur lors de la synchronisation des groupes de sites: $e');
@@ -1008,86 +950,4 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
     }
   }
 
-  /// Vérifie les références d'un groupe de sites dans les autres entités
-  Future<List<SyncConflict>> _checkSiteGroupReferences(int siteGroupId) async {
-    final conflicts = <SyncConflict>[];
-
-    try {
-      // Vérifier les sites associés au groupe
-      final sites =
-          await (_sitesRepository as dynamic).getSitesBySiteGroup(siteGroupId);
-
-      if (sites.isNotEmpty) {
-        // Pour chaque site dans ce groupe, vérifier s'il a des visites
-        int totalVisits = 0;
-        int totalObservations = 0;
-
-        for (final site in sites) {
-          final visits =
-              await _visitesDatabase.getVisitsBySite(site.idBaseSite);
-          totalVisits += visits.length;
-
-          // Compter les observations pour chaque visite
-          for (final visit in visits) {
-            final observations = await _observationsDatabase
-                .getObservationsByVisitId(visit.idBaseVisit);
-            totalObservations += observations.length;
-          }
-        }
-
-        if (totalVisits > 0) {
-          final conflict = SyncConflict(
-            conflictType: ConflictType.deletedReference,
-            entityType: 'siteGroup',
-            entityId: siteGroupId.toString(),
-            affectedField: null,
-            localValue: null,
-            remoteValue: null,
-            localModifiedAt: DateTime.now(),
-            remoteModifiedAt: DateTime.now(),
-            resolutionStrategy: ConflictResolutionStrategy.userDecision,
-            message:
-                'Le groupe de sites #$siteGroupId a été supprimé sur le serveur mais contient ${sites.length} site(s) avec $totalVisits visite(s) et $totalObservations observation(s)',
-            localData: {
-              'siteCount': sites.length,
-              'visitCount': totalVisits,
-              'observationCount': totalObservations,
-            },
-            remoteData: {},
-            severity: ConflictSeverity.high,
-            navigationPath: '/siteGroup/$siteGroupId',
-            referencedEntityType: 'site',
-            referencedEntityId: siteGroupId.toString(),
-            referencesCount: sites.length + totalVisits + totalObservations,
-          );
-
-          conflicts.add(conflict);
-        }
-      }
-    } catch (e) {
-      debugPrint(
-          'Erreur lors de la vérification des références du groupe de sites $siteGroupId: $e');
-      // En cas d'erreur, créer un conflit générique
-      final errorConflict = SyncConflict(
-        conflictType: ConflictType.dataConflict,
-        entityType: 'siteGroup',
-        entityId: siteGroupId.toString(),
-        affectedField: null,
-        localValue: null,
-        remoteValue: null,
-        localModifiedAt: DateTime.now(),
-        remoteModifiedAt: DateTime.now(),
-        resolutionStrategy: ConflictResolutionStrategy.clientWins,
-        message:
-            'Impossible de vérifier les références pour le groupe de sites #$siteGroupId: $e',
-        localData: {'error': e.toString()},
-        remoteData: {},
-        severity: ConflictSeverity.medium,
-        navigationPath: '/siteGroup/$siteGroupId',
-      );
-      conflicts.add(errorConflict);
-    }
-
-    return conflicts;
-  }
 }
