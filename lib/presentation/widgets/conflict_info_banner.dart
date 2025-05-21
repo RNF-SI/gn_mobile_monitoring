@@ -37,6 +37,33 @@ class ConflictInfoBanner extends ConsumerWidget {
           // Fallback si erreur
         }
       }
+      
+      // Si c'est un taxon, utiliser les données du contexte local
+      if (conflict.referencedEntityType?.toLowerCase() == 'taxon' &&
+          conflict.localData['_context'] != null &&
+          conflict.localData['_context']['taxon'] != null) {
+        try {
+          final taxonContext = conflict.localData['_context']['taxon'];
+          final nomComplet = taxonContext['nom_complet'] ?? '';
+          final nomVern = taxonContext['nom_vern'] ?? '';
+          final cdNom = conflict.referencedEntityId ?? taxonContext['cd_nom']?.toString() ?? '';
+          
+          String taxonName = nomComplet;
+          if (nomVern.isNotEmpty && nomVern != nomComplet) {
+            taxonName = '$nomComplet ($nomVern)';
+          }
+          if (taxonName.isEmpty) {
+            taxonName = 'Taxon cd_nom: $cdNom';
+          }
+          
+          String fieldName = StringFormatter.formatFieldName(conflict.affectedField);
+          return 'Référence supprimée: Le champ "$fieldName" '
+              'fait référence à un taxon qui n\'existe plus sur le serveur '
+              '($taxonName).';
+        } catch (e) {
+          // Fallback si erreur d'accès aux données
+        }
+      }
       return 'Référence supprimée: Le champ "${StringFormatter.formatFieldName(conflict.affectedField)}" '
           'fait référence à un élément qui n\'existe plus sur le serveur '
           '(${StringFormatter.capitalizeFirst(conflict.referencedEntityType ?? "type inconnu")} avec ID ${conflict.referencedEntityId ?? "inconnu"}).';
