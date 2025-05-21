@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
-import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
@@ -28,11 +28,11 @@ class SitesApiImpl implements SitesApi {
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(
       String moduleCode, String token) async {
     try {
-      // Récupérer d'abord l'ID du module à partir de son code
+      // 1. Fetch sites for the module (to get the list of IDs that we care about)
       final moduleResponse = await _dio.get(
         '/monitorings/object/$moduleCode/module',
         queryParameters: {
-          'depth': 0,
+          'depth': 1,
           'field_name': 'module_code',
         },
         options: Options(
@@ -42,119 +42,113 @@ class SitesApiImpl implements SitesApi {
 
       if (moduleResponse.statusCode != 200) {
         throw ApiException(
-          'Failed to fetch module info for $moduleCode',
+          'Failed to fetch sites for module $moduleCode',
           statusCode: moduleResponse.statusCode,
         );
       }
 
       final moduleData = moduleResponse.data as Map<String, dynamic>;
-      final int? moduleId =
-          moduleData['properties']?['id_module'] ?? moduleData['id'];
+      final Set<int> moduleSiteIds = {};
+      final List<BaseSiteEntity> moduleSites = [];
 
-      if (moduleId == null) {
-        throw ApiException(
-            'Could not extract module ID from response for module $moduleCode');
+      // Extract site IDs from the module response
+      print('Module data keys: ${moduleData.keys}');
+      if (moduleData['children'] != null &&
+          moduleData['children']['site'] != null) {
+        final sitesList = moduleData['children']['site'] as List;
+        print('Found ${sitesList.length} sites in module $moduleCode');
+        for (var site in sitesList) {
+          final siteData = site as Map<String, dynamic>;
+          final properties = siteData['properties'] as Map<String, dynamic>;
+          final siteId = properties['id_base_site'] ?? siteData['id'];
+
+          if (siteId != null) {
+            moduleSiteIds.add(siteId as int);
+
+            // Create basic site entity with data we have
+            final siteJson = {
+              'id_base_site': siteId,
+              'base_site_name': properties['base_site_name'],
+              'base_site_code': properties['initial_code'],
+            };
+
+            moduleSites.add(BaseSiteEntity.fromJson(siteJson));
+          }
+        }
       }
 
-      print('Found module ID $moduleId for module code $moduleCode');
+      // 2. Fetch detailed data for all sites
+      final detailedResponse = await _dio.get(
+        '/monitorings/list/$moduleCode/site',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
 
-      // Utiliser la nouvelle requête avec pagination pour récupérer TOUS les sites
-      final List<dynamic> allSitesData = [];
-      int currentPage = 1;
-      int totalCount = 0;
-      const int pageSize = 100; // Taille de page optimisée
-
-      // Boucle de pagination pour récupérer tous les sites
-      do {
-        print('Fetching page $currentPage for module $moduleCode...');
-
-        final sitesResponse = await _dio.get(
-          '/monitorings/sites',
-          queryParameters: {
-            'modules': moduleId.toString(),
-            'page': currentPage,
-            'limit': pageSize,
-            'sort': 'id_base_site', // Tri consistant pour la pagination
-            'sort_dir': 'asc',
-          },
-          options: Options(
-            headers: {'Authorization': 'Bearer $token'},
-          ),
+      if (detailedResponse.statusCode != 200) {
+        throw ApiException(
+          'Failed to fetch detailed sites data',
+          statusCode: detailedResponse.statusCode,
         );
+      }
 
-        if (sitesResponse.statusCode != 200) {
-          throw ApiException(
-            'Failed to fetch sites page $currentPage for module $moduleCode',
-            statusCode: sitesResponse.statusCode,
-          );
-        }
-
-        final Map<String, dynamic> responseData = sitesResponse.data;
-        final List<dynamic> pageItems = responseData['items'] ?? [];
-        totalCount = responseData['count'] ?? 0;
-        final int currentLimit = responseData['limit'] ?? pageSize;
-        final int currentPageNum = responseData['page'] ?? currentPage;
-
-        print(
-            'Page $currentPageNum: ${pageItems.length} sites retrieved (limit: $currentLimit)');
-
-        // Ajouter les sites de cette page à la liste totale
-        allSitesData.addAll(pageItems);
-
-        // Passer à la page suivante
-        currentPage++;
-
-        // Continuer tant qu'on a récupéré une page complète
-        // Si la page contient moins d'éléments que la limite, c'est la dernière page
-        if (pageItems.length < pageSize) {
-          print('Last page reached (${pageItems.length} < $pageSize items)');
-          break;
-        }
-      } while (true);
-
+      final List<dynamic> allSitesData = detailedResponse.data;
       print(
-          'Pagination completed: $totalCount sites total, ${allSitesData.length} sites retrieved for module $moduleCode');
-
+          'Found ${allSitesData.length} detailed sites from /monitorings/list/$moduleCode/site');
+      final Map<int, Map<String, dynamic>> detailedSitesMap = {};
       final List<Map<String, dynamic>> enrichedSites = [];
       final List<SiteComplement> siteComplements = [];
-      // Suppression du filtrage sur la propriété cruved['C']
-      // On garde tous les sites
+
+      // First, build a map of all detailed site data keyed by site ID
       for (var siteData in allSitesData) {
         final Map<String, dynamic> site = siteData as Map<String, dynamic>;
-
-        // Créer les données enrichies du site
-        final Map<String, dynamic> enrichedSite = {
-          'id_base_site': site['id_base_site'],
-          'base_site_name': site['base_site_name'],
-          'base_site_code': site['base_site_code'],
-          'base_site_description': site['base_site_description'],
-          'altitude_min': site['altitude_min'],
-          'altitude_max': site['altitude_max'],
-          'first_use_date': site['first_use_date'],
-          'uuid_base_site': site['uuid_base_site'],
-          // 'geometry': site['geometry'], // Inclure la géométrie si disponible
-        };
-
-        enrichedSites.add(enrichedSite);
-
-        // Créer les données de complément de site
         final int siteId = site['id_base_site'] as int;
-        final int? idSitesGroup = site['id_sites_group'] as int?;
-        final Map<String, dynamic>? siteDataField =
-            site['data'] as Map<String, dynamic>?;
-
-        // Créer l'entité puis la convertir en modèle de domaine
-        final complementEntity = SiteComplementEntity(
-          idBaseSite: siteId,
-          idSitesGroup: idSitesGroup,
-          data: siteDataField != null ? jsonEncode(siteDataField) : null,
-        );
-
-        siteComplements.add(complementEntity.toDomain());
+        detailedSitesMap[siteId] = site;
       }
 
-      print(
-          'Kept all ${allSitesData.length} sites (no filtering on cruved[\'C\'])');
+      // Now process only the sites that are in the module
+      for (var site in moduleSites) {
+        if (detailedSitesMap.containsKey(site.idBaseSite)) {
+          final detailedData = detailedSitesMap[site.idBaseSite]!;
+
+          // Create enriched site data
+          final Map<String, dynamic> enrichedSite = {
+            'id_base_site': site.idBaseSite,
+            'base_site_name':
+                detailedData['base_site_name'] ?? site.baseSiteName,
+            'base_site_code':
+                detailedData['base_site_code'] ?? site.baseSiteCode,
+            'base_site_description': detailedData['base_site_description'],
+            'altitude_min': detailedData['altitude_min'],
+            'altitude_max': detailedData['altitude_max'],
+            'first_use_date': detailedData['first_use_date'],
+            'uuid_base_site': detailedData['uuid_base_site'],
+          };
+
+          enrichedSites.add(enrichedSite);
+
+          // Create site complement data for storage
+          final int? idSitesGroup = detailedData['id_sites_group'] as int?;
+          final Map<String, dynamic>? siteData =
+              detailedData['data'] as Map<String, dynamic>?;
+
+          // Create entity first, then convert to domain model
+          final complementEntity = SiteComplementEntity(
+            idBaseSite: site.idBaseSite,
+            idSitesGroup: idSitesGroup,
+            data: siteData != null ? jsonEncode(siteData) : null,
+          );
+
+          siteComplements.add(complementEntity.toDomain());
+        } else {
+          // Site doesn't have detailed data, use basic data
+          enrichedSites.add({
+            'id_base_site': site.idBaseSite,
+            'base_site_name': site.baseSiteName,
+            'base_site_code': site.baseSiteCode,
+          });
+        }
+      }
 
       return {
         'enriched_sites': enrichedSites,
@@ -230,24 +224,5 @@ class SitesApiImpl implements SitesApi {
     } catch (e) {
       throw ApiException('Failed to fetch site groups: $e');
     }
-  }
-
-  @override
-  Future<List<ModuleEntity>> fetchModulesFromIdSite(
-      int idSite, String token) async {
-    final response = await _dio.get(
-      '/monitorings/sites/$idSite/modules',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $token',
-        },
-      ),
-    );
-    if (response.statusCode == 200) {
-      final List<dynamic> jsonData = response.data;
-      return jsonData.map((item) => ModuleEntity.fromJson(item)).toList();
-    }
-    throw ApiException('Failed to fetch modules from API',
-        statusCode: response.statusCode);
   }
 }
