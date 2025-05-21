@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
@@ -25,6 +26,9 @@ class MockGetVisitsBySiteAndModuleUseCase extends Mock
 
 class MockGetVisitWithDetailsUseCase extends Mock
     implements GetVisitWithDetailsUseCase {}
+
+class MockGetObservationsByVisitIdUseCase extends Mock
+    implements GetObservationsByVisitIdUseCase {}
 
 class MockGetVisitComplementUseCase extends Mock
     implements GetVisitComplementUseCase {}
@@ -70,6 +74,7 @@ void main() {
   late MockNavigatorObserver mockNavigatorObserver;
   late MockGetVisitsBySiteAndModuleUseCase mockGetVisitsBySiteAndModuleUseCase;
   late MockGetVisitWithDetailsUseCase mockGetVisitWithDetailsUseCase;
+  late MockGetObservationsByVisitIdUseCase mockGetObservationsByVisitIdUseCase;
   late MockGetVisitComplementUseCase mockGetVisitComplementUseCase;
   late MockSaveVisitComplementUseCase mockSaveVisitComplementUseCase;
   late MockCreateVisitUseCase mockCreateVisitUseCase;
@@ -158,6 +163,7 @@ void main() {
     mockNavigatorObserver = MockNavigatorObserver();
     mockGetVisitsBySiteAndModuleUseCase = MockGetVisitsBySiteAndModuleUseCase();
     mockGetVisitWithDetailsUseCase = MockGetVisitWithDetailsUseCase();
+    mockGetObservationsByVisitIdUseCase = MockGetObservationsByVisitIdUseCase();
     mockGetVisitComplementUseCase = MockGetVisitComplementUseCase();
     mockSaveVisitComplementUseCase = MockSaveVisitComplementUseCase();
     mockCreateVisitUseCase = MockCreateVisitUseCase();
@@ -172,6 +178,8 @@ void main() {
         .thenAnswer((_) async => []);
     when(() => mockGetVisitWithDetailsUseCase.execute(any()))
         .thenAnswer((_) async => testVisit);
+    when(() => mockGetObservationsByVisitIdUseCase.execute(any()))
+        .thenAnswer((_) async => []);
     when(() => mockGetVisitComplementUseCase.execute(any()))
         .thenAnswer((_) async => null);
     when(() => mockGetUserIdUseCase.execute()).thenAnswer((_) async => 42);
@@ -195,6 +203,7 @@ void main() {
             .overrideWith((ref, params) => SiteVisitsViewModel(
                   mockGetVisitsBySiteAndModuleUseCase,
                   mockGetVisitWithDetailsUseCase,
+                  mockGetObservationsByVisitIdUseCase,
                   mockGetVisitComplementUseCase,
                   mockSaveVisitComplementUseCase,
                   mockCreateVisitUseCase,
@@ -279,6 +288,7 @@ void main() {
               .overrideWith((ref, params) => SiteVisitsViewModel(
                     mockGetVisitsBySiteAndModuleUseCase,
                     mockGetVisitWithDetailsUseCase,
+                    mockGetObservationsByVisitIdUseCase,
                     mockGetVisitComplementUseCase,
                     mockSaveVisitComplementUseCase,
                     mockCreateVisitUseCase,
@@ -329,6 +339,7 @@ void main() {
               .overrideWith((ref, params) => SiteVisitsViewModel(
                     mockGetVisitsBySiteAndModuleUseCase,
                     mockGetVisitWithDetailsUseCase,
+                    mockGetObservationsByVisitIdUseCase,
                     mockGetVisitComplementUseCase,
                     mockSaveVisitComplementUseCase,
                     mockCreateVisitUseCase,
