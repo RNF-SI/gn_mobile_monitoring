@@ -14,6 +14,11 @@ class ConflictInfoBanner extends ConsumerWidget {
   });
 
   Future<String> _getConflictDescription(WidgetRef ref) async {
+    // Si un message personnalisé existe, l'utiliser en priorité
+    if (conflict.message != null && conflict.message!.isNotEmpty) {
+      return conflict.message!;
+    }
+
     if (conflict.conflictType == ConflictType.deletedReference) {
       // Si c'est une nomenclature, essayer de récupérer son nom
       if (conflict.referencedEntityType?.toLowerCase() == 'nomenclature' &&
