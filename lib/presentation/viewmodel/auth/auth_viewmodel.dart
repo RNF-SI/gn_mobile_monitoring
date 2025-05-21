@@ -24,6 +24,11 @@ import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as loadingState;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:go_router/go_router.dart';
 
 // Pour le Checker
@@ -306,6 +311,70 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       state = const loadingState.State.init();
     } catch (e) {
       print('Error during logout: $e');
+    }
+  }
+
+  /// Nouvelle méthode de déconnexion avec suppression complète des données
+  Future<void> signOutAndClearAllData(WidgetRef ref, BuildContext context) async {
+    try {
+      // Clear user data
+      _user = null;
+      controller.add(_user);
+
+      // Update login state  
+      await _setIsLoggedInFromLocalStorageUseCase.execute(false);
+      await _clearUserNameFromLocalStorageUseCase.execute();
+      await _clearUserIdFromLocalStorageUseCase.execute();
+      await _clearTokenFromLocalStorageUseCase.execute();
+      
+      // We don't clear API URL when logging out so it persists between sessions
+      // If you want to clear it, uncomment the line below
+      // await _clearApiUrlFromLocalStorageUseCase.execute();
+      // Config.clearStoredApiUrl();
+
+      // Supprimer la base de données locale et tous les caches
+      try {
+        // Supprimer et réinitialiser la base de données
+        final databaseService = ref.read(databaseServiceProvider.notifier);
+        await databaseService.deleteAndReinitializeDatabase();
+        
+        // Vider tous les caches des services
+        _clearAllServiceCaches(ref);
+        
+        print('Base de données et caches supprimés avec succès lors de la déconnexion');
+      } catch (e) {
+        print('Erreur lors de la suppression de la base de données: $e');
+        // Continuer avec la déconnexion même si la suppression de la DB échoue
+      }
+
+      // Clear any cached user information
+      ref.refresh(authStateProvider);
+
+      // Navigate to the login page
+      GoRouter.of(context).go('/login');
+
+      // Reset the state
+      state = const loadingState.State.init();
+    } catch (e) {
+      print('Error during enhanced logout: $e');
+    }
+  }
+
+  /// Vide tous les caches des services
+  void _clearAllServiceCaches(WidgetRef ref) {
+    try {
+      // Vider les conflits de synchronisation
+      ref.refresh(syncServiceProvider);
+      
+      // Refresh tous les providers de données pour vider leurs caches
+      ref.refresh(nomenclatureServiceProvider);
+      ref.refresh(datasetServiceProvider); 
+      ref.refresh(taxonServiceProvider);
+      ref.refresh(authStateProvider);
+      
+      print('Tous les caches des services ont été vidés');
+    } catch (e) {
+      print('Erreur lors du vidage des caches: $e');
     }
   }
 }

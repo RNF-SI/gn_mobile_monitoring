@@ -116,16 +116,65 @@ class MenuActions extends ConsumerWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Déconnexion'),
-        content: const Text(
-            'Êtes-vous sûr de vouloir vous déconnecter ? Vous aurez besoin d\'une connexion internet pour vous reconnecter.'),
+        title: const Text('Confirmation de déconnexion'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Êtes-vous sûr de vouloir vous déconnecter ?',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 16),
+            const Text('⚠️ Cette action va :'),
+            const SizedBox(height: 8),
+            const Text('• Supprimer TOUTES les données locales'),
+            const Text('• Effacer tous les modules téléchargés'),
+            const Text('• Effacer toutes les observations non synchronisées'),
+            const Text('• Vider tous les caches de l\'application'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.orange.withOpacity(0.3)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.warning, color: Colors.orange, size: 20),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Tout ce qui n\'a pas été synchronisé sera définitivement perdu !',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Vous aurez besoin d\'une connexion internet pour vous reconnecter et télécharger à nouveau les données.',
+              style: TextStyle(fontSize: 13, fontStyle: FontStyle.italic),
+            ),
+          ],
+        ),
         actions: [
           TextButton(
             child: const Text('Annuler'),
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          TextButton(
-            child: const Text('Se déconnecter'),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Confirmer la déconnexion'),
             onPressed: () => Navigator.of(context).pop(true),
           ),
         ],
@@ -133,7 +182,46 @@ class MenuActions extends ConsumerWidget {
     );
 
     if (confirm == true) {
-      await authViewModel.signOut(ref, context);
+      // Afficher un indicateur de progression pendant la suppression
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 16),
+              Expanded(
+                child: Text('Suppression des données locales en cours...'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      try {
+        // Utiliser la nouvelle méthode de déconnexion qui supprime tout
+        await authViewModel.signOutAndClearAllData(ref, context);
+        
+        // Fermer le dialog de progression - la navigation se fait automatiquement
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+      } catch (e) {
+        // Fermer le dialog de progression
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        
+        // Afficher l'erreur
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la déconnexion: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
     }
   }
 
