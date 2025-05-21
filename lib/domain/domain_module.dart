@@ -213,13 +213,6 @@ final incrementalSyncModulesUseCaseProvider =
   ),
 );
 
-final incrementalSyncSitesUseCaseProvider =
-    Provider<IncrementalSyncSitesUseCase>(
-  (ref) => IncrementalSyncSitesUseCaseImpl(
-    ref.watch(sitesRepositoryProvider),
-  ),
-);
-
 final incrementalSyncSiteGroupsUseCaseProvider =
     Provider<IncrementalSyncSiteGroupsUseCase>(
   (ref) => IncrementalSyncSiteGroupsUseCaseImpl(
