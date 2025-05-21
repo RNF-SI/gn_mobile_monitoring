@@ -80,8 +80,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_use
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/init_local_monitoring_database_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
