@@ -58,8 +58,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
@@ -190,9 +188,6 @@ final downloadCompleteModuleUseCaseProvider =
 
 final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
     (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
-
-final getSitesUseCaseProvider = Provider<GetSitesUseCase>(
-    (ref) => GetSitesUseCaseImpl(ref.watch(sitesRepositoryProvider)));
 
 final fetchModulesUseCaseProvider = Provider<FetchModulesUseCase>(
   (ref) => FetchModulesUseCaseImpl(

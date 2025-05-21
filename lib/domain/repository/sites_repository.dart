@@ -12,9 +12,6 @@ abstract class SitesRepository {
   /// Fetches site groups for all modules and adds only new ones without clearing existing data
   Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(String token);
 
-  /// Gets all sites from local database
-  Future<List<BaseSite>> getSites();
-
   /// Gets all site groups from local database
   Future<List<SiteGroup>> getSiteGroups();
 

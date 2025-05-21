@@ -610,17 +610,6 @@ class SitesRepositoryImpl implements SitesRepository {
   }
 
   @override
-  Future<List<BaseSite>> getSites() async {
-    try {
-      final sites = await database.getAllSites();
-      return sites;
-    } catch (error) {
-      print('Error getting sites: $error');
-      throw Exception('Failed to get sites');
-    }
-  }
-
-  @override
   Future<List<SiteGroup>> getSiteGroups() async {
     try {
       final groups = await database.getAllSiteGroups();
