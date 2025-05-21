@@ -23,7 +23,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_data
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -31,7 +30,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_code_use
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
@@ -45,7 +43,6 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sites_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -159,9 +156,6 @@ class MockGetNomenclatureByCodeUseCase extends Mock implements GetNomenclatureBy
 class MockGetModuleNomenclaturesUseCase extends Mock implements GetModuleNomenclaturesUseCase {}
 
 // Sites
-class MockGetSitesUseCase extends Mock implements GetSitesUseCase {}
-
-class MockFetchSitesUseCase extends Mock implements FetchSitesUseCase {}
 
 class MockGetSiteGroupsUseCase extends Mock implements GetSiteGroupsUseCase {}
 
@@ -176,7 +170,6 @@ class MockDatabaseService extends Mock implements DatabaseService {}
 
 class MockUserModulesViewModel extends Mock implements UserModulesViewModel {}
 
-class MockUserSitesViewModel extends Mock implements UserSitesViewModel {}
 
 class MockSiteGroupsViewModel extends Mock implements SiteGroupsViewModel {}
 
