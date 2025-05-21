@@ -11,13 +11,12 @@ import 'package:gn_mobile_monitoring/presentation/view/observation/observation_d
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/conflict_resolution_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sites_utilisateur_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/conflict_resolution_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 /// Service gérant la navigation vers les éléments en conflit
 class ConflictNavigationService {
@@ -48,7 +47,6 @@ class ConflictNavigationService {
       return 'Élément inconnu';
     }
   }
-
 
   /// Navigation directe vers l'élément en conflit
   /// Retourne true si l'élément a été modifié
@@ -125,9 +123,10 @@ class ConflictNavigationService {
           if (detailMatch != null && detailMatch.group(1) != null) {
             contextInfo['detail'] = int.parse(detailMatch.group(1)!);
           }
-          
+
           // Site group ID extraction
-          final siteGroupMatch = RegExp(r'/site_group/(\d+)').firstMatch(contextStr);
+          final siteGroupMatch =
+              RegExp(r'/site_group/(\d+)').firstMatch(contextStr);
           if (siteGroupMatch != null && siteGroupMatch.group(1) != null) {
             contextInfo['site_group_id'] = int.parse(siteGroupMatch.group(1)!);
           }
@@ -166,9 +165,10 @@ class ConflictNavigationService {
           if (detailMatch != null && detailMatch.group(1) != null) {
             contextInfo['detail'] = int.parse(detailMatch.group(1)!);
           }
-          
+
           // Site group ID extraction
-          final siteGroupMatch = RegExp(r'site_group[":]*(\d+)').firstMatch(contextStr);
+          final siteGroupMatch =
+              RegExp(r'site_group[":]*(\d+)').firstMatch(contextStr);
           if (siteGroupMatch != null && siteGroupMatch.group(1) != null) {
             contextInfo['site_group_id'] = int.parse(siteGroupMatch.group(1)!);
           }
@@ -200,7 +200,7 @@ class ConflictNavigationService {
         } else if (conflict.entityType.toLowerCase() == 'site') {
           contextInfo['site_id'] = int.tryParse(conflict.entityId) ?? 0;
         } else if (conflict.entityType.toLowerCase() == 'sitegroup' ||
-                   conflict.entityType.toLowerCase() == 'site_group') {
+            conflict.entityType.toLowerCase() == 'site_group') {
           contextInfo['site_group_id'] = int.tryParse(conflict.entityId) ?? 0;
         }
       }
@@ -311,13 +311,16 @@ class ConflictNavigationService {
                                       ),
                                     ),
                                   );
-                                  
+
                                   // Si la modification a réussi, marquer le conflit comme résolu
                                   if (result == true) {
-                                    ref.read(conflictResolutionProvider.notifier)
-                                      .markAsResolved(conflict, 'Détail d\'observation modifié');
+                                    ref
+                                        .read(
+                                            conflictResolutionProvider.notifier)
+                                        .markAsResolved(conflict,
+                                            'Détail d\'observation modifié');
                                   }
-                                  
+
                                   return result ?? false;
                                 }
                               } catch (e) {
@@ -346,13 +349,15 @@ class ConflictNavigationService {
                                 ),
                               ),
                             );
-                            
+
                             // Si la modification a réussi, marquer le conflit comme résolu
                             if (result == true) {
-                              ref.read(conflictResolutionProvider.notifier)
-                                .markAsResolved(conflict, 'Observation modifiée');
+                              ref
+                                  .read(conflictResolutionProvider.notifier)
+                                  .markAsResolved(
+                                      conflict, 'Observation modifiée');
                             }
-                            
+
                             return result ?? false;
                           }
                         } catch (e) {
@@ -376,13 +381,14 @@ class ConflictNavigationService {
                           ),
                         ),
                       );
-                      
+
                       // Si la modification a réussi, marquer le conflit comme résolu
                       if (result == true) {
-                        ref.read(conflictResolutionProvider.notifier)
-                          .markAsResolved(conflict, 'Visite modifiée');
+                        ref
+                            .read(conflictResolutionProvider.notifier)
+                            .markAsResolved(conflict, 'Visite modifiée');
                       }
-                      
+
                       return result ?? false;
                     }
                   } catch (e) {
@@ -404,13 +410,14 @@ class ConflictNavigationService {
                     ),
                   ),
                 );
-                
+
                 // Si la modification a réussi, marquer le conflit comme résolu
                 if (result == true) {
-                  ref.read(conflictResolutionProvider.notifier)
-                    .markAsResolved(conflict, 'Site modifié');
+                  ref
+                      .read(conflictResolutionProvider.notifier)
+                      .markAsResolved(conflict, 'Site modifié');
                 }
-                
+
                 return result ?? false;
               }
             }
@@ -438,25 +445,27 @@ class ConflictNavigationService {
             ),
           ),
         );
-        
+
         // Si la modification a réussi, marquer le conflit comme résolu
         if (result == true) {
-          ref.read(conflictResolutionProvider.notifier)
-            .markAsResolved(conflict, 'Module modifié');
+          ref
+              .read(conflictResolutionProvider.notifier)
+              .markAsResolved(conflict, 'Module modifié');
         }
-        
+
         return result ?? false;
       }
-      
+
       // Si nous avons un site_group_id sans module
       if (contextInfo.containsKey('site_group_id')) {
         final siteGroupId = contextInfo['site_group_id'] as int;
-        
+
         // Nous devons récupérer le site group et le module
         showLoadingIndicator();
         try {
           // Récupérer les groupes de sites de l'utilisateur
-          final siteGroupListState = ref.read(siteGroupViewModelStateNotifierProvider);
+          final siteGroupListState =
+              ref.read(siteGroupViewModelStateNotifierProvider);
           SiteGroup? siteGroup;
           siteGroupListState.when(
             init: () => throw Exception('Site groups not initialized'),
@@ -467,31 +476,38 @@ class ConflictNavigationService {
               );
             },
             loading: () => throw Exception('Site groups loading'),
-            error: (message) => throw Exception('Error loading site groups: $message'),
+            error: (message) =>
+                throw Exception('Error loading site groups: $message'),
           );
-          
+
           if (siteGroup == null) throw Exception('Site group not found');
-          
+
           // Trouver un module associé à ce groupe de sites
-          final moduleListState = ref.read(userModuleListeViewModelStateNotifierProvider);
+          final moduleListState =
+              ref.read(userModuleListeViewModelStateNotifierProvider);
           ModuleInfo? moduleInfo;
           moduleListState.when(
             init: () => throw Exception('Modules not initialized'),
             success: (modules) {
               // Chercher le premier module qui contient ce groupe de sites
               moduleInfo = modules.values.firstWhere(
-                (mi) => mi.module.sitesGroup?.any((sg) => sg.idSitesGroup == siteGroupId) ?? false,
-                orElse: () => throw Exception('Module not found for site group'),
+                (mi) =>
+                    mi.module.sitesGroup
+                        ?.any((sg) => sg.idSitesGroup == siteGroupId) ??
+                    false,
+                orElse: () =>
+                    throw Exception('Module not found for site group'),
               );
             },
             loading: () => throw Exception('Modules loading'),
-            error: (message) => throw Exception('Error loading modules: $message'),
+            error: (message) =>
+                throw Exception('Error loading modules: $message'),
           );
-          
+
           if (moduleInfo == null) throw Exception('Module not found');
-          
+
           hideLoadingIndicator();
-          
+
           if (!context.mounted) return false;
           final result = await Navigator.push<bool>(
             context,
@@ -502,38 +518,40 @@ class ConflictNavigationService {
               ),
             ),
           );
-          
+
           // Si la modification a réussi, marquer le conflit comme résolu
           if (result == true) {
-            ref.read(conflictResolutionProvider.notifier)
-              .markAsResolved(conflict, 'Groupe de sites modifié');
+            ref
+                .read(conflictResolutionProvider.notifier)
+                .markAsResolved(conflict, 'Groupe de sites modifié');
           }
-          
+
           return result ?? false;
         } catch (e) {
           hideLoadingIndicator();
-          debugPrint('Erreur lors de la navigation vers le groupe de sites: $e');
+          debugPrint(
+              'Erreur lors de la navigation vers le groupe de sites: $e');
           return false;
         }
       }
-      
+
       // Si nous avons un site_id sans module
       if (contextInfo.containsKey('site_id')) {
         final siteId = contextInfo['site_id'] as int;
-        
+
         // Essayer de trouver le site dans les données disponibles
         final modulesState = ref.read(userModuleListeProvider);
-        
+
         if (modulesState.data != null) {
           for (final moduleInfo in modulesState.data!.values) {
             final siteToOpen = moduleInfo.module.sites
                 ?.where((s) => s.idBaseSite == siteId)
                 .toList();
-                
+
             if (siteToOpen != null && siteToOpen.isNotEmpty) {
               final site = siteToOpen.first;
               hideLoadingIndicator();
-              
+
               if (!context.mounted) return false;
               final result = await Navigator.push<bool>(
                 context,
@@ -545,13 +563,14 @@ class ConflictNavigationService {
                   ),
                 ),
               );
-              
+
               // Si la modification a réussi, marquer le conflit comme résolu
               if (result == true) {
-                ref.read(conflictResolutionProvider.notifier)
-                  .markAsResolved(conflict, 'Site modifié');
+                ref
+                    .read(conflictResolutionProvider.notifier)
+                    .markAsResolved(conflict, 'Site modifié');
               }
-              
+
               return result ?? false;
             }
           }
