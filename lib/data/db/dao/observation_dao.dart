@@ -113,6 +113,28 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
         .go();
   }
 
+  /// Supprime toutes les observations d'une visite
+  Future<int> deleteObservationsByVisitId(int visitId) async {
+    return await (delete(tObservations)
+          ..where((tbl) => tbl.idBaseVisit.equals(visitId)))
+        .go();
+  }
+
+  /// Supprime toutes les données complémentaires des observations d'une visite
+  Future<int> deleteObservationComplementsByVisitId(int visitId) async {
+    // Récupérer d'abord les IDs des observations de cette visite
+    final observations = await (select(tObservations)
+          ..where((tbl) => tbl.idBaseVisit.equals(visitId)))
+        .get();
+    
+    // Supprimer les compléments pour chaque observation
+    for (final observation in observations) {
+      await deleteObservationComplement(observation.idObservation);
+    }
+    
+    return observations.length;
+  }
+
   /// Récupère une observation avec ses données complémentaires
   Future<Map<String, dynamic>> getObservationWithComplement(
       int observationId) async {

@@ -51,8 +51,22 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
           .go();
 
   Future<void> deleteVisitWithComplement(int visitId) => transaction(() async {
+        // Supprimer d'abord tous les détails d'observation de cette visite
+        await db.observationDetailDao.deleteObservationDetailsByVisitId(visitId);
+        
+        // Supprimer les compléments des observations de cette visite
+        await db.observationDao.deleteObservationComplementsByVisitId(visitId);
+        
+        // Supprimer toutes les observations de cette visite
+        await db.observationDao.deleteObservationsByVisitId(visitId);
+        
+        // Supprimer les compléments de la visite
         await deleteVisitComplement(visitId);
+        
+        // Supprimer les observateurs de la visite
         await deleteVisitObservers(visitId);
+        
+        // Supprimer la visite elle-même
         await deleteVisit(visitId);
       });
 

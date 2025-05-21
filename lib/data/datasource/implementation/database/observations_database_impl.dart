@@ -109,7 +109,11 @@ class ObservationsDatabaseImpl implements ObservationsDatabase {
   @override
   Future<bool> deleteObservation(int observationId) async {
     final db = await _database;
-    // Supprimer les données complémentaires d'abord
+    
+    // Supprimer les détails d'observation d'abord
+    await db.observationDetailDao.deleteObservationDetailsByObservationId(observationId);
+    
+    // Supprimer les données complémentaires
     await db.observationDao.deleteObservationComplement(observationId);
 
     // Supprimer l'observation
