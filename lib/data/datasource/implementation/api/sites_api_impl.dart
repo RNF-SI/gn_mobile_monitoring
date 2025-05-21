@@ -63,11 +63,11 @@ class SitesApiImpl implements SitesApi {
       int currentPage = 1;
       int totalCount = 0;
       const int pageSize = 100; // Taille de page optimisée
-      
+
       // Boucle de pagination pour récupérer tous les sites
       do {
         print('Fetching page $currentPage for module $moduleCode...');
-        
+
         final sitesResponse = await _dio.get(
           '/monitorings/sites',
           queryParameters: {
@@ -94,76 +94,67 @@ class SitesApiImpl implements SitesApi {
         totalCount = responseData['count'] ?? 0;
         final int currentLimit = responseData['limit'] ?? pageSize;
         final int currentPageNum = responseData['page'] ?? currentPage;
-        
-        print('Page $currentPageNum: ${pageItems.length} sites retrieved (limit: $currentLimit)');
-        
+
+        print(
+            'Page $currentPageNum: ${pageItems.length} sites retrieved (limit: $currentLimit)');
+
         // Ajouter les sites de cette page à la liste totale
         allSitesData.addAll(pageItems);
-        
+
         // Passer à la page suivante
         currentPage++;
-        
+
         // Continuer tant qu'on a récupéré une page complète
         // Si la page contient moins d'éléments que la limite, c'est la dernière page
         if (pageItems.length < pageSize) {
           print('Last page reached (${pageItems.length} < $pageSize items)');
           break;
         }
-        
       } while (true);
 
-      print('Pagination completed: $totalCount sites total, ${allSitesData.length} sites retrieved for module $moduleCode');
+      print(
+          'Pagination completed: $totalCount sites total, ${allSitesData.length} sites retrieved for module $moduleCode');
 
       final List<Map<String, dynamic>> enrichedSites = [];
       final List<SiteComplement> siteComplements = [];
-      int sitesWithCreatePermission = 0;
-
-      // Traiter tous les sites et filtrer ceux avec permission "C" (création de visites)
+      // Suppression du filtrage sur la propriété cruved['C']
+      // On garde tous les sites
       for (var siteData in allSitesData) {
         final Map<String, dynamic> site = siteData as Map<String, dynamic>;
-        final Map<String, dynamic>? cruved =
-            site['cruved'] as Map<String, dynamic>?;
 
-        // Vérifier si l'utilisateur a le droit de créer des visites sur ce site
-        final bool canCreateVisits = cruved?['C'] == true;
+        // Créer les données enrichies du site
+        final Map<String, dynamic> enrichedSite = {
+          'id_base_site': site['id_base_site'],
+          'base_site_name': site['base_site_name'],
+          'base_site_code': site['base_site_code'],
+          'base_site_description': site['base_site_description'],
+          'altitude_min': site['altitude_min'],
+          'altitude_max': site['altitude_max'],
+          'first_use_date': site['first_use_date'],
+          'uuid_base_site': site['uuid_base_site'],
+          // 'geometry': site['geometry'], // Inclure la géométrie si disponible
+        };
 
-        if (canCreateVisits) {
-          sitesWithCreatePermission++;
+        enrichedSites.add(enrichedSite);
 
-          // Créer les données enrichies du site
-          final Map<String, dynamic> enrichedSite = {
-            'id_base_site': site['id_base_site'],
-            'base_site_name': site['base_site_name'],
-            'base_site_code': site['base_site_code'],
-            'base_site_description': site['base_site_description'],
-            'altitude_min': site['altitude_min'],
-            'altitude_max': site['altitude_max'],
-            'first_use_date': site['first_use_date'],
-            'uuid_base_site': site['uuid_base_site'],
-            // 'geometry': site['geometry'], // Inclure la géométrie si disponible
-          };
+        // Créer les données de complément de site
+        final int siteId = site['id_base_site'] as int;
+        final int? idSitesGroup = site['id_sites_group'] as int?;
+        final Map<String, dynamic>? siteDataField =
+            site['data'] as Map<String, dynamic>?;
 
-          enrichedSites.add(enrichedSite);
+        // Créer l'entité puis la convertir en modèle de domaine
+        final complementEntity = SiteComplementEntity(
+          idBaseSite: siteId,
+          idSitesGroup: idSitesGroup,
+          data: siteDataField != null ? jsonEncode(siteDataField) : null,
+        );
 
-          // Créer les données de complément de site
-          final int siteId = site['id_base_site'] as int;
-          final int? idSitesGroup = site['id_sites_group'] as int?;
-          final Map<String, dynamic>? siteDataField =
-              site['data'] as Map<String, dynamic>?;
-
-          // Créer l'entité puis la convertir en modèle de domaine
-          final complementEntity = SiteComplementEntity(
-            idBaseSite: siteId,
-            idSitesGroup: idSitesGroup,
-            data: siteDataField != null ? jsonEncode(siteDataField) : null,
-          );
-
-          siteComplements.add(complementEntity.toDomain());
-        }
+        siteComplements.add(complementEntity.toDomain());
       }
 
       print(
-          'Filtered to $sitesWithCreatePermission sites with create permission out of ${allSitesData.length} total sites');
+          'Kept all ${allSitesData.length} sites (no filtering on cruved[\'C\'])');
 
       return {
         'enriched_sites': enrichedSites,
