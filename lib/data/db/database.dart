@@ -272,6 +272,6 @@ LazyDatabase _openConnection() {
       await file.create(recursive: true);
     }
 
-    return NativeDatabase(file, logStatements: true);
+    return NativeDatabase(file, logStatements: false);
   });
 }
