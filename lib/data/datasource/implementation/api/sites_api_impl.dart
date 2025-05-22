@@ -53,10 +53,13 @@ class SitesApiImpl implements SitesApi {
 
       // Extract site IDs from the module response
       print('Module data keys: ${moduleData.keys}');
+
+      // 1. Récupérer les sites directement liés au module
       if (moduleData['children'] != null &&
           moduleData['children']['site'] != null) {
         final sitesList = moduleData['children']['site'] as List;
-        print('Found ${sitesList.length} sites in module $moduleCode');
+        print(
+            'Found ${sitesList.length} sites directly linked to module $moduleCode');
         for (var site in sitesList) {
           final siteData = site as Map<String, dynamic>;
           final properties = siteData['properties'] as Map<String, dynamic>;

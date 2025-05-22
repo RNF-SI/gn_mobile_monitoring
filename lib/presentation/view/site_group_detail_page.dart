@@ -8,7 +8,7 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
-class SiteGroupDetailPage extends ConsumerWidget {
+class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final SiteGroup siteGroup;
   final ModuleInfo moduleInfo;
 
@@ -19,11 +19,25 @@ class SiteGroupDetailPage extends ConsumerWidget {
   }) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final sitesState = ref.watch(siteGroupDetailViewModelProvider(siteGroup));
+  ConsumerState<SiteGroupDetailPage> createState() => _SiteGroupDetailPageState();
+}
+
+class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Refresh data when page is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier).refresh();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sitesState = ref.watch(siteGroupDetailViewModelProvider(widget.siteGroup));
 
     // Récupérer la configuration pour personnaliser les libellés
-    final module = moduleInfo.module;
+    final module = widget.moduleInfo.module;
 
     // Obtenir la configuration des sites et l'analyser avec FormConfigParser
     final siteConfig = module.complement?.configuration?.site;
@@ -76,7 +90,7 @@ class SiteGroupDetailPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            '${moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
+            '${widget.moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${widget.siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,18 +106,18 @@ class SiteGroupDetailPage extends ConsumerWidget {
                   items: [
                     BreadcrumbItem(
                       label: 'Module',
-                      value: moduleInfo.module.moduleLabel ?? 'Module',
+                      value: widget.moduleInfo.module.moduleLabel ?? 'Module',
                       onTap: () {
                         Navigator.of(context)
                             .pop(); // Retour à la page précédente
                       },
                     ),
                     BreadcrumbItem(
-                      label: moduleInfo.module.complement?.configuration
+                      label: widget.moduleInfo.module.complement?.configuration
                               ?.sitesGroup?.label ??
                           'Groupe',
-                      value: siteGroup.sitesGroupName ??
-                          siteGroup.sitesGroupCode ??
+                      value: widget.siteGroup.sitesGroupName ??
+                          widget.siteGroup.sitesGroupCode ??
                           'Groupe',
                     ),
                   ],
@@ -121,20 +135,20 @@ class SiteGroupDetailPage extends ConsumerWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                        moduleInfo.module.complement?.configuration?.sitesGroup
+                        widget.moduleInfo.module.complement?.configuration?.sitesGroup
                                 ?.label ??
                             'Propriétés du groupe',
                         style: const TextStyle(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),
                     _buildPropertyRow(
-                        groupNameLabel, siteGroup.sitesGroupName ?? ''),
+                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
                     _buildPropertyRow(
-                        groupCodeLabel, siteGroup.sitesGroupCode ?? ''),
-                    if (siteGroup.sitesGroupDescription != null &&
-                        siteGroup.sitesGroupDescription!.isNotEmpty)
+                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                    if (widget.siteGroup.sitesGroupDescription != null &&
+                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
                       _buildPropertyRow(groupDescriptionLabel,
-                          siteGroup.sitesGroupDescription!),
+                          widget.siteGroup.sitesGroupDescription!),
                   ],
                 ),
               ),
@@ -148,9 +162,9 @@ class SiteGroupDetailPage extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  moduleInfo
+                  widget.moduleInfo
                           .module.complement?.configuration?.site?.labelList ??
-                      moduleInfo
+                      widget.moduleInfo
                           .module.complement?.configuration?.site?.label ??
                       'Sites associés',
                   style: const TextStyle(
@@ -262,9 +276,9 @@ class SiteGroupDetailPage extends ConsumerWidget {
                             MaterialPageRoute(
                               builder: (context) => SiteDetailPage(
                                 site: site,
-                                moduleInfo: moduleInfo,
+                                moduleInfo: widget.moduleInfo,
                                 fromSiteGroup:
-                                    siteGroup, // Passer le groupe de sites avec le nom correct du paramètre
+                                    widget.siteGroup, // Passer le groupe de sites avec le nom correct du paramètre
                               ),
                             ),
                           );
