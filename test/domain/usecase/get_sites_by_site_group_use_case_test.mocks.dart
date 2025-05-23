@@ -3,12 +3,13 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i3;
+import 'dart:async' as _i4;
 
-import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i4;
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i6;
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart' as _i5;
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart' as _i2;
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart'
-    as _i2;
+    as _i3;
 import 'package:mockito/mockito.dart' as _i1;
 
 // ignore_for_file: type=lint
@@ -24,84 +25,131 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
+class _FakeSyncResult_0 extends _i1.SmartFake implements _i2.SyncResult {
+  _FakeSyncResult_0(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [SitesRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockSitesRepository extends _i1.Mock implements _i2.SitesRepository {
+class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
   MockSitesRepository() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<void> fetchSitesAndSiteModules(String? token) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #fetchSitesAndSiteModules,
-          [token],
-        ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
-
-  @override
-  _i3.Future<void> fetchSiteGroupsAndSitesGroupModules(String? token) =>
+  _i4.Future<void> fetchSiteGroupsAndSitesGroupModules(String? token) =>
       (super.noSuchMethod(
         Invocation.method(
           #fetchSiteGroupsAndSitesGroupModules,
           [token],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<void> incrementalSyncSitesAndSiteModules(String? token) =>
+  _i4.Future<_i2.SyncResult> incrementalSyncSitesWithConflictHandling(
+          String? token) =>
       (super.noSuchMethod(
         Invocation.method(
-          #incrementalSyncSitesAndSiteModules,
+          #incrementalSyncSitesWithConflictHandling,
           [token],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<_i2.SyncResult>.value(_FakeSyncResult_0(
+          this,
+          Invocation.method(
+            #incrementalSyncSitesWithConflictHandling,
+            [token],
+          ),
+        )),
+      ) as _i4.Future<_i2.SyncResult>);
 
   @override
-  _i3.Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(
+  _i4.Future<void> incrementalSyncSiteGroupsAndSitesGroupModules(
           String? token) =>
       (super.noSuchMethod(
         Invocation.method(
           #incrementalSyncSiteGroupsAndSitesGroupModules,
           [token],
         ),
-        returnValue: _i3.Future<void>.value(),
-        returnValueForMissingStub: _i3.Future<void>.value(),
-      ) as _i3.Future<void>);
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 
   @override
-  _i3.Future<List<_i4.BaseSite>> getSites() => (super.noSuchMethod(
+  _i4.Future<_i2.SyncResult> incrementalSyncSiteGroupsWithConflictHandling(
+          String? token) =>
+      (super.noSuchMethod(
         Invocation.method(
-          #getSites,
-          [],
+          #incrementalSyncSiteGroupsWithConflictHandling,
+          [token],
         ),
-        returnValue: _i3.Future<List<_i4.BaseSite>>.value(<_i4.BaseSite>[]),
-      ) as _i3.Future<List<_i4.BaseSite>>);
+        returnValue: _i4.Future<_i2.SyncResult>.value(_FakeSyncResult_0(
+          this,
+          Invocation.method(
+            #incrementalSyncSiteGroupsWithConflictHandling,
+            [token],
+          ),
+        )),
+      ) as _i4.Future<_i2.SyncResult>);
 
   @override
-  _i3.Future<List<_i5.SiteGroup>> getSiteGroups() => (super.noSuchMethod(
+  _i4.Future<List<_i5.SiteGroup>> getSiteGroups() => (super.noSuchMethod(
         Invocation.method(
           #getSiteGroups,
           [],
         ),
-        returnValue: _i3.Future<List<_i5.SiteGroup>>.value(<_i5.SiteGroup>[]),
-      ) as _i3.Future<List<_i5.SiteGroup>>);
+        returnValue: _i4.Future<List<_i5.SiteGroup>>.value(<_i5.SiteGroup>[]),
+      ) as _i4.Future<List<_i5.SiteGroup>>);
 
   @override
-  _i3.Future<List<_i4.BaseSite>> getSitesBySiteGroup(int? siteGroupId) =>
+  _i4.Future<List<_i6.BaseSite>> getSitesBySiteGroup(int? siteGroupId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getSitesBySiteGroup,
           [siteGroupId],
         ),
-        returnValue: _i3.Future<List<_i4.BaseSite>>.value(<_i4.BaseSite>[]),
-      ) as _i3.Future<List<_i4.BaseSite>>);
+        returnValue: _i4.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
+      ) as _i4.Future<List<_i6.BaseSite>>);
+
+  @override
+  _i4.Future<void> fetchSitesForModule(
+    String? moduleCode,
+    String? token,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #fetchSitesForModule,
+          [
+            moduleCode,
+            token,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> fetchSiteGroupsForModule(
+    String? moduleCode,
+    String? token,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #fetchSiteGroupsForModule,
+          [
+            moduleCode,
+            token,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
 }
