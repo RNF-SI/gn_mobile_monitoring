@@ -241,4 +241,21 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
         returnValueForMissingStub:
             _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
       ) as _i4.Future<List<_i2.TBaseVisit>>);
+
+  @override
+  _i4.Future<bool> updateVisitServerId(
+    int? localVisitId,
+    int? serverId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateVisitServerId,
+          [
+            localVisitId,
+            serverId,
+          ],
+        ),
+        returnValue: _i4.Future<bool>.value(false),
+        returnValueForMissingStub: _i4.Future<bool>.value(false),
+      ) as _i4.Future<bool>);
 }
