@@ -66,6 +66,12 @@ class SitesDatabaseImpl implements SitesDatabase {
     return await db.sitesDao.getAllComplements();
   }
 
+  @override
+  Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteComplementsByModuleId(moduleId);
+  }
+
   /// TSitesGroups
   @override
   Future<void> clearSiteGroups() async {

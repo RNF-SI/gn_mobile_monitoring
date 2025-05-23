@@ -298,4 +298,16 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     final results = await query.map((row) => row.readTable(tBaseSites)).get();
     return results.map((e) => e.toDomain()).toList();
   }
+
+  /// Get site complements for sites belonging to a specific module
+  Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId) async {
+    final query = select(tSiteComplements).join([
+      leftOuterJoin(
+          corSiteModuleTable,
+          corSiteModuleTable.idBaseSite.equalsExp(tSiteComplements.idBaseSite))
+    ]);
+    query.where(corSiteModuleTable.idModule.equals(moduleId));
+    final results = await query.map((row) => row.readTable(tSiteComplements)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
 }

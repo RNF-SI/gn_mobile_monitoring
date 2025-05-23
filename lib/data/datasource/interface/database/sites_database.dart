@@ -17,6 +17,7 @@ abstract class SitesDatabase {
   Future<void> insertSiteComplements(List<SiteComplement> complements);
   Future<void> deleteSiteComplement(int siteId);
   Future<List<SiteComplement>> getAllSiteComplements();
+  Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId);
 
   /// Methods for handling `TSitesGroups`.
   Future<void> clearSiteGroups();
