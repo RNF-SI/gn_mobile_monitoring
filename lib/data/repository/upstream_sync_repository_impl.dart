@@ -136,7 +136,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             Map<String, dynamic> serverResponse;
             int? serverId;
             bool isNewVisit = visit.serverVisitId == null;
-            
+
             try {
               // Convertir l'entité en domaine en utilisant directement le mapper
               BaseVisit visitModel;
@@ -196,24 +196,28 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 _logger.i('Visite créée avec succès, ID serveur: $serverId',
                     tag: 'sync');
                 itemsAdded++;
-                
+
                 // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
-                await _visitRepository.updateVisitServerId(visitEntity.idBaseVisit, serverId);
-                _logger.i('ID serveur de la visite enregistré: local=${visitEntity.idBaseVisit}, serveur=$serverId',
+                await _visitRepository.updateVisitServerId(
+                    visitEntity.idBaseVisit, serverId);
+                _logger.i(
+                    'ID serveur de la visite enregistré: local=${visitEntity.idBaseVisit}, serveur=$serverId',
                     tag: 'sync');
               } else {
                 // PATCH - Mettre à jour une visite existante
                 serverId = visit.serverVisitId!;
-                _logger.i('Mise à jour d\'une visite existante sur le serveur, ID serveur: $serverId',
+                _logger.i(
+                    'Mise à jour d\'une visite existante sur le serveur, ID serveur: $serverId',
                     tag: 'sync');
-                
-                serverResponse = await _globalApi.updateVisit(token, moduleCode, serverId, visitModel);
-                
-                _logger.i('Visite mise à jour avec succès, ID serveur: $serverId',
+
+                serverResponse = await _globalApi.updateVisit(
+                    token, moduleCode, serverId, visitModel);
+
+                _logger.i(
+                    'Visite mise à jour avec succès, ID serveur: $serverId',
                     tag: 'sync');
                 // Pour les mises à jour, on ne compte pas comme "ajouté" mais comme traité
               }
-                  
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi de la visite: $e',
                   tag: 'sync', error: e);
@@ -244,7 +248,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               _logger.w(
                   'Visite ${visitEntity.idBaseVisit} créée sur le serveur (ID: $serverId) mais observations échouées',
                   tag: 'sync');
-              
+
               if (observationsResult.errorMessage != null) {
                 _logger.e(
                     'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}',
@@ -252,7 +256,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 errors.add(
                     'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
               }
-              
+
               // Marquer la visite comme partiellement synchronisée
               // En gardant l'ID serveur pour les futures tentatives de synchronisation
               itemsSkipped++;
@@ -411,21 +415,19 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 serverObservationId: serverObservationId);
 
             // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
-            if (!detailsResult.success &&
-                detailsResult.errorMessage != null) {
+            if (!detailsResult.success && detailsResult.errorMessage != null) {
               errors.add(
                   'Détails de l\'observation ${observation.idObservation}: ${detailsResult.errorMessage}');
               itemsSkipped++;
-              continue;
+              continue; // Passer à l'observation suivante sans la supprimer
             }
 
-            // 3. Si tout a réussi, supprimer l'observation localement
-            if (errors.isEmpty) {
-              await _observationsRepository
-                  .deleteObservation(observation.idObservation);
-              itemsDeleted++;
-              debugPrint('Observation supprimée avec succès');
-            }
+            // 3. Si cette observation spécifique a réussi, la supprimer localement
+            await _observationsRepository
+                .deleteObservation(observation.idObservation);
+            itemsDeleted++;
+            debugPrint(
+                'Observation ${observation.idObservation} supprimée avec succès');
 
             itemsProcessed++;
           } catch (e) {
