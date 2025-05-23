@@ -158,20 +158,17 @@ class SitesRepositoryImpl implements SitesRepository {
             // Supprimer la relation site-module
             await database.deleteSiteModule(site.idBaseSite, module.id);
 
-            // Vérifier si le site est encore lié à d'autres modules téléchargés
-            final allSiteModules = await database.getAllSiteModules();
-            final siteStillLinkedToOtherModules = allSiteModules.any((sm) =>
-                sm.idSite == site.idBaseSite && sm.idModule != module.id);
+            // Vérifier si le site appartient à d'autres modules avant suppression complète
+            final hasOtherReferences = await database.siteHasOtherModuleReferences(site.idBaseSite, module.id);
 
-            if (!siteStillLinkedToOtherModules) {
-              // Le site n'est lié à aucun autre module, on peut le supprimer
-              await database.deleteSite(site.idBaseSite);
+            if (!hasOtherReferences) {
+              // Le site n'est lié à aucun autre module, on peut le supprimer complètement
+              await database.deleteSiteCompletely(site.idBaseSite);
+              print('Site ${site.idBaseSite} supprimé complètement (pas d\'autres références de modules)');
               itemsDeleted++;
-              print('Site ${site.idBaseSite} complètement supprimé');
             } else {
-              // Le site est encore lié à d'autres modules, on ne le supprime pas
-              print(
-                  'Site ${site.idBaseSite} still linked to other modules, not deleting');
+              // Le site est encore lié à d'autres modules, on ne supprime que la relation
+              print('Site ${site.idBaseSite} conservé (lié à d\'autres modules), relation supprimée uniquement');
             }
           }
         }
@@ -524,19 +521,18 @@ class SitesRepositoryImpl implements SitesRepository {
           // Supprimer la relation groupe-module
           await database.deleteSiteGroupModule(siteGroup.idSitesGroup, module.id);
 
-          // Vérifier si le groupe est encore lié à d'autres modules téléchargés
-          final allSiteGroupModules = await database.getAllSiteGroupModules();
-          final groupStillLinkedToOtherModules = allSiteGroupModules.any((sgm) =>
-              sgm.idSitesGroup == siteGroup.idSitesGroup && sgm.idModule != module.id);
+          // Vérifier si le groupe appartient à d'autres modules avant suppression complète
+          final hasOtherReferences = await database.siteGroupHasOtherModuleReferences(siteGroup.idSitesGroup, module.id);
 
-          if (!groupStillLinkedToOtherModules) {
-            // Le groupe n'est lié à aucun autre module, on peut le supprimer
+          if (!hasOtherReferences) {
+            // Le groupe n'est lié à aucun autre module, on peut le supprimer complètement
+            // Note: Les compléments de sites ont déjà été mis à jour lors de la synchronisation des sites (qui précède celle des groupes)
             await database.deleteSiteGroup(siteGroup.idSitesGroup);
+            print('Groupe de sites ${siteGroup.idSitesGroup} supprimé complètement (pas d\'autres références de modules)');
             itemsDeleted++;
-            print('Groupe de sites ${siteGroup.idSitesGroup} complètement supprimé');
           } else {
-            // Le groupe est encore lié à d'autres modules, on ne le supprime pas
-            print('Groupe de sites ${siteGroup.idSitesGroup} encore lié à d\'autres modules, conservation');
+            // Le groupe est encore lié à d'autres modules, on ne supprime que la relation
+            print('Groupe de sites ${siteGroup.idSitesGroup} conservé (lié à d\'autres modules), relation supprimée uniquement');
           }
         }
 
@@ -742,6 +738,7 @@ class SitesRepositoryImpl implements SitesRepository {
 
         if (remainingSiteGroupModules.isEmpty) {
           // This site group isn't linked to any module anymore, completely remove it
+          // Note: Les compléments de sites ont déjà été mis à jour lors de la synchronisation des sites (qui précède celle des groupes)
           await database.deleteSiteGroup(siteGroupId);
           print('Groupe de sites $siteGroupId supprimé - plus lié à aucun module');
         } else {
