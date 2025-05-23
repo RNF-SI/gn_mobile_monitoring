@@ -68,4 +68,8 @@ abstract class VisitRepository {
 
   /// Remove all observers from a visit
   Future<void> clearVisitObservers(int visitId);
+
+  /// Update visit with server ID for sync tracking
+  /// Used when a visit is successfully created on server but observations fail
+  Future<void> updateVisitServerId(int localVisitId, int serverId);
 }
