@@ -148,4 +148,14 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
     
     return false;
   }
+  
+  /// Met à jour l'ID serveur d'une visite pour le suivi de synchronisation
+  Future<bool> updateVisitServerId(int localVisitId, int serverId) async {
+    final updated = await (update(tBaseVisits)
+      ..where((t) => t.idBaseVisit.equals(localVisitId)))
+      .write(TBaseVisitsCompanion(
+        serverVisitId: Value(serverId),
+      ));
+    return updated > 0;
+  }
 }

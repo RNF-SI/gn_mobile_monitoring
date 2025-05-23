@@ -104,4 +104,10 @@ class VisitesDatabaseImpl implements VisitesDatabase {
     final db = await _db;
     return db.visitesDao.getVisitsBySite(siteId);
   }
+
+  @override
+  Future<bool> updateVisitServerId(int localVisitId, int serverId) async {
+    final db = await _db;
+    return db.visitesDao.updateVisitServerId(localVisitId, serverId);
+  }
 }
