@@ -134,6 +134,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // 1. Envoyer la visite au serveur
             Map<String, dynamic> serverResponse;
+            int? serverId;
+            bool isNewVisit = visit.serverVisitId == null;
+            
             try {
               // Convertir l'entité en domaine en utilisant directement le mapper
               BaseVisit visitModel;
@@ -178,17 +181,39 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               // Convertir l'entité sécurisée en modèle de domaine
               visitModel = safeEntity.toDomain();
 
-              serverResponse =
-                  await _globalApi.sendVisit(token, moduleCode, visitModel);
+              if (isNewVisit) {
+                // POST - Créer une nouvelle visite
+                _logger.i('Création d\'une nouvelle visite sur le serveur',
+                    tag: 'sync');
+                serverResponse =
+                    await _globalApi.sendVisit(token, moduleCode, visitModel);
 
-              final serverId = serverResponse['id'] ?? serverResponse['ID'];
-              if (serverId == null) {
-                throw Exception('Réponse du serveur invalide pour la visite');
+                serverId = serverResponse['id'] ?? serverResponse['ID'];
+                if (serverId == null) {
+                  throw Exception('Réponse du serveur invalide pour la visite');
+                }
+
+                _logger.i('Visite créée avec succès, ID serveur: $serverId',
+                    tag: 'sync');
+                itemsAdded++;
+                
+                // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
+                await _visitRepository.updateVisitServerId(visitEntity.idBaseVisit, serverId);
+                _logger.i('ID serveur de la visite enregistré: local=${visitEntity.idBaseVisit}, serveur=$serverId',
+                    tag: 'sync');
+              } else {
+                // PATCH - Mettre à jour une visite existante
+                serverId = visit.serverVisitId!;
+                _logger.i('Mise à jour d\'une visite existante sur le serveur, ID serveur: $serverId',
+                    tag: 'sync');
+                
+                serverResponse = await _globalApi.updateVisit(token, moduleCode, serverId, visitModel);
+                
+                _logger.i('Visite mise à jour avec succès, ID serveur: $serverId',
+                    tag: 'sync');
+                // Pour les mises à jour, on ne compte pas comme "ajouté" mais comme traité
               }
-
-              _logger.i('Visite envoyée avec succès, ID serveur: $serverId',
-                  tag: 'sync');
-              itemsAdded++;
+                  
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi de la visite: $e',
                   tag: 'sync', error: e);
@@ -198,28 +223,28 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             }
 
             // 2. Récupérer et envoyer toutes les observations associées à cette visite
-            // Utiliser l'ID serveur retourné par la création de la visite plutôt que l'ID local
-            final serverVisitId =
-                serverResponse['id'] ?? serverResponse['ID'] ?? 0;
-            if (serverVisitId == 0) {
-              throw Exception(
-                  'ID serveur de la visite non trouvé dans la réponse');
-            }
+            // Utiliser l'ID serveur retourné par la création/mise à jour de la visite
 
             // On passe à la fois l'ID local (pour récupérer les observations localement)
             // et l'ID serveur (pour les envoyer avec le bon ID de visite serveur)
             final observationsResult = await syncObservationsToServer(
                 token, moduleCode, visitEntity.idBaseVisit,
-                serverVisitId: serverVisitId);
+                serverVisitId: serverId);
 
-            // 3. Si tout a réussi, supprimer la visite localement
-            if (observationsResult.success && errors.isEmpty) {
+            // 3. Gérer le résultat de la synchronisation des observations
+            if (observationsResult.success) {
+              // Si tout a réussi, supprimer la visite localement
               await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
               itemsDeleted++;
               _logger.i('Visite et observations supprimées avec succès',
                   tag: 'sync');
             } else {
-              // Ajouter les erreurs des observations à la liste d'erreurs
+              // Si les observations ont échoué, ne pas supprimer la visite
+              // mais loguer l'erreur pour permettre une nouvelle tentative
+              _logger.w(
+                  'Visite ${visitEntity.idBaseVisit} créée sur le serveur (ID: $serverId) mais observations échouées',
+                  tag: 'sync');
+              
               if (observationsResult.errorMessage != null) {
                 _logger.e(
                     'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}',
@@ -227,6 +252,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 errors.add(
                     'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
               }
+              
+              // Marquer la visite comme partiellement synchronisée
+              // En gardant l'ID serveur pour les futures tentatives de synchronisation
               itemsSkipped++;
             }
 
@@ -355,46 +383,44 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             }
 
             // 2. Récupérer et envoyer tous les détails associés à cette observation
-            if (observation.idObservation != null) {
-              // Récupérer l'ID serveur de l'observation depuis la réponse
-              final serverObservationId =
-                  serverResponse['id'] ?? serverResponse['ID'];
-              if (serverObservationId == null) {
-                throw Exception(
-                    'ID serveur de l\'observation non trouvé dans la réponse');
-              }
+            // Récupérer l'ID serveur de l'observation depuis la réponse
+            final serverObservationId =
+                serverResponse['id'] ?? serverResponse['ID'];
+            if (serverObservationId == null) {
+              throw Exception(
+                  'ID serveur de l\'observation non trouvé dans la réponse');
+            }
 
-              _logger.i(
-                  'Envoi des détails pour l\'observation local=${observation.idObservation}, serveur=$serverObservationId',
-                  tag: 'sync');
+            _logger.i(
+                'Envoi des détails pour l\'observation local=${observation.idObservation}, serveur=$serverObservationId',
+                tag: 'sync');
 
-              // Vérifier la réponse du serveur pour les champs importants
-              if (serverResponse.containsKey('properties')) {
-                final properties = serverResponse['properties'];
-                if (properties is Map) {
-                  _logger.i(
-                      'Propriétés de l\'observation dans la réponse du serveur: $properties',
-                      tag: 'sync');
-                }
-              }
-
-              // Passer l'ID serveur de l'observation pour les détails
-              final detailsResult = await syncObservationDetailsToServer(
-                  token, moduleCode, observation.idObservation,
-                  serverObservationId: serverObservationId);
-
-              // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
-              if (!detailsResult.success &&
-                  detailsResult.errorMessage != null) {
-                errors.add(
-                    'Détails de l\'observation ${observation.idObservation}: ${detailsResult.errorMessage}');
-                itemsSkipped++;
-                continue;
+            // Vérifier la réponse du serveur pour les champs importants
+            if (serverResponse.containsKey('properties')) {
+              final properties = serverResponse['properties'];
+              if (properties is Map) {
+                _logger.i(
+                    'Propriétés de l\'observation dans la réponse du serveur: $properties',
+                    tag: 'sync');
               }
             }
 
+            // Passer l'ID serveur de l'observation pour les détails
+            final detailsResult = await syncObservationDetailsToServer(
+                token, moduleCode, observation.idObservation,
+                serverObservationId: serverObservationId);
+
+            // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
+            if (!detailsResult.success &&
+                detailsResult.errorMessage != null) {
+              errors.add(
+                  'Détails de l\'observation ${observation.idObservation}: ${detailsResult.errorMessage}');
+              itemsSkipped++;
+              continue;
+            }
+
             // 3. Si tout a réussi, supprimer l'observation localement
-            if (errors.isEmpty && observation.idObservation != null) {
+            if (errors.isEmpty) {
               await _observationsRepository
                   .deleteObservation(observation.idObservation);
               itemsDeleted++;

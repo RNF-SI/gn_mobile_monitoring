@@ -45,6 +45,7 @@ class VisitRepositoryImpl implements VisitRepository {
         uuidBaseVisit: baseEntity.uuidBaseVisit,
         metaCreateDate: baseEntity.metaCreateDate,
         metaUpdateDate: baseEntity.metaUpdateDate,
+        serverVisitId: baseEntity.serverVisitId, // 🔧 FIX: Inclure le serverVisitId
         observers: observerIds,
       ));
     }
@@ -99,6 +100,7 @@ class VisitRepositoryImpl implements VisitRepository {
         uuidBaseVisit: baseEntity.uuidBaseVisit,
         metaCreateDate: baseEntity.metaCreateDate,
         metaUpdateDate: baseEntity.metaUpdateDate,
+        serverVisitId: baseEntity.serverVisitId, // 🔧 FIX: Inclure le serverVisitId
         observers: observerIds,
         data: _processTimeFieldsInDataMap(dataMap),
       ));
@@ -131,6 +133,7 @@ class VisitRepositoryImpl implements VisitRepository {
       uuidBaseVisit: baseEntity.uuidBaseVisit,
       metaCreateDate: baseEntity.metaCreateDate,
       metaUpdateDate: baseEntity.metaUpdateDate,
+      serverVisitId: baseEntity.serverVisitId, // 🔧 FIX: Inclure le serverVisitId
       observers: observerIds,
     );
   }
@@ -178,6 +181,7 @@ class VisitRepositoryImpl implements VisitRepository {
       uuidBaseVisit: baseEntity.uuidBaseVisit,
       metaCreateDate: baseEntity.metaCreateDate,
       metaUpdateDate: baseEntity.metaUpdateDate,
+      serverVisitId: baseEntity.serverVisitId, // 🔧 FIX: Inclure le serverVisitId
       observers: observerIds,
       data: _processTimeFieldsInDataMap(dataMap),
     );
@@ -630,5 +634,10 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<void> clearVisitObservers(int visitId) async {
     await _visitesDatabase.deleteVisitObservers(visitId);
+  }
+
+  @override
+  Future<void> updateVisitServerId(int localVisitId, int serverId) async {
+    await _visitesDatabase.updateVisitServerId(localVisitId, serverId);
   }
 }
