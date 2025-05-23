@@ -72,6 +72,24 @@ class SitesDatabaseImpl implements SitesDatabase {
     return await db.sitesDao.getSiteComplementsByModuleId(moduleId);
   }
 
+  @override
+  Future<bool> siteHasOtherModuleReferences(int siteId, int excludeModuleId) async {
+    final db = await _database;
+    return await db.sitesDao.siteHasOtherModuleReferences(siteId, excludeModuleId);
+  }
+
+  @override
+  Future<bool> siteGroupHasOtherModuleReferences(int siteGroupId, int excludeModuleId) async {
+    final db = await _database;
+    return await db.sitesDao.siteGroupHasOtherModuleReferences(siteGroupId, excludeModuleId);
+  }
+
+  @override
+  Future<void> deleteSiteCompletely(int siteId) async {
+    final db = await _database;
+    await db.sitesDao.deleteSiteCompletely(siteId);
+  }
+
   /// TSitesGroups
   @override
   Future<void> clearSiteGroups() async {

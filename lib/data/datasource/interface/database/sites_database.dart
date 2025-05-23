@@ -18,6 +18,10 @@ abstract class SitesDatabase {
   Future<void> deleteSiteComplement(int siteId);
   Future<List<SiteComplement>> getAllSiteComplements();
   Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId);
+  
+  Future<bool> siteHasOtherModuleReferences(int siteId, int excludeModuleId);
+  Future<bool> siteGroupHasOtherModuleReferences(int siteGroupId, int excludeModuleId);
+  Future<void> deleteSiteCompletely(int siteId);
 
   /// Methods for handling `TSitesGroups`.
   Future<void> clearSiteGroups();

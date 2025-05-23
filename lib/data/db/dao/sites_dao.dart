@@ -287,6 +287,32 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
         .toList();
   }
 
+  /// Check if a site belongs to other modules besides the specified one
+  Future<bool> siteHasOtherModuleReferences(int siteId, int excludeModuleId) async {
+    final query = select(corSiteModuleTable)
+      ..where((tbl) => tbl.idBaseSite.equals(siteId) & tbl.idModule.isNotValue(excludeModuleId));
+    final results = await query.get();
+    return results.isNotEmpty;
+  }
+
+  /// Check if a site group belongs to other modules besides the specified one
+  Future<bool> siteGroupHasOtherModuleReferences(int siteGroupId, int excludeModuleId) async {
+    final query = select(corSitesGroupModuleTable)
+      ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId) & tbl.idModule.isNotValue(excludeModuleId));
+    final results = await query.get();
+    return results.isNotEmpty;
+  }
+
+  /// Delete a site completely with all its related data (respects FK constraints)
+  Future<void> deleteSiteCompletely(int siteId) async {
+    // Delete site complement first (FK constraint)
+    await deleteSiteComplement(siteId);
+    
+    // Then delete the site itself
+    await deleteSite(siteId);
+  }
+
+
   /// Get all sites that belong to a specific site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
     final query = select(tBaseSites).join([
