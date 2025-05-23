@@ -3,7 +3,6 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 
-import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 
 extension VisiteEntityMapper on BaseVisitEntity {
@@ -67,6 +66,8 @@ extension VisiteEntityMapper on BaseVisitEntity {
       comments: comments == null ? const Value.absent() : Value(comments),
       uuidBaseVisit:
           uuidBaseVisit == null ? const Value.absent() : Value(uuidBaseVisit),
+      serverVisitId:
+          serverVisitId == null ? const Value.absent() : Value(serverVisitId),
       metaCreateDate: const Value.absent(),
       metaUpdateDate: const Value.absent(),
     );
@@ -87,6 +88,7 @@ extension BaseVisitMapper on BaseVisit {
       idNomenclatureGrpTyp: idNomenclatureGrpTyp,
       comments: comments,
       uuidBaseVisit: uuidBaseVisit,
+      serverVisitId: null, // Le modèle de domaine ne gère pas serverVisitId
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       observers: observers,
@@ -109,6 +111,7 @@ extension TBaseVisitMapper on TBaseVisit {
       idNomenclatureGrpTyp: idNomenclatureGrpTyp,
       comments: comments,
       uuidBaseVisit: uuidBaseVisit,
+      serverVisitId: serverVisitId, // Récupéré depuis la DB
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       // Note: observers and data need to be loaded separately

@@ -18,6 +18,7 @@ extension BaseVisitMapper on TBaseVisit {
       uuidBaseVisit: uuidBaseVisit,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
+      serverVisitId: serverVisitId, // 🔧 FIX: Ajouter le mapping du serverVisitId
     );
   }
 }
@@ -45,6 +46,7 @@ extension BaseVisitEntityMapper on BaseVisitEntity {
       comments: comments == null ? const Value.absent() : Value(comments),
       uuidBaseVisit:
           uuidBaseVisit == null ? const Value.absent() : Value(uuidBaseVisit),
+      serverVisitId: serverVisitId == null ? const Value.absent() : Value(serverVisitId), // 🔧 FIX: Ajouter le mapping du serverVisitId
       metaCreateDate: const Value.absent(),
       metaUpdateDate: const Value.absent(),
     );

@@ -9275,6 +9275,12 @@ class $TBaseVisitsTable extends TBaseVisits
   late final GeneratedColumn<String> uuidBaseVisit = GeneratedColumn<String>(
       'uuid_base_visit', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _serverVisitIdMeta =
+      const VerificationMeta('serverVisitId');
+  @override
+  late final GeneratedColumn<int> serverVisitId = GeneratedColumn<int>(
+      'server_visit_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _metaCreateDateMeta =
       const VerificationMeta('metaCreateDate');
   @override
@@ -9304,6 +9310,7 @@ class $TBaseVisitsTable extends TBaseVisits
         idNomenclatureGrpTyp,
         comments,
         uuidBaseVisit,
+        serverVisitId,
         metaCreateDate,
         metaUpdateDate
       ];
@@ -9384,6 +9391,12 @@ class $TBaseVisitsTable extends TBaseVisits
           uuidBaseVisit.isAcceptableOrUnknown(
               data['uuid_base_visit']!, _uuidBaseVisitMeta));
     }
+    if (data.containsKey('server_visit_id')) {
+      context.handle(
+          _serverVisitIdMeta,
+          serverVisitId.isAcceptableOrUnknown(
+              data['server_visit_id']!, _serverVisitIdMeta));
+    }
     if (data.containsKey('meta_create_date')) {
       context.handle(
           _metaCreateDateMeta,
@@ -9428,6 +9441,8 @@ class $TBaseVisitsTable extends TBaseVisits
           .read(DriftSqlType.string, data['${effectivePrefix}comments']),
       uuidBaseVisit: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}uuid_base_visit']),
+      serverVisitId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_visit_id']),
       metaCreateDate: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}meta_create_date'])!,
       metaUpdateDate: attachedDatabase.typeMapping.read(
@@ -9453,6 +9468,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
   final int? idNomenclatureGrpTyp;
   final String? comments;
   final String? uuidBaseVisit;
+  final int? serverVisitId;
   final String metaCreateDate;
   final String metaUpdateDate;
   const TBaseVisit(
@@ -9467,6 +9483,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       this.idNomenclatureGrpTyp,
       this.comments,
       this.uuidBaseVisit,
+      this.serverVisitId,
       required this.metaCreateDate,
       required this.metaUpdateDate});
   @override
@@ -9497,6 +9514,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
     }
     if (!nullToAbsent || uuidBaseVisit != null) {
       map['uuid_base_visit'] = Variable<String>(uuidBaseVisit);
+    }
+    if (!nullToAbsent || serverVisitId != null) {
+      map['server_visit_id'] = Variable<int>(serverVisitId);
     }
     map['meta_create_date'] = Variable<String>(metaCreateDate);
     map['meta_update_date'] = Variable<String>(metaUpdateDate);
@@ -9531,6 +9551,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       uuidBaseVisit: uuidBaseVisit == null && nullToAbsent
           ? const Value.absent()
           : Value(uuidBaseVisit),
+      serverVisitId: serverVisitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverVisitId),
       metaCreateDate: Value(metaCreateDate),
       metaUpdateDate: Value(metaUpdateDate),
     );
@@ -9553,6 +9576,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           serializer.fromJson<int?>(json['idNomenclatureGrpTyp']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidBaseVisit: serializer.fromJson<String?>(json['uuidBaseVisit']),
+      serverVisitId: serializer.fromJson<int?>(json['serverVisitId']),
       metaCreateDate: serializer.fromJson<String>(json['metaCreateDate']),
       metaUpdateDate: serializer.fromJson<String>(json['metaUpdateDate']),
     );
@@ -9573,6 +9597,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       'idNomenclatureGrpTyp': serializer.toJson<int?>(idNomenclatureGrpTyp),
       'comments': serializer.toJson<String?>(comments),
       'uuidBaseVisit': serializer.toJson<String?>(uuidBaseVisit),
+      'serverVisitId': serializer.toJson<int?>(serverVisitId),
       'metaCreateDate': serializer.toJson<String>(metaCreateDate),
       'metaUpdateDate': serializer.toJson<String>(metaUpdateDate),
     };
@@ -9590,6 +9615,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           Value<int?> idNomenclatureGrpTyp = const Value.absent(),
           Value<String?> comments = const Value.absent(),
           Value<String?> uuidBaseVisit = const Value.absent(),
+          Value<int?> serverVisitId = const Value.absent(),
           String? metaCreateDate,
           String? metaUpdateDate}) =>
       TBaseVisit(
@@ -9611,6 +9637,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
         comments: comments.present ? comments.value : this.comments,
         uuidBaseVisit:
             uuidBaseVisit.present ? uuidBaseVisit.value : this.uuidBaseVisit,
+        serverVisitId:
+            serverVisitId.present ? serverVisitId.value : this.serverVisitId,
         metaCreateDate: metaCreateDate ?? this.metaCreateDate,
         metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       );
@@ -9641,6 +9669,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       uuidBaseVisit: data.uuidBaseVisit.present
           ? data.uuidBaseVisit.value
           : this.uuidBaseVisit,
+      serverVisitId: data.serverVisitId.present
+          ? data.serverVisitId.value
+          : this.serverVisitId,
       metaCreateDate: data.metaCreateDate.present
           ? data.metaCreateDate.value
           : this.metaCreateDate,
@@ -9665,6 +9696,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
           ..write('comments: $comments, ')
           ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('serverVisitId: $serverVisitId, ')
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate')
           ..write(')'))
@@ -9684,6 +9716,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       idNomenclatureGrpTyp,
       comments,
       uuidBaseVisit,
+      serverVisitId,
       metaCreateDate,
       metaUpdateDate);
   @override
@@ -9702,6 +9735,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           other.idNomenclatureGrpTyp == this.idNomenclatureGrpTyp &&
           other.comments == this.comments &&
           other.uuidBaseVisit == this.uuidBaseVisit &&
+          other.serverVisitId == this.serverVisitId &&
           other.metaCreateDate == this.metaCreateDate &&
           other.metaUpdateDate == this.metaUpdateDate);
 }
@@ -9718,6 +9752,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
   final Value<int?> idNomenclatureGrpTyp;
   final Value<String?> comments;
   final Value<String?> uuidBaseVisit;
+  final Value<int?> serverVisitId;
   final Value<String> metaCreateDate;
   final Value<String> metaUpdateDate;
   const TBaseVisitsCompanion({
@@ -9732,6 +9767,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     this.idNomenclatureGrpTyp = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidBaseVisit = const Value.absent(),
+    this.serverVisitId = const Value.absent(),
     this.metaCreateDate = const Value.absent(),
     this.metaUpdateDate = const Value.absent(),
   });
@@ -9747,6 +9783,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     this.idNomenclatureGrpTyp = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidBaseVisit = const Value.absent(),
+    this.serverVisitId = const Value.absent(),
     this.metaCreateDate = const Value.absent(),
     this.metaUpdateDate = const Value.absent(),
   })  : idDataset = Value(idDataset),
@@ -9764,6 +9801,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     Expression<int>? idNomenclatureGrpTyp,
     Expression<String>? comments,
     Expression<String>? uuidBaseVisit,
+    Expression<int>? serverVisitId,
     Expression<String>? metaCreateDate,
     Expression<String>? metaUpdateDate,
   }) {
@@ -9782,6 +9820,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
         'id_nomenclature_grp_typ': idNomenclatureGrpTyp,
       if (comments != null) 'comments': comments,
       if (uuidBaseVisit != null) 'uuid_base_visit': uuidBaseVisit,
+      if (serverVisitId != null) 'server_visit_id': serverVisitId,
       if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
       if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
     });
@@ -9799,6 +9838,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
       Value<int?>? idNomenclatureGrpTyp,
       Value<String?>? comments,
       Value<String?>? uuidBaseVisit,
+      Value<int?>? serverVisitId,
       Value<String>? metaCreateDate,
       Value<String>? metaUpdateDate}) {
     return TBaseVisitsCompanion(
@@ -9814,6 +9854,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
       idNomenclatureGrpTyp: idNomenclatureGrpTyp ?? this.idNomenclatureGrpTyp,
       comments: comments ?? this.comments,
       uuidBaseVisit: uuidBaseVisit ?? this.uuidBaseVisit,
+      serverVisitId: serverVisitId ?? this.serverVisitId,
       metaCreateDate: metaCreateDate ?? this.metaCreateDate,
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
     );
@@ -9857,6 +9898,9 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     if (uuidBaseVisit.present) {
       map['uuid_base_visit'] = Variable<String>(uuidBaseVisit.value);
     }
+    if (serverVisitId.present) {
+      map['server_visit_id'] = Variable<int>(serverVisitId.value);
+    }
     if (metaCreateDate.present) {
       map['meta_create_date'] = Variable<String>(metaCreateDate.value);
     }
@@ -9881,6 +9925,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
           ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
           ..write('comments: $comments, ')
           ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('serverVisitId: $serverVisitId, ')
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate')
           ..write(')'))
@@ -16969,6 +17014,7 @@ typedef $$TBaseVisitsTableCreateCompanionBuilder = TBaseVisitsCompanion
   Value<int?> idNomenclatureGrpTyp,
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
+  Value<int?> serverVisitId,
   Value<String> metaCreateDate,
   Value<String> metaUpdateDate,
 });
@@ -16985,6 +17031,7 @@ typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
   Value<int?> idNomenclatureGrpTyp,
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
+  Value<int?> serverVisitId,
   Value<String> metaCreateDate,
   Value<String> metaUpdateDate,
 });
@@ -17055,6 +17102,9 @@ class $$TBaseVisitsTableFilterComposer
 
   ColumnFilters<String> get uuidBaseVisit => $composableBuilder(
       column: $table.uuidBaseVisit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate,
@@ -17134,6 +17184,10 @@ class $$TBaseVisitsTableOrderingComposer
       column: $table.uuidBaseVisit,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate,
       builder: (column) => ColumnOrderings(column));
@@ -17186,6 +17240,9 @@ class $$TBaseVisitsTableAnnotationComposer
 
   GeneratedColumn<String> get uuidBaseVisit => $composableBuilder(
       column: $table.uuidBaseVisit, builder: (column) => column);
+
+  GeneratedColumn<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId, builder: (column) => column);
 
   GeneratedColumn<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate, builder: (column) => column);
@@ -17250,6 +17307,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<int?> idNomenclatureGrpTyp = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<int?> serverVisitId = const Value.absent(),
             Value<String> metaCreateDate = const Value.absent(),
             Value<String> metaUpdateDate = const Value.absent(),
           }) =>
@@ -17266,6 +17324,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             idNomenclatureGrpTyp: idNomenclatureGrpTyp,
             comments: comments,
             uuidBaseVisit: uuidBaseVisit,
+            serverVisitId: serverVisitId,
             metaCreateDate: metaCreateDate,
             metaUpdateDate: metaUpdateDate,
           ),
@@ -17282,6 +17341,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<int?> idNomenclatureGrpTyp = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<int?> serverVisitId = const Value.absent(),
             Value<String> metaCreateDate = const Value.absent(),
             Value<String> metaUpdateDate = const Value.absent(),
           }) =>
@@ -17298,6 +17358,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             idNomenclatureGrpTyp: idNomenclatureGrpTyp,
             comments: comments,
             uuidBaseVisit: uuidBaseVisit,
+            serverVisitId: serverVisitId,
             metaCreateDate: metaCreateDate,
             metaUpdateDate: metaUpdateDate,
           ),
