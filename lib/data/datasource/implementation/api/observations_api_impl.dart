@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/sync_error_simulator.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 
@@ -30,6 +31,21 @@ class ObservationsApiImpl implements ObservationsApi {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
 
+      // 🧪 SIMULATION D'ERREURS POUR TESTS
+      if (SyncErrorSimulator.isEnabled) {
+        logger.i('[TEST] Simulation d\'erreurs activée: ${SyncErrorSimulator.getErrorDescription()}', tag: 'sync');
+        
+        // Vérifier si on doit simuler une erreur avant traitement
+        SyncErrorSimulator.throwSimulatedError();
+        
+        // Corrompre l'observation si nécessaire
+        final corruptedObservation = SyncErrorSimulator.corruptObservationData(observation);
+        if (corruptedObservation != null) {
+          observation = corruptedObservation;
+          logger.w('[TEST] Données d\'observation corrompues pour simulation', tag: 'sync');
+        }
+      }
+
       // Vérifier la connectivité
       final connectivityResults = await _connectivity.checkConnectivity();
       if (connectivityResults.contains(ConnectivityResult.none) || connectivityResults.isEmpty) {
@@ -47,7 +63,7 @@ class ObservationsApiImpl implements ObservationsApi {
       //      ... autres propriétés
       //    }
       // }
-      final Map<String, dynamic> requestBody = {
+      Map<String, dynamic> requestBody = {
         'properties': <String, dynamic>{
           // Assurer que id_base_visit est bien un entier
           'id_base_visit': observation.idBaseVisit != null
@@ -125,11 +141,20 @@ class ObservationsApiImpl implements ObservationsApi {
         debugPrint('Données complémentaires ajoutées dans properties: $properties');
       }
 
+      // 🧪 SIMULATION D'ERREURS POUR TESTS - Corrompre le body de la requête
+      if (SyncErrorSimulator.isEnabled) {
+        requestBody = SyncErrorSimulator.corruptRequestBody(requestBody);
+        logger.w('[TEST] Corps de requête potentiellement corrompu pour simulation', tag: 'sync');
+      }
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
           '\n==================================================================');
       logBuffer.writeln('[API] ENVOI OBSERVATION AU SERVEUR');
+      if (SyncErrorSimulator.isEnabled) {
+        logBuffer.writeln('[🧪 MODE TEST] ${SyncErrorSimulator.getErrorDescription()}');
+      }
       logBuffer.writeln(
           '==================================================================');
       logBuffer
