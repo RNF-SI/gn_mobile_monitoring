@@ -286,4 +286,16 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
             ))
         .toList();
   }
+
+  /// Get all sites that belong to a specific site group
+  Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async {
+    final query = select(tBaseSites).join([
+      leftOuterJoin(
+          tSiteComplements,
+          tSiteComplements.idBaseSite.equalsExp(tBaseSites.idBaseSite))
+    ]);
+    query.where(tSiteComplements.idSitesGroup.equals(siteGroupId));
+    final results = await query.map((row) => row.readTable(tBaseSites)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
 }
