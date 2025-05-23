@@ -1,8 +1,10 @@
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
-import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart' 
+    hide TBaseVisitMapper;
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_visit_use_case.dart';
+import 'package:uuid/uuid.dart';
 
 class CreateVisitUseCaseImpl implements CreateVisitUseCase {
   final VisitRepository _visitRepository;
@@ -11,8 +13,14 @@ class CreateVisitUseCaseImpl implements CreateVisitUseCase {
 
   @override
   Future<int> execute(BaseVisit visit) async {
-    // Convertir le modèle de domaine en entité
-    final visitEntity = visit.toEntity();
+    // Générer un UUID si aucun n'est fourni
+    final uuid = const Uuid();
+    final visitWithUuid = visit.uuidBaseVisit == null 
+        ? visit.copyWith(uuidBaseVisit: uuid.v4())
+        : visit;
+    
+    // Convertir le modèle de domaine en entité  
+    final visitEntity = visitWithUuid.toEntity();
     
     // Créer la visite dans la base de données
     final visitId = await _visitRepository.createVisit(visitEntity);
