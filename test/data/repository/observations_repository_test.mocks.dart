@@ -86,4 +86,21 @@ class MockObservationsDatabase extends _i1.Mock
         returnValue: _i3.Future<bool>.value(false),
         returnValueForMissingStub: _i3.Future<bool>.value(false),
       ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<bool> updateObservationServerId(
+    int? localObservationId,
+    int? serverObservationId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateObservationServerId,
+          [
+            localObservationId,
+            serverObservationId,
+          ],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
 }
