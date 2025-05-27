@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/core/helpers/json_parser_helper.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/base_visit_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/cor_visit_observer_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_visit_complement_mapper.dart';
@@ -16,8 +18,10 @@ import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
 class VisitRepositoryImpl implements VisitRepository {
   final VisitesDatabase _visitesDatabase;
+  final SitesDatabase _sitesDatabase;
+  final ModulesDatabase _modulesDatabase;
 
-  VisitRepositoryImpl(this._visitesDatabase);
+  VisitRepositoryImpl(this._visitesDatabase, this._sitesDatabase, this._modulesDatabase);
 
   @override
   Future<List<BaseVisitEntity>> getAllVisits() async {
@@ -51,6 +55,64 @@ class VisitRepositoryImpl implements VisitRepository {
     }
 
     return visitEntities;
+  }
+
+  @override
+  Future<List<BaseVisitEntity>> getVisitsByModuleCode(String moduleCode) async {
+    try {
+      // 1. Récupérer le module par son code
+      final module = await _modulesDatabase.getModuleByCode(moduleCode);
+      if (module == null) {
+        debugPrint('Module $moduleCode non trouvé');
+        return [];
+      }
+      
+      // 2. Récupérer tous les sites du module
+      final sites = await _sitesDatabase.getSitesByModuleId(module.id);
+      
+      if (sites.isEmpty) {
+        return [];
+      }
+      
+      // 3. Récupérer toutes les visites de ces sites
+      final allVisitEntities = <BaseVisitEntity>[];
+      
+      for (final site in sites) {
+        // Récupérer les visites de ce site spécifiquement pour ce module
+        final visits = await _visitesDatabase.getVisitsBySiteIdAndModuleId(site.idBaseSite, module.id);
+        
+        // Convertir chaque visite en entité avec tous les détails
+        for (final visit in visits) {
+          final baseEntity = visit.toEntity();
+          final observers = await getVisitObservers(visit.idBaseVisit);
+          final observerIds = observers.map((o) => o.idRole).toList();
+
+          allVisitEntities.add(BaseVisitEntity(
+            idBaseVisit: baseEntity.idBaseVisit,
+            idBaseSite: baseEntity.idBaseSite,
+            idDataset: baseEntity.idDataset,
+            idModule: baseEntity.idModule,
+            idDigitiser: baseEntity.idDigitiser,
+            visitDateMin: baseEntity.visitDateMin,
+            visitDateMax: baseEntity.visitDateMax,
+            idNomenclatureTechCollectCampanule:
+                baseEntity.idNomenclatureTechCollectCampanule,
+            idNomenclatureGrpTyp: baseEntity.idNomenclatureGrpTyp,
+            comments: baseEntity.comments,
+            uuidBaseVisit: baseEntity.uuidBaseVisit,
+            metaCreateDate: baseEntity.metaCreateDate,
+            metaUpdateDate: baseEntity.metaUpdateDate,
+            serverVisitId: baseEntity.serverVisitId,
+            observers: observerIds,
+          ));
+        }
+      }
+      
+      return allVisitEntities;
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération des visites du module $moduleCode: $e');
+      return [];
+    }
   }
 
   @override
