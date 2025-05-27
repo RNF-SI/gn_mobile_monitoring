@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
@@ -9,6 +10,7 @@ import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
@@ -20,6 +22,7 @@ final syncServiceProvider =
   final syncUseCase = ref.read(incrementalSyncAllUseCaseProvider);
   final getLastSyncDateUseCase = ref.read(getLastSyncDateUseCaseProvider);
   final updateLastSyncDateUseCase = ref.read(updateLastSyncDateUseCaseProvider);
+  final syncCompleteUseCase = ref.read(syncCompleteUseCaseProvider);
 
   return SyncService(
     getTokenUseCase,
@@ -27,6 +30,7 @@ final syncServiceProvider =
     getLastSyncDateUseCase,
     updateLastSyncDateUseCase,
     ref.read(syncRepositoryProvider),
+    syncCompleteUseCase,
   );
 });
 
@@ -36,6 +40,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   final IncrementalSyncAllUseCase _syncUseCase;
   final GetLastSyncDateUseCase _getLastSyncDateUseCase;
   final UpdateLastSyncDateUseCase _updateLastSyncDateUseCase;
+  final SyncCompleteUseCase _syncCompleteUseCase;
 
   Timer? _autoSyncTimer;
   bool _isSyncing = false;
@@ -64,6 +69,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     this._getLastSyncDateUseCase,
     this._updateLastSyncDateUseCase,
     this._syncRepository,
+    this._syncCompleteUseCase,
   ) : super(SyncStatus.initial()) {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
@@ -1346,6 +1352,205 @@ class SyncService extends StateNotifier<SyncStatus> {
       );
     } catch (e) {
       debugPrint('Erreur lors de la synchronisation complète automatique: $e');
+    }
+  }
+
+  /// Effectue une synchronisation complète (téléchargement + envoi)
+  /// Version BETA simple avec un seul bouton
+  Future<SyncStatus> syncComplete(WidgetRef ref) async {
+    if (_isSyncing) {
+      return state; // Ne pas synchroniser si déjà en cours
+    }
+
+    _isSyncing = true;
+    debugPrint('Démarrage de la synchronisation complète (BETA)');
+
+    // Réinitialiser les résultats au début d'une nouvelle synchronisation
+    _syncResults.clear();
+
+    final List<SyncStep> completedSteps = [];
+    final List<SyncStep> failedSteps = [];
+    final List<String> errorMessages = [];
+    int totalItemsProcessed = 0;
+    int totalItemsToProcess = 2; // Étape 1: Téléchargement, Étape 2: Envoi
+
+    try {
+      final token = await _getTokenUseCase.execute();
+
+      if (token == null) {
+        _isSyncing = false;
+        final newState = SyncStatus.failure(
+          errorMessage: 'Utilisateur non connecté',
+          completedSteps: [],
+          failedSteps: [],
+          itemsProcessed: 0,
+          itemsTotal: 0,
+        );
+        state = newState;
+        return newState;
+      }
+
+      // Initialiser le statut de synchronisation
+      state = SyncStatus.inProgress(
+        currentStep: SyncStep.configuration,
+        completedSteps: [],
+        itemsProcessed: 0,
+        itemsTotal: totalItemsToProcess,
+        currentEntityName: "Synchronisation complète en cours...",
+      );
+
+      // === ÉTAPE 1: SYNCHRONISATION DESCENDANTE (TÉLÉCHARGEMENT) ===
+      debugPrint('Étape 1: Synchronisation descendante (téléchargement)');
+      
+      state = state.copyWith(
+        currentEntityName: "Téléchargement des données depuis le serveur...",
+      );
+
+      try {
+        final downloadResult = await syncFromServer(
+          ref,
+          syncConfiguration: true,
+          syncNomenclatures: true,
+          syncTaxons: true,
+          syncObservers: true,
+          syncModules: true,
+          syncSites: true,
+          syncSiteGroups: true,
+          isManualSync: true,
+        );
+
+        if (downloadResult.state == SyncState.success || 
+            downloadResult.state == SyncState.conflictDetected) {
+          completedSteps.addAll([
+            SyncStep.configuration,
+            SyncStep.nomenclatures,
+            SyncStep.taxons,
+            SyncStep.observers,
+            SyncStep.modules,
+            SyncStep.sites,
+            SyncStep.siteGroups,
+          ]);
+          debugPrint('Étape 1 terminée avec succès');
+        } else {
+          failedSteps.addAll([
+            SyncStep.configuration,
+            SyncStep.nomenclatures,
+            SyncStep.taxons,
+            SyncStep.observers,
+            SyncStep.modules,
+            SyncStep.sites,
+            SyncStep.siteGroups,
+          ]);
+          if (downloadResult.errorMessage != null) {
+            errorMessages.add('Téléchargement: ${downloadResult.errorMessage}');
+          }
+          debugPrint('Échec de l\'étape 1: ${downloadResult.errorMessage}');
+        }
+        totalItemsProcessed += 1;
+      } catch (e) {
+        failedSteps.addAll([
+          SyncStep.configuration,
+          SyncStep.nomenclatures,
+          SyncStep.taxons,
+          SyncStep.observers,
+          SyncStep.modules,
+          SyncStep.sites,
+          SyncStep.siteGroups,
+        ]);
+        totalItemsProcessed += 1;
+        debugPrint('Erreur lors du téléchargement: $e');
+        errorMessages.add('Téléchargement: $e');
+      }
+
+      // === ÉTAPE 2: SYNCHRONISATION ASCENDANTE (ENVOI) ===
+      debugPrint('Étape 2: Synchronisation ascendante (envoi)');
+      
+      state = state.copyWith(
+        currentStep: SyncStep.visitsToServer,
+        currentEntityName: "Envoi des données vers le serveur...",
+        itemsProcessed: 1,
+      );
+
+      try {
+        // Nettoyer le cache des échecs avant chaque nouvelle synchronisation complète
+        // Cela permet de retenter tous les éléments qui avaient échoué lors de la synchronisation précédente
+        UpstreamSyncRepositoryImpl.resetForNewSyncSession();
+        
+        // Utiliser le nouveau use case pour la synchronisation complète
+        final uploadResult = await _syncCompleteUseCase.execute(token);
+        
+        if (uploadResult.success) {
+          completedSteps.add(SyncStep.visitsToServer);
+          debugPrint('Étape 2 terminée avec succès');
+        } else {
+          failedSteps.add(SyncStep.visitsToServer);
+          if (uploadResult.errorMessage != null) {
+            errorMessages.add('Envoi: ${uploadResult.errorMessage}');
+          }
+          if (uploadResult.itemsFailed > 0) {
+            errorMessages.add('Envoi: ${uploadResult.itemsFailed} éléments ont échoué');
+          }
+          debugPrint('Échec de l\'étape 2: ${uploadResult.errorMessage}');
+        }
+        
+        totalItemsProcessed += 1;
+      } catch (e) {
+        failedSteps.add(SyncStep.visitsToServer);
+        totalItemsProcessed += 1;
+        debugPrint('Erreur lors de l\'envoi des données: $e');
+        errorMessages.add('Envoi: $e');
+      }
+
+      // Générer un résumé des statistiques de synchronisation
+      final syncSummary = getSyncSummary();
+
+      // Déterminer l'état final
+      if (errorMessages.isNotEmpty) {
+        // Il y a eu des erreurs
+        String errorMsg = errorMessages.join('\n\n');
+        
+        final newState = SyncStatus.failure(
+          errorMessage: errorMsg,
+          completedSteps: completedSteps,
+          failedSteps: failedSteps,
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
+        );
+        
+        state = newState;
+        _isSyncing = false;
+        return newState;
+      } else {
+        // Tout s'est bien passé
+        await _updateLastFullSyncDate();
+
+        final newState = SyncStatus.success(
+          completedSteps: completedSteps,
+          itemsProcessed: totalItemsProcessed,
+          additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
+          lastSync: DateTime.now(),
+        );
+
+        state = newState;
+        _isSyncing = false;
+        return newState;
+      }
+
+    } catch (e) {
+      debugPrint('Erreur inattendue lors de la synchronisation complète: $e');
+
+      final newState = SyncStatus.failure(
+        errorMessage: 'Erreur inattendue lors de la synchronisation complète: $e',
+        completedSteps: completedSteps,
+        failedSteps: failedSteps,
+        itemsProcessed: totalItemsProcessed,
+        itemsTotal: totalItemsToProcess,
+      );
+
+      state = newState;
+      _isSyncing = false;
+      return newState;
     }
   }
 
