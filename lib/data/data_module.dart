@@ -95,6 +95,8 @@ final visitDatabaseProvider =
 final visitRepositoryProvider =
     Provider<VisitRepository>((ref) => VisitRepositoryImpl(
           ref.watch(visitDatabaseProvider),
+          ref.watch(siteDatabaseProvider),
+          ref.watch(moduleDatabaseProvider),
         ));
 
 final observationsDatabaseProvider =

@@ -2,6 +2,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.da
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
@@ -27,6 +28,7 @@ class SyncRepositoryImpl implements SyncRepository {
     GlobalApi globalApi,
     TaxonApi taxonApi,
     GlobalDatabase globalDatabase,
+    ModulesDatabase modulesDatabase,
     NomenclaturesDatabase nomenclaturesDatabase,
     DatasetsDatabase datasetsDatabase,
     TaxonDatabase taxonDatabase, {
@@ -53,6 +55,7 @@ class SyncRepositoryImpl implements SyncRepository {
           upstreamRepo: UpstreamSyncRepositoryImpl(
             globalApi,
             globalDatabase,
+            modulesDatabase,
             visitRepository: visitRepository,
             observationsRepository: observationsRepository,
             observationDetailsRepository: observationDetailsRepository,

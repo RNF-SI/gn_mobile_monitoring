@@ -214,8 +214,18 @@ class VisitsApiImpl implements VisitsApi {
       // Écrire dans le fichier log via AppLogger
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
 
-      throw NetworkException(
-          'Erreur réseau lors de l\'envoi de la visite: ${e.message}');
+      // Construire un message d'erreur complet avec tous les détails disponibles
+      String completeErrorMessage = 'Erreur réseau lors de l\'envoi de la visite: ${e.message}';
+      
+      // Ajouter les détails de la réponse si disponibles
+      if (e.response?.data != null) {
+        String responseData = e.response!.data.toString();
+        if (responseData.isNotEmpty) {
+          completeErrorMessage += '\n\nDétails du serveur:\n$responseData';
+        }
+      }
+      
+      throw NetworkException(completeErrorMessage);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
@@ -402,8 +412,18 @@ class VisitsApiImpl implements VisitsApi {
       // Écrire dans le fichier log via AppLogger
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
 
-      throw NetworkException(
-          'Erreur réseau lors de la mise à jour de la visite: ${e.message}');
+      // Construire un message d'erreur complet avec tous les détails disponibles
+      String completeErrorMessage = 'Erreur réseau lors de la mise à jour de la visite: ${e.message}';
+      
+      // Ajouter les détails de la réponse si disponibles
+      if (e.response?.data != null) {
+        String responseData = e.response!.data.toString();
+        if (responseData.isNotEmpty) {
+          completeErrorMessage += '\n\nDétails du serveur:\n$responseData';
+        }
+      }
+      
+      throw NetworkException(completeErrorMessage);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
