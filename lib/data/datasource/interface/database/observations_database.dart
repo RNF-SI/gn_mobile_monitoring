@@ -16,4 +16,7 @@ abstract class ObservationsDatabase {
   
   /// Supprime une observation
   Future<bool> deleteObservation(int observationId);
+
+  /// Met à jour l'ID serveur d'une observation
+  Future<bool> updateObservationServerId(int localObservationId, int serverObservationId);
 }

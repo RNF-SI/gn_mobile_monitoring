@@ -288,4 +288,196 @@ class ObservationsApiImpl implements ObservationsApi {
       rethrow;
     }
   }
+
+  @override
+  Future<Map<String, dynamic>> updateObservation(
+      String token, String moduleCode, int observationId, Observation observation) async {
+    try {
+      // Importer AppLogger et créer l'instance
+      final logger = AppLogger();
+
+      // 🧪 SIMULATION D'ERREURS POUR TESTS
+      if (SyncErrorSimulator.isEnabled) {
+        logger.i('[TEST] Simulation d\'erreurs activée: ${SyncErrorSimulator.getErrorDescription()}', tag: 'sync');
+        
+        // Vérifier si on doit simuler une erreur avant traitement
+        SyncErrorSimulator.throwSimulatedError();
+        
+        // Corrompre l'observation si nécessaire
+        final corruptedObservation = SyncErrorSimulator.corruptObservationData(observation);
+        if (corruptedObservation != null) {
+          observation = corruptedObservation;
+          logger.w('[TEST] Données d\'observation corrompues pour simulation', tag: 'sync');
+        }
+      }
+
+      // Vérifier la connectivité
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) || connectivityResults.isEmpty) {
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      // Préparer le corps de la requête comme pour sendObservation
+      Map<String, dynamic> requestBody = {
+        'properties': <String, dynamic>{
+          'id_base_visit': observation.idBaseVisit != null
+              ? int.parse(observation.idBaseVisit.toString())
+              : null,
+        },
+      };
+
+      if (observation.uuidObservation != null) {
+        requestBody['uuid_observation'] = observation.uuidObservation;
+      }
+
+      requestBody['module_code'] = moduleCode;
+
+      if (observation.cdNom != null) {
+        requestBody['properties']['cd_nom'] =
+            int.parse(observation.cdNom.toString());
+      }
+
+      if (observation.comments != null) {
+        requestBody['properties']['comments'] = observation.comments;
+      }
+
+      if (observation.data != null && observation.data!.isNotEmpty) {
+        final properties = requestBody['properties'] as Map<String, dynamic>;
+
+        observation.data!.forEach((key, value) {
+          if (key.startsWith('id_') && value is String) {
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              properties[key] = intValue;
+            } else {
+              properties[key] = value;
+            }
+          } else if (key == 'cd_nom' && value is String) {
+            int? intValue = int.tryParse(value);
+            if (intValue != null) {
+              properties[key] = intValue;
+            } else {
+              properties[key] = value;
+            }
+          } else {
+            properties[key] = value;
+          }
+        });
+      }
+
+      // 🧪 SIMULATION D'ERREURS POUR TESTS
+      if (SyncErrorSimulator.isEnabled) {
+        requestBody = SyncErrorSimulator.corruptRequestBody(requestBody);
+        logger.w('[TEST] Corps de requête potentiellement corrompu pour simulation', tag: 'sync');
+      }
+
+      // Log détaillé pour le débogage
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln('[API] MISE À JOUR OBSERVATION SUR LE SERVEUR (PATCH)');
+      if (SyncErrorSimulator.isEnabled) {
+        logBuffer.writeln('[🧪 MODE TEST] ${SyncErrorSimulator.getErrorDescription()}');
+      }
+      logBuffer.writeln('==================================================================');
+      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/observation/$observationId');
+      logBuffer.writeln('MÉTHODE: PATCH');
+
+      if (token.length > 10) {
+        logBuffer.writeln('HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+      } else {
+        logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
+      }
+
+      logBuffer.writeln('BODY:');
+      logBuffer.writeln('------------------------------------------------------------------');
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation/$observationId?skip_synthese=true';
+      logger.i('[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation', tag: 'sync');
+
+      // Envoyer la requête PATCH
+      final response = await _dio.patch(
+        endpoint,
+        data: requestBody,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      // Log de la réponse
+      logBuffer = StringBuffer();
+      logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
+      logBuffer.writeln('------------------------------------------------------------------');
+      if (response.data is Map || response.data is List) {
+        logBuffer.writeln(JsonEncoder.withIndent('  ').convert(response.data));
+      } else {
+        logBuffer.writeln(response.data.toString());
+      }
+      logBuffer.writeln('==================================================================');
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        logger.i('Observation mise à jour avec succès: ${response.data}', tag: 'sync');
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Erreur lors de la mise à jour de l\'observation. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln('[API] ERREUR DIO LORS DE LA MISE À JOUR DE L\'OBSERVATION');
+      logBuffer.writeln('==================================================================');
+      logBuffer.writeln('Type: ${e.type}');
+      logBuffer.writeln('Message: ${e.message}');
+      logBuffer.writeln('URL: ${e.requestOptions.uri}');
+      logBuffer.writeln('Méthode: ${e.requestOptions.method}');
+
+      if (e.response != null) {
+        logBuffer.writeln('\nRÉPONSE ERREUR:');
+        logBuffer.writeln('Status code: ${e.response?.statusCode}');
+        if (e.response?.data != null) {
+          if (e.response?.data is Map || e.response?.data is List) {
+            logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(e.response?.data));
+          } else {
+            logBuffer.writeln(e.response?.data.toString());
+          }
+        }
+      }
+
+      logBuffer.writeln('\nREQUEST OPTIONS:');
+      logBuffer.writeln('Connect timeout: ${e.requestOptions.connectTimeout}');
+      logBuffer.writeln('Receive timeout: ${e.requestOptions.receiveTimeout}');
+      logBuffer.writeln('Send timeout: ${e.requestOptions.sendTimeout}');
+      logBuffer.writeln('==================================================================');
+
+      logger.e(logBuffer.toString(), tag: 'sync', error: e);
+
+      throw NetworkException('Erreur réseau lors de la mise à jour de l\'observation: ${e.message}');
+    } catch (e, stackTrace) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln('\n==================================================================');
+      logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE LA MISE À JOUR DE L\'OBSERVATION');
+      logBuffer.writeln('==================================================================');
+      logBuffer.writeln('Type: ${e.runtimeType}');
+      logBuffer.writeln('Message: $e');
+      logBuffer.writeln('\nSTACK TRACE:');
+      logBuffer.writeln(stackTrace);
+      logBuffer.writeln('==================================================================');
+
+      logger.e(logBuffer.toString(), tag: 'sync', error: e, stackTrace: stackTrace);
+
+      rethrow;
+    }
+  }
 }

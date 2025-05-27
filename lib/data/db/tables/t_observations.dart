@@ -7,4 +7,5 @@ class TObservations extends Table {
   IntColumn get cdNom => integer().nullable()();
   TextColumn get comments => text().nullable()();
   TextColumn get uuidObservation => text().nullable().unique()();
+  IntColumn get serverObservationId => integer().nullable()();
 }

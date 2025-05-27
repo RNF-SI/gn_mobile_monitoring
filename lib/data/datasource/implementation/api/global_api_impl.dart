@@ -470,6 +470,12 @@ class GlobalApiImpl implements GlobalApi {
   }
 
   @override
+  Future<Map<String, dynamic>> updateObservation(
+      String token, String moduleCode, int observationId, Observation observation) async {
+    return _observationsApi.updateObservation(token, moduleCode, observationId, observation);
+  }
+
+  @override
   Future<Map<String, dynamic>> sendObservationDetail(
       String token, String moduleCode, ObservationDetail detail) async {
     return _observationDetailsApi.sendObservationDetail(

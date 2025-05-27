@@ -5142,9 +5142,21 @@ class $TObservationsTable extends TObservations
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _serverObservationIdMeta =
+      const VerificationMeta('serverObservationId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [idObservation, idBaseVisit, cdNom, comments, uuidObservation];
+  late final GeneratedColumn<int> serverObservationId = GeneratedColumn<int>(
+      'server_observation_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idObservation,
+        idBaseVisit,
+        cdNom,
+        comments,
+        uuidObservation,
+        serverObservationId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5181,6 +5193,12 @@ class $TObservationsTable extends TObservations
           uuidObservation.isAcceptableOrUnknown(
               data['uuid_observation']!, _uuidObservationMeta));
     }
+    if (data.containsKey('server_observation_id')) {
+      context.handle(
+          _serverObservationIdMeta,
+          serverObservationId.isAcceptableOrUnknown(
+              data['server_observation_id']!, _serverObservationIdMeta));
+    }
     return context;
   }
 
@@ -5200,6 +5218,8 @@ class $TObservationsTable extends TObservations
           .read(DriftSqlType.string, data['${effectivePrefix}comments']),
       uuidObservation: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}uuid_observation']),
+      serverObservationId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}server_observation_id']),
     );
   }
 
@@ -5215,12 +5235,14 @@ class TObservation extends DataClass implements Insertable<TObservation> {
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
+  final int? serverObservationId;
   const TObservation(
       {required this.idObservation,
       this.idBaseVisit,
       this.cdNom,
       this.comments,
-      this.uuidObservation});
+      this.uuidObservation,
+      this.serverObservationId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -5236,6 +5258,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     }
     if (!nullToAbsent || uuidObservation != null) {
       map['uuid_observation'] = Variable<String>(uuidObservation);
+    }
+    if (!nullToAbsent || serverObservationId != null) {
+      map['server_observation_id'] = Variable<int>(serverObservationId);
     }
     return map;
   }
@@ -5254,6 +5279,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       uuidObservation: uuidObservation == null && nullToAbsent
           ? const Value.absent()
           : Value(uuidObservation),
+      serverObservationId: serverObservationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverObservationId),
     );
   }
 
@@ -5266,6 +5294,8 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       cdNom: serializer.fromJson<int?>(json['cdNom']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidObservation: serializer.fromJson<String?>(json['uuidObservation']),
+      serverObservationId:
+          serializer.fromJson<int?>(json['serverObservationId']),
     );
   }
   @override
@@ -5277,6 +5307,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       'cdNom': serializer.toJson<int?>(cdNom),
       'comments': serializer.toJson<String?>(comments),
       'uuidObservation': serializer.toJson<String?>(uuidObservation),
+      'serverObservationId': serializer.toJson<int?>(serverObservationId),
     };
   }
 
@@ -5285,7 +5316,8 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           Value<int?> idBaseVisit = const Value.absent(),
           Value<int?> cdNom = const Value.absent(),
           Value<String?> comments = const Value.absent(),
-          Value<String?> uuidObservation = const Value.absent()}) =>
+          Value<String?> uuidObservation = const Value.absent(),
+          Value<int?> serverObservationId = const Value.absent()}) =>
       TObservation(
         idObservation: idObservation ?? this.idObservation,
         idBaseVisit: idBaseVisit.present ? idBaseVisit.value : this.idBaseVisit,
@@ -5294,6 +5326,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
         uuidObservation: uuidObservation.present
             ? uuidObservation.value
             : this.uuidObservation,
+        serverObservationId: serverObservationId.present
+            ? serverObservationId.value
+            : this.serverObservationId,
       );
   TObservation copyWithCompanion(TObservationsCompanion data) {
     return TObservation(
@@ -5307,6 +5342,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       uuidObservation: data.uuidObservation.present
           ? data.uuidObservation.value
           : this.uuidObservation,
+      serverObservationId: data.serverObservationId.present
+          ? data.serverObservationId.value
+          : this.serverObservationId,
     );
   }
 
@@ -5317,14 +5355,15 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           ..write('idBaseVisit: $idBaseVisit, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
-          ..write('uuidObservation: $uuidObservation')
+          ..write('uuidObservation: $uuidObservation, ')
+          ..write('serverObservationId: $serverObservationId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(idObservation, idBaseVisit, cdNom, comments, uuidObservation);
+  int get hashCode => Object.hash(idObservation, idBaseVisit, cdNom, comments,
+      uuidObservation, serverObservationId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5333,7 +5372,8 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           other.idBaseVisit == this.idBaseVisit &&
           other.cdNom == this.cdNom &&
           other.comments == this.comments &&
-          other.uuidObservation == this.uuidObservation);
+          other.uuidObservation == this.uuidObservation &&
+          other.serverObservationId == this.serverObservationId);
 }
 
 class TObservationsCompanion extends UpdateCompanion<TObservation> {
@@ -5342,12 +5382,14 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   final Value<int?> cdNom;
   final Value<String?> comments;
   final Value<String?> uuidObservation;
+  final Value<int?> serverObservationId;
   const TObservationsCompanion({
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
+    this.serverObservationId = const Value.absent(),
   });
   TObservationsCompanion.insert({
     this.idObservation = const Value.absent(),
@@ -5355,6 +5397,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
+    this.serverObservationId = const Value.absent(),
   });
   static Insertable<TObservation> custom({
     Expression<int>? idObservation,
@@ -5362,6 +5405,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     Expression<int>? cdNom,
     Expression<String>? comments,
     Expression<String>? uuidObservation,
+    Expression<int>? serverObservationId,
   }) {
     return RawValuesInsertable({
       if (idObservation != null) 'id_observation': idObservation,
@@ -5369,6 +5413,8 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
       if (cdNom != null) 'cd_nom': cdNom,
       if (comments != null) 'comments': comments,
       if (uuidObservation != null) 'uuid_observation': uuidObservation,
+      if (serverObservationId != null)
+        'server_observation_id': serverObservationId,
     });
   }
 
@@ -5377,13 +5423,15 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
       Value<int?>? idBaseVisit,
       Value<int?>? cdNom,
       Value<String?>? comments,
-      Value<String?>? uuidObservation}) {
+      Value<String?>? uuidObservation,
+      Value<int?>? serverObservationId}) {
     return TObservationsCompanion(
       idObservation: idObservation ?? this.idObservation,
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
       cdNom: cdNom ?? this.cdNom,
       comments: comments ?? this.comments,
       uuidObservation: uuidObservation ?? this.uuidObservation,
+      serverObservationId: serverObservationId ?? this.serverObservationId,
     );
   }
 
@@ -5405,6 +5453,9 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     if (uuidObservation.present) {
       map['uuid_observation'] = Variable<String>(uuidObservation.value);
     }
+    if (serverObservationId.present) {
+      map['server_observation_id'] = Variable<int>(serverObservationId.value);
+    }
     return map;
   }
 
@@ -5415,7 +5466,8 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
           ..write('idBaseVisit: $idBaseVisit, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
-          ..write('uuidObservation: $uuidObservation')
+          ..write('uuidObservation: $uuidObservation, ')
+          ..write('serverObservationId: $serverObservationId')
           ..write(')'))
         .toString();
   }
@@ -14781,6 +14833,7 @@ typedef $$TObservationsTableCreateCompanionBuilder = TObservationsCompanion
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
+  Value<int?> serverObservationId,
 });
 typedef $$TObservationsTableUpdateCompanionBuilder = TObservationsCompanion
     Function({
@@ -14789,6 +14842,7 @@ typedef $$TObservationsTableUpdateCompanionBuilder = TObservationsCompanion
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
+  Value<int?> serverObservationId,
 });
 
 class $$TObservationsTableFilterComposer
@@ -14814,6 +14868,10 @@ class $$TObservationsTableFilterComposer
 
   ColumnFilters<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -14842,6 +14900,10 @@ class $$TObservationsTableOrderingComposer
   ColumnOrderings<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation,
       builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TObservationsTableAnnotationComposer
@@ -14867,6 +14929,9 @@ class $$TObservationsTableAnnotationComposer
 
   GeneratedColumn<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation, builder: (column) => column);
+
+  GeneratedColumn<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId, builder: (column) => column);
 }
 
 class $$TObservationsTableTableManager extends RootTableManager<
@@ -14900,6 +14965,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
+            Value<int?> serverObservationId = const Value.absent(),
           }) =>
               TObservationsCompanion(
             idObservation: idObservation,
@@ -14907,6 +14973,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
+            serverObservationId: serverObservationId,
           ),
           createCompanionCallback: ({
             Value<int> idObservation = const Value.absent(),
@@ -14914,6 +14981,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
+            Value<int?> serverObservationId = const Value.absent(),
           }) =>
               TObservationsCompanion.insert(
             idObservation: idObservation,
@@ -14921,6 +14989,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
+            serverObservationId: serverObservationId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

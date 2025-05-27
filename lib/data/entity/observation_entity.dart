@@ -7,6 +7,7 @@ class ObservationEntity {
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
+  final int? serverObservationId;
   final String? metaCreateDate;
   final String? metaUpdateDate;
   final Map<String, dynamic>? data; // Données complémentaires
@@ -17,6 +18,7 @@ class ObservationEntity {
     this.cdNom,
     this.comments,
     this.uuidObservation,
+    this.serverObservationId,
     this.metaCreateDate,
     this.metaUpdateDate,
     this.data,

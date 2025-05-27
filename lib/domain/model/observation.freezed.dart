@@ -21,6 +21,7 @@ mixin _$Observation {
   int? get cdNom => throw _privateConstructorUsedError;
   String? get comments => throw _privateConstructorUsedError;
   String? get uuidObservation => throw _privateConstructorUsedError;
+  int? get serverObservationId => throw _privateConstructorUsedError;
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
@@ -44,6 +45,7 @@ abstract class $ObservationCopyWith<$Res> {
       int? cdNom,
       String? comments,
       String? uuidObservation,
+      int? serverObservationId,
       String? metaCreateDate,
       String? metaUpdateDate,
       Map<String, dynamic>? data});
@@ -69,6 +71,7 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
     Object? cdNom = freezed,
     Object? comments = freezed,
     Object? uuidObservation = freezed,
+    Object? serverObservationId = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
@@ -94,6 +97,10 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
           ? _value.uuidObservation
           : uuidObservation // ignore: cast_nullable_to_non_nullable
               as String?,
+      serverObservationId: freezed == serverObservationId
+          ? _value.serverObservationId
+          : serverObservationId // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -124,6 +131,7 @@ abstract class _$$ObservationImplCopyWith<$Res>
       int? cdNom,
       String? comments,
       String? uuidObservation,
+      int? serverObservationId,
       String? metaCreateDate,
       String? metaUpdateDate,
       Map<String, dynamic>? data});
@@ -147,6 +155,7 @@ class __$$ObservationImplCopyWithImpl<$Res>
     Object? cdNom = freezed,
     Object? comments = freezed,
     Object? uuidObservation = freezed,
+    Object? serverObservationId = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
@@ -172,6 +181,10 @@ class __$$ObservationImplCopyWithImpl<$Res>
           ? _value.uuidObservation
           : uuidObservation // ignore: cast_nullable_to_non_nullable
               as String?,
+      serverObservationId: freezed == serverObservationId
+          ? _value.serverObservationId
+          : serverObservationId // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -197,6 +210,7 @@ class _$ObservationImpl implements _Observation {
       this.cdNom,
       this.comments,
       this.uuidObservation,
+      this.serverObservationId,
       this.metaCreateDate,
       this.metaUpdateDate,
       final Map<String, dynamic>? data})
@@ -213,6 +227,8 @@ class _$ObservationImpl implements _Observation {
   @override
   final String? uuidObservation;
   @override
+  final int? serverObservationId;
+  @override
   final String? metaCreateDate;
   @override
   final String? metaUpdateDate;
@@ -228,7 +244,7 @@ class _$ObservationImpl implements _Observation {
 
   @override
   String toString() {
-    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
+    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, serverObservationId: $serverObservationId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
   }
 
   @override
@@ -245,6 +261,8 @@ class _$ObservationImpl implements _Observation {
                 other.comments == comments) &&
             (identical(other.uuidObservation, uuidObservation) ||
                 other.uuidObservation == uuidObservation) &&
+            (identical(other.serverObservationId, serverObservationId) ||
+                other.serverObservationId == serverObservationId) &&
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
@@ -260,6 +278,7 @@ class _$ObservationImpl implements _Observation {
       cdNom,
       comments,
       uuidObservation,
+      serverObservationId,
       metaCreateDate,
       metaUpdateDate,
       const DeepCollectionEquality().hash(_data));
@@ -280,6 +299,7 @@ abstract class _Observation implements Observation {
       final int? cdNom,
       final String? comments,
       final String? uuidObservation,
+      final int? serverObservationId,
       final String? metaCreateDate,
       final String? metaUpdateDate,
       final Map<String, dynamic>? data}) = _$ObservationImpl;
@@ -294,6 +314,8 @@ abstract class _Observation implements Observation {
   String? get comments;
   @override
   String? get uuidObservation;
+  @override
+  int? get serverObservationId;
   @override
   String? get metaCreateDate;
   @override

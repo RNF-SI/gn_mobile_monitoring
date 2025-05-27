@@ -43,4 +43,9 @@ class ObservationsRepositoryImpl implements ObservationsRepository {
   Future<bool> deleteObservation(int observationId) async {
     return _observationsDatabase.deleteObservation(observationId);
   }
+
+  @override
+  Future<bool> updateObservationServerId(int localObservationId, int serverObservationId) async {
+    return _observationsDatabase.updateObservationServerId(localObservationId, serverObservationId);
+  }
 }

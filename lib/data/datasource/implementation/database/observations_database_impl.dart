@@ -121,6 +121,12 @@ class ObservationsDatabaseImpl implements ObservationsDatabase {
 
     return result > 0;
   }
+
+  @override
+  Future<bool> updateObservationServerId(int localObservationId, int serverObservationId) async {
+    final db = await _database;
+    return await db.observationDao.updateObservationServerId(localObservationId, serverObservationId);
+  }
 }
 
 /// Extension pour ajouter la méthode copyWith à ObservationEntity
@@ -131,6 +137,7 @@ extension ObservationEntityExtension on ObservationEntity {
     int? cdNom,
     String? comments,
     String? uuidObservation,
+    int? serverObservationId,
     String? metaCreateDate,
     String? metaUpdateDate,
     Map<String, dynamic>? data,
@@ -141,6 +148,7 @@ extension ObservationEntityExtension on ObservationEntity {
       cdNom: cdNom ?? this.cdNom,
       comments: comments ?? this.comments,
       uuidObservation: uuidObservation ?? this.uuidObservation,
+      serverObservationId: serverObservationId ?? this.serverObservationId,
       metaCreateDate: metaCreateDate ?? this.metaCreateDate,
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       data: data ?? this.data,

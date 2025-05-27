@@ -10,6 +10,7 @@ class Observation with _$Observation {
     int? cdNom,
     String? comments,
     String? uuidObservation,
+    int? serverObservationId,
     String? metaCreateDate,
     String? metaUpdateDate,
     Map<String, dynamic>? data, // Données complémentaires

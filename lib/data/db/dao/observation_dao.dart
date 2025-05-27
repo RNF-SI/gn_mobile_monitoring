@@ -53,6 +53,17 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     return updated > 0;
   }
 
+  /// Met à jour l'ID serveur d'une observation
+  Future<bool> updateObservationServerId(int localObservationId, int serverObservationId) async {
+    final updated = await (update(tObservations)
+      ..where((tbl) => tbl.idObservation.equals(localObservationId)))
+      .write(TObservationsCompanion(
+        serverObservationId: Value(serverObservationId),
+      ));
+    
+    return updated > 0;
+  }
+
   /// Insère ou met à jour les données complémentaires d'une observation
   Future<int> insertOrUpdateObservationComplement(
       TObservationComplementsCompanion complement) async {

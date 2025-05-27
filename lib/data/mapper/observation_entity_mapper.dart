@@ -14,6 +14,7 @@ extension ObservationEntityMapper on ObservationEntity {
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       data: data,
@@ -30,6 +31,7 @@ extension ObservationMapper on Observation {
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       data: data,
@@ -57,6 +59,7 @@ extension TObservationMapper on TObservation {
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       // Les champs metaCreateDate et metaUpdateDate ne sont pas dans la table
       data: complementData,
     );
@@ -76,6 +79,9 @@ extension ObservationToCompanion on ObservationEntity {
       uuidObservation: uuidObservation == null
           ? const Value.absent()
           : Value(uuidObservation),
+      serverObservationId: serverObservationId == null
+          ? const Value.absent()
+          : Value(serverObservationId),
     );
   }
 
