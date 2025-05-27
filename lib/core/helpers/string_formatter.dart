@@ -34,3 +34,12 @@ class StringFormatter {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 }
+
+/// Extension pour les opérations sur les chaînes de caractères
+extension StringFormatterExtension on String {
+  /// Capitalise la première lettre d'une chaîne
+  String capitalize() {
+    if (isEmpty) return this;
+    return '${this[0].toUpperCase()}${substring(1)}';
+  }
+}
