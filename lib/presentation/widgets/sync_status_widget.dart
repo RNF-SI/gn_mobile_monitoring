@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
+import 'package:gn_mobile_monitoring/presentation/view/error/sync_error_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_dialog_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_navigation_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/sync_error_banner.dart';
 import 'package:intl/intl.dart';
 
 /// Widget pour afficher le statut de synchronisation
@@ -133,16 +135,10 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                // Toujours inverser l'état d'expansion des détails au clic
+                // Seulement inverser l'état d'expansion des détails au clic
                 setState(() {
                   _detailsExpanded = !_detailsExpanded;
                 });
-
-                // Si on a également une erreur, l'afficher
-                if (syncStatus.state == SyncState.failure &&
-                    syncStatus.errorMessage != null) {
-                  _showErrorDialog(context, syncStatus.errorMessage!);
-                }
               },
               borderRadius: BorderRadius.circular(8),
               child: Container(
@@ -190,66 +186,112 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                       .withOpacity(0.7),
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  syncStatus.nextFullSyncInfo!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(0.9),
-                                        fontStyle: FontStyle.italic,
-                                      ),
+                                Expanded(
+                                  child: Text(
+                                    syncStatus.nextFullSyncInfo!,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.9),
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                  ),
                                 ),
                               ],
                             ),
 
                           // Afficher les conflits s'il y en a - avec un bouton dédié
-                          if (syncStatus.state == SyncState.conflictDetected &&
-                              syncStatus.conflicts != null)
-                            syncStatus.conflicts!.isNotEmpty
-                                ? ElevatedButton.icon(
-                                    onPressed: () => _showConflictsDialog(
-                                        context, syncStatus.conflicts ?? []),
-                                    icon: Icon(
-                                      Icons.warning_amber_outlined,
-                                      size: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer,
-                                    ),
-                                    label: Text(
-                                      'Résoudre ${syncStatus.conflicts!.length} référence(s) manquante(s)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 13,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onErrorContainer,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .errorContainer,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Aucune référence manquante détectée',
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      fontSize: 13,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
+                          // Afficher les conflits même en cas d'erreur (failure)
+                          if (syncStatus.conflicts != null && syncStatus.conflicts!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showConflictsDialog(
+                                    context, syncStatus.conflicts ?? []),
+                                icon: Icon(
+                                  Icons.warning_amber_outlined,
+                                  size: 14,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                ),
+                                label: Text(
+                                  'Résoudre ${syncStatus.conflicts!.length} conflits downstream',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
                                   ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .errorContainer,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          // Afficher les erreurs de synchronisation (toutes les erreurs)
+                          if (syncStatus.state == SyncState.failure &&
+                              syncStatus.errorMessage != null &&
+                              syncStatus.errorMessage!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // Debug: afficher le message d'erreur dans les logs
+                                  debugPrint('=== ERROR BUTTON CLICKED ===');
+                                  debugPrint('Error message: ${syncStatus.errorMessage}');
+                                  debugPrint('Is upstream error: ${_isUpstreamSyncError(syncStatus.errorMessage!)}');
+                                  debugPrint('============================');
+                                  
+                                  _navigateToErrorPage(context, syncStatus.errorMessage!);
+                                },
+                                icon: Icon(
+                                  Icons.error_outline,
+                                  size: 14,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                ),
+                                label: Text(
+                                  _isUpstreamSyncError(syncStatus.errorMessage!) 
+                                    ? 'Voir les erreurs upstream'
+                                    : 'Voir les détails de l\'erreur',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .errorContainer,
+                                  foregroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
 
                           // Instruction discrète pour indiquer que c'est cliquable
                           Text(
@@ -528,8 +570,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   /// Affiche une boîte de dialogue avec les conflits filtrés par type
-  void _showConflictsByType(
-      BuildContext context, String conflictType, List<domain.SyncConflict> conflicts) {
+  void _showConflictsByType(BuildContext context, String conflictType,
+      List<domain.SyncConflict> conflicts) {
     // Filtrer uniquement les conflits par type référencé
     final typeConflicts =
         conflicts.where((c) => c.referencedEntityType == conflictType).toList();
@@ -544,7 +586,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   /// Affiche une boîte de dialogue avec les détails des conflits
-  void _showConflictsDialog(BuildContext context, List<domain.SyncConflict> conflicts,
+  void _showConflictsDialog(
+      BuildContext context, List<domain.SyncConflict> conflicts,
       {String? typeTitle}) {
     showDialog(
       context: context,
@@ -858,33 +901,36 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                       const SizedBox(height: 8),
 
                       // Statistiques visuelles
-                      Row(
-                        children: [
-                          // Ajoutés
-                          _buildStatIndicator(
-                            context,
-                            'Ajoutés',
-                            stats['added'] as int,
-                            Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8.0),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Row(
+                          children: [
+                            // Ajoutés
+                            _buildStatIndicator(
+                              context,
+                              'Ajoutés',
+                              stats['added'] as int,
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4.0),
 
-                          // Mis à jour
-                          _buildStatIndicator(
-                            context,
-                            'Mis à jour',
-                            stats['updated'] as int,
-                            Theme.of(context).colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 8.0),
+                            // Mis à jour
+                            _buildStatIndicator(
+                              context,
+                              'Mis à jour',
+                              stats['updated'] as int,
+                              Theme.of(context).colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 4.0),
 
-                          _buildStatIndicator(
-                            context,
-                            'Supprimés',
-                            stats['deleted'] as int,
-                            Theme.of(context).colorScheme.error,
-                          ),
-                        ],
+                            _buildStatIndicator(
+                              context,
+                              'Supprimés',
+                              stats['deleted'] as int,
+                              Theme.of(context).colorScheme.error,
+                            ),
+                          ],
+                        ),
                       ),
 
                       if (hasConflicts) ...[
@@ -979,9 +1025,11 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
           const SizedBox(height: 2),
           Container(
@@ -1007,7 +1055,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                   child: Text(
                     '$value',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -1019,5 +1067,109 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         ],
       ),
     );
+  }
+
+  /// Détermine si une erreur provient de la synchronisation ascendante (envoi de données)
+  bool _isUpstreamSyncError(String errorMessage) {
+    // Identifier les erreurs liées à l'envoi de données vers le serveur
+    final upstreamKeywords = [
+      'échec de l\'envoi',
+      'erreur lors de l\'envoi',
+      'synchronisation ascendante',
+      'envoi des données',
+      'upload failed',
+      'post failed',
+      'patch failed',
+      'failed to send',
+      'erreur de sérialisation',
+      'validation failed on server',
+      'server rejected',
+      'échec du post',
+      'échec du patch',
+      // Ajouter les patterns d'erreurs de synchronisation des visites/observations
+      'erreurs lors de la synchronisation des visites',
+      'erreurs lors de la synchronisation des observations',
+      'erreurs lors de la synchronisation des détails',
+      'visite',
+      'observation',
+      'detail',
+      'erreur de validation des données',
+      'erreur de synthèse',
+      'contrainte de base de données',
+      'check_synthese_count_max',
+      'synthese',
+      'erreur de dénombrement',
+      // Patterns génériques pour les erreurs d'entités
+      'erreur fatale lors de la synchronisation complète',
+      'échec de la synchronisation complète',
+    ];
+
+    final lowerError = errorMessage.toLowerCase();
+    return upstreamKeywords.any((keyword) => lowerError.contains(keyword));
+  }
+
+  /// Navigue vers la page de détail des erreurs de synchronisation
+  void _navigateToErrorPage(BuildContext context, String errorMessage) {
+    try {
+      debugPrint('=== NAVIGATION TO ERROR PAGE ===');
+      debugPrint('Context: $context');
+      debugPrint('Error message length: ${errorMessage.length}');
+      debugPrint('Widget.onSyncRequested: ${widget.onSyncRequested}');
+      
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            debugPrint('Building SyncErrorDetailPage...');
+            return SyncErrorDetailPage(
+              errorMessage: errorMessage,
+              errorTitle: 'Erreurs de synchronisation',
+              onRetry: widget.onSyncRequested,
+            );
+          },
+        ),
+      ).then((result) {
+        debugPrint('Navigation completed with result: $result');
+      }).catchError((error) {
+        debugPrint('Navigation failed with error: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'ouverture de la page: $error'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      });
+      
+      debugPrint('Navigation initiated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('=== NAVIGATION ERROR ===');
+      debugPrint('Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('========================');
+      
+      // Fallback: afficher un dialog simple
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur de synchronisation'),
+          content: SingleChildScrollView(
+            child: Text(errorMessage),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+            if (widget.onSyncRequested != null)
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onSyncRequested!();
+                },
+                child: const Text('Réessayer'),
+              ),
+          ],
+        ),
+      );
+    }
   }
 }
