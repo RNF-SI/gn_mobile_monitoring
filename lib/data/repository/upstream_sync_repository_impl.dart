@@ -1,7 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/core/helpers/sync_cache_manager.dart';
+import 'package:gn_mobile_monitoring/core/helpers/sync_error_handler.dart';
+import 'package:gn_mobile_monitoring/core/helpers/string_formatter.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
@@ -15,15 +19,34 @@ import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   final GlobalApi _globalApi;
   final GlobalDatabase _globalDatabase;
+  final ModulesDatabase _modulesDatabase;
   final VisitRepository _visitRepository;
   final ObservationsRepository _observationsRepository;
   final ObservationDetailsRepository _observationDetailsRepository;
 
   final AppLogger _logger = AppLogger();
 
+  /// Nettoie le cache des visites en échec (pour les retentatives)
+  /// Cette méthode est appelée au début de chaque synchronisation complète
+  static void clearFailedVisitsCache() {
+    SyncCacheManager.clearFailedVisitsCache();
+  }
+
+  /// Nettoie le cache pour une nouvelle session de synchronisation
+  /// Permet de retenter tous les éléments qui avaient échoué précédemment
+  static void resetForNewSyncSession() {
+    SyncCacheManager.resetForNewSyncSession();
+  }
+
+  /// Retire une visite spécifique du cache des échecs
+  static void removeFromFailedCache(int visitId) {
+    SyncCacheManager.removeFromFailedCache(visitId);
+  }
+
   UpstreamSyncRepositoryImpl(
     this._globalApi,
-    this._globalDatabase, {
+    this._globalDatabase,
+    this._modulesDatabase, {
     required VisitRepository visitRepository,
     required ObservationsRepository observationsRepository,
     required ObservationDetailsRepository observationDetailsRepository,
@@ -69,6 +92,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   @override
   Future<SyncResult> syncVisitsToServer(String token, String moduleCode) async {
     try {
+      // Note: On ne nettoie PAS le cache ici car il doit persister au sein d'une même session de sync
+      // Le cache est nettoyé uniquement au début d'une nouvelle synchronisation complète
+      
       // Vérifier la connectivité
       final isConnected = await checkConnectivity();
       if (!isConnected) {
@@ -92,8 +118,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         logBuffer.writeln(
             '==================================================================');
 
-        // Récupérer toutes les visites
-        final visits = await _visitRepository.getAllVisits();
+        // Récupérer seulement les visites du module spécifié
+        final visits = await _visitRepository.getVisitsByModuleCode(moduleCode);
         logBuffer.writeln('Total des visites dans la base: ${visits.length}');
 
         // Afficher les détails de chaque visite pour le débogage
@@ -125,12 +151,20 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         // Pour chaque visite, envoyer la visite et toutes ses observations
         for (final visitEntity in visits) {
           try {
+            // Vérifier si cette visite a déjà échoué récemment
+            if (SyncCacheManager.isVisitFailed(visitEntity.idBaseVisit)) {
+              _logger.w('Visite ${visitEntity.idBaseVisit} ignorée car déjà en échec récent', tag: 'sync');
+              itemsSkipped++;
+              continue;
+            }
+
             _logger.i('Traitement de la visite ID: ${visitEntity.idBaseVisit}',
                 tag: 'sync');
 
             // Récupérer tous les détails de la visite
             final visit = await _visitRepository
                 .getVisitWithFullDetails(visitEntity.idBaseVisit);
+
 
             // 1. Envoyer la visite au serveur
             Map<String, dynamic> serverResponse;
@@ -185,8 +219,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 // POST - Créer une nouvelle visite
                 _logger.i('Création d\'une nouvelle visite sur le serveur',
                     tag: 'sync');
+                
+                // Récupérer le vrai code du module depuis l'ID module de la visite
+                final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
+                if (realModuleCode == null) {
+                  throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
+                }
+                
                 serverResponse =
-                    await _globalApi.sendVisit(token, moduleCode, visitModel);
+                    await _globalApi.sendVisit(token, realModuleCode, visitModel);
 
                 serverId = serverResponse['id'] ?? serverResponse['ID'];
                 if (serverId == null) {
@@ -210,8 +251,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                     'Mise à jour d\'une visite existante sur le serveur, ID serveur: $serverId',
                     tag: 'sync');
 
+                // Récupérer le vrai code du module depuis l'ID module de la visite
+                final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
+                if (realModuleCode == null) {
+                  throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
+                }
+
                 serverResponse = await _globalApi.updateVisit(
-                    token, moduleCode, serverId, visitModel);
+                    token, realModuleCode, serverId, visitModel);
 
                 _logger.i(
                     'Visite mise à jour avec succès, ID serveur: $serverId',
@@ -221,7 +268,22 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi de la visite: $e',
                   tag: 'sync', error: e);
-              errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+              
+              // Extraire des informations plus détaillées de l'erreur
+              String detailedError = SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit);
+              errors.add(detailedError);
+              
+              // Incrémenter le compteur d'échecs pour cette visite
+              int failureCount = SyncCacheManager.incrementVisitFailureCount(visitEntity.idBaseVisit);
+              
+              // Analyser l'erreur pour déterminer si elle est fatale
+              bool isFatal = SyncErrorHandler.isFatalError(e);
+              _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}, message=${e.toString().length > 200 ? e.toString().substring(0, 200) + "..." : e.toString()}', tag: 'sync');
+              
+              // Marquer comme échoué pour cette session de synchronisation uniquement
+              _logger.e('Erreur détectée pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). Marquage comme échoué pour cette session.', tag: 'sync');
+              SyncCacheManager.markVisitAsFailed(visitEntity.idBaseVisit);
+              errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. Visite ignorée pour le reste de cette synchronisation, sera retentée lors de la prochaine synchronisation.');
               itemsSkipped++;
               continue; // Passer à la visite suivante
             }
@@ -229,10 +291,16 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // 2. Récupérer et envoyer toutes les observations associées à cette visite
             // Utiliser l'ID serveur retourné par la création/mise à jour de la visite
 
+            // Récupérer le vrai code du module pour les observations aussi
+            final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
+            if (realModuleCode == null) {
+              throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
+            }
+
             // On passe à la fois l'ID local (pour récupérer les observations localement)
             // et l'ID serveur (pour les envoyer avec le bon ID de visite serveur)
             final observationsResult = await syncObservationsToServer(
-                token, moduleCode, visitEntity.idBaseVisit,
+                token, realModuleCode, visitEntity.idBaseVisit,
                 serverVisitId: serverId);
 
             // 3. Gérer le résultat de la synchronisation des observations
@@ -277,9 +345,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         await updateLastSyncDate('visitsToServer', DateTime.now());
 
         if (errors.isNotEmpty) {
+          String errorMessage = 'Erreurs lors de la synchronisation des visites:\n${errors.join('\n')}';
+          
+          // Ajouter une note si des erreurs fatales ont été détectées
+          if (errors.any((error) => error.contains('ERREUR FATALE'))) {
+            errorMessage += '\n\nIMPORTANT: Des erreurs fatales ont été détectées. Les données restent sauvegardées localement mais la synchronisation a été interrompue pour éviter les boucles infinies. Veuillez corriger les données mentionnées ci-dessus et relancer la synchronisation.';
+          }
+          
           return SyncResult.failure(
-            errorMessage:
-                'Erreurs lors de la synchronisation des visites:\n${errors.join('\n')}',
+            errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
             itemsUpdated: 0, // Pas de mise à jour, seulement ajout/suppression
@@ -352,48 +426,91 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         // Pour chaque observation, envoyer l'observation et tous ses détails
         for (final observation in observations) {
           try {
+            // Vérifier si cette observation a déjà échoué récemment
+            if (SyncCacheManager.isObservationFailed(observation.idObservation)) {
+              _logger.w('Observation ${observation.idObservation} ignorée car déjà en échec récent', tag: 'sync');
+              itemsSkipped++;
+              continue;
+            }
+
             debugPrint(
                 'Traitement de l\'observation ID: ${observation.idObservation}');
 
             // 1. Envoyer l'observation au serveur avec l'ID de visite serveur
             Map<String, dynamic> serverResponse;
+            int? serverId;
+            bool isNewObservation = observation.serverObservationId == null;
+
             try {
               // Créer une version modifiée de l'observation avec l'ID de visite serveur
-              // Utiliser copyWith de freezed au lieu du constructeur direct
               final observationWithServerVisitId = observation.copyWith(
                 idBaseVisit: effectiveVisitId, // Utiliser l'ID serveur ici!
               );
 
-              _logger.i(
-                  'Envoi de l\'observation avec ID visite serveur = $effectiveVisitId',
-                  tag: 'sync');
-              serverResponse = await _globalApi.sendObservation(
-                  token, moduleCode, observationWithServerVisitId);
+              if (isNewObservation) {
+                // POST - Créer une nouvelle observation
+                _logger.i(
+                    'Création d\'une nouvelle observation avec ID visite serveur = $effectiveVisitId',
+                    tag: 'sync');
+                serverResponse = await _globalApi.sendObservation(
+                    token, moduleCode, observationWithServerVisitId);
 
-              final serverId = serverResponse['id'] ?? serverResponse['ID'];
-              if (serverId == null) {
-                throw Exception(
-                    'Réponse du serveur invalide pour l\'observation');
+                serverId = serverResponse['id'] ?? serverResponse['ID'];
+                if (serverId == null) {
+                  throw Exception(
+                      'Réponse du serveur invalide pour l\'observation');
+                }
+
+                // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
+                await _observationsRepository.updateObservationServerId(
+                    observation.idObservation, serverId);
+                _logger.i(
+                    'ID serveur de l\'observation enregistré: local=${observation.idObservation}, serveur=$serverId',
+                    tag: 'sync');
+
+                debugPrint(
+                    'Observation créée avec succès, ID serveur: $serverId');
+                itemsAdded++;
+              } else {
+                // PATCH - Mettre à jour une observation existante
+                serverId = observation.serverObservationId!;
+                _logger.i(
+                    'Mise à jour d\'une observation existante sur le serveur, ID serveur: $serverId',
+                    tag: 'sync');
+
+                serverResponse = await _globalApi.updateObservation(
+                    token, moduleCode, serverId, observationWithServerVisitId);
+
+                _logger.i(
+                    'Observation mise à jour avec succès, ID serveur: $serverId',
+                    tag: 'sync');
+                // Pour les mises à jour, on ne compte pas comme "ajouté" mais comme traité
               }
-
-              debugPrint(
-                  'Observation envoyée avec succès, ID serveur: $serverId');
-              itemsAdded++;
             } catch (e) {
               debugPrint('Erreur lors de l\'envoi de l\'observation: $e');
-              errors.add('Observation ${observation.idObservation}: $e');
+              
+              // Extraire des informations plus détaillées de l'erreur
+              String detailedError = SyncErrorHandler.extractDetailedError(e, 'observation', observation.idObservation);
+              errors.add(detailedError);
+              
+              // Incrémenter le compteur d'échecs pour cette observation
+              int failureCount = SyncCacheManager.incrementObservationFailureCount(observation.idObservation);
+              
+              // Analyser l'erreur pour déterminer si elle est fatale
+              bool isFatal = SyncErrorHandler.isFatalError(e);
+              _logger.w('Analyse erreur observation ${observation.idObservation}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}', tag: 'sync');
+              
+              // Marquer comme échoué pour cette session de synchronisation uniquement
+              _logger.e('Erreur détectée pour l\'observation ${observation.idObservation} (tentative $failureCount). Marquage comme échoué pour cette session.', tag: 'sync');
+              SyncCacheManager.markObservationAsFailed(observation.idObservation);
+              errors.add('ERREUR - Observation ${observation.idObservation}: ${SyncErrorHandler.extractDetailedError(e, 'observation', observation.idObservation)}. Observation ignorée pour le reste de cette synchronisation, sera retentée lors de la prochaine synchronisation.');
               itemsSkipped++;
               continue; // Passer à l'observation suivante
             }
 
             // 2. Récupérer et envoyer tous les détails associés à cette observation
-            // Récupérer l'ID serveur de l'observation depuis la réponse
-            final serverObservationId =
-                serverResponse['id'] ?? serverResponse['ID'];
-            if (serverObservationId == null) {
-              throw Exception(
-                  'ID serveur de l\'observation non trouvé dans la réponse');
-            }
+            // Utiliser l'ID serveur approprié selon le type d'opération
+            final serverObservationId = serverId;
 
             _logger.i(
                 'Envoi des détails pour l\'observation local=${observation.idObservation}, serveur=$serverObservationId',
@@ -439,9 +556,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         }
 
         if (errors.isNotEmpty) {
+          String errorMessage = 'Erreurs lors de la synchronisation des observations:\n${errors.join('\n')}';
+          
+          // Ajouter une note si des erreurs fatales ont été détectées
+          if (errors.any((error) => error.contains('ERREUR FATALE'))) {
+            errorMessage += '\n\nIMPORTANT: Des erreurs fatales ont été détectées. Les données restent sauvegardées localement mais la synchronisation a été interrompue pour éviter les boucles infinies. Veuillez corriger les données mentionnées ci-dessus et relancer la synchronisation.';
+          }
+          
           return SyncResult.failure(
-            errorMessage:
-                'Erreurs lors de la synchronisation des observations:\n${errors.join('\n')}',
+            errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
             itemsUpdated: 0,
@@ -612,8 +735,33 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi du détail d\'observation: $e',
                   tag: 'sync', error: e);
-              errors.add('Détail ${detail.idObservationDetail}: $e');
-              itemsSkipped++;
+              
+              // Extraire des informations plus détaillées de l'erreur
+              String detailedError = SyncErrorHandler.extractDetailedError(e, 'detail', detail.idObservationDetail ?? 0);
+              errors.add(detailedError);
+              
+              // Analyser l'erreur pour déterminer si elle est fatale
+              bool isFatal = SyncErrorHandler.isFatalError(e);
+              _logger.w('Analyse erreur détail ${detail.idObservationDetail}: isFatal=$isFatal, errorType=${e.runtimeType}', tag: 'sync');
+              
+              // Si c'est une erreur fatale (contrainte de base de données), 
+              // arrêter complètement la synchronisation pour éviter la boucle infinie
+              if (isFatal) {
+                _logger.e('Erreur fatale détectée pour le détail ${detail.idObservationDetail}. Arrêt de la synchronisation pour éviter la boucle infinie. L\'utilisateur doit corriger les données.', tag: 'sync');
+                errors.add('ERREUR FATALE - Détail ${detail.idObservationDetail}: ${SyncErrorHandler.extractDetailedError(e, 'detail', detail.idObservationDetail ?? 0)}. Synchronisation interrompue pour éviter les boucles infinies. Veuillez corriger les données et relancer la synchronisation.');
+                
+                // Retourner immédiatement avec l'erreur
+                return SyncResult.failure(
+                  errorMessage: errors.join('\n'),
+                  itemsProcessed: itemsProcessed,
+                  itemsAdded: itemsAdded,
+                  itemsUpdated: 0,
+                  itemsSkipped: itemsSkipped,
+                  itemsDeleted: itemsDeleted,
+                );
+              } else {
+                itemsSkipped++;
+              }
               continue; // Passer au détail suivant
             }
 
@@ -643,9 +791,16 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         if (errors.isNotEmpty) {
           _logger.e('Erreurs lors de la synchronisation: ${errors.join(", ")}',
               tag: 'sync');
+          
+          String errorMessage = 'Erreurs lors de la synchronisation des détails d\'observation:\n${errors.join('\n')}';
+          
+          // Ajouter une note si des erreurs fatales ont été détectées
+          if (errors.any((error) => error.contains('ERREUR FATALE'))) {
+            errorMessage += '\n\nIMPORTANT: Des erreurs fatales ont été détectées. Les données restent sauvegardées localement mais la synchronisation a été interrompue pour éviter les boucles infinies. Veuillez corriger les données mentionnées ci-dessus et relancer la synchronisation.';
+          }
+          
           return SyncResult.failure(
-            errorMessage:
-                'Erreurs lors de la synchronisation des détails d\'observation:\n${errors.join('\n')}',
+            errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
             itemsUpdated: 0,
@@ -685,4 +840,5 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
       );
     }
   }
+
 }
