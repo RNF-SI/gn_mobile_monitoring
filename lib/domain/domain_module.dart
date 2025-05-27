@@ -95,6 +95,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case_impl.dart';
@@ -236,6 +238,7 @@ final upstreamSyncRepositoryProvider = Provider<UpstreamSyncRepository>(
   (ref) => UpstreamSyncRepositoryImpl(
     ref.watch(globalApiProvider),
     ref.watch(globalDatabaseProvider),
+    ref.watch(moduleDatabaseProvider),
     visitRepository: ref.watch(visitRepositoryProvider),
     observationsRepository: ref.watch(observationsRepositoryProvider),
     observationDetailsRepository:
@@ -419,5 +422,13 @@ final getDatasetsForModuleUseCaseProvider =
     Provider<GetDatasetsForModuleUseCase>(
   (ref) => GetDatasetsForModuleUseCaseImpl(
     ref.watch(modulesRepositoryProvider),
+  ),
+);
+
+// Provider pour la synchronisation complète
+final syncCompleteUseCaseProvider = Provider<SyncCompleteUseCase>(
+  (ref) => SyncCompleteUseCaseImpl(
+    ref.watch(syncRepositoryProvider),
+    ref.watch(getModulesUseCaseProvider),
   ),
 );
