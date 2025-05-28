@@ -145,7 +145,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           failedSteps: [],
           itemsProcessed: 0,
           itemsTotal: 0,
-        );
+        ).copyWith(currentSyncType: SyncType.downstream);
         state = newState;
         return newState;
       }
@@ -636,7 +636,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
-        );
+        ).copyWith(currentSyncType: SyncType.downstream);
       } else {
         // Tout s'est bien passé
         DateTime now = DateTime.now();
@@ -645,7 +645,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
-        );
+        ).copyWith(currentSyncType: SyncType.downstream);
 
         // Si c'était une synchronisation complète, mettre à jour la date de dernière synchro
         final isFullSync = _isFullSync(
@@ -695,7 +695,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         ).where((step) => !completedSteps.contains(step)).toList(),
         itemsProcessed: totalItemsProcessed,
         itemsTotal: totalItemsToProcess,
-      );
+      ).copyWith(currentSyncType: SyncType.downstream);
 
       state = newState;
       _isSyncing = false;
@@ -1124,6 +1124,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       itemsSkipped: currentState.itemsSkipped,
       additionalInfo: currentState.additionalInfo,
       nextFullSyncInfo: timeRemaining,
+      currentSyncType: currentState.currentSyncType, // Préserver le type de synchronisation
     );
   }
 

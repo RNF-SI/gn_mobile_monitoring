@@ -46,6 +46,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
           'SyncStatusWidget - Nombre de conflits: ${syncStatus.conflicts!.length}');
     }
 
+
     // Couleur du texte en fonction du contexte
     final Color textColor = widget.isInAppBar
         ? Theme.of(context).colorScheme.onPrimary
@@ -170,10 +171,10 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                           ),
                           if (syncStatus.lastSync != null)
                             Text(
-                              'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
+                              '${_getLastSyncLabel(syncStatus.currentSyncType)}: ${_formatDate(syncStatus.lastSync!)}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-                          // Ajouter l'info sur la prochaine synchronisation complète
+                          // Ajouter l'info sur la prochaine synchronisation descendante
                           if (syncStatus.nextFullSyncInfo != null)
                             Row(
                               children: [
@@ -222,7 +223,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                       .onErrorContainer,
                                 ),
                                 label: Text(
-                                  'Résoudre ${syncStatus.conflicts!.length} conflits downstream',
+                                  'Résoudre ${syncStatus.conflicts!.length} conflits ${_getSyncTypeLabel(syncStatus.currentSyncType)}',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 13,
@@ -269,9 +270,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                       .onErrorContainer,
                                 ),
                                 label: Text(
-                                  _isUpstreamSyncError(syncStatus.errorMessage!) 
-                                    ? 'Voir les erreurs upstream'
-                                    : 'Voir les détails de l\'erreur',
+                                  _getErrorButtonText(syncStatus.errorMessage!, syncStatus.currentSyncType),
                                   style: const TextStyle(
                                     fontWeight: FontWeight.w500,
                                     fontSize: 13,
@@ -425,6 +424,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
               ),
             ),
 
+
           // Affichage des détails de synchronisation (quand _detailsExpanded = true)
           if (_detailsExpanded && syncStatus.additionalInfo != null)
             Padding(
@@ -455,7 +455,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Détails de la synchronisation',
+                            _getSyncDetailsTitle(syncStatus.currentSyncType),
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -522,18 +522,86 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
   // Obtient le texte à afficher selon l'état
   String _getStatusText(SyncStatus syncStatus) {
+    String baseText;
     switch (syncStatus.state) {
       case SyncState.idle:
-        return 'En attente de synchronisation';
+        baseText = 'En attente de synchronisation';
+        break;
       case SyncState.inProgress:
-        return 'Synchronisation en cours...';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Synchronisation descendante en cours...' 
+              : 'Synchronisation ascendante en cours...';
+        } else {
+          baseText = 'Synchronisation en cours...';
+        }
+        break;
       case SyncState.success:
-        return 'Synchronisation réussie';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Synchronisation descendante réussie' 
+              : 'Synchronisation ascendante réussie';
+        } else {
+          baseText = 'Synchronisation réussie';
+        }
+        break;
       case SyncState.failure:
-        return 'Échec de la synchronisation';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Échec de la synchronisation descendante' 
+              : 'Échec de la synchronisation ascendante';
+        } else {
+          baseText = 'Échec de la synchronisation';
+        }
+        break;
       case SyncState.conflictDetected:
-        return 'Conflits détectés';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Conflits détectés (synchronisation descendante)' 
+              : 'Conflits détectés (synchronisation ascendante)';
+        } else {
+          baseText = 'Conflits détectés';
+        }
+        break;
     }
+
+    return baseText;
+  }
+
+  // Obtient le label du type de synchronisation
+  String _getSyncTypeLabel(SyncType? syncType) {
+    if (syncType == null) return '';
+    return syncType == SyncType.downstream ? 'downstream' : 'upstream';
+  }
+
+  // Obtient le titre des détails selon le type de synchronisation
+  String _getSyncDetailsTitle(SyncType? syncType) {
+    if (syncType == null) return 'Détails de la synchronisation';
+    return syncType == SyncType.downstream 
+        ? 'Détails de la synchronisation descendante'
+        : 'Détails de la synchronisation ascendante';
+  }
+
+  // Obtient le label pour la dernière synchronisation selon le type
+  String _getLastSyncLabel(SyncType? syncType) {
+    if (syncType == null) return 'Dernière synchronisation';
+    return syncType == SyncType.downstream 
+        ? 'Dernière synchronisation descendante'
+        : 'Dernière synchronisation ascendante';
+  }
+
+  // Obtient le texte du bouton d'erreur selon le type de synchronisation
+  String _getErrorButtonText(String errorMessage, SyncType? syncType) {
+    if (syncType != null) {
+      return syncType == SyncType.downstream 
+          ? 'Voir les erreurs de téléchargement'
+          : 'Voir les erreurs d\'envoi';
+    }
+    
+    // Fallback sur la détection automatique si le type n'est pas disponible
+    return _isUpstreamSyncError(errorMessage) 
+        ? 'Voir les erreurs d\'envoi'
+        : 'Voir les erreurs de téléchargement';
   }
 
   // Formate une date pour l'affichage
@@ -1100,8 +1168,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       'synthese',
       'erreur de dénombrement',
       // Patterns génériques pour les erreurs d'entités
-      'erreur fatale lors de la synchronisation complète',
-      'échec de la synchronisation complète',
+      'erreur fatale lors de la synchronisation descendante',
+      'échec de la synchronisation descendante',
     ];
 
     final lowerError = errorMessage.toLowerCase();
