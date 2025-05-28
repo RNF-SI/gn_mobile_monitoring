@@ -34,10 +34,6 @@ class MenuActions extends ConsumerWidget {
             Icons.delete,
             '[DEV] Suppression et rechargement de la base de données',
             'delete'),
-        _buildMenuItem(Icons.schedule, '[DEV] Forcer date sync > 7 jours',
-            'force_old_sync'),
-        _buildMenuItem(Icons.refresh, '[DEV] Remettre date sync à maintenant',
-            'reset_sync'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(Icons.logout, 'Déconnexion', 'logout'),
@@ -70,20 +66,6 @@ class MenuActions extends ConsumerWidget {
         break;
       case 'sync_upload':
         await _performUploadSync(context, syncService, ref);
-        break;
-      case 'force_old_sync':
-        await syncService.forceOldSyncDate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('[DEV] Date de sync forcée à > 7 jours')),
-        );
-        break;
-      case 'reset_sync':
-        await syncService.resetSyncDate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('[DEV] Date de sync remise à maintenant')),
-        );
         break;
       case 'delete':
         await _confirmDelete(context, databaseService);

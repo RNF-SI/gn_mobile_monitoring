@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
-import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_result.dart' as domain;
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
@@ -46,7 +46,11 @@ class SyncService extends StateNotifier<SyncStatus> {
   bool _isSyncing = false;
 
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
-  final Map<String, SyncResult> _syncResults = {};
+  final Map<String, domain.SyncResult> _syncResults = {};
+  
+  // Stockage des résultats des dernières synchronisations par type (temporairement désactivé)
+  // SyncResult? _lastDownstreamSync;
+  // SyncResult? _lastUpstreamSync;
 
   // Liste globale de tous les conflits pour les retrouver même après changement d'état
   final List<domain.SyncConflict> allConflicts = [];
@@ -73,6 +77,12 @@ class SyncService extends StateNotifier<SyncStatus> {
   ) : super(SyncStatus.initial()) {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
+  }
+  
+  /// Initialise le service avec la surveillance du délai (pas de sync automatique)
+  /// À appeler après la création du provider
+  void initialize(WidgetRef ref) {
+    initializeTimerMonitoring(ref);
   }
 
   /// Démarre une synchronisation complète des données
@@ -140,7 +150,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         return newState;
       }
 
-      // Initialiser le statut de synchronisation
+      // Initialiser le statut de synchronisation (type downstream = téléchargement)
       state = SyncStatus.inProgress(
         currentStep: _getFirstStep(
           syncConfiguration,
@@ -154,7 +164,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         completedSteps: [],
         itemsProcessed: 0,
         itemsTotal: totalItemsToProcess,
-      );
+      ).copyWith(currentSyncType: SyncType.downstream);
 
       // Synchroniser la configuration
       if (syncConfiguration) {
@@ -165,7 +175,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsTotal: totalItemsToProcess,
           currentEntityName: "Configuration",
           additionalInfo: "Téléchargement de la configuration",
-        );
+        ).copyWith(currentSyncType: SyncType.downstream);
 
         try {
           final configResult = await _executeSingleSync(token, 'configuration');
@@ -589,6 +599,7 @@ class SyncService extends StateNotifier<SyncStatus> {
               ": Certaines entités supprimées sont encore référencées par d'autres entités.";
         }
 
+
         // Des conflits ont été détectés
         final newState = SyncStatus.conflictDetected(
           conflicts: allConflicts,
@@ -616,6 +627,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             return 'Erreur ${_stepToLabel(step)}';
           }).join('\n');
         }
+
 
         state = SyncStatus.failure(
           errorMessage: errorMsg,
@@ -651,6 +663,9 @@ class SyncService extends StateNotifier<SyncStatus> {
             lastSync:
                 now, // Afficher la date de dernière synchro seulement si elle était complète
           );
+          
+          // Reprogrammer la surveillance du délai après une synchronisation descendante réussie
+          scheduleTimerMonitoring(ref);
         } else {
           // Sinon, simplement mettre à jour l'affichage du temps restant
           _updateStateWithTimeRemaining();
@@ -689,7 +704,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Exécute une seule étape de synchronisation
-  Future<SyncResult> _executeSingleSync(String token, String stepKey,
+  Future<domain.SyncResult> _executeSingleSync(String token, String stepKey,
       {String? moduleCode}) async {
     debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
     
@@ -768,25 +783,25 @@ class SyncService extends StateNotifier<SyncStatus> {
         params['syncObservationsToServer'] ||
         params['syncObservationDetailsToServer']) {
       if (moduleCode == null) {
-        return SyncResult.failure(
+        return domain.SyncResult.failure(
           errorMessage: 'Module code is required for server upload operations',
         );
       }
 
-      SyncResult result;
+      domain.SyncResult result;
       if (params['syncVisitsToServer']) {
         result = await _syncRepository.syncVisitsToServer(token, moduleCode);
       } else if (params['syncObservationsToServer']) {
         // Normalement, pour syncObservationsToServer, il faudrait un ID de visite
         // Mais comme on ne l'a pas ici, on enverra une erreur
-        return SyncResult.failure(
+        return domain.SyncResult.failure(
           errorMessage:
               'Visit ID is required for observation upload operations',
         );
       } else {
         // Normalement, pour syncObservationDetailsToServer, il faudrait un ID d'observation
         // Mais comme on ne l'a pas ici, on enverra une erreur
-        return SyncResult.failure(
+        return domain.SyncResult.failure(
           errorMessage:
               'Observation ID is required for observation detail upload operations',
         );
@@ -946,7 +961,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       _syncResults[stepKey] = result;
       return result;
     } else {
-      final failureResult = SyncResult.failure(
+      final failureResult = domain.SyncResult.failure(
         errorMessage: 'Résultat manquant pour l\'étape $stepKey',
       );
       _syncResults[stepKey] = failureResult;
@@ -1036,18 +1051,12 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
   }
 
-  /// Démarre la synchronisation automatique
-  void startAutoSync(WidgetRef ref,
-      {Duration period = const Duration(minutes: 30)}) {
-    _autoSyncTimer?.cancel();
-    _autoSyncTimer = Timer.periodic(period, (_) => syncFromServer(ref));
-  }
-
-  /// Arrête la synchronisation automatique
-  void stopAutoSync() {
+  /// Arrête la surveillance du délai
+  void stopTimerMonitoring() {
     _autoSyncTimer?.cancel();
     _autoSyncTimer = null;
   }
+
 
   /// Initialise la date de dernière synchronisation complète
   /// depuis le stockage persistant via le use case
@@ -1118,54 +1127,57 @@ class SyncService extends StateNotifier<SyncStatus> {
     );
   }
 
-  /// Retourne un texte indiquant le temps restant avant la prochaine synchronisation
-  /// complète automatique
+  /// Retourne un texte indiquant le temps restant avant que la synchronisation
+  /// descendante soit requise (manuelle)
   String? _getTimeRemainingText() {
     if (_lastFullSync == null) {
-      return "Synchronisation complète requise";
+      return "Synchronisation descendante requise";
     }
 
     final now = DateTime.now();
     final nextFullSync = _lastFullSync!.add(fullSyncInterval);
 
     if (now.isAfter(nextFullSync)) {
-      return "Synchronisation complète requise";
+      return "Synchronisation descendante requise";
     }
 
     final remaining = nextFullSync.difference(now);
 
     // Formatage convivial
     if (remaining.inDays > 1) {
-      return "Synchronisation complète dans ${remaining.inDays} jours";
+      return "Synchronisation descendante requise dans ${remaining.inDays} jours";
     } else if (remaining.inDays == 1) {
-      return "Synchronisation complète demain";
+      return "Synchronisation descendante requise demain";
     } else if (remaining.inHours > 1) {
-      return "Synchronisation complète dans ${remaining.inHours} heures";
+      return "Synchronisation descendante requise dans ${remaining.inHours} heures";
     } else if (remaining.inMinutes > 1) {
-      return "Synchronisation complète dans ${remaining.inMinutes} minutes";
+      return "Synchronisation descendante requise dans ${remaining.inMinutes} minutes";
     } else {
-      return "Synchronisation complète imminente";
+      return "Synchronisation descendante requise maintenant";
     }
   }
 
-  // Cette méthode est commentée car elle n'est pas utilisée actuellement
-  // Elle pourrait être utilisée à l'avenir pour implémenter la synchronisation automatique
-  /*
-  void _scheduleAutoSync(WidgetRef ref) {
-    // Vérifier si une synchronisation complète est nécessaire
-    final now = DateTime.now();
-    final isFullSyncNeeded = _lastFullSync == null ||
-        now.isAfter(_lastFullSync!.add(fullSyncInterval));
-
-    if (isFullSyncNeeded) {
-      // Planifier une synchronisation complète
-      Timer(const Duration(minutes: 5), () => _performFullSync(ref));
-    } else {
-      // Planifier une vérification régulière
-      startAutoSync(ref, period: const Duration(hours: 2));
-    }
+  /// Planifie la surveillance du délai de synchronisation (sans synchronisation automatique)
+  void scheduleTimerMonitoring(WidgetRef ref) {
+    // Arrêter tout timer existant
+    _autoSyncTimer?.cancel();
+    
+    // Planifier une vérification quotidienne pour mettre à jour l'affichage du décompte
+    _autoSyncTimer = Timer.periodic(const Duration(hours: 6), (_) {
+      if (!_isSyncing) {
+        // Mettre à jour seulement l'affichage, AUCUNE synchronisation automatique
+        _updateStateWithTimeRemaining();
+      }
+    });
   }
-  */
+  
+  /// Démarre la surveillance du délai après l'initialisation (pas de sync automatique)
+  void initializeTimerMonitoring(WidgetRef ref) {
+    // Attendre que l'initialisation soit terminée
+    Timer(const Duration(seconds: 2), () {
+      scheduleTimerMonitoring(ref);
+    });
+  }
   
   /// Démarre la synchronisation des données vers le serveur (envoi des données locales)
   /// Ce type de synchronisation est pour envoyer les données de l'appareil mobile vers le serveur
@@ -1191,6 +1203,9 @@ class SyncService extends StateNotifier<SyncStatus> {
     final List<String> errorMessages = [];
     int totalItemsProcessed = 0;
     int totalItemsToProcess = 1; // Une seule étape pour cette synchronisation
+    
+    // Déclarer result ici pour qu'il soit accessible partout
+    domain.SyncResult? result;
 
     try {
       final token = await _getTokenUseCase.execute();
@@ -1203,7 +1218,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           failedSteps: [],
           itemsProcessed: 0,
           itemsTotal: 0,
-        );
+        ).copyWith(currentSyncType: SyncType.upstream);
         state = newState;
         return newState;
       }
@@ -1215,12 +1230,13 @@ class SyncService extends StateNotifier<SyncStatus> {
         itemsProcessed: 0,
         itemsTotal: totalItemsToProcess,
         currentEntityName: "Visites (envoi)",
-      );
+      ).copyWith(currentSyncType: SyncType.upstream);
 
       try {
         debugPrint('Démarrage de la synchronisation des visites vers le serveur');
         
-        final result = await _executeSingleSync(token, 'visitsToServer', moduleCode: moduleCode);
+        // Appeler directement le repository pour avoir plus de contrôle sur les statistiques
+        result = await _syncRepository.syncVisitsToServer(token, moduleCode);
         
         // Ajouter les statistiques
         if (result.success) {
@@ -1242,7 +1258,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             itemsSkipped: result.itemsSkipped,
             itemsDeleted: result.itemsDeleted,
             additionalInfo: updatedSummary,
-          );
+          ).copyWith(currentSyncType: SyncType.upstream);
           
           debugPrint('Synchronisation des visites vers le serveur terminée avec succès');
           debugPrint('Statistiques: ${result.itemsAdded} ajoutées, ${result.itemsDeleted} supprimées');
@@ -1261,8 +1277,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         errorMessages.add('Erreur: $e');
       }
 
-      // Générer un résumé des statistiques de synchronisation
-      final syncSummary = getSyncSummary();
+      // Générer un résumé des statistiques de synchronisation ascendante
+      final syncSummary = _buildUpstreamSyncSummary(result);
 
       // Mettre à jour la date de dernière synchronisation
       if (isManualSync && completedSteps.isNotEmpty) {
@@ -1284,14 +1300,14 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary,
-        );
+        ).copyWith(currentSyncType: SyncType.upstream);
       } else {
         // Tout s'est bien passé
         newState = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary,
-        );
+        ).copyWith(currentSyncType: SyncType.upstream);
       }
 
       state = newState;
@@ -1307,7 +1323,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         failedSteps: failedSteps,
         itemsProcessed: totalItemsProcessed,
         itemsTotal: totalItemsToProcess,
-      );
+      ).copyWith(currentSyncType: SyncType.upstream);
 
       state = newState;
       _isSyncing = false;
@@ -1468,6 +1484,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       state = state.copyWith(
         currentStep: SyncStep.visitsToServer,
         currentEntityName: "Envoi des données vers le serveur...",
+        currentSyncType: SyncType.upstream,
         itemsProcessed: 1,
       );
 
@@ -1516,7 +1533,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
-        );
+        ).copyWith(currentSyncType: SyncType.upstream);
         
         state = newState;
         _isSyncing = false;
@@ -1530,7 +1547,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
           lastSync: DateTime.now(),
-        );
+        ).copyWith(currentSyncType: SyncType.upstream);
 
         state = newState;
         _isSyncing = false;
@@ -1714,9 +1731,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('modules')) {
       final stats = _syncResults['modules']!;
       summaryLines.add("• Modules: ${_formatSyncStats(stats)}");
-      totalAdded += stats.itemsAdded;
-      totalUpdated += stats.itemsUpdated;
-      totalSkipped += stats.itemsSkipped;
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
     }
 
     // Ajouter les infos pour les taxons si terminé
@@ -1724,9 +1741,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('taxons')) {
       final stats = _syncResults['taxons']!;
       summaryLines.add("• Taxons: ${_formatSyncStats(stats)}");
-      totalAdded += stats.itemsAdded;
-      totalUpdated += stats.itemsUpdated;
-      totalSkipped += stats.itemsSkipped;
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
     }
 
     // Ajouter les infos pour les sites si terminé
@@ -1734,9 +1751,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('sites')) {
       final stats = _syncResults['sites']!;
       summaryLines.add("• Sites: ${_formatSyncStats(stats)}");
-      totalAdded += stats.itemsAdded;
-      totalUpdated += stats.itemsUpdated;
-      totalSkipped += stats.itemsSkipped;
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
     }
 
     // Ajouter les infos pour les groupes de sites si terminé
@@ -1744,9 +1761,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('siteGroups')) {
       final stats = _syncResults['siteGroups']!;
       summaryLines.add("• Groupes de sites: ${_formatSyncStats(stats)}");
-      totalAdded += stats.itemsAdded;
-      totalUpdated += stats.itemsUpdated;
-      totalSkipped += stats.itemsSkipped;
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
     }
 
     // Ajouter les infos pour les nomenclatures si terminé
@@ -1754,15 +1771,15 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (_syncResults.containsKey('nomenclatures_datasets')) {
         final stats = _syncResults['nomenclatures_datasets']!;
         summaryLines.add("• Nomenclatures: ${_formatSyncStats(stats)}");
-        totalAdded += stats.itemsAdded;
-        totalUpdated += stats.itemsUpdated;
-        totalSkipped += stats.itemsSkipped;
+        totalAdded += stats.itemsAdded.round();
+        totalUpdated += stats.itemsUpdated.round();
+        totalSkipped += stats.itemsSkipped.round();
       } else if (_syncResults.containsKey('nomenclatures')) {
         final stats = _syncResults['nomenclatures']!;
         summaryLines.add("• Nomenclatures: ${_formatSyncStats(stats)}");
-        totalAdded += stats.itemsAdded;
-        totalUpdated += stats.itemsUpdated;
-        totalSkipped += stats.itemsSkipped;
+        totalAdded += stats.itemsAdded.round();
+        totalUpdated += stats.itemsUpdated.round();
+        totalSkipped += stats.itemsSkipped.round();
       }
     }
 
@@ -1771,9 +1788,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('observers')) {
       final stats = _syncResults['observers']!;
       summaryLines.add("• Observateurs: ${_formatSyncStats(stats)}");
-      totalAdded += stats.itemsAdded;
-      totalUpdated += stats.itemsUpdated;
-      totalSkipped += stats.itemsSkipped;
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
     }
 
     // Si aucune étape complétée n'a d'informations disponibles
@@ -1803,7 +1820,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Formate les statistiques de synchronisation pour une étape donnée
-  String _formatSyncStats(SyncResult result) {
+  String _formatSyncStats(domain.SyncResult result) {
     if (!result.success) {
       return "Échec";
     }
@@ -1853,6 +1870,103 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     return "Résumé de la synchronisation:\n${summaryLines.join("\n")}";
   }
+
+  /// Construit un résumé détaillé pour la synchronisation ascendante (envoi vers serveur)
+  /// avec les statistiques par type d'objet
+  String _buildUpstreamSyncSummary(domain.SyncResult? result) {
+    if (result == null) {
+      return "";
+    }
+
+    final List<String> summaryLines = [];
+    summaryLines.add("Résumé de la synchronisation ascendante:");
+
+    final totalAdded = result.itemsAdded;
+    final totalUpdated = result.itemsUpdated;
+    final totalDeleted = result.itemsDeleted ?? 0;
+    final totalSkipped = result.itemsSkipped;
+
+    if (totalAdded == 0 && totalUpdated == 0 && totalDeleted == 0 && totalSkipped == 0) {
+      summaryLines.add("• Aucune donnée n'a été trouvée à synchroniser");
+      return summaryLines.join("\n");
+    }
+
+    // Utiliser les statistiques détaillées si disponibles
+    if (result.data != null && result.data!.isNotEmpty) {
+      final visitesAdded = result.data!['visits_added'] as int? ?? 0;
+      final observationsAdded = result.data!['observations_added'] as int? ?? 0;
+      final detailsAdded = result.data!['observation_details_added'] as int? ?? 0;
+      
+      final visitesDeleted = result.data!['visits_deleted'] as int? ?? 0;
+      final observationsDeleted = result.data!['observations_deleted'] as int? ?? 0;
+      final detailsDeleted = result.data!['observation_details_deleted'] as int? ?? 0;
+
+      // Afficher les statistiques par catégorie avec les vraies données
+      summaryLines.add("• Visites: ${_formatUpstreamStats(visitesAdded, 0, 0, visitesDeleted)}");
+      summaryLines.add("• Observations: ${_formatUpstreamStats(observationsAdded, 0, 0, observationsDeleted)}");
+      summaryLines.add("• Détails d'observations: ${_formatUpstreamStats(detailsAdded, 0, 0, detailsDeleted)}");
+      
+      // Ajouter une ligne de séparation
+      summaryLines.add("");
+      summaryLines.add("• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
+    } else {
+      // Fallback vers l'ancienne méthode avec estimation si les données détaillées ne sont pas disponibles
+      final visitesRatio = 0.2;
+      final observationsRatio = 0.3;
+      
+      final visitesAdded = (totalAdded * visitesRatio).round();
+      final observationsAdded = (totalAdded * observationsRatio).round();
+      final detailsAdded = totalAdded - visitesAdded - observationsAdded;
+
+      final visitesUpdated = (totalUpdated * visitesRatio).round();
+      final observationsUpdated = (totalUpdated * observationsRatio).round();
+      final detailsUpdated = totalUpdated - visitesUpdated - observationsUpdated;
+
+      final visitesSkipped = (totalSkipped * visitesRatio).round();
+      final observationsSkipped = (totalSkipped * observationsRatio).round();
+      final detailsSkipped = totalSkipped - visitesSkipped - observationsSkipped;
+
+      final visitesDeleted = totalDeleted;
+
+      summaryLines.add("• Visites (estimation): ${_formatUpstreamStats(visitesAdded, visitesUpdated, visitesSkipped, visitesDeleted)}");
+      summaryLines.add("• Observations (estimation): ${_formatUpstreamStats(observationsAdded, observationsUpdated, observationsSkipped, 0)}");
+      summaryLines.add("• Détails d'observations (estimation): ${_formatUpstreamStats(detailsAdded, detailsUpdated, detailsSkipped, 0)}");
+      
+      summaryLines.add("");
+      summaryLines.add("• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
+    }
+
+    // Ajouter une note explicative
+    if (result.success) {
+      summaryLines.add("");
+      summaryLines.add("✅ Synchronisation terminée avec succès");
+    } else {
+      summaryLines.add("");
+      summaryLines.add("⚠️ Synchronisation terminée avec des erreurs");
+    }
+
+    return summaryLines.join("\n");
+  }
+
+  /// Formate les statistiques pour la synchronisation ascendante
+  String _formatUpstreamStats(int added, int updated, int skipped, int deleted) {
+    if (added == 0 && updated == 0 && skipped == 0 && deleted == 0) {
+      return "Aucune donnée";
+    }
+
+    // Format compatible avec _buildSyncSummary : "X éléments (Y ajoutés, Z mis à jour, W ignorés, V supprimés)"
+    // IMPORTANT: Toujours inclure toutes les parties pour que le regex fonctionne
+    final total = added + updated + skipped + deleted;
+    
+    String result = "$total éléments ($added ajoutés, $updated mis à jour, $skipped ignorés";
+    if (deleted > 0) {
+      result += ", $deleted supprimés";
+    }
+    result += ")";
+    
+    return result;
+  }
+
 
   @override
   void dispose() {
