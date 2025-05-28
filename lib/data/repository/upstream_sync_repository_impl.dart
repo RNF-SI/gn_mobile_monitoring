@@ -105,6 +105,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
       int itemsProcessed = 0;
       int itemsAdded = 0;
+      int itemsUpdated = 0;
       int itemsSkipped = 0;
       int itemsDeleted = 0;
       List<String> errors = [];
@@ -147,6 +148,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsSkipped: 0,
           );
         }
+
+        // Variables pour accumuler les statistiques détaillées
+        int totalVisitsAdded = 0;
+        int totalObservationsAdded = 0;
+        int totalObservationDetailsAdded = 0;
+        int totalVisitsDeleted = 0;
+        int totalObservationsDeleted = 0;
+        int totalObservationDetailsDeleted = 0;
 
         // Pour chaque visite, envoyer la visite et toutes ses observations
         for (final visitEntity in visits) {
@@ -237,6 +246,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 _logger.i('Visite créée avec succès, ID serveur: $serverId',
                     tag: 'sync');
                 itemsAdded++;
+                totalVisitsAdded++;
 
                 // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
                 await _visitRepository.updateVisitServerId(
@@ -263,7 +273,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 _logger.i(
                     'Visite mise à jour avec succès, ID serveur: $serverId',
                     tag: 'sync');
-                // Pour les mises à jour, on ne compte pas comme "ajouté" mais comme traité
+                itemsUpdated++;
               }
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi de la visite: $e',
@@ -304,10 +314,24 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 serverVisitId: serverId);
 
             // 3. Gérer le résultat de la synchronisation des observations
+            
+            // Consolider les statistiques des observations et détails
+            itemsAdded += observationsResult.itemsAdded;
+            itemsUpdated += observationsResult.itemsUpdated;
+            itemsSkipped += observationsResult.itemsSkipped;
+            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            
+            // Accumuler les statistiques détaillées pour les observations
+            totalObservationsAdded += observationsResult.itemsAdded;
+            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            
             if (observationsResult.success) {
               // Si tout a réussi, supprimer la visite localement
               await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
               itemsDeleted++;
+              totalVisitsDeleted++;
               _logger.i('Visite et observations supprimées avec succès',
                   tag: 'sync');
             } else {
@@ -356,7 +380,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
-            itemsUpdated: 0, // Pas de mise à jour, seulement ajout/suppression
+            itemsUpdated: itemsUpdated,
             itemsSkipped: itemsSkipped,
             itemsDeleted: itemsDeleted,
           );
@@ -365,9 +389,17 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
-          itemsUpdated: 0,
+          itemsUpdated: itemsUpdated,
           itemsSkipped: itemsSkipped,
           itemsDeleted: itemsDeleted,
+          data: {
+            'visits_added': totalVisitsAdded,
+            'observations_added': totalObservationsAdded,
+            'observation_details_added': totalObservationDetailsAdded,
+            'visits_deleted': totalVisitsDeleted,
+            'observations_deleted': totalObservationsDeleted,
+            'observation_details_deleted': totalObservationDetailsDeleted,
+          },
         );
       } catch (e) {
         debugPrint('Erreur lors de la synchronisation des visites: $e');
@@ -403,6 +435,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
       int itemsProcessed = 0;
       int itemsAdded = 0;
+      int itemsUpdated = 0;
       int itemsSkipped = 0;
       int itemsDeleted = 0;
       List<String> errors = [];
@@ -484,7 +517,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 _logger.i(
                     'Observation mise à jour avec succès, ID serveur: $serverId',
                     tag: 'sync');
-                // Pour les mises à jour, on ne compte pas comme "ajouté" mais comme traité
+                itemsUpdated++;
               }
             } catch (e) {
               debugPrint('Erreur lors de l\'envoi de l\'observation: $e');
@@ -531,6 +564,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 token, moduleCode, observation.idObservation,
                 serverObservationId: serverObservationId);
 
+            // Consolider les statistiques des détails d'observation
+            itemsAdded += detailsResult.itemsAdded;
+            itemsUpdated += detailsResult.itemsUpdated;
+            itemsSkipped += detailsResult.itemsSkipped;
+            itemsDeleted += detailsResult.itemsDeleted ?? 0;
+            
+            _logger.i('Stats détails: +${detailsResult.itemsAdded} ajoutés, +${detailsResult.itemsUpdated} mis à jour, +${detailsResult.itemsSkipped} ignorés, +${detailsResult.itemsDeleted ?? 0} supprimés', tag: 'sync');
+
             // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
             if (!detailsResult.success && detailsResult.errorMessage != null) {
               errors.add(
@@ -567,7 +608,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
-            itemsUpdated: 0,
+            itemsUpdated: itemsUpdated,
             itemsSkipped: itemsSkipped,
             itemsDeleted: itemsDeleted,
           );
@@ -576,7 +617,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
-          itemsUpdated: 0,
+          itemsUpdated: itemsUpdated,
           itemsSkipped: itemsSkipped,
           itemsDeleted: itemsDeleted,
         );
@@ -617,6 +658,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
       int itemsProcessed = 0;
       int itemsAdded = 0;
+      int itemsUpdated = 0;
       int itemsSkipped = 0;
       int itemsDeleted = 0;
       List<String> errors = [];
@@ -731,6 +773,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               _logger.i(
                   'Détail d\'observation envoyé avec succès, ID serveur: $serverId',
                   tag: 'sync');
+              // Pour l'instant, les détails d'observation sont toujours des créations (POST)
+              // mais la logique peut être étendue pour gérer les mises à jour (PATCH) si nécessaire
               itemsAdded++;
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi du détail d\'observation: $e',
@@ -755,7 +799,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                   errorMessage: errors.join('\n'),
                   itemsProcessed: itemsProcessed,
                   itemsAdded: itemsAdded,
-                  itemsUpdated: 0,
+                  itemsUpdated: itemsUpdated,
                   itemsSkipped: itemsSkipped,
                   itemsDeleted: itemsDeleted,
                 );
@@ -803,19 +847,19 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             errorMessage: errorMessage,
             itemsProcessed: itemsProcessed,
             itemsAdded: itemsAdded,
-            itemsUpdated: 0,
+            itemsUpdated: itemsUpdated,
             itemsSkipped: itemsSkipped,
             itemsDeleted: itemsDeleted,
           );
         }
 
         _logger.i(
-            'Synchronisation des détails d\'observation réussie: $itemsProcessed traités, $itemsAdded ajoutés',
+            'Synchronisation des détails d\'observation réussie: $itemsProcessed traités, $itemsAdded ajoutés, $itemsUpdated mis à jour',
             tag: 'sync');
         return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
-          itemsUpdated: 0,
+          itemsUpdated: itemsUpdated,
           itemsSkipped: itemsSkipped,
           itemsDeleted: itemsDeleted,
         );
