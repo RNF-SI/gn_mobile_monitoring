@@ -27,7 +27,13 @@ mixin _$SyncStatus {
   DateTime? get lastSync => throw _privateConstructorUsedError;
   List<SyncConflict>? get conflicts => throw _privateConstructorUsedError;
   DateTime get lastUpdated =>
-      throw _privateConstructorUsedError; // Détails supplémentaires pour la progression
+      throw _privateConstructorUsedError; // Type de synchronisation en cours
+  SyncType? get currentSyncType =>
+      throw _privateConstructorUsedError; // Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
+// Détails supplémentaires pour la progression
   String? get currentEntityName =>
       throw _privateConstructorUsedError; // Nom du module, site, etc. en cours de traitement
   int? get currentEntityTotal =>
@@ -71,6 +77,7 @@ abstract class $SyncStatusCopyWith<$Res> {
       DateTime? lastSync,
       List<SyncConflict>? conflicts,
       DateTime lastUpdated,
+      SyncType? currentSyncType,
       String? currentEntityName,
       int? currentEntityTotal,
       int? currentEntityProcessed,
@@ -108,6 +115,7 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
     Object? lastSync = freezed,
     Object? conflicts = freezed,
     Object? lastUpdated = null,
+    Object? currentSyncType = freezed,
     Object? currentEntityName = freezed,
     Object? currentEntityTotal = freezed,
     Object? currentEntityProcessed = freezed,
@@ -163,6 +171,10 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      currentSyncType: freezed == currentSyncType
+          ? _value.currentSyncType
+          : currentSyncType // ignore: cast_nullable_to_non_nullable
+              as SyncType?,
       currentEntityName: freezed == currentEntityName
           ? _value.currentEntityName
           : currentEntityName // ignore: cast_nullable_to_non_nullable
@@ -223,6 +235,7 @@ abstract class _$$SyncStatusImplCopyWith<$Res>
       DateTime? lastSync,
       List<SyncConflict>? conflicts,
       DateTime lastUpdated,
+      SyncType? currentSyncType,
       String? currentEntityName,
       int? currentEntityTotal,
       int? currentEntityProcessed,
@@ -258,6 +271,7 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
     Object? lastSync = freezed,
     Object? conflicts = freezed,
     Object? lastUpdated = null,
+    Object? currentSyncType = freezed,
     Object? currentEntityName = freezed,
     Object? currentEntityTotal = freezed,
     Object? currentEntityProcessed = freezed,
@@ -313,6 +327,10 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      currentSyncType: freezed == currentSyncType
+          ? _value.currentSyncType
+          : currentSyncType // ignore: cast_nullable_to_non_nullable
+              as SyncType?,
       currentEntityName: freezed == currentEntityName
           ? _value.currentEntityName
           : currentEntityName // ignore: cast_nullable_to_non_nullable
@@ -368,6 +386,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
       this.lastSync,
       final List<SyncConflict>? conflicts,
       required this.lastUpdated,
+      this.currentSyncType,
       this.currentEntityName,
       this.currentEntityTotal,
       this.currentEntityProcessed,
@@ -424,6 +443,13 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
 
   @override
   final DateTime lastUpdated;
+// Type de synchronisation en cours
+  @override
+  final SyncType? currentSyncType;
+// Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
 // Détails supplémentaires pour la progression
   @override
   final String? currentEntityName;
@@ -454,7 +480,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsDeleted: $itemsDeleted, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
+    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentSyncType: $currentSyncType, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsDeleted: $itemsDeleted, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
   }
 
   @override
@@ -473,6 +499,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('lastSync', lastSync))
       ..add(DiagnosticsProperty('conflicts', conflicts))
       ..add(DiagnosticsProperty('lastUpdated', lastUpdated))
+      ..add(DiagnosticsProperty('currentSyncType', currentSyncType))
       ..add(DiagnosticsProperty('currentEntityName', currentEntityName))
       ..add(DiagnosticsProperty('currentEntityTotal', currentEntityTotal))
       ..add(
@@ -511,6 +538,8 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
                 .equals(other._conflicts, _conflicts) &&
             (identical(other.lastUpdated, lastUpdated) ||
                 other.lastUpdated == lastUpdated) &&
+            (identical(other.currentSyncType, currentSyncType) ||
+                other.currentSyncType == currentSyncType) &&
             (identical(other.currentEntityName, currentEntityName) ||
                 other.currentEntityName == currentEntityName) &&
             (identical(other.currentEntityTotal, currentEntityTotal) ||
@@ -545,6 +574,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
         lastSync,
         const DeepCollectionEquality().hash(_conflicts),
         lastUpdated,
+        currentSyncType,
         currentEntityName,
         currentEntityTotal,
         currentEntityProcessed,
@@ -578,6 +608,7 @@ abstract class _SyncStatus extends SyncStatus {
       final DateTime? lastSync,
       final List<SyncConflict>? conflicts,
       required final DateTime lastUpdated,
+      final SyncType? currentSyncType,
       final String? currentEntityName,
       final int? currentEntityTotal,
       final int? currentEntityProcessed,
@@ -610,7 +641,13 @@ abstract class _SyncStatus extends SyncStatus {
   @override
   List<SyncConflict>? get conflicts;
   @override
-  DateTime get lastUpdated; // Détails supplémentaires pour la progression
+  DateTime get lastUpdated; // Type de synchronisation en cours
+  @override
+  SyncType? get currentSyncType; // Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
+// Détails supplémentaires pour la progression
   @override
   String?
       get currentEntityName; // Nom du module, site, etc. en cours de traitement
