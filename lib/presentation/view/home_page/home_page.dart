@@ -7,11 +7,30 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sy
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
-class HomePage extends ConsumerWidget {
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  HomePageState createState() => HomePageState();
+}
+
+class HomePageState extends ConsumerState<HomePage> {
+  bool _syncServiceInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialiser le service de synchronisation après le premier build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_syncServiceInitialized) {
+        ref.read(syncServiceProvider.notifier).initialize(ref);
+        _syncServiceInitialized = true;
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
     //Rafraichir les status de téléchargement des modules
@@ -35,7 +54,7 @@ class HomePage extends ConsumerWidget {
           ),
           body: Column(
             children: [
-              const SyncStatusWidget(), // Ajout du widget de statut de synchronisation
+              const SyncStatusWidget(), // Widget de statut de synchronisation
               const Expanded(
                 child: ModuleListWidget(),
               ),
