@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart' as domain;
@@ -1490,9 +1489,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       );
 
       try {
-        // Nettoyer le cache des échecs avant chaque nouvelle synchronisation complète
-        // Cela permet de retenter tous les éléments qui avaient échoué lors de la synchronisation précédente
-        UpstreamSyncRepositoryImpl.resetForNewSyncSession();
+        // Note: Cache des échecs supprimé - les éléments échoués seront automatiquement retentés
         
         // Utiliser le nouveau use case pour la synchronisation complète
         final uploadResult = await _syncCompleteUseCase.execute(token);

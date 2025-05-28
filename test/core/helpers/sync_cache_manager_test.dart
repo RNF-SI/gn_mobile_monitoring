@@ -4,23 +4,13 @@ import 'package:gn_mobile_monitoring/core/helpers/sync_cache_manager.dart';
 void main() {
   group('SyncCacheManager', () {
     tearDown(() {
-      // Reset cache after each test
-      SyncCacheManager.resetForNewSyncSession();
+      // Clear failure stats after each test
+      SyncCacheManager.clearFailureStats();
     });
 
-    group('Visit failure tracking', () {
-      test('should track visit failures', () {
+    group('Failure count tracking', () {
+      test('should track visit failure counts', () {
         const visitId = 123;
-        
-        expect(SyncCacheManager.isVisitFailed(visitId), isFalse);
-        
-        SyncCacheManager.markVisitAsFailed(visitId);
-        
-        expect(SyncCacheManager.isVisitFailed(visitId), isTrue);
-      });
-
-      test('should increment failure count', () {
-        const visitId = 456;
         
         expect(SyncCacheManager.getVisitFailureCount(visitId), 0);
         
@@ -31,30 +21,8 @@ void main() {
         expect(SyncCacheManager.getVisitFailureCount(visitId), 2);
       });
 
-      test('should remove visit from failed cache', () {
-        const visitId = 789;
-        
-        SyncCacheManager.markVisitAsFailed(visitId);
-        expect(SyncCacheManager.isVisitFailed(visitId), isTrue);
-        
-        SyncCacheManager.removeFromFailedCache(visitId);
-        expect(SyncCacheManager.isVisitFailed(visitId), isFalse);
-      });
-    });
-
-    group('Observation failure tracking', () {
-      test('should track observation failures', () {
-        const observationId = 222;
-        
-        expect(SyncCacheManager.isObservationFailed(observationId), isFalse);
-        
-        SyncCacheManager.markObservationAsFailed(observationId);
-        
-        expect(SyncCacheManager.isObservationFailed(observationId), isTrue);
-      });
-
-      test('should increment observation failure count', () {
-        const observationId = 333;
+      test('should track observation failure counts', () {
+        const observationId = 456;
         
         expect(SyncCacheManager.getObservationFailureCount(observationId), 0);
         
@@ -65,49 +33,77 @@ void main() {
         expect(SyncCacheManager.getObservationFailureCount(observationId), 2);
       });
 
-      test('should remove observation from failed cache', () {
-        const observationId = 444;
+      test('should provide failure statistics', () {
+        const visitId = 789;
+        const observationId = 999;
         
-        SyncCacheManager.markObservationAsFailed(observationId);
-        expect(SyncCacheManager.isObservationFailed(observationId), isTrue);
+        SyncCacheManager.incrementVisitFailureCount(visitId);
+        SyncCacheManager.incrementVisitFailureCount(visitId);
+        SyncCacheManager.incrementObservationFailureCount(observationId);
         
-        SyncCacheManager.removeObservationFromFailedCache(observationId);
-        expect(SyncCacheManager.isObservationFailed(observationId), isFalse);
+        final stats = SyncCacheManager.getFailureStats();
+        
+        expect(stats['visitFailureCounts'][visitId], 2);
+        expect(stats['observationFailureCounts'][observationId], 1);
       });
-    });
 
-    group('Session management', () {
-      test('should reset all caches for new sync session', () {
-        const visitId = 555;
-        const observationId = 666;
+      test('should clear failure statistics', () {
+        const visitId = 111;
+        const observationId = 222;
         
-        // Mark items as failed
-        SyncCacheManager.markVisitAsFailed(visitId);
-        SyncCacheManager.markObservationAsFailed(observationId);
+        SyncCacheManager.incrementVisitFailureCount(visitId);
+        SyncCacheManager.incrementObservationFailureCount(observationId);
         
-        expect(SyncCacheManager.isVisitFailed(visitId), isTrue);
-        expect(SyncCacheManager.isObservationFailed(observationId), isTrue);
+        expect(SyncCacheManager.getVisitFailureCount(visitId), 1);
+        expect(SyncCacheManager.getObservationFailureCount(observationId), 1);
         
-        // Reset session
-        SyncCacheManager.resetForNewSyncSession();
+        SyncCacheManager.clearFailureStats();
         
-        expect(SyncCacheManager.isVisitFailed(visitId), isFalse);
-        expect(SyncCacheManager.isObservationFailed(observationId), isFalse);
         expect(SyncCacheManager.getVisitFailureCount(visitId), 0);
         expect(SyncCacheManager.getObservationFailureCount(observationId), 0);
       });
+    });
 
-      test('should get cache statistics', () {
-        SyncCacheManager.markVisitAsFailed(1);
-        SyncCacheManager.markVisitAsFailed(2);
-        SyncCacheManager.markObservationAsFailed(10);
+    group('Deprecated methods behavior', () {
+      test('isVisitFailed should always return false', () {
+        const visitId = 123;
         
-        final stats = SyncCacheManager.getCacheStats();
+        // Même après avoir "marqué" comme échoué, retourne false
+        SyncCacheManager.markVisitAsFailed(visitId);
+        expect(SyncCacheManager.isVisitFailed(visitId), isFalse);
+      });
+
+      test('isObservationFailed should always return false', () {
+        const observationId = 456;
         
-        expect(stats['failedVisits'], 2);
-        expect(stats['failedObservations'], 1);
-        expect(stats.containsKey('visitFailureCounts'), isTrue);
-        expect(stats.containsKey('observationFailureCounts'), isTrue);
+        // Même après avoir "marqué" comme échoué, retourne false
+        SyncCacheManager.markObservationAsFailed(observationId);
+        expect(SyncCacheManager.isObservationFailed(observationId), isFalse);
+      });
+
+      test('resetForNewSyncSession should not affect failure counts', () {
+        const visitId = 789;
+        
+        SyncCacheManager.incrementVisitFailureCount(visitId);
+        expect(SyncCacheManager.getVisitFailureCount(visitId), 1);
+        
+        // L'ancienne méthode de reset ne fait plus rien
+        SyncCacheManager.resetForNewSyncSession();
+        
+        // Les compteurs restent intacts
+        expect(SyncCacheManager.getVisitFailureCount(visitId), 1);
+      });
+
+      test('getCacheStats should delegate to getFailureStats', () {
+        const visitId = 111;
+        
+        SyncCacheManager.incrementVisitFailureCount(visitId);
+        
+        final deprecatedStats = SyncCacheManager.getCacheStats();
+        final newStats = SyncCacheManager.getFailureStats();
+        
+        expect(deprecatedStats['visitFailureCounts'], newStats['visitFailureCounts']);
+        expect(deprecatedStats['observationFailureCounts'], newStats['observationFailureCounts']);
       });
     });
 
@@ -115,22 +111,22 @@ void main() {
       test('should handle negative IDs', () {
         const visitId = -1;
         
-        expect(() => SyncCacheManager.markVisitAsFailed(visitId), returnsNormally);
-        expect(SyncCacheManager.isVisitFailed(visitId), isTrue);
+        expect(() => SyncCacheManager.incrementVisitFailureCount(visitId), returnsNormally);
+        expect(SyncCacheManager.getVisitFailureCount(visitId), 1);
       });
 
       test('should handle zero IDs', () {
         const observationId = 0;
         
-        expect(() => SyncCacheManager.markObservationAsFailed(observationId), returnsNormally);
-        expect(SyncCacheManager.isObservationFailed(observationId), isTrue);
+        expect(() => SyncCacheManager.incrementObservationFailureCount(observationId), returnsNormally);
+        expect(SyncCacheManager.getObservationFailureCount(observationId), 1);
       });
 
       test('should handle large IDs', () {
         const largeId = 999999999;
         
-        SyncCacheManager.markVisitAsFailed(largeId);
-        expect(SyncCacheManager.isVisitFailed(largeId), isTrue);
+        SyncCacheManager.incrementVisitFailureCount(largeId);
+        expect(SyncCacheManager.getVisitFailureCount(largeId), 1);
       });
     });
   });

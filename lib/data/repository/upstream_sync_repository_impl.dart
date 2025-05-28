@@ -26,22 +26,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
   final AppLogger _logger = AppLogger();
 
-  /// Nettoie le cache des visites en échec (pour les retentatives)
-  /// Cette méthode est appelée au début de chaque synchronisation complète
-  static void clearFailedVisitsCache() {
-    SyncCacheManager.clearFailedVisitsCache();
-  }
-
-  /// Nettoie le cache pour une nouvelle session de synchronisation
-  /// Permet de retenter tous les éléments qui avaient échoué précédemment
-  static void resetForNewSyncSession() {
-    SyncCacheManager.resetForNewSyncSession();
-  }
-
-  /// Retire une visite spécifique du cache des échecs
-  static void removeFromFailedCache(int visitId) {
-    SyncCacheManager.removeFromFailedCache(visitId);
-  }
+  // Note: Méthodes de cache supprimées - les éléments échoués sont automatiquement retentés
 
   UpstreamSyncRepositoryImpl(
     this._globalApi,
@@ -160,12 +145,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         // Pour chaque visite, envoyer la visite et toutes ses observations
         for (final visitEntity in visits) {
           try {
-            // Vérifier si cette visite a déjà échoué récemment
-            if (SyncCacheManager.isVisitFailed(visitEntity.idBaseVisit)) {
-              _logger.w('Visite ${visitEntity.idBaseVisit} ignorée car déjà en échec récent', tag: 'sync');
-              itemsSkipped++;
-              continue;
-            }
+            // Note: Suppression de la vérification du cache des échecs pour permettre les retry
 
             _logger.i('Traitement de la visite ID: ${visitEntity.idBaseVisit}',
                 tag: 'sync');
@@ -290,10 +270,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               bool isFatal = SyncErrorHandler.isFatalError(e);
               _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}, message=${e.toString().length > 200 ? e.toString().substring(0, 200) + "..." : e.toString()}', tag: 'sync');
               
-              // Marquer comme échoué pour cette session de synchronisation uniquement
-              _logger.e('Erreur détectée pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). Marquage comme échoué pour cette session.', tag: 'sync');
-              SyncCacheManager.markVisitAsFailed(visitEntity.idBaseVisit);
-              errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. Visite ignorée pour le reste de cette synchronisation, sera retentée lors de la prochaine synchronisation.');
+              // Continuer avec la visite suivante sans bloquer pour les prochaines sync
+              _logger.e('Erreur détectée pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). La visite sera retentée à la prochaine synchronisation.', tag: 'sync');
+              errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. La visite sera retentée à la prochaine synchronisation.');
               itemsSkipped++;
               continue; // Passer à la visite suivante
             }
@@ -459,12 +438,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         // Pour chaque observation, envoyer l'observation et tous ses détails
         for (final observation in observations) {
           try {
-            // Vérifier si cette observation a déjà échoué récemment
-            if (SyncCacheManager.isObservationFailed(observation.idObservation)) {
-              _logger.w('Observation ${observation.idObservation} ignorée car déjà en échec récent', tag: 'sync');
-              itemsSkipped++;
-              continue;
-            }
+            // Note: Suppression de la vérification du cache des échecs pour permettre les retry
 
             debugPrint(
                 'Traitement de l\'observation ID: ${observation.idObservation}');
@@ -533,10 +507,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               bool isFatal = SyncErrorHandler.isFatalError(e);
               _logger.w('Analyse erreur observation ${observation.idObservation}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}', tag: 'sync');
               
-              // Marquer comme échoué pour cette session de synchronisation uniquement
-              _logger.e('Erreur détectée pour l\'observation ${observation.idObservation} (tentative $failureCount). Marquage comme échoué pour cette session.', tag: 'sync');
-              SyncCacheManager.markObservationAsFailed(observation.idObservation);
-              errors.add('ERREUR - Observation ${observation.idObservation}: ${SyncErrorHandler.extractDetailedError(e, 'observation', observation.idObservation)}. Observation ignorée pour le reste de cette synchronisation, sera retentée lors de la prochaine synchronisation.');
+              // Continuer avec l'observation suivante sans bloquer pour les prochaines sync
+              _logger.e('Erreur détectée pour l\'observation ${observation.idObservation} (tentative $failureCount). L\'observation sera retentée à la prochaine synchronisation.', tag: 'sync');
+              errors.add('ERREUR - Observation ${observation.idObservation}: ${SyncErrorHandler.extractDetailedError(e, 'observation', observation.idObservation)}. L\'observation sera retentée à la prochaine synchronisation.');
               itemsSkipped++;
               continue; // Passer à l'observation suivante
             }

@@ -1,59 +1,14 @@
-/// Helper pour la gestion du cache des éléments en échec lors de la synchronisation
-/// Permet d'éviter les boucles infinies en marquant temporairement les éléments qui échouent
+/// Helper pour la gestion des statistiques d'échecs lors de la synchronisation
+/// Conserve un compteur des tentatives pour le débogage, mais ne bloque plus les éléments
 class SyncCacheManager {
-  // Tracker des visites qui ont déjà échoué pour éviter les boucles infinies
-  static final Set<int> _failedVisitIds = <int>{};
-  static final Set<int> _failedObservationIds = <int>{};
-  
-  // Compteur d'échecs par élément pour détecter les boucles
+  // Compteur d'échecs par élément pour le débogage et les statistiques
   static final Map<int, int> _visitFailureCount = <int, int>{};
   static final Map<int, int> _observationFailureCount = <int, int>{};
 
-  /// Nettoie le cache des visites en échec (pour les retentatives)
-  /// Cette méthode est appelée au début de chaque synchronisation complète
-  static void clearFailedVisitsCache() {
-    _failedVisitIds.clear();
-    _failedObservationIds.clear();
+  /// Nettoie les compteurs d'échecs
+  static void clearFailureStats() {
     _visitFailureCount.clear();
     _observationFailureCount.clear();
-  }
-
-  /// Nettoie le cache pour une nouvelle session de synchronisation
-  /// Permet de retenter tous les éléments qui avaient échoué précédemment
-  static void resetForNewSyncSession() {
-    clearFailedVisitsCache();
-  }
-
-  /// Retire une visite spécifique du cache des échecs
-  static void removeFromFailedCache(int visitId) {
-    _failedVisitIds.remove(visitId);
-    _visitFailureCount.remove(visitId);
-  }
-
-  /// Retire une observation spécifique du cache des échecs
-  static void removeObservationFromFailedCache(int observationId) {
-    _failedObservationIds.remove(observationId);
-    _observationFailureCount.remove(observationId);
-  }
-
-  /// Vérifie si une visite est marquée comme ayant échoué
-  static bool isVisitFailed(int visitId) {
-    return _failedVisitIds.contains(visitId);
-  }
-
-  /// Vérifie si une observation est marquée comme ayant échoué
-  static bool isObservationFailed(int observationId) {
-    return _failedObservationIds.contains(observationId);
-  }
-
-  /// Marque une visite comme ayant échoué
-  static void markVisitAsFailed(int visitId) {
-    _failedVisitIds.add(visitId);
-  }
-
-  /// Marque une observation comme ayant échoué
-  static void markObservationAsFailed(int observationId) {
-    _failedObservationIds.add(observationId);
   }
 
   /// Incrémente le compteur d'échecs pour une visite et retourne le nouveau compte
@@ -78,13 +33,61 @@ class SyncCacheManager {
     return _observationFailureCount[observationId] ?? 0;
   }
 
-  /// Obtient des statistiques sur le cache des échecs
-  static Map<String, dynamic> getCacheStats() {
+  /// Obtient des statistiques sur les échecs
+  static Map<String, dynamic> getFailureStats() {
     return {
-      'failedVisits': _failedVisitIds.length,
-      'failedObservations': _failedObservationIds.length,
       'visitFailureCounts': Map.from(_visitFailureCount),
       'observationFailureCounts': Map.from(_observationFailureCount),
     };
+  }
+
+  // ===== MÉTHODES OBSOLÈTES - GARDÉES POUR LA COMPATIBILITÉ =====
+  // Ces méthodes ne font plus rien mais sont conservées pour éviter les erreurs de compilation
+
+  @Deprecated('Utiliser clearFailureStats() - le cache de blocage est supprimé')
+  static void clearFailedVisitsCache() {
+    clearFailureStats();
+  }
+
+  @Deprecated('Méthode obsolète - les éléments ne sont plus bloqués')
+  static void resetForNewSyncSession() {
+    // Ne fait plus rien - les éléments ne sont plus bloqués
+  }
+
+  @Deprecated('Méthode obsolète - les éléments ne sont plus bloqués')
+  static void removeFromFailedCache(int visitId) {
+    // Ne fait plus rien - les éléments ne sont plus bloqués
+  }
+
+  @Deprecated('Méthode obsolète - les éléments ne sont plus bloqués')
+  static void removeObservationFromFailedCache(int observationId) {
+    // Ne fait plus rien - les éléments ne sont plus bloqués
+  }
+
+  @Deprecated('Méthode obsolète - retourne toujours false')
+  static bool isVisitFailed(int visitId) {
+    // Retourne toujours false - les éléments ne sont plus bloqués
+    return false;
+  }
+
+  @Deprecated('Méthode obsolète - retourne toujours false')
+  static bool isObservationFailed(int observationId) {
+    // Retourne toujours false - les éléments ne sont plus bloqués
+    return false;
+  }
+
+  @Deprecated('Méthode obsolète - les éléments ne sont plus bloqués')
+  static void markVisitAsFailed(int visitId) {
+    // Ne fait plus rien - les éléments ne sont plus bloqués
+  }
+
+  @Deprecated('Méthode obsolète - les éléments ne sont plus bloqués')
+  static void markObservationAsFailed(int observationId) {
+    // Ne fait plus rien - les éléments ne sont plus bloqués
+  }
+
+  @Deprecated('Utiliser getFailureStats() - le cache de blocage est supprimé')
+  static Map<String, dynamic> getCacheStats() {
+    return getFailureStats();
   }
 }
