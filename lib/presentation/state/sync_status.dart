@@ -36,6 +36,13 @@ enum SyncState {
   conflictDetected,
 }
 
+/// Type de synchronisation en cours
+enum SyncType {
+  downstream, // Serveur → Appareil
+  upstream,   // Appareil → Serveur
+}
+
+
 /// Représente le statut d'une opération de synchronisation
 @freezed
 class SyncStatus with _$SyncStatus {
@@ -53,6 +60,14 @@ class SyncStatus with _$SyncStatus {
     DateTime? lastSync,
     List<SyncConflict>? conflicts,
     required DateTime lastUpdated,
+    
+    // Type de synchronisation en cours
+    SyncType? currentSyncType,
+    
+    // Résultats des dernières synchronisations  
+    // (utilisation de domain.SyncResult temporairement désactivée)
+    // SyncResult? lastDownstreamSync,
+    // SyncResult? lastUpstreamSync,
     
     // Détails supplémentaires pour la progression
     String? currentEntityName,   // Nom du module, site, etc. en cours de traitement
