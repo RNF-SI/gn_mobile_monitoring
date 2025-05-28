@@ -3,12 +3,26 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i4;
+import 'dart:async' as _i5;
 
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart'
+    as _i12;
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart'
+    as _i6;
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart'
-    as _i3;
+    as _i4;
 import 'package:gn_mobile_monitoring/data/db/database.dart' as _i2;
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i7;
+import 'package:gn_mobile_monitoring/domain/model/module.dart' as _i3;
+import 'package:gn_mobile_monitoring/domain/model/module_complement.dart'
+    as _i14;
+import 'package:gn_mobile_monitoring/domain/model/site_complement.dart' as _i8;
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart' as _i9;
+import 'package:gn_mobile_monitoring/domain/model/site_module.dart' as _i11;
+import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart'
+    as _i10;
 import 'package:mockito/mockito.dart' as _i1;
+import 'package:mockito/src/dummies.dart' as _i13;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -33,23 +47,33 @@ class _FakeTBaseVisit_0 extends _i1.SmartFake implements _i2.TBaseVisit {
         );
 }
 
+class _FakeModule_1 extends _i1.SmartFake implements _i3.Module {
+  _FakeModule_1(
+    Object parent,
+    Invocation parentInvocation,
+  ) : super(
+          parent,
+          parentInvocation,
+        );
+}
+
 /// A class which mocks [VisitesDatabase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
+class MockVisitesDatabase extends _i1.Mock implements _i4.VisitesDatabase {
   @override
-  _i4.Future<List<_i2.TBaseVisit>> getAllVisits() => (super.noSuchMethod(
+  _i5.Future<List<_i2.TBaseVisit>> getAllVisits() => (super.noSuchMethod(
         Invocation.method(
           #getAllVisits,
           [],
         ),
-        returnValue: _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+        returnValue: _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
         returnValueForMissingStub:
-            _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
-      ) as _i4.Future<List<_i2.TBaseVisit>>);
+            _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+      ) as _i5.Future<List<_i2.TBaseVisit>>);
 
   @override
-  _i4.Future<List<_i2.TBaseVisit>> getVisitsBySiteIdAndModuleId(
+  _i5.Future<List<_i2.TBaseVisit>> getVisitsBySiteIdAndModuleId(
     int? siteId,
     int? moduleId,
   ) =>
@@ -61,18 +85,18 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
             moduleId,
           ],
         ),
-        returnValue: _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+        returnValue: _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
         returnValueForMissingStub:
-            _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
-      ) as _i4.Future<List<_i2.TBaseVisit>>);
+            _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+      ) as _i5.Future<List<_i2.TBaseVisit>>);
 
   @override
-  _i4.Future<_i2.TBaseVisit> getVisitById(int? id) => (super.noSuchMethod(
+  _i5.Future<_i2.TBaseVisit> getVisitById(int? id) => (super.noSuchMethod(
         Invocation.method(
           #getVisitById,
           [id],
         ),
-        returnValue: _i4.Future<_i2.TBaseVisit>.value(_FakeTBaseVisit_0(
+        returnValue: _i5.Future<_i2.TBaseVisit>.value(_FakeTBaseVisit_0(
           this,
           Invocation.method(
             #getVisitById,
@@ -80,141 +104,141 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
           ),
         )),
         returnValueForMissingStub:
-            _i4.Future<_i2.TBaseVisit>.value(_FakeTBaseVisit_0(
+            _i5.Future<_i2.TBaseVisit>.value(_FakeTBaseVisit_0(
           this,
           Invocation.method(
             #getVisitById,
             [id],
           ),
         )),
-      ) as _i4.Future<_i2.TBaseVisit>);
+      ) as _i5.Future<_i2.TBaseVisit>);
 
   @override
-  _i4.Future<int> insertVisit(_i2.TBaseVisitsCompanion? visit) =>
+  _i5.Future<int> insertVisit(_i2.TBaseVisitsCompanion? visit) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertVisit,
           [visit],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<bool> updateVisit(_i2.TBaseVisitsCompanion? visit) =>
+  _i5.Future<bool> updateVisit(_i2.TBaseVisitsCompanion? visit) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateVisit,
           [visit],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-        returnValueForMissingStub: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i5.Future<bool>.value(false),
+        returnValueForMissingStub: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
 
   @override
-  _i4.Future<int> deleteVisit(int? id) => (super.noSuchMethod(
+  _i5.Future<int> deleteVisit(int? id) => (super.noSuchMethod(
         Invocation.method(
           #deleteVisit,
           [id],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<_i2.TVisitComplement?> getVisitComplementById(int? visitId) =>
+  _i5.Future<_i2.TVisitComplement?> getVisitComplementById(int? visitId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getVisitComplementById,
           [visitId],
         ),
-        returnValue: _i4.Future<_i2.TVisitComplement?>.value(),
-        returnValueForMissingStub: _i4.Future<_i2.TVisitComplement?>.value(),
-      ) as _i4.Future<_i2.TVisitComplement?>);
+        returnValue: _i5.Future<_i2.TVisitComplement?>.value(),
+        returnValueForMissingStub: _i5.Future<_i2.TVisitComplement?>.value(),
+      ) as _i5.Future<_i2.TVisitComplement?>);
 
   @override
-  _i4.Future<int> insertVisitComplement(
+  _i5.Future<int> insertVisitComplement(
           _i2.TVisitComplementsCompanion? complement) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertVisitComplement,
           [complement],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<bool> updateVisitComplement(
+  _i5.Future<bool> updateVisitComplement(
           _i2.TVisitComplementsCompanion? complement) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateVisitComplement,
           [complement],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-        returnValueForMissingStub: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i5.Future<bool>.value(false),
+        returnValueForMissingStub: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
 
   @override
-  _i4.Future<int> deleteVisitComplement(int? visitId) => (super.noSuchMethod(
+  _i5.Future<int> deleteVisitComplement(int? visitId) => (super.noSuchMethod(
         Invocation.method(
           #deleteVisitComplement,
           [visitId],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<void> deleteVisitWithComplement(int? visitId) =>
+  _i5.Future<void> deleteVisitWithComplement(int? visitId) =>
       (super.noSuchMethod(
         Invocation.method(
           #deleteVisitWithComplement,
           [visitId],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 
   @override
-  _i4.Future<List<_i2.CorVisitObserverData>> getVisitObservers(int? visitId) =>
+  _i5.Future<List<_i2.CorVisitObserverData>> getVisitObservers(int? visitId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getVisitObservers,
           [visitId],
         ),
-        returnValue: _i4.Future<List<_i2.CorVisitObserverData>>.value(
+        returnValue: _i5.Future<List<_i2.CorVisitObserverData>>.value(
             <_i2.CorVisitObserverData>[]),
         returnValueForMissingStub:
-            _i4.Future<List<_i2.CorVisitObserverData>>.value(
+            _i5.Future<List<_i2.CorVisitObserverData>>.value(
                 <_i2.CorVisitObserverData>[]),
-      ) as _i4.Future<List<_i2.CorVisitObserverData>>);
+      ) as _i5.Future<List<_i2.CorVisitObserverData>>);
 
   @override
-  _i4.Future<int> insertVisitObserver(
+  _i5.Future<int> insertVisitObserver(
           _i2.CorVisitObserverCompanion? observer) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertVisitObserver,
           [observer],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<int> deleteVisitObservers(int? visitId) => (super.noSuchMethod(
+  _i5.Future<int> deleteVisitObservers(int? visitId) => (super.noSuchMethod(
         Invocation.method(
           #deleteVisitObservers,
           [visitId],
         ),
-        returnValue: _i4.Future<int>.value(0),
-        returnValueForMissingStub: _i4.Future<int>.value(0),
-      ) as _i4.Future<int>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
-  _i4.Future<void> replaceVisitObservers(
+  _i5.Future<void> replaceVisitObservers(
     int? visitId,
     List<_i2.CorVisitObserverCompanion>? observers,
   ) =>
@@ -226,24 +250,24 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
             observers,
           ],
         ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
 
   @override
-  _i4.Future<List<_i2.TBaseVisit>> getVisitsBySite(int? siteId) =>
+  _i5.Future<List<_i2.TBaseVisit>> getVisitsBySite(int? siteId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getVisitsBySite,
           [siteId],
         ),
-        returnValue: _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+        returnValue: _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
         returnValueForMissingStub:
-            _i4.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
-      ) as _i4.Future<List<_i2.TBaseVisit>>);
+            _i5.Future<List<_i2.TBaseVisit>>.value(<_i2.TBaseVisit>[]),
+      ) as _i5.Future<List<_i2.TBaseVisit>>);
 
   @override
-  _i4.Future<bool> updateVisitServerId(
+  _i5.Future<bool> updateVisitServerId(
     int? localVisitId,
     int? serverId,
   ) =>
@@ -255,7 +279,794 @@ class MockVisitesDatabase extends _i1.Mock implements _i3.VisitesDatabase {
             serverId,
           ],
         ),
-        returnValue: _i4.Future<bool>.value(false),
-        returnValueForMissingStub: _i4.Future<bool>.value(false),
-      ) as _i4.Future<bool>);
+        returnValue: _i5.Future<bool>.value(false),
+        returnValueForMissingStub: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+}
+
+/// A class which mocks [SitesDatabase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
+  @override
+  _i5.Future<void> clearSites() => (super.noSuchMethod(
+        Invocation.method(
+          #clearSites,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSites(List<_i7.BaseSite>? sites) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSites,
+          [sites],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateSite(_i7.BaseSite? site) => (super.noSuchMethod(
+        Invocation.method(
+          #updateSite,
+          [site],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteSite(int? siteId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteSite,
+          [siteId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i7.BaseSite>> getAllSites() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllSites,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+      ) as _i5.Future<List<_i7.BaseSite>>);
+
+  @override
+  _i5.Future<void> clearSiteComplements() => (super.noSuchMethod(
+        Invocation.method(
+          #clearSiteComplements,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSiteComplements(
+          List<_i8.SiteComplement>? complements) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteComplements,
+          [complements],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteSiteComplement(int? siteId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteSiteComplement,
+          [siteId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i8.SiteComplement>> getAllSiteComplements() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllSiteComplements,
+          [],
+        ),
+        returnValue:
+            _i5.Future<List<_i8.SiteComplement>>.value(<_i8.SiteComplement>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i8.SiteComplement>>.value(<_i8.SiteComplement>[]),
+      ) as _i5.Future<List<_i8.SiteComplement>>);
+
+  @override
+  _i5.Future<List<_i8.SiteComplement>> getSiteComplementsByModuleId(
+          int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteComplementsByModuleId,
+          [moduleId],
+        ),
+        returnValue:
+            _i5.Future<List<_i8.SiteComplement>>.value(<_i8.SiteComplement>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i8.SiteComplement>>.value(<_i8.SiteComplement>[]),
+      ) as _i5.Future<List<_i8.SiteComplement>>);
+
+  @override
+  _i5.Future<bool> siteHasOtherModuleReferences(
+    int? siteId,
+    int? excludeModuleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #siteHasOtherModuleReferences,
+          [
+            siteId,
+            excludeModuleId,
+          ],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+        returnValueForMissingStub: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<bool> siteGroupHasOtherModuleReferences(
+    int? siteGroupId,
+    int? excludeModuleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #siteGroupHasOtherModuleReferences,
+          [
+            siteGroupId,
+            excludeModuleId,
+          ],
+        ),
+        returnValue: _i5.Future<bool>.value(false),
+        returnValueForMissingStub: _i5.Future<bool>.value(false),
+      ) as _i5.Future<bool>);
+
+  @override
+  _i5.Future<void> deleteSiteCompletely(int? siteId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteSiteCompletely,
+          [siteId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearSiteGroups() => (super.noSuchMethod(
+        Invocation.method(
+          #clearSiteGroups,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSiteGroups(List<_i9.SiteGroup>? siteGroups) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteGroups,
+          [siteGroups],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateSiteGroup(_i9.SiteGroup? siteGroup) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteGroup,
+          [siteGroup],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteSiteGroup(int? siteGroupId) => (super.noSuchMethod(
+        Invocation.method(
+          #deleteSiteGroup,
+          [siteGroupId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i9.SiteGroup>> getAllSiteGroups() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllSiteGroups,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+      ) as _i5.Future<List<_i9.SiteGroup>>);
+
+  @override
+  _i5.Future<List<_i7.BaseSite>> getSitesForModule(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSitesForModule,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+      ) as _i5.Future<List<_i7.BaseSite>>);
+
+  @override
+  _i5.Future<List<_i9.SiteGroup>> getSiteGroupsForModule(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupsForModule,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+      ) as _i5.Future<List<_i9.SiteGroup>>);
+
+  @override
+  _i5.Future<void> clearAllSiteGroupModules() => (super.noSuchMethod(
+        Invocation.method(
+          #clearAllSiteGroupModules,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSiteGroupModules(
+          List<_i10.SitesGroupModule>? modules) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteGroupModules,
+          [modules],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteSiteGroupModule(
+    int? siteGroupId,
+    int? moduleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteSiteGroupModule,
+          [
+            siteGroupId,
+            moduleId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i10.SitesGroupModule>> getAllSiteGroupModules() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllSiteGroupModules,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i10.SitesGroupModule>>.value(
+            <_i10.SitesGroupModule>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i10.SitesGroupModule>>.value(
+                <_i10.SitesGroupModule>[]),
+      ) as _i5.Future<List<_i10.SitesGroupModule>>);
+
+  @override
+  _i5.Future<List<_i9.SiteGroup>> getSiteGroupsByModuleId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupsByModuleId,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i9.SiteGroup>>.value(<_i9.SiteGroup>[]),
+      ) as _i5.Future<List<_i9.SiteGroup>>);
+
+  @override
+  _i5.Future<List<_i10.SitesGroupModule>> getSiteGroupModulesBySiteGroupId(
+          int? siteGroupId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupModulesBySiteGroupId,
+          [siteGroupId],
+        ),
+        returnValue: _i5.Future<List<_i10.SitesGroupModule>>.value(
+            <_i10.SitesGroupModule>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i10.SitesGroupModule>>.value(
+                <_i10.SitesGroupModule>[]),
+      ) as _i5.Future<List<_i10.SitesGroupModule>>);
+
+  @override
+  _i5.Future<void> clearAllSiteModules() => (super.noSuchMethod(
+        Invocation.method(
+          #clearAllSiteModules,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSiteModules(List<_i11.SiteModule>? modules) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteModules,
+          [modules],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteSiteModule(
+    int? siteId,
+    int? moduleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteSiteModule,
+          [
+            siteId,
+            moduleId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i11.SiteModule>> getAllSiteModules() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllSiteModules,
+          [],
+        ),
+        returnValue:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+      ) as _i5.Future<List<_i11.SiteModule>>);
+
+  @override
+  _i5.Future<List<_i7.BaseSite>> getSitesByModuleId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSitesByModuleId,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+      ) as _i5.Future<List<_i7.BaseSite>>);
+
+  @override
+  _i5.Future<List<_i11.SiteModule>> getSiteModulesBySiteId(int? siteId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteModulesBySiteId,
+          [siteId],
+        ),
+        returnValue:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+      ) as _i5.Future<List<_i11.SiteModule>>);
+
+  @override
+  _i5.Future<List<_i7.BaseSite>> getSitesBySiteGroup(int? siteGroupId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSitesBySiteGroup,
+          [siteGroupId],
+        ),
+        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+      ) as _i5.Future<List<_i7.BaseSite>>);
+
+  @override
+  _i5.Future<void> insertSite(_i7.BaseSite? site) => (super.noSuchMethod(
+        Invocation.method(
+          #insertSite,
+          [site],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSiteGroup(_i9.SiteGroup? siteGroup) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteGroup,
+          [siteGroup],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i11.SiteModule>> getSiteModulesByModuleId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteModulesByModuleId,
+          [moduleId],
+        ),
+        returnValue:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i11.SiteModule>>.value(<_i11.SiteModule>[]),
+      ) as _i5.Future<List<_i11.SiteModule>>);
+
+  @override
+  _i5.Future<void> insertSiteModule(_i11.SiteModule? siteModule) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteModule,
+          [siteModule],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<_i7.BaseSite?> getSiteById(int? siteId) => (super.noSuchMethod(
+        Invocation.method(
+          #getSiteById,
+          [siteId],
+        ),
+        returnValue: _i5.Future<_i7.BaseSite?>.value(),
+        returnValueForMissingStub: _i5.Future<_i7.BaseSite?>.value(),
+      ) as _i5.Future<_i7.BaseSite?>);
+}
+
+/// A class which mocks [ModulesDatabase].
+///
+/// See the documentation for Mockito's code generation for more information.
+class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
+  @override
+  _i5.Future<void> clearModules() => (super.noSuchMethod(
+        Invocation.method(
+          #clearModules,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertModules(List<_i3.Module>? modules) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertModules,
+          [modules],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateModule(_i3.Module? module) => (super.noSuchMethod(
+        Invocation.method(
+          #updateModule,
+          [module],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<_i3.Module>> getAllModules() => (super.noSuchMethod(
+        Invocation.method(
+          #getAllModules,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+      ) as _i5.Future<List<_i3.Module>>);
+
+  @override
+  _i5.Future<String> getModuleCodeFromIdModule(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleCodeFromIdModule,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<String>.value(_i13.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getModuleCodeFromIdModule,
+            [moduleId],
+          ),
+        )),
+        returnValueForMissingStub:
+            _i5.Future<String>.value(_i13.dummyValue<String>(
+          this,
+          Invocation.method(
+            #getModuleCodeFromIdModule,
+            [moduleId],
+          ),
+        )),
+      ) as _i5.Future<String>);
+
+  @override
+  _i5.Future<void> markModuleAsDownloaded(int? moduleId) => (super.noSuchMethod(
+        Invocation.method(
+          #markModuleAsDownloaded,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertModuleComplements(
+          List<_i14.ModuleComplement>? moduleComplements) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertModuleComplements,
+          [moduleComplements],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<_i14.ModuleComplement?> getModuleComplementById(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleComplementById,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<_i14.ModuleComplement?>.value(),
+        returnValueForMissingStub: _i5.Future<_i14.ModuleComplement?>.value(),
+      ) as _i5.Future<_i14.ModuleComplement?>);
+
+  @override
+  _i5.Future<_i14.ModuleComplement?> getModuleComplementByModuleCode(
+          String? moduleCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleComplementByModuleCode,
+          [moduleCode],
+        ),
+        returnValue: _i5.Future<_i14.ModuleComplement?>.value(),
+        returnValueForMissingStub: _i5.Future<_i14.ModuleComplement?>.value(),
+      ) as _i5.Future<_i14.ModuleComplement?>);
+
+  @override
+  _i5.Future<List<_i14.ModuleComplement>> getAllModuleComplements() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllModuleComplements,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i14.ModuleComplement>>.value(
+            <_i14.ModuleComplement>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i14.ModuleComplement>>.value(
+                <_i14.ModuleComplement>[]),
+      ) as _i5.Future<List<_i14.ModuleComplement>>);
+
+  @override
+  _i5.Future<void> updateModuleComplement(
+          _i14.ModuleComplement? moduleComplement) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateModuleComplement,
+          [moduleComplement],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> updateModuleComplementConfiguration(
+    int? moduleId,
+    String? configuration,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateModuleComplementConfiguration,
+          [
+            moduleId,
+            configuration,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearAllData() => (super.noSuchMethod(
+        Invocation.method(
+          #clearAllData,
+          [],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> deleteModuleWithComplement(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #deleteModuleWithComplement,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearCorSiteModules(int? moduleId) => (super.noSuchMethod(
+        Invocation.method(
+          #clearCorSiteModules,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> clearSitesGroupModules(int? moduleId) => (super.noSuchMethod(
+        Invocation.method(
+          #clearSitesGroupModules,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> insertSitesGroupModules(
+          List<_i10.SitesGroupModule>? siteGroups) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSitesGroupModules,
+          [siteGroups],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<void> associateModuleWithDataset(
+    int? moduleId,
+    int? datasetId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #associateModuleWithDataset,
+          [
+            moduleId,
+            datasetId,
+          ],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
+  _i5.Future<List<int>> getDatasetIdsForModule(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getDatasetIdsForModule,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<List<int>>.value(<int>[]),
+        returnValueForMissingStub: _i5.Future<List<int>>.value(<int>[]),
+      ) as _i5.Future<List<int>>);
+
+  @override
+  _i5.Future<int?> getModuleTaxonomyListId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleTaxonomyListId,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<int?>.value(),
+        returnValueForMissingStub: _i5.Future<int?>.value(),
+      ) as _i5.Future<int?>);
+
+  @override
+  _i5.Future<List<_i3.Module>> getModules() => (super.noSuchMethod(
+        Invocation.method(
+          #getModules,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+      ) as _i5.Future<List<_i3.Module>>);
+
+  @override
+  _i5.Future<_i3.Module?> getModuleById(int? moduleId) => (super.noSuchMethod(
+        Invocation.method(
+          #getModuleById,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<_i3.Module?>.value(),
+        returnValueForMissingStub: _i5.Future<_i3.Module?>.value(),
+      ) as _i5.Future<_i3.Module?>);
+
+  @override
+  _i5.Future<_i3.Module> getModuleWithRelationsById(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleWithRelationsById,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<_i3.Module>.value(_FakeModule_1(
+          this,
+          Invocation.method(
+            #getModuleWithRelationsById,
+            [moduleId],
+          ),
+        )),
+        returnValueForMissingStub: _i5.Future<_i3.Module>.value(_FakeModule_1(
+          this,
+          Invocation.method(
+            #getModuleWithRelationsById,
+            [moduleId],
+          ),
+        )),
+      ) as _i5.Future<_i3.Module>);
+
+  @override
+  _i5.Future<List<_i3.Module>> getDownloadedModules() => (super.noSuchMethod(
+        Invocation.method(
+          #getDownloadedModules,
+          [],
+        ),
+        returnValue: _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i3.Module>>.value(<_i3.Module>[]),
+      ) as _i5.Future<List<_i3.Module>>);
+
+  @override
+  _i5.Future<_i3.Module?> getModuleIdByLabel(String? moduleLabel) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleIdByLabel,
+          [moduleLabel],
+        ),
+        returnValue: _i5.Future<_i3.Module?>.value(),
+        returnValueForMissingStub: _i5.Future<_i3.Module?>.value(),
+      ) as _i5.Future<_i3.Module?>);
+
+  @override
+  _i5.Future<_i3.Module?> getModuleByCode(String? moduleCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getModuleByCode,
+          [moduleCode],
+        ),
+        returnValue: _i5.Future<_i3.Module?>.value(),
+        returnValueForMissingStub: _i5.Future<_i3.Module?>.value(),
+      ) as _i5.Future<_i3.Module?>);
 }

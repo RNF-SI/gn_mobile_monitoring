@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.d
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/testable_sync_service.dart';
 import 'package:mocktail/mocktail.dart';
@@ -16,6 +17,7 @@ class MockGetTokenFromLocalStorageUseCase extends Mock implements GetTokenFromLo
 class MockIncrementalSyncAllUseCase extends Mock implements IncrementalSyncAllUseCase {}
 class MockGetLastSyncDateUseCase extends Mock implements GetLastSyncDateUseCase {}
 class MockUpdateLastSyncDateUseCase extends Mock implements UpdateLastSyncDateUseCase {}
+class MockSyncCompleteUseCase extends Mock implements SyncCompleteUseCase {}
 class MockSyncRepository extends Mock implements SyncRepository {}
 
 void main() {
@@ -24,6 +26,7 @@ void main() {
   late MockIncrementalSyncAllUseCase mockSyncUseCase;
   late MockGetLastSyncDateUseCase mockGetLastSyncDateUseCase;
   late MockUpdateLastSyncDateUseCase mockUpdateLastSyncDateUseCase;
+  late MockSyncCompleteUseCase mockSyncCompleteUseCase;
   late MockSyncRepository mockSyncRepository;
 
   setUp(() async {
@@ -35,6 +38,7 @@ void main() {
     mockSyncUseCase = MockIncrementalSyncAllUseCase();
     mockGetLastSyncDateUseCase = MockGetLastSyncDateUseCase();
     mockUpdateLastSyncDateUseCase = MockUpdateLastSyncDateUseCase();
+    mockSyncCompleteUseCase = MockSyncCompleteUseCase();
     mockSyncRepository = MockSyncRepository();
 
     // Configurer les comportements par défaut
@@ -58,6 +62,7 @@ void main() {
       mockGetLastSyncDateUseCase,
       mockUpdateLastSyncDateUseCase,
       mockSyncRepository,
+      mockSyncCompleteUseCase,
     );
   });
 

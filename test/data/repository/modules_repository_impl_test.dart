@@ -21,6 +21,8 @@ void main() {
   late MockDatasetsDatabase mockDatasetsDatabase;
   late MockTaxonApi mockTaxonApi;
   late MockTaxonDatabase mockTaxonDatabase;
+  late MockTaxonRepository mockTaxonRepository;
+  late MockSitesRepository mockSitesRepository;
 
   setUp(() {
     mockGlobalApi = MockGlobalApi();
@@ -30,9 +32,8 @@ void main() {
     mockNomenclaturesDatabase = MockNomenclaturesDatabase();
     mockDatasetsDatabase = MockDatasetsDatabase();
     mockTaxonDatabase = MockTaxonDatabase();
-
-    // Mock for TaxonRepository
-    final mockTaxonRepository = MockTaxonRepository();
+    mockTaxonRepository = MockTaxonRepository();
+    mockSitesRepository = MockSitesRepository();
     
     repository = ModulesRepositoryImpl(
       mockGlobalApi,
@@ -43,6 +44,7 @@ void main() {
       mockDatasetsDatabase,
       mockTaxonDatabase,
       mockTaxonRepository,
+      mockSitesRepository,
     );
   });
 

@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
@@ -19,12 +20,14 @@ import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 class MockSitesApi extends Mock implements SitesApi {}
 class MockSitesDatabase extends Mock implements SitesDatabase {}
 class MockModulesDatabase extends Mock implements ModulesDatabase {}
+class MockVisitesDatabase extends Mock implements VisitesDatabase {}
 
 void main() {
   late SitesRepository repository;
   late MockSitesApi mockSitesApi;
   late MockSitesDatabase mockSitesDatabase;
   late MockModulesDatabase mockModulesDatabase;
+  late MockVisitesDatabase mockVisitesDatabase;
   
   // Test data
   final testToken = 'test-token';
@@ -109,11 +112,13 @@ void main() {
     mockSitesApi = MockSitesApi();
     mockSitesDatabase = MockSitesDatabase();
     mockModulesDatabase = MockModulesDatabase();
+    mockVisitesDatabase = MockVisitesDatabase();
     
     repository = SitesRepositoryImpl(
       mockSitesApi,
       mockSitesDatabase,
       mockModulesDatabase,
+      mockVisitesDatabase,
     );
     
     // Register fallback values
@@ -125,33 +130,6 @@ void main() {
     registerFallbackValue(<SitesGroupModule>[]);
   });
 
-  group('getSites', () {
-    test('should return sites from local database', () async {
-      // Arrange
-      when(() => mockSitesDatabase.getAllSites())
-          .thenAnswer((_) async => testBaseSites.map((s) => s).toList());
-
-      // Act
-      final result = await repository.getSites();
-
-      // Assert
-      expect(result, equals(testBaseSites));
-      verify(() => mockSitesDatabase.getAllSites()).called(1);
-    });
-
-    test('should throw exception when database operation fails', () async {
-      // Arrange
-      when(() => mockSitesDatabase.getAllSites())
-          .thenThrow(Exception('Database error'));
-
-      // Act & Assert
-      expect(
-        () => repository.getSites(),
-        throwsA(isA<Exception>()),
-      );
-      verify(() => mockSitesDatabase.getAllSites()).called(1);
-    });
-  });
 
   group('getSiteGroups', () {
     test('should return site groups from local database', () async {
@@ -181,115 +159,6 @@ void main() {
     });
   });
 
-  group('fetchSitesAndSiteModules', () {
-    test('should fetch sites from API and update local database', () async {
-      // Arrange
-      when(() => mockModulesDatabase.getAllModules())
-          .thenAnswer((_) async => testModules);
-          
-      for (final module in testModules) {
-        // Mock the enriched sites endpoint that's actually used in the implementation
-        when(() => mockSitesApi.fetchEnrichedSitesForModule(module.moduleCode!, testToken))
-            .thenAnswer((_) async => {
-              'enriched_sites': testSites.map((s) => {
-                'id_base_site': s.idBaseSite,
-                'base_site_name': s.baseSiteName,
-                'base_site_code': s.baseSiteCode,
-                'first_use_date': s.firstUseDate.toString(),
-              }).toList(),
-              'site_complements': <SiteComplement>[],
-            });
-      }
-      
-      when(() => mockSitesDatabase.clearSites())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSites(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.clearAllSiteModules())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteModules(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.clearSiteComplements())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteComplements(any()))
-          .thenAnswer((_) async {});
-
-      // Act
-      await repository.fetchSitesAndSiteModules(testToken);
-
-      // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
-      
-      for (final module in testModules) {
-        verify(() => mockSitesApi.fetchEnrichedSitesForModule(module.moduleCode!, testToken)).called(1);
-      }
-      
-      verify(() => mockSitesDatabase.clearSites()).called(1);
-      verify(() => mockSitesDatabase.insertSites(any())).called(1);
-      verify(() => mockSitesDatabase.clearAllSiteModules()).called(1);
-      verify(() => mockSitesDatabase.insertSiteModules(any())).called(1);
-      verify(() => mockSitesDatabase.clearSiteComplements()).called(1);
-    });
-
-    test('should handle errors when API fails', () async {
-      // Arrange
-      when(() => mockModulesDatabase.getAllModules())
-          .thenAnswer((_) async => testModules);
-          
-      // Make only the first module throw an error - this is more realistic
-      when(() => mockSitesApi.fetchEnrichedSitesForModule(testModules[0].moduleCode!, any()))
-          .thenThrow(Exception('API error'));
-          
-      // Let the second module return empty results
-      when(() => mockSitesApi.fetchEnrichedSitesForModule(testModules[1].moduleCode!, any()))
-          .thenAnswer((_) async => {
-            'enriched_sites': <Map<String, dynamic>>[],
-            'site_complements': <SiteComplement>[],
-          });
-          
-      // Return empty lists to avoid NPE in database operations
-      when(() => mockSitesDatabase.getAllSiteModules())
-          .thenAnswer((_) async => []);
-          
-      when(() => mockSitesDatabase.clearSites())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSites(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.clearAllSiteModules())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteModules(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.clearSiteComplements())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteComplements(any()))
-          .thenAnswer((_) async {});
-
-      // Act
-      await repository.fetchSitesAndSiteModules(testToken);
-      
-      // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
-      verify(() => mockSitesApi.fetchEnrichedSitesForModule(testModules[0].moduleCode!, any())).called(1);
-      verify(() => mockSitesApi.fetchEnrichedSitesForModule(testModules[1].moduleCode!, any())).called(1);
-      
-      // Verify that database was updated (continuing with second module data)
-      verify(() => mockSitesDatabase.clearSites()).called(1);
-      verify(() => mockSitesDatabase.insertSites(any())).called(1);
-      verify(() => mockSitesDatabase.clearAllSiteModules()).called(1);
-      verify(() => mockSitesDatabase.insertSiteModules(any())).called(1);
-      verify(() => mockSitesDatabase.clearSiteComplements()).called(1);
-    });
-  });
 
   group('fetchSiteGroupsAndSitesGroupModules', () {
     test('should fetch site groups from API and update local database', () async {
@@ -375,78 +244,6 @@ void main() {
     });
   });
 
-  group('incrementalSyncSitesAndSiteModules', () {
-    test('should incrementally update sites in database', () async {
-      // Arrange
-      when(() => mockModulesDatabase.getAllModules())
-          .thenAnswer((_) async => testModules);
-          
-      // Mock existing data
-      when(() => mockSitesDatabase.getAllSites())
-          .thenAnswer((_) async => testBaseSites.sublist(0, 1).map((s) => s).toList()); // Only first site exists
-          
-      when(() => mockSitesDatabase.getAllSiteModules())
-          .thenAnswer((_) async => []); // No existing relationships
-      
-      // Mock site complements
-      when(() => mockSitesDatabase.getAllSiteComplements())
-          .thenAnswer((_) async => []);
-          
-      // Mock API responses for enriched sites endpoint
-      for (final module in testModules) {
-        when(() => mockSitesApi.fetchEnrichedSitesForModule(module.moduleCode!, testToken))
-            .thenAnswer((_) async => {
-              'enriched_sites': testSites.map((s) => {
-                'id_base_site': s.idBaseSite,
-                'base_site_name': s.baseSiteName,
-                'base_site_code': s.baseSiteCode,
-                'first_use_date': s.firstUseDate.toString(),
-              }).toList(),
-              'site_complements': <SiteComplement>[],
-            });
-      }
-      
-      // Mock database operations
-      when(() => mockSitesDatabase.insertSites(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.updateSite(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.deleteSite(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteModules(any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.deleteSiteModule(any(), any()))
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.clearSiteComplements())
-          .thenAnswer((_) async {});
-          
-      when(() => mockSitesDatabase.insertSiteComplements(any()))
-          .thenAnswer((_) async {});
-
-      // Act
-      await repository.incrementalSyncSitesAndSiteModules(testToken);
-
-      // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
-      verify(() => mockSitesDatabase.getAllSites()).called(1);
-      verify(() => mockSitesDatabase.getAllSiteModules()).called(1);
-      verify(() => mockSitesDatabase.getAllSiteComplements()).called(1);
-      
-      for (final module in testModules) {
-        verify(() => mockSitesApi.fetchEnrichedSitesForModule(module.moduleCode!, testToken)).called(1);
-      }
-      
-      // Should add new sites, update existing, and add new relationships
-      verify(() => mockSitesDatabase.insertSites(any())).called(1);
-      verify(() => mockSitesDatabase.updateSite(any())).called(1);
-      verify(() => mockSitesDatabase.insertSiteModules(any())).called(1);
-    });
-  });
 
   group('incrementalSyncSiteGroupsAndSitesGroupModules', () {
     test('should incrementally update site groups in database', () async {

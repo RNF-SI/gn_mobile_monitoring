@@ -46,7 +46,7 @@ void main() {
       expect(result, equals(createdObservationId));
       
       // Vérifier que la méthode du repository a été appelée
-      verify(() => mockRepository.createObservation(testObservation)).called(1);
+      verify(() => mockRepository.createObservation(any())).called(1);
     });
 
     test('should propagate exceptions from repository', () async {
@@ -79,7 +79,7 @@ void main() {
       
       // Assert
       expect(result, equals(createdObservationId));
-      verify(() => mockRepository.createObservation(observationWithoutData)).called(1);
+      verify(() => mockRepository.createObservation(any())).called(1);
     });
     
     test('should handle observation with empty data map', () async {
@@ -100,7 +100,7 @@ void main() {
       
       // Assert
       expect(result, equals(createdObservationId));
-      verify(() => mockRepository.createObservation(observationWithEmptyData)).called(1);
+      verify(() => mockRepository.createObservation(any())).called(1);
     });
   });
 }

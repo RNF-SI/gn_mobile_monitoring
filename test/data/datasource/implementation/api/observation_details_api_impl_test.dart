@@ -108,9 +108,9 @@ void main() {
         when(() => mockResponse.data).thenReturn(responseData);
         when(() => mockResponse.statusCode).thenReturn(200);
 
-        // Configuration du mock pour POST avec skip_synthese
+        // Configuration du mock pour POST
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((_) async => mockResponse);
@@ -121,7 +121,7 @@ void main() {
         // Vérifications
         expect(result, equals(responseData));
         verify(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).called(1);
@@ -152,7 +152,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {
@@ -193,7 +193,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {
@@ -222,7 +222,7 @@ void main() {
 
         // Configuration du mock pour erreur serveur
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenThrow(DioException(
@@ -264,7 +264,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true',
+              '$apiBase/monitorings/object/$moduleCode/observation_detail',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {
