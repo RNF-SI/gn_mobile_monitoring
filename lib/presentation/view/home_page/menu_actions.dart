@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
@@ -24,11 +25,19 @@ class MenuActions extends ConsumerWidget {
       onSelected: (value) => _handleMenuSelection(
           value, ref, context, authViewModel, syncNotifier, databaseService),
       itemBuilder: (BuildContext context) => [
-        _buildMenuItem(Icons.sync, 'Synchronisation complète', 'sync_complete'),
+        _buildMenuItem(
+            Icons.download, 'Synchronisation descendante', 'sync_download'),
+        _buildMenuItem(
+            Icons.upload, 'Synchronisation ascendante', 'sync_upload'),
+        const PopupMenuDivider(),
         _buildMenuItem(
             Icons.delete,
             '[DEV] Suppression et rechargement de la base de données',
             'delete'),
+        _buildMenuItem(Icons.schedule, '[DEV] Forcer date sync > 7 jours',
+            'force_old_sync'),
+        _buildMenuItem(Icons.refresh, '[DEV] Remettre date sync à maintenant',
+            'reset_sync'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(Icons.logout, 'Déconnexion', 'logout'),
@@ -56,8 +65,25 @@ class MenuActions extends ConsumerWidget {
     DatabaseService databaseService,
   ) async {
     switch (value) {
-      case 'sync_complete':
-        await _performCompleteSyncBeta(context, syncService, ref);
+      case 'sync_download':
+        await _performDownloadSync(context, syncService, ref);
+        break;
+      case 'sync_upload':
+        await _performUploadSync(context, syncService, ref);
+        break;
+      case 'force_old_sync':
+        await syncService.forceOldSyncDate();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('[DEV] Date de sync forcée à > 7 jours')),
+        );
+        break;
+      case 'reset_sync':
+        await syncService.resetSyncDate();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text('[DEV] Date de sync remise à maintenant')),
+        );
         break;
       case 'delete':
         await _confirmDelete(context, databaseService);
@@ -202,7 +228,7 @@ class MenuActions extends ConsumerWidget {
       try {
         // Utiliser la nouvelle méthode de déconnexion qui supprime tout
         await authViewModel.signOutAndClearAllData(ref, context);
-        
+
         // Fermer le dialog de progression - la navigation se fait automatiquement
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
@@ -212,7 +238,7 @@ class MenuActions extends ConsumerWidget {
         if (Navigator.of(context).canPop()) {
           Navigator.of(context).pop();
         }
-        
+
         // Afficher l'erreur
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -244,8 +270,8 @@ class MenuActions extends ConsumerWidget {
     );
   }
 
-  /// Effectue une synchronisation complète (version BETA simplifiée)
-  Future<void> _performCompleteSyncBeta(
+  /// Effectue une synchronisation descendante (téléchargement depuis le serveur)
+  Future<void> _performDownloadSync(
       BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
     final currentStatus = ref.read(syncServiceProvider);
@@ -256,49 +282,58 @@ class MenuActions extends ConsumerWidget {
       return;
     }
 
-    // Afficher un dialogue de confirmation simple
+    // Afficher un dialogue de confirmation avec explication
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Synchronisation complète'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          title: const Row(
             children: [
-              const Text(
-                'Cette opération va :',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              const Text('📥 Télécharger les dernières données du serveur'),
-              const Text('📤 Envoyer vos données locales vers le serveur'),
-              const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              Icon(Icons.download, color: Colors.green),
+              SizedBox(width: 8),
+              Expanded(child: Text('Synchronisation descendante')),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cette synchronisation va télécharger depuis le serveur :',
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-                child: const Row(
-                  children: [
-                    Icon(Icons.info, color: Colors.blue, size: 20),
-                    SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        'Version BETA : Synchronisation complète simplifiée',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue,
-                          fontSize: 13,
+                const SizedBox(height: 12),
+                const Text('📥 Sites et groupes de sites'),
+                const Text('📥 Taxons et listes taxonomiques'),
+                const Text('📥 Nomenclatures et types'),
+                const Text('📥 Configuration des modules'),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.green.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.green, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Met à jour les données de référence sans affecter vos observations locales.',
+                          style: TextStyle(
+                            color: Colors.green,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
           actions: [
             TextButton(
@@ -307,7 +342,8 @@ class MenuActions extends ConsumerWidget {
             ),
             ElevatedButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Synchroniser'),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+              child: const Text('Mettre à jour'),
             ),
           ],
         );
@@ -315,8 +351,235 @@ class MenuActions extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      // Lancer la synchronisation complète
-      await syncService.syncComplete(ref);
+      // Lancer la synchronisation descendante
+      await syncService.syncFromServer(ref);
+    }
+  }
+
+  /// Effectue une synchronisation ascendante (envoi vers le serveur)
+  Future<void> _performUploadSync(
+      BuildContext context, SyncService syncService, WidgetRef ref) async {
+    // Vérifier si une synchronisation est déjà en cours
+    final currentStatus = ref.read(syncServiceProvider);
+    if (currentStatus.state == SyncState.inProgress) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Une synchronisation est déjà en cours.')),
+      );
+      return;
+    }
+
+    // Vérifier si la synchronisation descendante est récente (< 7 jours)
+    final isFullSyncNeeded = syncService.isFullSyncNeeded();
+    if (isFullSyncNeeded) {
+      // Afficher un dialogue expliquant pourquoi c'est bloqué
+      await showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.warning, color: Colors.orange),
+                SizedBox(width: 8),
+                Expanded(child: Text('Synchronisation requise')),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Synchronisation ascendante impossible :',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                      '• La dernière synchronisation descendante date de plus de 7 jours'),
+                  const Text('• Ou c\'est votre première utilisation'),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.orange.withOpacity(0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info, color: Colors.orange, size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Effectuez d\'abord une synchronisation descendante pour mettre à jour vos données de référence.',
+                            style: TextStyle(
+                              color: Colors.orange,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Compris'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _performDownloadSync(context, syncService, ref);
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                child: const Text('Synchronisation descendante'),
+              ),
+            ],
+          );
+        },
+      );
+      return;
+    }
+
+    // Afficher un dialogue de confirmation avec explication
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.upload, color: Colors.blue),
+              SizedBox(width: 8),
+              Expanded(child: Text('Envoi vers serveur')),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Cette synchronisation va envoyer vers le serveur :',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                const Text('📤 Vos visites saisies'),
+                const Text('📤 Vos observations et détails'),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.info, color: Colors.blue, size: 20),
+                      SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Les données seront supprimées localement après confirmation de réception par le serveur.',
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+              child: const Text('Envoyer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      try {
+        // Récupérer la liste des modules téléchargés
+        final getModulesUseCase = ref.read(getModulesUseCaseProvider);
+        final modules = await getModulesUseCase.execute();
+
+        // Filtrer les modules téléchargés qui ont un code
+        final availableModules = modules
+            .where((m) =>
+                m.downloaded == true &&
+                m.moduleCode != null &&
+                m.moduleCode!.isNotEmpty)
+            .toList();
+
+        if (availableModules.isEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Aucun module téléchargé disponible pour la synchronisation.'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+          return;
+        }
+
+        // Si un seul module, le synchroniser directement
+        if (availableModules.length == 1) {
+          await syncService.syncToServer(ref,
+              moduleCode: availableModules.first.moduleCode!);
+        } else {
+          // Laisser l'utilisateur choisir le module
+          final selectedModule = await showDialog<String>(
+            context: context,
+            builder: (BuildContext context) {
+              return AlertDialog(
+                title: const Text('Choisir un module'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Sélectionnez le module à synchroniser :'),
+                    const SizedBox(height: 16),
+                    ...availableModules.map((module) => ListTile(
+                          title: Text(module.moduleLabel ?? module.moduleCode!),
+                          subtitle: Text('Code: ${module.moduleCode}'),
+                          onTap: () =>
+                              Navigator.of(context).pop(module.moduleCode),
+                        )),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Annuler'),
+                  ),
+                ],
+              );
+            },
+          );
+
+          if (selectedModule != null) {
+            await syncService.syncToServer(ref, moduleCode: selectedModule);
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la récupération des modules: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
