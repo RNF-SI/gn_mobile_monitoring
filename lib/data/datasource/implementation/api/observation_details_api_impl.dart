@@ -301,13 +301,7 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      // Ajouter skip_synthese=true comme paramètre global pour tous les modules
-      // Cette approche permet d'éviter les erreurs de synchronisation avec la synthèse
-      String endpoint =
-          '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true';
-      logger.i(
-          '[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation',
-          tag: 'sync');
+      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation_detail';
 
       // Envoyer la requête
       final response = await _dio.post(
