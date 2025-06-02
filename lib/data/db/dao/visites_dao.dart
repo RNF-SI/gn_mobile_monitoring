@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
@@ -151,11 +152,37 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
   
   /// Met à jour l'ID serveur d'une visite pour le suivi de synchronisation
   Future<bool> updateVisitServerId(int localVisitId, int serverId) async {
+    debugPrint('🔄 [VISIT_DAO] DÉBUT mise à jour ID serveur: local=$localVisitId, serveur=$serverId');
+    
+    // Vérifier que la visite existe avant la mise à jour
+    final existingVisit = await (select(tBaseVisits)
+      ..where((t) => t.idBaseVisit.equals(localVisitId)))
+      .getSingleOrNull();
+    
+    if (existingVisit == null) {
+      debugPrint('❌ [VISIT_DAO] Visite $localVisitId introuvable pour mise à jour ID serveur');
+      return false;
+    }
+    
+    debugPrint('✅ [VISIT_DAO] Visite trouvée: ID=${existingVisit.idBaseVisit}, currentServerID=${existingVisit.serverVisitId}');
+    
     final updated = await (update(tBaseVisits)
       ..where((t) => t.idBaseVisit.equals(localVisitId)))
       .write(TBaseVisitsCompanion(
         serverVisitId: Value(serverId),
       ));
+    
+    debugPrint('🔄 [VISIT_DAO] Résultat mise à jour: $updated lignes affectées');
+    
+    // Vérifier que la mise à jour a bien fonctionné
+    final updatedVisit = await (select(tBaseVisits)
+      ..where((t) => t.idBaseVisit.equals(localVisitId)))
+      .getSingleOrNull();
+    
+    if (updatedVisit != null) {
+      debugPrint('✅ [VISIT_DAO] Vérification: serverVisitId après mise à jour = ${updatedVisit.serverVisitId}');
+    }
+    
     return updated > 0;
   }
 }

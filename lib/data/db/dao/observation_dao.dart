@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_observations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_observations_complements.dart';
@@ -55,11 +56,36 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
 
   /// Met à jour l'ID serveur d'une observation
   Future<bool> updateObservationServerId(int localObservationId, int serverObservationId) async {
+    debugPrint('🔄 [OBSERVATION_DAO] DÉBUT mise à jour ID serveur: local=$localObservationId, serveur=$serverObservationId');
+    
+    // Vérifier que l'observation existe avant la mise à jour
+    final existingObservation = await (select(tObservations)
+      ..where((tbl) => tbl.idObservation.equals(localObservationId)))
+      .getSingleOrNull();
+    
+    if (existingObservation == null) {
+      debugPrint('❌ [OBSERVATION_DAO] Observation $localObservationId introuvable pour mise à jour ID serveur');
+      return false;
+    }
+    
+    debugPrint('✅ [OBSERVATION_DAO] Observation trouvée: ID=${existingObservation.idObservation}, currentServerID=${existingObservation.serverObservationId}');
+    
     final updated = await (update(tObservations)
       ..where((tbl) => tbl.idObservation.equals(localObservationId)))
       .write(TObservationsCompanion(
         serverObservationId: Value(serverObservationId),
       ));
+    
+    debugPrint('🔄 [OBSERVATION_DAO] Résultat mise à jour: $updated lignes affectées');
+    
+    // Vérifier que la mise à jour a bien fonctionné
+    final updatedObservation = await (select(tObservations)
+      ..where((tbl) => tbl.idObservation.equals(localObservationId)))
+      .getSingleOrNull();
+    
+    if (updatedObservation != null) {
+      debugPrint('✅ [OBSERVATION_DAO] Vérification: serverObservationId après mise à jour = ${updatedObservation.serverObservationId}');
+    }
     
     return updated > 0;
   }
