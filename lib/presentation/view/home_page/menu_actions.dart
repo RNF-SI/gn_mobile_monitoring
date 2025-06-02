@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
+import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
@@ -36,6 +37,8 @@ class MenuActions extends ConsumerWidget {
             'delete'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
+        _buildMenuItem(
+            Icons.attach_money, 'Financeurs du projet', 'funders'),
         _buildMenuItem(Icons.logout, 'Déconnexion', 'logout'),
       ],
     );
@@ -72,6 +75,9 @@ class MenuActions extends ConsumerWidget {
         break;
       case 'version':
         _showVersionAlert(context);
+        break;
+      case 'funders':
+        _navigateToFundersPage(context);
         break;
       case 'logout':
         await _confirmLogout(context, authViewModel, ref);
@@ -847,6 +853,15 @@ class MenuActions extends ConsumerWidget {
       // Autre jour
       return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} à ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     }
+  }
+  
+  /// Navigue vers la page des financeurs
+  void _navigateToFundersPage(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const FundersPage(),
+      ),
+    );
   }
 
   /// Construit une checkbox pour la sélection d'éléments à synchroniser
