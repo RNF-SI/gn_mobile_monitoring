@@ -77,9 +77,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   @override
   Future<SyncResult> syncVisitsToServer(String token, String moduleCode) async {
     try {
-      // Note: On ne nettoie PAS le cache ici car il doit persister au sein d'une même session de sync
-      // Le cache est nettoyé uniquement au début d'une nouvelle synchronisation complète
-      
       // Vérifier la connectivité
       final isConnected = await checkConnectivity();
       if (!isConnected) {
@@ -115,6 +112,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             logBuffer.writeln('- ID: ${visit.idBaseVisit}');
             logBuffer.writeln('  Site: ${visit.idBaseSite}');
             logBuffer.writeln('  Date: ${visit.visitDateMin}');
+            logBuffer.writeln('  Server ID: ${visit.serverVisitId}');
             logBuffer.writeln('  ---');
           }
         }
@@ -142,44 +140,88 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         int totalObservationsDeleted = 0;
         int totalObservationDetailsDeleted = 0;
 
-        // Pour chaque visite, envoyer la visite et toutes ses observations
-        for (final visitEntity in visits) {
-          try {
-            // Note: Suppression de la vérification du cache des échecs pour permettre les retry
+        // Séparer les visites en deux groupes : nouvelles visites (POST) et visites existantes (PATCH)
+        final newVisits = <BaseVisitEntity>[];
+        final existingVisits = <BaseVisitEntity>[];
+        
+        for (final visit in visits) {
+          if (visit.serverVisitId == null) {
+            newVisits.add(visit);
+          } else {
+            existingVisits.add(visit);
+          }
+        }
+        
+        _logger.i('Répartition des visites: ${newVisits.length} nouvelles, ${existingVisits.length} existantes', tag: 'sync');
 
-            _logger.i('Traitement de la visite ID: ${visitEntity.idBaseVisit}',
+        // PARTIE 1: Traiter d'abord les visites existantes (PATCH) avec l'ordre inversé
+        // Pour les visites existantes, traiter d'abord les observations, puis la visite
+        _logger.i('Démarrage du traitement des ${existingVisits.length} visites existantes (PATCH) - Observations d\'abord', tag: 'sync');
+        
+        for (final visitEntity in existingVisits) {
+          try {
+            _logger.i('Traitement de la visite existante ID: ${visitEntity.idBaseVisit} (serverId: ${visitEntity.serverVisitId})',
                 tag: 'sync');
 
             // Récupérer tous les détails de la visite
             final visit = await _visitRepository
                 .getVisitWithFullDetails(visitEntity.idBaseVisit);
+            
+            // Récupérer le vrai code du module pour les observations
+            final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
+            if (realModuleCode == null) {
+              throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
+            }
 
-
-            // 1. Envoyer la visite au serveur
+            // INVERSION: 1. D'abord synchroniser les observations (avant la visite)
+            _logger.i('ORDRE INVERSÉ: Synchronisation des observations avant la visite ${visitEntity.idBaseVisit}', tag: 'sync');
+            
+            // On passe à la fois l'ID local (pour récupérer les observations localement)
+            // et l'ID serveur (pour les envoyer avec le bon ID de visite serveur)
+            final observationsResult = await syncObservationsToServer(
+                token, realModuleCode, visitEntity.idBaseVisit,
+                serverVisitId: visit.serverVisitId);
+            
+            // Consolider les statistiques des observations et détails
+            itemsAdded += observationsResult.itemsAdded;
+            itemsUpdated += observationsResult.itemsUpdated;
+            itemsSkipped += observationsResult.itemsSkipped;
+            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            
+            // Accumuler les statistiques détaillées pour les observations
+            totalObservationsAdded += observationsResult.itemsAdded;
+            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            
+            // Vérifier si les observations ont réussi
+            if (!observationsResult.success) {
+              // Si les observations ont échoué, ne pas continuer avec la visite
+              _logger.w('Observations de la visite ${visitEntity.idBaseVisit} échouées, abandon de la mise à jour de la visite', tag: 'sync');
+              
+              if (observationsResult.errorMessage != null) {
+                _logger.e('Erreur observations: ${observationsResult.errorMessage}', tag: 'sync');
+                errors.add('Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
+              }
+              
+              itemsSkipped++;
+              continue; // Passer à la visite suivante
+            }
+            
+            // 2. Ensuite seulement, mettre à jour la visite (PATCH)
+            _logger.i('Mise à jour de la visite existante après synchronisation réussie des observations', tag: 'sync');
+            
             Map<String, dynamic> serverResponse;
-            int? serverId;
-            bool isNewVisit = visit.serverVisitId == null;
             bool visitProcessedSuccessfully = false;
-
+            int serverId = visit.serverVisitId!;
+            
             try {
-              // Convertir l'entité en domaine en utilisant directement le mapper
-              BaseVisit visitModel;
-
               // Prétraitement des observateurs pour éviter les erreurs
               List<int> safeObservers = [];
               if (visit.observers != null) {
-                _logger.i(
-                    "Prétraitement des observateurs : ${visit.observers!.length} observateurs trouvés",
-                    tag: "sync");
-
                 for (var o in visit.observers!) {
-                  _logger.i("Observateur déjà au format int: $o", tag: "sync");
                   safeObservers.add(o);
                 }
-
-                _logger.i(
-                    "Prétraitement terminé: ${safeObservers.length} observateurs valides trouvés",
-                    tag: "sync");
               }
 
               // Créer une nouvelle entité avec des observateurs sécurisés
@@ -191,8 +233,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 idDigitiser: visit.idDigitiser,
                 visitDateMin: visit.visitDateMin,
                 visitDateMax: visit.visitDateMax,
-                idNomenclatureTechCollectCampanule:
-                    visit.idNomenclatureTechCollectCampanule,
+                idNomenclatureTechCollectCampanule: visit.idNomenclatureTechCollectCampanule,
                 idNomenclatureGrpTyp: visit.idNomenclatureGrpTyp,
                 comments: visit.comments,
                 uuidBaseVisit: visit.uuidBaseVisit,
@@ -203,64 +244,16 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               );
 
               // Convertir l'entité sécurisée en modèle de domaine
-              visitModel = safeEntity.toDomain();
-
-              if (isNewVisit) {
-                // POST - Créer une nouvelle visite
-                _logger.i('Création d\'une nouvelle visite sur le serveur',
-                    tag: 'sync');
-                
-                // Récupérer le vrai code du module depuis l'ID module de la visite
-                final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
-                if (realModuleCode == null) {
-                  throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
-                }
-                
-                serverResponse =
-                    await _globalApi.sendVisit(token, realModuleCode, visitModel);
-
-                serverId = serverResponse['id'] ?? serverResponse['ID'];
-                if (serverId == null) {
-                  throw Exception('Réponse du serveur invalide pour la visite');
-                }
-
-                _logger.i('Visite créée avec succès, ID serveur: $serverId',
-                    tag: 'sync');
-                itemsAdded++;
-                totalVisitsAdded++;
-
-                // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
-                await _visitRepository.updateVisitServerId(
-                    visitEntity.idBaseVisit, serverId);
-                _logger.i(
-                    'ID serveur de la visite enregistré: local=${visitEntity.idBaseVisit}, serveur=$serverId',
-                    tag: 'sync');
-              } else {
-                // PATCH - Mettre à jour une visite existante
-                serverId = visit.serverVisitId!;
-                _logger.i(
-                    'Mise à jour d\'une visite existante sur le serveur, ID serveur: $serverId',
-                    tag: 'sync');
-
-                // Récupérer le vrai code du module depuis l'ID module de la visite
-                final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
-                if (realModuleCode == null) {
-                  throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
-                }
-
-                serverResponse = await _globalApi.updateVisit(
-                    token, realModuleCode, serverId, visitModel);
-
-                _logger.i(
-                    'Visite mise à jour avec succès, ID serveur: $serverId',
-                    tag: 'sync');
-                itemsUpdated++;
-              }
+              final visitModel = safeEntity.toDomain();
               
+              _logger.i('PATCH visite: ${visitEntity.idBaseVisit} -> serverId: $serverId', tag: 'sync');
+              serverResponse = await _globalApi.updateVisit(token, realModuleCode, serverId, visitModel);
+
+              _logger.i('Visite mise à jour avec succès, ID serveur: $serverId', tag: 'sync');
+              itemsUpdated++;
               visitProcessedSuccessfully = true;
             } catch (e) {
-              _logger.e('Erreur lors de l\'envoi de la visite: $e',
-                  tag: 'sync', error: e);
+              _logger.e('Erreur lors de la mise à jour de la visite: $e', tag: 'sync', error: e);
               
               // Extraire des informations plus détaillées de l'erreur
               String detailedError = SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit);
@@ -271,28 +264,132 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               
               // Analyser l'erreur pour déterminer si elle est fatale
               bool isFatal = SyncErrorHandler.isFatalError(e);
-              _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}, message=${e.toString().length > 200 ? e.toString().substring(0, 200) + "..." : e.toString()}', tag: 'sync');
+              _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}', tag: 'sync');
               
-              // Vérifier si la visite a déjà un serverVisitId pour la stratégie de récupération
-              if (visit.serverVisitId != null) {
-                _logger.w('Récupération: visite ${visitEntity.idBaseVisit} a échoué en PATCH mais a un serverVisitId=${visit.serverVisitId}. Tentative de synchronisation des observations.', tag: 'sync');
-                serverId = visit.serverVisitId!;
-                errors.add('AVERTISSEMENT - Visite ${visitEntity.idBaseVisit}: PATCH échoué mais poursuite avec les observations (ID serveur: $serverId)');
-                itemsSkipped++;
-                // Ne pas faire continue, poursuivre avec la synchronisation des observations
-              } else {
-                // Pas de serverVisitId, impossible de synchroniser les observations
-                _logger.e('Erreur critique pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). Pas de serverVisitId, impossible de synchroniser les observations. La visite sera retentée à la prochaine synchronisation.', tag: 'sync');
-                errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. La visite sera retentée à la prochaine synchronisation.');
-                itemsSkipped++;
-                continue; // Passer à la visite suivante
+              // Les observations ont été synchronisées avec succès mais la visite a échoué
+              // On conserve la visite locale pour pouvoir réessayer plus tard
+              _logger.w('La mise à jour de la visite a échoué, mais les observations ont été synchronisées. Conservation de la visite locale pour une prochaine tentative.', tag: 'sync');
+              itemsSkipped++;
+              
+              // Indiquer que nous allons conserver cette visite
+              _logger.i('Visite conservée localement malgré observations synchronisées', tag: 'sync');
+              
+              // On ne continue pas - il faut garder la visite locale
+              itemsProcessed++;
+              continue;
+            }
+            
+            // 3. Si la visite a été mise à jour avec succès, on peut supprimer la visite locale
+            await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
+            itemsDeleted++;
+            totalVisitsDeleted++;
+            
+            _logger.i('Visite mise à jour et supprimée avec succès', tag: 'sync');
+
+            itemsProcessed++;
+          } catch (e) {
+            _logger.e('Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e',
+                tag: 'sync', error: e);
+            errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        // PARTIE 2: Traiter ensuite les nouvelles visites (POST) avec l'ordre normal
+        // Pour les nouvelles visites, garder l'ordre habituel: visites d'abord, puis observations
+        _logger.i('Démarrage du traitement des ${newVisits.length} nouvelles visites (POST) - Visites d\'abord', tag: 'sync');
+        
+        for (final visitEntity in newVisits) {
+          try {
+            _logger.i('Traitement de la nouvelle visite ID: ${visitEntity.idBaseVisit}', tag: 'sync');
+
+            // Récupérer tous les détails de la visite
+            final visit = await _visitRepository.getVisitWithFullDetails(visitEntity.idBaseVisit);
+
+            // 1. Envoyer d'abord la visite au serveur (ordre normal pour les POST)
+            Map<String, dynamic> serverResponse;
+            int? serverId;
+            bool visitProcessedSuccessfully = false;
+
+            try {
+              // Prétraitement des observateurs pour éviter les erreurs
+              List<int> safeObservers = [];
+              if (visit.observers != null) {
+                for (var o in visit.observers!) {
+                  safeObservers.add(o);
+                }
               }
+
+              // Créer une nouvelle entité avec des observateurs sécurisés
+              final safeEntity = BaseVisitEntity(
+                idBaseVisit: visit.idBaseVisit,
+                idBaseSite: visit.idBaseSite,
+                idDataset: visit.idDataset,
+                idModule: visit.idModule,
+                idDigitiser: visit.idDigitiser,
+                visitDateMin: visit.visitDateMin,
+                visitDateMax: visit.visitDateMax,
+                idNomenclatureTechCollectCampanule: visit.idNomenclatureTechCollectCampanule,
+                idNomenclatureGrpTyp: visit.idNomenclatureGrpTyp,
+                comments: visit.comments,
+                uuidBaseVisit: visit.uuidBaseVisit,
+                metaCreateDate: visit.metaCreateDate,
+                metaUpdateDate: visit.metaUpdateDate,
+                observers: safeObservers,
+                data: visit.data,
+              );
+
+              // Convertir l'entité sécurisée en modèle de domaine
+              final visitModel = safeEntity.toDomain();
+
+              // POST - Créer une nouvelle visite
+              _logger.i('Création d\'une nouvelle visite sur le serveur', tag: 'sync');
+              
+              // Récupérer le vrai code du module depuis l'ID module de la visite
+              final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
+              if (realModuleCode == null) {
+                throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
+              }
+              
+              serverResponse = await _globalApi.sendVisit(token, realModuleCode, visitModel);
+
+              serverId = serverResponse['id'] ?? serverResponse['ID'];
+              if (serverId == null) {
+                throw Exception('Réponse du serveur invalide pour la visite');
+              }
+
+              _logger.i('Visite créée avec succès, ID serveur: $serverId', tag: 'sync');
+              itemsAdded++;
+              totalVisitsAdded++;
+
+              // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
+              await _visitRepository.updateVisitServerId(visitEntity.idBaseVisit, serverId);
+              _logger.i('ID serveur de la visite enregistré: local=${visitEntity.idBaseVisit}, serveur=$serverId', tag: 'sync');
+              
+              visitProcessedSuccessfully = true;
+            } catch (e) {
+              _logger.e('Erreur lors de l\'envoi de la visite: $e', tag: 'sync', error: e);
+              
+              // Extraire des informations plus détaillées de l'erreur
+              String detailedError = SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit);
+              errors.add(detailedError);
+              
+              // Incrémenter le compteur d'échecs pour cette visite
+              int failureCount = SyncCacheManager.incrementVisitFailureCount(visitEntity.idBaseVisit);
+              
+              // Analyser l'erreur pour déterminer si elle est fatale
+              bool isFatal = SyncErrorHandler.isFatalError(e);
+              _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}', tag: 'sync');
+              
+              // Pas de serverVisitId, impossible de synchroniser les observations
+              _logger.e('Erreur critique pour la visite ${visitEntity.idBaseVisit}. Pas de serverVisitId, impossible de synchroniser les observations.', tag: 'sync');
+              errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. La visite sera retentée à la prochaine synchronisation.');
+              itemsSkipped++;
+              continue; // Passer à la visite suivante
             }
 
-            // 2. Récupérer et envoyer toutes les observations associées à cette visite
-            // Utiliser l'ID serveur retourné par la création/mise à jour de la visite
-
-            // Récupérer le vrai code du module pour les observations aussi
+            // 2. Ensuite seulement, envoyer les observations (pour les nouvelles visites)
+            // Récupérer le vrai code du module pour les observations
             final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
             if (realModuleCode == null) {
               throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
@@ -303,8 +400,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             final observationsResult = await syncObservationsToServer(
                 token, realModuleCode, visitEntity.idBaseVisit,
                 serverVisitId: serverId);
-
-            // 3. Gérer le résultat de la synchronisation des observations
             
             // Consolider les statistiques des observations et détails
             itemsAdded += observationsResult.itemsAdded;
@@ -320,50 +415,28 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             
             if (observationsResult.success) {
               // Si les observations ont réussi, supprimer la visite localement
-              // même si la visite elle-même avait échoué en PATCH (tant qu'elle a un serverVisitId)
               await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
               itemsDeleted++;
               totalVisitsDeleted++;
               
-              if (visitProcessedSuccessfully) {
-                _logger.i('Visite et observations supprimées avec succès',
-                    tag: 'sync');
-              } else {
-                _logger.i('Visite supprimée avec succès (observations OK malgré échec PATCH visite)',
-                    tag: 'sync');
-              }
+              _logger.i('Visite et observations supprimées avec succès', tag: 'sync');
             } else {
               // Si les observations ont échoué, ne pas supprimer la visite
-              // mais loguer l'erreur pour permettre une nouvelle tentative
-              if (visitProcessedSuccessfully) {
-                _logger.w(
-                    'Visite ${visitEntity.idBaseVisit} créée/mise à jour sur le serveur (ID: $serverId) mais observations échouées',
-                    tag: 'sync');
-              } else {
-                _logger.w(
-                    'Visite ${visitEntity.idBaseVisit} PATCH échoué et observations échouées (ID serveur: $serverId)',
-                    tag: 'sync');
-              }
+              _logger.w('Visite ${visitEntity.idBaseVisit} créée sur le serveur (ID: $serverId) mais observations échouées', tag: 'sync');
 
               if (observationsResult.errorMessage != null) {
-                _logger.e(
-                    'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}',
-                    tag: 'sync');
-                errors.add(
-                    'Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
+                _logger.e('Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}', tag: 'sync');
+                errors.add('Observations de la visite ${visitEntity.idBaseVisit}: ${observationsResult.errorMessage}');
               }
 
               // Marquer la visite comme partiellement synchronisée
-              // En gardant l'ID serveur pour les futures tentatives de synchronisation
               itemsSkipped++;
             }
 
             itemsProcessed++;
           } catch (e) {
-            _logger.e(
-                'Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e',
-                tag: 'sync',
-                error: e);
+            _logger.e('Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e',
+                tag: 'sync', error: e);
             errors.add('Visite ${visitEntity.idBaseVisit}: $e');
             itemsSkipped++;
           }
