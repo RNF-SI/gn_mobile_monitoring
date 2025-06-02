@@ -159,6 +159,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             Map<String, dynamic> serverResponse;
             int? serverId;
             bool isNewVisit = visit.serverVisitId == null;
+            bool visitProcessedSuccessfully = false;
 
             try {
               // Convertir l'entité en domaine en utilisant directement le mapper
@@ -255,6 +256,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                     tag: 'sync');
                 itemsUpdated++;
               }
+              
+              visitProcessedSuccessfully = true;
             } catch (e) {
               _logger.e('Erreur lors de l\'envoi de la visite: $e',
                   tag: 'sync', error: e);
@@ -270,11 +273,20 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               bool isFatal = SyncErrorHandler.isFatalError(e);
               _logger.w('Analyse erreur visite ${visitEntity.idBaseVisit}: tentative=$failureCount, isFatal=$isFatal, errorType=${e.runtimeType}, message=${e.toString().length > 200 ? e.toString().substring(0, 200) + "..." : e.toString()}', tag: 'sync');
               
-              // Continuer avec la visite suivante sans bloquer pour les prochaines sync
-              _logger.e('Erreur détectée pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). La visite sera retentée à la prochaine synchronisation.', tag: 'sync');
-              errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. La visite sera retentée à la prochaine synchronisation.');
-              itemsSkipped++;
-              continue; // Passer à la visite suivante
+              // Vérifier si la visite a déjà un serverVisitId pour la stratégie de récupération
+              if (visit.serverVisitId != null) {
+                _logger.w('Récupération: visite ${visitEntity.idBaseVisit} a échoué en PATCH mais a un serverVisitId=${visit.serverVisitId}. Tentative de synchronisation des observations.', tag: 'sync');
+                serverId = visit.serverVisitId!;
+                errors.add('AVERTISSEMENT - Visite ${visitEntity.idBaseVisit}: PATCH échoué mais poursuite avec les observations (ID serveur: $serverId)');
+                itemsSkipped++;
+                // Ne pas faire continue, poursuivre avec la synchronisation des observations
+              } else {
+                // Pas de serverVisitId, impossible de synchroniser les observations
+                _logger.e('Erreur critique pour la visite ${visitEntity.idBaseVisit} (tentative $failureCount). Pas de serverVisitId, impossible de synchroniser les observations. La visite sera retentée à la prochaine synchronisation.', tag: 'sync');
+                errors.add('ERREUR - Visite ${visitEntity.idBaseVisit}: ${SyncErrorHandler.extractDetailedError(e, 'visite', visitEntity.idBaseVisit)}. La visite sera retentée à la prochaine synchronisation.');
+                itemsSkipped++;
+                continue; // Passer à la visite suivante
+              }
             }
 
             // 2. Récupérer et envoyer toutes les observations associées à cette visite
@@ -307,18 +319,31 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
             
             if (observationsResult.success) {
-              // Si tout a réussi, supprimer la visite localement
+              // Si les observations ont réussi, supprimer la visite localement
+              // même si la visite elle-même avait échoué en PATCH (tant qu'elle a un serverVisitId)
               await _visitRepository.deleteVisit(visitEntity.idBaseVisit);
               itemsDeleted++;
               totalVisitsDeleted++;
-              _logger.i('Visite et observations supprimées avec succès',
-                  tag: 'sync');
+              
+              if (visitProcessedSuccessfully) {
+                _logger.i('Visite et observations supprimées avec succès',
+                    tag: 'sync');
+              } else {
+                _logger.i('Visite supprimée avec succès (observations OK malgré échec PATCH visite)',
+                    tag: 'sync');
+              }
             } else {
               // Si les observations ont échoué, ne pas supprimer la visite
               // mais loguer l'erreur pour permettre une nouvelle tentative
-              _logger.w(
-                  'Visite ${visitEntity.idBaseVisit} créée sur le serveur (ID: $serverId) mais observations échouées',
-                  tag: 'sync');
+              if (visitProcessedSuccessfully) {
+                _logger.w(
+                    'Visite ${visitEntity.idBaseVisit} créée/mise à jour sur le serveur (ID: $serverId) mais observations échouées',
+                    tag: 'sync');
+              } else {
+                _logger.w(
+                    'Visite ${visitEntity.idBaseVisit} PATCH échoué et observations échouées (ID serveur: $serverId)',
+                    tag: 'sync');
+              }
 
               if (observationsResult.errorMessage != null) {
                 _logger.e(
@@ -457,20 +482,32 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               if (isNewObservation) {
                 // POST - Créer une nouvelle observation
                 _logger.i(
-                    'Création d\'une nouvelle observation avec ID visite serveur = $effectiveVisitId',
+                    '📤 POST Création d\'une nouvelle observation avec ID visite serveur = $effectiveVisitId',
                     tag: 'sync');
+                debugPrint('📤 POST observation locale ID: ${observation.idObservation}');
+                
                 serverResponse = await _globalApi.sendObservation(
                     token, moduleCode, observationWithServerVisitId);
 
+                debugPrint('📥 RÉPONSE SERVEUR pour observation ${observation.idObservation}: $serverResponse');
+                
                 serverId = serverResponse['id'] ?? serverResponse['ID'];
+                debugPrint('🔍 EXTRACTION ID SERVEUR: ${serverResponse['id']} ?? ${serverResponse['ID']} = $serverId');
+                
                 if (serverId == null) {
+                  debugPrint('❌ ERREUR: ID serveur NULL dans la réponse: $serverResponse');
                   throw Exception(
                       'Réponse du serveur invalide pour l\'observation');
                 }
 
+                debugPrint('✅ ID SERVEUR EXTRAIT: $serverId pour observation locale ${observation.idObservation}');
+
                 // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
+                debugPrint('🔄 APPEL updateObservationServerId: local=${observation.idObservation}, serveur=$serverId');
                 await _observationsRepository.updateObservationServerId(
                     observation.idObservation, serverId);
+                debugPrint('✅ RETOUR updateObservationServerId terminé');
+                
                 _logger.i(
                     'ID serveur de l\'observation enregistré: local=${observation.idObservation}, serveur=$serverId',
                     tag: 'sync');
@@ -494,7 +531,65 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 itemsUpdated++;
               }
             } catch (e) {
-              debugPrint('Erreur lors de l\'envoi de l\'observation: $e');
+              debugPrint('❌ ERREUR lors de l\'envoi de l\'observation: $e');
+              
+              // GESTION SPÉCIALE : Si l'observation a été créée sur le serveur mais la transaction a échoué,
+              // extraire l'ID serveur de l'erreur pour éviter les doublons lors du prochain retry
+              String errorString = e.toString();
+              debugPrint('🔍 RECHERCHE ID SERVEUR dans l\'erreur...');
+              debugPrint('🔍 ERREUR COMPLÈTE: ${errorString.length > 500 ? errorString.substring(0, 500) + "..." : errorString}');
+              
+              // Pour les NetworkException qui encapsulent les erreurs DIO, 
+              // essayer d'extraire des informations supplémentaires
+              String fullErrorContent = errorString;
+              
+              // Si c'est une NetworkException, utiliser la nouvelle propriété responseData
+              if (e.runtimeType.toString() == 'NetworkException') {
+                try {
+                  final dynamic networkException = e as dynamic;
+                  final String? responseData = networkException.responseData;
+                  
+                  if (responseData != null) {
+                    fullErrorContent += '\n' + responseData;
+                    debugPrint('🔍 RÉPONSE SERVEUR HTML: ${responseData.length > 300 ? responseData.substring(0, 300) + "..." : responseData}');
+                  } else {
+                    debugPrint('⚠️ responseData est null');
+                  }
+                } catch (extractionError) {
+                  debugPrint('⚠️ Impossible d\'extraire les détails de l\'erreur: $extractionError');
+                }
+              }
+              
+              // Pattern pour extraire l'ID d'observation du message d'erreur
+              // Ex: "MONITORING: create_or_update monitoringobject chiro, observation, 36880"
+              RegExp observationIdPattern = RegExp(r'observation,\s*(\d+)');
+              Match? match = observationIdPattern.firstMatch(fullErrorContent);
+              
+              if (match != null) {
+                String extractedIdStr = match.group(1)!;
+                int? extractedServerId = int.tryParse(extractedIdStr);
+                
+                if (extractedServerId != null) {
+                  debugPrint('✅ ID SERVEUR EXTRAIT DE L\'ERREUR: $extractedServerId pour observation locale ${observation.idObservation}');
+                  
+                  try {
+                    // Sauvegarder l'ID serveur même si la transaction a échoué
+                    debugPrint('🔄 SAUVEGARDE ID SERVEUR depuis erreur: local=${observation.idObservation}, serveur=$extractedServerId');
+                    await _observationsRepository.updateObservationServerId(
+                        observation.idObservation, extractedServerId);
+                    debugPrint('✅ ID serveur sauvegardé depuis l\'erreur - prochaine sync sera un PATCH');
+                    
+                    _logger.w('RÉCUPÉRATION - Observation ${observation.idObservation}: créée sur serveur (ID: $extractedServerId) mais transaction échouée. ID serveur sauvegardé pour PATCH lors du prochain retry.', tag: 'sync');
+                  } catch (updateError) {
+                    debugPrint('❌ Erreur lors de la sauvegarde de l\'ID serveur extrait: $updateError');
+                  }
+                } else {
+                  debugPrint('❌ Impossible de parser l\'ID serveur: $extractedIdStr');
+                }
+              } else {
+                debugPrint('❌ Aucun ID serveur trouvé dans l\'erreur complète');
+                debugPrint('🔍 RECHERCHE DANS CONTENU: ${fullErrorContent.length > 200 ? fullErrorContent.substring(0, 200) + "..." : fullErrorContent}');
+              }
               
               // Extraire des informations plus détaillées de l'erreur
               String detailedError = SyncErrorHandler.extractDetailedError(e, 'observation', observation.idObservation);
@@ -554,11 +649,12 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             }
 
             // 3. Si cette observation spécifique a réussi, la supprimer localement
+            debugPrint('🗑️ SUPPRESSION observation locale ID: ${observation.idObservation} après succès complet');
             await _observationsRepository
                 .deleteObservation(observation.idObservation);
             itemsDeleted++;
             debugPrint(
-                'Observation ${observation.idObservation} supprimée avec succès');
+                '✅ Observation ${observation.idObservation} supprimée avec succès de la base locale');
 
             itemsProcessed++;
           } catch (e) {
