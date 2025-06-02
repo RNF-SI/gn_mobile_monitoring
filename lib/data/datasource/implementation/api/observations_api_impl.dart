@@ -255,7 +255,8 @@ class ObservationsApiImpl implements ObservationsApi {
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
 
       throw NetworkException(
-          'Erreur réseau lors de l\'envoi de l\'observation: ${e.message}');
+          'Erreur réseau lors de l\'envoi de l\'observation: ${e.message}',
+          originalDioException: e);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
