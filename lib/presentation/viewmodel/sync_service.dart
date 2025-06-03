@@ -1231,6 +1231,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         itemsTotal: totalItemsToProcess,
         currentEntityName: "Visites (envoi)",
       ).copyWith(currentSyncType: SyncType.upstream);
+      
+      // Log avant de commencer la synchronisation ascendante
+      _logger.i('Démarrage de la synchronisation ascendante - module: $moduleCode', tag: 'sync');
 
       try {
         debugPrint('Démarrage de la synchronisation des visites vers le serveur');
@@ -1303,6 +1306,10 @@ class SyncService extends StateNotifier<SyncStatus> {
         ).copyWith(currentSyncType: SyncType.upstream);
       } else {
         // Tout s'est bien passé
+        // Vider le cache des nomenclatures après une synchronisation ascendante réussie
+        ref.read(nomenclatureServiceProvider.notifier).clearCache();
+        _logger.i('Cache des nomenclatures vidé après synchronisation ascendante - module: $moduleCode', tag: 'sync');
+        
         newState = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
@@ -1539,6 +1546,10 @@ class SyncService extends StateNotifier<SyncStatus> {
       } else {
         // Tout s'est bien passé
         await _updateLastFullSyncDate();
+        
+        // Vider le cache des nomenclatures après une synchronisation complète réussie
+        ref.read(nomenclatureServiceProvider.notifier).clearCache();
+        _logger.i('Cache des nomenclatures vidé après synchronisation complète', tag: 'sync');
 
         final newState = SyncStatus.success(
           completedSteps: completedSteps,
