@@ -135,6 +135,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     try {
       await _setApiUrlFromLocalStorageUseCase.execute(apiUrl);
       Config.setStoredApiUrl(apiUrl);
+      
+      // Debug: print configuration info
+      print(Config.getDebugInfo());
     } catch (e) {
       print('Error saving API URL: $e');
     }
