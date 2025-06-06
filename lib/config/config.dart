@@ -5,8 +5,8 @@
 
 // Main configuration facade
 class Config {
-  // Default API URL to use if no custom URL is provided
-  static const String defaultApiUrl = "https://demo-monitoring.fr/api";
+  // Default base URL to use if no custom URL is provided (without /api)
+  static const String defaultApiUrl = "https://demo-monitoring.fr";
   
   // Stored URL from localStorage
   static String? _storedApiUrl;
