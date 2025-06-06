@@ -5,11 +5,8 @@ import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:state_notifier/state_notifier.dart';
 
 // Mock sync service
 class MockSyncService extends StateNotifier<SyncStatus> {
@@ -39,7 +36,6 @@ class MockModuleListWidget extends Mock implements ModuleListWidget {
       super.toString();
 }
 
-
 class MockMenuActions extends Mock implements MenuActions {
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) =>
@@ -63,7 +59,8 @@ void main() {
             (ref) => MockSyncService(SyncStatus.initial()),
           ),
         ),
-        databaseSyncServiceProvider.overrideWithValue(MockDatabaseSyncService()),
+        databaseSyncServiceProvider
+            .overrideWithValue(MockDatabaseSyncService()),
       ],
     );
   });
@@ -82,7 +79,8 @@ void main() {
               (ref) => MockSyncService(syncStatus),
             ),
           ),
-          databaseSyncServiceProvider.overrideWithValue(MockDatabaseSyncService()),
+          databaseSyncServiceProvider
+              .overrideWithValue(MockDatabaseSyncService()),
         ],
       );
     }
@@ -102,13 +100,13 @@ void main() {
       (WidgetTester tester) async {
     await pumpHomePage(tester);
 
-    expect(find.text('Mes Données'), findsOneWidget);
-    
+    expect(find.text('Mes Modules'), findsOneWidget);
+
     // No tabs should be present
     expect(find.byType(Tab), findsNothing);
     expect(find.byType(TabBar), findsNothing);
     expect(find.byType(TabBarView), findsNothing);
-    
+
     // Only ModuleListWidget should be visible
     expect(find.byType(ModuleListWidget), findsOneWidget);
   });
@@ -146,19 +144,20 @@ void main() {
 
     await pumpHomePage(tester, syncingStatus);
     await tester.pump(); // Pour s'assurer que le modal est affiché
-    await tester.pump(const Duration(milliseconds: 300)); // Allow time for barrier to appear
+    await tester.pump(
+        const Duration(milliseconds: 300)); // Allow time for barrier to appear
 
     // Verify that we have a syncing state which should show an overlay
     expect(syncingStatus.state, equals(SyncState.inProgress));
-    
+
     // The text might be rendered in the SyncStatusWidget and not directly accessible
     // So we'll check for the presence of the SyncStatusWidget instead
     expect(find.byType(SyncStatusWidget), findsOneWidget);
-    
+
     // Check if the HomePage properly sets showOverlay to true when syncing
     final homePage = tester.widget<MaterialApp>(find.byType(MaterialApp));
     expect(homePage, isNotNull);
-    
+
     // Check if the ModalBarrier is in the widget tree - there might be several
     expect(find.byType(ModalBarrier), findsWidgets);
   });
@@ -179,7 +178,7 @@ void main() {
     // Try to interact with the page (no tabs to switch anymore)
     // Find a module item if it exists
     final moduleItem = find.byType(ListTile);
-    
+
     if (moduleItem.evaluate().isNotEmpty) {
       await tester.tap(moduleItem.first, warnIfMissed: false);
       await tester.pump();
@@ -202,19 +201,21 @@ void main() {
 
     await pumpHomePage(tester, deletingStatus);
     await tester.pump();
-    await tester.pump(const Duration(milliseconds: 300)); // Allow time for barrier to appear
-    
+    await tester.pump(
+        const Duration(milliseconds: 300)); // Allow time for barrier to appear
+
     // Verify the modal barrier behavior without relying on the specific key
     // Instead check if the SyncState is inProgress which should show an overlay
     expect(deletingStatus.state, equals(SyncState.inProgress));
-    
+
     // The text might be rendered in the SyncStatusWidget and not directly visible
     // So we'll check for the presence of the SyncStatusWidget instead
     expect(find.byType(SyncStatusWidget), findsOneWidget);
-    
+
     // Check the specific properties of the SyncStatus
     expect(deletingStatus.currentStep, equals(SyncStep.configuration));
-    expect(deletingStatus.additionalInfo, equals('Suppression et rechargement de la base de données...'));
+    expect(deletingStatus.additionalInfo,
+        equals('Suppression et rechargement de la base de données...'));
   });
 
   testWidgets('HomePage should display error indicator in failure state',
@@ -230,13 +231,13 @@ void main() {
     // Verify properties directly
     expect(errorStatus.state, SyncState.failure);
     expect(errorStatus.errorMessage, 'Erreur de synchronisation');
-    
+
     await pumpHomePage(tester, errorStatus);
     await tester.pump();
 
     // Verify modal barrier is not shown for error state
     expect(find.byKey(const Key('sync-modal-barrier')), findsNothing);
-    
+
     // Instead of looking for specific error text, just verify SyncStatusWidget is present
     expect(find.byType(SyncStatusWidget), findsOneWidget);
   });
@@ -264,7 +265,7 @@ void main() {
 
     // Verify modal barrier is not shown for success state
     expect(find.byKey(const Key('sync-modal-barrier')), findsNothing);
-    
+
     // Instead of looking for specific success text, just verify SyncStatusWidget is present
     expect(find.byType(SyncStatusWidget), findsOneWidget);
   });

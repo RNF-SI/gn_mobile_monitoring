@@ -47,7 +47,7 @@ class HomePageState extends ConsumerState<HomePage> {
         Scaffold(
           appBar: AppBar(
             backgroundColor: const Color(0xFF598979), // Brand color
-            title: const Text("Mes Données"),
+            title: const Text("Mes Modules"),
             actions: [
               MenuActions(),
             ],
