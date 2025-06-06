@@ -27,7 +27,7 @@ class MenuActions extends ConsumerWidget {
           value, ref, context, authViewModel, syncNotifier, databaseService),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(
-            Icons.download, 'Synchronisation descendante', 'sync_download'),
+            Icons.download, 'Mettre à jour les données', 'sync_download'),
         _buildMenuItem(
             Icons.upload, 'Téléversement', 'sync_upload'),
         const PopupMenuDivider(),
@@ -258,7 +258,7 @@ class MenuActions extends ConsumerWidget {
     );
   }
 
-  /// Effectue une synchronisation descendante (téléchargement depuis le serveur)
+  /// Effectue une mise à jour des données (téléchargement depuis le serveur)
   Future<void> _performDownloadSync(
       BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
@@ -279,7 +279,7 @@ class MenuActions extends ConsumerWidget {
             children: [
               Icon(Icons.download, color: Colors.green),
               SizedBox(width: 8),
-              Expanded(child: Text('Synchronisation descendante')),
+              Expanded(child: Text('Mise à jour des données')),
             ],
           ),
           content: SingleChildScrollView(
@@ -339,7 +339,7 @@ class MenuActions extends ConsumerWidget {
     );
 
     if (confirmed == true) {
-      // Lancer la synchronisation descendante
+      // Lancer la mise à jour des données
       await syncService.syncFromServer(ref);
     }
   }
@@ -356,7 +356,7 @@ class MenuActions extends ConsumerWidget {
       return;
     }
 
-    // Vérifier si la synchronisation descendante est récente (< 7 jours)
+    // Vérifier si la mise à jour des données est récente (< 7 jours)
     final isFullSyncNeeded = syncService.isFullSyncNeeded();
     if (isFullSyncNeeded) {
       // Afficher un dialogue expliquant pourquoi c'est bloqué
@@ -382,7 +382,7 @@ class MenuActions extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                      '• La dernière synchronisation descendante date de plus de 7 jours'),
+                      '• La dernière mise à jour des données date de plus de 7 jours'),
                   const Text('• Ou c\'est votre première utilisation'),
                   const SizedBox(height: 16),
                   Container(
@@ -398,7 +398,7 @@ class MenuActions extends ConsumerWidget {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Effectuez d\'abord une synchronisation descendante pour mettre à jour vos données de référence.',
+                            'Effectuez d\'abord une mise à jour des données pour mettre à jour vos données de référence.',
                             style: TextStyle(
                               color: Colors.orange,
                               fontSize: 13,
@@ -422,7 +422,7 @@ class MenuActions extends ConsumerWidget {
                   _performDownloadSync(context, syncService, ref);
                 },
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                child: const Text('Synchronisation descendante'),
+                child: const Text('Mettre à jour les données'),
               ),
             ],
           );

@@ -174,7 +174,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                               '${_getLastSyncLabel(syncStatus.currentSyncType)}: ${_formatDate(syncStatus.lastSync!)}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-                          // Ajouter l'info sur la prochaine synchronisation descendante
+                          // Ajouter l'info sur la prochaine mise à jour des données
                           if (syncStatus.nextFullSyncInfo != null)
                             Row(
                               children: [
@@ -530,7 +530,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       case SyncState.inProgress:
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
-              ? 'Synchronisation descendante en cours...' 
+              ? 'Mise à jour des données en cours...' 
               : 'Téléversement en cours...';
         } else {
           baseText = 'Synchronisation en cours...';
@@ -539,7 +539,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       case SyncState.success:
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
-              ? 'Synchronisation descendante réussie' 
+              ? 'Mise à jour des données réussie' 
               : 'Téléversement réussi';
         } else {
           baseText = 'Synchronisation réussie';
@@ -548,7 +548,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       case SyncState.failure:
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
-              ? 'Échec de la synchronisation descendante' 
+              ? 'Échec de la mise à jour des données' 
               : 'Échec du téléversement';
         } else {
           baseText = 'Échec de la synchronisation';
@@ -557,7 +557,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       case SyncState.conflictDetected:
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
-              ? 'Conflits détectés (synchronisation descendante)' 
+              ? 'Conflits détectés (mise à jour des données)' 
               : 'Conflits détectés (téléversement)';
         } else {
           baseText = 'Conflits détectés';
@@ -578,7 +578,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   String _getSyncDetailsTitle(SyncType? syncType) {
     if (syncType == null) return 'Détails de la synchronisation';
     return syncType == SyncType.downstream 
-        ? 'Détails de la synchronisation descendante'
+        ? 'Détails de la mise à jour des données'
         : 'Détails du téléversement';
   }
 
@@ -586,7 +586,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   String _getLastSyncLabel(SyncType? syncType) {
     if (syncType == null) return 'Dernière synchronisation';
     return syncType == SyncType.downstream 
-        ? 'Dernière synchronisation descendante'
+        ? 'Dernière mise à jour des données'
         : 'Dernier téléversement';
   }
 
@@ -1168,8 +1168,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       'synthese',
       'erreur de dénombrement',
       // Patterns génériques pour les erreurs d'entités
-      'erreur fatale lors de la synchronisation descendante',
-      'échec de la synchronisation descendante',
+      'erreur fatale lors de la mise à jour des données',
+      'échec de la mise à jour des données',
     ];
 
     final lowerError = errorMessage.toLowerCase();

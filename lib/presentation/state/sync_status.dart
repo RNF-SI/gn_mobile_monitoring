@@ -9,7 +9,7 @@ typedef SyncConflict = domain.SyncConflict;
 
 /// Représente les différentes étapes du processus de synchronisation
 enum SyncStep {
-  // === Étapes de synchronisation DESCENDANTE (serveur -> appareil) ===
+  // === Étapes de MISE À JOUR DES DONNÉES (serveur -> appareil) ===
   // Ces étapes sont pour le téléchargement des données depuis le serveur
   configuration,
   nomenclatures,

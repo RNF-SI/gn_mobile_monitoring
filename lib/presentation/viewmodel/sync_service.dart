@@ -329,7 +329,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
 
         debugPrint(
-            'Tous les caches ont été invalidés après synchronisation descendante');
+            'Tous les caches ont été invalidés après mise à jour des données');
         
         // Incrémenter la version du cache pour forcer le rafraîchissement des providers family
         ref.read(cacheVersionProvider.notifier).update((state) => state + 1);
@@ -693,7 +693,7 @@ class SyncService extends StateNotifier<SyncStatus> {
                 now, // Afficher la date de dernière synchro seulement si elle était complète
           );
 
-          // Reprogrammer la surveillance du délai après une synchronisation descendante réussie
+          // Reprogrammer la surveillance du délai après une mise à jour des données réussie
           scheduleTimerMonitoring(ref);
         } else {
           // Sinon, simplement mettre à jour l'affichage du temps restant
@@ -1162,32 +1162,32 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Retourne un texte indiquant le temps restant avant que la synchronisation
-  /// descendante soit requise (manuelle)
+  /// mise à jour des données soit requise (manuelle)
   String? _getTimeRemainingText() {
     if (_lastFullSync == null) {
-      return "Synchronisation descendante requise";
+      return "Mise à jour des données requise";
     }
 
     final now = DateTime.now();
     final nextFullSync = _lastFullSync!.add(fullSyncInterval);
 
     if (now.isAfter(nextFullSync)) {
-      return "Synchronisation descendante requise";
+      return "Mise à jour des données requise";
     }
 
     final remaining = nextFullSync.difference(now);
 
     // Formatage convivial
     if (remaining.inDays > 1) {
-      return "Synchronisation descendante requise dans ${remaining.inDays} jours";
+      return "Mise à jour des données requise dans ${remaining.inDays} jours";
     } else if (remaining.inDays == 1) {
-      return "Synchronisation descendante requise demain";
+      return "Mise à jour des données requise demain";
     } else if (remaining.inHours > 1) {
-      return "Synchronisation descendante requise dans ${remaining.inHours} heures";
+      return "Mise à jour des données requise dans ${remaining.inHours} heures";
     } else if (remaining.inMinutes > 1) {
-      return "Synchronisation descendante requise dans ${remaining.inMinutes} minutes";
+      return "Mise à jour des données requise dans ${remaining.inMinutes} minutes";
     } else {
-      return "Synchronisation descendante requise maintenant";
+      return "Mise à jour des données requise maintenant";
     }
   }
 
@@ -1485,7 +1485,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       );
 
       // === ÉTAPE 1: SYNCHRONISATION DESCENDANTE (TÉLÉCHARGEMENT) ===
-      debugPrint('Étape 1: Synchronisation descendante (téléchargement)');
+      debugPrint('Étape 1: Mise à jour des données (téléchargement)');
 
       state = state.copyWith(
         currentEntityName: "Téléchargement des données depuis le serveur...",
