@@ -3,11 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 // Provider pour récupérer les nomenclatures par type de code
 final nomenclaturesByTypeProvider =
     FutureProvider.autoDispose.family<List<Nomenclature>, String>(
   (ref, typeCode) async {
+    // Observer la version du cache pour forcer le rafraîchissement après sync
+    ref.watch(cacheVersionProvider);
+    
     final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
     return await nomenclatureService.getNomenclaturesByTypeCode(typeCode);
   },

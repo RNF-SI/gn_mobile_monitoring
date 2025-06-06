@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_ca
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 /// Provider pour le service de taxons
 final taxonServiceProvider = StateNotifierProvider<TaxonService,
@@ -23,6 +24,9 @@ final taxonServiceProvider = StateNotifierProvider<TaxonService,
 /// Provider pour récupérer les taxons par liste
 final taxonsByListProvider = FutureProvider.family<List<Taxon>, int>(
   (ref, listId) async {
+    // Observer la version du cache pour forcer le rafraîchissement après sync
+    ref.watch(cacheVersionProvider);
+    
     final taxonService = ref.read(taxonServiceProvider.notifier);
     return await taxonService.getTaxonsByListId(listId);
   },
@@ -31,6 +35,9 @@ final taxonsByListProvider = FutureProvider.family<List<Taxon>, int>(
 /// Provider pour récupérer les taxons par module
 final taxonsByModuleProvider = FutureProvider.family<List<Taxon>, int>(
   (ref, moduleId) async {
+    // Observer la version du cache pour forcer le rafraîchissement après sync
+    ref.watch(cacheVersionProvider);
+    
     final taxonService = ref.read(taxonServiceProvider.notifier);
     return await taxonService.getTaxonsByModuleId(moduleId);
   },
@@ -39,6 +46,9 @@ final taxonsByModuleProvider = FutureProvider.family<List<Taxon>, int>(
 /// Provider pour récupérer un taxon par cd_nom
 final taxonByCdNomProvider = FutureProvider.family<Taxon?, int>(
   (ref, cdNom) async {
+    // Observer la version du cache pour forcer le rafraîchissement après sync
+    ref.watch(cacheVersionProvider);
+    
     final taxonService = ref.read(taxonServiceProvider.notifier);
     return await taxonService.getTaxonByCdNom(cdNom);
   },

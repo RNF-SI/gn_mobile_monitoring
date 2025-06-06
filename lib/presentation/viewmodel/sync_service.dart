@@ -16,6 +16,9 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
 
+/// Provider pour la version du cache - incrémenté après chaque sync pour forcer le rafraîchissement
+final cacheVersionProvider = StateProvider<int>((ref) => 0);
+
 /// Provider pour le service de synchronisation
 final syncServiceProvider =
     StateNotifierProvider<SyncService, SyncStatus>((ref) {
@@ -327,6 +330,9 @@ class SyncService extends StateNotifier<SyncStatus> {
 
         debugPrint(
             'Tous les caches ont été invalidés après synchronisation descendante');
+        
+        // Incrémenter la version du cache pour forcer le rafraîchissement des providers family
+        ref.read(cacheVersionProvider.notifier).update((state) => state + 1);
       }
 
       // Synchroniser les taxons
@@ -1362,6 +1368,9 @@ class SyncService extends StateNotifier<SyncStatus> {
 
         debugPrint(
             'Tous les caches ont été invalidés après synchronisation ascendante - module: $moduleCode');
+        
+        // Incrémenter la version du cache pour forcer le rafraîchissement des providers family
+        ref.read(cacheVersionProvider.notifier).update((state) => state + 1);
 
         newState = SyncStatus.success(
           completedSteps: completedSteps,
@@ -1626,6 +1635,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         // Ils seront rechargés automatiquement lorsqu'ils seront accédés avec leurs paramètres spécifiques
         debugPrint(
             'Tous les caches ont été invalidés après synchronisation complète');
+        
+        // Incrémenter la version du cache pour forcer le rafraîchissement des providers family
+        ref.read(cacheVersionProvider.notifier).update((state) => state + 1);
 
         final newState = SyncStatus.success(
           completedSteps: completedSteps,
