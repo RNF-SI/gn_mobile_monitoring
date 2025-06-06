@@ -12,7 +12,9 @@ import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
 
 /// Provider pour le service de synchronisation
 final syncServiceProvider =
@@ -46,7 +48,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   // Stockage des résultats de synchronisation par étape pour conserver les informations détaillées
   final Map<String, domain.SyncResult> _syncResults = {};
-  
+
   // Stockage des résultats des dernières synchronisations par type (temporairement désactivé)
   // SyncResult? _lastDownstreamSync;
   // SyncResult? _lastUpstreamSync;
@@ -77,7 +79,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     // Initialiser la date de dernière synchro complète
     _initLastFullSyncDate();
   }
-  
+
   /// Initialise le service avec la surveillance du délai (pas de sync automatique)
   /// À appeler après la création du provider
   void initialize(WidgetRef ref) {
@@ -103,7 +105,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
-    bool isManualSync = true, // Indique si cette synchronisation est déclenchée manuellement
+    bool isManualSync =
+        true, // Indique si cette synchronisation est déclenchée manuellement
   }) async {
     if (_isSyncing) {
       return state; // Ne pas synchroniser si déjà en cours
@@ -114,7 +117,8 @@ class SyncService extends StateNotifier<SyncStatus> {
 
     // Réinitialiser les résultats et conflits au début d'une nouvelle synchronisation complète
     _syncResults.clear();
-    allConflicts.clear(); // Vider la liste des conflits pour éviter les conflits fantômes
+    allConflicts
+        .clear(); // Vider la liste des conflits pour éviter les conflits fantômes
 
     final List<SyncStep> completedSteps = [];
     final List<SyncStep> failedSteps = [];
@@ -298,9 +302,31 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
       }
 
-      // Invalider le cache des nomenclatures si la synchro a été faite
+      // Invalider tous les caches si la synchro des nomenclatures a été faite
       if (nomenclatureStepDone) {
+        // Vider le cache des nomenclatures
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
+
+        // Forcer le rechargement de tous les providers liés au cache
+        ref.invalidate(nomenclatureServiceProvider);
+        ref.invalidate(userModuleListeViewModelStateNotifierProvider);
+        ref.invalidate(siteGroupViewModelStateNotifierProvider);
+
+        // Invalider tous les providers de type family qui dépendent des nomenclatures
+        // Cela forcera le rechargement des nomenclatures dans les formulaires
+        try {
+          // Nous ne pouvons pas invalider directement les providers family,
+          // mais ils seront invalidés automatiquement à leur prochaine utilisation
+          // grâce à l'utilisation de autoDispose
+          debugPrint(
+              'Les providers autoDispose.family seront actualisés automatiquement à leur prochaine utilisation');
+        } catch (e) {
+          debugPrint(
+              'Erreur lors de l\'invalidation des providers de nomenclature: $e');
+        }
+
+        debugPrint(
+            'Tous les caches ont été invalidés après synchronisation descendante');
       }
 
       // Synchroniser les taxons
@@ -532,7 +558,6 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
       }
 
-
       // Générer un résumé des statistiques de synchronisation
       final syncSummary = getSyncSummary();
 
@@ -551,7 +576,8 @@ class SyncService extends StateNotifier<SyncStatus> {
       // La clé sera composée du type d'entité, de l'ID d'entité, du champ affecté et du type de conflit
       final Map<String, domain.SyncConflict> uniqueConflicts = {};
       for (final conflict in allConflicts) {
-        final key = '${conflict.entityType}_${conflict.entityId}_${conflict.affectedField ?? "NA"}_${conflict.conflictType.name}_${conflict.referencedEntityType ?? "NA"}_${conflict.referencedEntityId ?? "NA"}';
+        final key =
+            '${conflict.entityType}_${conflict.entityId}_${conflict.affectedField ?? "NA"}_${conflict.conflictType.name}_${conflict.referencedEntityType ?? "NA"}_${conflict.referencedEntityId ?? "NA"}';
         // Ajouter seulement si la clé n'existe pas déjà
         if (!uniqueConflicts.containsKey(key)) {
           uniqueConflicts[key] = conflict;
@@ -560,7 +586,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           debugPrint('Conflit dupliqué ignoré: $key');
         }
       }
-      
+
       // Remplacer la liste des conflits par les conflits uniques
       allConflicts.clear();
       allConflicts.addAll(uniqueConflicts.values);
@@ -598,7 +624,6 @@ class SyncService extends StateNotifier<SyncStatus> {
               ": Certaines entités supprimées sont encore référencées par d'autres entités.";
         }
 
-
         // Des conflits ont été détectés
         final newState = SyncStatus.conflictDetected(
           conflicts: allConflicts,
@@ -626,7 +651,6 @@ class SyncService extends StateNotifier<SyncStatus> {
             return 'Erreur ${_stepToLabel(step)}';
           }).join('\n');
         }
-
 
         state = SyncStatus.failure(
           errorMessage: errorMsg,
@@ -662,7 +686,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             lastSync:
                 now, // Afficher la date de dernière synchro seulement si elle était complète
           );
-          
+
           // Reprogrammer la surveillance du délai après une synchronisation descendante réussie
           scheduleTimerMonitoring(ref);
         } else {
@@ -706,7 +730,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   Future<domain.SyncResult> _executeSingleSync(String token, String stepKey,
       {String? moduleCode}) async {
     debugPrint('Démarrage de _executeSingleSync pour l\'étape: $stepKey');
-    
+
     // Nettoyer les conflits existants pour ce type d'entité au début de la synchronisation
     // pour éviter que d'anciens conflits persistent après résolution manuelle
     switch (stepKey) {
@@ -715,16 +739,19 @@ class SyncService extends StateNotifier<SyncStatus> {
         debugPrint('Nettoyage des anciens conflits de sites');
         break;
       case 'siteGroups':
-        allConflicts.removeWhere((conflict) => conflict.entityType == 'siteGroup');
+        allConflicts
+            .removeWhere((conflict) => conflict.entityType == 'siteGroup');
         debugPrint('Nettoyage des anciens conflits de groupes de sites');
         break;
       case 'nomenclatures':
       case 'nomenclatures_datasets':
-        allConflicts.removeWhere((conflict) => conflict.referencedEntityType == 'nomenclature');
+        allConflicts.removeWhere(
+            (conflict) => conflict.referencedEntityType == 'nomenclature');
         debugPrint('Nettoyage des anciens conflits de nomenclatures');
         break;
       case 'taxons':
-        allConflicts.removeWhere((conflict) => conflict.referencedEntityType == 'taxon');
+        allConflicts.removeWhere(
+            (conflict) => conflict.referencedEntityType == 'taxon');
         debugPrint('Nettoyage des anciens conflits de taxons');
         break;
     }
@@ -1009,7 +1036,8 @@ class SyncService extends StateNotifier<SyncStatus> {
     allConflicts.removeWhere((conflict) => conflict.entityType == entityType);
     final removedCount = initialCount - allConflicts.length;
     if (removedCount > 0) {
-      debugPrint('$removedCount conflit(s) de type $entityType supprimé(s) du cache');
+      debugPrint(
+          '$removedCount conflit(s) de type $entityType supprimé(s) du cache');
     }
   }
 
@@ -1055,7 +1083,6 @@ class SyncService extends StateNotifier<SyncStatus> {
     _autoSyncTimer?.cancel();
     _autoSyncTimer = null;
   }
-
 
   /// Initialise la date de dernière synchronisation complète
   /// depuis le stockage persistant via le use case
@@ -1123,7 +1150,8 @@ class SyncService extends StateNotifier<SyncStatus> {
       itemsSkipped: currentState.itemsSkipped,
       additionalInfo: currentState.additionalInfo,
       nextFullSyncInfo: timeRemaining,
-      currentSyncType: currentState.currentSyncType, // Préserver le type de synchronisation
+      currentSyncType:
+          currentState.currentSyncType, // Préserver le type de synchronisation
     );
   }
 
@@ -1161,7 +1189,7 @@ class SyncService extends StateNotifier<SyncStatus> {
   void scheduleTimerMonitoring(WidgetRef ref) {
     // Arrêter tout timer existant
     _autoSyncTimer?.cancel();
-    
+
     // Planifier une vérification quotidienne pour mettre à jour l'affichage du décompte
     _autoSyncTimer = Timer.periodic(const Duration(hours: 6), (_) {
       if (!_isSyncing) {
@@ -1170,7 +1198,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       }
     });
   }
-  
+
   /// Démarre la surveillance du délai après l'initialisation (pas de sync automatique)
   void initializeTimerMonitoring(WidgetRef ref) {
     // Attendre que l'initialisation soit terminée
@@ -1178,8 +1206,8 @@ class SyncService extends StateNotifier<SyncStatus> {
       scheduleTimerMonitoring(ref);
     });
   }
-  
-  /// Démarre la synchronisation des données vers le serveur (envoi des données locales)
+
+  /// Démarre le téléversement des données vers le serveur (envoi des données locales)
   /// Ce type de synchronisation est pour envoyer les données de l'appareil mobile vers le serveur
   /// Les données sont supprimées de l'appareil seulement après confirmation de réception par le serveur
   Future<SyncStatus> syncToServer(
@@ -1203,7 +1231,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     final List<String> errorMessages = [];
     int totalItemsProcessed = 0;
     int totalItemsToProcess = 1; // Une seule étape pour cette synchronisation
-    
+
     // Déclarer result ici pour qu'il soit accessible partout
     domain.SyncResult? result;
 
@@ -1218,7 +1246,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           failedSteps: [],
           itemsProcessed: 0,
           itemsTotal: 0,
-        ).copyWith(currentSyncType: SyncType.upstream);
+        ).copyWith(currentSyncType: SyncType.upload);
         state = newState;
         return newState;
       }
@@ -1230,26 +1258,28 @@ class SyncService extends StateNotifier<SyncStatus> {
         itemsProcessed: 0,
         itemsTotal: totalItemsToProcess,
         currentEntityName: "Visites (envoi)",
-      ).copyWith(currentSyncType: SyncType.upstream);
-      
-      // Log avant de commencer la synchronisation ascendante
-      _logger.i('Démarrage de la synchronisation ascendante - module: $moduleCode', tag: 'sync');
+      ).copyWith(currentSyncType: SyncType.upload);
+
+      // Log avant de commencer le téléversement
+      debugPrint('Démarrage du téléversement - module: $moduleCode');
 
       try {
-        debugPrint('Démarrage de la synchronisation des visites vers le serveur');
-        
+        debugPrint(
+            'Démarrage de la synchronisation des visites vers le serveur');
+
         // Appeler directement le repository pour avoir plus de contrôle sur les statistiques
         result = await _syncRepository.syncVisitsToServer(token, moduleCode);
-        
+
         // Ajouter les statistiques
         if (result.success) {
           completedSteps.add(SyncStep.visitsToServer);
-          
+
           // Mettre à jour avec le nouveau résumé incluant cette étape
-          final updatedSummary = "Synchronisation des visites terminée avec succès:\n"
+          final updatedSummary =
+              "Synchronisation des visites terminée avec succès:\n"
               "• ${result.itemsAdded} visites envoyées\n"
               "• ${result.itemsDeleted} visites supprimées localement";
-              
+
           state = SyncStatus.inProgress(
             currentStep: SyncStep.visitsToServer,
             completedSteps: completedSteps,
@@ -1261,22 +1291,26 @@ class SyncService extends StateNotifier<SyncStatus> {
             itemsSkipped: result.itemsSkipped,
             itemsDeleted: result.itemsDeleted,
             additionalInfo: updatedSummary,
-          ).copyWith(currentSyncType: SyncType.upstream);
-          
-          debugPrint('Synchronisation des visites vers le serveur terminée avec succès');
-          debugPrint('Statistiques: ${result.itemsAdded} ajoutées, ${result.itemsDeleted} supprimées');
+          ).copyWith(currentSyncType: SyncType.upload);
+
+          debugPrint(
+              'Synchronisation des visites vers le serveur terminée avec succès');
+          debugPrint(
+              'Statistiques: ${result.itemsAdded} ajoutées, ${result.itemsDeleted} supprimées');
         } else {
           failedSteps.add(SyncStep.visitsToServer);
           if (result.errorMessage != null) {
             errorMessages.add('Visites: ${result.errorMessage}');
           }
-          debugPrint('Échec de la synchronisation des visites vers le serveur: ${result.errorMessage}');
+          debugPrint(
+              'Échec de la synchronisation des visites vers le serveur: ${result.errorMessage}');
         }
         totalItemsProcessed += 1;
       } catch (e) {
         failedSteps.add(SyncStep.visitsToServer);
         totalItemsProcessed += 1;
-        debugPrint('Erreur lors de la synchronisation des visites vers le serveur: $e');
+        debugPrint(
+            'Erreur lors de la synchronisation des visites vers le serveur: $e');
         errorMessages.add('Erreur: $e');
       }
 
@@ -1303,18 +1337,37 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary,
-        ).copyWith(currentSyncType: SyncType.upstream);
+        ).copyWith(currentSyncType: SyncType.upload);
       } else {
         // Tout s'est bien passé
-        // Vider le cache des nomenclatures après une synchronisation ascendante réussie
+        // Vider et recharger tous les caches après une synchronisation ascendante réussie
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
-        _logger.i('Cache des nomenclatures vidé après synchronisation ascendante - module: $moduleCode', tag: 'sync');
-        
+
+        // Forcer le rechargement de tous les providers liés au cache qui sont utilisés dans l'application
+        // Cela va forcer un rechargement des données depuis la base de données locale
+        ref.invalidate(nomenclatureServiceProvider);
+        ref.invalidate(userModuleListeViewModelStateNotifierProvider);
+        ref.invalidate(siteGroupViewModelStateNotifierProvider);
+
+        // Invalider tous les providers de type family qui dépendent des nomenclatures
+        // Cela forcera le rechargement des nomenclatures dans les formulaires
+        try {
+          // Les providers autoDispose.family seront automatiquement invalidés à leur prochaine utilisation
+          debugPrint(
+              'Les providers autoDispose.family seront actualisés automatiquement à leur prochaine utilisation');
+        } catch (e) {
+          debugPrint(
+              'Erreur lors de l\'invalidation des providers de nomenclature: $e');
+        }
+
+        debugPrint(
+            'Tous les caches ont été invalidés après synchronisation ascendante - module: $moduleCode');
+
         newState = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary,
-        ).copyWith(currentSyncType: SyncType.upstream);
+        ).copyWith(currentSyncType: SyncType.upload);
       }
 
       state = newState;
@@ -1323,14 +1376,14 @@ class SyncService extends StateNotifier<SyncStatus> {
     } catch (e) {
       // Gérer les erreurs globales
       debugPrint('Erreur générale lors de la synchronisation ascendante: $e');
-      
+
       final newState = SyncStatus.failure(
         errorMessage: 'Erreur lors de la synchronisation ascendante: $e',
         completedSteps: completedSteps,
         failedSteps: failedSteps,
         itemsProcessed: totalItemsProcessed,
         itemsTotal: totalItemsToProcess,
-      ).copyWith(currentSyncType: SyncType.upstream);
+      ).copyWith(currentSyncType: SyncType.upload);
 
       state = newState;
       _isSyncing = false;
@@ -1424,7 +1477,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       // === ÉTAPE 1: SYNCHRONISATION DESCENDANTE (TÉLÉCHARGEMENT) ===
       debugPrint('Étape 1: Synchronisation descendante (téléchargement)');
-      
+
       state = state.copyWith(
         currentEntityName: "Téléchargement des données depuis le serveur...",
       );
@@ -1442,7 +1495,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           isManualSync: true,
         );
 
-        if (downloadResult.state == SyncState.success || 
+        if (downloadResult.state == SyncState.success ||
             downloadResult.state == SyncState.conflictDetected) {
           completedSteps.addAll([
             SyncStep.configuration,
@@ -1487,20 +1540,20 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       // === ÉTAPE 2: SYNCHRONISATION ASCENDANTE (ENVOI) ===
       debugPrint('Étape 2: Synchronisation ascendante (envoi)');
-      
+
       state = state.copyWith(
         currentStep: SyncStep.visitsToServer,
         currentEntityName: "Envoi des données vers le serveur...",
-        currentSyncType: SyncType.upstream,
+        currentSyncType: SyncType.upload,
         itemsProcessed: 1,
       );
 
       try {
         // Note: Cache des échecs supprimé - les éléments échoués seront automatiquement retentés
-        
+
         // Utiliser le nouveau use case pour la synchronisation complète
         final uploadResult = await _syncCompleteUseCase.execute(token);
-        
+
         if (uploadResult.success) {
           completedSteps.add(SyncStep.visitsToServer);
           debugPrint('Étape 2 terminée avec succès');
@@ -1510,11 +1563,12 @@ class SyncService extends StateNotifier<SyncStatus> {
             errorMessages.add('Envoi: ${uploadResult.errorMessage}');
           }
           if (uploadResult.itemsFailed > 0) {
-            errorMessages.add('Envoi: ${uploadResult.itemsFailed} éléments ont échoué');
+            errorMessages
+                .add('Envoi: ${uploadResult.itemsFailed} éléments ont échoué');
           }
           debugPrint('Échec de l\'étape 2: ${uploadResult.errorMessage}');
         }
-        
+
         totalItemsProcessed += 1;
       } catch (e) {
         failedSteps.add(SyncStep.visitsToServer);
@@ -1530,7 +1584,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (errorMessages.isNotEmpty) {
         // Il y a eu des erreurs
         String errorMsg = errorMessages.join('\n\n');
-        
+
         final newState = SyncStatus.failure(
           errorMessage: errorMsg,
           completedSteps: completedSteps,
@@ -1538,36 +1592,58 @@ class SyncService extends StateNotifier<SyncStatus> {
           itemsProcessed: totalItemsProcessed,
           itemsTotal: totalItemsToProcess,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
-        ).copyWith(currentSyncType: SyncType.upstream);
-        
+        ).copyWith(currentSyncType: SyncType.upload);
+
         state = newState;
         _isSyncing = false;
         return newState;
       } else {
         // Tout s'est bien passé
         await _updateLastFullSyncDate();
-        
-        // Vider le cache des nomenclatures après une synchronisation complète réussie
+
+        // Vider et recharger tous les caches après une synchronisation complète réussie
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
-        _logger.i('Cache des nomenclatures vidé après synchronisation complète', tag: 'sync');
+
+        // Forcer le rechargement de tous les providers liés au cache qui sont utilisés dans l'application
+        // Cela va forcer un rechargement des données depuis la base de données locale
+        ref.invalidate(nomenclatureServiceProvider);
+        ref.invalidate(userModuleListeViewModelStateNotifierProvider);
+        ref.invalidate(siteGroupViewModelStateNotifierProvider);
+
+        // Invalider tous les providers de type family qui dépendent des nomenclatures
+        // Cela forcera le rechargement des nomenclatures dans les formulaires
+        try {
+          // Les providers autoDispose.family seront automatiquement invalidés à leur prochaine utilisation
+          debugPrint(
+              'Les providers autoDispose.family seront actualisés automatiquement à leur prochaine utilisation');
+        } catch (e) {
+          debugPrint(
+              'Erreur lors de l\'invalidation des providers de nomenclature: $e');
+        }
+
+        // Pour les providers family, nous allons les invalider lors de leur prochaine utilisation
+        // Les providers de type family ne peuvent pas être invalidés globalement
+        // Ils seront rechargés automatiquement lorsqu'ils seront accédés avec leurs paramètres spécifiques
+        debugPrint(
+            'Tous les caches ont été invalidés après synchronisation complète');
 
         final newState = SyncStatus.success(
           completedSteps: completedSteps,
           itemsProcessed: totalItemsProcessed,
           additionalInfo: syncSummary.isNotEmpty ? syncSummary : null,
           lastSync: DateTime.now(),
-        ).copyWith(currentSyncType: SyncType.upstream);
+        ).copyWith(currentSyncType: SyncType.upload);
 
         state = newState;
         _isSyncing = false;
         return newState;
       }
-
     } catch (e) {
       debugPrint('Erreur inattendue lors de la synchronisation complète: $e');
 
       final newState = SyncStatus.failure(
-        errorMessage: 'Erreur inattendue lors de la synchronisation complète: $e',
+        errorMessage:
+            'Erreur inattendue lors de la synchronisation complète: $e',
         completedSteps: completedSteps,
         failedSteps: failedSteps,
         itemsProcessed: totalItemsProcessed,
@@ -1880,7 +1956,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     return "Résumé de la synchronisation:\n${summaryLines.join("\n")}";
   }
 
-  /// Construit un résumé détaillé pour la synchronisation ascendante (envoi vers serveur)
+  /// Construit un résumé détaillé pour le téléversement (envoi vers serveur)
   /// avec les statistiques par type d'objet
   String _buildUpstreamSyncSummary(domain.SyncResult? result) {
     if (result == null) {
@@ -1888,14 +1964,17 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     final List<String> summaryLines = [];
-    summaryLines.add("Résumé de la synchronisation ascendante:");
+    summaryLines.add("Résumé du téléversement:");
 
     final totalAdded = result.itemsAdded;
     final totalUpdated = result.itemsUpdated;
     final totalDeleted = result.itemsDeleted ?? 0;
     final totalSkipped = result.itemsSkipped;
 
-    if (totalAdded == 0 && totalUpdated == 0 && totalDeleted == 0 && totalSkipped == 0) {
+    if (totalAdded == 0 &&
+        totalUpdated == 0 &&
+        totalDeleted == 0 &&
+        totalSkipped == 0) {
       summaryLines.add("• Aucune donnée n'a été trouvée à synchroniser");
       return summaryLines.join("\n");
     }
@@ -1904,45 +1983,58 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (result.data != null && result.data!.isNotEmpty) {
       final visitesAdded = result.data!['visits_added'] as int? ?? 0;
       final observationsAdded = result.data!['observations_added'] as int? ?? 0;
-      final detailsAdded = result.data!['observation_details_added'] as int? ?? 0;
-      
+      final detailsAdded =
+          result.data!['observation_details_added'] as int? ?? 0;
+
       final visitesDeleted = result.data!['visits_deleted'] as int? ?? 0;
-      final observationsDeleted = result.data!['observations_deleted'] as int? ?? 0;
-      final detailsDeleted = result.data!['observation_details_deleted'] as int? ?? 0;
+      final observationsDeleted =
+          result.data!['observations_deleted'] as int? ?? 0;
+      final detailsDeleted =
+          result.data!['observation_details_deleted'] as int? ?? 0;
 
       // Afficher les statistiques par catégorie avec les vraies données
-      summaryLines.add("• Visites: ${_formatUpstreamStats(visitesAdded, 0, 0, visitesDeleted)}");
-      summaryLines.add("• Observations: ${_formatUpstreamStats(observationsAdded, 0, 0, observationsDeleted)}");
-      summaryLines.add("• Détails d'observations: ${_formatUpstreamStats(detailsAdded, 0, 0, detailsDeleted)}");
-      
+      summaryLines.add(
+          "• Visites: ${_formatUpstreamStats(visitesAdded, 0, 0, visitesDeleted)}");
+      summaryLines.add(
+          "• Observations: ${_formatUpstreamStats(observationsAdded, 0, 0, observationsDeleted)}");
+      summaryLines.add(
+          "• Détails d'observations: ${_formatUpstreamStats(detailsAdded, 0, 0, detailsDeleted)}");
+
       // Ajouter une ligne de séparation
       summaryLines.add("");
-      summaryLines.add("• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
+      summaryLines.add(
+          "• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
     } else {
       // Fallback vers l'ancienne méthode avec estimation si les données détaillées ne sont pas disponibles
       final visitesRatio = 0.2;
       final observationsRatio = 0.3;
-      
+
       final visitesAdded = (totalAdded * visitesRatio).round();
       final observationsAdded = (totalAdded * observationsRatio).round();
       final detailsAdded = totalAdded - visitesAdded - observationsAdded;
 
       final visitesUpdated = (totalUpdated * visitesRatio).round();
       final observationsUpdated = (totalUpdated * observationsRatio).round();
-      final detailsUpdated = totalUpdated - visitesUpdated - observationsUpdated;
+      final detailsUpdated =
+          totalUpdated - visitesUpdated - observationsUpdated;
 
       final visitesSkipped = (totalSkipped * visitesRatio).round();
       final observationsSkipped = (totalSkipped * observationsRatio).round();
-      final detailsSkipped = totalSkipped - visitesSkipped - observationsSkipped;
+      final detailsSkipped =
+          totalSkipped - visitesSkipped - observationsSkipped;
 
       final visitesDeleted = totalDeleted;
 
-      summaryLines.add("• Visites (estimation): ${_formatUpstreamStats(visitesAdded, visitesUpdated, visitesSkipped, visitesDeleted)}");
-      summaryLines.add("• Observations (estimation): ${_formatUpstreamStats(observationsAdded, observationsUpdated, observationsSkipped, 0)}");
-      summaryLines.add("• Détails d'observations (estimation): ${_formatUpstreamStats(detailsAdded, detailsUpdated, detailsSkipped, 0)}");
-      
+      summaryLines.add(
+          "• Visites (estimation): ${_formatUpstreamStats(visitesAdded, visitesUpdated, visitesSkipped, visitesDeleted)}");
+      summaryLines.add(
+          "• Observations (estimation): ${_formatUpstreamStats(observationsAdded, observationsUpdated, observationsSkipped, 0)}");
+      summaryLines.add(
+          "• Détails d'observations (estimation): ${_formatUpstreamStats(detailsAdded, detailsUpdated, detailsSkipped, 0)}");
+
       summaryLines.add("");
-      summaryLines.add("• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
+      summaryLines.add(
+          "• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
     }
 
     // Ajouter une note explicative
@@ -1958,7 +2050,8 @@ class SyncService extends StateNotifier<SyncStatus> {
   }
 
   /// Formate les statistiques pour la synchronisation ascendante
-  String _formatUpstreamStats(int added, int updated, int skipped, int deleted) {
+  String _formatUpstreamStats(
+      int added, int updated, int skipped, int deleted) {
     if (added == 0 && updated == 0 && skipped == 0 && deleted == 0) {
       return "Aucune donnée";
     }
@@ -1966,16 +2059,16 @@ class SyncService extends StateNotifier<SyncStatus> {
     // Format compatible avec _buildSyncSummary : "X éléments (Y ajoutés, Z mis à jour, W ignorés, V supprimés)"
     // IMPORTANT: Toujours inclure toutes les parties pour que le regex fonctionne
     final total = added + updated + skipped + deleted;
-    
-    String result = "$total éléments ($added ajoutés, $updated mis à jour, $skipped ignorés";
+
+    String result =
+        "$total éléments ($added ajoutés, $updated mis à jour, $skipped ignorés";
     if (deleted > 0) {
       result += ", $deleted supprimés";
     }
     result += ")";
-    
+
     return result;
   }
-
 
   @override
   void dispose() {

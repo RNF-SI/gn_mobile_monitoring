@@ -29,7 +29,7 @@ class MenuActions extends ConsumerWidget {
         _buildMenuItem(
             Icons.download, 'Synchronisation descendante', 'sync_download'),
         _buildMenuItem(
-            Icons.upload, 'Synchronisation ascendante', 'sync_upload'),
+            Icons.upload, 'Téléversement', 'sync_upload'),
         const PopupMenuDivider(),
         _buildMenuItem(
             Icons.delete,
@@ -344,7 +344,7 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  /// Effectue une synchronisation ascendante (envoi vers le serveur)
+  /// Effectue un téléversement (envoi vers le serveur)
   Future<void> _performUploadSync(
       BuildContext context, SyncService syncService, WidgetRef ref) async {
     // Vérifier si une synchronisation est déjà en cours
@@ -377,7 +377,7 @@ class MenuActions extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Synchronisation ascendante impossible :',
+                    'Téléversement impossible :',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),

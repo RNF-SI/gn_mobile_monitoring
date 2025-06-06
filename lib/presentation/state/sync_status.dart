@@ -19,7 +19,7 @@ enum SyncStep {
   sites,
   siteGroups,
   
-  // === Étapes de synchronisation ASCENDANTE (appareil -> serveur) ===
+  // === Étapes de TÉLÉVERSEMENT (appareil -> serveur) ===
   // Ces étapes sont pour l'envoi des données vers le serveur
   // Une fois envoyées et confirmées par le serveur, les données sont supprimées localement
   visitsToServer,
@@ -39,7 +39,7 @@ enum SyncState {
 /// Type de synchronisation en cours
 enum SyncType {
   downstream, // Serveur → Appareil
-  upstream,   // Appareil → Serveur
+  upload,     // Appareil → Serveur (téléversement)
 }
 
 

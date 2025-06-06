@@ -6,7 +6,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service
 
 // Provider pour récupérer les nomenclatures par type de code
 final nomenclaturesByTypeProvider =
-    FutureProvider.family<List<Nomenclature>, String>(
+    FutureProvider.autoDispose.family<List<Nomenclature>, String>(
   (ref, typeCode) async {
     final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
     return await nomenclatureService.getNomenclaturesByTypeCode(typeCode);

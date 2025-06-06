@@ -531,7 +531,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
               ? 'Synchronisation descendante en cours...' 
-              : 'Synchronisation ascendante en cours...';
+              : 'Téléversement en cours...';
         } else {
           baseText = 'Synchronisation en cours...';
         }
@@ -540,7 +540,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
               ? 'Synchronisation descendante réussie' 
-              : 'Synchronisation ascendante réussie';
+              : 'Téléversement réussi';
         } else {
           baseText = 'Synchronisation réussie';
         }
@@ -549,7 +549,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
               ? 'Échec de la synchronisation descendante' 
-              : 'Échec de la synchronisation ascendante';
+              : 'Échec du téléversement';
         } else {
           baseText = 'Échec de la synchronisation';
         }
@@ -558,7 +558,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         if (syncStatus.currentSyncType != null) {
           baseText = syncStatus.currentSyncType == SyncType.downstream 
               ? 'Conflits détectés (synchronisation descendante)' 
-              : 'Conflits détectés (synchronisation ascendante)';
+              : 'Conflits détectés (téléversement)';
         } else {
           baseText = 'Conflits détectés';
         }
@@ -571,7 +571,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   // Obtient le label du type de synchronisation
   String _getSyncTypeLabel(SyncType? syncType) {
     if (syncType == null) return '';
-    return syncType == SyncType.downstream ? 'downstream' : 'upstream';
+    return syncType == SyncType.downstream ? 'downstream' : 'upload';
   }
 
   // Obtient le titre des détails selon le type de synchronisation
@@ -579,7 +579,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     if (syncType == null) return 'Détails de la synchronisation';
     return syncType == SyncType.downstream 
         ? 'Détails de la synchronisation descendante'
-        : 'Détails de la synchronisation ascendante';
+        : 'Détails du téléversement';
   }
 
   // Obtient le label pour la dernière synchronisation selon le type
@@ -587,7 +587,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     if (syncType == null) return 'Dernière synchronisation';
     return syncType == SyncType.downstream 
         ? 'Dernière synchronisation descendante'
-        : 'Dernière synchronisation ascendante';
+        : 'Dernier téléversement';
   }
 
   // Obtient le texte du bouton d'erreur selon le type de synchronisation
@@ -1143,7 +1143,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     final upstreamKeywords = [
       'échec de l\'envoi',
       'erreur lors de l\'envoi',
-      'synchronisation ascendante',
+      'téléversement',
       'envoi des données',
       'upload failed',
       'post failed',

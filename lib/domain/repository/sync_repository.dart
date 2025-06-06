@@ -3,7 +3,7 @@ import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.
 
 /// Repository principal pour la synchronisation des données
 /// Cette interface sert de façade et combine les fonctionnalités des repositories
-/// de synchronisation ascendante et descendante
+/// de téléversement et de synchronisation descendante
 abstract class SyncRepository implements DownstreamSyncRepository, UpstreamSyncRepository {
   /// Vérifie la connectivité avec le serveur
   @override

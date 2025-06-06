@@ -15,7 +15,7 @@ import 'package:gn_mobile_monitoring/domain/repository/observations_repository.d
 import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
-/// Implémentation du repository de synchronisation ascendante (appareil vers serveur)
+/// Implémentation du repository de téléversement (appareil vers serveur)
 class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   final GlobalApi _globalApi;
   final GlobalDatabase _globalDatabase;
@@ -97,7 +97,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
         logBuffer.writeln(
             '\n==================================================================');
         logBuffer.writeln(
-            '[SYNC_REPO] DÉBUT SYNCHRONISATION ASCENDANTE - MODULE: $moduleCode');
+            '[SYNC_REPO] DÉBUT TÉLÉVERSEMENT - MODULE: $moduleCode');
         logBuffer.writeln(
             '==================================================================');
 
