@@ -159,7 +159,8 @@ class SitesApiImpl implements SitesApi {
       };
     } on DioException catch (e) {
       throw NetworkException(
-          'Network error while fetching enriched sites: ${e.message}');
+          'Network error while fetching enriched sites: ${e.message}',
+          originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch enriched sites: $e');
     }
@@ -223,7 +224,8 @@ class SitesApiImpl implements SitesApi {
       );
     } on DioException catch (e) {
       throw NetworkException(
-          'Network error while fetching site groups: ${e.message}');
+          'Network error while fetching site groups: ${e.message}',
+          originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch site groups: $e');
     }

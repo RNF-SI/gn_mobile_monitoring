@@ -21,13 +21,20 @@ class ConflictCardWidget extends ConsumerWidget {
     required this.conflictType,
   });
 
-  /// Obtenir le nom d'une entité supprimée (notamment pour les nomenclatures)
+  /// Obtenir le nom d'une entité supprimée (nomenclatures, sites, taxons)
   Future<String> _getDeletedEntityName(WidgetRef ref, domain.SyncConflict conflict) async {
-    if (conflict.referencedEntityType?.toLowerCase() == 'nomenclature' &&
-        conflict.referencedEntityId != null) {
+    final entityType = conflict.referencedEntityType?.toLowerCase();
+    final entityId = conflict.referencedEntityId;
+    
+    if (entityId == null) {
+      return '${StringFormatter.capitalizeFirst(conflict.referencedEntityType ?? "")} (ID inconnu)';
+    }
+    
+    // Nomenclatures
+    if (entityType == 'nomenclature') {
       final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
       try {
-        final id = int.tryParse(conflict.referencedEntityId!);
+        final id = int.tryParse(entityId);
         if (id != null) {
           final name = await nomenclatureService.getNomenclatureNameById(id);
           if (!name.contains('non trouvée')) {
@@ -35,10 +42,69 @@ class ConflictCardWidget extends ConsumerWidget {
           }
         }
       } catch (e) {
-        // Fallback si erreur
+        // Continue avec fallback
       }
     }
-    return '${StringFormatter.capitalizeFirst(conflict.referencedEntityType ?? "")} (ID: ${conflict.referencedEntityId ?? "?"})';
+    
+    // Taxons
+    if (entityType == 'taxon') {
+      try {
+        // D'abord vérifier si on a les données dans le contexte local
+        if (conflict.localData['_context'] != null &&
+            conflict.localData['_context']['taxon'] != null) {
+          final taxonContext = conflict.localData['_context']['taxon'];
+          final nomComplet = taxonContext['nom_complet'] ?? '';
+          final nomVern = taxonContext['nom_vern'] ?? '';
+          final cdNom = entityId;
+          
+          String taxonName = nomComplet;
+          if (nomVern.isNotEmpty && nomVern != nomComplet) {
+            taxonName = '$nomComplet ($nomVern)';
+          }
+          if (taxonName.isNotEmpty) {
+            return '$taxonName (cd_nom: $cdNom)';
+          }
+        }
+        
+        // Sinon essayer de récupérer depuis la base de données
+        final cdNom = int.tryParse(entityId);
+        if (cdNom != null) {
+          // TODO: Implémenter la récupération depuis la base si nécessaire
+          // Pour l'instant on retourne juste le cd_nom
+          return 'Taxon (cd_nom: $cdNom)';
+        }
+      } catch (e) {
+        // Continue avec fallback
+      }
+    }
+    
+    // Sites
+    if (entityType == 'site' || entityType == 'basesite') {
+      try {
+        // D'abord vérifier si on a les données dans le contexte local
+        if (conflict.localData['_context'] != null &&
+            conflict.localData['_context']['site'] != null) {
+          final siteContext = conflict.localData['_context']['site'];
+          final siteName = siteContext['base_site_name'] ?? siteContext['site_name'] ?? '';
+          final siteCode = siteContext['base_site_code'] ?? siteContext['site_code'] ?? '';
+          
+          if (siteName.isNotEmpty) {
+            if (siteCode.isNotEmpty) {
+              return '$siteName ($siteCode)';
+            }
+            return siteName;
+          }
+        }
+        
+        // Sinon retourner l'ID
+        return 'Site (ID: $entityId)';
+      } catch (e) {
+        // Continue avec fallback
+      }
+    }
+    
+    // Fallback par défaut
+    return '${StringFormatter.capitalizeFirst(conflict.referencedEntityType ?? "")} (ID: $entityId)';
   }
 
   @override

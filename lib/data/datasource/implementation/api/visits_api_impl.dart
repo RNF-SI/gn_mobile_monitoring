@@ -225,7 +225,7 @@ class VisitsApiImpl implements VisitsApi {
         }
       }
       
-      throw NetworkException(completeErrorMessage);
+      throw NetworkException(completeErrorMessage, originalDioException: e);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();
@@ -423,7 +423,7 @@ class VisitsApiImpl implements VisitsApi {
         }
       }
       
-      throw NetworkException(completeErrorMessage);
+      throw NetworkException(completeErrorMessage, originalDioException: e);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();

@@ -69,7 +69,8 @@ class TaxonApiImpl implements TaxonApi {
       return allTaxons;
     } on DioException catch (e) {
       throw NetworkException(
-          'Network error while fetching taxons for list $idListe: ${e.message}');
+          'Network error while fetching taxons for list $idListe: ${e.message}',
+          originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch taxons for list $idListe: $e');
     }
@@ -100,7 +101,8 @@ class TaxonApiImpl implements TaxonApi {
       );
     } on DioException catch (e) {
       throw NetworkException(
-          'Network error while fetching taxon list: ${e.message}');
+          'Network error while fetching taxon list: ${e.message}',
+          originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch taxon list: $e');
     }
@@ -124,7 +126,8 @@ class TaxonApiImpl implements TaxonApi {
       );
     } on DioException catch (e) {
       throw NetworkException(
-          'Network error while fetching taxon: ${e.message}');
+          'Network error while fetching taxon: ${e.message}',
+          originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch taxon: $e');
     }
@@ -369,6 +372,7 @@ class TaxonApiImpl implements TaxonApi {
     } on DioException catch (e) {
       throw NetworkException(
         'Erreur réseau lors de la recherche de taxons: ${e.message}',
+        originalDioException: e,
       );
     } catch (e) {
       throw ApiException('Erreur lors de la recherche de taxons: $e');

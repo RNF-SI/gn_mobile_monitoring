@@ -426,7 +426,10 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
 
           // Affichage des détails de synchronisation (quand _detailsExpanded = true)
-          if (_detailsExpanded && syncStatus.additionalInfo != null)
+          // Inclure même en cas d'échec car le bilan peut contenir des informations utiles
+          if (_detailsExpanded && 
+              syncStatus.additionalInfo != null && 
+              syncStatus.additionalInfo!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -729,7 +732,9 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     bool isIncrementalSummary =
         lines.isNotEmpty && lines[0].contains('Éléments déjà synchronisés');
     bool isFinalSummary =
-        lines.isNotEmpty && lines[0].contains('Résumé de la synchronisation');
+        lines.isNotEmpty && (lines[0].contains('Résumé de la synchronisation') || lines[0].contains('Résumé du téléversement'));
+    bool isUploadSummary = 
+        lines.isNotEmpty && lines[0].contains('Résumé du téléversement');
 
     // Récupérer les informations sur les conflits pour les associer aux bonnes sections
     final syncStatus = ref.watch(syncServiceProvider);
@@ -808,6 +813,55 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             statsByCategory[currentCategory]!['hasConflicts'] =
                 conflictsByEntityType.containsKey(categoryType) &&
                     conflictsByEntityType[categoryType]!.isNotEmpty;
+          }
+        }
+      }
+    } else if (isUploadSummary) {
+      // Traiter le résumé de téléversement (format similaire au résumé final)
+      for (int i = 1; i < lines.length; i++) {
+        final line = lines[i].trim();
+
+        if (line.startsWith('•') && !line.startsWith('• TOTAL')) {
+          // Ligne de catégorie pour le téléversement
+          final parts = line.substring(1).trim().split(':');
+          if (parts.length >= 2) {
+            final category = parts[0].trim();
+
+            // Initialiser les statistiques pour cette catégorie
+            if (!statsByCategory.containsKey(category)) {
+              statsByCategory[category] = {
+                'total': 0,
+                'added': 0,
+                'updated': 0,
+                'skipped': 0,
+                'deleted': 0,
+                'hasConflicts': false,
+              };
+            }
+
+            // Extraire les statistiques
+            final statsStr = parts[1].trim();
+            if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
+              final regex = RegExp(
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+              final match = regex.firstMatch(statsStr);
+
+              if (match != null) {
+                statsByCategory[category]!['total'] =
+                    int.parse(match.group(1) ?? '0');
+                statsByCategory[category]!['added'] =
+                    int.parse(match.group(2) ?? '0');
+                statsByCategory[category]!['updated'] =
+                    int.parse(match.group(3) ?? '0');
+                statsByCategory[category]!['skipped'] =
+                    int.parse(match.group(4) ?? '0');
+                statsByCategory[category]!['deleted'] =
+                    int.parse(match.group(5) ?? '0');
+              }
+            }
+
+            // Pour le téléversement, pas de conflits car les données sont envoyées vers le serveur
+            statsByCategory[category]!['hasConflicts'] = false;
           }
         }
       }

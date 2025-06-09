@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/core/helpers/string_formatter.dart';
+import 'package:gn_mobile_monitoring/core/helpers/server_error_extractor.dart';
 
 /// Helper pour la gestion et le formatage des erreurs de synchronisation
 class SyncErrorHandler {
@@ -8,66 +9,100 @@ class SyncErrorHandler {
     String baseMessage = '${entityType.capitalize()} $entityId: ';
     String errorStr = error.toString();
 
+    // Essayer d'extraire les détails serveur en priorité
+    String? serverDetails = ServerErrorExtractor.extractServerDetails(error);
+    
     // Extraire les informations spécifiques selon le type d'erreur
+    String userMessage;
     if (errorStr.contains('psycopg2.errors') ||
         errorStr.contains('CheckViolation') ||
         errorStr.contains('constraint') ||
         errorStr.contains('Constraint')) {
-      return '$baseMessage${_formatConstraintError(errorStr)}';
+      userMessage = _formatConstraintError(errorStr);
     } else if (errorStr.contains('500')) {
-      return '$baseMessage${_formatServerError(errorStr)}';
+      userMessage = _formatServerError(errorStr);
     } else if (errorStr.contains('400')) {
-      return '$baseMessage${_formatValidationError(errorStr)}';
+      userMessage = _formatValidationError(errorStr);
     } else if (errorStr.contains('timeout')) {
-      return '$baseMessage${_formatTimeoutError()}';
+      userMessage = _formatTimeoutError();
     } else if (errorStr.contains('permission') || errorStr.contains('403')) {
-      return '$baseMessage${_formatPermissionError()}';
+      userMessage = _formatPermissionError();
     } else if (errorStr.contains('NetworkException')) {
-      return '$baseMessage${_formatNetworkError(errorStr)}';
+      userMessage = _formatNetworkError(errorStr);
     } else {
       // Erreur générique, mais préserver les détails techniques PostgreSQL
       if (errorStr.contains('ERREUR:') ||
           errorStr.contains('DÉTAIL :') ||
           errorStr.contains('CONTEXTE :') ||
           errorStr.contains('sqlalchemy')) {
-        return '$baseMessage$errorStr';
+        userMessage = errorStr;
+      } else {
+        // Autres erreurs génériques
+        String message = errorStr;
+        if (message.length > 200) {
+          message = '${message.substring(0, 200)}...';
+        }
+        userMessage = message;
       }
-
-      // Autres erreurs génériques
-      String message = errorStr;
-      if (message.length > 200) {
-        message = '${message.substring(0, 200)}...';
-      }
-      return '$baseMessage$message';
     }
+
+    // Construire le message final avec détails serveur si disponibles
+    return _buildDetailedMessage(baseMessage, userMessage, serverDetails, errorStr);
+  }
+
+  /// Construit le message final avec détails serveur structurés
+  static String _buildDetailedMessage(String baseMessage, String userMessage, String? serverDetails, String originalError) {
+    final messageParts = <String>[baseMessage];
+    
+    // Ajouter le message utilisateur (sans les détails techniques s'ils sont déjà extraits)
+    String cleanUserMessage = userMessage;
+    if (serverDetails != null && userMessage.contains('Détails techniques:')) {
+      // Retirer la partie "Détails techniques" du message utilisateur si on a des détails serveur
+      cleanUserMessage = userMessage.split('Détails techniques:')[0].trim();
+    }
+    messageParts.add(cleanUserMessage);
+    
+    // Ajouter les détails serveur s'ils sont disponibles et différents du message utilisateur
+    if (serverDetails != null && 
+        serverDetails.trim().isNotEmpty && 
+        !cleanUserMessage.contains(serverDetails)) {
+      messageParts.add('Détails serveur: $serverDetails');
+    }
+    
+    // Ajouter les détails techniques seulement si pas déjà inclus dans les détails serveur
+    if (serverDetails == null || !originalError.contains(serverDetails)) {
+      messageParts.add('Détails techniques: $originalError');
+    }
+    
+    return messageParts.join('\n');
   }
 
   /// Formate une erreur de contrainte de base de données
   static String _formatConstraintError(String error) {
     if (error.contains('unique')) {
-      return 'Données en conflit - Cet élément existe déjà sur le serveur.\nDétails techniques: $error';
+      return 'Données en conflit - Cet élément existe déjà sur le serveur.';
     } else if (error.contains('foreign key') || error.contains('fkey')) {
-      return 'Référence invalide - Un ID référencé n\'existe pas sur le serveur.\nDétails techniques: $error';
+      return 'Référence invalide - Un ID référencé n\'existe pas sur le serveur.';
     } else {
-      return 'Erreur de validation des données - Contrainte de base de données violée.\nDétails techniques: $error';
+      return 'Erreur de validation des données - Contrainte de base de données violée.';
     }
   }
 
   /// Formate une erreur serveur 500
   static String _formatServerError(String error) {
     if (error.contains('synthese')) {
-      return 'Erreur de synthèse - Problème lors de l\'intégration des données dans la synthèse.\nDétails techniques: $error';
+      return 'Erreur de synthèse - Problème lors de l\'intégration des données dans la synthèse.';
     } else {
-      return 'Erreur interne du serveur - Contactez l\'administrateur.\nDétails techniques: $error';
+      return 'Erreur interne du serveur - Contactez l\'administrateur.';
     }
   }
 
   /// Formate une erreur de validation 400
   static String _formatValidationError(String error) {
     if (error.contains('required') || error.contains('requis')) {
-      return 'Champs obligatoires manquants - Vérifiez que toutes les données requises sont remplies.\nDétails techniques: $error';
+      return 'Champs obligatoires manquants - Vérifiez que toutes les données requises sont remplies.';
     } else {
-      return 'Données invalides - Vérifiez le format et le contenu des données.\nDétails techniques: $error';
+      return 'Données invalides - Vérifiez le format et le contenu des données.';
     }
   }
 

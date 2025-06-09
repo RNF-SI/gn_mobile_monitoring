@@ -219,6 +219,8 @@ class SyncErrorDetailPage extends ConsumerWidget {
       // Capturer uniquement les lignes techniques importantes
       if (trimmed.startsWith('ERREUR:') || 
           trimmed.startsWith('DÉTAIL :') ||
+          trimmed.startsWith('Détails serveur:') ||
+          trimmed.startsWith('Détails techniques:') ||
           trimmed.startsWith('CONTEXTE :') ||
           trimmed.contains('psycopg2.errors') ||
           trimmed.contains('CheckViolation') ||

@@ -455,7 +455,7 @@ class ObservationsApiImpl implements ObservationsApi {
 
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
 
-      throw NetworkException('Erreur réseau lors de la mise à jour de l\'observation: ${e.message}');
+      throw NetworkException('Erreur réseau lors de la mise à jour de l\'observation: ${e.message}', originalDioException: e);
     } catch (e, stackTrace) {
       final logger = AppLogger();
 
