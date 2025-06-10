@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
 
 class MenuActions extends ConsumerWidget {
   const MenuActions({super.key});
@@ -31,6 +32,8 @@ class MenuActions extends ConsumerWidget {
         _buildMenuItem(
             Icons.upload, 'Téléversement', 'sync_upload'),
         const PopupMenuDivider(),
+        _buildMenuItem(
+            Icons.bug_report, 'Export des logs', 'export_logs'),
         _buildMenuItem(
             Icons.delete,
             '[DEV] Suppression et rechargement de la base de données',
@@ -69,6 +72,9 @@ class MenuActions extends ConsumerWidget {
         break;
       case 'sync_upload':
         await _performUploadSync(context, syncService, ref);
+        break;
+      case 'export_logs':
+        await LogExportDialog.show(context);
         break;
       case 'delete':
         await _confirmDelete(context, databaseService);

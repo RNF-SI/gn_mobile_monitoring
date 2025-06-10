@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart' as domain;
@@ -116,7 +117,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     }
 
     _isSyncing = true;
-    debugPrint('Démarrage de syncAll avec plusieurs éléments');
+    AppLogger().i('Démarrage de la synchronisation complète des données', tag: 'SYNC');
 
     // Réinitialiser les résultats et conflits au début d'une nouvelle synchronisation complète
     _syncResults.clear();
@@ -207,8 +208,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         } catch (e) {
           failedSteps.add(SyncStep.configuration);
           totalItemsProcessed += 1;
-          debugPrint(
-              'Erreur lors de la synchronisation de la configuration: $e');
+          AppLogger().e('Échec de la synchronisation de la configuration', tag: 'SYNC', error: e);
         }
       }
 
@@ -234,8 +234,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           // Vérifier pour les conflits spécifiquement
           if (nomResult.conflicts != null && nomResult.conflicts!.isNotEmpty) {
             // On a des conflits mais on continue le processus
-            debugPrint(
-                'Des conflits de nomenclatures ont été détectés: ${nomResult.conflicts!.length}');
+            AppLogger().w('Conflits de nomenclatures détectés', tag: 'SYNC', error: 'Nombre: ${nomResult.conflicts!.length}');
 
             // Stocker les conflits pour une utilisation ultérieure
             allConflicts.addAll(nomResult.conflicts!);
@@ -299,7 +298,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         } catch (e) {
           failedSteps.add(SyncStep.nomenclatures);
           totalItemsProcessed += 1;
-          debugPrint('Erreur lors de la synchronisation des nomenclatures: $e');
+          AppLogger().e('Échec de la synchronisation des nomenclatures', tag: 'SYNC', error: e);
           errorMessages
               .add('Erreur lors de la synchronisation des nomenclatures: $e');
         }
@@ -350,12 +349,10 @@ class SyncService extends StateNotifier<SyncStatus> {
         );
 
         try {
-          debugPrint(
-              'SyncService - Démarrage de la synchronisation des taxons');
+          AppLogger().d('Démarrage de la synchronisation des taxons', tag: 'SYNC');
           final taxonsResult = await _executeSingleSync(token, 'taxons');
           if (taxonsResult.success) {
-            debugPrint(
-                'SyncService - Synchronisation des taxons réussie avec ${taxonsResult.itemsAdded} ajouts et ${taxonsResult.itemsUpdated} mises à jour');
+            AppLogger().i('Synchronisation des taxons terminée avec succès', tag: 'SYNC', error: 'Ajoutés: ${taxonsResult.itemsAdded}, Mis à jour: ${taxonsResult.itemsUpdated}');
             completedSteps.add(SyncStep.taxons);
 
             // Mise à jour avec le nouveau résumé incluant cette étape
@@ -372,15 +369,14 @@ class SyncService extends StateNotifier<SyncStatus> {
               additionalInfo: updatedSummary,
             );
           } else {
-            debugPrint(
-                'SyncService - Échec de la synchronisation des taxons: ${taxonsResult.errorMessage}');
+            AppLogger().e('Échec de la synchronisation des taxons', tag: 'SYNC', error: taxonsResult.errorMessage);
             failedSteps.add(SyncStep.taxons);
           }
           totalItemsProcessed += 1;
         } catch (e) {
           failedSteps.add(SyncStep.taxons);
           totalItemsProcessed += 1;
-          debugPrint('Erreur lors de la synchronisation des taxons: $e');
+          AppLogger().e('Exception lors de la synchronisation des taxons', tag: 'SYNC', error: e);
         }
       }
 
@@ -423,7 +419,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         } catch (e) {
           failedSteps.add(SyncStep.observers);
           totalItemsProcessed += 1;
-          debugPrint('Erreur lors de la synchronisation des observateurs: $e');
+          AppLogger().e('Échec de la synchronisation des observateurs', tag: 'SYNC', error: e);
         }
       }
 
@@ -468,7 +464,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         } catch (e) {
           failedSteps.add(SyncStep.modules);
           totalItemsProcessed += 1;
-          debugPrint('Erreur lors de la synchronisation des modules: $e');
+          AppLogger().e('Échec de la synchronisation des modules', tag: 'SYNC', error: e);
         }
       }
 
@@ -513,7 +509,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         } catch (e) {
           failedSteps.add(SyncStep.sites);
           totalItemsProcessed += 1;
-          debugPrint('Erreur lors de la synchronisation des sites: $e');
+          AppLogger().e('Échec de la synchronisation des sites', tag: 'SYNC', error: e);
         }
       }
 
@@ -707,7 +703,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       _isSyncing = false;
       return state;
     } catch (e) {
-      debugPrint('Erreur inattendue lors de la synchronisation: $e');
+      AppLogger().e('Erreur inattendue lors de la synchronisation', tag: 'SYNC', error: e);
 
       // Mettre à jour l'état en cas d'erreur
       final newState = SyncStatus.failure(
@@ -1080,7 +1076,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         );
       }
     } catch (e) {
-      debugPrint('Erreur lors de la résolution du conflit: $e');
+      AppLogger().e('Échec de la résolution du conflit', tag: 'SYNC', error: e);
     }
   }
 
@@ -1384,7 +1380,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       return newState;
     } catch (e) {
       // Gérer les erreurs globales
-      debugPrint('Erreur générale lors de la synchronisation ascendante: $e');
+      AppLogger().e('Erreur générale lors de la synchronisation ascendante', tag: 'SYNC', error: e);
 
       final newState = SyncStatus.failure(
         errorMessage: 'Erreur lors de la synchronisation ascendante: $e',
@@ -1436,7 +1432,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         isManualSync: false, // C'est une synchronisation automatique
       );
     } catch (e) {
-      debugPrint('Erreur lors de la synchronisation complète automatique: $e');
+      AppLogger().e('Échec de la synchronisation complète automatique', tag: 'SYNC', error: e);
     }
   }
 
@@ -1543,7 +1539,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           SyncStep.siteGroups,
         ]);
         totalItemsProcessed += 1;
-        debugPrint('Erreur lors du téléchargement: $e');
+        AppLogger().e('Échec du téléchargement de données', tag: 'SYNC', error: e);
         errorMessages.add('Téléchargement: $e');
       }
 
@@ -1582,7 +1578,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       } catch (e) {
         failedSteps.add(SyncStep.visitsToServer);
         totalItemsProcessed += 1;
-        debugPrint('Erreur lors de l\'envoi des données: $e');
+        AppLogger().e('Échec de l\'envoi des données vers le serveur', tag: 'SYNC', error: e);
         errorMessages.add('Envoi: $e');
       }
 
@@ -1651,7 +1647,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         return newState;
       }
     } catch (e) {
-      debugPrint('Erreur inattendue lors de la synchronisation complète: $e');
+      AppLogger().e('Erreur inattendue lors de la synchronisation complète', tag: 'SYNC', error: e);
 
       final newState = SyncStatus.failure(
         errorMessage:

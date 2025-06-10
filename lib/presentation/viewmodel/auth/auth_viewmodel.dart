@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
@@ -113,7 +114,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         Config.setStoredApiUrl(apiUrl);
       }
     } catch (e) {
-      print('Error loading API URL: $e');
+      AppLogger().e('Échec du chargement de l\'URL API stockée', tag: 'AUTH', error: e);
     }
   }
 
@@ -136,10 +137,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       await _setApiUrlFromLocalStorageUseCase.execute(apiUrl);
       Config.setStoredApiUrl(apiUrl);
       
-      // Debug: print configuration info
-      print(Config.getDebugInfo());
+      AppLogger().d('URL API sauvegardée avec succès', tag: 'AUTH');
     } catch (e) {
-      print('Error saving API URL: $e');
+      AppLogger().e('Échec de la sauvegarde de l\'URL API', tag: 'AUTH', error: e);
     }
   }
   
@@ -148,7 +148,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     try {
       return await _getApiUrlFromLocalStorageUseCase.execute();
     } catch (e) {
-      print('Error getting API URL: $e');
+      AppLogger().e('Échec de la récupération de l\'URL API', tag: 'AUTH', error: e);
       return null;
     }
   }
@@ -181,8 +181,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
           try {
             if (hasDatabaseData) {
-              print(
-                  "Database already contains data. Performing incremental sync...");
+              AppLogger().i('Base de données contient des données existantes, synchronisation incrémentale en cours', tag: 'AUTH');
 
               // Perform incremental sync of modules
               _updateLoginStatus(LoginStatusInfo.incrementalSyncModules);
@@ -190,7 +189,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
               // Sites are now synchronized with individual modules, not here anymore
             } else {
-              print("Empty database. Performing full initial sync...");
+              AppLogger().i('Base de données vide détectée, synchronisation initiale complète en cours', tag: 'AUTH');
 
               // First fetch and sync modules
               _updateLoginStatus(LoginStatusInfo.fetchingModules);
@@ -199,7 +198,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
               // Sites are now downloaded with individual modules, not here anymore
             }
           } catch (e) {
-            print('Error during data sync: $e');
+            AppLogger().e('Échec de la synchronisation des données après connexion', tag: 'AUTH', error: e);
             // We still continue to the home page even if some data fetching failed
           }
 
@@ -211,7 +210,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           GoRouter.of(context).go('/');
           state = loadingState.State.success(user);
         } catch (e) {
-          print('Error during post-login actions: $e');
+          AppLogger().e('Échec des actions post-connexion', tag: 'AUTH', error: e);
           _updateLoginStatus(LoginStatusInfo.error(e.toString()));
         }
       });
@@ -313,7 +312,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       // Reset the state
       state = const loadingState.State.init();
     } catch (e) {
-      print('Error during logout: $e');
+      AppLogger().e('Échec du processus de déconnexion', tag: 'AUTH', error: e);
     }
   }
 
@@ -344,9 +343,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         // Vider tous les caches des services
         _clearAllServiceCaches(ref);
         
-        print('Base de données et caches supprimés avec succès lors de la déconnexion');
+        AppLogger().i('Base de données et caches supprimés avec succès lors de la déconnexion', tag: 'AUTH');
       } catch (e) {
-        print('Erreur lors de la suppression de la base de données: $e');
+        AppLogger().e('Échec de la suppression de la base de données lors de la déconnexion', tag: 'AUTH', error: e);
         // Continuer avec la déconnexion même si la suppression de la DB échoue
       }
 
@@ -359,7 +358,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       // Reset the state
       state = const loadingState.State.init();
     } catch (e) {
-      print('Error during enhanced logout: $e');
+      AppLogger().e('Échec du processus de déconnexion amélioré', tag: 'AUTH', error: e);
     }
   }
 
@@ -375,9 +374,9 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       ref.refresh(taxonServiceProvider);
       ref.refresh(authStateProvider);
       
-      print('Tous les caches des services ont été vidés');
+      AppLogger().i('Tous les caches des services ont été vidés avec succès', tag: 'AUTH');
     } catch (e) {
-      print('Erreur lors du vidage des caches: $e');
+      AppLogger().e('Échec du vidage des caches de services', tag: 'AUTH', error: e);
     }
   }
 }
