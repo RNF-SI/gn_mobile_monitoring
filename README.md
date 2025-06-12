@@ -33,34 +33,34 @@ flutter pub run build_runner build --delete-conflicting-outputs
 
 # Lancer l'application
 flutter run
+```
 
-⚙️ Configuration
+## ⚙️ Configuration
 
 1. Lancez l'application
 2. Saisissez l'URL de votre instance GeoNature
 3. Connectez-vous avec vos identifiants GeoNature
 4. Téléchargez les modules de monitoring souhaités
 
-📋 Prérequis
+## 📋 Prérequis
 
 - Android 5.0 minimum
 - GeoNature 2.15.0 avec module monitoring 1.0.0 au minimum
 - Compte utilisateur avec droits sur les modules
 
-🛠️ Développement
+## 🛠️ Développement
 
-L'application utilise Flutter et suit une architecture Clean Architecture. Voir CLAUDE.md pour les conventions de code.
+L'application utilise Flutter et suit une architecture Clean Architecture.
 - [Tâches](./TASKS.md)
 - [Snippets](./SNIPPETS.md)
 - [.cursorrules](./CURSORRULES.md)
 - [Fichiers de Prompts](./PROMPTS.md)
 
 
-🤝 Contribution
+## 🤝 Contribution
 
 Les contributions sont bienvenues ! N'hésitez pas à ouvrir une issue ou proposer une PR.
 
-🐛 Support
+## 🐛 Support
 
-Pour tout problème ou question, ouvrez une issue sur ce repository.
-```
+Pour tout problème ou question, [ouvrez une issue](https://github.com/RNF-SI/gn_mobile_monitoring/issues/new) sur ce repository.
