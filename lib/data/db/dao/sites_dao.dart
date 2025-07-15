@@ -86,7 +86,7 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   Future<void> insertComplements(List<SiteComplement> complements) async {
     final dbEntities = complements.map((e) => e.toDatabaseEntity()).toList();
     await batch((batch) {
-      batch.insertAll(tSiteComplements, dbEntities);
+      batch.insertAll(tSiteComplements, dbEntities, mode: InsertMode.insertOrReplace);
     });
   }
 

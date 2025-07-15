@@ -4692,11 +4692,7 @@ class $TSiteComplementsTable extends TSiteComplements
   @override
   late final GeneratedColumn<int> idBaseSite = GeneratedColumn<int>(
       'id_base_site', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _idSitesGroupMeta =
       const VerificationMeta('idSitesGroup');
   @override

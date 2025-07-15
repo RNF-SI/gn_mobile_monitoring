@@ -152,35 +152,4 @@ class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
-
-  @override
-  _i4.Future<List<_i6.BaseSite>> getSites() => (super.noSuchMethod(
-        Invocation.method(
-          #getSites,
-          [],
-        ),
-        returnValue: _i4.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
-      ) as _i4.Future<List<_i6.BaseSite>>);
-
-  @override
-  _i4.Future<void> fetchSitesAndSiteModules(String? token) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #fetchSitesAndSiteModules,
-          [token],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
-
-  @override
-  _i4.Future<void> incrementalSyncSitesAndSiteModules(String? token) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #incrementalSyncSitesAndSiteModules,
-          [token],
-        ),
-        returnValue: _i4.Future<void>.value(),
-        returnValueForMissingStub: _i4.Future<void>.value(),
-      ) as _i4.Future<void>);
 }
