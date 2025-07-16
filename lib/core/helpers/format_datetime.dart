@@ -18,7 +18,7 @@ String formatDate(DateTime date) {
   return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
 }
 
-/// Formate une chaîne de date (comme "2024-03-21") en format localisé
+/// Formate une chaîne de date (comme "2024-03-21") en format français dd/MM/yyyy
 String formatDateString(String dateString) {
   try {
     // Si la chaîne contient un T (format ISO), extraire seulement la partie date
@@ -26,7 +26,8 @@ String formatDateString(String dateString) {
         dateString.contains('T') ? dateString.split('T')[0] : dateString;
 
     final date = DateTime.parse(datePart);
-    final formatter = DateFormat.yMd();
+    // Utiliser le format français dd/MM/yyyy
+    final formatter = DateFormat('dd/MM/yyyy');
     return formatter.format(date);
   } catch (e) {
     // En cas d'erreur, retourner la chaîne originale
