@@ -87,6 +87,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_ca
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/check_permission_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_permissions_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_token_from_local_storage_usecase.dart';
@@ -430,5 +432,18 @@ final syncCompleteUseCaseProvider = Provider<SyncCompleteUseCase>(
   (ref) => SyncCompleteUseCaseImpl(
     ref.watch(syncRepositoryProvider),
     ref.watch(getModulesUseCaseProvider),
+  ),
+);
+
+// Providers pour les permissions
+final checkPermissionUseCaseProvider = Provider<CheckPermissionUseCase>(
+  (ref) => CheckPermissionUseCase(
+    permissionRepository: ref.watch(permissionRepositoryProvider),
+  ),
+);
+
+final syncPermissionsUseCaseProvider = Provider<SyncPermissionsUseCase>(
+  (ref) => SyncPermissionsUseCase(
+    permissionRepository: ref.watch(permissionRepositoryProvider),
   ),
 );

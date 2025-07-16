@@ -8621,6 +8621,539 @@ class TPermissionsCompanion extends UpdateCompanion<TPermission> {
   }
 }
 
+class $TModulePermissionsTable extends TModulePermissions
+    with TableInfo<$TModulePermissionsTable, TModulePermission> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TModulePermissionsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _moduleCodeMeta =
+      const VerificationMeta('moduleCode');
+  @override
+  late final GeneratedColumn<String> moduleCode = GeneratedColumn<String>(
+      'module_code', aliasedName, false,
+      additionalChecks:
+          GeneratedColumn.checkTextLength(minTextLength: 1, maxTextLength: 50),
+      type: DriftSqlType.string,
+      requiredDuringInsert: true);
+  static const VerificationMeta _visitCreateMeta =
+      const VerificationMeta('visitCreate');
+  @override
+  late final GeneratedColumn<int> visitCreate = GeneratedColumn<int>(
+      'visit_create', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _visitReadMeta =
+      const VerificationMeta('visitRead');
+  @override
+  late final GeneratedColumn<int> visitRead = GeneratedColumn<int>(
+      'visit_read', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _visitUpdateMeta =
+      const VerificationMeta('visitUpdate');
+  @override
+  late final GeneratedColumn<int> visitUpdate = GeneratedColumn<int>(
+      'visit_update', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _visitDeleteMeta =
+      const VerificationMeta('visitDelete');
+  @override
+  late final GeneratedColumn<int> visitDelete = GeneratedColumn<int>(
+      'visit_delete', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _siteCreateMeta =
+      const VerificationMeta('siteCreate');
+  @override
+  late final GeneratedColumn<int> siteCreate = GeneratedColumn<int>(
+      'site_create', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _siteReadMeta =
+      const VerificationMeta('siteRead');
+  @override
+  late final GeneratedColumn<int> siteRead = GeneratedColumn<int>(
+      'site_read', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _siteUpdateMeta =
+      const VerificationMeta('siteUpdate');
+  @override
+  late final GeneratedColumn<int> siteUpdate = GeneratedColumn<int>(
+      'site_update', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _siteDeleteMeta =
+      const VerificationMeta('siteDelete');
+  @override
+  late final GeneratedColumn<int> siteDelete = GeneratedColumn<int>(
+      'site_delete', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  static const VerificationMeta _lastSyncMeta =
+      const VerificationMeta('lastSync');
+  @override
+  late final GeneratedColumn<DateTime> lastSync = GeneratedColumn<DateTime>(
+      'last_sync', aliasedName, false,
+      type: DriftSqlType.dateTime, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [
+        moduleCode,
+        visitCreate,
+        visitRead,
+        visitUpdate,
+        visitDelete,
+        siteCreate,
+        siteRead,
+        siteUpdate,
+        siteDelete,
+        lastSync
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_module_permissions';
+  @override
+  VerificationContext validateIntegrity(Insertable<TModulePermission> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('module_code')) {
+      context.handle(
+          _moduleCodeMeta,
+          moduleCode.isAcceptableOrUnknown(
+              data['module_code']!, _moduleCodeMeta));
+    } else if (isInserting) {
+      context.missing(_moduleCodeMeta);
+    }
+    if (data.containsKey('visit_create')) {
+      context.handle(
+          _visitCreateMeta,
+          visitCreate.isAcceptableOrUnknown(
+              data['visit_create']!, _visitCreateMeta));
+    }
+    if (data.containsKey('visit_read')) {
+      context.handle(_visitReadMeta,
+          visitRead.isAcceptableOrUnknown(data['visit_read']!, _visitReadMeta));
+    }
+    if (data.containsKey('visit_update')) {
+      context.handle(
+          _visitUpdateMeta,
+          visitUpdate.isAcceptableOrUnknown(
+              data['visit_update']!, _visitUpdateMeta));
+    }
+    if (data.containsKey('visit_delete')) {
+      context.handle(
+          _visitDeleteMeta,
+          visitDelete.isAcceptableOrUnknown(
+              data['visit_delete']!, _visitDeleteMeta));
+    }
+    if (data.containsKey('site_create')) {
+      context.handle(
+          _siteCreateMeta,
+          siteCreate.isAcceptableOrUnknown(
+              data['site_create']!, _siteCreateMeta));
+    }
+    if (data.containsKey('site_read')) {
+      context.handle(_siteReadMeta,
+          siteRead.isAcceptableOrUnknown(data['site_read']!, _siteReadMeta));
+    }
+    if (data.containsKey('site_update')) {
+      context.handle(
+          _siteUpdateMeta,
+          siteUpdate.isAcceptableOrUnknown(
+              data['site_update']!, _siteUpdateMeta));
+    }
+    if (data.containsKey('site_delete')) {
+      context.handle(
+          _siteDeleteMeta,
+          siteDelete.isAcceptableOrUnknown(
+              data['site_delete']!, _siteDeleteMeta));
+    }
+    if (data.containsKey('last_sync')) {
+      context.handle(_lastSyncMeta,
+          lastSync.isAcceptableOrUnknown(data['last_sync']!, _lastSyncMeta));
+    } else if (isInserting) {
+      context.missing(_lastSyncMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {moduleCode};
+  @override
+  TModulePermission map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TModulePermission(
+      moduleCode: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}module_code'])!,
+      visitCreate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}visit_create'])!,
+      visitRead: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}visit_read'])!,
+      visitUpdate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}visit_update'])!,
+      visitDelete: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}visit_delete'])!,
+      siteCreate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}site_create'])!,
+      siteRead: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}site_read'])!,
+      siteUpdate: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}site_update'])!,
+      siteDelete: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}site_delete'])!,
+      lastSync: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}last_sync'])!,
+    );
+  }
+
+  @override
+  $TModulePermissionsTable createAlias(String alias) {
+    return $TModulePermissionsTable(attachedDatabase, alias);
+  }
+}
+
+class TModulePermission extends DataClass
+    implements Insertable<TModulePermission> {
+  final String moduleCode;
+  final int visitCreate;
+  final int visitRead;
+  final int visitUpdate;
+  final int visitDelete;
+  final int siteCreate;
+  final int siteRead;
+  final int siteUpdate;
+  final int siteDelete;
+  final DateTime lastSync;
+  const TModulePermission(
+      {required this.moduleCode,
+      required this.visitCreate,
+      required this.visitRead,
+      required this.visitUpdate,
+      required this.visitDelete,
+      required this.siteCreate,
+      required this.siteRead,
+      required this.siteUpdate,
+      required this.siteDelete,
+      required this.lastSync});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['module_code'] = Variable<String>(moduleCode);
+    map['visit_create'] = Variable<int>(visitCreate);
+    map['visit_read'] = Variable<int>(visitRead);
+    map['visit_update'] = Variable<int>(visitUpdate);
+    map['visit_delete'] = Variable<int>(visitDelete);
+    map['site_create'] = Variable<int>(siteCreate);
+    map['site_read'] = Variable<int>(siteRead);
+    map['site_update'] = Variable<int>(siteUpdate);
+    map['site_delete'] = Variable<int>(siteDelete);
+    map['last_sync'] = Variable<DateTime>(lastSync);
+    return map;
+  }
+
+  TModulePermissionsCompanion toCompanion(bool nullToAbsent) {
+    return TModulePermissionsCompanion(
+      moduleCode: Value(moduleCode),
+      visitCreate: Value(visitCreate),
+      visitRead: Value(visitRead),
+      visitUpdate: Value(visitUpdate),
+      visitDelete: Value(visitDelete),
+      siteCreate: Value(siteCreate),
+      siteRead: Value(siteRead),
+      siteUpdate: Value(siteUpdate),
+      siteDelete: Value(siteDelete),
+      lastSync: Value(lastSync),
+    );
+  }
+
+  factory TModulePermission.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TModulePermission(
+      moduleCode: serializer.fromJson<String>(json['moduleCode']),
+      visitCreate: serializer.fromJson<int>(json['visitCreate']),
+      visitRead: serializer.fromJson<int>(json['visitRead']),
+      visitUpdate: serializer.fromJson<int>(json['visitUpdate']),
+      visitDelete: serializer.fromJson<int>(json['visitDelete']),
+      siteCreate: serializer.fromJson<int>(json['siteCreate']),
+      siteRead: serializer.fromJson<int>(json['siteRead']),
+      siteUpdate: serializer.fromJson<int>(json['siteUpdate']),
+      siteDelete: serializer.fromJson<int>(json['siteDelete']),
+      lastSync: serializer.fromJson<DateTime>(json['lastSync']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'moduleCode': serializer.toJson<String>(moduleCode),
+      'visitCreate': serializer.toJson<int>(visitCreate),
+      'visitRead': serializer.toJson<int>(visitRead),
+      'visitUpdate': serializer.toJson<int>(visitUpdate),
+      'visitDelete': serializer.toJson<int>(visitDelete),
+      'siteCreate': serializer.toJson<int>(siteCreate),
+      'siteRead': serializer.toJson<int>(siteRead),
+      'siteUpdate': serializer.toJson<int>(siteUpdate),
+      'siteDelete': serializer.toJson<int>(siteDelete),
+      'lastSync': serializer.toJson<DateTime>(lastSync),
+    };
+  }
+
+  TModulePermission copyWith(
+          {String? moduleCode,
+          int? visitCreate,
+          int? visitRead,
+          int? visitUpdate,
+          int? visitDelete,
+          int? siteCreate,
+          int? siteRead,
+          int? siteUpdate,
+          int? siteDelete,
+          DateTime? lastSync}) =>
+      TModulePermission(
+        moduleCode: moduleCode ?? this.moduleCode,
+        visitCreate: visitCreate ?? this.visitCreate,
+        visitRead: visitRead ?? this.visitRead,
+        visitUpdate: visitUpdate ?? this.visitUpdate,
+        visitDelete: visitDelete ?? this.visitDelete,
+        siteCreate: siteCreate ?? this.siteCreate,
+        siteRead: siteRead ?? this.siteRead,
+        siteUpdate: siteUpdate ?? this.siteUpdate,
+        siteDelete: siteDelete ?? this.siteDelete,
+        lastSync: lastSync ?? this.lastSync,
+      );
+  TModulePermission copyWithCompanion(TModulePermissionsCompanion data) {
+    return TModulePermission(
+      moduleCode:
+          data.moduleCode.present ? data.moduleCode.value : this.moduleCode,
+      visitCreate:
+          data.visitCreate.present ? data.visitCreate.value : this.visitCreate,
+      visitRead: data.visitRead.present ? data.visitRead.value : this.visitRead,
+      visitUpdate:
+          data.visitUpdate.present ? data.visitUpdate.value : this.visitUpdate,
+      visitDelete:
+          data.visitDelete.present ? data.visitDelete.value : this.visitDelete,
+      siteCreate:
+          data.siteCreate.present ? data.siteCreate.value : this.siteCreate,
+      siteRead: data.siteRead.present ? data.siteRead.value : this.siteRead,
+      siteUpdate:
+          data.siteUpdate.present ? data.siteUpdate.value : this.siteUpdate,
+      siteDelete:
+          data.siteDelete.present ? data.siteDelete.value : this.siteDelete,
+      lastSync: data.lastSync.present ? data.lastSync.value : this.lastSync,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TModulePermission(')
+          ..write('moduleCode: $moduleCode, ')
+          ..write('visitCreate: $visitCreate, ')
+          ..write('visitRead: $visitRead, ')
+          ..write('visitUpdate: $visitUpdate, ')
+          ..write('visitDelete: $visitDelete, ')
+          ..write('siteCreate: $siteCreate, ')
+          ..write('siteRead: $siteRead, ')
+          ..write('siteUpdate: $siteUpdate, ')
+          ..write('siteDelete: $siteDelete, ')
+          ..write('lastSync: $lastSync')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      moduleCode,
+      visitCreate,
+      visitRead,
+      visitUpdate,
+      visitDelete,
+      siteCreate,
+      siteRead,
+      siteUpdate,
+      siteDelete,
+      lastSync);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TModulePermission &&
+          other.moduleCode == this.moduleCode &&
+          other.visitCreate == this.visitCreate &&
+          other.visitRead == this.visitRead &&
+          other.visitUpdate == this.visitUpdate &&
+          other.visitDelete == this.visitDelete &&
+          other.siteCreate == this.siteCreate &&
+          other.siteRead == this.siteRead &&
+          other.siteUpdate == this.siteUpdate &&
+          other.siteDelete == this.siteDelete &&
+          other.lastSync == this.lastSync);
+}
+
+class TModulePermissionsCompanion extends UpdateCompanion<TModulePermission> {
+  final Value<String> moduleCode;
+  final Value<int> visitCreate;
+  final Value<int> visitRead;
+  final Value<int> visitUpdate;
+  final Value<int> visitDelete;
+  final Value<int> siteCreate;
+  final Value<int> siteRead;
+  final Value<int> siteUpdate;
+  final Value<int> siteDelete;
+  final Value<DateTime> lastSync;
+  final Value<int> rowid;
+  const TModulePermissionsCompanion({
+    this.moduleCode = const Value.absent(),
+    this.visitCreate = const Value.absent(),
+    this.visitRead = const Value.absent(),
+    this.visitUpdate = const Value.absent(),
+    this.visitDelete = const Value.absent(),
+    this.siteCreate = const Value.absent(),
+    this.siteRead = const Value.absent(),
+    this.siteUpdate = const Value.absent(),
+    this.siteDelete = const Value.absent(),
+    this.lastSync = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  TModulePermissionsCompanion.insert({
+    required String moduleCode,
+    this.visitCreate = const Value.absent(),
+    this.visitRead = const Value.absent(),
+    this.visitUpdate = const Value.absent(),
+    this.visitDelete = const Value.absent(),
+    this.siteCreate = const Value.absent(),
+    this.siteRead = const Value.absent(),
+    this.siteUpdate = const Value.absent(),
+    this.siteDelete = const Value.absent(),
+    required DateTime lastSync,
+    this.rowid = const Value.absent(),
+  })  : moduleCode = Value(moduleCode),
+        lastSync = Value(lastSync);
+  static Insertable<TModulePermission> custom({
+    Expression<String>? moduleCode,
+    Expression<int>? visitCreate,
+    Expression<int>? visitRead,
+    Expression<int>? visitUpdate,
+    Expression<int>? visitDelete,
+    Expression<int>? siteCreate,
+    Expression<int>? siteRead,
+    Expression<int>? siteUpdate,
+    Expression<int>? siteDelete,
+    Expression<DateTime>? lastSync,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (moduleCode != null) 'module_code': moduleCode,
+      if (visitCreate != null) 'visit_create': visitCreate,
+      if (visitRead != null) 'visit_read': visitRead,
+      if (visitUpdate != null) 'visit_update': visitUpdate,
+      if (visitDelete != null) 'visit_delete': visitDelete,
+      if (siteCreate != null) 'site_create': siteCreate,
+      if (siteRead != null) 'site_read': siteRead,
+      if (siteUpdate != null) 'site_update': siteUpdate,
+      if (siteDelete != null) 'site_delete': siteDelete,
+      if (lastSync != null) 'last_sync': lastSync,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  TModulePermissionsCompanion copyWith(
+      {Value<String>? moduleCode,
+      Value<int>? visitCreate,
+      Value<int>? visitRead,
+      Value<int>? visitUpdate,
+      Value<int>? visitDelete,
+      Value<int>? siteCreate,
+      Value<int>? siteRead,
+      Value<int>? siteUpdate,
+      Value<int>? siteDelete,
+      Value<DateTime>? lastSync,
+      Value<int>? rowid}) {
+    return TModulePermissionsCompanion(
+      moduleCode: moduleCode ?? this.moduleCode,
+      visitCreate: visitCreate ?? this.visitCreate,
+      visitRead: visitRead ?? this.visitRead,
+      visitUpdate: visitUpdate ?? this.visitUpdate,
+      visitDelete: visitDelete ?? this.visitDelete,
+      siteCreate: siteCreate ?? this.siteCreate,
+      siteRead: siteRead ?? this.siteRead,
+      siteUpdate: siteUpdate ?? this.siteUpdate,
+      siteDelete: siteDelete ?? this.siteDelete,
+      lastSync: lastSync ?? this.lastSync,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (moduleCode.present) {
+      map['module_code'] = Variable<String>(moduleCode.value);
+    }
+    if (visitCreate.present) {
+      map['visit_create'] = Variable<int>(visitCreate.value);
+    }
+    if (visitRead.present) {
+      map['visit_read'] = Variable<int>(visitRead.value);
+    }
+    if (visitUpdate.present) {
+      map['visit_update'] = Variable<int>(visitUpdate.value);
+    }
+    if (visitDelete.present) {
+      map['visit_delete'] = Variable<int>(visitDelete.value);
+    }
+    if (siteCreate.present) {
+      map['site_create'] = Variable<int>(siteCreate.value);
+    }
+    if (siteRead.present) {
+      map['site_read'] = Variable<int>(siteRead.value);
+    }
+    if (siteUpdate.present) {
+      map['site_update'] = Variable<int>(siteUpdate.value);
+    }
+    if (siteDelete.present) {
+      map['site_delete'] = Variable<int>(siteDelete.value);
+    }
+    if (lastSync.present) {
+      map['last_sync'] = Variable<DateTime>(lastSync.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TModulePermissionsCompanion(')
+          ..write('moduleCode: $moduleCode, ')
+          ..write('visitCreate: $visitCreate, ')
+          ..write('visitRead: $visitRead, ')
+          ..write('visitUpdate: $visitUpdate, ')
+          ..write('visitDelete: $visitDelete, ')
+          ..write('siteCreate: $siteCreate, ')
+          ..write('siteRead: $siteRead, ')
+          ..write('siteUpdate: $siteUpdate, ')
+          ..write('siteDelete: $siteDelete, ')
+          ..write('lastSync: $lastSync, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 class $CorSiteModuleTableTable extends CorSiteModuleTable
     with TableInfo<$CorSiteModuleTableTable, CorSiteModule> {
   @override
@@ -12512,6 +13045,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TPermissionsAvailableTable tPermissionsAvailable =
       $TPermissionsAvailableTable(this);
   late final $TPermissionsTable tPermissions = $TPermissionsTable(this);
+  late final $TModulePermissionsTable tModulePermissions =
+      $TModulePermissionsTable(this);
   late final $CorSiteModuleTableTable corSiteModuleTable =
       $CorSiteModuleTableTable(this);
   late final $CorSitesGroupModuleTableTable corSitesGroupModuleTable =
@@ -12546,6 +13081,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final TaxonDao taxonDao = TaxonDao(this as AppDatabase);
   late final AppMetadataDao appMetadataDao =
       AppMetadataDao(this as AppDatabase);
+  late final PermissionsDao permissionsDao =
+      PermissionsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12569,6 +13106,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tActions,
         tPermissionsAvailable,
         tPermissions,
+        tModulePermissions,
         corSiteModuleTable,
         corSitesGroupModuleTable,
         corObjectModuleTable,
@@ -16656,6 +17194,256 @@ typedef $$TPermissionsTableProcessedTableManager = ProcessedTableManager<
     ),
     TPermission,
     PrefetchHooks Function()>;
+typedef $$TModulePermissionsTableCreateCompanionBuilder
+    = TModulePermissionsCompanion Function({
+  required String moduleCode,
+  Value<int> visitCreate,
+  Value<int> visitRead,
+  Value<int> visitUpdate,
+  Value<int> visitDelete,
+  Value<int> siteCreate,
+  Value<int> siteRead,
+  Value<int> siteUpdate,
+  Value<int> siteDelete,
+  required DateTime lastSync,
+  Value<int> rowid,
+});
+typedef $$TModulePermissionsTableUpdateCompanionBuilder
+    = TModulePermissionsCompanion Function({
+  Value<String> moduleCode,
+  Value<int> visitCreate,
+  Value<int> visitRead,
+  Value<int> visitUpdate,
+  Value<int> visitDelete,
+  Value<int> siteCreate,
+  Value<int> siteRead,
+  Value<int> siteUpdate,
+  Value<int> siteDelete,
+  Value<DateTime> lastSync,
+  Value<int> rowid,
+});
+
+class $$TModulePermissionsTableFilterComposer
+    extends Composer<_$AppDatabase, $TModulePermissionsTable> {
+  $$TModulePermissionsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get moduleCode => $composableBuilder(
+      column: $table.moduleCode, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get visitCreate => $composableBuilder(
+      column: $table.visitCreate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get visitRead => $composableBuilder(
+      column: $table.visitRead, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get visitUpdate => $composableBuilder(
+      column: $table.visitUpdate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get visitDelete => $composableBuilder(
+      column: $table.visitDelete, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get siteCreate => $composableBuilder(
+      column: $table.siteCreate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get siteRead => $composableBuilder(
+      column: $table.siteRead, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get siteUpdate => $composableBuilder(
+      column: $table.siteUpdate, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get siteDelete => $composableBuilder(
+      column: $table.siteDelete, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get lastSync => $composableBuilder(
+      column: $table.lastSync, builder: (column) => ColumnFilters(column));
+}
+
+class $$TModulePermissionsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TModulePermissionsTable> {
+  $$TModulePermissionsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get moduleCode => $composableBuilder(
+      column: $table.moduleCode, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get visitCreate => $composableBuilder(
+      column: $table.visitCreate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get visitRead => $composableBuilder(
+      column: $table.visitRead, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get visitUpdate => $composableBuilder(
+      column: $table.visitUpdate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get visitDelete => $composableBuilder(
+      column: $table.visitDelete, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get siteCreate => $composableBuilder(
+      column: $table.siteCreate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get siteRead => $composableBuilder(
+      column: $table.siteRead, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get siteUpdate => $composableBuilder(
+      column: $table.siteUpdate, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get siteDelete => $composableBuilder(
+      column: $table.siteDelete, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get lastSync => $composableBuilder(
+      column: $table.lastSync, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TModulePermissionsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TModulePermissionsTable> {
+  $$TModulePermissionsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get moduleCode => $composableBuilder(
+      column: $table.moduleCode, builder: (column) => column);
+
+  GeneratedColumn<int> get visitCreate => $composableBuilder(
+      column: $table.visitCreate, builder: (column) => column);
+
+  GeneratedColumn<int> get visitRead =>
+      $composableBuilder(column: $table.visitRead, builder: (column) => column);
+
+  GeneratedColumn<int> get visitUpdate => $composableBuilder(
+      column: $table.visitUpdate, builder: (column) => column);
+
+  GeneratedColumn<int> get visitDelete => $composableBuilder(
+      column: $table.visitDelete, builder: (column) => column);
+
+  GeneratedColumn<int> get siteCreate => $composableBuilder(
+      column: $table.siteCreate, builder: (column) => column);
+
+  GeneratedColumn<int> get siteRead =>
+      $composableBuilder(column: $table.siteRead, builder: (column) => column);
+
+  GeneratedColumn<int> get siteUpdate => $composableBuilder(
+      column: $table.siteUpdate, builder: (column) => column);
+
+  GeneratedColumn<int> get siteDelete => $composableBuilder(
+      column: $table.siteDelete, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get lastSync =>
+      $composableBuilder(column: $table.lastSync, builder: (column) => column);
+}
+
+class $$TModulePermissionsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TModulePermissionsTable,
+    TModulePermission,
+    $$TModulePermissionsTableFilterComposer,
+    $$TModulePermissionsTableOrderingComposer,
+    $$TModulePermissionsTableAnnotationComposer,
+    $$TModulePermissionsTableCreateCompanionBuilder,
+    $$TModulePermissionsTableUpdateCompanionBuilder,
+    (
+      TModulePermission,
+      BaseReferences<_$AppDatabase, $TModulePermissionsTable, TModulePermission>
+    ),
+    TModulePermission,
+    PrefetchHooks Function()> {
+  $$TModulePermissionsTableTableManager(
+      _$AppDatabase db, $TModulePermissionsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TModulePermissionsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TModulePermissionsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TModulePermissionsTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<String> moduleCode = const Value.absent(),
+            Value<int> visitCreate = const Value.absent(),
+            Value<int> visitRead = const Value.absent(),
+            Value<int> visitUpdate = const Value.absent(),
+            Value<int> visitDelete = const Value.absent(),
+            Value<int> siteCreate = const Value.absent(),
+            Value<int> siteRead = const Value.absent(),
+            Value<int> siteUpdate = const Value.absent(),
+            Value<int> siteDelete = const Value.absent(),
+            Value<DateTime> lastSync = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TModulePermissionsCompanion(
+            moduleCode: moduleCode,
+            visitCreate: visitCreate,
+            visitRead: visitRead,
+            visitUpdate: visitUpdate,
+            visitDelete: visitDelete,
+            siteCreate: siteCreate,
+            siteRead: siteRead,
+            siteUpdate: siteUpdate,
+            siteDelete: siteDelete,
+            lastSync: lastSync,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required String moduleCode,
+            Value<int> visitCreate = const Value.absent(),
+            Value<int> visitRead = const Value.absent(),
+            Value<int> visitUpdate = const Value.absent(),
+            Value<int> visitDelete = const Value.absent(),
+            Value<int> siteCreate = const Value.absent(),
+            Value<int> siteRead = const Value.absent(),
+            Value<int> siteUpdate = const Value.absent(),
+            Value<int> siteDelete = const Value.absent(),
+            required DateTime lastSync,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              TModulePermissionsCompanion.insert(
+            moduleCode: moduleCode,
+            visitCreate: visitCreate,
+            visitRead: visitRead,
+            visitUpdate: visitUpdate,
+            visitDelete: visitDelete,
+            siteCreate: siteCreate,
+            siteRead: siteRead,
+            siteUpdate: siteUpdate,
+            siteDelete: siteDelete,
+            lastSync: lastSync,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TModulePermissionsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TModulePermissionsTable,
+    TModulePermission,
+    $$TModulePermissionsTableFilterComposer,
+    $$TModulePermissionsTableOrderingComposer,
+    $$TModulePermissionsTableAnnotationComposer,
+    $$TModulePermissionsTableCreateCompanionBuilder,
+    $$TModulePermissionsTableUpdateCompanionBuilder,
+    (
+      TModulePermission,
+      BaseReferences<_$AppDatabase, $TModulePermissionsTable, TModulePermission>
+    ),
+    TModulePermission,
+    PrefetchHooks Function()>;
 typedef $$CorSiteModuleTableTableCreateCompanionBuilder
     = CorSiteModuleTableCompanion Function({
   required int idBaseSite,
@@ -19289,6 +20077,8 @@ class $AppDatabaseManager {
       $$TPermissionsAvailableTableTableManager(_db, _db.tPermissionsAvailable);
   $$TPermissionsTableTableManager get tPermissions =>
       $$TPermissionsTableTableManager(_db, _db.tPermissions);
+  $$TModulePermissionsTableTableManager get tModulePermissions =>
+      $$TModulePermissionsTableTableManager(_db, _db.tModulePermissions);
   $$CorSiteModuleTableTableTableManager get corSiteModuleTable =>
       $$CorSiteModuleTableTableTableManager(_db, _db.corSiteModuleTable);
   $$CorSitesGroupModuleTableTableTableManager get corSitesGroupModuleTable =>

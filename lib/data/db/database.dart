@@ -12,12 +12,14 @@ import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/taxon_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/permissions_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nomenclatures.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/021_create_app_metadata_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/022_add_server_visit_id_to_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/023_add_server_observation_id_to_observations.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/024_create_module_permissions_table.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/app_metadata.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
@@ -43,6 +45,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_observations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_observations_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_permissions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_permissions_available.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_module_permissions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_taxrefs.dart';
@@ -89,6 +92,7 @@ part 'database.g.dart';
   TActions,
   TPermissionsAvailable,
   TPermissions,
+  TModulePermissions,
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
   CorObjectModuleTable,
@@ -111,6 +115,7 @@ part 'database.g.dart';
   BibNomenclaturesTypesDao,
   TaxonDao,
   AppMetadataDao,
+  PermissionsDao,
 ])
 class AppDatabase extends _$AppDatabase {
   // DAO qui peuvent être remplacés par des mocks pour les tests
@@ -165,7 +170,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -193,6 +198,7 @@ class AppDatabase extends _$AppDatabase {
           await migration21(m, this);
           await migration22(m, this);
           await migration23(m, this);
+          await migration24(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           final db = this; // Access the database instance
@@ -263,6 +269,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 23:
                 await migration23(m, db);
+                break;
+              case 24:
+                await migration24(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");

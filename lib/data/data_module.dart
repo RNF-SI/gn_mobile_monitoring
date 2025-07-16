@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observat
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/permission_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/dataset_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/global_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/modules_database_impl.dart';
@@ -16,6 +17,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/database/obs
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/sites_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/taxon_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/visites_database_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/db/permission_db_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
@@ -24,6 +26,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/permission_api_datasource.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
@@ -32,6 +35,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/observat
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/permission_db_datasource.dart';
 import 'package:gn_mobile_monitoring/data/repository/authentication_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/global_database_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
@@ -41,6 +45,8 @@ import 'package:gn_mobile_monitoring/data/repository/observations_repository_imp
 import 'package:gn_mobile_monitoring/data/repository/sites_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/taxon_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/permission_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/user_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
@@ -50,6 +56,14 @@ import 'package:gn_mobile_monitoring/domain/repository/observations_repository.d
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/permission_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/user_repository.dart';
+import 'package:gn_mobile_monitoring/core/network/network_info.dart';
+import 'package:gn_mobile_monitoring/core/network/network_info_impl.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
+import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 
 final globalApiProvider = Provider<GlobalApi>((_) => GlobalApiImpl());
 final globalDatabaseProvider =
@@ -148,3 +162,48 @@ final modulesRepositoryProvider =
           ref.watch(taxonRepositoryProvider),
           ref.watch(sitesRepositoryProvider),
         ));
+
+// Network
+final connectivityProvider = Provider<Connectivity>((_) => Connectivity());
+final networkInfoProvider = Provider<NetworkInfo>(
+  (ref) => NetworkInfoImpl(connectivity: ref.watch(connectivityProvider)),
+);
+
+// Dio
+final dioProvider = Provider<Dio>((_) => Dio());
+
+// Database
+final appDatabaseProvider = Provider<AppDatabase>((_) => throw UnimplementedError('AppDatabase must be injected'));
+
+// Permission Data Sources
+final permissionApiProvider = Provider<PermissionApiDataSource>(
+  (ref) => PermissionApiImpl(dio: ref.watch(dioProvider)),
+);
+
+final permissionDbProvider = Provider<PermissionDbDataSource>(
+  (ref) => PermissionDbImpl(
+    permissionsDao: ref.watch(appDatabaseProvider).permissionsDao,
+  ),
+);
+
+// User Repository
+final userRepositoryProvider = Provider<UserRepository>(
+  (ref) => UserRepositoryImpl(
+    getUserIdUseCase: ref.watch(getUserIdFromLocalStorageUseCaseProvider),
+    getUserNameUseCase: ref.watch(getUserNameFromLocalStorageUseCaseProvider),
+    getTokenUseCase: ref.watch(getTokenFromLocalStorageUseCaseProvider),
+    clearUserIdUseCase: ref.watch(clearUserIdFromLocalStorageUseCaseProvider),
+    clearUserNameUseCase: ref.watch(clearUserNameFromLocalStorageUseCaseProvider),
+    clearTokenUseCase: ref.watch(clearTokenFromLocalStorageUseCaseProvider),
+  ),
+);
+
+// Permission Repository
+final permissionRepositoryProvider = Provider<PermissionRepository>(
+  (ref) => PermissionRepositoryImpl(
+    apiDataSource: ref.watch(permissionApiProvider),
+    dbDataSource: ref.watch(permissionDbProvider),
+    networkInfo: ref.watch(networkInfoProvider),
+    userRepository: ref.watch(userRepositoryProvider),
+  ),
+);

@@ -20,6 +20,7 @@ mixin _$User {
   String get name => throw _privateConstructorUsedError;
   String get email => throw _privateConstructorUsedError;
   String get token => throw _privateConstructorUsedError;
+  int? get organismeId => throw _privateConstructorUsedError;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -32,7 +33,8 @@ abstract class $UserCopyWith<$Res> {
   factory $UserCopyWith(User value, $Res Function(User) then) =
       _$UserCopyWithImpl<$Res, User>;
   @useResult
-  $Res call({int id, String name, String email, String token});
+  $Res call(
+      {int id, String name, String email, String token, int? organismeId});
 }
 
 /// @nodoc
@@ -54,6 +56,7 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
     Object? name = null,
     Object? email = null,
     Object? token = null,
+    Object? organismeId = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -72,6 +75,10 @@ class _$UserCopyWithImpl<$Res, $Val extends User>
           ? _value.token
           : token // ignore: cast_nullable_to_non_nullable
               as String,
+      organismeId: freezed == organismeId
+          ? _value.organismeId
+          : organismeId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -83,7 +90,8 @@ abstract class _$$UserImplCopyWith<$Res> implements $UserCopyWith<$Res> {
       __$$UserImplCopyWithImpl<$Res>;
   @override
   @useResult
-  $Res call({int id, String name, String email, String token});
+  $Res call(
+      {int id, String name, String email, String token, int? organismeId});
 }
 
 /// @nodoc
@@ -102,6 +110,7 @@ class __$$UserImplCopyWithImpl<$Res>
     Object? name = null,
     Object? email = null,
     Object? token = null,
+    Object? organismeId = freezed,
   }) {
     return _then(_$UserImpl(
       id: null == id
@@ -120,6 +129,10 @@ class __$$UserImplCopyWithImpl<$Res>
           ? _value.token
           : token // ignore: cast_nullable_to_non_nullable
               as String,
+      organismeId: freezed == organismeId
+          ? _value.organismeId
+          : organismeId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -131,7 +144,8 @@ class _$UserImpl implements _User {
       {required this.id,
       required this.name,
       required this.email,
-      required this.token});
+      required this.token,
+      this.organismeId});
 
   @override
   final int id;
@@ -141,10 +155,12 @@ class _$UserImpl implements _User {
   final String email;
   @override
   final String token;
+  @override
+  final int? organismeId;
 
   @override
   String toString() {
-    return 'User(id: $id, name: $name, email: $email, token: $token)';
+    return 'User(id: $id, name: $name, email: $email, token: $token, organismeId: $organismeId)';
   }
 
   @override
@@ -155,11 +171,14 @@ class _$UserImpl implements _User {
             (identical(other.id, id) || other.id == id) &&
             (identical(other.name, name) || other.name == name) &&
             (identical(other.email, email) || other.email == email) &&
-            (identical(other.token, token) || other.token == token));
+            (identical(other.token, token) || other.token == token) &&
+            (identical(other.organismeId, organismeId) ||
+                other.organismeId == organismeId));
   }
 
   @override
-  int get hashCode => Object.hash(runtimeType, id, name, email, token);
+  int get hashCode =>
+      Object.hash(runtimeType, id, name, email, token, organismeId);
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.
@@ -175,7 +194,8 @@ abstract class _User implements User {
       {required final int id,
       required final String name,
       required final String email,
-      required final String token}) = _$UserImpl;
+      required final String token,
+      final int? organismeId}) = _$UserImpl;
 
   @override
   int get id;
@@ -185,6 +205,8 @@ abstract class _User implements User {
   String get email;
   @override
   String get token;
+  @override
+  int? get organismeId;
 
   /// Create a copy of User
   /// with the given fields replaced by the non-null parameter values.

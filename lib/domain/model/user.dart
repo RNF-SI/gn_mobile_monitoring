@@ -9,5 +9,6 @@ class User with _$User {
     required String name,
     required String email,
     required String token,
+    int? organismeId,
   }) = _User;
 }
