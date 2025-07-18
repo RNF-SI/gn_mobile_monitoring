@@ -182,12 +182,19 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
-  Future<void> downloadCompleteModule(int moduleId, String token) async {
+  Future<void> downloadCompleteModule(
+    int moduleId, 
+    String token, {
+    Function(double)? onProgressUpdate,
+    Function(String)? onStepUpdate,
+  }) async {
     try {
       final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
 
       // 1. Fetch nomenclatures and datasets
+      onStepUpdate?.call('Nomenclatures et datasets');
+      onProgressUpdate?.call(0.15);
       final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
 
       // Convert nomenclature entities to domain models
@@ -222,6 +229,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
       }
 
       // 2. Fetch and store module configuration
+      onStepUpdate?.call('Configuration du module');
+      onProgressUpdate?.call(0.30);
       final config = await globalApi.getModuleConfiguration(moduleCode);
 
       // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
@@ -332,6 +341,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
       await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
 
       // 3. Fetch Site Types
+      onStepUpdate?.call('Types de sites');
+      onProgressUpdate?.call(0.45);
       final siteTypesData = await globalApi.getSiteTypes();
 
       // Extract the site types that are related to this module from the configuration
@@ -419,6 +430,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
       }
 
       // 4. Download module taxons from configuration
+      onStepUpdate?.call('Taxons');
+      onProgressUpdate?.call(0.60);
       try {
         if (taxonDatabase != null) {
           await taxonRepository.downloadTaxonsFromConfig(config);
@@ -435,9 +448,13 @@ class ModulesRepositoryImpl implements ModulesRepository {
       await database.markModuleAsDownloaded(moduleId);
 
       // 5. Download sites for the module
+      onStepUpdate?.call('Sites');
+      onProgressUpdate?.call(0.80);
       await sitesRepository.fetchSitesForModule(moduleCode, token);
 
       // 6. Download site groups for the module
+      onStepUpdate?.call('Groupes de sites');
+      onProgressUpdate?.call(0.95);
       await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
     } catch (e) {
       throw Exception('Failed to download module data: $e');

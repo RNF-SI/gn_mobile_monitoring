@@ -33,6 +33,7 @@ class ModuleItemCardWidget extends ConsumerWidget {
                     moduleInfo.module.moduleDesc ??
                         'Pas de description disponible',
                     style: Theme.of(context).textTheme.bodyMedium,
+                    maxLines: 3,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],

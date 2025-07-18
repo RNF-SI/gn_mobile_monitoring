@@ -11,20 +11,29 @@ class DownloadCompleteModuleUseCaseImpl implements DownloadCompleteModuleUseCase
   Future<void> execute(
     int moduleId,
     String token,
-    Function(double) onProgressUpdate,
-  ) async {
+    Function(double) onProgressUpdate, [
+    Function(String)? onStepUpdate,
+  ]) async {
     try {
-      // Mise à jour initiale de la progression (10%)
-      onProgressUpdate(0.1);
+      // Début du téléchargement
+      onStepUpdate?.call('Préparation...');
+      onProgressUpdate(0.05);
       
       // Téléchargement de toutes les données du module
       // Incluant : configuration, nomenclatures, datasets, sites et groupes de sites
-      await _modulesRepository.downloadCompleteModule(moduleId, token);
+      await _modulesRepository.downloadCompleteModule(
+        moduleId, 
+        token,
+        onProgressUpdate: onProgressUpdate,
+        onStepUpdate: onStepUpdate,
+      );
       
-      // Mise à jour finale de la progression (100%)
+      // Finalisation (100%)
+      onStepUpdate?.call('Terminé!');
       onProgressUpdate(1.0);
     } catch (e) {
       // En cas d'erreur, réinitialiser la progression à 0
+      onStepUpdate?.call('Erreur');
       onProgressUpdate(0.0);
       rethrow;
     }

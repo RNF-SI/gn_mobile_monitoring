@@ -25,7 +25,14 @@ abstract class ModulesRepository {
   ///
   /// [moduleId] L'identifiant du module à télécharger
   /// [token] Le token d'authentification pour l'API
-  Future<void> downloadCompleteModule(int moduleId, String token);
+  /// [onProgressUpdate] Callback optionnel pour suivre la progression
+  /// [onStepUpdate] Callback optionnel pour informer sur l'étape en cours
+  Future<void> downloadCompleteModule(
+    int moduleId, 
+    String token, {
+    Function(double)? onProgressUpdate,
+    Function(String)? onStepUpdate,
+  });
 
   /// Récupère un module complet depuis la base de données locale avec toutes ses données.
   ///

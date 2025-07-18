@@ -86,51 +86,72 @@ class ModuleDownloadButton extends HookConsumerWidget {
     final syncStatus = ref.watch(syncServiceProvider);
     final isSyncing = syncStatus.state == SyncState.inProgress;
 
+    // Déterminer si on doit afficher l'indication de temps
+    final showTimeIndication = _isDownloading && 
+        (moduleInfo.currentStep == 'Sites' || moduleInfo.currentStep == 'Taxons');
+
     return AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
-          return GestureDetector(
-            onTap: isSyncing
-                ? null // Désactiver le tap pendant la synchronisation
-                : () {
-                    _onPressed(context, ref);
-                  },
-            child: Opacity(
-              opacity: isSyncing
-                  ? 0.5
-                  : 1.0, // Réduire l'opacité pendant la synchronisation
-              child: Stack(
-                children: [
-                  ButtonShapeWidget(
-                    transitionDuration: transitionDuration,
-                    isDownloaded: _isDownloaded,
-                    isDownloading: _isDownloading,
-                    isFetching: _isFetching,
-                    isRemoving: _isRemoving,
-                    downloadProgress: moduleInfo.downloadProgress,
-                    isDisabled: isSyncing, // Passer l'état de désactivation
-                  ),
-                  if (_isDownloading || _isFetching)
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        duration: transitionDuration,
-                        opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
-                        curve: Curves.ease,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ProgressIndicatorWidget(
-                              isDownloading: _isDownloading,
-                              isFetching: _isFetching,
-                              progress: moduleInfo.downloadProgress,
-                            ),
-                          ],
-                        ),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: isSyncing
+                    ? null // Désactiver le tap pendant la synchronisation
+                    : () {
+                        _onPressed(context, ref);
+                      },
+                child: Opacity(
+                  opacity: isSyncing
+                      ? 0.5
+                      : 1.0, // Réduire l'opacité pendant la synchronisation
+                  child: Stack(
+                    children: [
+                      ButtonShapeWidget(
+                        transitionDuration: transitionDuration,
+                        isDownloaded: _isDownloaded,
+                        isDownloading: _isDownloading,
+                        isFetching: _isFetching,
+                        isRemoving: _isRemoving,
+                        downloadProgress: moduleInfo.downloadProgress,
+                        isDisabled: isSyncing, // Passer l'état de désactivation
+                        moduleInfo: moduleInfo,
                       ),
-                    ),
-                ],
+                      if (_isDownloading || _isFetching)
+                        Positioned.fill(
+                          child: AnimatedOpacity(
+                            duration: transitionDuration,
+                            opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
+                            curve: Curves.ease,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                ProgressIndicatorWidget(
+                                  isDownloading: _isDownloading,
+                                  isFetching: _isFetching,
+                                  progress: moduleInfo.downloadProgress,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (showTimeIndication)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    'Peut prendre du temps...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: colorBlue1,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+            ],
           );
         });
   }
@@ -147,6 +168,7 @@ class ButtonShapeWidget extends StatelessWidget {
     required this.transitionDuration,
     this.downloadProgress = 0.0,
     this.isDisabled = false,
+    required this.moduleInfo,
   });
 
   final bool isDownloading;
@@ -156,6 +178,7 @@ class ButtonShapeWidget extends StatelessWidget {
   final Duration transitionDuration;
   final bool isRemoving;
   final bool isDisabled;
+  final ModuleInfo moduleInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -176,8 +199,13 @@ class ButtonShapeWidget extends StatelessWidget {
     if (isDownloading) {
       if (downloadProgress == 1.0) {
         buttonText = '${(downloadProgress * 99).toInt()}%';
-      } else
+      } else {
         buttonText = '${(downloadProgress * 100).toInt()}%';
+      }
+      // Add current step information if available
+      if (moduleInfo.currentStep.isNotEmpty) {
+        buttonText += '\n${moduleInfo.currentStep}';
+      }
     } else if (isRemoving) {
       buttonText = 'Supression...'; // New text for the removing state
     }

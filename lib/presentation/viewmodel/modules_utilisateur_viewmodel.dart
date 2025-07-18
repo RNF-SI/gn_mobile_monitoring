@@ -107,25 +107,36 @@ class UserModulesViewModel
     // Initially set the state to downloading
     var newModuleInfo = moduleInfo.copyWith(
         downloadStatus: ModuleDownloadStatus.moduleDownloading,
-        downloadProgress: 0.0 // Explicitly set progress to 0 on start
+        downloadProgress: 0.0, // Explicitly set progress to 0 on start
+        currentStep: "Préparation du téléchargement..."
         );
     state = custom_async_state.State.success(
         state.data!.updateModuleInfo(newModuleInfo));
 
     try {
       // Téléchargement complet du module (configuration, datasets, nomenclatures, sites et groupes de sites)
-      await _downloadCompleteModuleUseCase.execute(moduleId, token, (double progress) {
-        // Directly update state inside the callback to reflect real-time progress
-        newModuleInfo = newModuleInfo.copyWith(downloadProgress: progress);
-        state = custom_async_state.State.success(
-            state.data!.updateModuleInfo(newModuleInfo));
-      });
+      await _downloadCompleteModuleUseCase.execute(
+        moduleId, 
+        token, 
+        (double progress) {
+          // Directly update state inside the callback to reflect real-time progress
+          newModuleInfo = newModuleInfo.copyWith(downloadProgress: progress);
+          state = custom_async_state.State.success(
+              state.data!.updateModuleInfo(newModuleInfo));
+        },
+        (String step) {
+          // Update current step information
+          newModuleInfo = newModuleInfo.copyWith(currentStep: step);
+          state = custom_async_state.State.success(
+              state.data!.updateModuleInfo(newModuleInfo));
+        }
+      );
 
       // Once download is complete, update the state to reflect this
       newModuleInfo = newModuleInfo.copyWith(
           downloadStatus: ModuleDownloadStatus.moduleDownloaded,
-          downloadProgress:
-              1.0 // Ensure progress is set to 100% when downloaded
+          downloadProgress: 1.0, // Ensure progress is set to 100% when downloaded
+          currentStep: "Téléchargement terminé!"
           );
       state = custom_async_state.State.success(
           state.data!.updateModuleInfo(newModuleInfo));

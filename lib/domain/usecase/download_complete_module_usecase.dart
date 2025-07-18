@@ -15,6 +15,7 @@ abstract class DownloadCompleteModuleUseCase {
   /// [moduleId] L'identifiant du module à télécharger
   /// [token] Le token d'authentification pour accéder à l'API
   /// [onProgressUpdate] Callback pour suivre la progression du téléchargement (0.0 à 1.0)
+  /// [onStepUpdate] Callback optionnel pour fournir des informations sur l'étape en cours
   /// 
   /// Cette méthode :
   /// - Télécharge la configuration du module
@@ -27,6 +28,7 @@ abstract class DownloadCompleteModuleUseCase {
   Future<void> execute(
     int moduleId,
     String token,
-    Function(double) onProgressUpdate,
-  );
+    Function(double) onProgressUpdate, [
+    Function(String)? onStepUpdate,
+  ]);
 }
