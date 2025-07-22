@@ -7,22 +7,15 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/sync_error_simulator.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 
-class ObservationsApiImpl implements ObservationsApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class ObservationsApiImpl extends BaseApi implements ObservationsApi {
   final Connectivity _connectivity;
 
-  ObservationsApiImpl({Dio? dio, Connectivity? connectivity})
-      : _dio = dio ?? Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 180), // 3 minutes
-          sendTimeout: const Duration(seconds: 60),
-        )),
-        _connectivity = connectivity ?? Connectivity();
+  ObservationsApiImpl({Connectivity? connectivity})
+        : _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendObservation(
@@ -158,7 +151,7 @@ class ObservationsApiImpl implements ObservationsApi {
       logBuffer.writeln(
           '==================================================================');
       logBuffer
-          .writeln('URL: $apiBase/monitorings/object/$moduleCode/observation');
+          .writeln('URL: ${apiBase}/monitorings/object/$moduleCode/observation');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -177,10 +170,10 @@ class ObservationsApiImpl implements ObservationsApi {
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation';
+      String endpoint = '/monitorings/object/$moduleCode/observation';
 
       // Envoyer la requête
-      final response = await _dio.post(
+      final response = await dio.post(
         endpoint,
         data: requestBody,
         options: Options(
@@ -376,7 +369,7 @@ class ObservationsApiImpl implements ObservationsApi {
         logBuffer.writeln('[🧪 MODE TEST] ${SyncErrorSimulator.getErrorDescription()}');
       }
       logBuffer.writeln('==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/observation/$observationId');
+      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/observation/$observationId');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       if (token.length > 10) {
@@ -391,10 +384,10 @@ class ObservationsApiImpl implements ObservationsApi {
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation/$observationId';
+      String endpoint = '/monitorings/object/$moduleCode/observation/$observationId';
 
       // Envoyer la requête PATCH
-      final response = await _dio.patch(
+      final response = await dio.patch(
         endpoint,
         data: requestBody,
         options: Options(

@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
@@ -16,28 +17,18 @@ import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
-class GlobalApiImpl implements GlobalApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class GlobalApiImpl extends BaseApi implements GlobalApi {
   final Connectivity _connectivity;
   final VisitsApi _visitsApi;
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
 
   GlobalApiImpl({
-    Dio? dio,
     Connectivity? connectivity,
     VisitsApi? visitsApi,
     ObservationsApi? observationsApi,
     ObservationDetailsApi? observationDetailsApi,
-  })  : _dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: Config.apiBase,
-              connectTimeout: const Duration(seconds: 60),
-              receiveTimeout: const Duration(seconds: 180), // 3 minutes
-              sendTimeout: const Duration(seconds: 60),
-            )),
-        _connectivity = connectivity ?? Connectivity(),
+  })  : _connectivity = connectivity ?? Connectivity(),
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
@@ -53,13 +44,10 @@ class GlobalApiImpl implements GlobalApi {
     try {
       // Use the moduleName parameter in the API URL
       final response =
-          await _dio.get('$apiBase/monitorings/util/init_data/$moduleName');
+          await createDio(receiveTimeout: const Duration(seconds: 180)).get('/monitorings/util/init_data/$moduleName');
 
       if (response.statusCode == 200) {
         // Log the response for debugging
-        print('Response from $apiBase/monitorings/util/init_data/$moduleName:');
-        print(
-            'Nomenclature count: ${(response.data['nomenclature'] as List<dynamic>).length}');
 
         final nomenclatures = (response.data['nomenclature'] as List<dynamic>)
             .map((json) => NomenclatureEntity.fromJson(json))
@@ -119,7 +107,7 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode) async {
     try {
       final response =
-          await _dio.get('$apiBase/monitorings/config/$moduleCode');
+          await dio.get('/monitorings/config/$moduleCode');
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -136,7 +124,7 @@ class GlobalApiImpl implements GlobalApi {
   @override
   Future<List<Map<String, dynamic>>> getSiteTypes() async {
     try {
-      final response = await _dio.get('$apiBase/monitorings/sites/types');
+      final response = await dio.get('/monitorings/sites/types');
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -155,8 +143,8 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getSiteTypeById(
       int idNomenclatureTypeSite) async {
     try {
-      final response = await _dio
-          .get('$apiBase/monitorings/sites/types/$idNomenclatureTypeSite');
+      final response = await dio
+          .get('/monitorings/sites/types/$idNomenclatureTypeSite');
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -173,7 +161,7 @@ class GlobalApiImpl implements GlobalApi {
   @override
   Future<Map<String, dynamic>> getSiteTypeByLabel(String label) async {
     try {
-      final response = await _dio.get('$apiBase/monitorings/sites/types/label',
+      final response = await dio.get('/monitorings/sites/types/label',
           queryParameters: {'label_fr': label});
 
       if (response.statusCode == 200) {
@@ -191,7 +179,7 @@ class GlobalApiImpl implements GlobalApi {
   Future<List<Map<String, dynamic>>> getNomenclatureTypes() async {
     try {
       final response =
-          await _dio.get('$apiBase/nomenclatures/nomenclature_types');
+          await dio.get('/nomenclatures/nomenclature_types');
 
       if (response.statusCode == 200) {
         final items = response.data as List<dynamic>;
@@ -209,8 +197,8 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getNomenclatureTypeByMnemonique(
       String mnemonique) async {
     try {
-      final response = await _dio
-          .get('$apiBase/nomenclatures/nomenclature_types/$mnemonique');
+      final response = await dio
+          .get('/nomenclatures/nomenclature_types/$mnemonique');
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -235,8 +223,8 @@ class GlobalApiImpl implements GlobalApi {
       }
 
       // Utiliser l'endpoint des types de sites pour vérifier si le serveur est accessible
-      final response = await _dio.get(
-        '$apiBase/monitorings/sites/types',
+      final response = await dio.get(
+        '/monitorings/sites/types',
         options: Options(
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 5),
@@ -273,8 +261,8 @@ class GlobalApiImpl implements GlobalApi {
       // Synchroniser les nomenclatures et datasets pour chaque module
       for (final moduleCode in moduleCodes) {
         try {
-          final response = await _dio.get(
-            '$apiBase/monitorings/util/init_data/$moduleCode',
+          final response = await dio.get(
+            '/monitorings/util/init_data/$moduleCode',
             options: Options(
               headers: {'Authorization': 'Bearer $token'},
             ),
@@ -401,8 +389,8 @@ class GlobalApiImpl implements GlobalApi {
       // Synchroniser la configuration pour chaque module
       for (final moduleCode in moduleCodes) {
         try {
-          final response = await _dio.get(
-            '$apiBase/monitorings/config/$moduleCode',
+          final response = await dio.get(
+            '/monitorings/config/$moduleCode',
             options: Options(
               headers: {'Authorization': 'Bearer $token'},
             ),

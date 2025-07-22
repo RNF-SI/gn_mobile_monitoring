@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
@@ -11,24 +12,21 @@ import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_complement_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 
-class SitesApiImpl implements SitesApi {
-  final Dio _dio;
+class SitesApiImpl extends BaseApi implements SitesApi {
+  SitesApiImpl();
 
-  SitesApiImpl()
-      : _dio = Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(
-              seconds: 300), // 5 minutes pour les grosses quantités de données
-          sendTimeout: const Duration(seconds: 120),
-        ));
+  @override
+  Dio get dio => createDio(
+    receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les grosses quantités de données
+    sendTimeout: const Duration(seconds: 120),
+  );
 
   @override
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(
       String moduleCode, String token) async {
     try {
       // Fetch sites for the module using the secure endpoint with depth=2
-      final moduleResponse = await _dio.get(
+      final moduleResponse = await dio.get(
         '/monitorings/object/$moduleCode/module',
         queryParameters: {
           'depth': 2,
@@ -185,7 +183,7 @@ class SitesApiImpl implements SitesApi {
     for (var site in enrichedSites) {
       try {
         final siteId = site['id_base_site'] as int;
-        final response = await _dio.get(
+        final response = await dio.get(
           '/monitorings/object/$moduleCode/site/$siteId',
           queryParameters: {
             'depth': 0, // We don't need visits data
@@ -222,7 +220,7 @@ class SitesApiImpl implements SitesApi {
   Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsForModule(
       String moduleCode, String token) async {
     try {
-      final response = await _dio.get(
+      final response = await dio.get(
         '/monitorings/object/$moduleCode/module',
         queryParameters: {
           'depth': 2,

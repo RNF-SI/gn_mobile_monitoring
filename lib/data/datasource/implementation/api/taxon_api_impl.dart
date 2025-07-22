@@ -4,22 +4,22 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 
-class TaxonApiImpl implements TaxonApi {
-  final Dio _dio;
+class TaxonApiImpl extends BaseApi implements TaxonApi {
   final Connectivity _connectivity = Connectivity();
 
-  TaxonApiImpl()
-      : _dio = Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les listes de taxons volumineuses
-          sendTimeout: const Duration(seconds: 120),
-        ));
+  TaxonApiImpl();
+
+  @override
+  Dio get dio => createDio(
+    receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les listes de taxons volumineuses
+    sendTimeout: const Duration(seconds: 120),
+  );
 
   @override
   Future<List<Taxon>> getTaxonsByList(int idListe) async {
@@ -34,7 +34,7 @@ class TaxonApiImpl implements TaxonApi {
       while (hasMoreData) {
         debugPrint('Récupération de la page $currentPage (limite=$limit) pour la liste $idListe');
         
-        final response = await _dio.get(
+        final response = await dio.get(
           '/taxhub/api/taxref/allnamebylist/$idListe',
           queryParameters: {
             'limit': limit,
@@ -79,7 +79,7 @@ class TaxonApiImpl implements TaxonApi {
   @override
   Future<TaxonList> getTaxonList(int idListe) async {
     try {
-      final response = await _dio.get(
+      final response = await dio.get(
         '/monitorings/util/taxonomy_list/$idListe',
       );
 
@@ -111,7 +111,7 @@ class TaxonApiImpl implements TaxonApi {
   @override
   Future<Taxon> getTaxonByCdNom(int cdNom) async {
     try {
-      final response = await _dio.get(
+      final response = await dio.get(
         '/taxonomie/taxref/$cdNom',
       );
 
@@ -352,7 +352,7 @@ class TaxonApiImpl implements TaxonApi {
       }
 
       // Appel API
-      final response = await _dio.get(
+      final response = await dio.get(
         '/taxonomie/taxref/search',
         queryParameters: queryParams,
         options: Options(

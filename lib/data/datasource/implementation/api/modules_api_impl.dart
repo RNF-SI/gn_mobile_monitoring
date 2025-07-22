@@ -1,19 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 
-class ModulesApiImpl implements ModulesApi {
-  final Dio _dio;
-
-  ModulesApiImpl()
-      : _dio = Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 120), // 2 minutes
-          sendTimeout: const Duration(seconds: 60),
-        ));
+class ModulesApiImpl extends BaseApi implements ModulesApi {
+  ModulesApiImpl();
 
   /// Checks if a module has sufficient CRUVED permissions
   /// Returns true if any of the CRUVED values is greater than 0
@@ -26,7 +19,7 @@ class ModulesApiImpl implements ModulesApi {
   Future<(List<ModuleEntity>, List<ModuleComplementEntity>)> getModules(
       String token) async {
     try {
-      final response = await _dio.get(
+      final response = await dio.get(
         '/monitorings/modules',
         options: Options(
           headers: {
@@ -37,21 +30,43 @@ class ModulesApiImpl implements ModulesApi {
 
       if (response.statusCode == 200) {
         final data = response.data;
+        
+        List<dynamic> modulesList;
+        
+        // Gérer différents formats de réponse API
         if (data is List) {
-          final modules = <ModuleEntity>[];
-          final moduleComplements = <ModuleComplementEntity>[];
+          // Si la réponse est directement une liste
+          modulesList = data;
+        } else if (data is Map<String, dynamic>) {
+          // Si la réponse est un objet, chercher la liste dans différentes clés possibles
+          if (data.containsKey('modules')) {
+            modulesList = data['modules'] as List<dynamic>;
+          } else if (data.containsKey('data')) {
+            modulesList = data['data'] as List<dynamic>;
+          } else if (data.containsKey('results')) {
+            modulesList = data['results'] as List<dynamic>;
+          } else {
+            // Si aucune clé connue, essayer de traiter l'objet comme un module unique
+            modulesList = [data];
+          }
+        } else {
+          throw Exception('Unexpected response format: ${data.runtimeType}');
+        }
+        
+        final modules = <ModuleEntity>[];
+        final moduleComplements = <ModuleComplementEntity>[];
 
-          for (var item in data) {
-            final json = item as Map<String, dynamic>;
+        for (var item in modulesList) {
+          final json = item as Map<String, dynamic>;
 
-            // Check CRUVED permissions
-            final cruved = json['cruved'] as Map<String, dynamic>?;
-            if (!_hasModulePermissions(cruved ?? {})) {
-              continue; // Skip this module if no permissions
-            }
+          // Check CRUVED permissions
+          final cruved = json['cruved'] as Map<String, dynamic>?;
+          if (!_hasModulePermissions(cruved ?? {})) {
+            continue; // Skip this module if no permissions
+          }
 
-            // Extract module data
-            final moduleJson = {
+          // Extract module data
+          final moduleJson = {
               'id_module': json['id_module'],
               'module_code': json['module_code'],
               'module_label': json['module_label'],
@@ -90,10 +105,7 @@ class ModulesApiImpl implements ModulesApi {
                 .add(ModuleComplementEntity.fromJson(complementJson));
           }
 
-          return (modules, moduleComplements);
-        } else {
-          throw Exception('Unexpected response format: not a List');
-        }
+        return (modules, moduleComplements);
       } else {
         throw Exception(
             'Failed to load modules with status code: ${response.statusCode}');

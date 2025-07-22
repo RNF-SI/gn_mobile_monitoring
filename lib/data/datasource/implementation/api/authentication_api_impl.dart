@@ -3,10 +3,11 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/user_entity.dart';
 
-class AuthenticationApiImpl implements AuthenticationApi {
+class AuthenticationApiImpl extends BaseApi implements AuthenticationApi {
   @override
   Future<UserEntity> login(String identifiant, String password) async {
     final options = {
@@ -15,14 +16,9 @@ class AuthenticationApiImpl implements AuthenticationApi {
       'id_application': 1,
     };
 
-    var apiBase = Config.apiBase;
     try {
-      Response response = await Dio(BaseOptions(
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 60),
-          sendTimeout: const Duration(seconds: 60),
-        )).post(
-        "$apiBase/auth/login",
+      Response response = await dio.post(
+        "/auth/login",
         options: Options(headers: {
           HttpHeaders.contentTypeHeader: "application/json",
         }),

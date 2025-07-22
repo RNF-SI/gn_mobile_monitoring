@@ -6,22 +6,15 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 
-class VisitsApiImpl implements VisitsApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class VisitsApiImpl extends BaseApi implements VisitsApi {
   final Connectivity _connectivity;
 
-  VisitsApiImpl({Dio? dio, Connectivity? connectivity})
-      : _dio = dio ?? Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 180), // 3 minutes
-          sendTimeout: const Duration(seconds: 60),
-        )),
-        _connectivity = connectivity ?? Connectivity();
+  VisitsApiImpl({Connectivity? connectivity})
+        : _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendVisit(
@@ -121,7 +114,7 @@ class VisitsApiImpl implements VisitsApi {
       logBuffer.writeln('[API] ENVOI VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit');
+      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/visit');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -142,8 +135,8 @@ class VisitsApiImpl implements VisitsApi {
 
       // Envoyer la requête
       // Utiliser l'URL correcte selon les spécifications du backend: /monitorings/object/<module_code>/visit
-      final response = await _dio.post(
-        '$apiBase/monitorings/object/$moduleCode/visit',
+      final response = await dio.post(
+        '/monitorings/object/$moduleCode/visit',
         data: requestBody,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
@@ -321,7 +314,7 @@ class VisitsApiImpl implements VisitsApi {
       logBuffer.writeln('[API] MISE À JOUR VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit/$visitId');
+      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/visit/$visitId');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -341,8 +334,8 @@ class VisitsApiImpl implements VisitsApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête PATCH avec l'ID dans l'URL
-      final response = await _dio.patch(
-        '$apiBase/monitorings/object/$moduleCode/visit/$visitId',
+      final response = await dio.patch(
+        '/monitorings/object/$moduleCode/visit/$visitId',
         data: requestBody,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},

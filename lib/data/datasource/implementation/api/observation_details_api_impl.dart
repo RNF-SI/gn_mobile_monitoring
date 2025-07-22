@@ -5,22 +5,15 @@ import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 
-class ObservationDetailsApiImpl implements ObservationDetailsApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi {
   final Connectivity _connectivity;
 
-  ObservationDetailsApiImpl({Dio? dio, Connectivity? connectivity})
-      : _dio = dio ?? Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 180), // 3 minutes
-          sendTimeout: const Duration(seconds: 60),
-        )),
-        _connectivity = connectivity ?? Connectivity();
+  ObservationDetailsApiImpl({Connectivity? connectivity})
+        : _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendObservationDetail(
@@ -282,7 +275,7 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       logBuffer.writeln(
           '==================================================================');
       logBuffer.writeln(
-          'URL: $apiBase/monitorings/object/$moduleCode/observation_detail');
+          'URL: ${apiBase}/monitorings/object/$moduleCode/observation_detail');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -301,10 +294,10 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '$apiBase/monitorings/object/$moduleCode/observation_detail';
+      String endpoint = '/monitorings/object/$moduleCode/observation_detail';
 
       // Envoyer la requête
-      final response = await _dio.post(
+      final response = await dio.post(
         endpoint,
         data: requestBody,
         options: Options(
