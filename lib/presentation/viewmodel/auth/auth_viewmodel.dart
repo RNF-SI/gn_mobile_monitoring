@@ -30,6 +30,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 
 // Pour le Checker
@@ -205,8 +206,18 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           // Set status to complete
           _updateLoginStatus(LoginStatusInfo.complete);
 
-          // Refresh state
+          await Future.delayed(const Duration(milliseconds: 200));
+
+          // Refresh state ET refresh modules provider pour forcer le rechargement
           ref.refresh(isLoggedInProvider);
+          
+          // Rafraîchir explicitement le provider des modules
+          try {
+            ref.refresh(userModuleListeViewModelStateNotifierProvider);
+          } catch (e) {
+            AppLogger().d('Impossible de rafraîchir le provider des modules: $e', tag: 'AUTH');
+          }
+          
           GoRouter.of(context).go('/');
           state = loadingState.State.success(user);
         } catch (e) {
@@ -299,12 +310,21 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       await _clearTokenFromLocalStorageUseCase.execute();
       
       // We don't clear API URL when logging out so it persists between sessions
-      // If you want to clear it, uncomment the line below
+      // This is convenient for users who always use the same server
+      // If you want to clear it, uncomment the lines below
       // await _clearApiUrlFromLocalStorageUseCase.execute();
       // Config.clearStoredApiUrl();
 
       // Clear any cached user information
       ref.refresh(authStateProvider);
+      
+      // IMPORTANT: Aussi rafraîchir le provider des modules pour éviter 
+      // les problèmes de cache lors de la reconnexion
+      try {
+        ref.refresh(userModuleListeViewModelStateNotifierProvider);
+      } catch (e) {
+        AppLogger().d('Impossible de rafraîchir le provider des modules lors de déconnexion: $e', tag: 'AUTH');
+      }
 
       // Navigate to the login page
       GoRouter.of(context).go('/login');
@@ -330,7 +350,8 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       await _clearTokenFromLocalStorageUseCase.execute();
       
       // We don't clear API URL when logging out so it persists between sessions
-      // If you want to clear it, uncomment the line below
+      // This is convenient for users who always use the same server
+      // If you want to clear it, uncomment the lines below
       // await _clearApiUrlFromLocalStorageUseCase.execute();
       // Config.clearStoredApiUrl();
 
