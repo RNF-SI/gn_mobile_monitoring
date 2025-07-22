@@ -11,7 +11,7 @@ import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
 
 final userModuleListeProvider =
-    Provider.autoDispose<custom_async_state.State<ModuleInfoList>>((ref) {
+    Provider<custom_async_state.State<ModuleInfoList>>((ref) {
   final userModuleListeState =
       ref.watch(userModuleListeViewModelStateNotifierProvider);
 
@@ -26,7 +26,7 @@ final userModuleListeProvider =
 });
 
 final userModuleListeViewModelStateNotifierProvider =
-    StateNotifierProvider.autoDispose<UserModulesViewModel,
+    StateNotifierProvider<UserModulesViewModel,
         custom_async_state.State<ModuleInfoList>>((ref) {
   return UserModulesViewModel(
     ref.watch(getModulesUseCaseProvider),
@@ -81,7 +81,7 @@ class UserModulesViewModel
           custom_async_state.State.success(ModuleInfoList(values: moduleInfos));
     } catch (e) {
       state =
-          custom_async_state.State.error(Exception("Failed to load modules"));
+          custom_async_state.State.error(Exception("Failed to load modules: ${e.toString()}"));
     }
   }
 
