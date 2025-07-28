@@ -20,6 +20,10 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 class ObservationDetailPageBase extends DetailPage {
@@ -227,9 +231,15 @@ class ObservationDetailPageBaseState
           label: 'Module',
           value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
           onTap: () {
-            // Naviguer vers le module (retour de plusieurs niveaux)
-            Navigator.of(context).popUntil((route) =>
-                route.isFirst || route.settings.name == '/module_detail');
+            // Naviguer vers le module en revenant à la racine puis en naviguant
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: widget.moduleInfo!,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -243,9 +253,16 @@ class ObservationDetailPageBaseState
                 widget.fromSiteGroup.sitesGroupCode ??
                 'Groupe',
             onTap: () {
-              // Retour vers le groupe (plusieurs niveaux)
-              Navigator.of(context).popUntil(
-                  (route) => route.settings.name == '/site_group_detail');
+              // Naviguer vers le groupe de sites
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SiteGroupDetailPage(
+                    siteGroup: widget.fromSiteGroup,
+                    moduleInfo: widget.moduleInfo!,
+                  ),
+                ),
+              );
             },
           ),
         );
@@ -257,9 +274,17 @@ class ObservationDetailPageBaseState
           label: siteLabel,
           value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
           onTap: () {
-            // Naviguer vers le site
-            Navigator.of(context)
-                .popUntil((route) => route.settings.name == '/site_detail');
+            // Naviguer vers la page du site
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => SiteDetailPage(
+                  site: widget.site,
+                  moduleInfo: widget.moduleInfo!,
+                  fromSiteGroup: widget.fromSiteGroup,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -270,7 +295,7 @@ class ObservationDetailPageBaseState
           label: visitLabel,
           value: formatDateString(widget.visit.visitDateMin),
           onTap: () {
-            // Naviguer vers la visite (retour de 1 niveau)
+            // Naviguer vers la page de la visite (juste remonter d'un niveau)
             Navigator.of(context).pop();
           },
         ),

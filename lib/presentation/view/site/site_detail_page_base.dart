@@ -17,6 +17,8 @@ import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
@@ -139,9 +141,15 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           label: 'Module',
           value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
           onTap: () {
-            // Naviguer vers le module (retour de plusieurs niveaux)
-            Navigator.of(context).popUntil((route) =>
-                route.isFirst || route.settings.name == '/module_detail');
+            // Naviguer vers le module
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: widget.moduleInfo!,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -160,7 +168,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                 widget.fromSiteGroup.sitesGroupCode ??
                 'Groupe',
             onTap: () {
-              // Retour vers le groupe (1 niveau)
+              // Naviguer vers le groupe de sites (juste remonter d'un niveau)
               Navigator.of(context).pop();
             },
           ),

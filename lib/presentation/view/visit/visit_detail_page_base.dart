@@ -16,6 +16,9 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmod
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 
 /// Page de détail de visite basée sur la classe DetailPage
 class VisitDetailPageBase extends DetailPage {
@@ -180,9 +183,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
           label: 'Module',
           value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
           onTap: () {
-            // Naviguer vers le module (retour de plusieurs niveaux)
-            Navigator.of(context).popUntil((route) =>
-                route.isFirst || route.settings.name == '/module_detail');
+            // Naviguer vers le module
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: widget.moduleInfo!,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -196,11 +205,16 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                 widget.fromSiteGroup.sitesGroupCode ??
                 'Groupe',
             onTap: () {
-              // Retour vers le groupe (2 niveaux - passer par le site)
-              int count = 0;
-              Navigator.of(context).popUntil((route) {
-                return count++ >= 2;
-              });
+              // Naviguer vers le groupe de sites
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SiteGroupDetailPage(
+                    siteGroup: widget.fromSiteGroup,
+                    moduleInfo: widget.moduleInfo!,
+                  ),
+                ),
+              );
             },
           ),
         );
@@ -212,7 +226,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
           label: siteLabel,
           value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
           onTap: () {
-            // Naviguer vers le site (retour de 1 niveau)
+            // Naviguer vers le site (juste remonter d'un niveau)
             Navigator.of(context).pop();
           },
         ),
