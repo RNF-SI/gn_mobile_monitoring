@@ -207,7 +207,12 @@ class FormDataProcessor {
           }
 
           // Transformer les objets complexes en chaînes si nécessaire
-          if (entry.value is! num &&
+          if (entry.value is DateTime) {
+            // Convertir DateTime en format ISO string
+            data[entry.key] = (entry.value as DateTime).toIso8601String();
+            debugPrint(
+                'Correction: ${entry.key} DateTime converti en ISO String: ${data[entry.key]}');
+          } else if (entry.value is! num &&
               entry.value is! bool &&
               entry.value is! String &&
               entry.value is! List &&

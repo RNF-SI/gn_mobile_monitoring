@@ -130,6 +130,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                     : initialValue.toString()
                 : '',
           );
+          // S'assurer que la valeur est stockée au format string pour la sérialisation JSON
+          if (initialValue is DateTime) {
+            _formValues[fieldName] = initialValue.toIso8601String().split('T')[0];
+          }
           break;
         case 'TimePicker':
           _textControllers[fieldName] = TextEditingController(
@@ -604,7 +608,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             onTap: () async {
               final date = await showDatePicker(
                 context: context,
-                initialDate: _formValues[fieldName] ?? DateTime.now(),
+                initialDate: _formValues[fieldName] is DateTime 
+                    ? _formValues[fieldName] as DateTime
+                    : (_formValues[fieldName] is String && (_formValues[fieldName] as String).isNotEmpty)
+                        ? DateTime.tryParse(_formValues[fieldName] as String) ?? DateTime.now()
+                        : DateTime.now(),
                 firstDate: DateTime(2000),
                 lastDate: DateTime(2100),
               );
@@ -612,7 +620,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 setState(() {
                   _textControllers[fieldName]!.text =
                       '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}';
-                  _formValues[fieldName] = date;
+                  // Stocker la date au format ISO string pour la sérialisation JSON
+                  _formValues[fieldName] = date.toIso8601String().split('T')[0]; // Garde seulement la partie date (YYYY-MM-DD)
                 });
               }
             },
