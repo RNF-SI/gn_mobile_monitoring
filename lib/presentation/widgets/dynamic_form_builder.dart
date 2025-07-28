@@ -140,6 +140,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             text: initialValue?.toString() ?? '',
           );
           break;
+        case 'RadioButton':
+          // Initialiser la valeur par défaut pour les radio buttons
+          if (_formValues[fieldName] == null) {
+            final String? defaultValue = 
+                fieldConfig['default']?.toString() ?? 
+                fieldConfig['value']?.toString();
+            if (defaultValue != null) {
+              _formValues[fieldName] = defaultValue;
+            }
+          }
+          break;
         // Les autres types de widgets n'utilisent pas de contrôleurs
       }
     });
@@ -495,6 +506,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             description: description);
       case 'Checkbox':
         return _buildCheckboxField(fieldName, label, description: description);
+      case 'RadioButton':
+        return _buildRadioField(
+            fieldName, label, isRequired, fieldConfig,
+            description: description);
       case 'AutocompleteField':
         return _buildAutocompleteField(
             fieldName, label, isRequired, fieldConfig,
@@ -893,6 +908,175 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
         ],
       ),
+    );
+  }
+
+  Widget _buildRadioField(String fieldName, String label, bool isRequired,
+      Map<String, dynamic> fieldConfig, {String? description}) {
+    // Récupérer les valeurs possibles et la valeur par défaut
+    final List<dynamic> values = fieldConfig['values'] ?? [];
+    final String? defaultValue = 
+        fieldConfig['default']?.toString() ?? 
+        fieldConfig['value']?.toString();
+    
+    // Initialiser la valeur si elle n'existe pas
+    if (_formValues[fieldName] == null && defaultValue != null) {
+      _formValues[fieldName] = defaultValue;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: FormField<String>(
+        initialValue: _formValues[fieldName]?.toString(),
+        validator: isRequired
+            ? (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Ce champ est requis';
+                }
+                return null;
+              }
+            : null,
+        builder: (FormFieldState<String> field) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                isRequired ? '$label *' : label,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+              if (description != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                  child: Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              _buildRadioOptions(fieldName, values, field),
+              if (field.hasError)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    field.errorText!,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  /// Construit les options radio avec disposition adaptative (horizontale ou verticale)
+  Widget _buildRadioOptions(String fieldName, List<dynamic> values, FormFieldState<String> field) {
+    // Déterminer si on doit utiliser une disposition horizontale ou verticale
+    final shouldUseHorizontalLayout = _shouldUseHorizontalLayout(values);
+    
+    if (shouldUseHorizontalLayout) {
+      // Disposition horizontale avec Wrap pour gérer le retour à la ligne
+      return Wrap(
+        spacing: 16.0,
+        runSpacing: 8.0,
+        children: values.map<Widget>((value) {
+          final stringValue = value.toString();
+          return _buildCompactRadioTile(fieldName, stringValue, field);
+        }).toList(),
+      );
+    } else {
+      // Disposition verticale traditionnelle
+      return Column(
+        children: values.map<Widget>((value) {
+          final stringValue = value.toString();
+          return _buildFullRadioTile(fieldName, stringValue, field);
+        }).toList(),
+      );
+    }
+  }
+
+  /// Détermine si la disposition horizontale doit être utilisée
+  bool _shouldUseHorizontalLayout(List<dynamic> values) {
+    // Critères pour la disposition horizontale :
+    // 1. Maximum 4 options
+    // 2. Chaque option a moins de 15 caractères
+    // 3. La somme totale des caractères est raisonnable
+    
+    if (values.length > 4) return false;
+    
+    int totalCharacters = 0;
+    for (final value in values) {
+      final stringValue = value.toString();
+      if (stringValue.length > 15) return false;
+      totalCharacters += stringValue.length;
+    }
+    
+    // Si le total dépasse 40 caractères, utiliser la disposition verticale
+    return totalCharacters <= 40;
+  }
+
+  /// Construit un radio tile compact pour la disposition horizontale
+  Widget _buildCompactRadioTile(String fieldName, String stringValue, FormFieldState<String> field) {
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _formValues[fieldName] = stringValue;
+          field.didChange(stringValue);
+        });
+        updateFormValue(fieldName, stringValue);
+      },
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Radio<String>(
+              value: stringValue,
+              groupValue: _formValues[fieldName]?.toString(),
+              onChanged: (String? selectedValue) {
+                setState(() {
+                  _formValues[fieldName] = selectedValue;
+                  field.didChange(selectedValue);
+                });
+                updateFormValue(fieldName, selectedValue);
+              },
+              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              visualDensity: VisualDensity.compact,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              stringValue,
+              style: const TextStyle(fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Construit un radio tile traditionnel pour la disposition verticale
+  Widget _buildFullRadioTile(String fieldName, String stringValue, FormFieldState<String> field) {
+    return RadioListTile<String>(
+      title: Text(stringValue),
+      value: stringValue,
+      groupValue: _formValues[fieldName]?.toString(),
+      onChanged: (String? selectedValue) {
+        setState(() {
+          _formValues[fieldName] = selectedValue;
+          field.didChange(selectedValue);
+        });
+        updateFormValue(fieldName, selectedValue);
+      },
+      contentPadding: EdgeInsets.zero,
+      dense: true,
     );
   }
 

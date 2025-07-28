@@ -428,6 +428,8 @@ class FormConfigParser {
       case 'bool_checkbox':
       case 'checkbox':
         return 'Checkbox';
+      case 'radio':
+        return 'RadioButton';
       case 'observers':
         return 'ObserverField';
       case 'medias':
@@ -526,6 +528,7 @@ class FormConfigParser {
           if (fieldConfig['description'] != null)
             'description': fieldConfig['description'],
           if (fieldConfig['default'] != null) 'default': fieldConfig['default'],
+          if (fieldConfig['value'] != null) 'value': fieldConfig['value'],
           if (fieldConfig['values'] != null) 'values': fieldConfig['values'],
           'validations': determineValidations(fieldConfig),
           'visibility': determineVisibility(fieldConfig),
