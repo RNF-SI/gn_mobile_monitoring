@@ -320,6 +320,21 @@ class ObservationDetailPageBaseState
       title: Text(getTitle()),
       actions: [
         IconButton(
+          icon: const Icon(Icons.add),
+          onPressed: () {
+            _navigateToNewObservation();
+          },
+          tooltip: 'Nouvelle observation',
+        ),
+        // Séparateur visuel
+        Container(
+          height: 24,
+          width: 1,
+          color: Colors.grey.withOpacity(0.5),
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+        ),
+
+        IconButton(
           icon: const Icon(Icons.edit),
           onPressed: () {
             if (widget.observationConfig != null) {
@@ -943,6 +958,67 @@ class ObservationDetailPageBaseState
     if (confirmed == true) {
       await _deleteObservation();
     }
+  }
+
+  /// Navigue vers le formulaire de nouvelle observation en préservant le fil d'Ariane
+  void _navigateToNewObservation() {
+    // Vérifier que la configuration d'observation est disponible
+    if (widget.observationConfig == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Configuration d\'observation non disponible'),
+        ),
+      );
+      return;
+    }
+
+    // Préparer les informations pour le fil d'Ariane
+    final String? moduleName = widget.moduleInfo?.module.moduleLabel;
+    final String? siteLabel = widget.moduleInfo?.module.complement
+            ?.configuration?.site?.label ??
+        'Site';
+    final String? siteName =
+        widget.site.baseSiteName ?? widget.site.baseSiteCode;
+    final String? visitLabel = widget.moduleInfo?.module.complement
+            ?.configuration?.visit?.label ??
+        'Visite';
+    final String? visitDate =
+        formatDateString(widget.visit.visitDateMin);
+
+    // Naviguer vers le formulaire de nouvelle observation
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ObservationFormPage(
+          visitId: widget.visit.idBaseVisit,
+          observationConfig: widget.observationConfig!,
+          customConfig: widget.customConfig,
+          moduleId: widget.moduleInfo?.module.id,
+          // Paramètres pour maintenir le fil d'Ariane
+          moduleName: moduleName,
+          siteLabel: siteLabel,
+          siteName: siteName,
+          visitLabel: visitLabel,
+          visitDate: visitDate,
+          visit: widget.visit,
+          site: widget.site,
+          moduleInfo: widget.moduleInfo,
+          fromSiteGroup: widget.fromSiteGroup,
+          observationDetailConfig: widget.observationDetailConfig,
+          // Pas d'observation existante (mode création)
+          observation: null,
+        ),
+      ),
+    ).then((result) {
+      // Si une nouvelle observation a été créée, rafraîchir la liste des observations
+      // pour que la navigation entre observations soit à jour
+      if (result == true) {
+        widget.ref
+            .read(observationsProvider(widget.visit.idBaseVisit).notifier)
+            .loadObservations();
+      }
+      // Note: Pas besoin de recharger l'observation actuelle car elle n'a pas changé
+    });
   }
 
   /// Supprime l'observation actuelle
