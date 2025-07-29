@@ -522,7 +522,9 @@ class FormDataProcessor {
 
           if (shouldHide) {
             hiddenFields.add(fieldName);
-            filteredValues.remove(fieldName);
+            // IMPORTANT: Ne pas supprimer la valeur du champ caché
+            // Les champs cachés conservent leurs valeurs pour la sauvegarde
+            // filteredValues.remove(fieldName); // ❌ SUPPRIMÉ
             foundNewHiddenField = true;
           }
         }
