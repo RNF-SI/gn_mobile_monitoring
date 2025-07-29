@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:uuid/uuid.dart';
@@ -22,6 +23,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
   final getObservationByIdUseCase =
       ref.watch(getObservationByIdUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
+  final getUserIdFromLocalStorageUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
 
   return ObservationsViewModel(
     getObservationsByVisitIdUseCase,
@@ -30,6 +32,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
     deleteObservationUseCase,
     getObservationByIdUseCase,
     formDataProcessor,
+    getUserIdFromLocalStorageUseCase,
     visitId,
   );
 });
@@ -48,6 +51,7 @@ class ObservationsViewModel
   final DeleteObservationUseCase _deleteObservationUseCase;
   final GetObservationByIdUseCase _getObservationByIdUseCase;
   final FormDataProcessor _formDataProcessor;
+  final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
 
   final int _visitId;
   bool _mounted = true;
@@ -59,6 +63,7 @@ class ObservationsViewModel
     this._deleteObservationUseCase,
     this._getObservationByIdUseCase,
     this._formDataProcessor,
+    this._getUserIdFromLocalStorageUseCase,
     this._visitId,
   ) : super(const AsyncValue.loading()) {
     if (_visitId > 0) {
@@ -125,10 +130,18 @@ class ObservationsViewModel
       // Générer un UUID pour l'observation
       final uuid = _generateUuid();
       
+      // Récupérer l'ID de l'utilisateur courant depuis le stockage local
+      final idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
+      
+      if (idDigitiser == null || idDigitiser <= 0) {
+        throw Exception('Impossible de créer une observation : utilisateur non connecté');
+      }
+      
       // Préparer l'objet Observation à partir des données du formulaire
       final observation = Observation(
         idObservation: 0, // Nouvel ID généré par la BDD
         idBaseVisit: _visitId,
+        idDigitiser: idDigitiser, // ID de l'utilisateur courant
         cdNom: formData['cd_nom'] is int ? formData['cd_nom'] : null,
         comments: formData['comments']?.toString(),
         uuidObservation: uuid, // Inclure l'UUID généré
@@ -175,9 +188,20 @@ class ObservationsViewModel
       // S'assurer que l'UUID est défini
       String uuid = existingObservation.uuidObservation ?? _generateUuid();
       
+      // Conserver l'idDigitiser existant, ou utiliser l'utilisateur courant si null
+      int? idDigitiser = existingObservation.idDigitiser;
+      if (idDigitiser == null) {
+        idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
+        
+        if (idDigitiser == null || idDigitiser <= 0) {
+          throw Exception('Impossible de mettre à jour une observation : utilisateur non connecté');
+        }
+      }
+      
       final updatedObservation = Observation(
         idObservation: observationId,
         idBaseVisit: _visitId,
+        idDigitiser: idDigitiser, // Conserver ou définir l'ID digitiser
         cdNom: formData['cd_nom'] is int
             ? formData['cd_nom']
             : existingObservation.cdNom,

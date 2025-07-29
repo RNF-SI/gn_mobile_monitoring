@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 class ObservationEntity {
   final int idObservation;
   final int? idBaseVisit;
+  final int? idDigitiser;
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
@@ -15,6 +16,7 @@ class ObservationEntity {
   ObservationEntity({
     required this.idObservation,
     this.idBaseVisit,
+    this.idDigitiser,
     this.cdNom,
     this.comments,
     this.uuidObservation,

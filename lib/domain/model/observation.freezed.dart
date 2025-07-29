@@ -18,6 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$Observation {
   int get idObservation => throw _privateConstructorUsedError;
   int? get idBaseVisit => throw _privateConstructorUsedError;
+  int? get idDigitiser => throw _privateConstructorUsedError;
   int? get cdNom => throw _privateConstructorUsedError;
   String? get comments => throw _privateConstructorUsedError;
   String? get uuidObservation => throw _privateConstructorUsedError;
@@ -42,6 +43,7 @@ abstract class $ObservationCopyWith<$Res> {
   $Res call(
       {int idObservation,
       int? idBaseVisit,
+      int? idDigitiser,
       int? cdNom,
       String? comments,
       String? uuidObservation,
@@ -68,6 +70,7 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
   $Res call({
     Object? idObservation = null,
     Object? idBaseVisit = freezed,
+    Object? idDigitiser = freezed,
     Object? cdNom = freezed,
     Object? comments = freezed,
     Object? uuidObservation = freezed,
@@ -84,6 +87,10 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
       idBaseVisit: freezed == idBaseVisit
           ? _value.idBaseVisit
           : idBaseVisit // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
               as int?,
       cdNom: freezed == cdNom
           ? _value.cdNom
@@ -128,6 +135,7 @@ abstract class _$$ObservationImplCopyWith<$Res>
   $Res call(
       {int idObservation,
       int? idBaseVisit,
+      int? idDigitiser,
       int? cdNom,
       String? comments,
       String? uuidObservation,
@@ -152,6 +160,7 @@ class __$$ObservationImplCopyWithImpl<$Res>
   $Res call({
     Object? idObservation = null,
     Object? idBaseVisit = freezed,
+    Object? idDigitiser = freezed,
     Object? cdNom = freezed,
     Object? comments = freezed,
     Object? uuidObservation = freezed,
@@ -168,6 +177,10 @@ class __$$ObservationImplCopyWithImpl<$Res>
       idBaseVisit: freezed == idBaseVisit
           ? _value.idBaseVisit
           : idBaseVisit // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
               as int?,
       cdNom: freezed == cdNom
           ? _value.cdNom
@@ -207,6 +220,7 @@ class _$ObservationImpl implements _Observation {
   const _$ObservationImpl(
       {required this.idObservation,
       this.idBaseVisit,
+      this.idDigitiser,
       this.cdNom,
       this.comments,
       this.uuidObservation,
@@ -220,6 +234,8 @@ class _$ObservationImpl implements _Observation {
   final int idObservation;
   @override
   final int? idBaseVisit;
+  @override
+  final int? idDigitiser;
   @override
   final int? cdNom;
   @override
@@ -244,7 +260,7 @@ class _$ObservationImpl implements _Observation {
 
   @override
   String toString() {
-    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, serverObservationId: $serverObservationId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
+    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, idDigitiser: $idDigitiser, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, serverObservationId: $serverObservationId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
   }
 
   @override
@@ -256,6 +272,8 @@ class _$ObservationImpl implements _Observation {
                 other.idObservation == idObservation) &&
             (identical(other.idBaseVisit, idBaseVisit) ||
                 other.idBaseVisit == idBaseVisit) &&
+            (identical(other.idDigitiser, idDigitiser) ||
+                other.idDigitiser == idDigitiser) &&
             (identical(other.cdNom, cdNom) || other.cdNom == cdNom) &&
             (identical(other.comments, comments) ||
                 other.comments == comments) &&
@@ -275,6 +293,7 @@ class _$ObservationImpl implements _Observation {
       runtimeType,
       idObservation,
       idBaseVisit,
+      idDigitiser,
       cdNom,
       comments,
       uuidObservation,
@@ -296,6 +315,7 @@ abstract class _Observation implements Observation {
   const factory _Observation(
       {required final int idObservation,
       final int? idBaseVisit,
+      final int? idDigitiser,
       final int? cdNom,
       final String? comments,
       final String? uuidObservation,
@@ -308,6 +328,8 @@ abstract class _Observation implements Observation {
   int get idObservation;
   @override
   int? get idBaseVisit;
+  @override
+  int? get idDigitiser;
   @override
   int? get cdNom;
   @override

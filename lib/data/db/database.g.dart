@@ -5119,6 +5119,12 @@ class $TObservationsTable extends TObservations
   late final GeneratedColumn<int> idBaseVisit = GeneratedColumn<int>(
       'id_base_visit', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idDigitiserMeta =
+      const VerificationMeta('idDigitiser');
+  @override
+  late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
+      'id_digitiser', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
   @override
   late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
@@ -5148,6 +5154,7 @@ class $TObservationsTable extends TObservations
   List<GeneratedColumn> get $columns => [
         idObservation,
         idBaseVisit,
+        idDigitiser,
         cdNom,
         comments,
         uuidObservation,
@@ -5174,6 +5181,12 @@ class $TObservationsTable extends TObservations
           _idBaseVisitMeta,
           idBaseVisit.isAcceptableOrUnknown(
               data['id_base_visit']!, _idBaseVisitMeta));
+    }
+    if (data.containsKey('id_digitiser')) {
+      context.handle(
+          _idDigitiserMeta,
+          idDigitiser.isAcceptableOrUnknown(
+              data['id_digitiser']!, _idDigitiserMeta));
     }
     if (data.containsKey('cd_nom')) {
       context.handle(
@@ -5208,6 +5221,8 @@ class $TObservationsTable extends TObservations
           .read(DriftSqlType.int, data['${effectivePrefix}id_observation'])!,
       idBaseVisit: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id_base_visit']),
+      idDigitiser: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
       cdNom: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}cd_nom']),
       comments: attachedDatabase.typeMapping
@@ -5228,6 +5243,7 @@ class $TObservationsTable extends TObservations
 class TObservation extends DataClass implements Insertable<TObservation> {
   final int idObservation;
   final int? idBaseVisit;
+  final int? idDigitiser;
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
@@ -5235,6 +5251,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
   const TObservation(
       {required this.idObservation,
       this.idBaseVisit,
+      this.idDigitiser,
       this.cdNom,
       this.comments,
       this.uuidObservation,
@@ -5245,6 +5262,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     map['id_observation'] = Variable<int>(idObservation);
     if (!nullToAbsent || idBaseVisit != null) {
       map['id_base_visit'] = Variable<int>(idBaseVisit);
+    }
+    if (!nullToAbsent || idDigitiser != null) {
+      map['id_digitiser'] = Variable<int>(idDigitiser);
     }
     if (!nullToAbsent || cdNom != null) {
       map['cd_nom'] = Variable<int>(cdNom);
@@ -5267,6 +5287,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       idBaseVisit: idBaseVisit == null && nullToAbsent
           ? const Value.absent()
           : Value(idBaseVisit),
+      idDigitiser: idDigitiser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitiser),
       cdNom:
           cdNom == null && nullToAbsent ? const Value.absent() : Value(cdNom),
       comments: comments == null && nullToAbsent
@@ -5287,6 +5310,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return TObservation(
       idObservation: serializer.fromJson<int>(json['idObservation']),
       idBaseVisit: serializer.fromJson<int?>(json['idBaseVisit']),
+      idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
       cdNom: serializer.fromJson<int?>(json['cdNom']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidObservation: serializer.fromJson<String?>(json['uuidObservation']),
@@ -5300,6 +5324,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return <String, dynamic>{
       'idObservation': serializer.toJson<int>(idObservation),
       'idBaseVisit': serializer.toJson<int?>(idBaseVisit),
+      'idDigitiser': serializer.toJson<int?>(idDigitiser),
       'cdNom': serializer.toJson<int?>(cdNom),
       'comments': serializer.toJson<String?>(comments),
       'uuidObservation': serializer.toJson<String?>(uuidObservation),
@@ -5310,6 +5335,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
   TObservation copyWith(
           {int? idObservation,
           Value<int?> idBaseVisit = const Value.absent(),
+          Value<int?> idDigitiser = const Value.absent(),
           Value<int?> cdNom = const Value.absent(),
           Value<String?> comments = const Value.absent(),
           Value<String?> uuidObservation = const Value.absent(),
@@ -5317,6 +5343,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       TObservation(
         idObservation: idObservation ?? this.idObservation,
         idBaseVisit: idBaseVisit.present ? idBaseVisit.value : this.idBaseVisit,
+        idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
         cdNom: cdNom.present ? cdNom.value : this.cdNom,
         comments: comments.present ? comments.value : this.comments,
         uuidObservation: uuidObservation.present
@@ -5333,6 +5360,8 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           : this.idObservation,
       idBaseVisit:
           data.idBaseVisit.present ? data.idBaseVisit.value : this.idBaseVisit,
+      idDigitiser:
+          data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
       cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
       comments: data.comments.present ? data.comments.value : this.comments,
       uuidObservation: data.uuidObservation.present
@@ -5349,6 +5378,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return (StringBuffer('TObservation(')
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idDigitiser: $idDigitiser, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
           ..write('uuidObservation: $uuidObservation, ')
@@ -5358,14 +5388,15 @@ class TObservation extends DataClass implements Insertable<TObservation> {
   }
 
   @override
-  int get hashCode => Object.hash(idObservation, idBaseVisit, cdNom, comments,
-      uuidObservation, serverObservationId);
+  int get hashCode => Object.hash(idObservation, idBaseVisit, idDigitiser,
+      cdNom, comments, uuidObservation, serverObservationId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TObservation &&
           other.idObservation == this.idObservation &&
           other.idBaseVisit == this.idBaseVisit &&
+          other.idDigitiser == this.idDigitiser &&
           other.cdNom == this.cdNom &&
           other.comments == this.comments &&
           other.uuidObservation == this.uuidObservation &&
@@ -5375,6 +5406,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
 class TObservationsCompanion extends UpdateCompanion<TObservation> {
   final Value<int> idObservation;
   final Value<int?> idBaseVisit;
+  final Value<int?> idDigitiser;
   final Value<int?> cdNom;
   final Value<String?> comments;
   final Value<String?> uuidObservation;
@@ -5382,6 +5414,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   const TObservationsCompanion({
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
@@ -5390,6 +5423,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   TObservationsCompanion.insert({
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
@@ -5398,6 +5432,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   static Insertable<TObservation> custom({
     Expression<int>? idObservation,
     Expression<int>? idBaseVisit,
+    Expression<int>? idDigitiser,
     Expression<int>? cdNom,
     Expression<String>? comments,
     Expression<String>? uuidObservation,
@@ -5406,6 +5441,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     return RawValuesInsertable({
       if (idObservation != null) 'id_observation': idObservation,
       if (idBaseVisit != null) 'id_base_visit': idBaseVisit,
+      if (idDigitiser != null) 'id_digitiser': idDigitiser,
       if (cdNom != null) 'cd_nom': cdNom,
       if (comments != null) 'comments': comments,
       if (uuidObservation != null) 'uuid_observation': uuidObservation,
@@ -5417,6 +5453,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   TObservationsCompanion copyWith(
       {Value<int>? idObservation,
       Value<int?>? idBaseVisit,
+      Value<int?>? idDigitiser,
       Value<int?>? cdNom,
       Value<String?>? comments,
       Value<String?>? uuidObservation,
@@ -5424,6 +5461,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     return TObservationsCompanion(
       idObservation: idObservation ?? this.idObservation,
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+      idDigitiser: idDigitiser ?? this.idDigitiser,
       cdNom: cdNom ?? this.cdNom,
       comments: comments ?? this.comments,
       uuidObservation: uuidObservation ?? this.uuidObservation,
@@ -5439,6 +5477,9 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     }
     if (idBaseVisit.present) {
       map['id_base_visit'] = Variable<int>(idBaseVisit.value);
+    }
+    if (idDigitiser.present) {
+      map['id_digitiser'] = Variable<int>(idDigitiser.value);
     }
     if (cdNom.present) {
       map['cd_nom'] = Variable<int>(cdNom.value);
@@ -5460,6 +5501,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     return (StringBuffer('TObservationsCompanion(')
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idDigitiser: $idDigitiser, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
           ..write('uuidObservation: $uuidObservation, ')
@@ -14826,6 +14868,7 @@ typedef $$TObservationsTableCreateCompanionBuilder = TObservationsCompanion
     Function({
   Value<int> idObservation,
   Value<int?> idBaseVisit,
+  Value<int?> idDigitiser,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
@@ -14835,6 +14878,7 @@ typedef $$TObservationsTableUpdateCompanionBuilder = TObservationsCompanion
     Function({
   Value<int> idObservation,
   Value<int?> idBaseVisit,
+  Value<int?> idDigitiser,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
@@ -14855,6 +14899,9 @@ class $$TObservationsTableFilterComposer
 
   ColumnFilters<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnFilters(column));
@@ -14887,6 +14934,9 @@ class $$TObservationsTableOrderingComposer
   ColumnOrderings<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnOrderings(column));
 
@@ -14916,6 +14966,9 @@ class $$TObservationsTableAnnotationComposer
 
   GeneratedColumn<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => column);
+
+  GeneratedColumn<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => column);
 
   GeneratedColumn<int> get cdNom =>
       $composableBuilder(column: $table.cdNom, builder: (column) => column);
@@ -14958,6 +15011,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
@@ -14966,6 +15020,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
               TObservationsCompanion(
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
+            idDigitiser: idDigitiser,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
@@ -14974,6 +15029,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
           createCompanionCallback: ({
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
@@ -14982,6 +15038,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
               TObservationsCompanion.insert(
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
+            idDigitiser: idDigitiser,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,

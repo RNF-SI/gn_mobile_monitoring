@@ -7,6 +7,7 @@ class Observation with _$Observation {
   const factory Observation({
     required int idObservation,
     int? idBaseVisit,
+    int? idDigitiser,
     int? cdNom,
     String? comments,
     String? uuidObservation,

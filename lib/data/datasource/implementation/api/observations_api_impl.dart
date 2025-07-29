@@ -95,6 +95,11 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
         requestBody['properties']['comments'] = observation.comments;
       }
 
+      // Ajouter l'id_digitiser s'il est disponible
+      if (observation.idDigitiser != null) {
+        requestBody['properties']['id_digitiser'] = observation.idDigitiser;
+      }
+
       // Ajouter les données complémentaires si disponibles
       // En utilisant une approche itérative pour éviter les problèmes de type
       if (observation.data != null && observation.data!.isNotEmpty) {
@@ -329,6 +334,11 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
 
       if (observation.comments != null) {
         requestBody['properties']['comments'] = observation.comments;
+      }
+
+      // Ajouter l'id_digitiser s'il est disponible
+      if (observation.idDigitiser != null) {
+        requestBody['properties']['id_digitiser'] = observation.idDigitiser;
       }
 
       if (observation.data != null && observation.data!.isNotEmpty) {
