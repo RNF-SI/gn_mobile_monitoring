@@ -351,19 +351,81 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   }
 
   Map<String, dynamic> getFormValues() {
-    // IMPORTANT: Selon les spécifications de persistance des valeurs cachées,
-    // cette méthode doit retourner TOUTES les valeurs, cachées ET visibles.
-    // hidden = propriété d'affichage uniquement, PAS de traitement des données
+    // LOGIQUE DE FILTRAGE DES CHAMPS CACHÉS :
+    // - Champs required + cachés → CONSERVER (nécessaires pour la BDD)
+    // - Champs non-required + cachés → SUPPRIMER (données non-pertinentes)
+    // - Champs visibles → CONSERVER toujours
     
-    // Debug pour cd_nom
-    if (_formValues.containsKey('cd_nom')) {
-      debugPrint('🐛 [DEBUG] getFormValues - cd_nom présent: ${_formValues['cd_nom']}');
-    } else {
-      debugPrint('🐛 [DEBUG] getFormValues - cd_nom ABSENT des _formValues !');
-    }
+    final Map<String, dynamic> filteredValues = {};
     
-    // Retourner une copie de toutes les valeurs du formulaire
-    return Map<String, dynamic>.from(_formValues);
+    // Préparer le contexte d'évaluation pour déterminer la visibilité
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+    final evaluationContext = formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+    
+    // Examiner chaque champ pour décider s'il doit être inclus
+    _unifiedSchema.forEach((fieldName, fieldConfig) {
+      if (!_formValues.containsKey(fieldName)) {
+        return; // Pas de valeur pour ce champ
+      }
+      
+      final fieldValue = _formValues[fieldName];
+      
+      // Déterminer si le champ est caché
+      final isHidden = formDataProcessor.isFieldHidden(
+        fieldName,
+        evaluationContext,
+        fieldConfig: fieldConfig,
+        allFieldsConfig: _unifiedSchema,
+      );
+      
+      if (!isHidden) {
+        // Champ visible → toujours inclure
+        filteredValues[fieldName] = fieldValue;
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] cd_nom inclus (visible): $fieldValue');
+        }
+      } else {
+        // Champ caché → vérifier s'il est required
+        // Gérer les deux formats possibles : fieldConfig['required'] ou fieldConfig['validations']['required']
+        bool isRequired = false;
+        
+        // Format 1: required directement dans fieldConfig (ex: configuration serveur)
+        if (fieldConfig.containsKey('required')) {
+          isRequired = fieldConfig['required'] == true;
+        }
+        
+        // Format 2: required dans validations (ex: configuration locale)
+        if (!isRequired && fieldConfig.containsKey('validations')) {
+          final validations = fieldConfig['validations'] as Map<String, dynamic>? ?? {};
+          isRequired = validations['required'] == true;
+        }
+        
+        if (isRequired) {
+          // Champ caché mais required → conserver pour éviter erreur BDD
+          filteredValues[fieldName] = fieldValue;
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom inclus (caché mais required): $fieldValue');
+          }
+        } else {
+          // Champ caché et non-required → supprimer
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom SUPPRIMÉ (caché et non-required): $fieldValue');
+          }
+        }
+      }
+    });
+    
+    return filteredValues;
   }
 
   /// Retourne toutes les valeurs du formulaire (y compris les champs cachés)
