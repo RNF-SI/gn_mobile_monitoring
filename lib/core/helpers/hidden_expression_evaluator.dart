@@ -53,8 +53,6 @@ class HiddenExpressionEvaluator {
       // Évaluer l'expression en fonction de son type
       return _evaluateExpressionBody(body, params, context);
     } catch (e) {
-      // Log l'erreur pour faciliter le débogage
-      debugPrint('Erreur lors de l\'évaluation de l\'expression: $e');
       return null;
     }
   }
@@ -271,7 +269,9 @@ class HiddenExpressionEvaluator {
   
   /// Vérifie si l'expression contient un opérateur de comparaison
   bool _containsComparisonOperator(String expr) {
-    return expr.contains('==') || 
+    return expr.contains('===') || 
+           expr.contains('!==') ||
+           expr.contains('==') || 
            expr.contains('!=') ||
            expr.contains('>=') ||
            expr.contains('<=') ||
@@ -286,10 +286,14 @@ class HiddenExpressionEvaluator {
       expr = expr.substring(0, expr.length - 8).trim();
     }
     
-    // Détecter quel opérateur est utilisé
+    // Détecter quel opérateur est utilisé (ordre important pour éviter les conflits)
     String operator;
     
-    if (expr.contains('==')) {
+    if (expr.contains('===')) {
+      operator = '===';
+    } else if (expr.contains('!==')) {
+      operator = '!==';
+    } else if (expr.contains('==')) {
       operator = '==';
     } else if (expr.contains('!=')) {
       operator = '!=';
@@ -323,34 +327,46 @@ class HiddenExpressionEvaluator {
     
     final rightValue = _evaluateValue(cleanRightExpr, params, context);
     
-    // Si une des valeurs n'a pas pu être évaluée, le résultat est incertain
-    if (leftValue == null || rightValue == null) {
-      return null;
-    }
+    // Note: Nous permettons maintenant les comparaisons avec null
+    // car c'est un cas courant dans les formulaires (champs non encore remplis)
     
     // Effectuer la comparaison en fonction de l'opérateur
     bool? result;
-    switch (operator) {
-      case '==': 
-        result = leftValue == rightValue;
-        break;
-      case '!=': 
-        result = leftValue != rightValue;
-        break;
-      case '>=': 
-        result = _compareValues(leftValue, rightValue) >= 0;
-        break;
-      case '<=': 
-        result = _compareValues(leftValue, rightValue) <= 0;
-        break;
-      case '>': 
-        result = _compareValues(leftValue, rightValue) > 0;
-        break;
-      case '<': 
-        result = _compareValues(leftValue, rightValue) < 0;
-        break;
-      default: 
-        return null;
+    try {
+      switch (operator) {
+        case '===': 
+          // Triple égal JavaScript : égalité stricte (même valeur ET même type)
+          result = leftValue == rightValue && leftValue.runtimeType == rightValue.runtimeType;
+          break;
+        case '!==': 
+          // Inégalité stricte JavaScript
+          result = !(leftValue == rightValue && leftValue.runtimeType == rightValue.runtimeType);
+          break;
+        case '==': 
+          result = leftValue == rightValue;
+          break;
+        case '!=': 
+          result = leftValue != rightValue;
+          break;
+        case '>=': 
+          result = _compareValues(leftValue, rightValue) >= 0;
+          break;
+        case '<=': 
+          result = _compareValues(leftValue, rightValue) <= 0;
+          break;
+        case '>': 
+          result = _compareValues(leftValue, rightValue) > 0;
+          break;
+        case '<': 
+          result = _compareValues(leftValue, rightValue) < 0;
+          break;
+        default: 
+          return null;
+      }
+    } catch (e) {
+      // En cas d'erreur de comparaison (par exemple, types incompatibles)
+      // retourner null pour signaler une évaluation impossible
+      return null;
     }
     
     return result;
@@ -400,10 +416,15 @@ class HiddenExpressionEvaluator {
           if (paramValue.containsKey(propName)) {
             final value = paramValue[propName];
             return value;
+          } else {
+            // La propriété n'existe pas, retourner null comme valeur réelle
+            // (pas comme signal d'erreur)
+            return null;
           }
         }
       }
       
+      // Le paramètre n'existe pas, retourner null comme valeur réelle
       return null;
     }
     
