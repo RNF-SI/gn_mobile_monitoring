@@ -2559,7 +2559,7 @@ mixin _$GenericFieldConfig {
   @JsonKey(name: 'attribut_label')
   String? get attributLabel => throw _privateConstructorUsedError;
   String? get definition => throw _privateConstructorUsedError;
-  bool? get hidden => throw _privateConstructorUsedError;
+  dynamic get hidden => throw _privateConstructorUsedError;
   bool? get required => throw _privateConstructorUsedError;
   String? get typeWidget => throw _privateConstructorUsedError;
   String? get typeUtil => throw _privateConstructorUsedError;
@@ -2569,9 +2569,9 @@ mixin _$GenericFieldConfig {
   String? get keyLabel => throw _privateConstructorUsedError;
   String? get keyValue => throw _privateConstructorUsedError;
   bool? get multiple => throw _privateConstructorUsedError;
-  List<Map<String, dynamic>>? get values => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get value => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get default_ => throw _privateConstructorUsedError;
+  dynamic get values => throw _privateConstructorUsedError;
+  dynamic get value => throw _privateConstructorUsedError;
+  dynamic get default_ => throw _privateConstructorUsedError;
   String? get designStyle => throw _privateConstructorUsedError;
   String? get dataPath => throw _privateConstructorUsedError;
   @JsonKey(name: 'id_list')
@@ -2593,7 +2593,7 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: 'attribut_label') String? attributLabel,
       String? definition,
-      bool? hidden,
+      dynamic hidden,
       bool? required,
       String? typeWidget,
       String? typeUtil,
@@ -2603,9 +2603,9 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       String? keyLabel,
       String? keyValue,
       bool? multiple,
-      List<Map<String, dynamic>>? values,
-      Map<String, dynamic>? value,
-      Map<String, dynamic>? default_,
+      dynamic values,
+      dynamic value,
+      dynamic default_,
       String? designStyle,
       String? dataPath,
       @JsonKey(name: 'id_list') dynamic idList});
@@ -2657,7 +2657,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as dynamic,
       required: freezed == required
           ? _value.required
           : required // ignore: cast_nullable_to_non_nullable
@@ -2697,15 +2697,15 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
       values: freezed == values
           ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>?,
+              as dynamic,
       value: freezed == value
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       default_: freezed == default_
           ? _value.default_
           : default_ // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       designStyle: freezed == designStyle
           ? _value.designStyle
           : designStyle // ignore: cast_nullable_to_non_nullable
@@ -2733,7 +2733,7 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: 'attribut_label') String? attributLabel,
       String? definition,
-      bool? hidden,
+      dynamic hidden,
       bool? required,
       String? typeWidget,
       String? typeUtil,
@@ -2743,9 +2743,9 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       String? keyLabel,
       String? keyValue,
       bool? multiple,
-      List<Map<String, dynamic>>? values,
-      Map<String, dynamic>? value,
-      Map<String, dynamic>? default_,
+      dynamic values,
+      dynamic value,
+      dynamic default_,
       String? designStyle,
       String? dataPath,
       @JsonKey(name: 'id_list') dynamic idList});
@@ -2795,7 +2795,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as dynamic,
       required: freezed == required
           ? _value.required
           : required // ignore: cast_nullable_to_non_nullable
@@ -2833,17 +2833,17 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           : multiple // ignore: cast_nullable_to_non_nullable
               as bool?,
       values: freezed == values
-          ? _value._values
+          ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>?,
+              as dynamic,
       value: freezed == value
-          ? _value._value
+          ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       default_: freezed == default_
-          ? _value._default_
+          ? _value.default_
           : default_ // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       designStyle: freezed == designStyle
           ? _value.designStyle
           : designStyle // ignore: cast_nullable_to_non_nullable
@@ -2876,15 +2876,12 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       this.keyLabel,
       this.keyValue,
       this.multiple,
-      final List<Map<String, dynamic>>? values,
-      final Map<String, dynamic>? value,
-      final Map<String, dynamic>? default_,
+      this.values,
+      this.value,
+      this.default_,
       this.designStyle,
       this.dataPath,
-      @JsonKey(name: 'id_list') this.idList})
-      : _values = values,
-        _value = value,
-        _default_ = default_;
+      @JsonKey(name: 'id_list') this.idList});
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -2892,7 +2889,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   @override
   final String? definition;
   @override
-  final bool? hidden;
+  final dynamic hidden;
   @override
   final bool? required;
   @override
@@ -2911,36 +2908,12 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   final String? keyValue;
   @override
   final bool? multiple;
-  final List<Map<String, dynamic>>? _values;
   @override
-  List<Map<String, dynamic>>? get values {
-    final value = _values;
-    if (value == null) return null;
-    if (_values is EqualUnmodifiableListView) return _values;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
-  final Map<String, dynamic>? _value;
+  final dynamic values;
   @override
-  Map<String, dynamic>? get value {
-    final value = _value;
-    if (value == null) return null;
-    if (_value is EqualUnmodifiableMapView) return _value;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
-  final Map<String, dynamic>? _default_;
+  final dynamic value;
   @override
-  Map<String, dynamic>? get default_ {
-    final value = _default_;
-    if (value == null) return null;
-    if (_default_ is EqualUnmodifiableMapView) return _default_;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
+  final dynamic default_;
   @override
   final String? designStyle;
   @override
@@ -2963,7 +2936,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
                 other.attributLabel == attributLabel) &&
             (identical(other.definition, definition) ||
                 other.definition == definition) &&
-            (identical(other.hidden, hidden) || other.hidden == hidden) &&
+            const DeepCollectionEquality().equals(other.hidden, hidden) &&
             (identical(other.required, required) ||
                 other.required == required) &&
             (identical(other.typeWidget, typeWidget) ||
@@ -2981,9 +2954,9 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
                 other.keyValue == keyValue) &&
             (identical(other.multiple, multiple) ||
                 other.multiple == multiple) &&
-            const DeepCollectionEquality().equals(other._values, _values) &&
-            const DeepCollectionEquality().equals(other._value, _value) &&
-            const DeepCollectionEquality().equals(other._default_, _default_) &&
+            const DeepCollectionEquality().equals(other.values, values) &&
+            const DeepCollectionEquality().equals(other.value, value) &&
+            const DeepCollectionEquality().equals(other.default_, default_) &&
             (identical(other.designStyle, designStyle) ||
                 other.designStyle == designStyle) &&
             (identical(other.dataPath, dataPath) ||
@@ -2996,7 +2969,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       runtimeType,
       attributLabel,
       definition,
-      hidden,
+      const DeepCollectionEquality().hash(hidden),
       required,
       typeWidget,
       typeUtil,
@@ -3006,9 +2979,9 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       keyLabel,
       keyValue,
       multiple,
-      const DeepCollectionEquality().hash(_values),
-      const DeepCollectionEquality().hash(_value),
-      const DeepCollectionEquality().hash(_default_),
+      const DeepCollectionEquality().hash(values),
+      const DeepCollectionEquality().hash(value),
+      const DeepCollectionEquality().hash(default_),
       designStyle,
       dataPath,
       const DeepCollectionEquality().hash(idList));
@@ -3027,7 +3000,7 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   const factory _GenericFieldConfig(
           {@JsonKey(name: 'attribut_label') final String? attributLabel,
           final String? definition,
-          final bool? hidden,
+          final dynamic hidden,
           final bool? required,
           final String? typeWidget,
           final String? typeUtil,
@@ -3037,9 +3010,9 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
           final String? keyLabel,
           final String? keyValue,
           final bool? multiple,
-          final List<Map<String, dynamic>>? values,
-          final Map<String, dynamic>? value,
-          final Map<String, dynamic>? default_,
+          final dynamic values,
+          final dynamic value,
+          final dynamic default_,
           final String? designStyle,
           final String? dataPath,
           @JsonKey(name: 'id_list') final dynamic idList}) =
@@ -3051,7 +3024,7 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   String? get definition;
   @override
-  bool? get hidden;
+  dynamic get hidden;
   @override
   bool? get required;
   @override
@@ -3071,11 +3044,11 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   bool? get multiple;
   @override
-  List<Map<String, dynamic>>? get values;
+  dynamic get values;
   @override
-  Map<String, dynamic>? get value;
+  dynamic get value;
   @override
-  Map<String, dynamic>? get default_;
+  dynamic get default_;
   @override
   String? get designStyle;
   @override
