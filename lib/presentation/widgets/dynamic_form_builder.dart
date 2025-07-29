@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:meta/meta.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -65,13 +66,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void initState() {
     super.initState();
     _textControllers = {};
-    _formValues = widget.initialValues ?? {};
+    _formValues = Map<String, dynamic>.from(widget.initialValues ?? {});
 
     // Générer le schéma unifié
     _unifiedSchema = FormConfigParser.generateUnifiedSchema(
       widget.objectConfig,
       widget.customConfig,
     );
+    
 
     // Trier les champs selon l'ordre défini dans displayProperties
     if (widget.displayProperties != null &&
@@ -111,8 +113,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void _initControllers() {
     // Initialiser les contrôleurs pour chaque champ
     _unifiedSchema.forEach((fieldName, fieldConfig) {
-      final dynamic initialValue = _formValues[fieldName];
       final String widgetType = fieldConfig['widget_type'];
+
+      // Initialiser les valeurs par défaut de manière intelligente
+      // (champs visibles + champs cachés si explicitement requis)
+      _initializeDefaultValue(fieldName, fieldConfig);
+
+      // Récupérer la valeur après initialisation par défaut
+      final dynamic initialValue = _formValues[fieldName];
 
       switch (widgetType) {
         case 'TextField':
@@ -140,20 +148,152 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             text: initialValue?.toString() ?? '',
           );
           break;
-        case 'RadioButton':
-          // Initialiser la valeur par défaut pour les radio buttons
-          if (_formValues[fieldName] == null) {
-            final String? defaultValue = 
-                fieldConfig['default']?.toString() ?? 
-                fieldConfig['value']?.toString();
-            if (defaultValue != null) {
-              _formValues[fieldName] = defaultValue;
-            }
-          }
-          break;
-        // Les autres types de widgets n'utilisent pas de contrôleurs
+        // Les autres types de widgets n'utilisent pas de contrôleurs mais leurs valeurs
+        // par défaut sont déjà initialisées par _initializeDefaultValue ci-dessus
       }
     });
+  }
+
+  /// Initialise la valeur par défaut pour un champ si elle n'existe pas déjà
+  /// 
+  /// Cette méthode applique une logique nuancée :
+  /// - Initialise toujours les champs visibles
+  /// - Initialise les champs cachés SEULEMENT si explicitement demandé ou nécessaire
+  void _initializeDefaultValue(String fieldName, Map<String, dynamic> fieldConfig) {
+    // Si le champ a déjà une valeur, ne pas l'écraser
+    if (_formValues.containsKey(fieldName)) {
+      return;
+    }
+
+    final dynamic defaultValue = fieldConfig['default'] ?? fieldConfig['value'];
+    if (defaultValue == null) {
+      return; // Aucune valeur par défaut à initialiser
+    }
+
+    // Vérifier si le champ est initialement caché
+    final hiddenCondition = fieldConfig['hidden'];
+    if (hiddenCondition != null) {
+      final bool shouldInitializeEvenIfHidden = _shouldInitializeHiddenField(fieldName, fieldConfig);
+      
+      if (!shouldInitializeEvenIfHidden) {
+        // Évaluer si le champ est initialement caché avec le contexte initial
+        final initialContext = _prepareInitialEvaluationContext();
+        final formDataProcessor = ref.read(formDataProcessorProvider);
+        
+        final isInitiallyHidden = formDataProcessor.isFieldHidden(
+          fieldName, 
+          initialContext,
+          fieldConfig: fieldConfig,
+          allFieldsConfig: _unifiedSchema
+        );
+        
+        if (isInitiallyHidden) {
+          // Ne pas initialiser les champs initialement cachés
+          return;
+        }
+      }
+    }
+
+    // Procéder à l'initialisation
+    _setDefaultValueByType(fieldName, fieldConfig, defaultValue);
+  }
+
+  /// Détermine si un champ caché doit être initialisé avec sa valeur par défaut
+  /// 
+  /// Critères d'initialisation pour les champs cachés :
+  /// 1. Annotation explicite 'initialize_when_hidden': true
+  /// 2. Champs requis avec 'required': true (logique métier)
+  /// 3. Champs avec 'always_initialize': true
+  bool _shouldInitializeHiddenField(String fieldName, Map<String, dynamic> fieldConfig) {
+    // Critère 1: Annotation explicite
+    if (fieldConfig['initialize_when_hidden'] == true) {
+      return true;
+    }
+    
+    // Critère 2: Champs requis avec 'always_initialize'
+    if (fieldConfig['always_initialize'] == true) {
+      return true;
+    }
+    
+    // Critère 3: Champs requis pour la logique métier (cas spéciaux)
+    // Par exemple, facteurs de correction, coefficients, etc.
+    if (_isMetadataField(fieldName, fieldConfig)) {
+      return true;
+    }
+    
+    return false;
+  }
+
+  /// Détermine si un champ est un champ de métadonnées nécessaire même quand caché
+  bool _isMetadataField(String fieldName, Map<String, dynamic> fieldConfig) {
+    // Exemples de champs métadonnées qui pourraient être nécessaires
+    final metadataPatterns = [
+      'facteur_correction',
+      'coefficient_',
+      '_metadata',
+      'version_',
+      'default_'
+    ];
+    
+    return metadataPatterns.any((pattern) => fieldName.contains(pattern));
+  }
+
+  /// Prépare un contexte d'évaluation initial basé sur les valeurs initiales et par défaut
+  Map<String, dynamic> _prepareInitialEvaluationContext() {
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+    
+    // Utiliser les valeurs initiales du widget + valeurs déjà présentes
+    final initialValues = Map<String, dynamic>.from(widget.initialValues ?? {});
+    initialValues.addAll(_formValues);
+    
+    return formDataProcessor.prepareEvaluationContext(
+      values: initialValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+  }
+
+  /// Définit la valeur par défaut en fonction du type de widget
+  void _setDefaultValueByType(String fieldName, Map<String, dynamic> fieldConfig, dynamic defaultValue) {
+    final String widgetType = fieldConfig['widget_type'];
+
+    switch (widgetType) {
+      case 'RadioButton':
+        _formValues[fieldName] = defaultValue.toString();
+        break;
+      case 'TaxonSelector':
+        if (defaultValue is int) {
+          _formValues[fieldName] = defaultValue;
+        } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
+          _formValues[fieldName] = defaultValue['cd_nom'];
+        }
+        break;
+      case 'NomenclatureSelector':
+        if (defaultValue is Map) {
+          _formValues[fieldName] = defaultValue;
+        } else if (defaultValue is int) {
+          _formValues[fieldName] = {'id': defaultValue};
+        }
+        break;
+      case 'Checkbox':
+        _formValues[fieldName] = defaultValue == true || defaultValue == 'true';
+        break;
+      case 'DatasetSelector':
+        if (defaultValue is int) {
+          _formValues[fieldName] = defaultValue;
+        }
+        break;
+      default:
+        // Pour les autres types, stocker la valeur directement
+        _formValues[fieldName] = defaultValue;
+        break;
+    }
   }
 
   void resetForm() {
@@ -216,55 +356,57 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   }
 
   Map<String, dynamic> getFormValues() {
+    // Créer une copie des valeurs en filtrant les champs cachés
+    final Map<String, dynamic> visibleValues = {};
+    
+    // Préparer le contexte d'évaluation
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+    final evaluationContext = formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+    
+    // Pour chaque champ dans le schéma, vérifier s'il est visible
+    _unifiedSchema.forEach((fieldName, fieldConfig) {
+      // Si le champ a une valeur ET qu'il n'est pas caché, l'inclure
+      if (_formValues.containsKey(fieldName)) {
+        final isHidden = formDataProcessor.isFieldHidden(
+          fieldName, 
+          evaluationContext,
+          fieldConfig: fieldConfig,
+          allFieldsConfig: _unifiedSchema
+        );
+        
+        if (!isHidden) {
+          visibleValues[fieldName] = _formValues[fieldName];
+        }
+      }
+    });
+    
+    return visibleValues;
+  }
+
+  /// Retourne toutes les valeurs du formulaire (y compris les champs cachés)
+  /// Utilisé principalement pour les tests et le debug
+  @visibleForTesting
+  Map<String, dynamic> getAllFormValues() {
     return Map<String, dynamic>.from(_formValues);
   }
 
   // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
   void updateFormValue(String fieldName, dynamic value) {
-    debugPrint('Updating form value: $fieldName = $value');
-    
-    // Déterminer dynamiquement si c'est un champ critique en analysant le schéma
-    final isCriticalField = _isCriticalField(fieldName);
-    
     setState(() {
       if (value == null) {
         _formValues.remove(fieldName);
       } else {
         _formValues[fieldName] = value;
-      }
-      
-      if (isCriticalField) {
-        debugPrint('Critical field changed: $fieldName = $value');
-        
-        // Vérification des conditions de visibilité pour les champs qui pourraient être affectés
-        final formDataProcessor = ref.read(formDataProcessorProvider);
-        final evaluationContext = formDataProcessor.prepareEvaluationContext(
-          values: _formValues,
-          metadata: {
-            'bChainInput': widget.chainInput ?? false,
-            'parents': {
-              'site': widget.objectConfig,
-              'module': widget.customConfig?.idModule,
-            },
-            'dataset': widget.customConfig?.idListTaxonomy,
-          },
-        );
-        
-        // Ne débogue qu'un nombre limité de champs pour éviter une boucle infinie de logs
-        int debuggedFields = 0;
-        for (final entry in _unifiedSchema.entries) {
-          if (entry.value.containsKey('hidden') && entry.value['hidden'] != false) {
-            if (debuggedFields < 5) { // Limiter à 5 champs maximum
-              final isHidden = formDataProcessor.isFieldHidden(
-                entry.key, 
-                evaluationContext,
-                fieldConfig: entry.value
-              );
-              debugPrint('Field ${entry.key} hidden condition = $isHidden');
-              debuggedFields++;
-            }
-          }
-        }
       }
       
       // Les conditions de visibilité seront réévaluées lors de la prochaine construction
@@ -305,9 +447,6 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
   @override
   Widget build(BuildContext context) {
-    // Débogage: limiter les logs pour éviter la surcharge
-    // debugPrint('Building form with values: $_formValues');
-    
     return Form(
       key: _formKey,
       child: Column(
@@ -460,9 +599,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       },
     );
 
-    // Évaluer si le champ doit être masqué
-    if (formDataProcessor.isFieldHidden(fieldName, evaluationContext,
-        fieldConfig: fieldConfig)) {
+    // Évaluer si le champ doit être masqué (avec support des cascades)
+    final isHidden = formDataProcessor.isFieldHidden(fieldName, evaluationContext,
+        fieldConfig: fieldConfig, allFieldsConfig: _unifiedSchema);
+    
+    if (isHidden) {
       return const SizedBox.shrink(); // Ne pas afficher ce champ
     }
 
