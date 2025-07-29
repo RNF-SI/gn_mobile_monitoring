@@ -507,6 +507,10 @@ class FormConfigParser {
     final fieldsToExclude = [
       // 'id_dataset', // Nous voulons maintenant afficher le champ dataset
       'uuid_base_visit',
+      'uuid_observation',
+      'uuid_base_site', 
+      'uuid_sites_group',
+      'uuid_module_complement',
       'nb_observations',
       // 'medias', // Le champ media doit être affiché
       'id_module',
