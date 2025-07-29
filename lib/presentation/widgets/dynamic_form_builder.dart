@@ -170,29 +170,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       return; // Aucune valeur par défaut à initialiser
     }
 
-    // Vérifier si le champ est initialement caché
-    final hiddenCondition = fieldConfig['hidden'];
-    if (hiddenCondition != null) {
-      final bool shouldInitializeEvenIfHidden = _shouldInitializeHiddenField(fieldName, fieldConfig);
-      
-      if (!shouldInitializeEvenIfHidden) {
-        // Évaluer si le champ est initialement caché avec le contexte initial
-        final initialContext = _prepareInitialEvaluationContext();
-        final formDataProcessor = ref.read(formDataProcessorProvider);
-        
-        final isInitiallyHidden = formDataProcessor.isFieldHidden(
-          fieldName, 
-          initialContext,
-          fieldConfig: fieldConfig,
-          allFieldsConfig: _unifiedSchema
-        );
-        
-        if (isInitiallyHidden) {
-          // Ne pas initialiser les champs initialement cachés
-          return;
-        }
-      }
-    }
+    // IMPORTANT: Selon les spécifications de persistance des valeurs cachées,
+    // TOUS les champs avec des valeurs par défaut doivent être initialisés,
+    // qu'ils soient cachés ou visibles. hidden = propriété d'affichage uniquement.
+    
+    // La logique précédente qui évitait d'initialiser les champs cachés
+    // est supprimée pour respecter le principe fondamental :
+    // "hidden = propriété d'affichage uniquement, PAS de traitement des données"
 
     // Procéder à l'initialisation
     _setDefaultValueByType(fieldName, fieldConfig, defaultValue);
@@ -263,6 +247,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void _setDefaultValueByType(String fieldName, Map<String, dynamic> fieldConfig, dynamic defaultValue) {
     final String widgetType = fieldConfig['widget_type'];
 
+    // Debug pour cd_nom
+    if (fieldName == 'cd_nom') {
+      debugPrint('🐛 [DEBUG] _setDefaultValueByType pour cd_nom: defaultValue=$defaultValue, type=${defaultValue.runtimeType}');
+    }
+
     switch (widgetType) {
       case 'RadioButton':
         _formValues[fieldName] = defaultValue.toString();
@@ -270,8 +259,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       case 'TaxonSelector':
         if (defaultValue is int) {
           _formValues[fieldName] = defaultValue;
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom défini à: $defaultValue');
+          }
         } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
           _formValues[fieldName] = defaultValue['cd_nom'];
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom extrait de Map: ${defaultValue['cd_nom']}');
+          }
         }
         break;
       case 'NomenclatureSelector':
@@ -356,41 +351,19 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   }
 
   Map<String, dynamic> getFormValues() {
-    // Créer une copie des valeurs en filtrant les champs cachés
-    final Map<String, dynamic> visibleValues = {};
+    // IMPORTANT: Selon les spécifications de persistance des valeurs cachées,
+    // cette méthode doit retourner TOUTES les valeurs, cachées ET visibles.
+    // hidden = propriété d'affichage uniquement, PAS de traitement des données
     
-    // Préparer le contexte d'évaluation
-    final formDataProcessor = ref.read(formDataProcessorProvider);
-    final evaluationContext = formDataProcessor.prepareEvaluationContext(
-      values: _formValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+    // Debug pour cd_nom
+    if (_formValues.containsKey('cd_nom')) {
+      debugPrint('🐛 [DEBUG] getFormValues - cd_nom présent: ${_formValues['cd_nom']}');
+    } else {
+      debugPrint('🐛 [DEBUG] getFormValues - cd_nom ABSENT des _formValues !');
+    }
     
-    // Pour chaque champ dans le schéma, vérifier s'il est visible
-    _unifiedSchema.forEach((fieldName, fieldConfig) {
-      // Si le champ a une valeur ET qu'il n'est pas caché, l'inclure
-      if (_formValues.containsKey(fieldName)) {
-        final isHidden = formDataProcessor.isFieldHidden(
-          fieldName, 
-          evaluationContext,
-          fieldConfig: fieldConfig,
-          allFieldsConfig: _unifiedSchema
-        );
-        
-        if (!isHidden) {
-          visibleValues[fieldName] = _formValues[fieldName];
-        }
-      }
-    });
-    
-    return visibleValues;
+    // Retourner une copie de toutes les valeurs du formulaire
+    return Map<String, dynamic>.from(_formValues);
   }
 
   /// Retourne toutes les valeurs du formulaire (y compris les champs cachés)
@@ -402,11 +375,23 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
   // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
   void updateFormValue(String fieldName, dynamic value) {
+    // Debug pour cd_nom
+    if (fieldName == 'cd_nom') {
+      debugPrint('🐛 [DEBUG] updateFormValue appelée pour cd_nom: value=$value, type=${value.runtimeType}');
+      debugPrint('🐛 [DEBUG] Valeur actuelle dans _formValues: ${_formValues[fieldName]}');
+    }
+
     setState(() {
       if (value == null) {
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] ⚠️ SUPPRESSION de cd_nom car value=null !');
+        }
         _formValues.remove(fieldName);
       } else {
         _formValues[fieldName] = value;
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] cd_nom mis à jour: $value');
+        }
       }
       
       // Les conditions de visibilité seront réévaluées lors de la prochaine construction
