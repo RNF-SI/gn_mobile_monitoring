@@ -175,21 +175,37 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
     void searchForTaxonomyFields(dynamic obj) {
       if (obj is Map<String, dynamic>) {
-        // Si c'est un champ de taxonomie avec un id_list
-        if (obj['type_util'] == 'taxonomy' && obj.containsKey('id_list')) {
-          // La propriété id_list peut être un entier ou une chaîne
-          dynamic rawListId = obj['id_list'];
+        // Si c'est un champ de taxonomie
+        if (obj['type_util'] == 'taxonomy' || obj['type_widget'] == 'taxonomy') {
           int? listId;
           
-          if (rawListId is int) {
-            listId = rawListId;
-          } else if (rawListId is String) {
-            // Tenter de convertir en entier
-            listId = int.tryParse(rawListId);
+          // Méthode 1: Chercher dans id_list
+          if (obj.containsKey('id_list')) {
+            dynamic rawListId = obj['id_list'];
+            
+            if (rawListId is int) {
+              listId = rawListId;
+            } else if (rawListId is String) {
+              listId = int.tryParse(rawListId);
+            }
+          }
+          
+          // Méthode 2: Extraire depuis le champ api
+          if (listId == null && obj.containsKey('api')) {
+            final api = obj['api'] as String?;
+            if (api != null && api.contains('allnamebylist/')) {
+              // Format attendu: "taxref/allnamebylist/100" -> retourne 100
+              final parts = api.split('/');
+              if (parts.length > 2 && parts[parts.length - 2] == 'allnamebylist') {
+                final listIdStr = parts.last;
+                listId = int.tryParse(listIdStr);
+              }
+            }
           }
           
           if (listId != null) {
             listIds.add(listId);
+            print('Found taxonomy list ID: $listId from field config');
           }
         }
 
@@ -202,6 +218,7 @@ class TaxonRepositoryImpl implements TaxonRepository {
     }
 
     searchForTaxonomyFields(config);
+    print('Total taxonomy list IDs found: ${listIds.length} - IDs: $listIds');
     return listIds;
   }
 }

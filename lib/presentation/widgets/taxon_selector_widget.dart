@@ -61,9 +61,22 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   }
 
   Future<void> _initializeSelectedTaxon() async {
-    if (widget.value != null) {
+    // Déterminer la valeur à utiliser - priorité au widget.value, puis aux defaults du fieldConfig
+    int? cdNomToLoad = widget.value;
+    
+    // Si aucune valeur n'est fournie, essayer d'extraire depuis la configuration
+    if (cdNomToLoad == null && widget.fieldConfig != null) {
+      final defaultValue = widget.fieldConfig!['default'] ?? widget.fieldConfig!['value'];
+      if (defaultValue is int) {
+        cdNomToLoad = defaultValue;
+      } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
+        cdNomToLoad = defaultValue['cd_nom'] as int?;
+      }
+    }
+    
+    if (cdNomToLoad != null) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+      final taxon = await taxonService.getTaxonByCdNom(cdNomToLoad);
 
       // Vérifier si le taxon appartient à la liste taxonomique appropriée
       if (taxon != null) {
@@ -92,6 +105,11 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           _selectedTaxon = taxon;
           _searchController.text = _formatDisplayName(taxon);
         });
+        
+        // Si la valeur provenait de la configuration et n'était pas déjà définie, notifier le parent
+        if (widget.value == null) {
+          widget.onChanged(taxon.cdNom);
+        }
       }
     }
   }
@@ -106,7 +124,19 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   }
 
   Future<void> _updateSelectedTaxon() async {
-    if (widget.value == null) {
+    // Déterminer la valeur effective - widget.value en priorité, puis defaults du fieldConfig
+    int? effectiveValue = widget.value;
+    
+    if (effectiveValue == null && widget.fieldConfig != null) {
+      final defaultValue = widget.fieldConfig!['default'] ?? widget.fieldConfig!['value'];
+      if (defaultValue is int) {
+        effectiveValue = defaultValue;
+      } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
+        effectiveValue = defaultValue['cd_nom'] as int?;
+      }
+    }
+    
+    if (effectiveValue == null) {
       if (mounted) {
         setState(() {
           _selectedTaxon = null;
@@ -116,9 +146,9 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
       return;
     }
 
-    if (_selectedTaxon?.cdNom != widget.value) {
+    if (_selectedTaxon?.cdNom != effectiveValue) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+      final taxon = await taxonService.getTaxonByCdNom(effectiveValue);
 
       // Vérifier si le taxon appartient à la liste taxonomique appropriée
       if (taxon != null) {

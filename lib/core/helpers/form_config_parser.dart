@@ -331,9 +331,23 @@ class FormConfigParser {
       }
     }
 
+    // Essayer d'extraire l'ID de liste depuis le champ 'api'
+    final api = fieldConfig['api'] as String?;
+    if (api != null && api.contains('allnamebylist/')) {
+      // Format attendu: "taxref/allnamebylist/100" -> retourne 100
+      final parts = api.split('/');
+      if (parts.length > 2 && parts[parts.length - 2] == 'allnamebylist') {
+        final listIdStr = parts.last;
+        final listId = int.tryParse(listIdStr);
+        if (listId != null) {
+          return listId;
+        }
+      }
+    }
+
     // Cas où l'ID de liste est stocké dans la valeur existante
-    final value = fieldConfig['value'] as Map<String, dynamic>?;
-    if (value != null && value['id_list'] != null) {
+    final value = fieldConfig['value'];
+    if (value is Map<String, dynamic> && value['id_list'] != null) {
       return value['id_list'] as int?;
     }
 

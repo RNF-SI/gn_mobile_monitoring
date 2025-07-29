@@ -358,17 +358,18 @@ class FormDataProcessor {
     return processedData;
   }
 
-  /// Évalue si un champ doit être masqué en fonction des règles définies
+  /// Évalue si un champ doit être masqué en fonction des règles définies avec support des cascades
   ///
   /// Parameters:
   /// - fieldId: L'identifiant du champ à évaluer
   /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
   /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'hidden'
+  /// - allFieldsConfig: Configuration de tous les champs pour évaluer les cascades (optionnel)
   ///
   /// Returns:
   /// - true si le champ doit être masqué, false sinon
   bool isFieldHidden(String fieldId, Map<String, dynamic> context,
-      {Map<String, dynamic>? fieldConfig}) {
+      {Map<String, dynamic>? fieldConfig, Map<String, dynamic>? allFieldsConfig}) {
     // Si aucune configuration n'est fournie, le champ n'est pas masqué
     if (fieldConfig == null) {
       return false;
@@ -388,31 +389,150 @@ class FormDataProcessor {
         (hiddenValue.trim().startsWith('({') ||
             hiddenValue.trim().startsWith('('))) {
       try {
+        // ÉTAPE 1: Évaluer d'abord avec le contexte original pour gérer les auto-références
+        final originalResult = _expressionEvaluator.evaluateExpression(hiddenValue, context);
+        
+        // Si c'est une auto-référence (le champ se référence lui-même), utiliser le résultat original
+        if (_isSelfreferencingExpression(hiddenValue, fieldId)) {
+          return originalResult ?? false;
+        }
+
+        // ÉTAPE 2: Pour les autres cas, utiliser le contexte cascade-aware
+        final cascadeContext = _buildCascadeAwareContext(context, allFieldsConfig);
+
         // Détecter les expressions complexes qui pourraient causer des problèmes
         // plutôt que d'avoir des cas spéciaux codés en dur
         final String normalizedExpression =
-            _normalizeHiddenExpression(hiddenValue, context);
+            _normalizeHiddenExpression(hiddenValue, cascadeContext);
 
         // Si l'expression a été normalisée, l'évaluer directement
         if (normalizedExpression != hiddenValue) {
-          return _evaluateNormalizedExpression(normalizedExpression, context);
+          final result = _evaluateNormalizedExpression(normalizedExpression, cascadeContext);
+          return result;
         }
 
-        // Évaluation normale de l'expression
+        // Évaluation normale de l'expression avec le contexte en cascade
         final result =
-            _expressionEvaluator.evaluateExpression(hiddenValue, context);
+            _expressionEvaluator.evaluateExpression(hiddenValue, cascadeContext);
 
         // Si l'évaluation échoue, ne pas masquer le champ par défaut
         return result ?? false;
       } catch (e) {
-        debugPrint(
-            'Erreur lors de l\'évaluation de l\'expression pour $fieldId: $e');
         return false;
       }
     }
 
     // Par défaut, ne pas masquer le champ
     return false;
+  }
+
+  /// Détermine si une expression fait référence au champ lui-même
+  /// 
+  /// Parameters:
+  /// - expression: L'expression à analyser
+  /// - fieldId: L'ID du champ en cours d'évaluation
+  /// 
+  /// Returns:
+  /// - true si l'expression fait référence au champ lui-même
+  bool _isSelfreferencingExpression(String expression, String fieldId) {
+    // Rechercher les références au champ dans l'expression
+    final patterns = [
+      RegExp("value\\['$fieldId'\\]"), // value['fieldName']
+      RegExp("value\\.$fieldId"), // value.fieldName
+    ];
+    
+    for (final pattern in patterns) {
+      if (pattern.hasMatch(expression)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /// Construit un contexte d'évaluation conscient des cascades
+  /// 
+  /// Cette méthode filtre les valeurs des champs qui sont eux-mêmes cachés
+  /// pour permettre la propagation en cascade des conditions de masquage.
+  /// 
+  /// Parameters:
+  /// - context: Le contexte d'évaluation original
+  /// - allFieldsConfig: Configuration de tous les champs (pour détecter les champs cachés)
+  /// 
+  /// Returns:
+  /// - Un contexte modifié où les champs cachés ont leurs valeurs supprimées
+  Map<String, dynamic> _buildCascadeAwareContext(
+      Map<String, dynamic> context, Map<String, dynamic>? allFieldsConfig) {
+    // Si aucune configuration n'est fournie, retourner le contexte original
+    if (allFieldsConfig == null) {
+      return context;
+    }
+
+    // Copier le contexte pour ne pas modifier l'original
+    final cascadeContext = Map<String, dynamic>.from(context);
+    final originalValues = context['value'] as Map<String, dynamic>? ?? {};
+    final filteredValues = Map<String, dynamic>.from(originalValues);
+
+    // Détecter récursivement les champs qui doivent être cachés
+    final hiddenFields = <String>{};
+    bool foundNewHiddenField = true;
+    int maxIterations = 10; // Sécurité pour éviter les boucles infinies
+    int iteration = 0;
+
+    while (foundNewHiddenField && iteration < maxIterations) {
+      foundNewHiddenField = false;
+      iteration++;
+
+      for (final entry in allFieldsConfig.entries) {
+        final fieldName = entry.key;
+        final fieldConfig = entry.value;
+
+        // Si ce champ est déjà marqué comme caché, continuer
+        if (hiddenFields.contains(fieldName)) {
+          continue;
+        }
+
+        // S'assurer que fieldConfig est bien un Map<String, dynamic>
+        if (fieldConfig is! Map<String, dynamic>) {
+          continue;
+        }
+
+        // Évaluer si ce champ doit être caché avec le contexte filtré actuel
+        final hiddenValue = fieldConfig['hidden'];
+        if (hiddenValue != null && hiddenValue != false) {
+          // Créer un contexte temporaire avec les valeurs filtrées actuelles
+          final tempContext = {
+            ...cascadeContext,
+            'value': filteredValues,
+          };
+
+          bool shouldHide = false;
+          try {
+            if (hiddenValue is bool) {
+              shouldHide = hiddenValue;
+            } else if (hiddenValue is String &&
+                (hiddenValue.trim().startsWith('({') ||
+                    hiddenValue.trim().startsWith('('))) {
+              final result = _expressionEvaluator.evaluateExpression(hiddenValue, tempContext);
+              shouldHide = result ?? false;
+            }
+          } catch (e) {
+            shouldHide = false;
+          }
+
+          if (shouldHide) {
+            hiddenFields.add(fieldName);
+            filteredValues.remove(fieldName);
+            foundNewHiddenField = true;
+          }
+        }
+      }
+    }
+
+    // Retourner le contexte avec les valeurs filtrées
+    cascadeContext['value'] = filteredValues;
+    
+    return cascadeContext;
   }
 
   /// Analyse et prétraite les expressions de masquage pour éviter les boucles infinies et
@@ -434,11 +554,20 @@ class FormDataProcessor {
 
     // Cas 1: Expression simple en fonction d'un seul champ
     // Format: (value) => value['champ']
+    // IMPORTANT: Ne pas normaliser si l'expression contient des opérateurs de comparaison
     if (cleanExpr.startsWith('(value)') &&
         cleanExpr.contains("value['") &&
         !cleanExpr.contains('&&') &&
         !cleanExpr.contains('||') &&
-        !cleanExpr.contains('!')) {
+        !cleanExpr.contains('!') &&
+        !cleanExpr.contains('===') &&
+        !cleanExpr.contains('!==') &&
+        !cleanExpr.contains('==') &&
+        !cleanExpr.contains('!=') &&
+        !cleanExpr.contains('>=') &&
+        !cleanExpr.contains('<=') &&
+        !cleanExpr.contains('>') &&
+        !cleanExpr.contains('<')) {
       // Extraire le nom du champ entre guillemets simples
       final startIndex = cleanExpr.indexOf("['") + 2;
       final endIndex = cleanExpr.indexOf("']", startIndex);
