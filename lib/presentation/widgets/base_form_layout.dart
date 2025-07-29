@@ -86,8 +86,9 @@ class BaseFormLayout extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
+    return Container(
+      padding: const EdgeInsets.fromLTRB(0, 12.0, 0, 16.0),
+      margin: const EdgeInsets.only(bottom: 20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
