@@ -29,7 +29,7 @@ class ModuleListWidget extends ConsumerWidget {
                 .loadModules();
           },
           child: ListView.builder(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 48),
             itemCount: moduleInfoList.length,
             itemBuilder: (context, index) {
               final moduleInfo = moduleInfoList[index];
