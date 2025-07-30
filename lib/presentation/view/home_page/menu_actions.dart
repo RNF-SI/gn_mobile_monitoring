@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
@@ -41,6 +42,8 @@ class MenuActions extends ConsumerWidget {
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(
+            Icons.account_circle, 'Informations de connexion', 'connection_info'),
+        _buildMenuItem(
             Icons.attach_money, 'Financeurs du projet', 'funders'),
         _buildMenuItem(Icons.logout, 'Déconnexion', 'logout'),
       ],
@@ -81,6 +84,9 @@ class MenuActions extends ConsumerWidget {
         break;
       case 'version':
         _showVersionAlert(context);
+        break;
+      case 'connection_info':
+        await _showConnectionInfoDialog(context, ref);
         break;
       case 'funders':
         _navigateToFundersPage(context);
@@ -866,6 +872,224 @@ class MenuActions extends ConsumerWidget {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => const FundersPage(),
+      ),
+    );
+  }
+
+  /// Affiche les informations de connexion (utilisateur et instance)
+  Future<void> _showConnectionInfoDialog(BuildContext context, WidgetRef ref) async {
+    try {
+      // Essayer d'abord de récupérer depuis authState
+      final authState = ref.read(authStateProvider).value;
+      
+      // Récupérer les informations depuis le local storage
+      final getApiUrlUseCase = ref.read(getApiUrlFromLocalStorageUseCaseProvider);
+      final getUserNameUseCase = ref.read(getUserNameFromLocalStorageUseCaseProvider);
+      final getUserIdUseCase = ref.read(getUserIdFromLocalStorageUseCaseProvider);
+      
+      // Récupérer l'URL de l'API
+      final apiUrl = await getApiUrlUseCase.execute();
+      
+      // Utiliser authState si disponible, sinon local storage
+      String? userName = authState?.name;
+      String? userEmail = authState?.email;
+      int? userId = authState?.id;
+      
+      // Si authState n'est pas disponible, utiliser le local storage
+      if (userName == null || userId == null) {
+        userName = await getUserNameUseCase.execute();
+        try {
+          userId = await getUserIdUseCase.execute();
+        } catch (e) {
+          // L'ID pourrait ne pas être disponible
+          userId = null;
+        }
+      }
+
+      if (!context.mounted) return;
+
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Row(
+              children: [
+                Icon(Icons.account_circle, color: Color(0xFF598979)),
+                SizedBox(width: 8),
+                Expanded(child: Text('Informations de connexion')),
+              ],
+            ),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Informations utilisateur
+                  _buildInfoSection(
+                    context,
+                    'Utilisateur connecté',
+                    Icons.person,
+                    [
+                      _buildInfoRow('Nom', userName ?? 'Non disponible'),
+                      if (userEmail != null && userEmail != 'No email provided')
+                        _buildInfoRow('Email', userEmail),
+                      _buildInfoRow('ID', userId?.toString() ?? 'Non disponible'),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Informations instance
+                  _buildInfoSection(
+                    context,
+                    'Instance GeoNature',
+                    Icons.cloud,
+                    [
+                      _buildInfoRow(
+                        'URL', 
+                        apiUrl ?? 'Non disponible',
+                        copyable: true,
+                      ),
+                      _buildInfoRow(
+                        'Domaine', 
+                        apiUrl != null ? Uri.tryParse(apiUrl)?.host ?? 'Non disponible' : 'Non disponible',
+                      ),
+                    ],
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF598979).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF598979).withOpacity(0.3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(Icons.info, color: Color(0xFF598979), size: 20),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Ces informations sont utiles pour le débogage et le support technique.',
+                            style: TextStyle(
+                              color: Color(0xFF598979),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text("Fermer"),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de la récupération des informations: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Construit une section d'informations avec titre et icône
+  Widget _buildInfoSection(
+    BuildContext context,
+    String title,
+    IconData icon,
+    List<Widget> children,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF598979)),
+            const SizedBox(width: 6),
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Color(0xFF598979),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Construit une ligne d'information avec possibilité de copie
+  Widget _buildInfoRow(String label, String value, {bool copyable = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '$label:',
+              style: const TextStyle(
+                fontWeight: FontWeight.w500,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          Expanded(
+            child: copyable && value != 'Non disponible'
+                ? GestureDetector(
+                    onTap: () {
+                      Clipboard.setData(ClipboardData(text: value));
+                      // Feedback visuel sans ScaffoldMessenger qui pourrait causer des problèmes
+                    },
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            value,
+                            style: const TextStyle(
+                              color: Colors.blue,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                        const Icon(Icons.copy, size: 16, color: Colors.blue),
+                      ],
+                    ),
+                  )
+                : Text(
+                    value,
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+          ),
+        ],
       ),
     );
   }
