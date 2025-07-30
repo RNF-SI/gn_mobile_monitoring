@@ -58,6 +58,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   late Map<String, dynamic> _formValues;
   late Map<String, TextEditingController> _textControllers;
   late Map<String, dynamic> _unifiedSchema;
+  final Set<String> _userClearedFields = <String>{};
 
   /// Returns the onSubmit callback from the widget
   Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
@@ -162,6 +163,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void _initializeDefaultValue(String fieldName, Map<String, dynamic> fieldConfig) {
     // Si le champ a déjà une valeur, ne pas l'écraser
     if (_formValues.containsKey(fieldName)) {
+      return;
+    }
+    
+    // Si l'utilisateur a explicitement supprimé ce champ, ne pas le réinitialiser
+    if (_userClearedFields.contains(fieldName)) {
+      if (fieldName == 'cd_nom') {
+        debugPrint('🐛 [DEBUG] cd_nom ignoré car supprimé par l\'utilisateur');
+      }
       return;
     }
 
@@ -380,6 +389,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       
       final fieldValue = _formValues[fieldName];
       
+      // Ignorer les valeurs explicitement null (champs supprimés par l'utilisateur)
+      if (fieldValue == null) {
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] cd_nom ignoré car null (supprimé par utilisateur)');
+        }
+        return;
+      }
+      
       // Déterminer si le champ est caché
       final isHidden = formDataProcessor.isFieldHidden(
         fieldName,
@@ -441,6 +458,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     if (fieldName == 'cd_nom') {
       debugPrint('🐛 [DEBUG] updateFormValue appelée pour cd_nom: value=$value, type=${value.runtimeType}');
       debugPrint('🐛 [DEBUG] Valeur actuelle dans _formValues: ${_formValues[fieldName]}');
+      debugPrint('🐛 [DEBUG] Stack trace: ${StackTrace.current}');
     }
 
     setState(() {
@@ -448,9 +466,15 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         if (fieldName == 'cd_nom') {
           debugPrint('🐛 [DEBUG] ⚠️ SUPPRESSION de cd_nom car value=null !');
         }
-        _formValues.remove(fieldName);
+        // NE PAS supprimer le champ, mais le mettre à null pour éviter
+        // que _buildTaxonField aille chercher la valeur par défaut dans la config
+        _formValues[fieldName] = null;
+        // Marquer ce champ comme explicitement supprimé par l'utilisateur
+        _userClearedFields.add(fieldName);
       } else {
         _formValues[fieldName] = value;
+        // Supprimer de la liste des champs supprimés car l'utilisateur a défini une nouvelle valeur
+        _userClearedFields.remove(fieldName);
         if (fieldName == 'cd_nom') {
           debugPrint('🐛 [DEBUG] cd_nom mis à jour: $value');
         }
@@ -692,14 +716,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         return _buildSelectField(
             fieldName, label, isRequired, fieldConfig['values'],
             description: description);
+      case 'DatalistField':
+        return _buildDatalistField(
+            fieldName, label, isRequired, fieldConfig,
+            description: description);
       case 'Checkbox':
         return _buildCheckboxField(fieldName, label, description: description);
       case 'RadioButton':
         return _buildRadioField(
-            fieldName, label, isRequired, fieldConfig,
-            description: description);
-      case 'AutocompleteField':
-        return _buildAutocompleteField(
             fieldName, label, isRequired, fieldConfig,
             description: description);
       case 'ObserverField':
@@ -1058,6 +1082,206 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  Widget _buildDatalistField(
+      String fieldName, String label, bool required, Map<String, dynamic> fieldConfig,
+      {String? description}) {
+    
+    // Préparer les données source selon le type (API ou valeurs statiques)
+    List<Map<String, dynamic>> dataSource = [];
+    
+    if (fieldConfig['values'] is List) {
+      // Cas 1: Valeurs statiques (values)
+      final values = fieldConfig['values'] as List;
+      for (final value in values) {
+        if (value is String) {
+          dataSource.add({
+            'value': value,
+            'label': value,
+          });
+        } else if (value is Map<String, dynamic>) {
+          dataSource.add({
+            'value': value['value']?.toString() ?? '',
+            'label': value['label']?.toString() ?? value['value']?.toString() ?? '',
+          });
+        }
+      }
+    }
+    
+    // Pour l'instant, nous gérons seulement les valeurs statiques
+    // Les API seront implémentées dans une version ultérieure
+    
+    final isMultiple = fieldConfig['multiple'] == true;
+    
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 8),
+          isMultiple 
+            ? _buildMultiSelectDatalist(fieldName, dataSource, required)
+            : _buildSingleSelectDatalist(fieldName, dataSource, required),
+        ],
+      ),
+    );
+  }
+
+  /// Widget pour datalist à sélection simple avec recherche/filtrage
+  Widget _buildSingleSelectDatalist(String fieldName, List<Map<String, dynamic>> dataSource, bool required) {
+    final TextEditingController controller = _textControllers.putIfAbsent(
+      fieldName, 
+      () => TextEditingController()
+    );
+    
+    // Initialiser l'affichage avec la valeur actuelle
+    if (_formValues[fieldName] != null) {
+      final currentValue = _formValues[fieldName].toString();
+      final item = dataSource.firstWhere(
+        (item) => item['value'] == currentValue, 
+        orElse: () => {'value': currentValue, 'label': currentValue}
+      );
+      controller.text = item['label'] ?? '';
+    }
+
+    return Autocomplete<Map<String, dynamic>>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return dataSource;
+        }
+        return dataSource.where((option) {
+          return option['label']
+              .toString()
+              .toLowerCase()
+              .contains(textEditingValue.text.toLowerCase());
+        });
+      },
+      displayStringForOption: (option) => option['label'] ?? '',
+      fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+        // Synchroniser avec notre controller
+        if (textEditingController.text != controller.text) {
+          textEditingController.text = controller.text;
+        }
+        
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            suffixIcon: const Icon(Icons.arrow_drop_down),
+            hintText: 'Rechercher...',
+          ),
+          validator: required
+              ? (value) => value == null || value.isEmpty ? 'Ce champ est requis' : null
+              : null,
+        );
+      },
+      onSelected: (option) {
+        controller.text = option['label'] ?? '';
+        setState(() {
+          _formValues[fieldName] = option['value'];
+        });
+      },
+    );
+  }
+
+  /// Widget pour datalist à sélection multiple avec checkbox
+  Widget _buildMultiSelectDatalist(String fieldName, List<Map<String, dynamic>> dataSource, bool required) {
+    // Initialiser la valeur comme une liste si ce n'est pas déjà fait
+    if (_formValues[fieldName] == null) {
+      _formValues[fieldName] = <String>[];
+    } else if (_formValues[fieldName] is! List) {
+      // Convertir une valeur unique en liste
+      final currentValue = _formValues[fieldName];
+      _formValues[fieldName] = currentValue != null ? [currentValue.toString()] : <String>[];
+    }
+
+    final selectedValues = List<String>.from(_formValues[fieldName] as List);
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Column(
+        children: [
+          // En-tête avec compteur de sélections
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: const BoxDecoration(
+              color: Colors.grey,
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(4),
+                topRight: Radius.circular(4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.checklist, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  '${selectedValues.length} sélection(s)',
+                  style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
+          // Liste des options avec checkbox
+          ...dataSource.map((option) {
+            final isSelected = selectedValues.contains(option['value']);
+            return CheckboxListTile(
+              dense: true,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+              title: Text(
+                option['label'] ?? '',
+                style: const TextStyle(fontSize: 14),
+              ),
+              value: isSelected,
+              onChanged: (bool? value) {
+                setState(() {
+                  if (value == true) {
+                    if (!selectedValues.contains(option['value'])) {
+                      selectedValues.add(option['value'].toString());
+                    }
+                  } else {
+                    selectedValues.remove(option['value']);
+                  }
+                  _formValues[fieldName] = List<String>.from(selectedValues);
+                });
+              },
+              controlAffinity: ListTileControlAffinity.leading,
+            );
+          }).toList(),
+          // Message de validation
+          if (required && selectedValues.isEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: const Text(
+                'Ce champ est requis',
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildCheckboxField(String fieldName, String label,
       {String? description}) {
     // Initialiser la valeur si elle n'existe pas
@@ -1268,72 +1492,6 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
-  // Pour les champs de type "datalist" (généralement des APIs externes)
-  Widget _buildAutocompleteField(String fieldName, String label, bool required,
-      Map<String, dynamic> fieldConfig,
-      {String? description}) {
-    // Note: Pour une implémentation réelle, il faudrait connecter à l'API source
-    // Ce qui nécessite plus de code et une gestion réseau
-    // Ici, nous proposons une version simplifiée
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            required ? '$label *' : label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          if (description != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          if (fieldConfig['api'] != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
-              child: Text(
-                'Source: ${fieldConfig['api']}',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.blue,
-                ),
-              ),
-            ),
-          const SizedBox(height: 8),
-          // Version simplifiée - Dans une implémentation réelle,
-          // on utiliserait un vrai widget Autocomplete avec API
-          TextFormField(
-            decoration: const InputDecoration(
-              hintText: 'Rechercher...',
-              border: OutlineInputBorder(),
-              suffixIcon: Icon(Icons.search),
-            ),
-            validator: required
-                ? (value) => value == null || value.isEmpty
-                    ? 'Ce champ est requis'
-                    : null
-                : null,
-            onChanged: (value) {
-              // Simulation: en réalité, on devrait faire une requête à l'API
-              setState(() {
-                _formValues[fieldName] = value;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
   // Pour les champs de type "observers"
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
@@ -1519,14 +1677,38 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
     if (_formValues.containsKey(fieldName)) {
       final value = _formValues[fieldName];
-      if (value is int) {
+      if (value == null) {
+        // La valeur a été explicitement mise à null (supprimée par l'utilisateur)
+        initialValue = null;
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] cd_nom explicitement null dans _formValues');
+        }
+      } else if (value is int) {
         initialValue = value;
       } else if (value is Map<String, dynamic> && value.containsKey('cd_nom')) {
         initialValue = value['cd_nom'] as int?;
       }
     } else {
-      // Essayer de récupérer depuis la configuration
-      initialValue = FormConfigParser.getSelectedTaxonCdNom(fieldConfig);
+      // Vérifier si l'utilisateur a explicitement supprimé ce champ
+      if (_userClearedFields.contains(fieldName)) {
+        initialValue = null;
+        if (fieldName == 'cd_nom') {
+          debugPrint('🐛 [DEBUG] cd_nom ignoré car supprimé par utilisateur');
+        }
+      } else {
+        // Ne récupérer depuis la configuration QUE si l'utilisateur n'a pas explicitement supprimé le champ
+        if (!_userClearedFields.contains(fieldName)) {
+          initialValue = FormConfigParser.getSelectedTaxonCdNom(fieldConfig);
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom récupéré depuis config: $initialValue');
+          }
+        } else {
+          initialValue = null;
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom ignoré (supprimé par utilisateur)');
+          }
+        }
+      }
     }
 
     // Pour obtenir l'ID du module
@@ -1637,6 +1819,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             fieldConfig: mergedConfig,
             value: initialValue,
             isRequired: required,
+            userCleared: _userClearedFields.contains(fieldName),
             onChanged: (cdNom) {
               // Utiliser la méthode spécifique pour mettre à jour les valeurs
               // qui garantit la réévaluation des conditions de visibilité

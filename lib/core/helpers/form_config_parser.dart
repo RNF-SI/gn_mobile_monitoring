@@ -434,7 +434,8 @@ class FormConfigParser {
                 .contains('nomenclatures/nomenclature/')) {
           return 'NomenclatureSelector';
         }
-        return 'AutocompleteField';
+        // Sinon utiliser le widget datalist générique
+        return 'DatalistField';
       case 'nomenclature':
         return 'NomenclatureSelector';
       case 'taxonomy':
