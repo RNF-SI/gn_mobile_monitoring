@@ -38,7 +38,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "textarea"`, 3 lignes par défaut
 
-![TextField_multiline Example](docs/screenshots/textarea.png) *(📸 Capture d'écran à ajouter)*
+![TextField_multiline Example](docs/screenshots/textarea.png) 
 
 ---
 
@@ -57,7 +57,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "number"`, validation min/max
 
-![NumberField Example](docs/screenshots/numberfield.png) *(📸 Capture d'écran à ajouter)*
+![NumberField Example](docs/screenshots/numberfield.png) 
 
 #### 🎯 Champs de Sélection
 
@@ -78,7 +78,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "select"`, valeurs simples
 
-![DropdownButton Example](docs/screenshots/dropdown.png) *(📸 Capture d'écran à ajouter)*
+![DropdownButton Example](docs/screenshots/dropdown.png) 
 
 ---
 
@@ -86,26 +86,20 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 **Configuration JSON** (Module: RHOMEOOrthoptere) 
 ```json
 {
-  "id_nomenclature_typ_denbr": {
-    "type_widget": "datalist",
-    "attribut_label": "Type de dénombrement",
-    "api": "nomenclatures/nomenclature/TYP_DENBR",
-    "application": "GeoNature",
-    "keyValue": "id_nomenclature",
-    "keyLabel": "label_fr",
-    "data_path": "values",
-    "type_util": "nomenclature",
-    "required": "({value}) => value.presence === 'Oui'",
-    "hidden":"({value}) => value.presence === 'Non'",
-    "filters": {
-        "cd_nomenclature": ["Co", "Es"]
-    }
-  },
+    "methode_prospection": {
+      "type_widget": "datalist",
+      "multiple": true,
+      "attribut_label": "Méthode de prospection",
+      "values": ["Par observation directe", "Par plaques"],
+      "required": "({value}) => value.accessibility === 'Oui'",
+      "hidden": "({value}) => value.accessibility === 'Non'"
+    },
 }
+
 ```
 **Paramètres clés** : `type_widget: "datalist"`, objets label/value, recherche intégrée
 
-![DatalistField Example](docs/screenshots/datalist.png) *(📸 Capture d'écran à ajouter)*
+![DatalistField Example](docs/screenshots/datalist.png) 
 
 ---
 
@@ -127,7 +121,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "radio"`, valeur par défaut possible
 
-![RadioButton Example](docs/screenshots/radio.png) *(📸 Capture d'écran à ajouter)*
+![RadioButton Example](docs/screenshots/radio.png) 
 
 ---
 
@@ -145,7 +139,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "bool_checkbox"`, valeur booléenne
 
-![Checkbox Example](docs/screenshots/checkbox.png) *(📸 Capture d'écran à ajouter)*
+![Checkbox Example](docs/screenshots/checkbox.png) 
 
 #### 📅 Champs Date/Heure
 
@@ -162,7 +156,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "date"`, format ISO 8601
 
-![DatePicker Example](docs/screenshots/datepicker.png) *(📸 Capture d'écran à ajouter)*
+![DatePicker Example](docs/screenshots/datepicker.png) 
 
 ---
 
@@ -178,7 +172,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "time"`, format HH:MM
 
-![TimePicker Example](docs/screenshots/timepicker.png) *(📸 Capture d'écran à ajouter)*
+![TimePicker Example](docs/screenshots/timepicker.png) 
 
 #### 🧬 Champs Spécialisés GeoNature
 
@@ -199,7 +193,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : `type_widget: "taxonomy"`, recherche par nom scientifique/français
 
-![TaxonSelector Example](docs/screenshots/taxon.png) *(📸 Capture d'écran à ajouter)*
+![TaxonSelector Example](docs/screenshots/taxon.png) 
 
 ---
 
@@ -216,9 +210,29 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
   }
 }
 ```
+ou
+```json
+{
+  "id_nomenclature_typ_denbr": {
+    "type_widget": "datalist",
+    "attribut_label": "Type de dénombrement",
+    "api": "nomenclatures/nomenclature/TYP_DENBR",
+    "application": "GeoNature",
+    "keyValue": "id_nomenclature",
+    "keyLabel": "label_fr",
+    "data_path": "values",
+    "type_util": "nomenclature",
+    "required": "({value}) => value.presence === 'Oui'",
+    "hidden":"({value}) => value.presence === 'Non'",
+    "filters": {
+        "cd_nomenclature": ["Co", "Es"]
+    }
+  },
+}
+```
 **Paramètres clés** : `type_widget: "nomenclature"`, code référentiel
 
-![NomenclatureSelector Example](docs/screenshots/nomenclature.png) *(📸 Capture d'écran à ajouter)*
+![NomenclatureSelector Example](docs/screenshots/nomenclature.png) 
 
 ---
 
@@ -233,7 +247,7 @@ Ce document détaille les capacités et limitations de l'application mobile GeoN
 ```
 **Paramètres clés** : Détection automatique sur `id_dataset`, masqué si unique
 
-![DatasetSelector Example](docs/screenshots/dataset.png) *(📸 Capture d'écran à ajouter)*
+![DatasetSelector Example](docs/screenshots/dataset.png) 
 
 ---
 
@@ -252,7 +266,7 @@ Attention, ce champs est automatiquement assigné à l'utilisateur courant dans 
 ```
 **Paramètres clés** : Gestion multi-observateurs, chips de suppression
 
-![ObserverField Example](docs/screenshots/observers.png) *(📸 Capture d'écran à ajouter)*
+![ObserverField Example](docs/screenshots/observers.png) 
 
 #### 🔄 Mapping Configuration → Widget
 
@@ -274,6 +288,34 @@ Attention, ce champs est automatiquement assigné à l'utilisateur courant dans 
 
 ### Conversion JavaScript → Dart
 
+#### 📋 Résumé des Capacités de Conversion
+
+L'application mobile supporte un **sous-ensemble limité** des expressions JavaScript utilisées dans GeoNature. Voici ce qui fonctionne et ce qui ne fonctionne pas :
+
+**✅ CE QUI FONCTIONNE :**
+- **Expressions simples** : Accès direct aux propriétés (`value.champ`)
+- **Opérateurs de base** : Logiques (`&&`, `||`, `!`) et comparaisons (`==`, `!=`, `>`, `<`, etc.)
+- **Conditions simples** : Tests booléens et comparaisons directes
+- **Une fonction JS** : `Object.keys().length` uniquement
+
+**❌ CE QUI NE FONCTIONNE PAS :**
+- **Blocs de code** : Déclarations de variables, fonctions multi-lignes
+- **Méthodes d'arrays** : `includes()`, `filter()`, `map()`, `reduce()`
+- **Opérateurs avancés** : Ternaires complexes, null coalescing (`??`), optional chaining (`?.`)
+- **Accès complexes** : Propriétés imbriquées (`value.obj.prop`), avec fallback (`|| {}`)
+- **Paramètre meta** : Accès au contexte du formulaire (`meta.dataset`, `meta.parents`)
+- **Manipulation de formulaires** : `objForm.patchValue()`, `objForm.controls`
+- **Construction d'objets** : Création dynamique d'objets dans les expressions
+- **Expressions régulières** : Tout pattern matching avec regex
+- **Fonctions personnalisées** : Appels de fonctions non natives
+
+**💡 IMPACT PRATIQUE :**
+- **72% des modules** utilisent uniquement des expressions simples (compatibles)
+- **28% des modules** nécessitent des adaptations ou sont incompatibles
+- Les modules complexes comme `petite_chouette_montagne`, `RHOMEOFlore` nécessitent un refactoring
+
+---
+
 #### ✅ Expressions Supportées
 ```javascript
 // Expressions simples
@@ -291,7 +333,83 @@ Attention, ce champs est automatiquement assigné à l'utilisateur courant dans 
 Object.keys().length
 ```
 
-#### ❌ Expressions Non Supportées
+#### ❌ Expressions Non Supportées - Exemples Réels des Protocoles
+
+##### 1. **Blocs Multi-lignes avec Déclarations** (petite_chouette_montagne)
+```javascript
+// observation.json - champ "change"
+"change": [
+    "({objForm, meta}) => {",
+        "const nb_total = (objForm.value.nb_before_rep + objForm.value.nb_repasse);",
+        "objForm.patchValue({nb_total});",
+        "(objForm.value.cd_nom != (null || undefined) && objForm.value.cd_nom != 3507 ? objForm.patchValue({nb_passereau}) : '');",
+    "}"
+]
+```
+**Problème**: Déclarations de variables, appels de méthodes, logique complexe
+
+##### 2. **Méthode includes() sur Arrays** (RHOMEOAmphibien)
+```javascript
+// observation.json - champ "duree_peche"
+"hidden": "({value}) => ['Visuel',null].includes(value.typ_detection)"
+"required": "({value}) => ['Pêche au troubleau','Auditif'].includes(value.typ_detection)"
+```
+**Problème**: Méthode `includes()` non convertie en Dart
+
+##### 3. **Opérateurs Ternaires Complexes** (petite_chouette_montagne)
+```javascript
+// observation.json - champs "chev_chant", "sexe", "nb_passereau"
+"hidden": "({value}) => (value.cd_nom != (null || undefined) ? value.cd_nom != 3507 : true)"
+```
+**Problème**: Comparaison avec `(null || undefined)` dans ternaire
+
+##### 4. **Accès à Propriétés Imbriquées avec Fallback** (suivi_loutre_UICN_gmb)
+```javascript
+// observation.json - champs "nombre_individus", "sexe", "stade_de_vie"
+"hidden": "({value, meta}) => (meta.nomenclatures[value.technique_observation] || {}).cd_nomenclature !== '0'"
+```
+**Problème**: Pattern `|| {}` et chaînage de propriétés
+
+##### 5. **Propriétés Profondément Imbriquées** (suivi_loutre_UICN_gmb)
+```javascript
+// observation.json - champ "fraich_ep"
+"hidden": "({value}) => !(value.cd_nom && value.cd_nom.cd_nom == 60630)"
+```
+**Problème**: Accès à `value.cd_nom.cd_nom` (double niveau)
+
+##### 6. **Construction d'Objets dans Expressions** (cheveches)
+```javascript
+// visit.json - champ "id_base_site"
+"params": [
+    "({meta}) => ({",
+        "id_module: __MODULE.ID_MODULE,",
+        "id_sites_group: meta.parents.site && meta.parents.site.properties.id_sites_group,",
+        "order_by: 'base_site_name*'",
+    "})"
+]
+```
+**Problème**: Création d'objet avec expressions conditionnelles
+
+##### 7. **Manipulation de Formulaires** (suivi_phytosocio)
+```javascript
+// visit.json - champ "change"
+"change":[
+    "({objForm, meta}) => {",
+      "const surf_releve = (objForm.value.type_placette == 'C' ? objForm.value.surf_releve_c : objForm.value.surf_releve_q)",
+      "objForm.patchValue({surf_releve})",
+    "}"
+]
+```
+**Problème**: Manipulation directe du formulaire Angular
+
+##### 8. **Paramètre meta avec Conditions** (cheveches)
+```javascript
+// visit.json - champ "id_base_site"
+"hidden": "({meta, value}) => !meta.bChainInput && value.id_base_site"
+```
+**Problème**: Utilisation du contexte `meta` non supporté
+
+##### Autres Patterns Non Supportés
 ```javascript
 // Fonctions complexes
 ({value}) => value.items.filter(x => x.active).length > 0
