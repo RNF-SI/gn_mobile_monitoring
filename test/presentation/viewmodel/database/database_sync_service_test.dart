@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDatabaseService extends Mock implements DatabaseService {}
@@ -19,6 +20,8 @@ class MockRef extends Mock implements Ref {}
 
 class MockFetchModulesUseCase extends Mock implements FetchModulesUseCase {}
 
+class MockStateController extends Mock implements StateController<int> {}
+
 void main() {
   late DatabaseSyncService databaseSyncService;
   late MockDatabaseService mockDatabaseService;
@@ -26,6 +29,7 @@ void main() {
   late MockUserModulesViewModel mockModulesViewModel;
   late MockRef mockRef;
   late MockFetchModulesUseCase mockFetchModulesUseCase;
+  late MockStateController mockStateController;
 
   setUp(() {
     mockDatabaseService = MockDatabaseService();
@@ -33,9 +37,13 @@ void main() {
     mockModulesViewModel = MockUserModulesViewModel();
     mockRef = MockRef();
     mockFetchModulesUseCase = MockFetchModulesUseCase();
+    mockStateController = MockStateController();
 
     when(() => mockRef.read(fetchModulesUseCaseProvider))
         .thenReturn(mockFetchModulesUseCase);
+    when(() => mockRef.read(cacheVersionProvider.notifier))
+        .thenReturn(mockStateController);
+    when(() => mockStateController.update(any())).thenReturn(1);
 
     databaseSyncService = DatabaseSyncService(
       mockDatabaseService,

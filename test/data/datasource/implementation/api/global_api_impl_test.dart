@@ -37,7 +37,6 @@ void main() {
     mockObservationDetailsApi = MockObservationDetailsApi();
     
     globalApi = GlobalApiImpl(
-      dio: mockDio, 
       connectivity: mockConnectivity,
       visitsApi: mockVisitsApi,
       observationsApi: mockObservationsApi,

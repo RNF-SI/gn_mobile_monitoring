@@ -179,15 +179,22 @@ void main() {
     when(() => mockGetTokenFromLocalStorageUseCase.execute())
         .thenAnswer((_) async => 'test-token');
 
-    // Mock download usecase
-    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any()))
+    // Mock download usecase - handle 4 parameters (moduleId, token, progressCallback, stepCallback)
+    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any(), any()))
         .thenAnswer((invocation) async {
       final progressCallback =
           invocation.positionalArguments[2] as Function(double);
+      final stepCallback =
+          invocation.positionalArguments[3] as Function(String)?;
+      
       // Simulate progress updates
+      stepCallback?.call("Préparation du téléchargement...");
       progressCallback(0.3);
+      stepCallback?.call("Téléchargement des données...");
       progressCallback(0.7);
+      stepCallback?.call("Finalisation...");
       progressCallback(1.0);
+      stepCallback?.call("Téléchargement terminé!");
     });
 
     // Act
@@ -239,7 +246,7 @@ void main() {
         .thenAnswer((_) async => 'test-token');
 
     // Mock download usecase to throw error
-    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any()))
+    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any(), any()))
         .thenThrow(Exception('Download failed'));
 
     // Act

@@ -163,7 +163,7 @@ void main() {
   group('fetchSiteGroupsAndSitesGroupModules', () {
     test('should fetch site groups from API and update local database', () async {
       // Arrange
-      when(() => mockModulesDatabase.getAllModules())
+      when(() => mockModulesDatabase.getDownloadedModules())
           .thenAnswer((_) async => testModules);
           
       for (final module in testModules) {
@@ -187,7 +187,7 @@ void main() {
       await repository.fetchSiteGroupsAndSitesGroupModules(testToken);
 
       // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
+      verify(() => mockModulesDatabase.getDownloadedModules()).called(1);
       
       for (final module in testModules) {
         verify(() => mockSitesApi.fetchSiteGroupsForModule(module.moduleCode!, testToken)).called(1);
@@ -201,7 +201,7 @@ void main() {
 
     test('should handle errors when API fails', () async {
       // Arrange
-      when(() => mockModulesDatabase.getAllModules())
+      when(() => mockModulesDatabase.getDownloadedModules())
           .thenAnswer((_) async => testModules);
           
       // Make only the first module throw an error - this is more realistic
@@ -232,7 +232,7 @@ void main() {
       await repository.fetchSiteGroupsAndSitesGroupModules(testToken);
       
       // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
+      verify(() => mockModulesDatabase.getDownloadedModules()).called(1);
       verify(() => mockSitesApi.fetchSiteGroupsForModule(testModules[0].moduleCode!, any())).called(1);
       verify(() => mockSitesApi.fetchSiteGroupsForModule(testModules[1].moduleCode!, any())).called(1);
       
@@ -248,7 +248,7 @@ void main() {
   group('incrementalSyncSiteGroupsAndSitesGroupModules', () {
     test('should incrementally update site groups in database', () async {
       // Arrange
-      when(() => mockModulesDatabase.getAllModules())
+      when(() => mockModulesDatabase.getDownloadedModules())
           .thenAnswer((_) async => testModules);
           
       // Mock existing data
@@ -284,7 +284,7 @@ void main() {
       await repository.incrementalSyncSiteGroupsAndSitesGroupModules(testToken);
 
       // Assert
-      verify(() => mockModulesDatabase.getAllModules()).called(1);
+      verify(() => mockModulesDatabase.getDownloadedModules()).called(1);
       verify(() => mockSitesDatabase.getAllSiteGroups()).called(1);
       verify(() => mockSitesDatabase.getAllSiteGroupModules()).called(1);
       

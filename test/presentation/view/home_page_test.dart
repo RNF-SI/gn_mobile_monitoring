@@ -6,12 +6,24 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart'
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Mock sync service
 class MockSyncService extends StateNotifier<SyncStatus> {
   MockSyncService(super.state);
+  
+  // Mock initialize method that doesn't create timers
+  void initialize(WidgetRef ref) {
+    // Do nothing - avoid creating timers in tests
+  }
 }
+
+// Mock sync service that extends the real SyncService for proper override
+class MockSyncServiceForProvider extends Mock implements SyncService {}
+
+// Mock WidgetRef for mocktail fallback
+class MockWidgetRef extends Mock implements WidgetRef {}
 
 // Mock database sync service
 class MockDatabaseSyncService {
@@ -51,6 +63,10 @@ class MockSyncStatusWidget extends Mock implements SyncStatusWidget {
 void main() {
   late ProviderContainer container;
 
+  setUpAll(() {
+    registerFallbackValue(MockWidgetRef());
+  });
+
   setUp(() {
     container = ProviderContainer(
       overrides: [
@@ -59,6 +75,12 @@ void main() {
             (ref) => MockSyncService(SyncStatus.initial()),
           ),
         ),
+        syncServiceProvider.overrideWith((ref) {
+          final mock = MockSyncServiceForProvider();
+          when(() => mock.state).thenReturn(SyncStatus.initial());
+          when(() => mock.initialize(any())).thenReturn(null);
+          return mock;
+        }),
         databaseSyncServiceProvider
             .overrideWithValue(MockDatabaseSyncService()),
       ],
@@ -94,6 +116,8 @@ void main() {
       ),
     );
     await tester.pump();
+    // Allow timers to be processed and settled
+    await tester.pump(const Duration(seconds: 3));
   }
 
   testWidgets('HomePage should display only modules without tabs',

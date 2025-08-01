@@ -55,7 +55,7 @@ void main() {
       );
 
       // Scénario 2: Changement vers 'Non' - cd_nom caché mais valeur conservée
-      context['value']['presence'] = 'Non';
+      context['value']!['presence'] = 'Non';
 
       expect(
         processor.isFieldHidden(
@@ -70,13 +70,13 @@ void main() {
 
       // ASSERTION CRITIQUE: La valeur cd_nom doit être conservée
       expect(
-        context['value']['cd_nom'],
+        context['value']!['cd_nom'],
         equals(186278),
         reason: 'La valeur cd_nom=186278 doit être préservée même quand le champ est caché'
       );
 
       // Scénario 3: Retour vers 'Oui' - cd_nom redevient visible avec valeur intacte
-      context['value']['presence'] = 'Oui';
+      context['value']!['presence'] = 'Oui';
 
       expect(
         processor.isFieldHidden(
@@ -90,7 +90,7 @@ void main() {
       );
 
       expect(
-        context['value']['cd_nom'],
+        context['value']!['cd_nom'],
         equals(186278),
         reason: 'La valeur cd_nom=186278 doit être restaurée intacte'
       );
@@ -161,13 +161,13 @@ void main() {
       };
 
       // Avec l'ancienne logique, cette information serait perdue
-      expect(contextAvecAncienneLogique['value'].containsKey('cd_nom'), false,
+      expect(contextAvecAncienneLogique['value']?.containsKey('cd_nom'), false,
           reason: 'Ancienne logique: cd_nom était supprimé');
 
       // Avec la nouvelle logique, l'information est préservée
-      expect(contextAvecNouvelleLogique['value'].containsKey('cd_nom'), true,
+      expect(contextAvecNouvelleLogique['value']?.containsKey('cd_nom'), true,
           reason: 'Nouvelle logique: cd_nom est conservé');
-      expect(contextAvecNouvelleLogique['value']['cd_nom'], equals(186278),
+      expect(contextAvecNouvelleLogique['value']!['cd_nom'], equals(186278),
           reason: 'Nouvelle logique: valeur par défaut préservée');
     });
   });

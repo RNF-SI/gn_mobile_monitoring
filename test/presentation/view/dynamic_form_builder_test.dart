@@ -651,7 +651,8 @@ class SimpleMockFormDataProcessor implements FormDataProcessor {
   final _expressionEvaluator = HiddenExpressionEvaluator();
   
   @override
-  bool isFieldHidden(String fieldId, Map<String, dynamic> context, {Map<String, dynamic>? fieldConfig}) {
+  bool isFieldHidden(String fieldId, Map<String, dynamic> context, 
+      {Map<String, dynamic>? fieldConfig, Map<String, dynamic>? allFieldsConfig}) {
     // Pour les tests, nous masquons seulement les champs avec hidden: true explicitement
     if (fieldConfig != null && fieldConfig['hidden'] == true) {
       return true;
@@ -672,7 +673,12 @@ class SimpleMockFormDataProcessor implements FormDataProcessor {
   
   // Méthodes non utilisées dans les tests, mais nécessaires pour l'interface
   @override
-  Future<Map<String, dynamic>> processFormData(Map<String, dynamic> formData) async {
+  Future<Map<String, dynamic>> processFormData(
+    Map<String, dynamic> formData, {
+    bool excludeHiddenFields = false,
+    Map<String, dynamic>? fieldConfigs,
+    Map<String, dynamic>? currentContext,
+  }) async {
     return formData;
   }
   

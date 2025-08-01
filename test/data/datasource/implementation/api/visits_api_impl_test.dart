@@ -20,7 +20,7 @@ void main() {
   setUp(() {
     mockDio = MockDio();
     mockConnectivity = MockConnectivity();
-    visitsApi = VisitsApiImpl(dio: mockDio, connectivity: mockConnectivity);
+    visitsApi = VisitsApiImpl(connectivity: mockConnectivity);
   });
 
   setUpAll(() {

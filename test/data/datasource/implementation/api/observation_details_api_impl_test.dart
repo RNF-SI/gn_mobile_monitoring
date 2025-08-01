@@ -19,7 +19,7 @@ void main() {
   setUp(() {
     mockDio = MockDio();
     mockConnectivity = MockConnectivity();
-    observationDetailsApi = ObservationDetailsApiImpl(dio: mockDio, connectivity: mockConnectivity);
+    observationDetailsApi = ObservationDetailsApiImpl(connectivity: mockConnectivity);
   });
 
   setUpAll(() {
@@ -286,6 +286,6 @@ void main() {
 // ✓ Extension pour faciliter les tests avec dépendances injectées
 extension ObservationDetailsApiImplTestExtension on ObservationDetailsApiImpl {
   static ObservationDetailsApiImpl createWithDeps(Dio dio, Connectivity connectivity) {
-    return ObservationDetailsApiImpl(dio: dio, connectivity: connectivity);
+    return ObservationDetailsApiImpl(connectivity: connectivity);
   }
 }

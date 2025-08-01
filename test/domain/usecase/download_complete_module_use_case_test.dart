@@ -23,14 +23,23 @@ void main() {
       double progress = 0.0;
       void onProgressUpdate(double value) => progress = value;
       
-      when(() => mockModulesRepository.downloadCompleteModule(any(), any()))
-          .thenAnswer((_) async => {});
+      when(() => mockModulesRepository.downloadCompleteModule(
+            any(), 
+            any(),
+            onProgressUpdate: any(named: 'onProgressUpdate'),
+            onStepUpdate: any(named: 'onStepUpdate'),
+          )).thenAnswer((_) async {});
 
       // Act
       await useCase.execute(moduleId, token, onProgressUpdate);
 
       // Assert
-      verify(() => mockModulesRepository.downloadCompleteModule(moduleId, token)).called(1);
+      verify(() => mockModulesRepository.downloadCompleteModule(
+            moduleId, 
+            token,
+            onProgressUpdate: any(named: 'onProgressUpdate'),
+            onStepUpdate: any(named: 'onStepUpdate'),
+          )).called(1);
       expect(progress, equals(1.0)); // Vérifie que la progression est mise à jour à 100%
     });
 
@@ -42,8 +51,12 @@ void main() {
       void onProgressUpdate(double value) => progress = value;
       
       final exception = Exception('Failed to download module data');
-      when(() => mockModulesRepository.downloadCompleteModule(any(), any()))
-          .thenThrow(exception);
+      when(() => mockModulesRepository.downloadCompleteModule(
+            any(), 
+            any(),
+            onProgressUpdate: any(named: 'onProgressUpdate'),
+            onStepUpdate: any(named: 'onStepUpdate'),
+          )).thenThrow(exception);
 
       // Act & Assert
       expect(

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
@@ -37,6 +38,7 @@ class MockNomenclatureService extends StateNotifier<State<Map<String, List<Nomen
 }
 
 void main() {
+  late ProviderContainer container;
   late SyncService syncService;
   late MockGetTokenFromLocalStorageUseCase mockGetTokenUseCase;
   late MockIncrementalSyncAllUseCase mockSyncUseCase;
@@ -44,6 +46,7 @@ void main() {
   late MockUpdateLastSyncDateUseCase mockUpdateLastSyncDateUseCase;
   late MockSyncCompleteUseCase mockSyncCompleteUseCase;
   late MockSyncRepository mockSyncRepository;
+  late MockNomenclatureService mockNomenclatureService;
   late MockRef mockRef;
 
   setUp(() async {
@@ -57,6 +60,7 @@ void main() {
     mockUpdateLastSyncDateUseCase = MockUpdateLastSyncDateUseCase();
     mockSyncCompleteUseCase = MockSyncCompleteUseCase();
     mockSyncRepository = MockSyncRepository();
+    mockNomenclatureService = MockNomenclatureService();
     mockRef = MockRef();
 
     // Configurer les comportements par défaut
@@ -73,15 +77,22 @@ void main() {
       itemsSkipped: 0
     ));
 
-    // Créer l'instance à tester
-    syncService = SyncService(
-      mockGetTokenUseCase,
-      mockSyncUseCase,
-      mockGetLastSyncDateUseCase,
-      mockUpdateLastSyncDateUseCase,
-      mockSyncRepository,
-      mockSyncCompleteUseCase,
+    // Créer le ProviderContainer avec tous les providers mockés
+    container = ProviderContainer(
+      overrides: [
+        getTokenFromLocalStorageUseCaseProvider.overrideWithValue(mockGetTokenUseCase),
+        incrementalSyncAllUseCaseProvider.overrideWithValue(mockSyncUseCase),
+        getLastSyncDateUseCaseProvider.overrideWithValue(mockGetLastSyncDateUseCase),
+        updateLastSyncDateUseCaseProvider.overrideWithValue(mockUpdateLastSyncDateUseCase),
+        syncCompleteUseCaseProvider.overrideWithValue(mockSyncCompleteUseCase),
+        syncRepositoryProvider.overrideWithValue(mockSyncRepository),
+        nomenclatureServiceProvider.overrideWith((ref) => mockNomenclatureService),
+        cacheVersionProvider.overrideWith((ref) => 0),
+      ],
     );
+    
+    // Obtenir le service via le provider
+    syncService = container.read(syncServiceProvider.notifier);
     
     // Attendre l'initialisation async
     await Future.delayed(Duration(milliseconds: 100));
@@ -89,6 +100,7 @@ void main() {
 
   tearDown(() async {
     // Nettoyer l'environnement de test
+    container.dispose();
     await MockSetup.tearDownTestEnvironment();
   });
 

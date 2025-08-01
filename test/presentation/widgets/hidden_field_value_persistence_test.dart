@@ -67,7 +67,7 @@ void main() {
 
       // POINT CLÉ: La valeur cd_nom = 186278 doit être conservée
       // dans le contexte même quand le champ est caché
-      expect(context['value']['cd_nom'], equals(186278));
+      expect(context['value']!['cd_nom'], equals(186278));
     });
 
     test('Les valeurs par défaut persistent même après masquage/démasquage', () {
@@ -104,7 +104,7 @@ void main() {
       );
 
       // Étape 2: Cacher le champ
-      context['value']['visibility_trigger'] = 'hide';
+      context['value']!['visibility_trigger'] = 'hide';
 
       expect(
         processor.isFieldHidden(
@@ -118,12 +118,12 @@ void main() {
 
       // POINT CLÉ: La valeur par défaut doit être préservée
       expect(
-        context['value']['hidden_field_with_default'],
+        context['value']!['hidden_field_with_default'],
         equals('valeur_par_defaut_123')
       );
 
       // Étape 3: Rendre visible à nouveau
-      context['value']['visibility_trigger'] = 'show';
+      context['value']!['visibility_trigger'] = 'show';
 
       expect(
         processor.isFieldHidden(
@@ -137,7 +137,7 @@ void main() {
 
       // La valeur par défaut doit toujours être là
       expect(
-        context['value']['hidden_field_with_default'],
+        context['value']!['hidden_field_with_default'],
         equals('valeur_par_defaut_123')
       );
     });
@@ -183,7 +183,7 @@ void main() {
       );
 
       // Désactiver level1 - level2 et level3 devraient être cachés en cascade
-      context['value']['level1'] = 'inactive';
+      context['value']!['level1'] = 'inactive';
 
       expect(
         processor.isFieldHidden('level2', context,
@@ -193,8 +193,8 @@ void main() {
       );
 
       // POINT CLÉ: Même cachés, les champs conservent leurs valeurs
-      expect(context['value']['level2'], equals('level2_default'));
-      expect(context['value']['level3'], equals('level3_default'));
+      expect(context['value']!['level2'], equals('level2_default'));
+      expect(context['value']!['level3'], equals('level3_default'));
     });
 
     test('Soumission de formulaire avec champs cachés', () async {

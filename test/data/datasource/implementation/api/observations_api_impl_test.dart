@@ -19,7 +19,7 @@ void main() {
   setUp(() {
     mockDio = MockDio();
     mockConnectivity = MockConnectivity();
-    observationsApi = ObservationsApiImpl(dio: mockDio, connectivity: mockConnectivity);
+    observationsApi = ObservationsApiImpl(connectivity: mockConnectivity);
   });
 
   setUpAll(() {
