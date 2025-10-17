@@ -59,6 +59,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   late Map<String, TextEditingController> _textControllers;
   late Map<String, dynamic> _unifiedSchema;
   final Set<String> _userClearedFields = <String>{};
+  late Set<String> _criticalFields;
 
   /// Returns the onSubmit callback from the widget
   Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
@@ -74,7 +75,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       widget.objectConfig,
       widget.customConfig,
     );
-    
+
 
     // Trier les champs selon l'ordre défini dans displayProperties
     if (widget.displayProperties != null &&
@@ -93,6 +94,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         defaultDisplayProperties,
       );
     }
+
+    // Identifier les champs critiques qui affectent la visibilité/validation d'autres champs
+    _criticalFields = _getAllCriticalFields();
 
     _initControllers();
 
@@ -165,7 +169,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     if (_formValues.containsKey(fieldName)) {
       return;
     }
-    
+
     // Si l'utilisateur a explicitement supprimé ce champ, ne pas le réinitialiser
     if (_userClearedFields.contains(fieldName)) {
       if (fieldName == 'cd_nom') {
@@ -479,9 +483,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           debugPrint('🐛 [DEBUG] cd_nom mis à jour: $value');
         }
       }
-      
-      // Les conditions de visibilité seront réévaluées lors de la prochaine construction
     });
+
+    // Si c'est un champ critique (qui affecte la visibilité/validation d'autres champs),
+    // forcer un rafraîchissement supplémentaire pour mettre à jour les labels et validations
+    if (_criticalFields.contains(fieldName)) {
+      setState(() {});
+    }
   }
   
   /// Détermine si un champ est critique (peut affecter la visibilité d'autres champs)
@@ -585,37 +593,90 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     ];
   }
   
-  /// Identifie tous les champs critiques qui pourraient affecter la visibilité
+  /// Identifie tous les champs critiques qui pourraient affecter la visibilité ou validation
   Set<String> _getAllCriticalFields() {
     final Set<String> criticalFields = {};
-    
+
     // 1. Les champs de taxonomie sont toujours critiques
     for (final key in _formValues.keys) {
       if (key == 'cd_nom' || key.contains('cd_nom') || key.contains('espece')) {
         criticalFields.add(key);
       }
     }
-    
-    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés 
-    // dans les expressions 'hidden' d'autres champs
+
+    // 2. Analyser le schéma pour trouver tous les champs qui sont référencés
+    // dans les expressions 'hidden' ou 'required' d'autres champs
     for (final entry in _unifiedSchema.entries) {
+      // Analyser les expressions 'hidden'
       if (entry.value.containsKey('hidden') && entry.value['hidden'] is String) {
         final String hiddenExpr = entry.value['hidden'] as String;
-        
+
         // Analyser l'expression pour trouver les noms de champs référencés
-        // Pattern: value['nom_du_champ']
-        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]");
+        // Pattern: value['nom_du_champ'] ou value.nom_du_champ
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]|value\.(\w+)");
         final matches = fieldRefPattern.allMatches(hiddenExpr);
-        
+
         for (final match in matches) {
           if (match.groupCount >= 1) {
-            criticalFields.add(match.group(1)!);
+            final fieldName = match.group(1) ?? match.group(2);
+            if (fieldName != null) {
+              criticalFields.add(fieldName);
+            }
+          }
+        }
+      }
+
+      // Analyser les expressions 'required'
+      if (entry.value.containsKey('required') && entry.value['required'] is String) {
+        final String requiredExpr = entry.value['required'] as String;
+
+        // Analyser l'expression pour trouver les noms de champs référencés
+        final RegExp fieldRefPattern = RegExp(r"value\['([^']+)'\]|value\.(\w+)");
+        final matches = fieldRefPattern.allMatches(requiredExpr);
+
+        for (final match in matches) {
+          if (match.groupCount >= 1) {
+            final fieldName = match.group(1) ?? match.group(2);
+            if (fieldName != null) {
+              criticalFields.add(fieldName);
+            }
           }
         }
       }
     }
-    
+
     return criticalFields;
+  }
+
+  /// Vérifie si un champ est actuellement caché
+  bool _isFieldCurrentlyHidden(String fieldName) {
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+
+    // Préparer le contexte d'évaluation
+    final evaluationContext = formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+
+    // Vérifier si le champ est caché
+    final fieldConfig = _unifiedSchema[fieldName];
+    if (fieldConfig == null) {
+      return false;
+    }
+
+    return formDataProcessor.isFieldHidden(
+      fieldName,
+      evaluationContext,
+      fieldConfig: fieldConfig,
+      allFieldsConfig: _unifiedSchema,
+    );
   }
 
   List<Widget> _buildFormFields() {
@@ -673,7 +734,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Évaluer si le champ doit être masqué (avec support des cascades)
     final isHidden = formDataProcessor.isFieldHidden(fieldName, evaluationContext,
         fieldConfig: fieldConfig, allFieldsConfig: _unifiedSchema);
-    
+
     if (isHidden) {
       return const SizedBox.shrink(); // Ne pas afficher ce champ
     }
@@ -686,7 +747,29 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildFieldWidget(String fieldName, Map<String, dynamic> fieldConfig) {
     final String widgetType = fieldConfig['widget_type'];
     final String label = fieldConfig['attribut_label'];
-    final bool isRequired = fieldConfig['validations']['required'] == true;
+
+    // Évaluer si le champ est requis (supporte les expressions conditionnelles)
+    final formDataProcessor = ref.read(formDataProcessorProvider);
+    final Map<String, dynamic> evaluationContext =
+        formDataProcessor.prepareEvaluationContext(
+      values: _formValues,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+
+    // Utiliser la nouvelle méthode pour évaluer required (supporte les expressions)
+    final bool isRequired = formDataProcessor.isFieldRequired(
+      fieldName,
+      evaluationContext,
+      fieldConfig: fieldConfig,
+    );
+
     final String? description = fieldConfig['description'];
 
     // Vérifier si c'est le champ des observateurs par son nom
@@ -774,18 +857,25 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           TextFormField(
+            key: ValueKey('${fieldName}_$required'),
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
             ),
             maxLines: maxLines,
-            validator: required
-                ? (value) => value == null || value.isEmpty
-                    ? 'Ce champ est requis'
-                    : null
-                : null,
+            validator: (value) {
+              // Ne pas valider les champs cachés
+              if (_isFieldCurrentlyHidden(fieldName)) {
+                return null;
+              }
+              // Valider si requis
+              if (required && (value == null || value.isEmpty)) {
+                return 'Ce champ est requis';
+              }
+              return null;
+            },
             onChanged: (value) {
-              _formValues[fieldName] = value;
+              updateFormValue(fieldName, value);
             },
           ),
         ],
@@ -820,6 +910,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           TextFormField(
+            key: ValueKey('${fieldName}_$required'),
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
               hintText: 'Sélectionner une date',
@@ -827,11 +918,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               border: OutlineInputBorder(),
             ),
             readOnly: true,
-            validator: required
-                ? (value) => value == null || value.isEmpty
-                    ? 'Ce champ est requis'
-                    : null
-                : null,
+            validator: (value) {
+              // Ne pas valider les champs cachés
+              if (_isFieldCurrentlyHidden(fieldName)) {
+                return null;
+              }
+              // Valider si requis
+              if (required && (value == null || value.isEmpty)) {
+                return 'Ce champ est requis';
+              }
+              return null;
+            },
             onTap: () async {
               final date = await showDatePicker(
                 context: context,
@@ -891,6 +988,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           TextFormField(
+            key: ValueKey('${fieldName}_$required'),
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
               hintText: 'Sélectionner une heure',
@@ -898,11 +996,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               border: OutlineInputBorder(),
             ),
             readOnly: true,
-            validator: required
-                ? (value) => value == null || value.isEmpty
-                    ? 'Ce champ est requis'
-                    : null
-                : null,
+            validator: (value) {
+              // Ne pas valider les champs cachés
+              if (_isFieldCurrentlyHidden(fieldName)) {
+                return null;
+              }
+              // Valider si requis
+              if (required && (value == null || value.isEmpty)) {
+                return 'Ce champ est requis';
+              }
+              return null;
+            },
             onTap: () async {
               // Initialiser avec la valeur existante si disponible
               TimeOfDay initialTime = TimeOfDay.now();
@@ -983,6 +1087,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
             keyboardType: TextInputType.number,
             validator: (value) {
+              // Ne pas valider les champs cachés
+              if (_isFieldCurrentlyHidden(fieldName)) {
+                return null;
+              }
               if (required && (value == null || value.isEmpty)) {
                 return 'Ce champ est requis';
               }
@@ -1066,9 +1174,16 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               );
             }).toList(),
-            validator: required
-                ? (value) => value == null ? 'Ce champ est requis' : null
-                : null,
+            validator: (value) {
+              // Ne pas valider les champs cachés
+              if (_isFieldCurrentlyHidden(fieldName)) {
+                return null;
+              }
+              if (required && value == null) {
+                return 'Ce champ est requis';
+              }
+              return null;
+            },
             onChanged: (value) {
               if (value != null) {
                 setState(() {
@@ -1187,9 +1302,16 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             suffixIcon: const Icon(Icons.arrow_drop_down),
             hintText: 'Rechercher...',
           ),
-          validator: required
-              ? (value) => value == null || value.isEmpty ? 'Ce champ est requis' : null
-              : null,
+          validator: (value) {
+            // Ne pas valider les champs cachés
+            if (_isFieldCurrentlyHidden(fieldName)) {
+              return null;
+            }
+            if (required && (value == null || value.isEmpty)) {
+              return 'Ce champ est requis';
+            }
+            return null;
+          },
         );
       },
       onSelected: (option) {
@@ -1339,15 +1461,18 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return Padding(
       padding: const EdgeInsets.only(bottom: 13.0),
       child: FormField<String>(
+        key: ValueKey('${fieldName}_${isRequired}_${_formValues[fieldName]}'),
         initialValue: _formValues[fieldName]?.toString(),
-        validator: isRequired
-            ? (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Ce champ est requis';
-                }
-                return null;
-              }
-            : null,
+        validator: (value) {
+          // Ne pas valider les champs cachés
+          if (_isFieldCurrentlyHidden(fieldName)) {
+            return null;
+          }
+          if (isRequired && (value == null || value.isEmpty)) {
+            return 'Ce champ est requis';
+          }
+          return null;
+        },
         builder: (FormFieldState<String> field) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1923,9 +2048,16 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                     child: Text(dataset.datasetName),
                   );
                 }).toList(),
-                validator: required
-                    ? (value) => value == null ? 'Ce champ est requis' : null
-                    : null,
+                validator: (value) {
+                  // Ne pas valider les champs cachés
+                  if (_isFieldCurrentlyHidden(fieldName)) {
+                    return null;
+                  }
+                  if (required && value == null) {
+                    return 'Ce champ est requis';
+                  }
+                  return null;
+                },
                 onChanged: (value) {
                   setState(() {
                     if (value == null) {

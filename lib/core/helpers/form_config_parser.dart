@@ -539,7 +539,8 @@ class FormConfigParser {
           'attribut_label': fieldConfig['attribut_label'] ?? fieldName,
           'type_widget': fieldConfig['type_widget'] ?? 'text',
           'widget_type': determineWidgetType(fieldConfig),
-          'required': fieldConfig['required'] == true,
+          // IMPORTANT: Préserver la valeur originale de 'required' (booléen OU expression)
+          'required': fieldConfig['required'] ?? false,
           // Ajouter la propriété hidden pour référence future
           'hidden': fieldConfig['hidden'] ?? false,
           // Ajouter le nom du champ pour faciliter le tri ultérieur

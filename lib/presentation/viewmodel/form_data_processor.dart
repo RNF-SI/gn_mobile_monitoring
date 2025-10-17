@@ -733,6 +733,75 @@ class FormDataProcessor {
     return false;
   }
 
+  /// Évalue si un champ est requis en fonction des règles définies
+  ///
+  /// Parameters:
+  /// - fieldId: L'identifiant du champ à évaluer
+  /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
+  /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'required'
+  ///
+  /// Returns:
+  /// - true si le champ est requis, false sinon
+  bool isFieldRequired(String fieldId, Map<String, dynamic> context,
+      {Map<String, dynamic>? fieldConfig}) {
+    // Si aucune configuration n'est fournie, le champ n'est pas requis
+    if (fieldConfig == null) {
+      return false;
+    }
+
+    // Vérifier si le champ a une règle 'required'
+    final requiredValue = fieldConfig['required'];
+
+    // Si la valeur est un booléen, l'utiliser directement
+    if (requiredValue is bool) {
+      return requiredValue;
+    }
+
+    // Si la valeur est une chaîne commençant par (, c'est une expression à évaluer
+    // Note: La syntaxe peut être soit JS `({value}) => ...` ou Dart `(value) => ...`
+    if (requiredValue is String &&
+        (requiredValue.trim().startsWith('({') ||
+            requiredValue.trim().startsWith('('))) {
+      try {
+        // Évaluer l'expression avec le contexte fourni
+        final result = _expressionEvaluator.evaluateExpression(requiredValue, context);
+
+        // Si l'évaluation échoue, le champ n'est pas requis par défaut
+        return result ?? false;
+      } catch (e) {
+        // En cas d'erreur, ne pas rendre le champ requis par défaut
+        debugPrint('Erreur lors de l\'évaluation de required pour $fieldId: $e');
+        return false;
+      }
+    }
+
+    // Vérifier également dans validations (format alternatif)
+    final validations = fieldConfig['validations'] as Map<String, dynamic>?;
+    if (validations != null && validations.containsKey('required')) {
+      final validationRequired = validations['required'];
+
+      if (validationRequired is bool) {
+        return validationRequired;
+      }
+
+      // Si c'est une expression dans validations
+      if (validationRequired is String &&
+          (validationRequired.trim().startsWith('({') ||
+              validationRequired.trim().startsWith('('))) {
+        try {
+          final result = _expressionEvaluator.evaluateExpression(validationRequired, context);
+          return result ?? false;
+        } catch (e) {
+          debugPrint('Erreur lors de l\'évaluation de validations.required pour $fieldId: $e');
+          return false;
+        }
+      }
+    }
+
+    // Par défaut, le champ n'est pas requis
+    return false;
+  }
+
   /// Prépare un contexte d'évaluation pour les fonctions hidden
   ///
   /// Cette méthode normalise le contexte en s'assurant que les clés attendues sont présentes

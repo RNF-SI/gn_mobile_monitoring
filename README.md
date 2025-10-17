@@ -4,7 +4,11 @@ Version mobile du module monitoring de Geonature.
 
 ## Documentation
 
-- [Fonctionnalités Supportées](./SUPPORTED_FEATURES.md) - Compatibilité des modules et limitations
+### Fonctionnalités
+- [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) - Types de widgets, compatibilité des modules et limitations
+- [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) - Documentation technique détaillée des expressions JS
+
+### Développement
 - [Tâches](./TASKS.md)
 - [Snippets](./SNIPPETS.md)
 - [.cursorrules](./CURSORRULES.md)

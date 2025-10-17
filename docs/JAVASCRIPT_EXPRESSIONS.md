@@ -2,7 +2,7 @@
 
 ## Vue d'ensemble
 
-Les formulaires dynamiques de GeoNature Mobile permettent de définir des conditions de visibilité des champs en utilisant des expressions JavaScript. Ces expressions sont interprétées côté Dart lors du chargement des modules.
+Les formulaires dynamiques de GeoNature Mobile permettent de définir des **conditions de visibilité** (`hidden`) et des **validations conditionnelles** (`required`) des champs en utilisant des expressions JavaScript. Ces expressions sont interprétées côté Dart lors du chargement des modules.
 
 ## Expressions supportées ✅
 
@@ -215,6 +215,43 @@ Les formulaires dynamiques de GeoNature Mobile permettent de définir des condit
 (value) => /^[0-9]+$/.test(value['code'])
 ```
 
+## Propriétés supportant les expressions conditionnelles
+
+### 1. `hidden` - Visibilité conditionnelle
+
+Permet de masquer ou afficher un champ selon des conditions dynamiques.
+
+```javascript
+// Exemple : Cacher un champ si "accessibility" n'est pas "Oui"
+"Heure_debut": {
+  "type_widget": "time",
+  "attribut_label": "Heure de début",
+  "hidden": "({value}) => value.accessibility !== 'Oui'"
+}
+```
+
+### 2. `required` - Validation conditionnelle
+
+Permet de rendre un champ requis ou optionnel selon des conditions dynamiques.
+
+```javascript
+// Exemple : Le champ est requis seulement si "accessibility" est "Oui"
+"Heure_debut": {
+  "type_widget": "time",
+  "attribut_label": "Heure de début",
+  "required": "({value}) => value.accessibility === 'Oui'",
+  "hidden": "({value}) => value.accessibility === 'Non'"
+}
+```
+
+**Formats supportés pour `required` :**
+- Booléen statique : `"required": true` ou `"required": false`
+- Expression JavaScript : `"required": "({value}) => expression"`
+- Dans `validations` : `"validations": {"required": true}` ou `"validations": {"required": "({value}) => expression"}`
+
+**⚠️ Note importante (Bug corrigé en octobre 2025)** :
+Les expressions conditionnelles pour `required` n'étaient pas correctement préservées lors de la génération du schéma unifié. Ce bug a été corrigé dans `FormConfigParser.generateUnifiedSchema()`. Si vous utilisez une version antérieure, les expressions `required` conditionnelles seront converties en `false`.
+
 ## Mécanisme de visibilité en cascade
 
 Le système supporte la propagation automatique des conditions de masquage :
@@ -240,7 +277,8 @@ champB: {
 
 ### Important
 - Les champs cachés **conservent leurs valeurs** dans le formulaire
-- Les champs `required` cachés restent dans les données envoyées au serveur
+- Les champs `required` cachés **ne sont PAS validés** (la validation est ignorée pour les champs cachés)
+- Les champs `required` + cachés restent dans les données envoyées au serveur
 - Les champs non-required cachés sont exclus des données finales
 
 ## Optimisations
