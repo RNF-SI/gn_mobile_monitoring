@@ -46,6 +46,10 @@ class BaseFormLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Détecter si le clavier est visible
+    final viewInsets = MediaQuery.of(context).viewInsets;
+    final isKeyboardVisible = viewInsets.bottom > 0;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
@@ -54,7 +58,13 @@ class BaseFormLayout extends StatelessWidget {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(16.0),
+              // Réduire le padding en bas quand le clavier est visible
+              padding: EdgeInsets.fromLTRB(
+                16.0,
+                16.0,
+                16.0,
+                isKeyboardVisible ? 8.0 : 16.0,
+              ),
               child: Column(
                 children: [
                   // Fil d'Ariane (optionnel)
@@ -86,9 +96,15 @@ class BaseFormLayout extends StatelessWidget {
   }
 
   Widget _buildActionButtons(BuildContext context) {
+    // Détecter si le clavier est visible
+    final viewInsets = MediaQuery.of(context).viewInsets;
+    final isKeyboardVisible = viewInsets.bottom > 0;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(0, 12.0, 0, 16.0),
-      margin: const EdgeInsets.only(bottom: 20.0),
+      // Réduire le padding en bas quand le clavier est visible
+      padding: EdgeInsets.fromLTRB(0, 12.0, 0, isKeyboardVisible ? 8.0 : 16.0),
+      // Réduire la marge en bas quand le clavier est visible
+      margin: EdgeInsets.only(bottom: isKeyboardVisible ? 0.0 : 20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
