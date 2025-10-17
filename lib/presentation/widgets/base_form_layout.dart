@@ -58,10 +58,10 @@ class BaseFormLayout extends StatelessWidget {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              // Réduire le padding en bas quand le clavier est visible
+              // Option 5 : Réduire le padding en haut et en bas quand le clavier est visible
               padding: EdgeInsets.fromLTRB(
                 16.0,
-                16.0,
+                isKeyboardVisible ? 8.0 : 16.0,
                 16.0,
                 isKeyboardVisible ? 8.0 : 16.0,
               ),
@@ -87,8 +87,8 @@ class BaseFormLayout extends StatelessWidget {
                     ),
                   ),
 
-                  // Boutons d'action fixes en bas
-                  _buildActionButtons(context),
+                  // Option 1 : Masquer les boutons quand le clavier est visible
+                  if (!isKeyboardVisible) _buildActionButtons(context),
                 ],
               ),
             ),

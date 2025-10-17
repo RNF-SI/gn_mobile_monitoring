@@ -526,7 +526,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           // Option de basculement pour l'enchaînement des saisies
           if (widget.objectConfig.chained == true && widget.chainInput != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 16.0),
+              padding: const EdgeInsets.only(bottom: 13.0),
               child: Row(
                 children: [
                   const Text('Enchaîner les saisies'),
@@ -752,7 +752,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -762,7 +762,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -772,7 +772,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TextFormField(
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
@@ -798,7 +798,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     _textControllers[fieldName] ??= TextEditingController();
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -808,7 +808,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -818,7 +818,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TextFormField(
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
@@ -869,7 +869,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -879,7 +879,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -889,7 +889,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TextFormField(
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
@@ -955,7 +955,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -965,7 +965,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -975,7 +975,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TextFormField(
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
@@ -1029,7 +1029,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1039,7 +1039,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1049,7 +1049,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
@@ -1113,7 +1113,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     final isMultiple = fieldConfig['multiple'] == true;
     
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1123,7 +1123,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1133,7 +1133,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           isMultiple 
             ? _buildMultiSelectDatalist(fieldName, dataSource, required)
             : _buildSingleSelectDatalist(fieldName, dataSource, required),
@@ -1288,7 +1288,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     _formValues[fieldName] ??= false;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1337,7 +1337,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: FormField<String>(
         initialValue: _formValues[fieldName]?.toString(),
         validator: isRequired
@@ -1358,7 +1358,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
               if (description != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4.0, bottom: 8.0),
+                  padding: const EdgeInsets.only(top: 4.0, bottom: 4.0),
                   child: Text(
                     description,
                     style: const TextStyle(
@@ -1368,7 +1368,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                     ),
                   ),
                 ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               _buildRadioOptions(fieldName, values, field),
               if (field.hasError)
                 Padding(
@@ -1524,7 +1524,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1534,7 +1534,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1544,7 +1544,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           // Afficher les observateurs sélectionnés
           if (_formValues[fieldName] is List &&
               (_formValues[fieldName] as List).isNotEmpty)
@@ -1570,7 +1570,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 );
               }).toList(),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           // Champ désactivé pour indiquer que les observateurs sont déjà sélectionnés
           Container(
             padding: const EdgeInsets.all(12.0),
@@ -1623,7 +1623,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     
     // Construire un widget de sélection de nomenclature
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1633,7 +1633,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1643,7 +1643,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           NomenclatureSelectorWidget(
             label: label,
             fieldConfig: fieldConfig,
@@ -1743,7 +1743,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       final List values = mergedConfig['values'] as List;
 
       return Padding(
-        padding: const EdgeInsets.only(bottom: 16.0),
+        padding: const EdgeInsets.only(bottom: 13.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1763,7 +1763,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   ),
                 ),
               ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             ...values.map<Widget>((option) {
               // Extraire la valeur et le libellé
               final int optionValue =
@@ -1792,7 +1792,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
     // Cas standard: utiliser le TaxonSelectorWidget
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1802,7 +1802,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1812,7 +1812,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           TaxonSelectorWidget(
             label: label,
             moduleId: moduleId,
@@ -1854,7 +1854,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1864,7 +1864,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
           if (description != null)
             Padding(
-              padding: const EdgeInsets.only(bottom: 8.0),
+              padding: const EdgeInsets.only(bottom: 4.0),
               child: Text(
                 description,
                 style: const TextStyle(
@@ -1874,7 +1874,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 ),
               ),
             ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
           FutureBuilder<List<Dataset>>(
             future: datasetService.getDatasetsForModule(moduleId),
             builder: (context, snapshot) {
