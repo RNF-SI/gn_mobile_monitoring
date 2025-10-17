@@ -50,19 +50,54 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       final List<SiteComplement> siteComplements = [];
 
       // 1. PRIORITY: Récupérer d'abord les sites dans les groupes de sites (avec depth=2)
+      List<dynamic>? siteGroupsList;
+      
+      // Try to find site groups in different possible locations
       if (moduleData['children'] != null &&
           moduleData['children']['sites_group'] != null) {
-        final siteGroupsList = moduleData['children']['sites_group'] as List;
+        // Original structure: data.children.sites_group
+        siteGroupsList = moduleData['children']['sites_group'] as List;
+      } else if (moduleData['sites_group'] != null) {
+        // Alternative structure: data.sites_group directly
+        siteGroupsList = moduleData['sites_group'] as List;
+      } else if (moduleData['properties'] != null && 
+                 moduleData['properties']['sites_group'] != null) {
+        // Another possible structure: data.properties.sites_group
+        siteGroupsList = moduleData['properties']['sites_group'] as List;
+      }
+      
+      if (siteGroupsList != null) {
         
         for (var group in siteGroupsList) {
           final groupData = group as Map<String, dynamic>;
-          final groupProperties = groupData['properties'] as Map<String, dynamic>;
-          final groupId = groupProperties['id_sites_group'] as int;
           
-          // Check if the group has sites
+          // Extract group properties - handle different structures
+          Map<String, dynamic> groupProperties;
+          if (groupData['properties'] != null) {
+            groupProperties = groupData['properties'] as Map<String, dynamic>;
+          } else {
+            // If no properties field, use the group data itself
+            groupProperties = groupData;
+          }
+          
+          final groupId = groupProperties['id_sites_group'] as int? ??
+                         groupData['id_sites_group'] as int? ??
+                         groupData['id'] as int? ??
+                         0;
+          
+          // Check if the group has sites - handle different structures
+          List<dynamic>? sitesList;
+          
           if (groupData['children'] != null &&
               groupData['children']['site'] != null) {
-            final sitesList = groupData['children']['site'] as List;
+            sitesList = groupData['children']['site'] as List;
+          } else if (groupData['site'] != null) {
+            sitesList = groupData['site'] as List;
+          } else if (groupData['sites'] != null) {
+            sitesList = groupData['sites'] as List;
+          }
+          
+          if (sitesList != null) {
             
             for (var site in sitesList) {
               final siteData = site as Map<String, dynamic>;
@@ -112,13 +147,31 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       }
 
       // 2. Récupérer les sites directement liés au module (hors groupes) qui ne sont pas déjà traités
+      List<dynamic>? directSitesList;
+      
+      // Try to find sites in different possible locations
       if (moduleData['children'] != null &&
           moduleData['children']['site'] != null) {
-        final sitesList = moduleData['children']['site'] as List;
+        directSitesList = moduleData['children']['site'] as List;
+      } else if (moduleData['site'] != null) {
+        directSitesList = moduleData['site'] as List;
+      } else if (moduleData['sites'] != null) {
+        directSitesList = moduleData['sites'] as List;
+      }
+      
+      if (directSitesList != null) {
         
-        for (var site in sitesList) {
+        for (var site in directSitesList) {
           final siteData = site as Map<String, dynamic>;
-          final properties = siteData['properties'] as Map<String, dynamic>;
+          
+          // Extract site properties - handle different structures
+          Map<String, dynamic> properties;
+          if (siteData['properties'] != null) {
+            properties = siteData['properties'] as Map<String, dynamic>;
+          } else {
+            // If no properties field, use the site data itself
+            properties = siteData;
+          }
           final siteId = properties['id_base_site'] ?? siteData['id'];
 
           if (siteId != null && !moduleSiteIds.contains(siteId)) {
@@ -195,7 +248,15 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
         if (response.statusCode == 200) {
           final siteData = response.data as Map<String, dynamic>;
-          final properties = siteData['properties'] as Map<String, dynamic>;
+          
+          // Extract site properties - handle different structures
+          Map<String, dynamic> properties;
+          if (siteData['properties'] != null) {
+            properties = siteData['properties'] as Map<String, dynamic>;
+          } else {
+            // If no properties field, use the site data itself
+            properties = siteData;
+          }
 
           // Update the site with additional details from the secure endpoint
           site['base_site_code'] = properties['base_site_code'];
@@ -235,33 +296,85 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final data = response.data as Map<String, dynamic>;
         final result = <SiteGroupsWithModulesLabel>[];
 
-        // Process site groups from the children
+        // Debug print to understand the response structure
+        print('API Response structure for module $moduleCode: ${data.keys.toList()}');
+        
+        // Handle different API response structures
+        List<dynamic>? siteGroupsList;
+        
+        // Try to find site groups in different possible locations
         if (data['children'] != null &&
             data['children']['sites_group'] != null) {
-          final siteGroupsList = data['children']['sites_group'] as List;
+          // Original structure: data.children.sites_group
+          siteGroupsList = data['children']['sites_group'] as List;
+          print('Found site groups in children.sites_group: ${siteGroupsList.length} groups');
+        } else if (data['sites_group'] != null) {
+          // Alternative structure: data.sites_group directly
+          siteGroupsList = data['sites_group'] as List;
+          print('Found site groups directly in sites_group: ${siteGroupsList.length} groups');
+        } else if (data['properties'] != null && 
+                   data['properties']['sites_group'] != null) {
+          // Another possible structure: data.properties.sites_group
+          siteGroupsList = data['properties']['sites_group'] as List;
+          print('Found site groups in properties.sites_group: ${siteGroupsList.length} groups');
+        } else {
+          // No site groups found - this might be normal for modules without site groups
+          print('No site groups found for module $moduleCode. Response keys: ${data.keys.toList()}');
+          if (data['children'] != null) {
+            print('Children keys: ${(data['children'] as Map<String, dynamic>).keys.toList()}');
+          }
+          if (data['properties'] != null) {
+            print('Properties keys: ${(data['properties'] as Map<String, dynamic>).keys.toList()}');
+          }
+        }
+        
+        // Process site groups if found
+        if (siteGroupsList != null) {
           for (var group in siteGroupsList) {
-            final groupData = group as Map<String, dynamic>;
-            final properties = groupData['properties'] as Map<String, dynamic>;
+            try {
+              final groupData = group as Map<String, dynamic>;
+              
+              // Extract properties - handle different structures
+              Map<String, dynamic>? properties;
+              if (groupData['properties'] != null) {
+                properties = groupData['properties'] as Map<String, dynamic>;
+              } else {
+                // If no properties field, use the group data itself
+                properties = groupData;
+              }
 
-            // Extract site group data from the properties
-            final Map<String, dynamic> formattedGroupData = {
-              'id_sites_group': properties['id_sites_group'] ?? groupData['id'],
-              'sites_group_name': properties['sites_group_name'] ?? '',
-              'sites_group_code': properties['sites_group_code'] ?? '',
-              'comments': properties['comments'],
-              'nb_sites': properties['nb_sites'],
-              'nb_visits': properties['nb_visits'],
-              'modules': [
-                moduleCode
-              ], // We know this site group belongs to this module
-            };
+              // Extract site group data from the properties
+              final Map<String, dynamic> formattedGroupData = {
+                'id_sites_group': properties['id_sites_group'] ?? 
+                                 groupData['id_sites_group'] ?? 
+                                 groupData['id'] ??
+                                 groupData['id_group'],
+                'sites_group_name': properties['sites_group_name'] ?? 
+                                   groupData['sites_group_name'] ?? 
+                                   groupData['name'] ?? 
+                                   '',
+                'sites_group_code': properties['sites_group_code'] ?? 
+                                   groupData['sites_group_code'] ?? 
+                                   groupData['code'] ?? 
+                                   '',
+                'comments': properties['comments'] ?? groupData['comments'],
+                'nb_sites': properties['nb_sites'] ?? groupData['nb_sites'],
+                'nb_visits': properties['nb_visits'] ?? groupData['nb_visits'],
+                'modules': [
+                  moduleCode
+                ], // We know this site group belongs to this module
+              };
 
-            result.add(SiteGroupsWithModulesLabel(
-              siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
-              moduleLabelList: [
-                moduleCode
-              ], // We know this site group belongs to this module
-            ));
+              result.add(SiteGroupsWithModulesLabel(
+                siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
+                moduleLabelList: [
+                  moduleCode
+                ], // We know this site group belongs to this module
+              ));
+            } catch (e) {
+              print('Error processing site group: $e');
+              print('Group data: $group');
+            }
           }
         }
 
