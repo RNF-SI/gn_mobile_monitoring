@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_error_reporter.dart';
@@ -176,6 +177,15 @@ class MainApp extends ConsumerWidget {
     return MaterialApp.router(
       routerConfig: _router,
       debugShowCheckedModeBanner: false, // Masquer la bannière de débogage
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('fr', 'FR'),
+      ],
+      locale: const Locale('fr', 'FR'),
       theme: ThemeData(
         primaryColor:
             const Color(0xFF598979), // Used for elements needing emphasis

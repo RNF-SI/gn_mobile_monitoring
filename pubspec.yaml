@@ -30,6 +30,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
   drift: ^2.21.0
   sqlite3: ^2.4.6
   path_provider: ^2.1.5
@@ -49,7 +51,7 @@ dependencies:
   stack_trace: ^1.10.0
   flutter_hooks: ^0.18.0
   hooks_riverpod: ^2.1.3
-  intl: ^0.17.0
+  intl: ^0.20.2
   path: ^1.8.3
   package_info_plus: ^8.3.0
   url_launcher: ^6.2.5
