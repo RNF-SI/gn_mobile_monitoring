@@ -422,6 +422,47 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   @override
+  Widget build(BuildContext context) {
+    final childContent = buildChildrenContent();
+
+    // Détecter si le clavier est visible
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    // Ajuster les valeurs de flex selon l'état du clavier
+    // Sans clavier: 40% propriétés / 60% tableaux
+    // Avec clavier: 20% propriétés / 80% tableaux
+    final int propertiesFlex = isKeyboardVisible ? 1 : 2;
+    final int childrenFlex = isKeyboardVisible ? 4 : 3;
+
+    return Scaffold(
+      appBar: buildAppBar(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildBreadcrumb(),
+          if (childContent == null)
+            Expanded(child: buildBaseContent())
+          else
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: propertiesFlex,
+                    child: buildBaseContent(),
+                  ),
+                  Expanded(
+                    flex: childrenFlex,
+                    child: childContent,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget? buildChildrenContent() {
     if (_childrenTypes.isEmpty || _tabController == null) {
       return null;
@@ -516,139 +557,124 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     final ObjectConfig? sitesGroupConfig =
         module.complement?.configuration?.sitesGroup;
 
-    Map<String, dynamic> parsedGroupConfig = {};
-
-    if (sitesGroupConfig != null) {
-      final customConfig = module.complement?.configuration?.custom;
-      parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
-          sitesGroupConfig, customConfig);
-    }
-
-    // Libellés personnalisés en fonction de la configuration
-    final String groupNameLabel = (parsedGroupConfig.isNotEmpty &&
-            parsedGroupConfig.containsKey('sites_group_name'))
-        ? parsedGroupConfig['sites_group_name']['attribut_label'] ??
-            'Nom du groupe'
-        : sitesGroupConfig?.label ?? 'Nom du groupe';
-
     // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
     if (_filteredSiteGroups.isEmpty) {
       _filterSiteGroups();
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          // Champ de recherche
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Rechercher un groupe',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _handleSearch('');
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: _handleSearch,
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _filteredSiteGroups.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Text(
-                          'Aucun groupe de sites associé à ce module',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
-                        ),
+    // Déterminer les colonnes à afficher pour les groupes de sites
+    List<String> standardColumns = [
+      'actions',
+      'sites_group_name',
+    ];
+
+    List<String> displayColumns = determineDataColumns(
+      standardColumns: standardColumns,
+      itemConfig: sitesGroupConfig,
+      firstItemData: null,
+      filterMetaColumns: true,
+    );
+
+    // Créer les colonnes du DataTable
+    List<DataColumn> columns = buildDataColumns(
+      columns: displayColumns,
+      itemConfig: sitesGroupConfig,
+      predefinedLabels: {
+        'actions': 'Action',
+        'sites_group_name': 'Nom du groupe',
+      },
+    );
+
+    // Générer le schéma pour le formatage des cellules
+    Map<String, dynamic> schema = {};
+    if (sitesGroupConfig != null) {
+      schema = FormConfigParser.generateUnifiedSchema(sitesGroupConfig, customConfig);
+    }
+
+    // Construire les lignes du tableau
+    List<DataRow> rows = _filteredSiteGroups.map((group) {
+      return DataRow(
+        cells: displayColumns.map((column) {
+          // Colonne d'actions
+          if (column == 'actions') {
+            return DataCell(
+              IconButton(
+                icon: const Icon(Icons.visibility, size: 20),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteGroupDetailPage(
+                        siteGroup: group,
+                        moduleInfo: _updatedModule != null
+                            ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                            : widget.moduleInfo,
                       ),
-                    )
-                  : Table(
-                      columnWidths: const {
-                        0: FixedColumnWidth(
-                            80), // Reduced width for single icon
-                        1: FlexColumnWidth(2), // Name column
-                      },
-                      children: [
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 16.0),
-                              child: Text('Action',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(groupNameLabel,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        ..._filteredSiteGroups.map((group) => TableRow(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  height: 48,
-                                  alignment: Alignment.center,
-                                  child: IconButton(
-                                    icon:
-                                        const Icon(Icons.visibility, size: 20),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SiteGroupDetailPage(
-                                            siteGroup: group,
-                                            moduleInfo: _updatedModule != null
-                                                ? widget.moduleInfo.copyWith(
-                                                    module: _updatedModule!)
-                                                : widget.moduleInfo,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(group.sitesGroupName ?? ''),
-                                ),
-                              ],
-                            )),
-                      ],
                     ),
-            ),
-          ),
-        ],
+                  );
+                },
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            );
+          }
+
+          // Propriétés du groupe de sites
+          dynamic value;
+          switch (column) {
+            case 'sites_group_name':
+              value = group.sitesGroupName;
+              break;
+            case 'sites_group_code':
+              value = group.sitesGroupCode;
+              break;
+            case 'sites_group_description':
+              value = group.sitesGroupDescription;
+              break;
+            default:
+              // Pour les autres colonnes, on laisse la valeur à null
+              value = null;
+          }
+
+          // Formater la valeur et créer la cellule
+          String displayValue = formatDataCellValue(
+            rawValue: value,
+            columnName: column,
+            schema: schema,
+          );
+
+          return buildFormattedDataCell(
+            value: displayValue,
+            enableTooltip: true,
+          );
+        }).toList(),
+      );
+    }).toList();
+
+    // Message vide personnalisé
+    Widget emptyMessage = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Text(
+        'Aucun groupe de sites associé à ce module',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.grey[600],
+        ),
       ),
+    );
+
+    // Utiliser la méthode factorisée buildDataTable
+    return buildDataTable(
+      columns: columns,
+      rows: rows,
+      showSearch: true,
+      searchHint: "Rechercher un groupe",
+      searchController: _searchController,
+      onSearchChanged: _handleSearch,
+      emptyMessage: emptyMessage,
+      isLoading: false,
     );
   }
 
