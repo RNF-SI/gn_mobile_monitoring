@@ -96,6 +96,9 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       if (visit.comments != null) {
         requestBody['properties']['comments'] = visit.comments;
       }
+      if (visit.idDigitiser != null) {
+        requestBody['properties']['id_digitiser'] = visit.idDigitiser;
+      }
       if (visit.idNomenclatureTechCollectCampanule != null) {
         requestBody['properties']['id_nomenclature_tech_collect_campanule'] =
             visit.idNomenclatureTechCollectCampanule;
@@ -297,6 +300,9 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       }
       if (visit.comments != null) {
         requestBody['properties']['comments'] = visit.comments;
+      }
+      if (visit.idDigitiser != null) {
+        requestBody['properties']['id_digitiser'] = visit.idDigitiser;
       }
       if (visit.idNomenclatureTechCollectCampanule != null) {
         requestBody['properties']['id_nomenclature_tech_collect_campanule'] =
