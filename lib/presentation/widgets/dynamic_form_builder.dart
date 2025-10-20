@@ -927,12 +927,30 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               if (required && (value == null || value.isEmpty)) {
                 return 'Ce champ est requis';
               }
+              // Validation des dates futures pour les dates de début de visite
+              if (value != null && value.isNotEmpty && _isStartDateField(fieldName)) {
+                final selectedDate = _formValues[fieldName] is DateTime
+                    ? _formValues[fieldName] as DateTime
+                    : (_formValues[fieldName] is String)
+                        ? DateTime.tryParse(_formValues[fieldName] as String)
+                        : null;
+
+                if (selectedDate != null) {
+                  final now = DateTime.now();
+                  final today = DateTime(now.year, now.month, now.day);
+                  final dateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+
+                  if (dateOnly.isAfter(today)) {
+                    return 'La date ne peut pas être dans le futur';
+                  }
+                }
+              }
               return null;
             },
             onTap: () async {
               final date = await showDatePicker(
                 context: context,
-                initialDate: _formValues[fieldName] is DateTime 
+                initialDate: _formValues[fieldName] is DateTime
                     ? _formValues[fieldName] as DateTime
                     : (_formValues[fieldName] is String && (_formValues[fieldName] as String).isNotEmpty)
                         ? DateTime.tryParse(_formValues[fieldName] as String) ?? DateTime.now()
@@ -953,6 +971,15 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         ],
       ),
     );
+  }
+
+  /// Détermine si un champ de date est une date de début de visite
+  bool _isStartDateField(String fieldName) {
+    // Liste des noms de champs qui représentent des dates de début de visite
+    const startDateFields = [
+      'visit_date_min',
+    ];
+    return startDateFields.contains(fieldName);
   }
 
   Widget _buildTimeField(String fieldName, String label, bool required,
