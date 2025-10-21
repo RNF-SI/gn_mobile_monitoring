@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/nomenclature_selector_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/multiple_nomenclature_selector_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/taxon_selector_widget.dart';
 
 /// Un widget qui génère un formulaire dynamique
@@ -1762,18 +1763,32 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildNomenclatureField(String fieldName, String label, bool required,
       Map<String, dynamic> fieldConfig,
       {String? description}) {
-    
-    // Vérifier et corriger les valeurs de nomenclature
+
+    // Vérifier si le champ permet la sélection multiple
+    final bool isMultiple = fieldConfig['multiple'] == true;
+
+    if (isMultiple) {
+      // Utiliser le widget de sélection multiple
+      return _buildMultipleNomenclatureField(
+        fieldName,
+        label,
+        required,
+        fieldConfig,
+        description: description,
+      );
+    }
+
+    // Vérifier et corriger les valeurs de nomenclature (sélection simple)
     if (_formValues.containsKey(fieldName)) {
       final value = _formValues[fieldName];
-      
+
       // Si la valeur est un entier, la convertir en map
       if (value is int) {
         _formValues[fieldName] = {'id': value};
       }
     }
-    
-    // Construire un widget de sélection de nomenclature
+
+    // Construire un widget de sélection de nomenclature simple
     return Padding(
       padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
@@ -1799,10 +1814,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           NomenclatureSelectorWidget(
             label: label,
             fieldConfig: fieldConfig,
-            value: _formValues[fieldName] is Map<String, dynamic> 
-                ? _formValues[fieldName] as Map<String, dynamic> 
-                : (_formValues[fieldName] is int 
-                    ? {'id': _formValues[fieldName]} 
+            value: _formValues[fieldName] is Map<String, dynamic>
+                ? _formValues[fieldName] as Map<String, dynamic>
+                : (_formValues[fieldName] is int
+                    ? {'id': _formValues[fieldName]}
                     : null),
             isRequired: required,
             onChanged: (value) {
@@ -1817,6 +1832,52 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
         ],
       ),
+    );
+  }
+
+  // Pour les champs de nomenclature à sélection multiple
+  Widget _buildMultipleNomenclatureField(String fieldName, String label, bool required,
+      Map<String, dynamic> fieldConfig,
+      {String? description}) {
+
+    // Préparer la valeur : convertir en List<int> si nécessaire
+    List<int>? currentValue;
+
+    if (_formValues.containsKey(fieldName)) {
+      final value = _formValues[fieldName];
+
+      if (value is List) {
+        // Convertir tous les éléments en int
+        currentValue = value.map((e) {
+          if (e is int) return e;
+          if (e is Map && e.containsKey('id')) return e['id'] as int;
+          return int.tryParse(e.toString());
+        }).whereType<int>().toList();
+      } else if (value is int) {
+        // Convertir un seul int en liste
+        currentValue = [value];
+      } else if (value is Map && value.containsKey('id')) {
+        // Extraire l'ID d'une map
+        currentValue = [value['id'] as int];
+      }
+    }
+
+    return MultipleNomenclatureSelectorWidget(
+      label: label,
+      fieldConfig: fieldConfig,
+      value: currentValue,
+      isRequired: required,
+      description: description,
+      onChanged: (value) {
+        setState(() {
+          if (value == null || value.isEmpty) {
+            _formValues.remove(fieldName);
+          } else {
+            // Stocker comme liste d'IDs pour être compatible avec le format web
+            _formValues[fieldName] = value;
+          }
+        });
+      },
     );
   }
 

@@ -559,6 +559,8 @@ class FormConfigParser {
           if (fieldConfig['id_list'] != null) 'id_list': fieldConfig['id_list'],
           if (fieldConfig['type_util'] != null)
             'type_util': fieldConfig['type_util'],
+          // Ajouter la propriété multiple pour les sélections multiples
+          if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
         };
       }
     });

@@ -138,6 +138,8 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 ```
 
 #### NomenclatureSelector - Nomenclatures GeoNature
+
+**Sélection simple** (dropdown) :
 ```json
 {
   "id_nomenclature_statut_observation": {
@@ -170,6 +172,27 @@ ou avec API :
   }
 }
 ```
+
+**Sélection multiple** (checkboxes) - 🆕 **Nouveau** :
+```json
+{
+  "methode_de_prospection": {
+    "type_widget": "datalist",
+    "attribut_label": "Méthode(s) de prospection",
+    "api": "nomenclatures/nomenclature/METHODE_PROSPECTION",
+    "application": "GeoNature",
+    "keyValue": "id_nomenclature",
+    "keyLabel": "label_fr",
+    "multiple": true,
+    "data_path": "values",
+    "type_util": "nomenclature",
+    "required": "({value}) => value.accessibility === 'Oui'",
+    "hidden": "({value}) => value.accessibility === 'Non'"
+  }
+}
+```
+
+> 📘 **Documentation complète** : Voir [MULTIPLE_NOMENCLATURE_SELECTOR.md](MULTIPLE_NOMENCLATURE_SELECTOR.md) pour plus de détails sur la sélection multiple de nomenclatures.
 
 #### DatasetSelector - Sélection de jeux de données
 ```json

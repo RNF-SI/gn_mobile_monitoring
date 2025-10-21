@@ -219,12 +219,6 @@ class VisitRepositoryImpl implements VisitRepository {
         complementDb.data!.isNotEmpty) {
       // Utiliser le parseur JSON robuste qui gère les cas spéciaux
       dataMap = JsonParserHelper.parseRobust(complementDb.data);
-      
-      if (dataMap == null) {
-        debugPrint('Échec de tous les parsings pour: ${complementDb.data}');
-      } else {
-        debugPrint('Parsing réussi pour les données de visite');
-      }
     }
 
     // Construire l'entité complète avec les données collectées
@@ -270,152 +264,6 @@ class VisitRepositoryImpl implements VisitRepository {
     });
 
     return processedMap;
-  }
-
-  /// Parse une chaîne de caractères contenant des paires clé-valeur au format "cle: valeur"
-  Map<String, dynamic> _parseKeyValuePairs(String content) {
-    final result = <String, dynamic>{};
-
-    // Analyse avancée pour gérer les cas spéciaux comme les virgules dans les chaînes
-    List<String> parts = [];
-
-    // Utilisation d'une expression régulière pour identifier les paires clé-valeur
-    // Cette regex recherche: un mot, suivi par ":", puis une valeur jusqu'à la prochaine virgule
-    // qui n'est pas entre guillemets ou accolades
-    final regexp = RegExp(r'(\w+)\s*:\s*([^,]+)(?:,|$)');
-    final matches = regexp.allMatches(content);
-
-    for (final match in matches) {
-      if (match.groupCount >= 2) {
-        final key = match.group(1)?.trim();
-        final rawValue = match.group(2)?.trim();
-
-        if (key != null && rawValue != null) {
-          // Essayer de convertir la valeur en type approprié
-          final value = _convertStringToTypedValue(rawValue, keyName: key);
-          result[key] = value;
-        }
-      }
-    }
-
-    // Si l'extraction avec regex n'a pas fonctionné, tenter une approche plus simple
-    if (result.isEmpty) {
-      // Séparer par virgule, puis par deux-points
-      parts = content.split(',');
-
-      for (final part in parts) {
-        final keyValue = part.split(':');
-        if (keyValue.length >= 2) {
-          final key = keyValue[0].trim();
-          // Joindre le reste au cas où il y aurait des deux-points dans la valeur
-          final rawValue = keyValue.sublist(1).join(':').trim();
-          final value = _convertStringToTypedValue(rawValue, keyName: key);
-          result[key] = value;
-        }
-      }
-    }
-
-    return result;
-  }
-
-  /// Tente de convertir une chaîne en valeur typée (int, double, bool, etc.)
-  dynamic _convertStringToTypedValue(String rawValue, {String? keyName}) {
-    // Suppression des guillemets si présents
-    String cleanValue = rawValue.trim();
-    if ((cleanValue.startsWith('"') && cleanValue.endsWith('"')) ||
-        (cleanValue.startsWith("'") && cleanValue.endsWith("'"))) {
-      cleanValue = cleanValue.substring(1, cleanValue.length - 1);
-    }
-
-    // Si le nom de clé contient "time" et n'est pas une date, c'est probablement une heure
-    if (keyName != null &&
-        keyName.toLowerCase().contains('time') &&
-        !keyName.toLowerCase().contains('date')) {
-      return normalizeTimeFormat(cleanValue);
-    }
-
-    // Tentative de conversion en nombre
-    if (RegExp(r'^-?\d+$').hasMatch(cleanValue)) {
-      return int.parse(cleanValue);
-    }
-    if (RegExp(r'^-?\d+\.\d+$').hasMatch(cleanValue)) {
-      return double.parse(cleanValue);
-    }
-
-    // Tentative de conversion en booléen
-    if (cleanValue.toLowerCase() == 'true') return true;
-    if (cleanValue.toLowerCase() == 'false') return false;
-    if (cleanValue.toLowerCase() == 'null') return null;
-
-    // Sinon, retourner la chaîne
-    return cleanValue;
-  }
-
-  /// Dernière tentative pour parser un dictionnaire, quelle que soit sa forme
-  Map<String, dynamic> _forceParseDictionary(String data) {
-    final result = <String, dynamic>{};
-
-    try {
-      // Retirer les caractères d'ouverture/fermeture et les espaces supplémentaires
-      var cleanData = data.trim();
-      if (cleanData.startsWith('{')) cleanData = cleanData.substring(1);
-      if (cleanData.endsWith('}'))
-        cleanData = cleanData.substring(0, cleanData.length - 1);
-
-      // Diviser en fonction des paires clé-valeur que nous pouvons identifier
-      final keyValuePattern = RegExp(r'(\w+)\s*:\s*([^,]+)(?=,\s*\w+\s*:|$)');
-      final matches = keyValuePattern.allMatches(cleanData);
-
-      for (final match in matches) {
-        if (match.groupCount >= 2) {
-          final key = match.group(1);
-          final value = match.group(2);
-
-          if (key != null && value != null) {
-            result[key] = _convertStringToTypedValue(value, keyName: key);
-          }
-        }
-      }
-
-      // Si nous n'avons rien trouvé, essayer une approche plus simple
-      if (result.isEmpty) {
-        debugPrint('Tentative de parsing agressif');
-
-        // Diviser par virgule
-        final parts = cleanData.split(',');
-        for (final part in parts) {
-          if (part.contains(':')) {
-            final keyValue = part.split(':');
-            if (keyValue.length >= 2) {
-              final key = keyValue[0].trim();
-              final value = keyValue[1].trim();
-              result[key] = _convertStringToTypedValue(value, keyName: key);
-            }
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint('Erreur dans le parsing agressif: $e');
-    }
-
-    return result;
-  }
-
-  /// Convertit une chaîne au format dict Python-like en JSON valide pour la sauvegarde
-  String _convertToValidJson(String input) {
-    // Si c'est déjà un JSON valide, le retourner tel quel
-    try {
-      jsonDecode(input);
-      return input;
-    } catch (_) {
-      // Ce n'est pas du JSON valide, essayer de le convertir
-    }
-
-    // Remplacer la forme "key: value" par "\"key\": value"
-    final pattern = RegExp(r'(\w+):\s*');
-    return input.replaceAllMapped(pattern, (match) {
-      return '"${match.group(1)}": ';
-    });
   }
 
   @override
@@ -509,65 +357,6 @@ class VisitRepositoryImpl implements VisitRepository {
     return success;
   }
 
-  /// Convertit une Map en chaîne JSON simple
-  /// Cette méthode est utilisée comme solution de secours si jsonEncode échoue
-  String _mapToSimpleJsonString(Map<String, dynamic> data) {
-    final buffer = StringBuffer('{');
-    var first = true;
-
-    data.forEach((key, value) {
-      if (!first) {
-        buffer.write(',');
-      }
-      first = false;
-
-      // Échapper les guillemets dans la clé si nécessaire
-      final escapedKey = key.replaceAll('"', '\\"');
-      buffer.write('"$escapedKey":');
-
-      // Convertir la valeur en fonction de son type
-      if (value == null) {
-        buffer.write('null');
-      } else if (value is num || value is bool) {
-        buffer.write(value.toString());
-      } else if (value is String) {
-        // Si c'est un champ d'heure, normaliser
-        if (key.toLowerCase().contains('time') &&
-            !key.toLowerCase().contains('date')) {
-          final normalizedTime = normalizeTimeFormat(value);
-          buffer.write('"$normalizedTime"');
-        } else {
-          // Échapper les guillemets dans la valeur si nécessaire
-          final escapedValue = value.replaceAll('"', '\\"');
-          buffer.write('"$escapedValue"');
-        }
-      } else if (value is List) {
-        buffer.write('[');
-        var firstItem = true;
-        for (final item in value) {
-          if (!firstItem) {
-            buffer.write(',');
-          }
-          firstItem = false;
-
-          if (item is String) {
-            final escapedItem = item.replaceAll('"', '\\"');
-            buffer.write('"$escapedItem"');
-          } else {
-            buffer.write(item.toString());
-          }
-        }
-        buffer.write(']');
-      } else {
-        // Pour les autres types, utiliser toString()
-        buffer.write('"${value.toString()}"');
-      }
-    });
-
-    buffer.write('}');
-    return buffer.toString();
-  }
-
   @override
   Future<bool> deleteVisit(int id) async {
     try {
@@ -644,16 +433,6 @@ class VisitRepositoryImpl implements VisitRepository {
     // Convertir le modèle de domaine en entité
     final entity = complement.toEntity();
     await saveVisitComplement(entity);
-  }
-
-  /// Vérifie si une chaîne est un JSON valide
-  bool _isValidJson(String jsonString) {
-    try {
-      jsonDecode(jsonString);
-      return true;
-    } catch (_) {
-      return false;
-    }
   }
 
   @override
