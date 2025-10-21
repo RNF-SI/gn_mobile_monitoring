@@ -131,8 +131,23 @@ class VisitFormWrapper extends ConsumerWidget {
 
   /// Prépare les valeurs initiales pour le mode édition
   Map<String, dynamic> _prepareInitialValues() {
-    if (visit == null || visit!.data == null) return {};
-    return Map<String, dynamic>.from(visit!.data!);
+    if (visit == null) return {};
+
+    // Créer un Map avec les champs de base de la visite
+    final initialValues = <String, dynamic>{
+      'visit_date_min': visit!.visitDateMin,
+      'visit_date_max': visit!.visitDateMax,
+      'comments': visit!.comments,
+      'id_dataset': visit!.idDataset,
+      'observers': visit!.observers ?? [],
+    };
+
+    // Ajouter les données complémentaires si elles existent
+    if (visit!.data != null && visit!.data!.isNotEmpty) {
+      initialValues.addAll(visit!.data!);
+    }
+
+    return initialValues;
   }
 
   /// Gère la sauvegarde de la visite
@@ -215,15 +230,19 @@ class VisitFormWrapper extends ConsumerWidget {
           );
 
           final chainInput = ref.read(chainVisitInputProvider);
-          
+
           if (!chainInput) {
-            // Créer un objet BaseVisit temporaire avec les données minimales
+            // Créer un objet BaseVisit temporaire avec toutes les données du formulaire
             final newVisit = BaseVisit(
               idBaseVisit: visitId,
               idDataset: _extractDatasetId(formData),
               idBaseSite: site.idBaseSite,
               visitDateMin: formData['visit_date_min'] ?? DateTime.now().toIso8601String(),
+              visitDateMax: formData['visit_date_max'],
+              comments: formData['comments'],
               idModule: moduleId ?? 1,
+              observers: formData['observers'] as List<int>?,
+              data: formData,
             );
 
             // Vérifier si la configuration des observations existe
