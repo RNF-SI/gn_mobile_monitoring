@@ -4,6 +4,37 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 
 > 💡 Pour la documentation technique détaillée des expressions JavaScript, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
+## 🆕 Dernières Améliorations (Octobre 2025)
+
+### Support Complet des Expressions `required`
+L'application supporte maintenant les **validations conditionnelles dynamiques** avec évaluation des expressions JavaScript pour le champ `required`.
+
+**Fonctionnalités ajoutées :**
+- ✅ Évaluation dynamique des expressions `required` sous forme de chaînes JavaScript
+- ✅ Support des formats `"required": "({value}) => expression"` et `"validations": {"required": "expression"}`
+- ✅ Mise à jour en temps réel de l'indicateur visuel (astérisque rouge) selon les conditions
+- ✅ Validation intelligente qui ignore automatiquement les champs cachés
+- ✅ Support des mêmes opérateurs que pour `hidden` (==, !=, ===, !==, &&, ||, !, etc.)
+
+**Impact sur la compatibilité :**
+- Les modules POPAmphibien, POPReptile et ecrevisses_pattes_blanches passent de **90% à 100% de compatibilité** 🎉
+- Toutes les expressions conditionnelles `required` sont maintenant évaluées correctement
+- L'expérience utilisateur est améliorée avec un retour visuel immédiat sur les champs requis
+
+**Exemple d'utilisation :**
+```json
+{
+  "Heure_debut": {
+    "type_widget": "time",
+    "attribut_label": "Heure de début",
+    "required": "({value}) => value.accessibility === 'Oui'",
+    "hidden": "({value}) => value.accessibility === 'Non'"
+  }
+}
+```
+
+**Commit de référence :** [`eb54732`](../../commit/eb54732) - "Champs required qui traite à présent les expressions string"
+
 ## 🚀 Types de Champs Supportés
 
 ### 📝 Champs de Base
@@ -192,6 +223,12 @@ ou avec API :
 }
 ```
 
+**Compatibilité avec `required` et `hidden` :**
+- ✅ Les nomenclatures multiples supportent pleinement les expressions conditionnelles
+- ✅ Validation dynamique avec `required` (expressions JavaScript)
+- ✅ Visibilité conditionnelle avec `hidden` (expressions JavaScript)
+- ✅ Les valeurs sélectionnées sont sauvegardées dans un tableau d'IDs de nomenclatures
+
 > 📘 **Documentation complète** : Voir [MULTIPLE_NOMENCLATURE_SELECTOR.md](MULTIPLE_NOMENCLATURE_SELECTOR.md) pour plus de détails sur la sélection multiple de nomenclatures.
 
 #### DatasetSelector - Sélection de jeux de données
@@ -237,8 +274,10 @@ ou avec API :
 ## 🎯 Logique Conditionnelle
 
 ### Visibilité (`hidden`)
+- ✅ **Booléens statiques** : `"hidden": true` ou `"hidden": false`
 - ✅ **Conditions simples** : Masquage basé sur une valeur de champ
-- ✅ **Conditions complexes** : Combinaisons avec opérateurs logiques
+- ✅ **Expressions JavaScript** : `"hidden": "({value}) => value.champ === 'valeur'"`
+- ✅ **Conditions complexes** : Combinaisons avec opérateurs logiques (&&, ||, !)
 - ✅ **Cascades** : Champs cachés en cascade (A→B→C)
 - ✅ **Auto-références** : Un champ peut se référencer lui-même
 - ✅ **Persistance** : Conservation des valeurs des champs cachés
@@ -246,10 +285,12 @@ ou avec API :
 ### Validation (`required`)
 - ✅ **Booléens statiques** : `"required": true` ou `"required": false`
 - ✅ **Expressions conditionnelles** : `"required": "({value}) => value.champ === 'valeur'"`
-- ✅ **Format validations** : `"validations": {"required": true}` ou avec expressions
+- ✅ **Format validations** : `"validations": {"required": true}` ou avec expressions JavaScript
+- ✅ **Support des expressions string** : 🆕 Les expressions sous forme de chaîne sont maintenant évaluées dynamiquement
 - ✅ **Champs cachés** : Les champs cachés ne sont pas validés (validation ignorée automatiquement)
+- ✅ **Indicateur visuel** : Affichage dynamique de l'astérisque (*) selon l'état du champ requis
 
-**Exemple de validation conditionnelle** (POPReptile) :
+**Exemple complet de validation et visibilité conditionnelles** (POPReptile) :
 ```json
 {
   "accessibility": {
@@ -267,17 +308,19 @@ ou avec API :
 }
 ```
 
-**Comportement dynamique** :
+**Comportement dynamique** (🆕 amélioration récente) :
 - Quand `accessibility = "Oui"` :
   - ✅ Le champ "Heure de début" est **visible**
-  - ✅ Le label affiche "Heure de début **\***" (avec astérisque)
-  - ✅ La validation est **active** (champ requis)
+  - ✅ Le label affiche "Heure de début **\***" (avec astérisque rouge)
+  - ✅ La validation est **active** et évaluée dynamiquement
+  - ✅ L'expression `required` est interprétée en temps réel
 
 - Quand `accessibility = "Non"` :
   - ✅ Le champ "Heure de début" est **caché**
-  - ✅ La validation est **désactivée** (même si `required` est true)
+  - ✅ La validation est **désactivée** automatiquement (même si `required` est défini)
+  - ✅ Les valeurs cachées sont conservées mais non validées
 
-**Mise à jour dynamique** : L'astérisque et la validation s'ajustent automatiquement quand l'utilisateur change la valeur d'`accessibility`.
+**Mise à jour en temps réel** : L'astérisque, le label et la validation s'ajustent instantanément lors des changements de valeur des champs dont dépend la condition.
 
 > 📘 Pour la liste complète des expressions JavaScript supportées, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
@@ -286,7 +329,7 @@ ou avec API :
 ### Résumé par Complexité JavaScript
 
 #### 🟢 Modules Simples (23 modules - 72%)
-Compatible à 100%, utilise uniquement `"hidden": true/false`
+Compatible à 100%, utilise uniquement `"hidden": true/false` et `"required": true/false`
 - apollons, cheveches, chiro, chronocapture, chronoventaire
 - lichens_bio_indicateurs, micromam_analyse_pelotes_rejection_gmb
 - nidif_gypa, oedic, osmodermes, piegeages_passifs
@@ -295,8 +338,9 @@ Compatible à 100%, utilise uniquement `"hidden": true/false`
 - Tous les modules **suivi_*** (sauf suivi_phytosocio)
 
 #### 🟡 Modules Moyens (3 modules - 9%)
-Compatible à 90%, nécessite expressions simples
+✅ **Compatible à 100%** (🆕 amélioration récente - support des expressions `required`)
 - ecrevisses_pattes_blanches, POPAmphibien, POPReptile
+- **Fonctionnalités supportées** : Expressions JavaScript pour `hidden` et `required`
 
 #### 🟠 Modules Complexes (3 modules - 9%)
 Compatible à 60%, nécessite extensions majeures
@@ -315,8 +359,8 @@ Compatible à 20%, refactoring nécessaire
 | **apollons** | ✅ | ✅ | 🟢 Simple | Module ID 21, expressions basiques |
 | **cheveches** | ☐ | ☐ | 🟢 Simple | À tester |
 | **chiro** | 🔄 | ⚠️ | 🟢 Simple | Tests d'erreurs |
-| **POPAmphibien** | ☐ | ☐ | 🟡 Moyenne | Validations conditionnelles `required` |
-| **POPReptile** | ✅ | ✅ | 🟡 Moyenne | Tests complets |
+| **POPAmphibien** | ✅ | ✅ | 🟡 Moyenne | 🆕 Validations conditionnelles `required` supportées |
+| **POPReptile** | ✅ | ✅ | 🟡 Moyenne | 🆕 Tests complets avec expressions `required` et `hidden` |
 | **RHOMEOAmphibien** | ☐ | ☐ | 🟠 Complexe | Méthode `includes()` |
 | **petite_chouette_montagne** | ☐ | ☐ | 🔴 Très complexe | Opérateurs ternaires imbriqués |
 | **RHOMEOFlore** | ☐ | ☐ | 🔴 Très complexe | Blocs multi-lignes |
@@ -354,22 +398,56 @@ Compatible à 20%, refactoring nécessaire
 - **Navigation** : GoRouter
 - **Modèles** : Freezed (immutable)
 
-### Pipeline de Traitement
+### Pipeline de Traitement des Formulaires
+
 ```
 Configuration JSON (GeoNature)
     ↓
 FormConfigParser.generateUnifiedSchema()
+    ↓ (parsing et fusion object_config + custom_config)
     ↓
-HiddenExpressionEvaluator.evaluateExpression()
+DynamicFormBuilder (State Management)
     ↓
-Widgets Flutter dynamiques
+    ├─→ FormDataProcessor.isFieldRequired()
+    │   └─→ HiddenExpressionEvaluator.evaluateExpression()
+    │       └─→ Évaluation des expressions `required`
+    │
+    └─→ FormDataProcessor.isFieldVisible()
+        └─→ HiddenExpressionEvaluator.evaluateExpression()
+            └─→ Évaluation des expressions `hidden`
+    ↓
+Widgets Flutter dynamiques (mise à jour en temps réel)
 ```
 
+> ℹ️ **Note technique** : Les deux types d'expressions (`required` et `hidden`) utilisent la même classe `HiddenExpressionEvaluator` pour l'évaluation. Cette classe générique peut interpréter n'importe quelle expression JavaScript conditionnelle, qu'elle soit pour la visibilité ou la validation.
+
 ### Fichiers Clés
-- **`lib/core/helpers/form_config_parser.dart`** : Parsing et fusion des configurations
-- **`lib/core/helpers/hidden_expression_evaluator.dart`** : Évaluation des expressions JS
-- **`lib/presentation/viewmodel/form_data_processor.dart`** : Traitement des données et logique conditionnelle
-- **`lib/presentation/widgets/dynamic_form_builder.dart`** : Construction dynamique des formulaires
+
+#### Core Layer
+- **[`lib/core/helpers/form_config_parser.dart`](../../lib/core/helpers/form_config_parser.dart)** :
+  - Parsing et fusion des configurations JSON
+  - Génération du schéma unifié
+  - Tri des champs selon l'ordre d'affichage
+
+- **[`lib/core/helpers/hidden_expression_evaluator.dart`](../../lib/core/helpers/hidden_expression_evaluator.dart)** :
+  - Évaluation **générique** des expressions JavaScript (utilisée pour `hidden` ET `required`)
+  - Support des opérateurs logiques (&&, ||, !)
+  - Support des comparaisons (==, !=, ===, !==, <, >, <=, >=)
+  - Conversion des syntaxes JS vers Dart
+  - **Classe réutilisable** : Une seule implémentation pour tous types d'expressions conditionnelles
+
+#### Presentation Layer
+- **[`lib/presentation/viewmodel/form_data_processor.dart`](../../lib/presentation/viewmodel/form_data_processor.dart)** :
+  - **Méthode `isFieldRequired()`** : Évaluation dynamique des champs requis (🆕 ajoutée récemment)
+  - **Méthode `isFieldVisible()`** : Évaluation dynamique de la visibilité
+  - Traitement des données de formulaire avant sauvegarde
+  - Conversion des nomenclatures et taxonomies
+
+- **[`lib/presentation/widgets/dynamic_form_builder.dart`](../../lib/presentation/widgets/dynamic_form_builder.dart)** :
+  - Construction dynamique des formulaires
+  - Gestion de l'état des champs
+  - Mise à jour en temps réel des validations
+  - Affichage de l'astérisque (*) pour les champs requis
 
 ## 📝 Plan de Développement Recommandé
 
@@ -427,6 +505,19 @@ Pour mettre à jour le tableau après avoir testé un module :
 
 ---
 
-**Dernière mise à jour** : 17 octobre 2025
+**Dernière mise à jour** : 22 octobre 2025
 **Version de l'application** : Flutter 3.22.3
 **Architecture** : Clean Architecture avec Riverpod
+
+## 📋 Historique des Changements
+
+### Version du 22 octobre 2025
+- ✅ Ajout du support complet des expressions `required` conditionnelles
+- ✅ Amélioration de la compatibilité des modules POPAmphibien, POPReptile et ecrevisses_pattes_blanches (100%)
+- ✅ Ajout de l'évaluation dynamique des validations avec expressions JavaScript
+- ✅ Indicateurs visuels en temps réel pour les champs requis
+
+### Version du 17 octobre 2025
+- ✅ Documentation initiale des fonctionnalités supportées
+- ✅ Catalogue complet des types de widgets
+- ✅ Documentation des expressions JavaScript pour `hidden`
