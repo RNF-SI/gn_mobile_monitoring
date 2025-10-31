@@ -192,10 +192,12 @@ class ModulesRepositoryImpl implements ModulesRepository {
       final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
 
-      // 1. Fetch nomenclatures and datasets
-      onStepUpdate?.call('Nomenclatures et datasets');
+      // 1. Fetch nomenclatures, datasets ET configuration en une seule fois
+      // Cette méthode optimisée récupère tout et évite les appels redondants
+      onStepUpdate?.call('Nomenclatures, datasets et configuration');
       onProgressUpdate?.call(0.15);
-      final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
+      // Passer le token pour les requêtes authentifiées
+      final data = await globalApi.getNomenclaturesAndDatasets(moduleId, token: token);
 
       // Convert nomenclature entities to domain models
       final nomenclatures =
@@ -228,10 +230,10 @@ class ModulesRepositoryImpl implements ModulesRepository {
         await database.associateModuleWithDataset(moduleId, dataset.id);
       }
 
-      // 2. Fetch and store module configuration
+      // 2. Utiliser la configuration déjà récupérée (pas besoin de refaire l'appel API)
       onStepUpdate?.call('Configuration du module');
       onProgressUpdate?.call(0.30);
-      final config = await globalApi.getModuleConfiguration(moduleCode);
+      final config = data.configuration;
 
       // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
       try {

@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
@@ -36,6 +37,21 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
+
+      // 204 (No Content) signifie qu'il n'y a pas de sites disponibles,
+      // mais c'est un cas valide - continuer avec des données vides
+      if (moduleResponse.statusCode == 204) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: réponse 204 (No Content) pour les sites. '
+          'Aucun site disponible pour ce module.',
+          tag: 'sync',
+        );
+        return {
+          'sites': <Map<String, dynamic>>[],
+          'site_complements': <Map<String, dynamic>>[],
+        };
+      }
 
       if (moduleResponse.statusCode != 200) {
         throw ApiException(
@@ -101,7 +117,15 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             
             for (var site in sitesList) {
               final siteData = site as Map<String, dynamic>;
-              final properties = siteData['properties'] as Map<String, dynamic>;
+              
+              // Extract site properties - handle different structures
+              Map<String, dynamic> properties;
+              if (siteData['properties'] != null) {
+                properties = siteData['properties'] as Map<String, dynamic>;
+              } else {
+                // If no properties field, use the site data itself
+                properties = siteData;
+              }
               final siteId = properties['id_base_site'] ?? siteData['id'];
 
               if (siteId != null && !moduleSiteIds.contains(siteId)) {
@@ -291,6 +315,18 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           headers: {'Authorization': 'Bearer $token'},
         ),
       );
+
+      // 204 (No Content) signifie qu'il n'y a pas de groupes de sites disponibles,
+      // mais c'est un cas valide - retourner une liste vide
+      if (response.statusCode == 204) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: réponse 204 (No Content) pour les groupes de sites. '
+          'Aucun groupe de sites disponible pour ce module.',
+          tag: 'sync',
+        );
+        return <SiteGroupsWithModulesLabel>[];
+      }
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;

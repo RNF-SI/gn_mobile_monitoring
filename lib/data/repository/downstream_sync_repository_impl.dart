@@ -186,13 +186,25 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
           existingNomenclatures.map((n) => n.id).toSet();
       final serverNomenclatureIds = <int>{};
 
+      // Obtenir les IDs des modules téléchargés
+      final downloadedModuleIds = downloadedModules
+          .where((module) => module.downloaded == true)
+          .map((module) => module.id)
+          .toList();
+
+      int modulesSucceeded = 0;
+      int modulesFailed = 0;
+
       // Synchroniser les nomenclatures et datasets pour chaque module
-      for (final moduleCode in downloadedModuleCodes) {
+      for (final moduleId in downloadedModuleIds) {
         try {
-          debugPrint('Synchronisation du module $moduleCode');
+          final module = downloadedModules.firstWhere((m) => m.id == moduleId);
+          final moduleCode = module.moduleCode ?? 'unknown';
+          debugPrint('Synchronisation du module $moduleCode (ID: $moduleId)');
 
           // Récupérer les nomenclatures et datasets du module
-          final data = await _globalApi.getNomenclaturesAndDatasets(moduleCode);
+          // IMPORTANT: Passer le token pour l'authentification
+          final data = await _globalApi.getNomenclaturesAndDatasets(moduleId, token: token);
 
           // Convertir les nomenclatures entities en domain models
           final nomenclatures =
@@ -237,8 +249,13 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
               data.nomenclatureTypes.length;
           itemsAdded += insertedCount;
           itemsUpdated += updatedCount + data.datasets.length;
+          
+          modulesSucceeded++;
         } catch (e) {
           itemsSkipped++;
+          modulesFailed++;
+          final module = downloadedModules.firstWhere((m) => m.id == moduleId);
+          final moduleCode = module.moduleCode ?? 'unknown';
           errors.add('Module $moduleCode: ${e.toString()}');
           debugPrint(
               'Erreur lors de la synchronisation du module $moduleCode: $e');
@@ -321,10 +338,25 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       // Mettre à jour la date de synchronisation
       await updateLastSyncDate('nomenclatures', DateTime.now());
 
-      if (errors.isNotEmpty) {
+      // Si tous les modules ont échoué, retourner un échec
+      if (modulesSucceeded == 0 && modulesFailed > 0) {
         return SyncResult.failure(
           errorMessage:
-              'Erreurs lors de la synchronisation:\n${errors.join('\n')}',
+              'Tous les modules ont échoué lors de la synchronisation:\n${errors.join('\n')}',
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      }
+
+      // Si certains modules ont réussi mais d'autres ont échoué, retourner un succès avec avertissement
+      if (errors.isNotEmpty && modulesSucceeded > 0) {
+        debugPrint(
+            'Synchronisation partielle: $modulesSucceeded modules réussis, $modulesFailed modules ignorés');
+        // Considérer comme un succès partiel - les modules en échec sont comptés dans itemsSkipped
+        return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
           itemsUpdated: itemsUpdated,

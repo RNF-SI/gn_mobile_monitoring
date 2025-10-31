@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
@@ -39,57 +40,219 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       ({
         List<NomenclatureEntity> nomenclatures,
         List<DatasetEntity> datasets,
-        List<Map<String, dynamic>> nomenclatureTypes
-      })> getNomenclaturesAndDatasets(String moduleName) async {
+        List<Map<String, dynamic>> nomenclatureTypes,
+        Map<String, dynamic> configuration,
+      })> getNomenclaturesAndDatasets(int moduleId, {String? token}) async {
     try {
-      // Use the moduleName parameter in the API URL
-      final response =
-          await createDio(receiveTimeout: const Duration(seconds: 180)).get('/monitorings/util/init_data/$moduleName');
-
-      if (response.statusCode == 200) {
-        // Log the response for debugging
-
-        final nomenclatures = (response.data['nomenclature'] as List<dynamic>)
-            .map((json) => NomenclatureEntity.fromJson(json))
-            .toList();
-
-        // Extract unique nomenclature types from nomenclatures
-        final Map<int, Map<String, dynamic>> uniqueTypeData = {};
-
-        for (var nomenclature in nomenclatures) {
-          final idType = nomenclature.idType;
-          // Only process types that haven't been seen yet
-          if (!uniqueTypeData.containsKey(idType)) {
-            // Utiliser le codeType de la nomenclature s'il est disponible
-            final mnemonique =
-                nomenclature.codeType ?? _getMnemoniqueFallback(idType);
-            uniqueTypeData[idType] = {
-              'idType': idType,
-              'mnemonique': mnemonique,
-            };
+      final logger = AppLogger();
+      
+      // Préparer les headers si un token est fourni
+      final headers = token != null ? {'Authorization': 'Bearer $token'} : null;
+      
+      // Créer une instance Dio avec timeout approprié
+      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 180));
+      
+      // Étape 1 : Récupérer le module avec depth=1 pour obtenir les datasets ET le module_code
+      // Le token doit être fourni pour éviter une redirection 302 vers la page de login
+      final moduleResponse = await dioInstance.get(
+        '/monitorings/module/$moduleId',
+        queryParameters: {'depth': 1},
+        options: headers != null 
+          ? Options(headers: headers)
+          : null,
+      );
+      
+      // 204 (No Content) signifie qu'il n'y a pas de données disponibles, 
+      // mais c'est un cas valide (pas une erreur)
+      if (moduleResponse.statusCode == 204) {
+        logger.i(
+          'Module $moduleId: réponse 204 (No Content) - aucune nomenclature ou dataset disponible. '
+          'Le module peut être téléchargé normalement.',
+          tag: 'sync',
+        );
+        // Même avec 204, on peut récupérer la configuration
+        final moduleData = moduleResponse.data as Map<String, dynamic>?;
+        final moduleCode = moduleData?['module_code'] as String?;
+        
+        // Essayer de récupérer quand même la configuration
+        Map<String, dynamic> config = {};
+        if (moduleCode != null) {
+          try {
+            final configResponse = await dio.get(
+              '/monitorings/config/$moduleCode',
+              options: headers != null ? Options(headers: headers) : null,
+            );
+            if (configResponse.statusCode == 200) {
+              config = configResponse.data as Map<String, dynamic>;
+            }
+          } catch (e) {
+            logger.w('Impossible de récupérer la configuration pour $moduleCode: $e', tag: 'sync');
           }
         }
-
-        final datasets = (response.data['dataset'] as List<dynamic>)
-            .map((json) => DatasetEntity.fromJson(json))
-            .toList();
-
+        
         return (
-          nomenclatures: nomenclatures,
-          datasets: datasets,
-          nomenclatureTypes: uniqueTypeData.values.toList(),
+          nomenclatures: <NomenclatureEntity>[],
+          datasets: <DatasetEntity>[],
+          nomenclatureTypes: <Map<String, dynamic>>[],
+          configuration: config,
         );
-      } else {
-        throw Exception(
-            'Failed to fetch data for module $moduleName. Status code: ${response.statusCode}');
       }
+
+      if (moduleResponse.statusCode != 200) {
+        throw Exception(
+            'Failed to fetch module $moduleId. Status code: ${moduleResponse.statusCode}');
+      }
+
+      final moduleData = moduleResponse.data as Map<String, dynamic>;
+      
+      // Extraire le module_code pour récupérer la configuration
+      final moduleCode = moduleData['module_code'] as String?;
+      if (moduleCode == null) {
+        throw Exception('Module code not found in module data for module $moduleId');
+      }
+
+      // Parser les datasets depuis le nouveau format
+      final List<DatasetEntity> datasets = [];
+      if (moduleData.containsKey('datasets') && moduleData['datasets'] is List) {
+        final datasetsList = moduleData['datasets'] as List<dynamic>;
+        for (var datasetJson in datasetsList) {
+          try {
+            final dataset = DatasetEntity.fromJson(datasetJson as Map<String, dynamic>);
+            datasets.add(dataset);
+          } catch (e) {
+            logger.w(
+              'Erreur lors du parsing d\'un dataset: $e\nDonnées: $datasetJson',
+              tag: 'sync',
+            );
+            // Continuer avec les autres datasets
+          }
+        }
+      }
+
+      // Étape 2 : Récupérer la configuration du module pour obtenir les types de nomenclatures
+      // Cette configuration sera également retournée pour éviter un appel redondant
+      final configResponse = await dio.get(
+        '/monitorings/config/$moduleCode',
+        options: headers != null ? Options(headers: headers) : null,
+      );
+      
+      final Map<String, dynamic> config;
+      if (configResponse.statusCode == 200) {
+        config = configResponse.data as Map<String, dynamic>;
+      } else {
+        logger.w(
+          'Module $moduleCode: Impossible de récupérer la configuration (status: ${configResponse.statusCode}). '
+          'Les nomenclatures ne pourront pas être récupérées.',
+          tag: 'sync',
+        );
+        // Retourner les datasets sans nomenclatures mais avec une config vide
+        return (
+          nomenclatures: <NomenclatureEntity>[],
+          datasets: datasets,
+          nomenclatureTypes: <Map<String, dynamic>>[],
+          configuration: <String, dynamic>{},
+        );
+      }
+      
+      // Extraire les types de nomenclatures depuis config.data.nomenclature
+      final List<String> nomenclatureTypeCodes = [];
+      if (config.containsKey('data') && 
+          config['data'] is Map &&
+          (config['data'] as Map).containsKey('nomenclature') &&
+          (config['data'] as Map)['nomenclature'] is List) {
+        final data = config['data'] as Map<String, dynamic>;
+        final nomenclatureList = data['nomenclature'] as List<dynamic>;
+        nomenclatureTypeCodes.addAll(
+          nomenclatureList.whereType<String>(),
+        );
+      }
+
+      // Étape 3 : Récupérer les nomenclatures pour chaque type
+      final List<NomenclatureEntity> allNomenclatures = [];
+      final Map<int, Map<String, dynamic>> uniqueTypeData = {};
+
+      // Récupérer les nomenclatures en parallèle pour optimiser les performances
+      // Note: Les nomenclatures GeoNature sont généralement publiques et n'ont pas besoin du token
+      await Future.wait(
+        nomenclatureTypeCodes.map((typeCode) async {
+          try {
+            final nomenclatureResponse = await dio.get(
+              '/nomenclatures/nomenclature/$typeCode',
+              // Optionnel: ajouter le token si nécessaire pour certaines instances
+              // options: headers != null ? Options(headers: headers) : null,
+            );
+
+            if (nomenclatureResponse.statusCode == 200) {
+              final nomenclatureData = nomenclatureResponse.data as Map<String, dynamic>;
+              
+              // Extraire les valeurs (values) de la réponse
+              if (nomenclatureData.containsKey('values') && 
+                  nomenclatureData['values'] is List) {
+                final values = nomenclatureData['values'] as List<dynamic>;
+                
+                for (var valueJson in values) {
+                  try {
+                    final nomenclature = NomenclatureEntity.fromJson(
+                      valueJson as Map<String, dynamic>,
+                    );
+                    allNomenclatures.add(nomenclature);
+
+                    // Ajouter le type de nomenclature si pas déjà vu
+                    if (!uniqueTypeData.containsKey(nomenclature.idType)) {
+                      uniqueTypeData[nomenclature.idType] = {
+                        'idType': nomenclature.idType,
+                        'mnemonique': nomenclature.codeType ?? 
+                                     nomenclatureData['mnemonique'] ?? 
+                                     typeCode,
+                      };
+                    }
+                  } catch (e) {
+                    logger.w(
+                      'Erreur lors du parsing d\'une nomenclature pour le type $typeCode: $e',
+                      tag: 'sync',
+                    );
+                  }
+                }
+              }
+            } else {
+              logger.w(
+                'Module $moduleCode: Impossible de récupérer les nomenclatures pour le type $typeCode '
+                '(status: ${nomenclatureResponse.statusCode})',
+                tag: 'sync',
+              );
+            }
+          } catch (e) {
+            logger.w(
+              'Erreur lors de la récupération des nomenclatures pour le type $typeCode: $e',
+              tag: 'sync',
+            );
+            // Continuer avec les autres types
+          }
+        }),
+      );
+
+      logger.i(
+        'Module $moduleCode (ID: $moduleId): ${datasets.length} datasets et '
+        '${allNomenclatures.length} nomenclatures récupérés depuis ${nomenclatureTypeCodes.length} types. '
+        'Configuration également récupérée.',
+        tag: 'sync',
+      );
+
+      return (
+        nomenclatures: allNomenclatures,
+        datasets: datasets,
+        nomenclatureTypes: uniqueTypeData.values.toList(),
+        configuration: config,
+      );
     } catch (e) {
       throw Exception(
-          'Error fetching data for module $moduleName: ${e.toString()}');
+          'Error fetching data for module $moduleId: ${e.toString()}');
     }
   }
 
   // Helper method to provide a default mnemonique for known type IDs
+  // Conservée pour une utilisation future lors de la récupération des nomenclatures
+  // ignore: unused_element
   String _getMnemoniqueFallback(int idType) {
     // Map of known type IDs to their mnemoniques
     final knownTypes = {
@@ -109,8 +272,34 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       final response =
           await dio.get('/monitorings/config/$moduleCode');
 
+      // 204 (No Content) signifie qu'il n'y a pas de configuration disponible,
+      // mais c'est un cas valide - retourner une configuration minimale valide
+      if (response.statusCode == 204) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: réponse 204 (No Content) pour la configuration. '
+          'Retour d\'une configuration minimale valide.',
+          tag: 'sync',
+        );
+        // Retourner une configuration minimale mais valide pour éviter les erreurs de parsing
+        return {
+          'module': {'children_types': [], 'label': 'Module'},
+          'site': {'label': 'Site', 'label_list': 'Sites'},
+          'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+        };
+      }
+
       if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        final data = response.data;
+        if (data == null || (data is Map && data.isEmpty)) {
+          // Si les données sont null ou vides, retourner une config minimale
+          return {
+            'module': {'children_types': [], 'label': 'Module'},
+            'site': {'label': 'Site', 'label_list': 'Sites'},
+            'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+          };
+        }
+        return data as Map<String, dynamic>;
       } else {
         throw Exception(
             'Failed to fetch configuration for module $moduleCode. Status code: ${response.statusCode}');
@@ -242,7 +431,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   @override
   Future<SyncResult> syncNomenclaturesAndDatasets(
     String token,
-    List<String> moduleCodes, {
+    List<int> moduleIds, {
     DateTime? lastSync,
   }) async {
     try {
@@ -259,61 +448,38 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       final Map<int, Map<String, dynamic>> allUniqueTypeData = {};
 
       // Synchroniser les nomenclatures et datasets pour chaque module
-      for (final moduleCode in moduleCodes) {
+      // On réutilise la méthode getNomenclaturesAndDatasets qui implémente correctement
+      // le nouveau flux avec récupération de la configuration et des nomenclatures
+      for (final moduleId in moduleIds) {
         try {
-          final response = await dio.get(
-            '/monitorings/util/init_data/$moduleCode',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-            ),
-          );
+          // Utiliser getNomenclaturesAndDatasets qui gère tout le flux
+          // Passer le token pour les requêtes authentifiées
+          final data = await getNomenclaturesAndDatasets(moduleId, token: token);
 
-          if (response.statusCode == 200) {
-            // Traiter les nomenclatures
-            final nomenclatures =
-                (response.data['nomenclature'] as List<dynamic>)
-                    .map((json) => NomenclatureEntity.fromJson(json))
-                    .toList();
-
-            // Extraire les types de nomenclature uniques
-            for (var nomenclature in nomenclatures) {
-              final idType = nomenclature.idType;
-              if (!allUniqueTypeData.containsKey(idType)) {
-                final mnemonique =
-                    nomenclature.codeType ?? _getMnemoniqueFallback(idType);
-                allUniqueTypeData[idType] = {
-                  'idType': idType,
-                  'mnemonique': mnemonique,
-                };
-              }
-            }
-
-            // Compter les nomenclatures
-            itemsProcessed += nomenclatures.length;
-            if (lastSync == null) {
-              itemsAdded += nomenclatures.length;
-            } else {
-              itemsUpdated += nomenclatures.length;
-            }
-
-            // Traiter les datasets
-            final datasets = (response.data['dataset'] as List<dynamic>)
-                .map((json) => DatasetEntity.fromJson(json))
-                .toList();
-
-            // Compter les datasets
-            itemsProcessed += datasets.length;
-            // Les datasets sont considérés comme des mises à jour
-            // car ils sont liés aux modules déjà téléchargés
-            itemsUpdated += datasets.length;
+          // Compter les nomenclatures
+          itemsProcessed += data.nomenclatures.length;
+          if (lastSync == null) {
+            itemsAdded += data.nomenclatures.length;
           } else {
-            itemsSkipped++;
-            errors
-                .add('Module $moduleCode: Status code ${response.statusCode}');
+            itemsUpdated += data.nomenclatures.length;
           }
+
+          // Ajouter les types de nomenclatures uniques
+          for (var typeData in data.nomenclatureTypes) {
+            final idType = typeData['idType'] as int;
+            if (!allUniqueTypeData.containsKey(idType)) {
+              allUniqueTypeData[idType] = typeData;
+            }
+          }
+
+          // Compter les datasets
+          itemsProcessed += data.datasets.length;
+          // Les datasets sont considérés comme des mises à jour
+          // car ils sont liés aux modules déjà téléchargés
+          itemsUpdated += data.datasets.length;
         } catch (e) {
           itemsSkipped++;
-          errors.add('Module $moduleCode: ${e.toString()}');
+          errors.add('Module $moduleId: ${e.toString()}');
         }
       }
 
@@ -361,14 +527,22 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     List<String> moduleCodes, {
     DateTime? lastSync,
   }) async {
-    return syncNomenclaturesAndDatasets(token, moduleCodes, lastSync: lastSync);
+    // Cette méthode est dépréciée, elle ne peut plus fonctionner avec le nouvel endpoint
+    // qui nécessite des moduleIds. Retourner une erreur explicite.
+    return SyncResult.failure(
+      errorMessage: 'syncNomenclatures est dépréciée. Utilisez syncNomenclaturesAndDatasets avec des moduleIds.',
+    );
   }
 
   @override
   @Deprecated('Use syncNomenclaturesAndDatasets instead')
   Future<SyncResult> syncDatasets(
       String token, List<String> moduleCodes) async {
-    return syncNomenclaturesAndDatasets(token, moduleCodes);
+    // Cette méthode est dépréciée, elle ne peut plus fonctionner avec le nouvel endpoint
+    // qui nécessite des moduleIds. Retourner une erreur explicite.
+    return SyncResult.failure(
+      errorMessage: 'syncDatasets est dépréciée. Utilisez syncNomenclaturesAndDatasets avec des moduleIds.',
+    );
   }
 
   @override
