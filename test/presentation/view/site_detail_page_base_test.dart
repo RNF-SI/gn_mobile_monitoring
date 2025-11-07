@@ -333,10 +333,17 @@ void main() {
       // Vérifier que le fil d'Ariane est affiché
       expect(find.byType(BreadcrumbNavigation), findsOneWidget);
 
-      // Vérifier les éléments du fil d'Ariane
-      expect(find.text('Module: Test Module'), findsOneWidget);
-      expect(find.text('Groupe: Test Site Group'), findsOneWidget);
-      expect(find.text('Site: Test Site'), findsOneWidget);
+      // Cliquer sur "Afficher les détails" pour afficher les éléments détaillés du breadcrumb
+      await tester.tap(find.text('Afficher les détails'));
+      await tester.pumpAndSettle();
+
+      // Vérifier les éléments du fil d'Ariane (label et value sont dans des widgets séparés)
+      expect(find.text('Module:'), findsOneWidget);
+      expect(find.text('Test Module'), findsOneWidget);
+      expect(find.text('Groupe:'), findsOneWidget);
+      expect(find.text('Test Site Group'), findsOneWidget);
+      expect(find.text('Site:'), findsOneWidget);
+      expect(find.text('Test Site'), findsAtLeastNWidgets(1)); // Peut apparaître plusieurs fois dans la page
     });
 
     testWidgets('initializes objectData property correctly',

@@ -49,6 +49,11 @@ void main() {
   late MockNomenclatureService mockNomenclatureService;
   late MockRef mockRef;
 
+  setUpAll(() {
+    // Enregistrer le fallback pour ProviderOrFamily utilisé dans mockRef.invalidate(any())
+    registerFallbackValue(nomenclatureServiceProvider);
+  });
+
   setUp(() async {
     // Initialiser l'environnement de test
     await MockSetup.initializeTestEnvironment();
@@ -199,6 +204,13 @@ void main() {
 
   group('SyncService syncToServer tests', () {
     test('should not start sync if already syncing', () async {
+      // Configurer mockRef pour retourner le mockNomenclatureService
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       // Test le cas initial uniquement
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
       expect(result.state, equals(SyncState.success));
@@ -217,6 +229,13 @@ void main() {
     });
 
     test('should show success state after successful sync', () async {
+      // Configurer mockRef pour retourner les providers nécessaires
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       // Arrange
       when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.success(
@@ -226,10 +245,10 @@ void main() {
                 itemsDeleted: 1,
                 itemsSkipped: 0,
               ));
-      
+
       // Act
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
-      
+
       // Assert
       expect(result.state, equals(SyncState.success));
       // Note: Le SyncStatus retourné par syncToServer ne contient pas itemsAdded/Updated/Deleted
@@ -267,10 +286,14 @@ void main() {
       
       // Mock nomenclature service pour éviter l'erreur type 'Null' is not a subtype of type 'NomenclatureService'
       final mockNomenclatureService = MockNomenclatureService();
-      
+
       when(() => mockRef.read(nomenclatureServiceProvider.notifier)).thenReturn(mockNomenclatureService);
       // clearCache() est déjà implémentée dans MockNomenclatureService, pas besoin de mocker
-      
+
+      // Mock cacheVersionProvider.notifier pour éviter l'erreur type 'Null' is not a subtype of type 'StateController<int>'
+      when(() => mockRef.read(cacheVersionProvider.notifier)).thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       when(() => mockSyncUseCase.execute(
         any(),
         syncConfiguration: any(named: 'syncConfiguration'),

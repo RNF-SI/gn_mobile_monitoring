@@ -651,7 +651,7 @@ class SimpleMockFormDataProcessor implements FormDataProcessor {
   final _expressionEvaluator = HiddenExpressionEvaluator();
   
   @override
-  bool isFieldHidden(String fieldId, Map<String, dynamic> context, 
+  bool isFieldHidden(String fieldId, Map<String, dynamic> context,
       {Map<String, dynamic>? fieldConfig, Map<String, dynamic>? allFieldsConfig}) {
     // Pour les tests, nous masquons seulement les champs avec hidden: true explicitement
     if (fieldConfig != null && fieldConfig['hidden'] == true) {
@@ -659,7 +659,17 @@ class SimpleMockFormDataProcessor implements FormDataProcessor {
     }
     return false;
   }
-  
+
+  @override
+  bool isFieldRequired(String fieldId, Map<String, dynamic> context,
+      {Map<String, dynamic>? fieldConfig}) {
+    // Pour les tests, vérifier si le champ a required: true dans sa config
+    if (fieldConfig != null && fieldConfig['required'] == true) {
+      return true;
+    }
+    return false;
+  }
+
   @override
   Map<String, dynamic> prepareEvaluationContext({
     required Map<String, dynamic> values,

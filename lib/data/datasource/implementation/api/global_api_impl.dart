@@ -25,6 +25,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   final ObservationDetailsApi _observationDetailsApi;
 
   GlobalApiImpl({
+    Dio? dio,
     Connectivity? connectivity,
     VisitsApi? visitsApi,
     ObservationsApi? observationsApi,
@@ -33,7 +34,8 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
-            observationDetailsApi ?? ObservationDetailsApiImpl();
+            observationDetailsApi ?? ObservationDetailsApiImpl(),
+        super(dio: dio);
 
   @override
   Future<

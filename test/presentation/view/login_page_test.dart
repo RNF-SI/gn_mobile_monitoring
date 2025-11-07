@@ -63,7 +63,7 @@ void main() {
     // Check for labels in the TextFormFields using simpler assertions
     expect(find.text('Identifiant'), findsOneWidget);
     expect(find.text('Mot de Passe'), findsOneWidget);
-    expect(find.text('URL de l\'API'), findsOneWidget);
+    expect(find.text('URL du serveur GeoNature'), findsOneWidget);
   });
 
   testWidgets('LoginPage should validate identifiant field',

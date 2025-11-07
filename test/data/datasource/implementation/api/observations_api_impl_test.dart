@@ -1,7 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
@@ -19,7 +18,10 @@ void main() {
   setUp(() {
     mockDio = MockDio();
     mockConnectivity = MockConnectivity();
-    observationsApi = ObservationsApiImpl(connectivity: mockConnectivity);
+    observationsApi = ObservationsApiImpl(
+      connectivity: mockConnectivity,
+      dio: mockDio,
+    );
   });
 
   setUpAll(() {
@@ -31,7 +33,6 @@ void main() {
   group('ObservationsApiImpl', () {
     const String token = 'test_token';
     const String moduleCode = 'TEST_MODULE';
-    final String apiBase = Config.apiBase;
 
     group('sendObservation', () {
       test('should throw NetworkException when no internet connection', () async {
@@ -88,7 +89,7 @@ void main() {
 
         // Configuration du mock pour POST
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((_) async => mockResponse);
@@ -99,7 +100,7 @@ void main() {
         // Vérifications
         expect(result, equals(responseData));
         verify(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).called(1);
@@ -131,7 +132,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {
@@ -163,7 +164,7 @@ void main() {
 
         // Configuration du mock pour erreur serveur
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenThrow(DioException(
@@ -205,7 +206,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {
@@ -241,7 +242,7 @@ void main() {
         final capturedData = <String, dynamic>{};
         
         when(() => mockDio.post(
-              '$apiBase/monitorings/object/$moduleCode/observation',
+              '/monitorings/object/$moduleCode/observation',
               data: any(named: 'data'),
               options: any(named: 'options'),
             )).thenAnswer((invocation) async {

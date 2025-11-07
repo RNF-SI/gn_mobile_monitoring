@@ -33,12 +33,11 @@ void main() {
 
       // Vérifier la structure du message
       expect(result, startsWith('Observation 36760:'));
-      expect(result, contains('Données en conflit'));
-      expect(result, contains('nombre maximum doit être supérieur'));
+      expect(result, contains('Erreur de communication avec le serveur'));
+      expect(result, contains('Le nombre maximum (2) doit être supérieur au nombre minimum (3)'));
       expect(result, contains('Détails serveur:'));
       expect(result, contains('ERREUR: la nouvelle ligne'));
       expect(result, contains('check_synthese_count_max'));
-      expect(result, contains('nombre maximum (2)'));
       expect(result, contains('Détails techniques:'));
     });
 
@@ -70,7 +69,7 @@ void main() {
 
       // Vérifier la structure du message
       expect(result, startsWith('Observation 36761:'));
-      expect(result, contains('Erreur interne du serveur'));
+      expect(result, contains('Erreur de communication avec le serveur'));
       expect(result, contains('Détails serveur:'));
       expect(result, contains('id_nomenclature --> (1376)'));
       expect(result, contains('STADE_VIE'));
@@ -115,7 +114,7 @@ void main() {
 
       // Vérifier la structure du message
       expect(result, startsWith('Observation 36761:'));
-      expect(result, contains('Erreur interne du serveur'));
+      expect(result, contains('Erreur de communication avec le serveur'));
       expect(result, contains('Détails serveur:'));
       expect(result, contains('GeoNatureError'));
       expect(result, contains('import_from_table'));
@@ -202,7 +201,7 @@ DÉTAIL : La ligne en échec contient (2561408, 7efaec3c-8c70-403a-85f3-58a0cd32
         );
 
         expect(result, startsWith('Observation 36760:'));
-        expect(result, contains('Données en conflit'));
+        expect(result, contains('Erreur de validation des données - Contrainte de base de données violée'));
         expect(result, contains('check_synthese_count_max'));
         expect(result, contains('DÉTAIL : La ligne en échec'));
         expect(result, contains('Rhinolophus ferrumequinum'));

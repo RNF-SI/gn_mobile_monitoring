@@ -11,9 +11,14 @@ import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 
 class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi {
   final Connectivity _connectivity;
+  final Dio? _dio;
 
-  ObservationDetailsApiImpl({Connectivity? connectivity})
-        : _connectivity = connectivity ?? Connectivity();
+  ObservationDetailsApiImpl({Connectivity? connectivity, Dio? dio})
+        : _connectivity = connectivity ?? Connectivity(),
+          _dio = dio;
+
+  @override
+  Dio get dio => _dio ?? super.dio;
 
   @override
   Future<Map<String, dynamic>> sendObservationDetail(

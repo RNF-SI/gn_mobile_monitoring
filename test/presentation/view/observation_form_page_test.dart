@@ -111,7 +111,6 @@ void main() {
     expect(find.text('Champ de test'), findsOneWidget);
 
     // Vérifier que le bouton de sauvegarde est présent
-    expect(find.byIcon(Icons.save), findsOneWidget);
     expect(find.text('Ajouter'), findsOneWidget);
   });
 

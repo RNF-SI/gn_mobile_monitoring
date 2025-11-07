@@ -218,6 +218,11 @@ void main() {
 
     testWidgets('displays site group in breadcrumb when provided',
         (WidgetTester tester) async {
+      // Set a larger viewport to prevent overflow in tests
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.reset());
+
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
@@ -252,6 +257,10 @@ void main() {
       // Attendre que tous les widgets soient construits
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
+
+      // Cliquer sur "Afficher les détails" pour voir les éléments détaillés du breadcrumb
+      await tester.tap(find.text('Afficher les détails'));
+      await tester.pumpAndSettle();
 
       // Vérifier que les éléments du fil d'Ariane sont présents
       expect(find.textContaining('Module'), findsAtLeastNWidgets(1));

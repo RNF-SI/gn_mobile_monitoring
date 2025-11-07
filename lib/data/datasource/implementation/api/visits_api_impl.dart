@@ -13,8 +13,9 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 class VisitsApiImpl extends BaseApi implements VisitsApi {
   final Connectivity _connectivity;
 
-  VisitsApiImpl({Connectivity? connectivity})
-        : _connectivity = connectivity ?? Connectivity();
+  VisitsApiImpl({Dio? dio, Connectivity? connectivity})
+        : _connectivity = connectivity ?? Connectivity(),
+          super(dio: dio);
 
   @override
   Future<Map<String, dynamic>> sendVisit(

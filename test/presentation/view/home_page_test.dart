@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
@@ -9,21 +15,38 @@ import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
 
-// Mock sync service
-class MockSyncService extends StateNotifier<SyncStatus> {
-  MockSyncService(super.state);
-  
-  // Mock initialize method that doesn't create timers
+// Mocks pour les use cases
+class MockGetTokenUseCase extends Mock implements GetTokenFromLocalStorageUseCase {}
+class MockIncrementalSyncAllUseCase extends Mock implements IncrementalSyncAllUseCase {}
+class MockGetLastSyncDateUseCase extends Mock implements GetLastSyncDateUseCase {}
+class MockUpdateLastSyncDateUseCase extends Mock implements UpdateLastSyncDateUseCase {}
+class MockSyncRepository extends Mock implements SyncRepository {}
+class MockSyncCompleteUseCase extends Mock implements SyncCompleteUseCase {}
+
+// Classe fake pour SyncService (pas un Mock mais une vraie sous-classe minimale)
+class FakeSyncService extends SyncService {
+  FakeSyncService(SyncStatus initialState)
+      : super(
+          MockGetTokenUseCase(),
+          MockIncrementalSyncAllUseCase(),
+          MockGetLastSyncDateUseCase(),
+          MockUpdateLastSyncDateUseCase(),
+          MockSyncRepository(),
+          MockSyncCompleteUseCase(),
+        ) {
+    state = initialState;
+  }
+
+  @override
   void initialize(WidgetRef ref) {
-    // Do nothing - avoid creating timers in tests
+    // Ne fait rien pour éviter les timers dans les tests
+  }
+
+  @override
+  void initializeTimerMonitoring(WidgetRef ref) {
+    // Ne fait rien pour éviter les timers dans les tests
   }
 }
-
-// Mock sync service that extends the real SyncService for proper override
-class MockSyncServiceForProvider extends Mock implements SyncService {}
-
-// Mock WidgetRef for mocktail fallback
-class MockWidgetRef extends Mock implements WidgetRef {}
 
 // Mock database sync service
 class MockDatabaseSyncService {
@@ -31,11 +54,6 @@ class MockDatabaseSyncService {
     // Do nothing in tests
   }
 }
-
-// Mock providers
-final syncStatusProvider = StateNotifierProvider<MockSyncService, SyncStatus>(
-  (ref) => MockSyncService(SyncStatus.initial()),
-);
 
 final databaseSyncServiceProvider = Provider<MockDatabaseSyncService>((ref) {
   return MockDatabaseSyncService();
@@ -63,24 +81,12 @@ class MockSyncStatusWidget extends Mock implements SyncStatusWidget {
 void main() {
   late ProviderContainer container;
 
-  setUpAll(() {
-    registerFallbackValue(MockWidgetRef());
-  });
-
   setUp(() {
     container = ProviderContainer(
       overrides: [
-        syncStatusProvider.overrideWithProvider(
-          StateNotifierProvider<MockSyncService, SyncStatus>(
-            (ref) => MockSyncService(SyncStatus.initial()),
-          ),
+        syncServiceProvider.overrideWith(
+          (ref) => FakeSyncService(SyncStatus.initial()),
         ),
-        syncServiceProvider.overrideWith((ref) {
-          final mock = MockSyncServiceForProvider();
-          when(() => mock.state).thenReturn(SyncStatus.initial());
-          when(() => mock.initialize(any())).thenReturn(null);
-          return mock;
-        }),
         databaseSyncServiceProvider
             .overrideWithValue(MockDatabaseSyncService()),
       ],
@@ -96,10 +102,8 @@ void main() {
     if (syncStatus != null) {
       container = ProviderContainer(
         overrides: [
-          syncStatusProvider.overrideWithProvider(
-            StateNotifierProvider<MockSyncService, SyncStatus>(
-              (ref) => MockSyncService(syncStatus),
-            ),
+          syncServiceProvider.overrideWith(
+            (ref) => FakeSyncService(syncStatus),
           ),
           databaseSyncServiceProvider
               .overrideWithValue(MockDatabaseSyncService()),

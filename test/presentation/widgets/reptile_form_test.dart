@@ -34,7 +34,7 @@ class MockFormDataProcessor extends Mock implements FormDataProcessor {
 
     if (hiddenCondition is String) {
       final values = evaluationContext['value'] as Map<String, dynamic>? ?? {};
-      
+
       // Déléguer à l'évaluateur d'expressions réel
       try {
         final HiddenExpressionEvaluator evaluator = HiddenExpressionEvaluator();
@@ -46,6 +46,15 @@ class MockFormDataProcessor extends Mock implements FormDataProcessor {
     }
 
     return false;
+  }
+
+  @override
+  bool isFieldRequired(
+    String fieldId,
+    Map<String, dynamic> context,
+    {Map<String, dynamic>? fieldConfig}
+  ) {
+    return fieldConfig?['required'] == true;
   }
 }
 

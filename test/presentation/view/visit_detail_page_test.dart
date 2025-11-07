@@ -358,6 +358,11 @@ void main() {
 
   testWidgets('VisitDetailPage should display empty state when no observations',
       (WidgetTester tester) async {
+    // Set a larger viewport to prevent overflow in tests
+    tester.view.physicalSize = const Size(800, 1400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.reset());
+
     // Create test objects specifically for this test
     final testSite = createTestSite();
     final moduleInfo = createTestModuleInfo();

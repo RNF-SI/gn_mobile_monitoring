@@ -222,12 +222,21 @@ void main() {
       );
       
       await tester.pump();
-      
+
       // Vérifier que le fil d'Ariane est affiché
       expect(find.byType(BreadcrumbNavigation), findsOneWidget);
-      expect(find.text('Home: Dashboard'), findsOneWidget);
-      expect(find.text('Category: Test Category'), findsOneWidget);
-      expect(find.text('Object: Test Object'), findsOneWidget);
+
+      // Cliquer sur "Afficher les détails" pour voir les éléments détaillés
+      await tester.tap(find.text('Afficher les détails'));
+      await tester.pumpAndSettle();
+
+      // Vérifier les éléments du breadcrumb (labels et valeurs sont séparés)
+      expect(find.text('Home:'), findsOneWidget);
+      expect(find.text('Dashboard'), findsOneWidget);
+      expect(find.text('Category:'), findsOneWidget);
+      expect(find.text('Test Category'), findsOneWidget);
+      expect(find.text('Object:'), findsOneWidget);
+      expect(find.text('Test Object'), findsOneWidget);
     });
     
     testWidgets('buildBaseContent combines property display correctly', (WidgetTester tester) async {
