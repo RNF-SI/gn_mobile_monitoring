@@ -137,6 +137,24 @@ class SyncErrorDetailPage extends ConsumerWidget {
     String fullErrorMessage = 'RAPPORT D\'ERREUR DE SYNCHRONISATION\n';
     fullErrorMessage += '${'=' * 50}\n\n';
     
+    // Ajouter d'abord les erreurs de synchronisation détectées
+    final syncErrors = _detectSyncErrors(errorMessage);
+    if (syncErrors.isNotEmpty) {
+      fullErrorMessage += 'ERREURS DE SYNCHRONISATION (${syncErrors.length}):\n';
+      fullErrorMessage += '${'-' * 40}\n';
+      for (int i = 0; i < syncErrors.length; i++) {
+        final error = syncErrors[i];
+        fullErrorMessage += '${i + 1}. Module: ${error['module']}\n';
+        fullErrorMessage += '   Type: ${error['errorType']}\n';
+        fullErrorMessage += '   Erreur: ${error['error']}\n';
+        if (error['suggestion']?.isNotEmpty == true) {
+          fullErrorMessage += '   Suggestion: ${error['suggestion']}\n';
+        }
+        fullErrorMessage += '\n';
+      }
+      fullErrorMessage += '\n';
+    }
+    
     // Analyser les erreurs d'entités pour enrichissement contextuel
     final lines = errorMessage.split('\n');
     final List<String> enrichedErrors = [];
@@ -249,7 +267,89 @@ class SyncErrorDetailPage extends ConsumerWidget {
 
 
   /// Construit l'affichage détaillé des erreurs
+  /// Détecte les erreurs de synchronisation (réseau, configuration, etc.)
+  List<Map<String, String>> _detectSyncErrors(String message) {
+    final List<Map<String, String>> syncErrors = [];
+    final lines = message.split('\n');
+    
+    for (final line in lines) {
+      final trimmed = line.trim();
+      if (trimmed.isEmpty) continue;
+      
+      // Détecter les erreurs de synchronisation spécifiques
+      if (trimmed.contains('Module ') && 
+          (trimmed.contains('Erreur DNS') || 
+           trimmed.contains('Erreur réseau') ||
+           trimmed.contains('Erreur serveur') ||
+           trimmed.contains('Timeout') ||
+           trimmed.contains('failed host lookup') ||
+           trimmed.contains('Erreur d\'autorisation'))) {
+        
+        // Extraire le module et le type d'erreur
+        final moduleMatch = RegExp(r'Module ([^:]+):').firstMatch(trimmed);
+        final moduleName = moduleMatch?.group(1) ?? 'Inconnu';
+        
+        String errorType = 'Erreur générale';
+        String suggestion = '';
+        
+        if (trimmed.contains('failed host lookup') || trimmed.contains('Erreur DNS')) {
+          errorType = 'Erreur DNS';
+          suggestion = 'Vérifiez votre connexion Internet';
+        } else if (trimmed.contains('Erreur réseau') || trimmed.contains('Network error')) {
+          errorType = 'Erreur réseau';
+          suggestion = 'Vérifiez votre connexion réseau';
+        } else if (trimmed.contains('Timeout')) {
+          errorType = 'Timeout';
+          suggestion = 'Le serveur est lent, réessayez plus tard';
+        } else if (trimmed.contains('Erreur serveur') || trimmed.contains('Status code')) {
+          errorType = 'Erreur serveur';
+          suggestion = 'Problème côté serveur, réessayez plus tard';
+        } else if (trimmed.contains('Erreur d\'autorisation')) {
+          errorType = 'Erreur d\'autorisation';
+          suggestion = 'Reconnectez-vous';
+        }
+        
+        syncErrors.add({
+          'type': 'Synchronisation',
+          'module': moduleName,
+          'errorType': errorType,
+          'error': trimmed,
+          'suggestion': suggestion,
+          'rawLine': line,
+        });
+      }
+      // Détecter les erreurs générales de synchronisation
+      else if (trimmed.contains('Erreur lors de la synchronisation') ||
+               trimmed.contains('Erreur configuration') ||
+               trimmed.contains('Erreur groupes de sites')) {
+        
+        String errorType = 'Erreur de synchronisation';
+        String suggestion = 'Vérifiez votre connexion et réessayez';
+        
+        if (trimmed.contains('configuration')) {
+          errorType = 'Erreur de configuration';
+        } else if (trimmed.contains('groupes de sites')) {
+          errorType = 'Erreur groupes de sites';
+        }
+        
+        syncErrors.add({
+          'type': 'Synchronisation',
+          'module': 'Global',
+          'errorType': errorType,
+          'error': trimmed,
+          'suggestion': suggestion,
+          'rawLine': line,
+        });
+      }
+    }
+    
+    return syncErrors;
+  }
+
   Widget _buildErrorDetails(BuildContext context, WidgetRef ref) {
+    // Détecter d'abord les erreurs de synchronisation
+    final syncErrors = _detectSyncErrors(errorMessage);
+    
     // Analyser le message d'erreur pour extraire uniquement les erreurs d'entités spécifiques
     final lines = errorMessage.split('\n');
     final List<Map<String, String>> errors = [];
@@ -392,6 +492,136 @@ class SyncErrorDetailPage extends ConsumerWidget {
 
     return Column(
       children: [
+        // Affichage des erreurs de synchronisation en premier (plus importantes)
+        if (syncErrors.isNotEmpty) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.4),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.error.withOpacity(0.5),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.sync_problem,
+                      color: Theme.of(context).colorScheme.error,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Erreurs de synchronisation (${syncErrors.length})',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...syncErrors.map((error) => Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // En-tête avec module et type d'erreur
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'Module: ${error['module']}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.primary,
+                                    ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                error['errorType'] ?? 'Erreur',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).colorScheme.error,
+                                    ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        // Message d'erreur
+                        Text(
+                          error['error'] ?? '',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                fontFamily: 'monospace',
+                              ),
+                        ),
+                        if (error['suggestion']?.isNotEmpty == true) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.lightbulb_outline,
+                                  size: 16,
+                                  color: Theme.of(context).colorScheme.primary,
+                                ),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                  child: Text(
+                                    'Suggestion: ${error['suggestion']}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                )),
+              ],
+            ),
+          ),
+        ],
+        
         // Affichage d'un résumé si beaucoup d'erreurs
         if (hasMany) ...[
           Container(

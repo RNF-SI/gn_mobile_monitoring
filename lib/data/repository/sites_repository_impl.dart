@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
+import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
@@ -84,8 +85,12 @@ class SitesRepositoryImpl implements SitesRepository {
           print(
               'Sites distants pour le module ${module.moduleCode}: ${remoteSites.length}');
         } catch (e) {
-          print(
-              'Erreur lors de la récupération des sites pour le module ${module.moduleCode}: $e');
+          final errorMessage = ErrorMessageHelper.formatError(
+            'la synchronisation des sites', 
+            e, 
+            moduleCode: module.moduleCode
+          );
+          print(errorMessage);
           continue;
         }
 
@@ -483,8 +488,12 @@ class SitesRepositoryImpl implements SitesRepository {
           print(
               'Groupes de sites distants pour le module ${module.moduleCode}: ${remoteSiteGroups.length}');
         } catch (e) {
-          print(
-              'Module ${module.moduleCode}: Aucun groupe de sites trouvé ou erreur API - $e');
+          final errorMessage = ErrorMessageHelper.formatError(
+            'la synchronisation des groupes de sites', 
+            e, 
+            moduleCode: module.moduleCode
+          );
+          print(errorMessage);
           // Si le module n'a pas de groupes de sites, traiter comme une liste vide
           remoteSiteGroups = [];
           // Ne pas faire continue, traiter comme un cas normal avec 0 groupe

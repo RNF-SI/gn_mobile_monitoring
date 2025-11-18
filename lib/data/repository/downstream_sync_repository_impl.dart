@@ -127,9 +127,13 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       return result;
     } catch (e) {
       debugPrint('Erreur lors de la synchronisation de la configuration: $e');
+      // Import du helper dans ce fichier si nécessaire
+      final errorMessage = e.toString().toLowerCase().contains('failed host lookup') 
+          ? 'Erreur réseau lors de la synchronisation de la configuration: Impossible de contacter le serveur. Vérifiez votre connexion Internet.'
+          : 'Erreur lors de la synchronisation de la configuration: $e';
+      
       return SyncResult.failure(
-        errorMessage:
-            'Erreur lors de la synchronisation de la configuration: $e',
+        errorMessage: errorMessage,
       );
     }
   }

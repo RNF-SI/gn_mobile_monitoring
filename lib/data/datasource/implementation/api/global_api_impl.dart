@@ -1,6 +1,8 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
@@ -562,8 +564,12 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       int itemsSkipped = 0;
       List<String> errors = [];
 
+      // Log des modules à synchroniser
+      debugPrint('Synchronisation de la configuration pour ${moduleCodes.length} modules: ${moduleCodes.join(', ')}');
+      
       // Synchroniser la configuration pour chaque module
       for (final moduleCode in moduleCodes) {
+        debugPrint('Synchronisation configuration du module: $moduleCode');
         try {
           final response = await dio.get(
             '/monitorings/config/$moduleCode',
@@ -576,14 +582,23 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
             itemsProcessed++;
             // On considère que c'est une mise à jour puisque le module était déjà téléchargé
             itemsUpdated++;
+            debugPrint('Configuration synchronisée avec succès pour le module: $moduleCode');
           } else {
             itemsSkipped++;
-            errors
-                .add('Module $moduleCode: Status code ${response.statusCode}');
+            final errorMsg = 'Module $moduleCode: Erreur serveur lors de la synchronisation de la configuration (code ${response.statusCode})';
+            errors.add(errorMsg);
+            debugPrint('Erreur de synchronisation configuration: $errorMsg');
           }
         } catch (e) {
           itemsSkipped++;
-          errors.add('Module $moduleCode: ${e.toString()}');
+          final errorMessage = ErrorMessageHelper.formatError(
+            'la synchronisation de la configuration', 
+            e, 
+            moduleCode: moduleCode
+          );
+          errors.add(errorMessage);
+          // Log détaillé pour le debugging
+          debugPrint('Erreur de synchronisation configuration pour module $moduleCode: $e');
         }
       }
 
