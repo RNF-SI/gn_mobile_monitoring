@@ -25,4 +25,7 @@ class AppColors {
 
   /// Rouge (utilisé pour les erreurs)
   static const Color red = Colors.red;
+
+  /// Gris clair (utilisé pour les placeholders/hints)
+  static const Color hint = Color(0xFF9E9E9E);
 }

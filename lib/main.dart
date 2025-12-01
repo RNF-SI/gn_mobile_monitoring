@@ -228,6 +228,7 @@ class MainApp extends ConsumerWidget {
           fillColor: AppColors.background,
           labelStyle: const TextStyle(color: AppColors.border),
           floatingLabelStyle: const TextStyle(color: AppColors.primary),
+          hintStyle: const TextStyle(color: AppColors.hint),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: AppColors.border),
