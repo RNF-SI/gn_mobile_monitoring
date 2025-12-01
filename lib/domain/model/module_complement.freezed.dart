@@ -26,9 +26,7 @@ mixin _$ModuleComplement {
   String? get data => throw _privateConstructorUsedError;
   ModuleConfiguration? get configuration => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleComplementCopyWith<ModuleComplement> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -63,8 +61,6 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -118,8 +114,6 @@ class _$ModuleComplementCopyWithImpl<$Res, $Val extends ModuleComplement>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleConfigurationCopyWith<$Res>? get configuration {
@@ -164,8 +158,6 @@ class __$$ModuleComplementImplCopyWithImpl<$Res>
       $Res Function(_$ModuleComplementImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -298,9 +290,7 @@ class _$ModuleComplementImpl implements _ModuleComplement {
       data,
       configuration);
 
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleComplementImplCopyWith<_$ModuleComplementImpl> get copyWith =>
@@ -338,11 +328,8 @@ abstract class _ModuleComplement implements ModuleComplement {
   String? get data;
   @override
   ModuleConfiguration? get configuration;
-
-  /// Create a copy of ModuleComplement
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleComplementImplCopyWith<_$ModuleComplementImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

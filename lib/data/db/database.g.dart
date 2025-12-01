@@ -17554,9 +17554,10 @@ final class $$CorVisitObserverTableReferences extends BaseReferences<
       db.tBaseVisits.createAlias($_aliasNameGenerator(
           db.corVisitObserver.idBaseVisit, db.tBaseVisits.idBaseVisit));
 
-  $$TBaseVisitsTableProcessedTableManager get idBaseVisit {
+  $$TBaseVisitsTableProcessedTableManager? get idBaseVisit {
+    if ($_item.idBaseVisit == null) return null;
     final manager = $$TBaseVisitsTableTableManager($_db, $_db.tBaseVisits)
-        .filter((f) => f.idBaseVisit($_item.idBaseVisit));
+        .filter((f) => f.idBaseVisit($_item.idBaseVisit!));
     final item = $_typedResult.readTableOrNull(_idBaseVisitTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18887,9 +18888,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.bibListesTable.createAlias($_aliasNameGenerator(
           db.corTaxonListeTable.idListe, db.bibListesTable.idListe));
 
-  $$BibListesTableTableProcessedTableManager get idListe {
+  $$BibListesTableTableProcessedTableManager? get idListe {
+    if ($_item.idListe == null) return null;
     final manager = $$BibListesTableTableTableManager($_db, $_db.bibListesTable)
-        .filter((f) => f.idListe($_item.idListe));
+        .filter((f) => f.idListe($_item.idListe!));
     final item = $_typedResult.readTableOrNull(_idListeTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18900,9 +18902,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.tTaxrefs.createAlias(
           $_aliasNameGenerator(db.corTaxonListeTable.cdNom, db.tTaxrefs.cdNom));
 
-  $$TTaxrefsTableProcessedTableManager get cdNom {
+  $$TTaxrefsTableProcessedTableManager? get cdNom {
+    if ($_item.cdNom == null) return null;
     final manager = $$TTaxrefsTableTableManager($_db, $_db.tTaxrefs)
-        .filter((f) => f.cdNom($_item.cdNom));
+        .filter((f) => f.cdNom($_item.cdNom!));
     final item = $_typedResult.readTableOrNull(_cdNomTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(

@@ -42,9 +42,7 @@ mixin _$Taxon {
   String? get group3Inpn => throw _privateConstructorUsedError;
   String? get url => throw _privateConstructorUsedError;
 
-  /// Create a copy of Taxon
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TaxonCopyWith<Taxon> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -91,8 +89,6 @@ class _$TaxonCopyWithImpl<$Res, $Val extends Taxon>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Taxon
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -270,8 +266,6 @@ class __$$TaxonImplCopyWithImpl<$Res>
       _$TaxonImpl _value, $Res Function(_$TaxonImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Taxon
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -566,9 +560,7 @@ class _$TaxonImpl implements _Taxon {
         url
       ]);
 
-  /// Create a copy of Taxon
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TaxonImplCopyWith<_$TaxonImpl> get copyWith =>
@@ -653,11 +645,8 @@ abstract class _Taxon implements Taxon {
   String? get group3Inpn;
   @override
   String? get url;
-
-  /// Create a copy of Taxon
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TaxonImplCopyWith<_$TaxonImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

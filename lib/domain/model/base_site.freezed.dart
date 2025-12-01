@@ -29,9 +29,7 @@ mixin _$BaseSite {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $BaseSiteCopyWith<BaseSite> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -65,8 +63,6 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -161,8 +157,6 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
       _$BaseSiteImpl _value, $Res Function(_$BaseSiteImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -315,9 +309,7 @@ class _$BaseSiteImpl implements _BaseSite {
       metaCreateDate,
       metaUpdateDate);
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>
@@ -349,8 +341,8 @@ abstract class _BaseSite implements BaseSite {
   @override
   DateTime? get firstUseDate;
   @override
-  String? get geom; // GeoJSON representation
-  @override
+  String? get geom;
+  @override // GeoJSON representation
   String? get uuidBaseSite;
   @override
   int? get altitudeMin;
@@ -360,11 +352,8 @@ abstract class _BaseSite implements BaseSite {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
-
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

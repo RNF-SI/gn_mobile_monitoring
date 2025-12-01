@@ -52,9 +52,7 @@ mixin _$SyncStatus {
       throw _privateConstructorUsedError; // Informations supplémentaires sur la progression
   String? get nextFullSyncInfo => throw _privateConstructorUsedError;
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SyncStatusCopyWith<SyncStatus> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -99,8 +97,6 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -255,8 +251,6 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
       _$SyncStatusImpl _value, $Res Function(_$SyncStatusImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -586,9 +580,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
         nextFullSyncInfo
       ]);
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SyncStatusImplCopyWith<_$SyncStatusImpl> get copyWith =>
@@ -641,39 +633,33 @@ abstract class _SyncStatus extends SyncStatus {
   @override
   List<SyncConflict>? get conflicts;
   @override
-  DateTime get lastUpdated; // Type de synchronisation en cours
-  @override
-  SyncType? get currentSyncType; // Résultats des dernières synchronisations
+  DateTime get lastUpdated;
+  @override // Type de synchronisation en cours
+  SyncType? get currentSyncType;
+  @override // Résultats des dernières synchronisations
 // (utilisation de domain.SyncResult temporairement désactivée)
 // SyncResult? lastDownstreamSync,
 // SyncResult? lastUpstreamSync,
 // Détails supplémentaires pour la progression
-  @override
-  String?
-      get currentEntityName; // Nom du module, site, etc. en cours de traitement
-  @override
-  int?
-      get currentEntityTotal; // Nombre total d'éléments à traiter pour l'entité courante
-  @override
-  int?
-      get currentEntityProcessed; // Nombre d'éléments traités pour l'entité courante
-  @override
-  int? get itemsAdded; // Nombre d'éléments ajoutés dans l'étape actuelle
-  @override
-  int? get itemsUpdated; // Nombre d'éléments mis à jour dans l'étape actuelle
-  @override
-  int? get itemsSkipped; // Nombre d'éléments ignorés dans l'étape actuelle
-  @override
-  int? get itemsDeleted; // Nombre d'éléments supprimés dans l'étape actuelle
-  @override
-  String? get additionalInfo; // Informations supplémentaires sur la progression
-  @override
+  String? get currentEntityName;
+  @override // Nom du module, site, etc. en cours de traitement
+  int? get currentEntityTotal;
+  @override // Nombre total d'éléments à traiter pour l'entité courante
+  int? get currentEntityProcessed;
+  @override // Nombre d'éléments traités pour l'entité courante
+  int? get itemsAdded;
+  @override // Nombre d'éléments ajoutés dans l'étape actuelle
+  int? get itemsUpdated;
+  @override // Nombre d'éléments mis à jour dans l'étape actuelle
+  int? get itemsSkipped;
+  @override // Nombre d'éléments ignorés dans l'étape actuelle
+  int? get itemsDeleted;
+  @override // Nombre d'éléments supprimés dans l'étape actuelle
+  String? get additionalInfo;
+  @override // Informations supplémentaires sur la progression
   String? get nextFullSyncInfo;
-
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SyncStatusImplCopyWith<_$SyncStatusImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

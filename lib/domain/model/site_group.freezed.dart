@@ -30,9 +30,7 @@ mixin _$SiteGroup {
   int? get altitudeMin => throw _privateConstructorUsedError;
   int? get altitudeMax => throw _privateConstructorUsedError;
 
-  /// Create a copy of SiteGroup
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SiteGroupCopyWith<SiteGroup> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -68,8 +66,6 @@ class _$SiteGroupCopyWithImpl<$Res, $Val extends SiteGroup>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SiteGroup
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -176,8 +172,6 @@ class __$$SiteGroupImplCopyWithImpl<$Res>
       _$SiteGroupImpl _value, $Res Function(_$SiteGroupImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SiteGroup
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -350,9 +344,7 @@ class _$SiteGroupImpl implements _SiteGroup {
       altitudeMin,
       altitudeMax);
 
-  /// Create a copy of SiteGroup
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SiteGroupImplCopyWith<_$SiteGroupImpl> get copyWith =>
@@ -401,11 +393,8 @@ abstract class _SiteGroup implements SiteGroup {
   int? get altitudeMin;
   @override
   int? get altitudeMax;
-
-  /// Create a copy of SiteGroup
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SiteGroupImplCopyWith<_$SiteGroupImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -38,9 +38,7 @@ mixin _$Module {
   List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
   List<BaseSite>? get sites => throw _privateConstructorUsedError;
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleCopyWith<Module> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -85,8 +83,6 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -200,8 +196,6 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     ) as $Val);
   }
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleComplementCopyWith<$Res>? get complement {
@@ -257,8 +251,6 @@ class __$$ModuleImplCopyWithImpl<$Res>
       _$ModuleImpl _value, $Res Function(_$ModuleImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -537,9 +529,7 @@ class _$ModuleImpl implements _Module {
         const DeepCollectionEquality().hash(_sites)
       ]);
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
@@ -612,11 +602,8 @@ abstract class _Module implements Module {
   List<SiteGroup>? get sitesGroup;
   @override
   List<BaseSite>? get sites;
-
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
