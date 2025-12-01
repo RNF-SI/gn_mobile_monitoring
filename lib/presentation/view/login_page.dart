@@ -23,6 +23,7 @@ class _LoginPageState extends State<LoginPage> {
   final _apiUrl = TextEditingController();
 
   bool _isLoading = false;
+  bool _hasSubmitted = false;
 
   void loading() {
     setState(() {
@@ -80,20 +81,14 @@ class _LoginPageState extends State<LoginPage> {
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
-          // Image d'arrière-plan occupant tout l'écran
+          // Image d'arrière-plan avec hauteur 100% et largeur adaptée
           Positioned.fill(
-            child: ClipRect(
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: Transform.scale(
-                  scale: 1, // Facteur de zoom (plus petit = moins zoomé)
-                  child: Image.asset(
-                    'assets/photo/splash_screen.jpg',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                  ),
-                ),
+            child: Center(
+              child: Image.asset(
+                'assets/photo/splash_screen.jpg',
+                fit: BoxFit.fitHeight,
+                alignment: Alignment.center,
+                height: double.infinity,
               ),
             ),
           ),
@@ -114,6 +109,9 @@ class _LoginPageState extends State<LoginPage> {
                   final auth = ref.watch(authenticationViewModelProvider);
 
                   Future<void> onPressedFunction() async {
+                    setState(() {
+                      _hasSubmitted = true;
+                    });
                     if (_formKey.currentState!.validate()) {
                       loading();
                       // Normaliser l'URL de base (sans /api)
@@ -165,6 +163,9 @@ class _LoginPageState extends State<LoginPage> {
                             child: TextFormField(
                               controller: _identifiant,
                               keyboardType: TextInputType.emailAddress,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
                               decoration: InputDecoration(
                                 fillColor: const Color(0xFFF4F1E4),
                                 filled: true,
@@ -190,6 +191,9 @@ class _LoginPageState extends State<LoginPage> {
                             child: TextFormField(
                               controller: _password,
                               obscureText: true,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
                               decoration: InputDecoration(
                                 fillColor: const Color(0xFFF4F1E4),
                                 filled: true,
@@ -215,6 +219,9 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: TextFormField(
                               controller: _apiUrl,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
                               decoration: InputDecoration(
                                 fillColor: const Color(0xFFF4F1E4),
                                 filled: true,
@@ -251,7 +258,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: Text(
-                              type == Status.login ? 'Log in' : 'Sign up',
+                              type == Status.login ? 'Se connecter' : 'Sign up',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
