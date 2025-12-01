@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_error_reporter.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/error_handler.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
 import 'package:gn_mobile_monitoring/presentation/view/error_screen.dart';
@@ -62,18 +63,18 @@ void main() async {
     if (stack is stack_trace.Chain) return stack.toTrace().vmTrace;
     return stack;
   };
-  
+
   WidgetsFlutterBinding.ensureInitialized();
 
   // Initialiser le gestionnaire d'erreurs et le système de rapport
   final errorHandler = ErrorHandler();
   await errorHandler.initialize();
   await AppErrorReporter().initialize();
-  
+
   try {
     // Initialize local storage
     await LocalStorageRepositoryImpl.init();
-    
+
     // Initialize stored API URL if available
     final localStorageRepository = LocalStorageRepositoryImpl();
     final apiUrl = await localStorageRepository.getApiUrl();
@@ -81,9 +82,11 @@ void main() async {
       Config.setStoredApiUrl(apiUrl);
       AppLogger().i('Using stored API URL: $apiUrl', tag: 'CONFIG');
     } else {
-      AppLogger().i('No stored API URL found, login page will use default URL: ${Config.defaultApiUrl}', tag: 'CONFIG');
+      AppLogger().i(
+          'No stored API URL found, login page will use default URL: ${Config.defaultApiUrl}',
+          tag: 'CONFIG');
     }
-    
+
     // Lancer l'application avec le provider error listener
     runApp(
       ProviderScope(
@@ -98,10 +101,10 @@ void main() async {
     AppLogger().e(
       'Erreur lors du démarrage de l\'application',
       tag: 'STARTUP',
-      error: e, 
+      error: e,
       stackTrace: stackTrace,
     );
-    
+
     // Afficher un écran d'erreur de démarrage
     runApp(MaterialApp(
       home: Scaffold(
@@ -112,7 +115,7 @@ void main() async {
               const Icon(Icons.error_outline, color: Colors.red, size: 64),
               const SizedBox(height: 16),
               const Text('Erreur de démarrage de l\'application',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               Text('$e', style: const TextStyle(color: Colors.red)),
               const SizedBox(height: 24),
@@ -170,8 +173,8 @@ class MainApp extends ConsumerWidget {
     // S'assurer que les services essentiels sont initialisés
     ref.watch(databaseServiceProvider);
     ref.watch(nomenclatureServiceProvider);
-    final MaterialColor customBlueSwatch = createMaterialColor(
-      const Color(0xFF8AAC3E),
+    final MaterialColor customPrimarySwatch = createMaterialColor(
+      AppColors.primary,
     );
 
     return MaterialApp.router(
@@ -187,44 +190,62 @@ class MainApp extends ConsumerWidget {
       ],
       locale: const Locale('fr', 'FR'),
       theme: ThemeData(
-        primaryColor:
-            const Color(0xFF598979), // Used for elements needing emphasis
-        scaffoldBackgroundColor:
-            const Color(0xFFF4F1E4), // Background color for Scaffold widgets
+        primaryColor: AppColors.dark,
+        scaffoldBackgroundColor: AppColors.background,
         appBarTheme: const AppBarTheme(
-          color: Color(0xFF598979), // Custom color for AppBar
-          toolbarTextStyle: TextStyle(
-              color: Colors.white, fontSize: 18), // Simplified text style
+          backgroundColor: AppColors.dark,
+          toolbarTextStyle: TextStyle(color: AppColors.white, fontSize: 18),
           titleTextStyle: TextStyle(
-              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              color: AppColors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             foregroundColor: const Color(0xFF8B5500),
-            backgroundColor: const Color(0xFF8AAC3E), // Button background color
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)), // Rounded buttons
+            backgroundColor: AppColors.primary,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           ),
         ),
         iconTheme: const IconThemeData(
-          color: Color(0xFF7DAB9C), // Icon color
+          color: AppColors.border,
         ),
         textTheme: const TextTheme(
-          bodyLarge:
-              TextStyle(color: Color(0xFF1a1a18)), // General text styling
+          bodyLarge: TextStyle(color: Color(0xFF1a1a18)),
           bodyMedium: TextStyle(color: Color(0xFF1a1a18)),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            foregroundColor: Colors.white,
-            backgroundColor:
-                const Color(0xFF8AAC3E), // Text color for elevated buttons
+            foregroundColor: AppColors.white,
+            backgroundColor: AppColors.primary,
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         ),
-        colorScheme: ColorScheme.fromSwatch(primarySwatch: customBlueSwatch)
-            .copyWith(secondary: const Color(0xFF8AAC3E)),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: AppColors.background,
+          labelStyle: const TextStyle(color: AppColors.border),
+          floatingLabelStyle: const TextStyle(color: AppColors.primary),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.primary, width: 2),
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: AppColors.border),
+          ),
+        ),
+        textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: AppColors.primary,
+        ),
+        colorScheme: ColorScheme.fromSwatch(primarySwatch: customPrimarySwatch)
+            .copyWith(secondary: AppColors.primary),
       ),
       // Gestionnaire global des erreurs de navigation
       builder: (context, child) {
@@ -236,22 +257,24 @@ class MainApp extends ConsumerWidget {
             error: errorDetails.exception,
             stackTrace: errorDetails.stack,
           );
-          
+
           // En mode debug, utiliser l'erreur standard de Flutter
           if (kDebugMode) {
             return ErrorWidget(errorDetails.exception);
           }
-          
+
           // En mode production, afficher notre écran d'erreur personnalisé
           return ErrorScreen(
             title: 'Erreur d\'affichage',
-            message: 'Une erreur s\'est produite lors de l\'affichage de cette page.',
+            message:
+                'Une erreur s\'est produite lors de l\'affichage de cette page.',
             error: errorDetails.exception,
             stackTrace: errorDetails.stack,
           );
         };
-        
-        return child ?? const Scaffold(body: Center(child: CircularProgressIndicator()));
+
+        return child ??
+            const Scaffold(body: Center(child: CircularProgressIndicator()));
       },
     );
   }

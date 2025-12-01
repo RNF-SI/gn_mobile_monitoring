@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 
 enum Status {
@@ -95,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
           // Overlay de couleur verte semi-transparent pour la lisibilité
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF598979).withOpacity(0.2),
+              color: AppColors.dark.withOpacity(0.2),
             ),
           ),
           // Contenu du formulaire
@@ -137,14 +138,14 @@ class _LoginPageState extends State<LoginPage> {
                           const Text.rich(
                             TextSpan(
                               text: 'Monitoring',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 34),
+                              style: TextStyle(
+                                  color: AppColors.white, fontSize: 34),
                               children: [
                                 TextSpan(
                                   text: 'Mobile',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF8AAC3E),
+                                    color: AppColors.primary,
                                     fontSize: 45,
                                   ),
                                 ),
@@ -161,15 +162,8 @@ class _LoginPageState extends State<LoginPage> {
                               autovalidateMode: _hasSubmitted
                                   ? AutovalidateMode.onUserInteraction
                                   : AutovalidateMode.disabled,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              decoration: const InputDecoration(
                                 labelText: 'Identifiant',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               validator: (value) {
                                 if (value!.isEmpty) {
@@ -189,15 +183,8 @@ class _LoginPageState extends State<LoginPage> {
                               autovalidateMode: _hasSubmitted
                                   ? AutovalidateMode.onUserInteraction
                                   : AutovalidateMode.disabled,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              decoration: const InputDecoration(
                                 labelText: 'Mot de Passe',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               validator: (value) {
                                 if (value!.isEmpty) {
@@ -217,16 +204,9 @@ class _LoginPageState extends State<LoginPage> {
                               autovalidateMode: _hasSubmitted
                                   ? AutovalidateMode.onUserInteraction
                                   : AutovalidateMode.disabled,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              decoration: const InputDecoration(
                                 labelText: 'URL du serveur GeoNature',
                                 hintText: 'https://geonature.mondomaine.org',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               keyboardType: TextInputType.url,
                               validator: (value) {
@@ -245,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 20), // Space before the button
                           MaterialButton(
                             onPressed: onPressedFunction,
-                            color: const Color(0xFF8AAC3E),
+                            color: AppColors.primary,
                             textColor: Colors.white,
                             minWidth: 200,
                             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -262,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                           if (_isLoading) ...[
                             const CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF8AAC3E))),
+                                    AppColors.primary)),
                             const SizedBox(height: 16),
                             Consumer(
                               builder: (context, ref, _) {
