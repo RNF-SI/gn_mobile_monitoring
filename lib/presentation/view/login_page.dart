@@ -307,6 +307,33 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+          // Logo LIFE et texte de copyright en bas
+          Positioned(
+            bottom: 15,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/photo/logo_life.png',
+                    height: 100,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '© B CAUVIN',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
