@@ -77,8 +77,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Permettre au contenu de se déplacer quand le clavier apparaît
-      resizeToAvoidBottomInset: true,
+      // Garder l'image fixe, le clavier passe par-dessus
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           // Image d'arrière-plan avec hauteur 100% et largeur adaptée
@@ -129,12 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                   return Form(
                     key: _formKey,
                     child: Padding(
-                      padding: EdgeInsets.only(
-                        // Marge supplémentaire en bas pour éviter le clavier
-                        bottom: MediaQuery.of(context).viewInsets.bottom > 0
-                            ? MediaQuery.of(context).viewInsets.bottom + 20
-                            : 0,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Column(
                         mainAxisAlignment:
                             MainAxisAlignment.values[2], // Center the children
