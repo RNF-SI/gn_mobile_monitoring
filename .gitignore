@@ -45,6 +45,9 @@ app.*.map.json
 /lib/config/config_dev.dart
 /lib/config/config_prod.dart
 
+# Test environment configuration
+.env.test
+
 # Database copy
 sqlite-db-copy
 

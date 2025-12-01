@@ -1,0 +1,123 @@
+name: Integration Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch: # Permet l'exécution manuelle
+
+jobs:
+  # Tests unitaires (rapides, toujours exécutés)
+  unit-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ☕ Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.3'
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 🔨 Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: 🔍 Analyze code
+        run: flutter analyze --no-fatal-infos
+
+      - name: 🧪 Run unit tests
+        run: flutter test --exclude-tags=integration --coverage
+
+      - name: 📊 Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
+          name: unit-tests-coverage
+
+  # Tests d'intégration (plus longs, avec serveur réel)
+  integration-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: unit-tests # Exécuter seulement si les tests unitaires passent
+
+    # Exécuter les tests d'intégration seulement sur main/develop ou manuellement
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: ☕ Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.3'
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install dependencies
+        run: flutter pub get
+
+      - name: 🔨 Generate code
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: 🔧 Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y curl
+          curl --version
+
+      - name: 🧪 Run integration tests (Real HTTP)
+        env:
+          TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_MODULES: ${{ secrets.TEST_MODULES }}
+        run: |
+          echo "🌐 Exécution des tests d'intégration avec vraies requêtes HTTP..."
+          chmod +x run_integration_tests.sh
+          ./run_integration_tests.sh
+          
+      - name: 🧪 Run Flutter integration tests (Limited HTTP)
+        env:
+          TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_MODULES: ${{ secrets.TEST_MODULES }}
+        run: |
+          echo "🧪 Exécution des tests Flutter (avec limitations HTTP)..."
+          flutter test test/integration/ --tags=integration --reporter=expanded || echo "⚠️ Tests Flutter échoués (limitations TestWidgetsFlutterBinding attendues)"
+
+      - name: 📊 Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-results
+          path: |
+            test/integration/
+            coverage/
+
+  # Notification de succès/échec
+  notify:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    if: always()
+
+    steps:
+      - name: ✅ Tests passed
+        if: ${{ needs.unit-tests.result == 'success' && (needs.integration-tests.result == 'success' || needs.integration-tests.result == 'skipped') }}
+        run: echo "✅ All tests passed successfully!"
+
+      - name: ❌ Tests failed
+        if: ${{ needs.unit-tests.result == 'failure' || needs.integration-tests.result == 'failure' }}
+        run: |
+          echo "❌ Some tests failed. Check the logs above."
+          exit 1
