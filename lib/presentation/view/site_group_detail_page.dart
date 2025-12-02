@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
@@ -32,6 +33,7 @@ class SiteGroupDetailPage extends ConsumerStatefulWidget {
 
 class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   int? _expandedPanelIndex;
+  Position? _userPosition;
 
   @override
   void initState() {
@@ -41,7 +43,107 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       ref
           .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
           .refresh();
+      _loadUserLocation();
     });
+  }
+
+  /// Charge la position GPS de l'utilisateur
+  Future<void> _loadUserLocation() async {
+    try {
+      debugPrint('Début du chargement de la position GPS');
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('⚠️ Service de localisation désactivé');
+        return;
+      }
+      debugPrint('✓ Service de localisation activé');
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('Permission actuelle: $permission');
+
+      if (permission == LocationPermission.denied) {
+        debugPrint('Demande de permission...');
+        permission = await Geolocator.requestPermission();
+        debugPrint('Permission après demande: $permission');
+        if (permission == LocationPermission.denied) {
+          debugPrint('⚠️ Permission de localisation refusée');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('⚠️ Permission de localisation refusée définitivement');
+        return;
+      }
+
+      debugPrint('Récupération de la position...');
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.medium,
+      );
+      debugPrint(
+          '✓ Position récupérée: lat=${position.latitude}, lon=${position.longitude}');
+
+      if (mounted) {
+        setState(() {
+          _userPosition = position;
+        });
+        debugPrint('✓ Position enregistrée dans l\'état');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erreur lors de la récupération de la position: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  /// Calcule la distance entre la position de l'utilisateur et un site
+  double? _calculateDistance(BaseSite site) {
+    if (_userPosition == null || site.geom == null) {
+      return null;
+    }
+
+    try {
+      // Parser la géométrie GeoJSON
+      final geomData = jsonDecode(site.geom!);
+      double? siteLat;
+      double? siteLon;
+
+      // Extraire les coordonnées selon le type de géométrie
+      if (geomData is Map<String, dynamic>) {
+        final type = geomData['type'];
+        final coordinates = geomData['coordinates'];
+
+        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
+          // Format GeoJSON: [longitude, latitude]
+          siteLon = coordinates[0].toDouble();
+          siteLat = coordinates[1].toDouble();
+        }
+      }
+
+      if (siteLat == null || siteLon == null) {
+        return null;
+      }
+
+      // Calculer la distance en mètres
+      return Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        siteLat,
+        siteLon,
+      );
+    } catch (e) {
+      debugPrint(
+          'Erreur lors du calcul de la distance pour le site ${site.idBaseSite}: $e');
+      return null;
+    }
+  }
+
+  /// Formate la distance pour l'affichage
+  String _formatDistance(double distanceInMeters) {
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      return '${(distanceInMeters / 1000).toStringAsFixed(2)} km';
+    }
   }
 
   @override
@@ -297,66 +399,79 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               },
               tooltip: 'Voir les détails',
             ),
-            title: FutureBuilder<SiteComplement?>(
-              future: _getSiteComplement(site.idBaseSite),
-              builder: (context, snapshot) {
-                // Construire les données du site (base + complément)
-                final Map<String, dynamic> siteData = {};
+            title: Row(
+              children: [
+                Expanded(
+                  child: FutureBuilder<SiteComplement?>(
+                    future: _getSiteComplement(site.idBaseSite),
+                    builder: (context, snapshot) {
+                      // Construire les données du site (base + complément)
+                      final Map<String, dynamic> siteData = {};
 
-                // Ajouter les champs de base
-                if (site.baseSiteCode != null) {
-                  siteData['base_site_code'] = site.baseSiteCode;
-                }
-                if (site.baseSiteName != null) {
-                  siteData['base_site_name'] = site.baseSiteName;
-                }
-                if (site.baseSiteDescription != null) {
-                  siteData['base_site_description'] = site.baseSiteDescription;
-                }
-                if (site.firstUseDate != null) {
-                  siteData['first_use_date'] = site.firstUseDate!.toString();
-                }
+                      // Ajouter les champs de base
+                      if (site.baseSiteCode != null) {
+                        siteData['base_site_code'] = site.baseSiteCode;
+                      }
+                      if (site.baseSiteName != null) {
+                        siteData['base_site_name'] = site.baseSiteName;
+                      }
+                      if (site.baseSiteDescription != null) {
+                        siteData['base_site_description'] =
+                            site.baseSiteDescription;
+                      }
+                      if (site.firstUseDate != null) {
+                        siteData['first_use_date'] =
+                            site.firstUseDate!.toString();
+                      }
 
-                // Ajouter les données du complément si disponibles
-                if (snapshot.hasData && snapshot.data?.data != null) {
-                  try {
-                    Map<String, dynamic> complementData = {};
-                    if (snapshot.data!.data is String) {
-                      complementData = Map<String, dynamic>.from(
-                          jsonDecode(snapshot.data!.data as String));
-                    } else {
-                      complementData =
-                          Map<String, dynamic>.from(snapshot.data!.data as Map);
-                    }
-                    siteData.addAll(complementData);
-                  } catch (e) {
-                    debugPrint(
-                        'Erreur lors du décodage des données complémentaires: $e');
-                  }
-                }
+                      // Ajouter les données du complément si disponibles
+                      if (snapshot.hasData && snapshot.data?.data != null) {
+                        try {
+                          Map<String, dynamic> complementData = {};
+                          if (snapshot.data!.data is String) {
+                            complementData = Map<String, dynamic>.from(
+                                jsonDecode(snapshot.data!.data as String));
+                          } else {
+                            complementData = Map<String, dynamic>.from(
+                                snapshot.data!.data as Map);
+                          }
+                          siteData.addAll(complementData);
+                        } catch (e) {
+                          debugPrint(
+                              'Erreur lors du décodage des données complémentaires: $e');
+                        }
+                      }
 
-                // Récupérer le premier champ de display_list
-                final List<String>? displayProperties =
-                    siteConfig?.displayList ?? siteConfig?.displayProperties;
+                      // Récupérer le premier champ de display_list
+                      final List<String>? displayProperties =
+                          siteConfig?.displayList ??
+                              siteConfig?.displayProperties;
 
-                String displayText = site.baseSiteName ?? 'Site sans nom';
+                      String displayText = site.baseSiteName ?? 'Site sans nom';
 
-                if (displayProperties != null && displayProperties.isNotEmpty) {
-                  final firstProperty = displayProperties.first;
-                  if (siteData.containsKey(firstProperty)) {
-                    final rawValue = siteData[firstProperty];
-                    displayText = ValueFormatter.format(rawValue);
-                  }
-                }
+                      if (displayProperties != null &&
+                          displayProperties.isNotEmpty) {
+                        final firstProperty = displayProperties.first;
+                        if (siteData.containsKey(firstProperty)) {
+                          final rawValue = siteData[firstProperty];
+                          displayText = ValueFormatter.format(rawValue);
+                        }
+                      }
 
-                return Text(
-                  displayText,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
+                      return Text(
+                        displayText,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
+                ),
+                // Afficher la distance à droite
+                if (_userPosition != null && site.geom != null)
+                  _buildDistanceBadge(site),
+              ],
             ),
             initiallyExpanded: isExpanded,
             onExpansionChanged: (bool expanded) {
@@ -521,5 +636,46 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       debugPrint('Erreur lors de la récupération du complément: $e');
       return null;
     }
+  }
+
+  /// Construit le badge de distance pour le header
+  Widget _buildDistanceBadge(BaseSite site) {
+    final distance = _calculateDistance(site);
+
+    if (distance == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.blue.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.location_on,
+            color: Colors.blue,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _formatDistance(distance),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.blue,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
