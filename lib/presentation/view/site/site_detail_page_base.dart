@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
-import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -12,13 +12,12 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
@@ -60,29 +59,50 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties =>
-      objectConfig?.displayProperties ?? objectConfig?.displayList;
+  List<String>? get displayProperties => objectConfig?.displayProperties;
 
   // Site complement data pour le site courant
   SiteComplement? _siteComplement;
 
   @override
   Map<String, dynamic> get objectData {
-    // Obtenir les données du site depuis le complément
+    final Map<String, dynamic> data = {};
+
+    // Ajouter les champs de base du site
+    if (widget.site.baseSiteCode != null) {
+      data['base_site_code'] = widget.site.baseSiteCode;
+    }
+    if (widget.site.baseSiteName != null) {
+      data['base_site_name'] = widget.site.baseSiteName;
+    }
+    if (widget.site.baseSiteDescription != null) {
+      data['base_site_description'] = widget.site.baseSiteDescription;
+    }
+    if (widget.site.firstUseDate != null) {
+      data['first_use_date'] = widget.site.firstUseDate!.toString();
+    }
+
+    // Ajouter les données du complément si présentes
     if (_siteComplement?.data != null) {
       try {
+        Map<String, dynamic> complementData = {};
         // Tenter de parser le JSON si c'est au format chaîne
         if (_siteComplement!.data is String) {
-          return Map<String, dynamic>.from(
+          complementData = Map<String, dynamic>.from(
               jsonDecode(_siteComplement!.data as String));
+        } else {
+          // Sinon, essayer de le convertir directement
+          complementData =
+              Map<String, dynamic>.from(_siteComplement!.data as Map);
         }
-        // Sinon, essayer de le convertir directement
-        return Map<String, dynamic>.from(_siteComplement!.data as Map);
+        // Fusionner les données du complément (elles écrasent les champs de base si présents)
+        data.addAll(complementData);
       } catch (e) {
         debugPrint('Erreur lors du décodage des données du site: $e');
       }
     }
-    return {};
+
+    return data;
   }
 
   @override
@@ -95,6 +115,26 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   void initState() {
     super.initState();
     _initializeTabController();
+    _loadSiteComplement();
+  }
+
+  /// Charge le complément du site depuis la base de données
+  Future<void> _loadSiteComplement() async {
+    try {
+      final sitesDatabase = widget.ref.read(siteDatabaseProvider);
+      final allComplements = await sitesDatabase.getAllSiteComplements();
+      final complement = allComplements
+          .where((c) => c.idBaseSite == widget.site.idBaseSite)
+          .firstOrNull;
+
+      if (mounted) {
+        setState(() {
+          _siteComplement = complement;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement du complément du site: $e');
+    }
   }
 
   // Cette méthode sera appelée une fois que les dépendances sont injectées
@@ -254,63 +294,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
               padding: const EdgeInsets.all(16.0),
               child: ConflictInfoBanner(conflict: widget.currentConflict!),
             ),
-          // Propriétés du site - non expandable et taille intrinsèque
+
+          // Propriétés du site (champs de base + données spécifiques au module)
+          // Affichées dynamiquement via buildPropertiesWidget()
           Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Informations générales',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                        'Code', widget.site.baseSiteCode ?? 'Non spécifié'),
-                    _buildInfoRow(
-                        'Nom', widget.site.baseSiteName ?? 'Non spécifié'),
-                    _buildInfoRow('Description',
-                        widget.site.baseSiteDescription ?? 'Non spécifiée'),
-                    if (widget.site.firstUseDate != null)
-                      _buildInfoRow(
-                          'Date de création',
-                          formatDateString(
-                              widget.site.firstUseDate!.toString())),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Propriétés spécifiques au module si présentes
-          if (_siteComplement?.data != null)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: buildPropertiesWidget(),
-            ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: buildPropertiesWidget(),
           ),
         ],
       ),
@@ -666,13 +655,13 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   void _showDeleteVisitConfirmationDialog(BaseVisit visit) async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
         (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
-    
+
     // Compter les observations de cette visite
     final observationCount = await siteVisitsViewModel
-        .getObservationCountForVisit(visit.idBaseVisit!);
-    
+        .getObservationCountForVisit(visit.idBaseVisit);
+
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -681,9 +670,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Voulez-vous vraiment supprimer la visite du ${
-              formatDateString(visit.visitDateMin)
-            } ?'),
+            Text(
+                'Voulez-vous vraiment supprimer la visite du ${formatDateString(visit.visitDateMin)} ?'),
             if (observationCount > 0) ...[
               const SizedBox(height: 16),
               Container(
@@ -733,10 +721,10 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   void _deleteVisitFromList(BaseVisit visit) async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
         (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
-    
+
     try {
-      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit!);
-      
+      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit);
+
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -744,7 +732,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Pas besoin de navigation car on reste sur la même page
         // Le ViewModel va automatiquement rafraîchir la liste
       } else if (mounted) {

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 
-class PropertyDisplayWidget extends StatelessWidget {
+class PropertyDisplayWidget extends ConsumerWidget {
   final Map<String, dynamic> data;
   final ObjectConfig? config;
   final CustomConfig? customConfig;
   final String title;
   final bool separateEmptyFields;
+  final List<String>? displayProperties;
 
   const PropertyDisplayWidget({
     super.key,
@@ -17,10 +21,11 @@ class PropertyDisplayWidget extends StatelessWidget {
     this.customConfig,
     this.title = 'Données spécifiques',
     this.separateEmptyFields = false,
+    this.displayProperties,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -38,11 +43,214 @@ class PropertyDisplayWidget extends StatelessWidget {
             if (data.isEmpty)
               const Text('Aucune donnée spécifique disponible')
             else
-              ...buildPropertyRows(data, config, customConfig, separateEmptyFields),
+              FutureBuilder<Map<String, dynamic>>(
+                future: _enrichDataWithNomenclatures(data, ref),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  final enrichedData = snapshot.data ?? data;
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: buildPropertyRows(enrichedData, config,
+                        customConfig, separateEmptyFields, displayProperties),
+                  );
+                },
+              ),
           ],
         ),
       ),
     );
+  }
+
+  /// Enrichit les données en convertissant les IDs de nomenclatures en objets avec labels
+  Future<Map<String, dynamic>> _enrichDataWithNomenclatures(
+      Map<String, dynamic> data, WidgetRef ref) async {
+    final enrichedData = Map<String, dynamic>.from(data);
+    final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+
+    debugPrint(
+        'Données reçues pour enrichissement: ${enrichedData.keys.join(", ")}');
+
+    // Générer le schéma unifié pour identifier les champs de nomenclature
+    final Map<String, dynamic> parsedConfig = config != null
+        ? FormConfigParser.generateUnifiedSchema(config!, customConfig)
+        : {};
+
+    // Identifier les champs de nomenclature et sites_group depuis la configuration
+    final List<String> nomenclatureFields = [];
+    final List<String> sitesGroupFields = [];
+
+    // 1. Chercher dans la configuration parsée
+    for (final entry in parsedConfig.entries) {
+      final fieldName = entry.key;
+      final fieldConfig = entry.value;
+
+      if (fieldConfig is Map<String, dynamic>) {
+        // Vérifier si c'est un champ de nomenclature
+        if (FormConfigParser.isNomenclatureField(fieldConfig)) {
+          nomenclatureFields.add(fieldName);
+        }
+        // Vérifier si c'est un champ de type sites_group
+        else if (fieldConfig['type_util'] == 'sites_group' ||
+            (fieldConfig['type_widget'] == 'datalist' &&
+                fieldConfig['keyValue'] == 'id_sites_group')) {
+          sitesGroupFields.add(fieldName);
+        }
+      }
+    }
+
+    // 2. Ajouter aussi les champs qui commencent par id_nomenclature_ (pour compatibilité)
+    for (final key in enrichedData.keys) {
+      if (key.startsWith('id_nomenclature_') &&
+          !nomenclatureFields.contains(key)) {
+        nomenclatureFields.add(key);
+      }
+    }
+
+    // 3. Ajouter id_sites_group si présent dans les données (pour compatibilité)
+    if (enrichedData.containsKey('id_sites_group') &&
+        !sitesGroupFields.contains('id_sites_group')) {
+      sitesGroupFields.add('id_sites_group');
+    }
+
+    debugPrint('Champs de nomenclature trouvés: ${nomenclatureFields.length}');
+    debugPrint('Champs nomenclature: ${nomenclatureFields.join(", ")}');
+    debugPrint('Champs sites_group trouvés: ${sitesGroupFields.length}');
+    debugPrint('Champs sites_group: ${sitesGroupFields.join(", ")}');
+
+    // Pour chaque champ de nomenclature, convertir l'ID en objet
+    for (final fieldName in nomenclatureFields) {
+      // Vérifier que le champ existe dans les données
+      if (!enrichedData.containsKey(fieldName)) {
+        debugPrint('  $fieldName: Champ non présent dans les données');
+        continue;
+      }
+
+      final fieldValue = enrichedData[fieldName];
+
+      debugPrint(
+          'Traitement de $fieldName: valeur=$fieldValue, type=${fieldValue?.runtimeType}');
+
+      // Ignorer si null ou vide
+      if (fieldValue == null || fieldValue == '' || fieldValue == 0) {
+        debugPrint('  $fieldName: Valeur null/vide, ignoré');
+        continue;
+      }
+
+      // Convertir en entier si nécessaire
+      int? idNomenclature;
+      if (fieldValue is int) {
+        idNomenclature = fieldValue;
+      } else if (fieldValue is String) {
+        idNomenclature = int.tryParse(fieldValue);
+      } else if (fieldValue is Map) {
+        // Si c'est déjà un Map, vérifier s'il contient un ID
+        if (fieldValue.containsKey('id')) {
+          final id = fieldValue['id'];
+          idNomenclature = id is int ? id : int.tryParse(id.toString());
+        }
+      }
+
+      if (idNomenclature == null || idNomenclature == 0) {
+        debugPrint('  $fieldName: Impossible de convertir en ID valide');
+        continue;
+      }
+
+      debugPrint('  $fieldName: ID trouvé=$idNomenclature');
+
+      try {
+        // Récupérer la nomenclature par son ID
+        final nomenclatureName =
+            await nomenclatureService.getNomenclatureNameById(idNomenclature);
+
+        debugPrint('  $fieldName: Label récupéré=$nomenclatureName');
+
+        // Si on a trouvé un label, créer un objet nomenclature
+        if (nomenclatureName != 'Nomenclature $idNomenclature (non trouvée)') {
+          // Créer un objet avec le label
+          enrichedData[fieldName] = {
+            'id': idNomenclature,
+            'label': nomenclatureName,
+          };
+          debugPrint('  $fieldName: Enrichi avec succès');
+        } else {
+          debugPrint('  $fieldName: Nomenclature non trouvée');
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de l\'enrichissement de $fieldName: $e');
+        // En cas d'erreur, conserver l'ID tel quel
+      }
+    }
+
+    // Traiter les champs de type sites_group
+    for (final fieldName in sitesGroupFields) {
+      // Vérifier que le champ existe dans les données
+      if (!enrichedData.containsKey(fieldName)) {
+        debugPrint('  $fieldName: Champ non présent dans les données');
+        continue;
+      }
+
+      final fieldValue = enrichedData[fieldName];
+
+      debugPrint(
+          'Traitement de $fieldName (sites_group): valeur=$fieldValue, type=${fieldValue?.runtimeType}');
+
+      // Ignorer si null ou vide
+      if (fieldValue == null || fieldValue == '' || fieldValue == 0) {
+        debugPrint('  $fieldName: Valeur null/vide, ignoré');
+        continue;
+      }
+
+      // Convertir en entier si nécessaire
+      int? siteGroupId;
+      if (fieldValue is int) {
+        siteGroupId = fieldValue;
+      } else if (fieldValue is String) {
+        siteGroupId = int.tryParse(fieldValue);
+      } else if (fieldValue is Map) {
+        // Si c'est déjà un Map, vérifier s'il contient un ID
+        if (fieldValue.containsKey('id')) {
+          final id = fieldValue['id'];
+          siteGroupId = id is int ? id : int.tryParse(id.toString());
+        }
+      }
+
+      if (siteGroupId == null || siteGroupId == 0) {
+        debugPrint('  $fieldName: Impossible de convertir en ID valide');
+        continue;
+      }
+
+      debugPrint('  $fieldName: ID trouvé=$siteGroupId');
+
+      try {
+        final sitesDatabase = ref.read(siteDatabaseProvider);
+        final allSiteGroups = await sitesDatabase.getAllSiteGroups();
+        final siteGroup = allSiteGroups
+            .where((sg) => sg.idSitesGroup == siteGroupId)
+            .firstOrNull;
+
+        if (siteGroup != null) {
+          // Créer un objet avec le nom du groupe
+          enrichedData[fieldName] = {
+            'id': siteGroupId,
+            'label': siteGroup.sitesGroupName ??
+                siteGroup.sitesGroupCode ??
+                'Groupe $siteGroupId',
+          };
+          debugPrint(
+              '  $fieldName: Enrichi avec succès (${enrichedData[fieldName]['label']})');
+        } else {
+          debugPrint('  $fieldName: Groupe de sites non trouvé');
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de l\'enrichissement de $fieldName: $e');
+        // En cas d'erreur, conserver l'ID tel quel
+      }
+    }
+
+    return enrichedData;
   }
 
   static List<Widget> buildPropertyRows(
@@ -50,6 +258,7 @@ class PropertyDisplayWidget extends StatelessWidget {
     ObjectConfig? config,
     CustomConfig? customConfig,
     bool separateEmptyFields,
+    List<String>? displayProperties,
   ) {
     // Préparer la configuration si disponible
     final Map<String, dynamic> parsedConfig = config != null
@@ -62,21 +271,45 @@ class PropertyDisplayWidget extends StatelessWidget {
       fieldLabels[entry.key] = entry.value['attribut_label'];
     }
 
+    // Filtrer les clés selon displayProperties si défini
+    final keysToShow = displayProperties != null && displayProperties.isNotEmpty
+        ? data.keys.where((key) => displayProperties.contains(key)).toList()
+        : data.keys.toList();
+
     if (!separateEmptyFields) {
       // Affichage simple (sans séparation des champs vides)
       final List<Widget> widgets = [];
-      final sortedKeys = data.keys.toList()..sort();
+      final sortedKeys = keysToShow.toList()..sort();
 
       for (final key in sortedKeys) {
-        if (data[key] != null) {
+        final value = data[key];
+        // Vérifier si la valeur est valide
+        bool isValid = false;
+
+        if (value == null) {
+          isValid = false;
+        } else if (value is Map) {
+          // Un Map enrichi est toujours valide (il contient 'id' et 'label')
+          isValid = value.isNotEmpty;
+        } else if (value is String) {
+          isValid = value.trim().isNotEmpty;
+        } else if (value is num) {
+          // Pour les nombres, considérer comme valide sauf si c'est 0
+          isValid = value != 0;
+        } else {
+          // Autres types (bool, etc.) sont valides
+          isValid = true;
+        }
+
+        if (isValid) {
           // Formater le libellé du champ
           String displayLabel = fieldLabels[key] ?? key;
           if (displayLabel == key) {
             displayLabel = _formatLabel(key);
           }
 
-          String displayValue = _formatValue(data[key]);
-          
+          String displayValue = _formatValue(value);
+
           widgets.add(_buildPropertyRow(displayLabel, displayValue));
         }
       }
@@ -84,7 +317,8 @@ class PropertyDisplayWidget extends StatelessWidget {
       return widgets;
     } else {
       // Affichage avec séparation des champs vides et non vides
-      return _buildSortedProperties(data, config, customConfig);
+      return _buildSortedProperties(
+          data, config, customConfig, displayProperties);
     }
   }
 
@@ -92,37 +326,86 @@ class PropertyDisplayWidget extends StatelessWidget {
     Map<String, dynamic> data,
     ObjectConfig? config,
     CustomConfig? customConfig,
+    List<String>? displayProperties,
   ) {
     // Séparer les propriétés remplies et vides
     final filledProperties = <MapEntry<String, dynamic>>[];
     final emptyProperties = <MapEntry<String, dynamic>>[];
     final Set<String> allKeys = <String>{};
-    
-    // Ajouter toutes les clés de data
-    allKeys.addAll(data.keys);
-    
-    // Ajouter toutes les clés définies dans la configuration
-    if (config != null) {
-      // Récupérer les clés des propriétés configurées
-      if (config.propertiesKeys != null) {
-        allKeys.addAll(config.propertiesKeys!);
-      }
-      // Récupérer les clés de generic
-      if (config.generic != null) {
-        allKeys.addAll(config.generic!.keys);
-      }
-      // Récupérer les clés de specific
-      if (config.specific != null) {
-        allKeys.addAll(config.specific!.keys);
+
+    debugPrint(
+        '_buildSortedProperties - displayProperties: ${displayProperties?.join(", ")}');
+    debugPrint(
+        '_buildSortedProperties - données disponibles: ${data.keys.join(", ")}');
+
+    // Si displayProperties est défini, utiliser uniquement ces clés
+    if (displayProperties != null && displayProperties.isNotEmpty) {
+      allKeys.addAll(displayProperties);
+      debugPrint(
+          '_buildSortedProperties - Utilisation de displayProperties: ${allKeys.join(", ")}');
+    } else {
+      // Ajouter toutes les clés de data
+      allKeys.addAll(data.keys);
+
+      // Ajouter toutes les clés définies dans la configuration
+      if (config != null) {
+        // Récupérer les clés des propriétés configurées
+        if (config.propertiesKeys != null) {
+          allKeys.addAll(config.propertiesKeys!);
+        }
+        // Récupérer les clés de generic
+        if (config.generic != null) {
+          allKeys.addAll(config.generic!.keys);
+        }
+        // Récupérer les clés de specific
+        if (config.specific != null) {
+          allKeys.addAll(config.specific!.keys);
+        }
       }
     }
 
     // Trier les propriétés selon qu'elles sont remplies ou non
     for (var key in allKeys) {
-      if (data.containsKey(key) && data[key] != null && data[key].toString().isNotEmpty) {
-        filledProperties.add(MapEntry(key, data[key]));
+      debugPrint('Vérification du champ: $key');
+      if (data.containsKey(key)) {
+        final value = data[key];
+        debugPrint('  Valeur trouvée: $value (type: ${value.runtimeType})');
+
+        // Vérifier si la valeur est valide
+        bool isValid = false;
+
+        if (value == null) {
+          isValid = false;
+          debugPrint('  -> Invalide: null');
+        } else if (value is Map) {
+          // Un Map enrichi est toujours valide (il contient 'id' et 'label')
+          isValid = value.isNotEmpty;
+          debugPrint(
+              '  -> Map: isValid=$isValid, contenu: ${value.keys.join(", ")}');
+        } else if (value is String) {
+          isValid = value.trim().isNotEmpty;
+          debugPrint('  -> String: isValid=$isValid');
+        } else if (value is num) {
+          // Pour les nombres, considérer comme valide sauf si c'est 0
+          // (mais certains champs peuvent avoir 0 comme valeur valide)
+          isValid = value != 0;
+          debugPrint('  -> Num: isValid=$isValid (valeur=$value)');
+        } else {
+          // Autres types (bool, etc.) sont valides
+          isValid = true;
+          debugPrint('  -> Autre type: isValid=$isValid');
+        }
+
+        if (isValid) {
+          filledProperties.add(MapEntry(key, value));
+          debugPrint('  -> Ajouté aux champs remplis');
+        } else {
+          emptyProperties.add(MapEntry(key, null));
+          debugPrint('  -> Ajouté aux champs vides');
+        }
       } else {
         // Soit la propriété n'existe pas, soit elle est vide
+        debugPrint('  Champ non présent dans les données');
         emptyProperties.add(MapEntry(key, null));
       }
     }
@@ -152,7 +435,11 @@ class PropertyDisplayWidget extends StatelessWidget {
 
       for (final entry in filledProperties) {
         final label = _getPropertyLabel(entry.key, config, customConfig);
-        final value = _formatValue(entry.value);
+        final rawValue = entry.value;
+        debugPrint(
+            'Affichage champ rempli: $label = $rawValue (type: ${rawValue.runtimeType})');
+        final value = _formatValue(rawValue);
+        debugPrint('  Valeur formatée: $value');
         widgets.add(_buildPropertyRow(label, value));
       }
     }
@@ -176,6 +463,12 @@ class PropertyDisplayWidget extends StatelessWidget {
 
       for (final entry in emptyProperties) {
         final label = _getPropertyLabel(entry.key, config, customConfig);
+        debugPrint('Affichage champ vide: $label');
+        // Vérifier si le champ existe dans les données mais a été considéré comme vide
+        if (data.containsKey(entry.key)) {
+          debugPrint(
+              '  ATTENTION: Le champ existe dans les données avec la valeur: ${data[entry.key]}');
+        }
         widgets.add(_buildPropertyRow(
           label,
           'Non renseigné',
@@ -194,12 +487,13 @@ class PropertyDisplayWidget extends StatelessWidget {
   ) {
     if (config != null) {
       // Vérifier dans la configuration parsée
-      final parsedConfig = FormConfigParser.generateUnifiedSchema(config, customConfig);
-      if (parsedConfig.containsKey(key) && 
+      final parsedConfig =
+          FormConfigParser.generateUnifiedSchema(config, customConfig);
+      if (parsedConfig.containsKey(key) &&
           parsedConfig[key].containsKey('attribut_label')) {
         return parsedConfig[key]['attribut_label'];
       }
-      
+
       // Vérifier dans generic
       if (config.generic != null && config.generic!.containsKey(key)) {
         return config.generic![key]!.attributLabel ?? key;
