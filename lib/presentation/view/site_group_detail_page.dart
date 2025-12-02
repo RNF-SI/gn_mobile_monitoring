@@ -15,28 +15,34 @@ class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final ModuleInfo moduleInfo;
 
   const SiteGroupDetailPage({
-    Key? key,
+    super.key,
     required this.siteGroup,
     required this.moduleInfo,
-  }) : super(key: key);
+  });
 
   @override
-  ConsumerState<SiteGroupDetailPage> createState() => _SiteGroupDetailPageState();
+  ConsumerState<SiteGroupDetailPage> createState() =>
+      _SiteGroupDetailPageState();
 }
 
 class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
+  int? _expandedPanelIndex;
+
   @override
   void initState() {
     super.initState();
     // Refresh data when page is opened
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier).refresh();
+      ref
+          .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
+          .refresh();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final sitesState = ref.watch(siteGroupDetailViewModelProvider(widget.siteGroup));
+    final sitesState =
+        ref.watch(siteGroupDetailViewModelProvider(widget.siteGroup));
 
     // Récupérer la configuration pour personnaliser les libellés
     final module = widget.moduleInfo.module;
@@ -166,34 +172,59 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      widget.moduleInfo
-                              .module.complement?.configuration?.site?.labelList ??
-                          widget.moduleInfo
-                              .module.complement?.configuration?.site?.label ??
-                          'Sites associés',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                        widget.moduleInfo.module.complement?.configuration
+                                ?.sitesGroup?.label ??
+                            'Propriétés du groupe',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _buildPropertyRow(
+                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
+                    _buildPropertyRow(
+                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                    if (widget.siteGroup.sitesGroupDescription != null &&
+                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
+                      _buildPropertyRow(groupDescriptionLabel,
+                          widget.siteGroup.sitesGroupDescription!),
                   ],
                 ),
               ),
+            ),
+          ),
 
-              // Sites Table
-              Expanded(
-                child: sitesState.when(
-                  data: (sites) => _buildSitesTable(
-                    sites,
-                    context,
-                    baseSiteNameLabel,
-                    baseSiteCodeLabel,
-                  ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Text(
-                      'Erreur lors du chargement des sites: $error',
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                  ),
+          // Sites Table Section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.moduleInfo.module.complement?.configuration?.site
+                          ?.labelList ??
+                      widget.moduleInfo.module.complement?.configuration?.site
+                          ?.label ??
+                      'Sites associés',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ),
+
+          // Sites Expansion Panel List
+          Expanded(
+            child: sitesState.when(
+              data: (sites) => _buildSitesExpansionPanelList(
+                sites,
+                context,
+                baseSiteNameLabel,
+                baseSiteCodeLabel,
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Erreur lors du chargement des sites: $error',
+                  style: const TextStyle(color: Colors.red),
                 ),
               ),
             ],
@@ -234,7 +265,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     );
   }
 
-  Widget _buildSitesTable(
+  Widget _buildSitesExpansionPanelList(
     List<BaseSite> sites,
     BuildContext context,
     String baseSiteNameLabel,
@@ -246,102 +277,80 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       );
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: SingleChildScrollView(
-        child: Table(
-          columnWidths: const {
-            0: FixedColumnWidth(80), // Action column
-            1: FlexColumnWidth(80), // Name column
-            2: FixedColumnWidth(100), // Code column
-            3: FixedColumnWidth(120), // Description column
-          },
-          children: [
-            TableRow(
-              children: [
-                const Padding(
-                  padding:
-                      EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-                  child: Text('Action',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(baseSiteNameLabel,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(baseSiteCodeLabel,
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text('Description',
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                ),
-              ],
+    return ListView.builder(
+      itemCount: sites.length,
+      itemBuilder: (context, index) {
+        final site = sites[index];
+        final isExpanded = _expandedPanelIndex == index;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ExpansionTile(
+            key: ValueKey('expansion_${index}_$_expandedPanelIndex'),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide.none,
             ),
-            ...sites.map((site) => TableRow(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      height: 48,
-                      alignment: Alignment.center,
-                      child: IconButton(
-                        icon: const Icon(Icons.visibility, size: 20),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SiteDetailPage(
-                                site: site,
-                                moduleInfo: widget.moduleInfo,
-                                fromSiteGroup:
-                                    widget.siteGroup, // Passer le groupe de sites avec le nom correct du paramètre
-                              ),
-                            ),
-                          );
-                        },
-                        padding: EdgeInsets.zero,
-                        constraints: const BoxConstraints(
-                          minWidth: 36,
-                          minHeight: 36,
+            collapsedShape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            childrenPadding: EdgeInsets.zero,
+            leading: IconButton(
+              icon: const Icon(Icons.visibility, size: 20),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteDetailPage(
+                      site: site,
+                      moduleInfo: widget.moduleInfo,
+                      fromSiteGroup: widget.siteGroup,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'Voir les détails',
+            ),
+            title: Text(
+              site.baseSiteName ?? 'Site sans nom',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            initiallyExpanded: isExpanded,
+            onExpansionChanged: (bool expanded) {
+              setState(() {
+                if (expanded) {
+                  _expandedPanelIndex = index;
+                } else if (_expandedPanelIndex == index) {
+                  _expandedPanelIndex = null;
+                }
+              });
+            },
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: site.baseSiteDescription != null &&
+                        site.baseSiteDescription!.isNotEmpty
+                    ? Text(
+                        site.baseSiteDescription!,
+                        style: const TextStyle(fontSize: 14),
+                      )
+                    : const Text(
+                        'Aucune description disponible',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontStyle: FontStyle.italic,
+                          color: Colors.grey,
                         ),
-                        tooltip: 'Voir les détails',
                       ),
-                    ),
-                    Container(
-                      height: 48,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(site.baseSiteName ?? ''),
-                    ),
-                    Container(
-                      height: 48,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(site.baseSiteCode ?? ''),
-                    ),
-                    Container(
-                      height: 48,
-                      alignment: Alignment.centerLeft,
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Text(
-                        site.baseSiteDescription != null &&
-                                site.baseSiteDescription!.isNotEmpty
-                            ? site.baseSiteDescription!.length > 25
-                                ? '${site.baseSiteDescription!.substring(0, 22)}...'
-                                : site.baseSiteDescription!
-                            : '-',
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                )),
-          ],
-        ),
-      ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
