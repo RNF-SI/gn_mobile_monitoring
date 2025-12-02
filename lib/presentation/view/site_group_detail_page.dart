@@ -1,14 +1,19 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
-import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
-
 
 class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final SiteGroup siteGroup;
@@ -110,21 +115,22 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 padding: const EdgeInsets.all(8.0),
                 child: Card(
                   child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 8.0, horizontal: 12.0),
                     child: BreadcrumbNavigation(
                       items: [
                         BreadcrumbItem(
                           label: 'Module',
-                          value: widget.moduleInfo.module.moduleLabel ?? 'Module',
+                          value:
+                              widget.moduleInfo.module.moduleLabel ?? 'Module',
                           onTap: () {
                             Navigator.of(context)
                                 .pop(); // Retour à la page précédente
                           },
                         ),
                         BreadcrumbItem(
-                          label: widget.moduleInfo.module.complement?.configuration
-                                  ?.sitesGroup?.label ??
+                          label: widget.moduleInfo.module.complement
+                                  ?.configuration?.sitesGroup?.label ??
                               'Groupe',
                           value: widget.siteGroup.sitesGroupName ??
                               widget.siteGroup.sitesGroupCode ??
@@ -145,16 +151,16 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                            widget.moduleInfo.module.complement?.configuration?.sitesGroup
-                                    ?.label ??
+                            widget.moduleInfo.module.complement?.configuration
+                                    ?.sitesGroup?.label ??
                                 'Propriétés du groupe',
                             style: const TextStyle(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                         const SizedBox(height: 8),
-                        _buildPropertyRow(
-                            groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                        _buildPropertyRow(
-                            groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                        _buildPropertyRow(groupNameLabel,
+                            widget.siteGroup.sitesGroupName ?? ''),
+                        _buildPropertyRow(groupCodeLabel,
+                            widget.siteGroup.sitesGroupCode ?? ''),
                         if (widget.siteGroup.sitesGroupDescription != null &&
                             widget.siteGroup.sitesGroupDescription!.isNotEmpty)
                           _buildPropertyRow(groupDescriptionLabel,
@@ -168,37 +174,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               // Sites Table Section
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        widget.moduleInfo.module.complement?.configuration
-                                ?.sitesGroup?.label ??
-                            'Propriétés du groupe',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+                child: Text(
                   widget.moduleInfo.module.complement?.configuration?.site
                           ?.labelList ??
                       widget.moduleInfo.module.complement?.configuration?.site
@@ -207,24 +183,28 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
-          ),
-
-          // Sites Expansion Panel List
-          Expanded(
-            child: sitesState.when(
-              data: (sites) => _buildSitesExpansionPanelList(
-                sites,
-                context,
-                baseSiteNameLabel,
-                baseSiteCodeLabel,
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Text(
-                  'Erreur lors du chargement des sites: $error',
-                  style: const TextStyle(color: Colors.red),
+
+              // Sites Expansion Panel List
+              Expanded(
+                child: sitesState.when(
+                  data: (sites) => _buildSitesExpansionPanelList(
+                    sites,
+                    context,
+                    baseSiteNameLabel,
+                    baseSiteCodeLabel,
+                    siteConfig,
+                    customConfig,
+                    parsedSiteConfig,
+                  ),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text(
+                      'Erreur lors du chargement des sites: $error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -237,7 +217,9 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const GeometriesMapWidget(geojsonData: null)), // replace null by geojson data
+                  MaterialPageRoute(
+                      builder: (_) => const GeometriesMapWidget(
+                          geojsonData: null)), // replace null by geojson data
                 );
               },
               child: const Icon(Icons.map),
@@ -270,6 +252,9 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     BuildContext context,
     String baseSiteNameLabel,
     String baseSiteCodeLabel,
+    ObjectConfig? siteConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedSiteConfig,
   ) {
     if (sites.isEmpty) {
       return const Center(
@@ -312,12 +297,66 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               },
               tooltip: 'Voir les détails',
             ),
-            title: Text(
-              site.baseSiteName ?? 'Site sans nom',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+            title: FutureBuilder<SiteComplement?>(
+              future: _getSiteComplement(site.idBaseSite),
+              builder: (context, snapshot) {
+                // Construire les données du site (base + complément)
+                final Map<String, dynamic> siteData = {};
+
+                // Ajouter les champs de base
+                if (site.baseSiteCode != null) {
+                  siteData['base_site_code'] = site.baseSiteCode;
+                }
+                if (site.baseSiteName != null) {
+                  siteData['base_site_name'] = site.baseSiteName;
+                }
+                if (site.baseSiteDescription != null) {
+                  siteData['base_site_description'] = site.baseSiteDescription;
+                }
+                if (site.firstUseDate != null) {
+                  siteData['first_use_date'] = site.firstUseDate!.toString();
+                }
+
+                // Ajouter les données du complément si disponibles
+                if (snapshot.hasData && snapshot.data?.data != null) {
+                  try {
+                    Map<String, dynamic> complementData = {};
+                    if (snapshot.data!.data is String) {
+                      complementData = Map<String, dynamic>.from(
+                          jsonDecode(snapshot.data!.data as String));
+                    } else {
+                      complementData =
+                          Map<String, dynamic>.from(snapshot.data!.data as Map);
+                    }
+                    siteData.addAll(complementData);
+                  } catch (e) {
+                    debugPrint(
+                        'Erreur lors du décodage des données complémentaires: $e');
+                  }
+                }
+
+                // Récupérer le premier champ de display_list
+                final List<String>? displayProperties =
+                    siteConfig?.displayList ?? siteConfig?.displayProperties;
+
+                String displayText = site.baseSiteName ?? 'Site sans nom';
+
+                if (displayProperties != null && displayProperties.isNotEmpty) {
+                  final firstProperty = displayProperties.first;
+                  if (siteData.containsKey(firstProperty)) {
+                    final rawValue = siteData[firstProperty];
+                    displayText = ValueFormatter.format(rawValue);
+                  }
+                }
+
+                return Text(
+                  displayText,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                );
+              },
             ),
             initiallyExpanded: isExpanded,
             onExpansionChanged: (bool expanded) {
@@ -330,27 +369,157 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               });
             },
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: site.baseSiteDescription != null &&
-                        site.baseSiteDescription!.isNotEmpty
-                    ? Text(
-                        site.baseSiteDescription!,
-                        style: const TextStyle(fontSize: 14),
-                      )
-                    : const Text(
-                        'Aucune description disponible',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontStyle: FontStyle.italic,
-                          color: Colors.grey,
-                        ),
-                      ),
-              ),
+              _buildSiteProperties(
+                  site, siteConfig, customConfig, parsedSiteConfig),
             ],
           ),
         );
       },
     );
+  }
+
+  Widget _buildSiteProperties(
+    BaseSite site,
+    ObjectConfig? siteConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedSiteConfig,
+  ) {
+    // Récupérer les données complémentaires
+    return FutureBuilder<SiteComplement?>(
+      future: _getSiteComplement(site.idBaseSite),
+      builder: (context, snapshot) {
+        // Construire les données du site (base + complément)
+        final Map<String, dynamic> siteData = {};
+
+        // Ajouter les champs de base
+        if (site.baseSiteCode != null) {
+          siteData['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          siteData['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          siteData['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          siteData['first_use_date'] = site.firstUseDate!.toString();
+        }
+
+        // Ajouter les données du complément si disponibles
+        if (snapshot.hasData && snapshot.data?.data != null) {
+          try {
+            Map<String, dynamic> complementData = {};
+            if (snapshot.data!.data is String) {
+              complementData = Map<String, dynamic>.from(
+                  jsonDecode(snapshot.data!.data as String));
+            } else {
+              complementData =
+                  Map<String, dynamic>.from(snapshot.data!.data as Map);
+            }
+            siteData.addAll(complementData);
+          } catch (e) {
+            debugPrint(
+                'Erreur lors du décodage des données complémentaires: $e');
+          }
+        }
+
+        // Si pas de données, afficher un message
+        if (siteData.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Aucune information disponible',
+              style: TextStyle(
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+            ),
+          );
+        }
+
+        // Déterminer les colonnes à afficher (uniquement display_list)
+        List<String>? displayProperties =
+            siteConfig?.displayList ?? siteConfig?.displayProperties;
+
+        // Si pas de displayProperties, ne rien afficher
+        if (displayProperties == null || displayProperties.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Aucune information à afficher',
+              style: TextStyle(
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+            ),
+          );
+        }
+
+        // Exclure le premier item de display_list (déjà affiché dans le title)
+        final propertiesToShow = displayProperties.length > 1
+            ? displayProperties.sublist(1)
+            : <String>[];
+
+        // Si plus rien à afficher après exclusion du premier item
+        if (propertiesToShow.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Text(
+              'Aucune information supplémentaire à afficher',
+              style: TextStyle(
+                fontSize: 14,
+                fontStyle: FontStyle.italic,
+                color: Colors.grey,
+              ),
+            ),
+          );
+        }
+
+        // Filtrer les propriétés meta et ne garder que celles présentes dans les données
+        final filteredProperties = propertiesToShow.where((key) {
+          return !key.startsWith('meta_') && siteData.containsKey(key);
+        }).toList();
+
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: filteredProperties.map((propertyKey) {
+              final rawValue = siteData[propertyKey];
+
+              // Obtenir le label depuis la configuration
+              String label = propertyKey;
+              if (parsedSiteConfig.containsKey(propertyKey)) {
+                label = parsedSiteConfig[propertyKey]['attribut_label'] ??
+                    propertyKey;
+              }
+
+              // Formater la valeur
+              String displayValue = ValueFormatter.format(rawValue);
+
+              return _buildPropertyRow(label, displayValue);
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<SiteComplement?> _getSiteComplement(int siteId) async {
+    try {
+      final sitesDatabase = ref.read(siteDatabaseProvider);
+      final allComplements = await sitesDatabase.getAllSiteComplements();
+      final complement = allComplements
+          .where(
+            (complement) => complement.idBaseSite == siteId,
+          )
+          .firstOrNull;
+      return complement;
+    } catch (e) {
+      debugPrint('Erreur lors de la récupération du complément: $e');
+      return null;
+    }
   }
 }
