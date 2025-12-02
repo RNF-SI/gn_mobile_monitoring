@@ -9,8 +9,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -423,6 +425,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   @override
   Widget build(BuildContext context) {
+    // Récupérer la configuration pour personnaliser les libellés
+    final module = widget.moduleInfo.module;
+
     final childContent = buildChildrenContent();
 
     // Détecter si le clavier est visible
@@ -450,6 +455,39 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                     flex: propertiesFlex,
                     child: buildBaseContent(),
                   ),
+                 Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final groupSiteConfig = module.complement?.configuration?.sitesGroup;
+                if (groupSiteConfig != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteGroupFormPage(
+                         siteConfig: groupSiteConfig,
+                        customConfig: module.complement?.configuration?.custom,
+                        moduleId: module.id,
+                        moduleInfo: widget.moduleInfo,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Configuration de site non disponible'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: Text(
+                'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
+              ),
+            ),
+          ),
+
                   Expanded(
                     flex: childrenFlex,
                     child: childContent,
@@ -457,6 +495,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ],
               ),
             ),
+            
         ],
       ),
     );

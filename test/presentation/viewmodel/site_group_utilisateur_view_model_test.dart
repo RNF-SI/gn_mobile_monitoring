@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Mock des dépendances

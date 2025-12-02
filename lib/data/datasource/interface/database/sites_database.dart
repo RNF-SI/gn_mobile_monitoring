@@ -35,6 +35,7 @@ abstract class SitesDatabase {
 
   /// Methods for handling CorSitesGroupModules
   Future<void> clearAllSiteGroupModules();
+  Future<void> insertSiteGroupModule(SitesGroupModule siteGroupModule);
   Future<void> insertSiteGroupModules(List<SitesGroupModule> modules);
   Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId);
   Future<List<SitesGroupModule>> getAllSiteGroupModules();
@@ -56,7 +57,7 @@ abstract class SitesDatabase {
   Future<int> insertSite(BaseSite site);
   
   /// Insert a single site group
-  Future<void> insertSiteGroup(SiteGroup siteGroup);
+  Future<int> insertSiteGroup(SiteGroup siteGroup);
   
   /// Get site modules by module ID
   Future<List<SiteModule>> getSiteModulesByModuleId(int moduleId);
@@ -66,4 +67,7 @@ abstract class SitesDatabase {
   
   /// Get a site by its ID
   Future<BaseSite?> getSiteById(int siteId);
+
+  /// Get a site group by its ID
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId);
 }

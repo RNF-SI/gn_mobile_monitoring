@@ -15,7 +15,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecas
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 
 /// Provider pour la version du cache - incrémenté après chaque sync pour forcer le rafraîchissement
 final cacheVersionProvider = StateProvider<int>((ref) => 0);
