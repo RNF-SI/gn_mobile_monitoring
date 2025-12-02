@@ -53,6 +53,12 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     });
   }
 
+  // Insert a single site and return its ID
+  Future<int> insertSite(BaseSite site) async {
+    final dbEntity = site.toDatabaseEntity();
+    return await into(tBaseSites).insert(dbEntity);
+  }
+
   // Update a single site
   Future<void> updateSite(BaseSite site) async {
     final dbEntity = site.toDatabaseEntity();

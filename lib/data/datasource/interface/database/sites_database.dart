@@ -52,8 +52,8 @@ abstract class SitesDatabase {
   /// Get sites by site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
   
-  /// Insert a single site
-  Future<void> insertSite(BaseSite site);
+  /// Insert a single site and return its ID
+  Future<int> insertSite(BaseSite site);
   
   /// Insert a single site group
   Future<void> insertSiteGroup(SiteGroup siteGroup);
