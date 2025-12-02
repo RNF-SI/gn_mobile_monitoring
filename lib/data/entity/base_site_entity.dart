@@ -35,7 +35,7 @@ class BaseSiteEntity {
       firstUseDate: json['first_use_date'] != null
           ? DateTime.parse(json['first_use_date'])
           : null,
-      geom: json['geom'] as String?,
+      geom: json['geometry'] as String?,
       uuidBaseSite: json['uuid_base_site'] as String?,
       altitudeMin: json['altitude_min'] as int?,
       altitudeMax: json['altitude_max'] as int?,
