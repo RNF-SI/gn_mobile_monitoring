@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
@@ -100,9 +101,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         title: Text(
             '${widget.moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${widget.siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
       ),
-      body: Stack(
-        children: [
-          Column(
+      body: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Fil d'Ariane pour la navigation
@@ -165,40 +164,47 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 ),
               ),
 
+              // Propriétés supplémentaires du groupe
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                  widget.moduleInfo.module.complement?.configuration
+                                          ?.sitesGroup?.label ??
+                                      'Propriétés du groupe',
+                                  style: const TextStyle(
+                                      fontSize: 16, fontWeight: FontWeight.bold)),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        _buildPropertyRow(
+                            groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
+                        _buildPropertyRow(
+                            groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                        if (widget.siteGroup.sitesGroupDescription != null &&
+                            widget.siteGroup.sitesGroupDescription!.isNotEmpty)
+                          _buildPropertyRow(groupDescriptionLabel,
+                              widget.siteGroup.sitesGroupDescription!),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
               // Sites Table Section
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        widget.moduleInfo.module.complement?.configuration
-                                ?.sitesGroup?.label ??
-                            'Propriétés du groupe',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
+                child: Text(
                   widget.moduleInfo.module.complement?.configuration?.site
                           ?.labelList ??
                       widget.moduleInfo.module.complement?.configuration?.site
@@ -207,54 +213,54 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   style: const TextStyle(
                       fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
-          ),
-
-          // Sites Expansion Panel List
-          Expanded(
-            child: sitesState.when(
-              data: (sites) => _buildSitesExpansionPanelList(
-                sites,
-                context,
-                baseSiteNameLabel,
-                baseSiteCodeLabel,
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Text(
-                  'Erreur lors du chargement des sites: $error',
-                  style: const TextStyle(color: Colors.red),
+
+              // Sites Expansion Panel List
+              Expanded(
+                child: sitesState.when(
+                  data: (sites) => _buildSitesExpansionPanelList(
+                    sites,
+                    context,
+                    baseSiteNameLabel,
+                    baseSiteCodeLabel,
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text(
+                      'Erreur lors du chargement des sites: $error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          // Bouton carto en bas à droite
-          Positioned(
-            bottom: 60,
-            right: 20,
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => sitesState.when(
-                      data: (sites) => GeometriesMapWidget(geojsonData: sites),
-                      loading: () => const Center(child: CircularProgressIndicator()),
-                      error: (error, stack) => Center(
-                        child: Text(
-                          'Erreur lors du chargement des sites: $error',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => Scaffold(
+                appBar: AppBar(
+                  title: const Text('Carte des sites'),
+                ),
+                body: sitesState.when(
+                  data: (sites) => GeometriesMapWidget(
+                    geojsonData: _convertSitesToGeoJSON(sites),
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text(
+                      'Erreur lors du chargement des sites: $error',
+                      style: const TextStyle(color: Colors.red),
                     ),
-                  ), // replace null by geojson data
-                );
-              },
-              child: const Icon(Icons.map),
+                  ),
+                ),
+              ),
             ),
-          ),
-        ],
+          );
+        },
+        child: const Icon(Icons.map),
       ),
     );
   }
@@ -363,5 +369,38 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         );
       },
     );
+  }
+
+  /// Convert list of BaseSite to GeoJSON format expected by GeometriesMapWidget
+  String? _convertSitesToGeoJSON(List<BaseSite> sites) {
+    if (sites.isEmpty) return null;
+    
+    final List<Map<String, dynamic>> geoJsonFeatures = [];
+    
+    for (final site in sites) {
+      if (site.geom == null || site.geom!.isEmpty) continue;
+      
+      try {
+        // Parse the geometry JSON string
+        final Map<String, dynamic> geometry = jsonDecode(site.geom!);
+        
+        // Create a feature with site information
+        final feature = {
+          'id': site.idBaseSite,
+          'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
+          'description': site.baseSiteDescription ?? '',
+          'geom': geometry,
+        };
+        
+        geoJsonFeatures.add(feature);
+      } catch (e) {
+        print('Erreur parsing geometry pour site ${site.idBaseSite}: $e');
+        // Skip this site if geometry parsing fails
+      }
+    }
+    
+    if (geoJsonFeatures.isEmpty) return null;
+    
+    return jsonEncode(geoJsonFeatures);
   }
 }
