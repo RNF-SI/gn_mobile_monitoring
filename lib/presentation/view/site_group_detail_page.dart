@@ -162,51 +162,46 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  widget.moduleInfo
-                          .module.complement?.configuration?.site?.labelList ??
-                      widget.moduleInfo
-                          .module.complement?.configuration?.site?.label ??
-                      'Sites associés',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                Expanded(
+                  child: Text(
+                    widget.moduleInfo
+                            .module.complement?.configuration?.site?.labelList ??
+                        widget.moduleInfo
+                            .module.complement?.configuration?.site?.label ??
+                        'Sites associés',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final siteConfig = module.complement?.configuration?.site;
+                    if (siteConfig != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteFormPageWithTypeSelection(
+                            siteConfig: siteConfig,
+                            customConfig: module.complement?.configuration?.custom,
+                            moduleId: module.id,
+                            moduleInfo: widget.moduleInfo,
+                            siteGroup: widget.siteGroup,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Configuration de site non disponible'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add_circle),
+                  tooltip: 'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
                 ),
               ],
-            ),
-          ),
-
-          // Add Site Button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final siteConfig = module.complement?.configuration?.site;
-                if (siteConfig != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteFormPageWithTypeSelection(
-                        siteConfig: siteConfig,
-                        customConfig: module.complement?.configuration?.custom,
-                        moduleId: module.id,
-                        moduleInfo: widget.moduleInfo,
-                        siteGroup: widget.siteGroup,
-                      ),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Configuration de site non disponible'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: Text(
-                'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
-              ),
             ),
           ),
 
