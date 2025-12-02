@@ -23,9 +23,15 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   List<Map<String, String>> tileLayers = [];
   Map<String, String>? selectedLayer;
 
+  late final MapController mapController;
+  bool hasAutoCentered = false; // recentrage automatique unique
+  bool userMovedMap = false;    // stoppe l'auto-recentrage
+
   @override
   void initState() {
     super.initState();
+    mapController = MapController();   // 🔥 Initialisation du controller
+
     loadTileLayers();
     loadGeometriesSafely();
     loadUserLocation();
@@ -173,6 +179,12 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
         print("Localisation affichée ✔");
       });
+
+      // 🔥 Recentrage automatique une fois tant que l'utilisateur n'a pas touché la carte
+      if (!hasAutoCentered && !userMovedMap) {
+        mapController.move(userPosition!, 17);
+        hasAutoCentered = true;
+      }
     } catch (e) {
       print("Erreur localisation : $e");
     }
@@ -182,66 +194,95 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   Widget build(BuildContext context) {
     LatLng initialCenter = userPosition ?? LatLng(48.85, 2.35);
 
-  return Column(
-    children: [
-      // Dropdown pour choisir la couche
-      if (tileLayers.isNotEmpty)
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: DropdownButton<Map<String, String>>(
-            value: selectedLayer,
-            items: tileLayers
-                .map((layer) => DropdownMenuItem(
-                      value: layer,
-                      child: Text(layer["name"] ?? "Layer"),
-                    ))
-                .toList(),
-            onChanged: (value) {
-              setState(() {
-                selectedLayer = value;
-              });
-            },
-          ),
-        ),
-
-      Expanded(
-        child: Stack(
+    return Stack(
+      children: [
+        Column(
           children: [
-            FlutterMap(
-              options: MapOptions(
-                initialCenter: initialCenter,
-                initialZoom: userPosition != null ? 15 : 12,
-              ),
-              children: [
-                if (selectedLayer != null)
-                  TileLayer(
-                    urlTemplate: selectedLayer!["urlTemplate"]!,
-                    userAgentPackageName:
-                        'com.example.gn_mobile_monitoring',
-                  ),
-                PolylineLayer(polylines: polylines),
-                PolygonLayer(polygons: polygons),
-                MarkerLayer(markers: markers),
-              ],
-            ),
-            // Attribution en bas à droite
-            if (selectedLayer != null)
-              Positioned(
-                bottom: 8,
-                right: 8,
-                child: Container(
-                  color: Colors.white70,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                  child: Text(
-                    selectedLayer?["attribution"] ?? "",
-                    style: const TextStyle(fontSize: 10),
-                  ),
+            // Dropdown
+            if (tileLayers.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: DropdownButton<Map<String, String>>(
+                  value: selectedLayer,
+                  items: tileLayers
+                      .map((layer) => DropdownMenuItem(
+                            value: layer,
+                            child: Text(layer["name"] ?? "Layer"),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      selectedLayer = value;
+                    });
+                  },
                 ),
               ),
-            ],
-          ),
+
+            Expanded(
+              child: Stack(
+                children: [
+                  FlutterMap(
+                    mapController: mapController,
+                    options: MapOptions(
+                      initialCenter: initialCenter,
+                      initialZoom:
+                          userPosition != null ? 15 : 12,
+
+                      // 🔥 Si l'utilisateur touche la carte → on arrête l'auto recentrage
+                      onPointerDown: (_, __) {
+                        userMovedMap = true;
+                      },
+                    ),
+                    children: [
+                      if (selectedLayer != null)
+                        TileLayer(
+                          urlTemplate: selectedLayer!["urlTemplate"]!,
+                          userAgentPackageName:
+                              'com.example.gn_mobile_monitoring',
+                        ),
+                      PolylineLayer(polylines: polylines),
+                      PolygonLayer(polygons: polygons),
+                      MarkerLayer(markers: markers),
+                    ],
+                  ),
+
+                  // Attribution
+                  if (selectedLayer != null)
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: Container(
+                        color: Colors.white70,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 4, vertical: 2),
+                        child: Text(
+                          selectedLayer?["attribution"] ?? "",
+                          style: const TextStyle(fontSize: 10),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
         ),
+
+        // ---------------------------
+        // Bouton flottant "Centrer"
+        // ---------------------------
+        if (userPosition != null)
+          Positioned(
+            bottom: 60,
+            right: 20,
+            child: FloatingActionButton(
+              child: const Icon(Icons.my_location),
+              onPressed: () {
+                mapController.move(userPosition!, 17);
+                userMovedMap = false; // optionnel
+                hasAutoCentered = true; // optionnel (empêche auto recentrage)
+              },
+            ),
+          ),
       ],
     );
   }
