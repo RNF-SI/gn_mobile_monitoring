@@ -117,6 +117,15 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   }
 
   /// Operations for TSitesGroups
+  
+   // Get site group by ID
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId) async {
+    final query = select(tSitesGroups)
+      ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId));
+    final result = await query.getSingleOrNull();
+    if (result == null) return null;
+    return result.toDomain();
+  }
 
   // Fetch all site groups
   Future<List<SiteGroup>> getAllGroups() async {
@@ -124,6 +133,12 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     return dbGroups.map((e) => e.toDomain()).toList();
   }
 
+  // Insert a single site^group and return its ID
+  Future<int> insertSiteGroup(SiteGroup siteGroup) async {
+    final dbEntity = siteGroup.toDatabaseEntity();
+    return await into(tSitesGroups).insert(dbEntity);
+  }
+  
   // Insert multiple site groups
   Future<void> insertGroups(List<SiteGroup> groups) async {
     final dbEntities = groups.map((e) => e.toDatabaseEntity()).toList();
@@ -163,6 +178,11 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   Future<List<SiteGroup>> getGroupsForModule(int moduleId) async {
     // TODO: Implement this
     return [];
+  }
+
+  Future<int> insertSiteGroupModule(siteGroupModule) async {
+   final dbEntity = siteGroupModule.toDatabaseEntity();
+    return await into(corSitesGroupModuleTable).insert(dbEntity);
   }
 
   Future<void> insertSitesGroupModules(List<SitesGroupModule> modules) async {
