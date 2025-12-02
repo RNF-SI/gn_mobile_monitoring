@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -27,6 +28,9 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   bool hasAutoCentered = false; // recentrage automatique unique
   bool userMovedMap = false;    // stoppe l'auto-recentrage
 
+  StreamSubscription<Position>? positionStream;
+  CircleMarker? accuracyCircle; // cercle de précision
+
   @override
   void initState() {
     super.initState();
@@ -37,6 +41,11 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
     loadUserLocation();
   }
 
+  @override
+  void dispose() {
+    positionStream?.cancel();
+    super.dispose();
+  }
   // -------------------------
   // Charger les layers depuis le JSON de config
   // -------------------------
@@ -164,29 +173,56 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
       // OK → récupérer la position
       Position pos = await Geolocator.getCurrentPosition();
+      _updateUserPosition(pos);
 
-      setState(() {
-        userPosition = LatLng(pos.latitude, pos.longitude);
-
-        markers.add(
-          Marker(
-            point: userPosition!,
-            width: 40,
-            height: 40,
-            child: const Icon(Icons.my_location, color: Colors.blue, size: 34),
-          ),
-        );
-
-        print("Localisation affichée ✔");
+      // Tracking en continu
+      positionStream = Geolocator.getPositionStream(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.best,
+          distanceFilter: 2, // mise à jour tous les 2 m
+        ),
+      ).listen((Position newPos) {
+        _updateUserPosition(newPos);
       });
-
-      // 🔥 Recentrage automatique une fois tant que l'utilisateur n'a pas touché la carte
-      if (!hasAutoCentered && !userMovedMap) {
-        mapController.move(userPosition!, 17);
-        hasAutoCentered = true;
-      }
     } catch (e) {
       print("Erreur localisation : $e");
+    }
+  }
+
+  void _updateUserPosition(Position pos) {
+    setState(() {
+      userPosition = LatLng(pos.latitude, pos.longitude);
+
+      // Supprimer ancien marker bleu
+      markers.removeWhere((m) =>
+          m.child is Icon &&
+          (m.child as Icon).icon == Icons.my_location);
+
+      // Ajouter marker bleu
+      markers.add(
+        Marker(
+          point: userPosition!,
+          width: 40,
+          height: 40,
+          child: const Icon(Icons.my_location, color: Colors.blue, size: 34),
+        ),
+      );
+
+      // 🔵 Cercle de précision
+      accuracyCircle = CircleMarker(
+        point: userPosition!,
+        radius: pos.accuracy, // précision GPS en mètres
+        useRadiusInMeter: true,
+        color: Colors.blue.withOpacity(0.15),
+        borderStrokeWidth: 1.5,
+        borderColor: Colors.blue,
+      );
+    });
+
+    // Recentrage automatique UNE seule fois si l'utilisateur n'a pas bougé
+    if (!hasAutoCentered && !userMovedMap) {
+      mapController.move(userPosition!, 17);
+      hasAutoCentered = true;
     }
   }
 
@@ -240,8 +276,12 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
                           userAgentPackageName:
                               'com.example.gn_mobile_monitoring',
                         ),
+                      // 🔵 Cercle de précision GPS
+                      if (accuracyCircle != null)
+                        CircleLayer(circles: [accuracyCircle!]),
                       PolylineLayer(polylines: polylines),
                       PolygonLayer(polygons: polygons),
+                      // 🔵 Marker de l’utilisateur
                       MarkerLayer(markers: markers),
                     ],
                   ),
