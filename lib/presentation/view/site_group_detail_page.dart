@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -174,6 +175,41 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             ),
           ),
 
+          // Add Site Button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final siteConfig = module.complement?.configuration?.site;
+                if (siteConfig != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteFormPageWithTypeSelection(
+                        siteConfig: siteConfig,
+                        customConfig: module.complement?.configuration?.custom,
+                        moduleId: module.id,
+                        moduleInfo: widget.moduleInfo,
+                        siteGroup: widget.siteGroup,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Configuration de site non disponible'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: Text(
+                'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+              ),
+            ),
+          ),
+
           // Sites Table
           Expanded(
             child: sitesState.when(
@@ -324,4 +360,6 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       ),
     );
   }
+
+ 
 }

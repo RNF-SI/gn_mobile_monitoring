@@ -213,9 +213,9 @@ class SitesDatabaseImpl implements SitesDatabase {
   }
   
   @override
-  Future<void> insertSite(BaseSite site) async {
+  Future<int> insertSite(BaseSite site) async {
     final db = await _database;
-    await db.sitesDao.insertSites([site]);
+    return await db.sitesDao.insertSite(site);
   }
   
   @override
