@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class BaseSiteEntity {
   final int idBaseSite;
   final String? baseSiteName;
@@ -35,7 +37,7 @@ class BaseSiteEntity {
       firstUseDate: json['first_use_date'] != null
           ? DateTime.parse(json['first_use_date'])
           : null,
-      geom: json['geom'] as String?,
+      geom: _parseGeometry(json['geometry'] ?? json['geom']),
       uuidBaseSite: json['uuid_base_site'] as String?,
       altitudeMin: json['altitude_min'] as int?,
       altitudeMax: json['altitude_max'] as int?,
@@ -63,5 +65,18 @@ class BaseSiteEntity {
       'meta_create_date': metaCreateDate?.toIso8601String(),
       'meta_update_date': metaUpdateDate?.toIso8601String(),
     };
+  }
+
+  // Helper method to parse geometry from different formats
+  static String? _parseGeometry(dynamic geometryData) {
+    if (geometryData == null) return null;
+    
+    if (geometryData is String) {
+      return geometryData;
+    } else if (geometryData is Map<String, dynamic>) {
+      return jsonEncode(geometryData);
+    }
+    
+    return null;
   }
 }

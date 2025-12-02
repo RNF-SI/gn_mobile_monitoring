@@ -290,9 +290,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           site['first_use_date'] = properties['first_use_date'];
           site['uuid_base_site'] = properties['uuid_base_site'];
           
-          // Also update geometry if available
+          // Also update geometry if available (convert from Map to JSON string)
           if (siteData['geometry'] != null) {
-            site['geometry'] = siteData['geometry'];
+            final geometryData = siteData['geometry'];
+            if (geometryData is Map<String, dynamic>) {
+              site['geom'] = jsonEncode(geometryData);
+            } else if (geometryData is String) {
+              site['geom'] = geometryData;
+            }
           }
         }
       } catch (e) {
