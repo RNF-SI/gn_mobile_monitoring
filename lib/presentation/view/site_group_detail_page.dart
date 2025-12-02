@@ -364,16 +364,42 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       );
     }
 
+    // Trier les sites par distance si la position GPS est disponible
+    List<BaseSite> sortedSites = List.from(sites);
+    if (_userPosition != null) {
+      sortedSites.sort((a, b) {
+        final distanceA = _calculateDistance(a);
+        final distanceB = _calculateDistance(b);
+
+        // Si les deux distances sont disponibles, trier par distance
+        if (distanceA != null && distanceB != null) {
+          return distanceA.compareTo(distanceB);
+        }
+        // Si seule la distance A est disponible, A vient en premier
+        if (distanceA != null && distanceB == null) {
+          return -1;
+        }
+        // Si seule la distance B est disponible, B vient en premier
+        if (distanceA == null && distanceB != null) {
+          return 1;
+        }
+        // Si aucune distance n'est disponible, conserver l'ordre original
+        return 0;
+      });
+    }
+
     return ListView.builder(
-      itemCount: sites.length,
+      itemCount: sortedSites.length,
       itemBuilder: (context, index) {
-        final site = sites[index];
-        final isExpanded = _expandedPanelIndex == index;
+        final site = sortedSites[index];
+        // Trouver l'index original pour gérer l'expansion
+        final originalIndex = sites.indexOf(site);
+        final isExpanded = _expandedPanelIndex == originalIndex;
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
           child: ExpansionTile(
-            key: ValueKey('expansion_${index}_$_expandedPanelIndex'),
+            key: ValueKey('expansion_${originalIndex}_$_expandedPanelIndex'),
             shape: const RoundedRectangleBorder(
               side: BorderSide.none,
             ),
@@ -477,8 +503,8 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             onExpansionChanged: (bool expanded) {
               setState(() {
                 if (expanded) {
-                  _expandedPanelIndex = index;
-                } else if (_expandedPanelIndex == index) {
+                  _expandedPanelIndex = originalIndex;
+                } else if (_expandedPanelIndex == originalIndex) {
                   _expandedPanelIndex = null;
                 }
               });
