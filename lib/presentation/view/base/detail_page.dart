@@ -59,6 +59,7 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
       customConfig: customConfig,
       title: propertiesTitle,
       separateEmptyFields: separateEmptyFields,
+      displayProperties: displayProperties,
     );
   }
 
@@ -477,7 +478,7 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
                                     width: 1,
                                   ),
                                 ),
-                                headingRowColor: MaterialStateProperty.all(
+                                headingRowColor: WidgetStateProperty.all(
                                   tableHeaderColor,
                                 ),
                               ),
