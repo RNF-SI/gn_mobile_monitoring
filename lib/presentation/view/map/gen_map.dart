@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
@@ -19,11 +20,40 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   List<Polygon> polygons = [];
   LatLng? userPosition;
 
+  List<Map<String, String>> tileLayers = [];
+  Map<String, String>? selectedLayer;
+
   @override
   void initState() {
     super.initState();
+    loadTileLayers();
     loadGeometriesSafely();
     loadUserLocation();
+  }
+
+  // -------------------------
+  // Charger les layers depuis le JSON de config
+  // -------------------------
+  Future<void> loadTileLayers() async {
+    try {
+      final String jsonString =
+          await rootBundle.loadString('assets/layers_config.json');
+      final List data = jsonDecode(jsonString);
+      setState(() {
+        tileLayers = data
+            .map<Map<String, String>>((e) => {
+                  "name": e["name"],
+                  "urlTemplate": e["urlTemplate"],
+                  "attribution": e["attribution"] ?? "",
+                })
+            .toList();
+
+        // Valeur par défaut
+        if (tileLayers.isNotEmpty) selectedLayer = tileLayers.first;
+      });
+    } catch (e) {
+      print("Erreur chargement layers.json : $e");
+    }
   }
 
   // -------------------------
@@ -102,53 +132,116 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   // Récupération de la position de l'appareil
   // -------------------------------
   Future<void> loadUserLocation() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return;
+    try {
+      // Vérifier si le service GPS est activé
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        print("GPS désactivé → pas d'affichage de la localisation.");
+        return; // ⛔️ ne rien afficher
+      }
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) return;
+      // Vérifier les permissions
+      LocationPermission permission = await Geolocator.checkPermission();
+
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          print("Permission refusée → pas de localisation.");
+          return; // ⛔️ ne rien afficher
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        print("Permission bloquée définitivement → pas de localisation.");
+        return; // ⛔️ ne rien afficher
+      }
+
+      // OK → récupérer la position
+      Position pos = await Geolocator.getCurrentPosition();
+
+      setState(() {
+        userPosition = LatLng(pos.latitude, pos.longitude);
+
+        markers.add(
+          Marker(
+            point: userPosition!,
+            width: 40,
+            height: 40,
+            child: const Icon(Icons.my_location, color: Colors.blue, size: 34),
+          ),
+        );
+
+        print("Localisation affichée ✔");
+      });
+    } catch (e) {
+      print("Erreur localisation : $e");
     }
-
-    if (permission == LocationPermission.deniedForever) {
-      return;
-    }
-
-    Position position = await Geolocator.getCurrentPosition();
-    setState(() {
-      userPosition = LatLng(position.latitude, position.longitude);
-
-      // Ajout d'un marqueur "Vous êtes ici"
-      markers.add(
-        Marker(
-          point: userPosition!,
-          width: 40,
-          height: 40,
-          child: const Icon(Icons.my_location, color: Colors.blue, size: 35),
-        ),
-      );
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     LatLng initialCenter = userPosition ?? LatLng(48.85, 2.35);
 
-    return FlutterMap(
-      options: MapOptions(
-        initialCenter: initialCenter,
-        initialZoom: userPosition != null ? 15 : 12,
-      ),
-      children: [
-        TileLayer(
-          urlTemplate:
-              "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-          userAgentPackageName: 'com.example.gn_mobile_monitoring', // <-- IMPORTANT
+  return Column(
+    children: [
+      // Dropdown pour choisir la couche
+      if (tileLayers.isNotEmpty)
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: DropdownButton<Map<String, String>>(
+            value: selectedLayer,
+            items: tileLayers
+                .map((layer) => DropdownMenuItem(
+                      value: layer,
+                      child: Text(layer["name"] ?? "Layer"),
+                    ))
+                .toList(),
+            onChanged: (value) {
+              setState(() {
+                selectedLayer = value;
+              });
+            },
+          ),
         ),
-        PolylineLayer(polylines: polylines),
-        PolygonLayer(polygons: polygons),
-        MarkerLayer(markers: markers),
+
+      Expanded(
+        child: Stack(
+          children: [
+            FlutterMap(
+              options: MapOptions(
+                initialCenter: initialCenter,
+                initialZoom: userPosition != null ? 15 : 12,
+              ),
+              children: [
+                if (selectedLayer != null)
+                  TileLayer(
+                    urlTemplate: selectedLayer!["urlTemplate"]!,
+                    userAgentPackageName:
+                        'com.example.gn_mobile_monitoring',
+                  ),
+                PolylineLayer(polylines: polylines),
+                PolygonLayer(polygons: polygons),
+                MarkerLayer(markers: markers),
+              ],
+            ),
+            // Attribution en bas à droite
+            if (selectedLayer != null)
+              Positioned(
+                bottom: 8,
+                right: 8,
+                child: Container(
+                  color: Colors.white70,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    selectedLayer?["attribution"] ?? "",
+                    style: const TextStyle(fontSize: 10),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ],
     );
   }

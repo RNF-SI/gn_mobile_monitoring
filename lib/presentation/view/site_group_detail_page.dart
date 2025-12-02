@@ -200,13 +200,24 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           ),
           // Bouton carto en bas à droite
           Positioned(
-            bottom: 20,
+            bottom: 60,
             right: 20,
             child: FloatingActionButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const GeometriesMapWidget(geojsonData: null)), // replace null by geojson data
+                  MaterialPageRoute(
+                    builder: (_) => sitesState.when(
+                      data: (sites) => GeometriesMapWidget(geojsonData: sites),
+                      loading: () => const Center(child: CircularProgressIndicator()),
+                      error: (error, stack) => Center(
+                        child: Text(
+                          'Erreur lors du chargement des sites: $error',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      ),
+                    ),
+                  ), // replace null by geojson data
                 );
               },
               child: const Icon(Icons.map),
