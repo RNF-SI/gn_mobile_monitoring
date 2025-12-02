@@ -22,9 +22,7 @@ mixin _$ModuleInfo {
       throw _privateConstructorUsedError; // Default to 0.0, indicating no progress
   String get currentStep => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleInfoCopyWith<ModuleInfo> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -54,8 +52,6 @@ class _$ModuleInfoCopyWithImpl<$Res, $Val extends ModuleInfo>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -84,8 +80,6 @@ class _$ModuleInfoCopyWithImpl<$Res, $Val extends ModuleInfo>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleCopyWith<$Res> get module {
@@ -121,8 +115,6 @@ class __$$ModuleInfoImplCopyWithImpl<$Res>
       _$ModuleInfoImpl _value, $Res Function(_$ModuleInfoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -197,9 +189,7 @@ class _$ModuleInfoImpl extends _ModuleInfo {
   int get hashCode => Object.hash(
       runtimeType, module, downloadStatus, downloadProgress, currentStep);
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleInfoImplCopyWith<_$ModuleInfoImpl> get copyWith =>
@@ -219,14 +209,11 @@ abstract class _ModuleInfo extends ModuleInfo {
   @override
   ModuleDownloadStatus get downloadStatus;
   @override
-  double get downloadProgress; // Default to 0.0, indicating no progress
-  @override
+  double get downloadProgress;
+  @override // Default to 0.0, indicating no progress
   String get currentStep;
-
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleInfoImplCopyWith<_$ModuleInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

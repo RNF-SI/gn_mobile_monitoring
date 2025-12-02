@@ -18,9 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ModuleInfoList {
   List<ModuleInfo> get values => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleInfoList
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleInfoListCopyWith<ModuleInfoList> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -44,8 +42,6 @@ class _$ModuleInfoListCopyWithImpl<$Res, $Val extends ModuleInfoList>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleInfoList
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,8 +75,6 @@ class __$$ModuleInfoListImplCopyWithImpl<$Res>
       _$ModuleInfoListImpl _value, $Res Function(_$ModuleInfoListImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleInfoList
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -127,9 +121,7 @@ class _$ModuleInfoListImpl extends _ModuleInfoList {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_values));
 
-  /// Create a copy of ModuleInfoList
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleInfoListImplCopyWith<_$ModuleInfoListImpl> get copyWith =>
@@ -144,11 +136,8 @@ abstract class _ModuleInfoList extends ModuleInfoList {
 
   @override
   List<ModuleInfo> get values;
-
-  /// Create a copy of ModuleInfoList
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleInfoListImplCopyWith<_$ModuleInfoListImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

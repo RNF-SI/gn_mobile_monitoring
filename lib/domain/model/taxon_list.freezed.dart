@@ -23,9 +23,7 @@ mixin _$TaxonList {
   String? get regne => throw _privateConstructorUsedError;
   String? get group2Inpn => throw _privateConstructorUsedError;
 
-  /// Create a copy of TaxonList
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TaxonListCopyWith<TaxonList> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -54,8 +52,6 @@ class _$TaxonListCopyWithImpl<$Res, $Val extends TaxonList>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TaxonList
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -120,8 +116,6 @@ class __$$TaxonListImplCopyWithImpl<$Res>
       _$TaxonListImpl _value, $Res Function(_$TaxonListImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TaxonList
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -211,9 +205,7 @@ class _$TaxonListImpl implements _TaxonList {
   int get hashCode => Object.hash(
       runtimeType, idListe, codeListe, nomListe, descListe, regne, group2Inpn);
 
-  /// Create a copy of TaxonList
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TaxonListImplCopyWith<_$TaxonListImpl> get copyWith =>
@@ -241,11 +233,8 @@ abstract class _TaxonList implements TaxonList {
   String? get regne;
   @override
   String? get group2Inpn;
-
-  /// Create a copy of TaxonList
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TaxonListImplCopyWith<_$TaxonListImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

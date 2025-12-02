@@ -7,6 +7,8 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
+
 
 class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final SiteGroup siteGroup;
@@ -98,47 +100,76 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         title: Text(
             '${widget.moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${widget.siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: Stack(
         children: [
-          // Fil d'Ariane pour la navigation
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-                child: BreadcrumbNavigation(
-                  items: [
-                    BreadcrumbItem(
-                      label: 'Module',
-                      value: widget.moduleInfo.module.moduleLabel ?? 'Module',
-                      onTap: () {
-                        Navigator.of(context)
-                            .pop(); // Retour à la page précédente
-                      },
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fil d'Ariane pour la navigation
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                    child: BreadcrumbNavigation(
+                      items: [
+                        BreadcrumbItem(
+                          label: 'Module',
+                          value: widget.moduleInfo.module.moduleLabel ?? 'Module',
+                          onTap: () {
+                            Navigator.of(context)
+                                .pop(); // Retour à la page précédente
+                          },
+                        ),
+                        BreadcrumbItem(
+                          label: widget.moduleInfo.module.complement?.configuration
+                                  ?.sitesGroup?.label ??
+                              'Groupe',
+                          value: widget.siteGroup.sitesGroupName ??
+                              widget.siteGroup.sitesGroupCode ??
+                              'Groupe',
+                        ),
+                      ],
                     ),
-                    BreadcrumbItem(
-                      label: widget.moduleInfo.module.complement?.configuration
-                              ?.sitesGroup?.label ??
-                          'Groupe',
-                      value: widget.siteGroup.sitesGroupName ??
-                          widget.siteGroup.sitesGroupCode ??
-                          'Groupe',
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ),
-          // Group Properties Card
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              // Group Properties Card
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            widget.moduleInfo.module.complement?.configuration?.sitesGroup
+                                    ?.label ??
+                                'Propriétés du groupe',
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 8),
+                        _buildPropertyRow(
+                            groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
+                        _buildPropertyRow(
+                            groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                        if (widget.siteGroup.sitesGroupDescription != null &&
+                            widget.siteGroup.sitesGroupDescription!.isNotEmpty)
+                          _buildPropertyRow(groupDescriptionLabel,
+                              widget.siteGroup.sitesGroupDescription!),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Sites Table Section
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
                         widget.moduleInfo.module.complement?.configuration
@@ -196,6 +227,20 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   style: const TextStyle(color: Colors.red),
                 ),
               ),
+            ],
+          ),
+          // Bouton carto en bas à droite
+          Positioned(
+            bottom: 20,
+            right: 20,
+            child: FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const GeometriesMapWidget(geojsonData: null)), // replace null by geojson data
+                );
+              },
+              child: const Icon(Icons.map),
             ),
           ),
         ],

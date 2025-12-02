@@ -20,9 +20,7 @@ mixin _$VisitObserver {
   int get idRole => throw _privateConstructorUsedError;
   String get uniqueId => throw _privateConstructorUsedError;
 
-  /// Create a copy of VisitObserver
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $VisitObserverCopyWith<VisitObserver> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -46,8 +44,6 @@ class _$VisitObserverCopyWithImpl<$Res, $Val extends VisitObserver>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of VisitObserver
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -91,8 +87,6 @@ class __$$VisitObserverImplCopyWithImpl<$Res>
       _$VisitObserverImpl _value, $Res Function(_$VisitObserverImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of VisitObserver
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -152,9 +146,7 @@ class _$VisitObserverImpl implements _VisitObserver {
   @override
   int get hashCode => Object.hash(runtimeType, idBaseVisit, idRole, uniqueId);
 
-  /// Create a copy of VisitObserver
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$VisitObserverImplCopyWith<_$VisitObserverImpl> get copyWith =>
@@ -173,11 +165,8 @@ abstract class _VisitObserver implements VisitObserver {
   int get idRole;
   @override
   String get uniqueId;
-
-  /// Create a copy of VisitObserver
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$VisitObserverImplCopyWith<_$VisitObserverImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

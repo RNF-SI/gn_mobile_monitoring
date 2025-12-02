@@ -19,9 +19,7 @@ mixin _$BibTypeSite {
   int get idNomenclatureTypeSite => throw _privateConstructorUsedError;
   Map<String, dynamic>? get config => throw _privateConstructorUsedError;
 
-  /// Create a copy of BibTypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $BibTypeSiteCopyWith<BibTypeSite> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -45,8 +43,6 @@ class _$BibTypeSiteCopyWithImpl<$Res, $Val extends BibTypeSite>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of BibTypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -85,8 +81,6 @@ class __$$BibTypeSiteImplCopyWithImpl<$Res>
       _$BibTypeSiteImpl _value, $Res Function(_$BibTypeSiteImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of BibTypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -145,9 +139,7 @@ class _$BibTypeSiteImpl implements _BibTypeSite {
   int get hashCode => Object.hash(runtimeType, idNomenclatureTypeSite,
       const DeepCollectionEquality().hash(_config));
 
-  /// Create a copy of BibTypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$BibTypeSiteImplCopyWith<_$BibTypeSiteImpl> get copyWith =>
@@ -163,11 +155,8 @@ abstract class _BibTypeSite implements BibTypeSite {
   int get idNomenclatureTypeSite;
   @override
   Map<String, dynamic>? get config;
-
-  /// Create a copy of BibTypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$BibTypeSiteImplCopyWith<_$BibTypeSiteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

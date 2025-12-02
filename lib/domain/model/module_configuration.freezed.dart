@@ -32,9 +32,7 @@ mixin _$ModuleConfiguration {
   TreeConfig? get tree => throw _privateConstructorUsedError;
   ObjectConfig? get visit => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleConfigurationCopyWith<ModuleConfiguration> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -80,8 +78,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -150,8 +146,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $CustomConfigCopyWith<$Res>? get custom {
@@ -164,8 +158,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $DataConfigCopyWith<$Res>? get data {
@@ -178,8 +170,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleConfigCopyWith<$Res>? get module {
@@ -192,8 +182,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get observation {
@@ -206,8 +194,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get observationDetail {
@@ -220,8 +206,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get site {
@@ -234,8 +218,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get sitesGroup {
@@ -248,8 +230,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $TreeConfigCopyWith<$Res>? get tree {
@@ -262,8 +242,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get visit {
@@ -327,8 +305,6 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
       $Res Function(_$ModuleConfigurationImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -506,9 +482,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       tree,
       visit);
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleConfigurationImplCopyWith<_$ModuleConfigurationImpl> get copyWith =>
@@ -544,9 +518,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   @override
   ObjectConfig? get observation;
   @override
-  ObjectConfig?
-      get observationDetail; // Nouvelle propriété pour les détails d'observation
-  @override
+  ObjectConfig? get observationDetail;
+  @override // Nouvelle propriété pour les détails d'observation
   ObjectConfig? get site;
   @override
   ObjectConfig? get sitesGroup;
@@ -556,11 +529,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   TreeConfig? get tree;
   @override
   ObjectConfig? get visit;
-
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleConfigurationImplCopyWith<_$ModuleConfigurationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -588,9 +558,7 @@ mixin _$CustomConfig {
   @JsonKey(name: '__MONITORINGS_PATH')
   String? get monitoringsPath => throw _privateConstructorUsedError;
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CustomConfigCopyWith<CustomConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -625,8 +593,6 @@ class _$CustomConfigCopyWithImpl<$Res, $Val extends CustomConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -716,8 +682,6 @@ class __$$CustomConfigImplCopyWithImpl<$Res>
       _$CustomConfigImpl _value, $Res Function(_$CustomConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -889,9 +853,7 @@ class _$CustomConfigImpl implements _CustomConfig {
       const DeepCollectionEquality().hash(_typesSite),
       monitoringsPath);
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CustomConfigImplCopyWith<_$CustomConfigImpl> get copyWith =>
@@ -943,11 +905,8 @@ abstract class _CustomConfig implements CustomConfig {
   @override
   @JsonKey(name: '__MONITORINGS_PATH')
   String? get monitoringsPath;
-
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CustomConfigImplCopyWith<_$CustomConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -957,9 +916,7 @@ mixin _$TypeSite {
   int? get idNomenclatureTypeSite => throw _privateConstructorUsedError;
   dynamic get config => throw _privateConstructorUsedError;
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TypeSiteCopyWith<TypeSite> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -982,8 +939,6 @@ class _$TypeSiteCopyWithImpl<$Res, $Val extends TypeSite>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1022,8 +977,6 @@ class __$$TypeSiteImplCopyWithImpl<$Res>
       _$TypeSiteImpl _value, $Res Function(_$TypeSiteImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1072,9 +1025,7 @@ class _$TypeSiteImpl implements _TypeSite {
   int get hashCode => Object.hash(runtimeType, idNomenclatureTypeSite,
       const DeepCollectionEquality().hash(config));
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TypeSiteImplCopyWith<_$TypeSiteImpl> get copyWith =>
@@ -1090,11 +1041,8 @@ abstract class _TypeSite implements TypeSite {
   int? get idNomenclatureTypeSite;
   @override
   dynamic get config;
-
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TypeSiteImplCopyWith<_$TypeSiteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1104,9 +1052,7 @@ mixin _$DataConfig {
   List<String>? get nomenclature => throw _privateConstructorUsedError;
   int? get user => throw _privateConstructorUsedError;
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $DataConfigCopyWith<DataConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1130,8 +1076,6 @@ class _$DataConfigCopyWithImpl<$Res, $Val extends DataConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1170,8 +1114,6 @@ class __$$DataConfigImplCopyWithImpl<$Res>
       _$DataConfigImpl _value, $Res Function(_$DataConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1229,9 +1171,7 @@ class _$DataConfigImpl implements _DataConfig {
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_nomenclature), user);
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$DataConfigImplCopyWith<_$DataConfigImpl> get copyWith =>
@@ -1246,11 +1186,8 @@ abstract class _DataConfig implements DataConfig {
   List<String>? get nomenclature;
   @override
   int? get user;
-
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$DataConfigImplCopyWith<_$DataConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1292,9 +1229,7 @@ mixin _$ModuleConfig {
       throw _privateConstructorUsedError;
   String? get uuidFieldName => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleConfigCopyWith<ModuleConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1350,8 +1285,6 @@ class _$ModuleConfigCopyWithImpl<$Res, $Val extends ModuleConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1510,8 +1443,6 @@ class _$ModuleConfigCopyWithImpl<$Res, $Val extends ModuleConfig>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $CruvedConfigCopyWith<$Res>? get cruved {
@@ -1577,8 +1508,6 @@ class __$$ModuleConfigImplCopyWithImpl<$Res>
       _$ModuleConfigImpl _value, $Res Function(_$ModuleConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2046,9 +1975,7 @@ class _$ModuleConfigImpl implements _ModuleConfig {
         uuidFieldName
       ]);
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleConfigImplCopyWith<_$ModuleConfigImpl> get copyWith =>
@@ -2150,11 +2077,8 @@ abstract class _ModuleConfig implements ModuleConfig {
   Map<String, TypeSiteConfig>? get typesSite;
   @override
   String? get uuidFieldName;
-
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleConfigImplCopyWith<_$ModuleConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2168,9 +2092,7 @@ mixin _$CruvedConfig {
   int? get E => throw _privateConstructorUsedError;
   int? get D => throw _privateConstructorUsedError;
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CruvedConfigCopyWith<CruvedConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2194,8 +2116,6 @@ class _$CruvedConfigCopyWithImpl<$Res, $Val extends CruvedConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2254,8 +2174,6 @@ class __$$CruvedConfigImplCopyWithImpl<$Res>
       _$CruvedConfigImpl _value, $Res Function(_$CruvedConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2334,9 +2252,7 @@ class _$CruvedConfigImpl implements _CruvedConfig {
   @override
   int get hashCode => Object.hash(runtimeType, C, R, U, V, E, D);
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CruvedConfigImplCopyWith<_$CruvedConfigImpl> get copyWith =>
@@ -2364,11 +2280,8 @@ abstract class _CruvedConfig implements CruvedConfig {
   int? get E;
   @override
   int? get D;
-
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CruvedConfigImplCopyWith<_$CruvedConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2380,9 +2293,7 @@ mixin _$ExportConfig {
   String? get type => throw _privateConstructorUsedError;
   String? get template => throw _privateConstructorUsedError;
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ExportConfigCopyWith<ExportConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2406,8 +2317,6 @@ class _$ExportConfigCopyWithImpl<$Res, $Val extends ExportConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2456,8 +2365,6 @@ class __$$ExportConfigImplCopyWithImpl<$Res>
       _$ExportConfigImpl _value, $Res Function(_$ExportConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2521,9 +2428,7 @@ class _$ExportConfigImpl implements _ExportConfig {
   @override
   int get hashCode => Object.hash(runtimeType, label, method, type, template);
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ExportConfigImplCopyWith<_$ExportConfigImpl> get copyWith =>
@@ -2545,11 +2450,8 @@ abstract class _ExportConfig implements ExportConfig {
   String? get type;
   @override
   String? get template;
-
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ExportConfigImplCopyWith<_$ExportConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2577,9 +2479,7 @@ mixin _$GenericFieldConfig {
   @JsonKey(name: 'id_list')
   dynamic get idList => throw _privateConstructorUsedError;
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $GenericFieldConfigCopyWith<GenericFieldConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2621,8 +2521,6 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2759,8 +2657,6 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
       $Res Function(_$GenericFieldConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2986,9 +2882,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       dataPath,
       const DeepCollectionEquality().hash(idList));
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$GenericFieldConfigImplCopyWith<_$GenericFieldConfigImpl> get copyWith =>
@@ -3056,11 +2950,8 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   @JsonKey(name: 'id_list')
   dynamic get idList;
-
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$GenericFieldConfigImplCopyWith<_$GenericFieldConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3070,9 +2961,7 @@ mixin _$TypeSiteConfig {
   List<dynamic>? get displayProperties => throw _privateConstructorUsedError;
   String? get name => throw _privateConstructorUsedError;
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TypeSiteConfigCopyWith<TypeSiteConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3096,8 +2985,6 @@ class _$TypeSiteConfigCopyWithImpl<$Res, $Val extends TypeSiteConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3136,8 +3023,6 @@ class __$$TypeSiteConfigImplCopyWithImpl<$Res>
       _$TypeSiteConfigImpl _value, $Res Function(_$TypeSiteConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3197,9 +3082,7 @@ class _$TypeSiteConfigImpl implements _TypeSiteConfig {
   int get hashCode => Object.hash(runtimeType,
       const DeepCollectionEquality().hash(_displayProperties), name);
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TypeSiteConfigImplCopyWith<_$TypeSiteConfigImpl> get copyWith =>
@@ -3216,11 +3099,8 @@ abstract class _TypeSiteConfig implements TypeSiteConfig {
   List<dynamic>? get displayProperties;
   @override
   String? get name;
-
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TypeSiteConfigImplCopyWith<_$TypeSiteConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3253,9 +3133,7 @@ mixin _$ObjectConfig {
       throw _privateConstructorUsedError;
   String? get uuidFieldName => throw _privateConstructorUsedError;
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ObjectConfigCopyWith<ObjectConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3302,8 +3180,6 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3470,8 +3346,6 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
       _$ObjectConfigImpl _value, $Res Function(_$ObjectConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3859,9 +3733,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         uuidFieldName
       ]);
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ObjectConfigImplCopyWith<_$ObjectConfigImpl> get copyWith =>
@@ -3940,11 +3812,8 @@ abstract class _ObjectConfig implements ObjectConfig {
   Map<String, TypeSiteConfig>? get typesSite;
   @override
   String? get uuidFieldName;
-
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ObjectConfigImplCopyWith<_$ObjectConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3954,9 +3823,7 @@ mixin _$SortConfig {
   String? get dir => throw _privateConstructorUsedError;
   String? get prop => throw _privateConstructorUsedError;
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SortConfigCopyWith<SortConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3980,8 +3847,6 @@ class _$SortConfigCopyWithImpl<$Res, $Val extends SortConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4020,8 +3885,6 @@ class __$$SortConfigImplCopyWithImpl<$Res>
       _$SortConfigImpl _value, $Res Function(_$SortConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4068,9 +3931,7 @@ class _$SortConfigImpl implements _SortConfig {
   @override
   int get hashCode => Object.hash(runtimeType, dir, prop);
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SortConfigImplCopyWith<_$SortConfigImpl> get copyWith =>
@@ -4085,11 +3946,8 @@ abstract class _SortConfig implements SortConfig {
   String? get dir;
   @override
   String? get prop;
-
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SortConfigImplCopyWith<_$SortConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -4098,9 +3956,7 @@ abstract class _SortConfig implements SortConfig {
 mixin _$TreeConfig {
   Map<String, dynamic>? get module => throw _privateConstructorUsedError;
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TreeConfigCopyWith<TreeConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -4124,8 +3980,6 @@ class _$TreeConfigCopyWithImpl<$Res, $Val extends TreeConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4159,8 +4013,6 @@ class __$$TreeConfigImplCopyWithImpl<$Res>
       _$TreeConfigImpl _value, $Res Function(_$TreeConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4208,9 +4060,7 @@ class _$TreeConfigImpl implements _TreeConfig {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_module));
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TreeConfigImplCopyWith<_$TreeConfigImpl> get copyWith =>
@@ -4223,11 +4073,8 @@ abstract class _TreeConfig implements TreeConfig {
 
   @override
   Map<String, dynamic>? get module;
-
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TreeConfigImplCopyWith<_$TreeConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

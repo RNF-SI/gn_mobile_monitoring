@@ -42,9 +42,7 @@ mixin _$Dataset {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
 
-  /// Create a copy of Dataset
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $DatasetCopyWith<Dataset> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -91,8 +89,6 @@ class _$DatasetCopyWithImpl<$Res, $Val extends Dataset>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Dataset
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -270,8 +266,6 @@ class __$$DatasetImplCopyWithImpl<$Res>
       _$DatasetImpl _value, $Res Function(_$DatasetImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Dataset
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -585,9 +579,7 @@ class _$DatasetImpl implements _Dataset {
         metaUpdateDate
       ]);
 
-  /// Create a copy of Dataset
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$DatasetImplCopyWith<_$DatasetImpl> get copyWith =>
@@ -623,10 +615,10 @@ abstract class _Dataset implements Dataset {
       final DateTime? metaUpdateDate}) = _$DatasetImpl;
 
   @override
-  int get id; // idDataset
-  @override
-  String get uniqueDatasetId; // UUID
-  @override
+  int get id;
+  @override // idDataset
+  String get uniqueDatasetId;
+  @override // UUID
   int get idAcquisitionFramework;
   @override
   String get datasetName;
@@ -672,11 +664,8 @@ abstract class _Dataset implements Dataset {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
-
-  /// Create a copy of Dataset
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$DatasetImplCopyWith<_$DatasetImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

@@ -31,9 +31,7 @@ mixin _$ObservationDetail {
   /// Données sous forme de Map
   Map<String, dynamic> get data => throw _privateConstructorUsedError;
 
-  /// Create a copy of ObservationDetail
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ObservationDetailCopyWith<ObservationDetail> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -62,8 +60,6 @@ class _$ObservationDetailCopyWithImpl<$Res, $Val extends ObservationDetail>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ObservationDetail
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -122,8 +118,6 @@ class __$$ObservationDetailImplCopyWithImpl<$Res>
       $Res Function(_$ObservationDetailImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ObservationDetail
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -227,9 +221,7 @@ class _$ObservationDetailImpl implements _ObservationDetail {
       uuidObservationDetail,
       const DeepCollectionEquality().hash(_data));
 
-  /// Create a copy of ObservationDetail
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ObservationDetailImplCopyWith<_$ObservationDetailImpl> get copyWith =>
@@ -245,30 +237,28 @@ abstract class _ObservationDetail implements ObservationDetail {
       final String? uuidObservationDetail,
       final Map<String, dynamic> data}) = _$ObservationDetailImpl;
 
-  /// Identifiant unique du détail d'observation
   @override
+
+  /// Identifiant unique du détail d'observation
   int? get idObservationDetail;
+  @override
 
   /// Identifiant de l'observation parente
-  @override
   int? get idObservation;
+  @override
 
   /// Identifiant du module
-  @override
   int? get idModule;
+  @override
 
   /// UUID unique du détail d'observation
-  @override
   String? get uuidObservationDetail;
+  @override
 
   /// Données sous forme de Map
-  @override
   Map<String, dynamic> get data;
-
-  /// Create a copy of ObservationDetail
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ObservationDetailImplCopyWith<_$ObservationDetailImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

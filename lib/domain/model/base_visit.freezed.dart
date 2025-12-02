@@ -38,12 +38,8 @@ mixin _$BaseVisit {
       throw _privateConstructorUsedError; // Liste des ID des observateurs
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
-  /// Serializes this BaseVisit to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
-
-  /// Create a copy of BaseVisit
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $BaseVisitCopyWith<BaseVisit> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -81,8 +77,6 @@ class _$BaseVisitCopyWithImpl<$Res, $Val extends BaseVisit>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of BaseVisit
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -202,8 +196,6 @@ class __$$BaseVisitImplCopyWithImpl<$Res>
       _$BaseVisitImpl _value, $Res Function(_$BaseVisitImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of BaseVisit
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -405,7 +397,7 @@ class _$BaseVisitImpl implements _BaseVisit {
             const DeepCollectionEquality().equals(other._data, _data));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -425,9 +417,7 @@ class _$BaseVisitImpl implements _BaseVisit {
       const DeepCollectionEquality().hash(_observers),
       const DeepCollectionEquality().hash(_data));
 
-  /// Create a copy of BaseVisit
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$BaseVisitImplCopyWith<_$BaseVisitImpl> get copyWith =>
@@ -489,14 +479,11 @@ abstract class _BaseVisit implements BaseVisit {
   @override
   String? get metaUpdateDate;
   @override
-  List<int>? get observers; // Liste des ID des observateurs
-  @override
+  List<int>? get observers;
+  @override // Liste des ID des observateurs
   Map<String, dynamic>? get data;
-
-  /// Create a copy of BaseVisit
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$BaseVisitImplCopyWith<_$BaseVisitImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
