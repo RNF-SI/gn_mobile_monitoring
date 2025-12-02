@@ -31,6 +31,40 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   StreamSubscription<Position>? positionStream;
   CircleMarker? accuracyCircle; // cercle de précision
 
+  LatLng? computeCentroid() {
+    List<LatLng> allPoints = [];
+
+    // Récupère tous les points des markers
+    for (var m in markers) {
+      allPoints.add(m.point);
+    }
+
+    // Récupère les points des polylines
+    for (var poly in polylines) {
+      allPoints.addAll(poly.points);
+    }
+
+    // Récupère les points des polygons
+    for (var polygon in polygons) {
+      allPoints.addAll(polygon.points);
+    }
+
+    if (allPoints.isEmpty) return null;
+
+    double sumLat = 0;
+    double sumLng = 0;
+
+    for (var p in allPoints) {
+      sumLat += p.latitude;
+      sumLng += p.longitude;
+    }
+
+    return LatLng(
+      sumLat / allPoints.length,
+      sumLng / allPoints.length,
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -228,7 +262,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    LatLng initialCenter = userPosition ?? LatLng(48.85, 2.35);
+    LatLng initialCenter = userPosition ?? computeCentroid() ?? const LatLng(48.85, 2.35);
 
     return Stack(
       children: [
@@ -274,7 +308,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
                         TileLayer(
                           urlTemplate: selectedLayer!["urlTemplate"]!,
                           userAgentPackageName:
-                              'com.example.gn_mobile_monitoring',
+                            'com.example.gn_mobile_monitoring',
                         ),
                       // 🔵 Cercle de précision GPS
                       if (accuracyCircle != null)
