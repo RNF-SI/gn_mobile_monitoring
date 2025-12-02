@@ -1,5 +1,4 @@
 import 'package:dio/dio.dart';
-import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';

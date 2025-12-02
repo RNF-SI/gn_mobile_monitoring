@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/user_entity.dart';
-import 'package:gn_mobile_monitoring/data/mapper/user_mapper.dart';
 import 'package:gn_mobile_monitoring/data/repository/authentication_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';

@@ -1094,9 +1094,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       _lastFullSync = await _getLastSyncDateUseCase.execute(fullSyncKey);
 
       // Si c'est la première fois, initialiser avec une date qui forcera une synchro complète bientôt
-      if (_lastFullSync == null) {
-        _lastFullSync = DateTime.now().subtract(const Duration(days: 5));
-      }
+      _lastFullSync ??= DateTime.now().subtract(const Duration(days: 5));
     } catch (e) {
       debugPrint(
           'Erreur lors de la récupération de la date de dernière synchronisation: $e');
@@ -1906,7 +1904,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       final deletedPart = totalDeleted > 0 ? ", $totalDeleted supprimés" : "";
       summaryLines.insert(1,
-          "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés$deletedPart)");
+          "• TOTAL: ${totalAdded + totalUpdated} éléments ($totalAdded ajoutés, $totalUpdated mis à jour, $totalSkipped ignorés$deletedPart)");
     }
 
     return summaryLines.join("\n");

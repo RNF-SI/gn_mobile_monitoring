@@ -161,7 +161,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       logBuffer.writeln(
           '==================================================================');
       logBuffer
-          .writeln('URL: ${apiBase}/monitorings/object/$moduleCode/observation');
+          .writeln('URL: $apiBase/monitorings/object/$moduleCode/observation');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -384,7 +384,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
         logBuffer.writeln('[🧪 MODE TEST] ${SyncErrorSimulator.getErrorDescription()}');
       }
       logBuffer.writeln('==================================================================');
-      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/observation/$observationId');
+      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/observation/$observationId');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       if (token.length > 10) {

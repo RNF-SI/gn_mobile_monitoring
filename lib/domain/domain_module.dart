@@ -114,7 +114,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.d
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case_impl.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>

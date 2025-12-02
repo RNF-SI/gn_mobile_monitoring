@@ -8,7 +8,6 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Classes for Mocktail fallbacks

@@ -1,11 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
-import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../mocks/mocks.dart';
 
 class MockTaxonRepository extends Mock implements TaxonRepository {}
 

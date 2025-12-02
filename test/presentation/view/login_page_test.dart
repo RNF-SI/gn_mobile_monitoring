@@ -215,8 +215,8 @@ void main() {
           home: Builder(
             builder: (context) => Scaffold(
               body: Column(
-                children: [
-                  const CircularProgressIndicator(),
+                children: const [
+                  CircularProgressIndicator(),
                   Text(errorMessage),
                 ],
               ),

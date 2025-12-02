@@ -45,10 +45,6 @@ class TestObservationsNotifier
     return [];
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
 
 void main() {

@@ -54,7 +54,7 @@ class SiteTypeSelector extends StatelessWidget {
                 leading: const Icon(Icons.location_on),
                 onTap: () => onSiteTypeSelected(typeId),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),

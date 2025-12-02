@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
-import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockConnectivity extends Mock implements Connectivity {}

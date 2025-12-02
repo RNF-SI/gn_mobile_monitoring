@@ -1,6 +1,4 @@
-import 'package:gn_mobile_monitoring/data/db/dao/app_metadata_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
-import 'package:mocktail/mocktail.dart';
 
 import 'app_metadata_dao_mock.dart';
 

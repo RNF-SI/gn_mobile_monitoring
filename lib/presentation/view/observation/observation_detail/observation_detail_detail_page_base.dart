@@ -69,8 +69,4 @@ class ObservationDetailDetailPageBaseState
     return 'Détails de l\'observation détail ${widget.index}';
   }
 
-  @override
-  Widget buildBaseContent() {
-    return super.buildBaseContent();
-  }
 }

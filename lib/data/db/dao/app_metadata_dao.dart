@@ -7,7 +7,7 @@ part 'app_metadata_dao.g.dart';
 
 @DriftAccessor(tables: [AppMetadataTable])
 class AppMetadataDao extends DatabaseAccessor<AppDatabase> with _$AppMetadataDaoMixin {
-  AppMetadataDao(AppDatabase db) : super(db);
+  AppMetadataDao(super.db);
 
   Future<String?> getValue(String key) async {
     final query = select(appMetadataTable)

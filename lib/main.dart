@@ -192,7 +192,7 @@ class MainApp extends ConsumerWidget {
         scaffoldBackgroundColor:
             const Color(0xFFF4F1E4), // Background color for Scaffold widgets
         appBarTheme: const AppBarTheme(
-          color: Color(0xFF598979), // Custom color for AppBar
+          backgroundColor: Color(0xFF598979), // Custom color for AppBar
           toolbarTextStyle: TextStyle(
               color: Colors.white, fontSize: 18), // Simplified text style
           titleTextStyle: TextStyle(

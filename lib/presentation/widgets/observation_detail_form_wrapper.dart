@@ -88,7 +88,7 @@ class ObservationDetailFormWrapperState extends ConsumerState<ObservationDetailF
       onSave: (formData) => _handleSave(context, formData),
       saveButtonText: _isEditMode ? 'Enregistrer' : 'Ajouter',
       chainInputProvider: chainDetailInputProvider,
-      displayProperties: widget.observationDetail.displayProperties as List<String>? ?? [],
+      displayProperties: widget.observationDetail.displayProperties ?? [],
     );
   }
 

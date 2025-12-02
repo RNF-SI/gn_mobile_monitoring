@@ -669,7 +669,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     
     // Compter les observations de cette visite
     final observationCount = await siteVisitsViewModel
-        .getObservationCountForVisit(visit.idBaseVisit!);
+        .getObservationCountForVisit(visit.idBaseVisit);
     
     if (!mounted) return;
     
@@ -735,7 +735,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
     
     try {
-      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit!);
+      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit);
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

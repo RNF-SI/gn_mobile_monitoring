@@ -698,15 +698,15 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<int>);
 
   @override
-  _i5.Future<void> insertSiteGroup(_i9.SiteGroup? siteGroup) =>
+  _i5.Future<int> insertSiteGroup(_i9.SiteGroup siteGroup) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertSiteGroup,
           [siteGroup],
         ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
+        returnValue: _i5.Future<int>.value(0),
+        returnValueForMissingStub: _i5.Future<int>.value(0),
+      ) as _i5.Future<int>);
 
   @override
   _i5.Future<List<_i11.SiteModule>> getSiteModulesByModuleId(int? moduleId) =>

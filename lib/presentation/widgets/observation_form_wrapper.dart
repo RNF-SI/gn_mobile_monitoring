@@ -211,7 +211,7 @@ class ObservationFormWrapper extends ConsumerWidget {
     final observationsViewModel = ref.read(observationsProvider(visitId).notifier);
     final updatedObservation = await observationsViewModel.getObservationById(observationId);
 
-    if (updatedObservation != null && context.mounted) {
+    if (context.mounted) {
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -240,7 +240,7 @@ class ObservationFormWrapper extends ConsumerWidget {
     final observationsViewModel = ref.read(observationsProvider(visitId).notifier);
     final newObservation = await observationsViewModel.getObservationById(observationId);
 
-    if (newObservation == null || !context.mounted) return;
+    if (!context.mounted) return;
 
     // Si configuration des détails d'observation disponible, proposer de créer un détail
     if (observationDetailConfig != null) {

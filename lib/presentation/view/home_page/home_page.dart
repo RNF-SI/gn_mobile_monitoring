@@ -48,14 +48,14 @@ class HomePageState extends ConsumerState<HomePage> {
           appBar: AppBar(
             backgroundColor: const Color(0xFF598979), // Brand color
             title: const Text("Mes Modules"),
-            actions: [
+            actions: const [
               MenuActions(),
             ],
           ),
           body: Column(
-            children: [
-              const SyncStatusWidget(), // Widget de statut de synchronisation
-              const Expanded(
+            children: const [
+              SyncStatusWidget(), // Widget de statut de synchronisation
+              Expanded(
                 child: ModuleListWidget(),
               ),
             ],

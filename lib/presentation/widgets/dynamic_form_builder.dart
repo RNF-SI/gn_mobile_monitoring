@@ -1192,7 +1192,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
             isExpanded: true,
-            value: _formValues[fieldName]?.toString(),
+            initialValue: _formValues[fieldName]?.toString(),
             items: options.map((option) {
               return DropdownMenuItem<String>(
                 value: option.key,
@@ -1302,46 +1302,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       controller.text = item['label'] ?? '';
     }
 
-    return Autocomplete<Map<String, dynamic>>(
-      optionsBuilder: (TextEditingValue textEditingValue) {
-        if (textEditingValue.text.isEmpty) {
-          return dataSource;
-        }
-        return dataSource.where((option) {
-          return option['label']
-              .toString()
-              .toLowerCase()
-              .contains(textEditingValue.text.toLowerCase());
-        });
-      },
-      displayStringForOption: (option) => option['label'] ?? '',
-      fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-        // Synchroniser avec notre controller
-        if (textEditingController.text != controller.text) {
-          textEditingController.text = controller.text;
-        }
-        
-        return TextFormField(
-          controller: textEditingController,
-          focusNode: focusNode,
-          decoration: InputDecoration(
-            border: const OutlineInputBorder(),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            suffixIcon: const Icon(Icons.arrow_drop_down),
-            hintText: 'Rechercher...',
-          ),
-          validator: (value) {
-            // Ne pas valider les champs cachés
-            if (_isFieldCurrentlyHidden(fieldName)) {
-              return null;
-            }
-            if (required && (value == null || value.isEmpty)) {
-              return 'Ce champ est requis';
-            }
-            return null;
-          },
-        );
-      },
+    return _AutocompleteField(
+      fieldName: fieldName,
+      controller: controller,
+      dataSource: dataSource,
+      required: required,
+      isFieldHidden: _isFieldCurrentlyHidden(fieldName),
       onSelected: (option) {
         controller.text = option['label'] ?? '';
         setState(() {
@@ -1356,13 +1322,25 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Initialiser la valeur comme une liste si ce n'est pas déjà fait
     if (_formValues[fieldName] == null) {
       _formValues[fieldName] = <String>[];
+    } else if (_formValues[fieldName] is Map) {
+      _formValues[fieldName] = <String>[];
     } else if (_formValues[fieldName] is! List) {
       // Convertir une valeur unique en liste
       final currentValue = _formValues[fieldName];
       _formValues[fieldName] = currentValue != null ? [currentValue.toString()] : <String>[];
     }
 
-    final selectedValues = List<String>.from(_formValues[fieldName] as List);
+    //final selectedValues = List<String>.from(_formValues[fieldName] as List);
+    
+    final rawValue = _formValues[fieldName];
+    List<String> selectedValues;
+    if (rawValue is List) {
+      selectedValues = rawValue.map((e) => e.toString()).toList();
+    } else {
+      // Fallback: si ce n'est toujours pas une List, initialiser à vide
+      selectedValues = <String>[];
+      _formValues[fieldName] = selectedValues;
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -1417,7 +1395,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               },
               controlAffinity: ListTileControlAffinity.leading,
             );
-          }).toList(),
+          }),
           // Message de validation
           if (required && selectedValues.isEmpty)
             Container(
@@ -2128,7 +2106,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                 ),
-                value: initialValue,
+                initialValue: initialValue,
                 hint: Text('Sélectionner un jeu de données'),
                 items: datasets.map((dataset) {
                   return DropdownMenuItem<int>(
@@ -2160,6 +2138,149 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Widget helper pour gérer la synchronisation des contrôleurs dans Autocomplete
+class _AutocompleteField extends StatefulWidget {
+  final String fieldName;
+  final TextEditingController controller;
+  final List<Map<String, dynamic>> dataSource;
+  final bool required;
+  final bool isFieldHidden;
+  final Function(Map<String, dynamic>) onSelected;
+
+  const _AutocompleteField({
+    required this.fieldName,
+    required this.controller,
+    required this.dataSource,
+    required this.required,
+    required this.isFieldHidden,
+    required this.onSelected,
+  });
+
+  @override
+  State<_AutocompleteField> createState() => _AutocompleteFieldState();
+}
+
+class _AutocompleteFieldState extends State<_AutocompleteField> {
+  TextEditingController? _autocompleteController;
+  VoidCallback? _listener;
+  bool _isUpdatingFromMain = false;
+  bool _isUpdatingFromAutocomplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Synchroniser après le premier build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _autocompleteController != null) {
+        _syncControllers();
+        _setupListener();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _removeListener();
+    super.dispose();
+  }
+
+  void _syncControllers() {
+    if (_autocompleteController != null && mounted && !_isUpdatingFromAutocomplete) {
+      if (_autocompleteController!.text != widget.controller.text) {
+        _isUpdatingFromMain = true;
+        _autocompleteController!.text = widget.controller.text;
+        _isUpdatingFromMain = false;
+      }
+    }
+  }
+
+  void _setupListener() {
+    // Retirer l'ancien listener s'il existe
+    _removeListener();
+    
+    // Ajouter un seul listener sur le contrôleur principal
+    _listener = () {
+      if (mounted && _autocompleteController != null && !_isUpdatingFromAutocomplete) {
+        if (_autocompleteController!.text != widget.controller.text) {
+          _isUpdatingFromMain = true;
+          _autocompleteController!.text = widget.controller.text;
+          _isUpdatingFromMain = false;
+        }
+      }
+    };
+    widget.controller.addListener(_listener!);
+  }
+
+  void _removeListener() {
+    if (_listener != null) {
+      widget.controller.removeListener(_listener!);
+      _listener = null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Autocomplete<Map<String, dynamic>>(
+      optionsBuilder: (TextEditingValue textEditingValue) {
+        if (textEditingValue.text.isEmpty) {
+          return widget.dataSource;
+        }
+        return widget.dataSource.where((option) {
+          return option['label']
+              .toString()
+              .toLowerCase()
+              .contains(textEditingValue.text.toLowerCase());
+        });
+      },
+      displayStringForOption: (option) => option['label'] ?? '',
+      fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
+        // Stocker la référence au contrôleur d'Autocomplete
+        if (_autocompleteController != textEditingController) {
+          _autocompleteController = textEditingController;
+          // Synchroniser après le build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _syncControllers();
+              _setupListener();
+            }
+          });
+        }
+        
+        return TextFormField(
+          controller: textEditingController,
+          focusNode: focusNode,
+          decoration: const InputDecoration(
+            border: OutlineInputBorder(),
+            contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            suffixIcon: Icon(Icons.arrow_drop_down),
+            hintText: 'Rechercher...',
+          ),
+          validator: (value) {
+            // Ne pas valider les champs cachés
+            if (widget.isFieldHidden) {
+              return null;
+            }
+            if (widget.required && (value == null || value.isEmpty)) {
+              return 'Ce champ est requis';
+            }
+            return null;
+          },
+          onChanged: (value) {
+            // Synchroniser le contrôleur principal avec celui d'Autocomplete
+            // uniquement si la mise à jour ne vient pas du listener principal
+            if (!_isUpdatingFromMain && widget.controller.text != value) {
+              _isUpdatingFromAutocomplete = true;
+              widget.controller.text = value;
+              _isUpdatingFromAutocomplete = false;
+            }
+          },
+        );
+      },
+      onSelected: widget.onSelected,
     );
   }
 }

@@ -418,10 +418,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     return 'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Détails du module'}';
   }
 
-  @override
-  Widget buildBaseContent() {
-    return super.buildBaseContent(); // Utilise la mise en page par défaut
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -660,22 +656,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             );
           }
 
-          // Propriétés du groupe de sites
-          dynamic value;
-          switch (column) {
-            case 'sites_group_name':
-              value = group.sitesGroupName;
-              break;
-            case 'sites_group_code':
-              value = group.sitesGroupCode;
-              break;
-            case 'sites_group_description':
-              value = group.sitesGroupDescription;
-              break;
-            default:
-              // Pour les autres colonnes, on laisse la valeur à null
-              value = null;
-          }
+          // Propriétés du groupe de sites - mapping dynamique
+          dynamic value = _getSiteGroupValue(group, column);
 
           // Formater la valeur et créer la cellule
           String displayValue = formatDataCellValue(
@@ -717,6 +699,50 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
+  /// Récupère dynamiquement la valeur d'une colonne depuis un SiteGroup
+  /// Cette fonction mappe automatiquement les noms de colonnes aux propriétés du modèle
+  dynamic _getSiteGroupValue(dynamic group, String column) {
+    // Mapping des noms de colonnes vers les propriétés du modèle SiteGroup
+    final Map<String, dynamic Function(dynamic)> propertyMap = {
+      'sites_group_name': (g) => g.sitesGroupName,
+      'sites_group_code': (g) => g.sitesGroupCode,
+      'sites_group_description': (g) => g.sitesGroupDescription,
+      'altitude_min': (g) => g.altitudeMin,
+      'altitude_max': (g) => g.altitudeMax,
+      'comments': (g) => g.comments,
+      'uuid_sites_group': (g) => g.uuidSitesGroup,
+      'id_sites_group': (g) => g.idSitesGroup,
+      'id_digitiser': (g) => g.idDigitiser,
+      'meta_create_date': (g) => g.metaCreateDate?.toIso8601String(),
+      'meta_update_date': (g) => g.metaUpdateDate?.toIso8601String(),
+    };
+
+    // Essayer d'abord le mapping direct des propriétés
+    if (propertyMap.containsKey(column)) {
+      try {
+        return propertyMap[column]!(group);
+      } catch (e) {
+        // Si l'accès échoue, continuer avec les autres méthodes
+      }
+    }
+
+    // Pour nb_sites et nb_visits, ou autres colonnes calculées,
+    // essayer de les récupérer depuis le champ data (JSON)
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        final dataMap = jsonDecode(group.data!) as Map<String, dynamic>;
+        if (dataMap.containsKey(column)) {
+          return dataMap[column];
+        }
+      } catch (e) {
+        // Si le parsing échoue, continuer
+      }
+    }
+
+    // Si aucune valeur n'est trouvée, retourner null
+    return null;
+  }
+
   Widget _buildSitesTab() {
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
@@ -737,7 +763,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     ];
 
     // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
-    Map<String, dynamic>? firstItemData = null;
+    Map<String, dynamic>? firstItemData;
 
     List<String> displayColumns = determineDataColumns(
       standardColumns: standardColumns,

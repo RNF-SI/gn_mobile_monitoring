@@ -169,9 +169,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             
             // Récupérer le vrai code du module pour les observations
             final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
-            if (realModuleCode == null) {
-              throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
-            }
 
             // INVERSION: 1. D'abord synchroniser les observations (avant la visite)
             _logger.i('ORDRE INVERSÉ: Synchronisation des observations avant la visite ${visitEntity.idBaseVisit}', tag: 'sync');
@@ -347,9 +344,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               
               // Récupérer le vrai code du module depuis l'ID module de la visite
               final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
-              if (realModuleCode == null) {
-                throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
-              }
               
               serverResponse = await _globalApi.sendVisit(token, realModuleCode, visitModel);
 
@@ -391,9 +385,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // 2. Ensuite seulement, envoyer les observations (pour les nouvelles visites)
             // Récupérer le vrai code du module pour les observations
             final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
-            if (realModuleCode == null) {
-              throw Exception('Code de module introuvable pour l\'ID module: ${visit.idModule}');
-            }
 
             // On passe à la fois l'ID local (pour récupérer les observations localement)
             // et l'ID serveur (pour les envoyer avec le bon ID de visite serveur)
@@ -610,7 +601,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               // extraire l'ID serveur de l'erreur pour éviter les doublons lors du prochain retry
               String errorString = e.toString();
               debugPrint('🔍 RECHERCHE ID SERVEUR dans l\'erreur...');
-              debugPrint('🔍 ERREUR COMPLÈTE: ${errorString.length > 500 ? errorString.substring(0, 500) + "..." : errorString}');
+              debugPrint('🔍 ERREUR COMPLÈTE: ${errorString.length > 500 ? "${errorString.substring(0, 500)}..." : errorString}');
               
               // Pour les NetworkException qui encapsulent les erreurs DIO, 
               // essayer d'extraire des informations supplémentaires
@@ -623,8 +614,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                   final String? responseData = networkException.responseData;
                   
                   if (responseData != null) {
-                    fullErrorContent += '\n' + responseData;
-                    debugPrint('🔍 RÉPONSE SERVEUR HTML: ${responseData.length > 300 ? responseData.substring(0, 300) + "..." : responseData}');
+                    fullErrorContent += '\n$responseData';
+                    debugPrint('🔍 RÉPONSE SERVEUR HTML: ${responseData.length > 300 ? "${responseData.substring(0, 300)}..." : responseData}');
                   } else {
                     debugPrint('⚠️ responseData est null');
                   }
@@ -661,7 +652,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 }
               } else {
                 debugPrint('❌ Aucun ID serveur trouvé dans l\'erreur complète');
-                debugPrint('🔍 RECHERCHE DANS CONTENU: ${fullErrorContent.length > 200 ? fullErrorContent.substring(0, 200) + "..." : fullErrorContent}');
+                debugPrint('🔍 RECHERCHE DANS CONTENU: ${fullErrorContent.length > 200 ? "${fullErrorContent.substring(0, 200)}..." : fullErrorContent}');
               }
               
               // Extraire des informations plus détaillées de l'erreur

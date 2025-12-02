@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
-import 'package:mocktail/mocktail.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

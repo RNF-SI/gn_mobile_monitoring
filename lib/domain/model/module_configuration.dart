@@ -504,7 +504,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
         if (attributLabel != null) 'attribut_label': attributLabel,
         if (definition != null) 'definition': definition,
         if (hidden != null) 'hidden': hidden,
-        if (required != null) 'required': required,
+        'required': required,
         if (typeWidget != null) 'type_widget': typeWidget,
         if (typeUtil != null) 'type_util': typeUtil,
         if (multiSelect != null) 'multi_select': multiSelect,

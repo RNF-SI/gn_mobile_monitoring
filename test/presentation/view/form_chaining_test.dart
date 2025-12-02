@@ -25,12 +25,12 @@ class TestApp extends StatelessWidget {
   final Observation? observation;
   
   const TestApp({
-    Key? key,
+    super.key,
     required this.observationConfig,
     required this.visitId,
     this.customConfig,
     this.observation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

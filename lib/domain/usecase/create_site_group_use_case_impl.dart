@@ -1,7 +1,5 @@
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
-import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
-import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case.dart';
 import 'package:uuid/uuid.dart';
 

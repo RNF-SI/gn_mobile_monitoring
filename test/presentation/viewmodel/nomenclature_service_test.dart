@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';

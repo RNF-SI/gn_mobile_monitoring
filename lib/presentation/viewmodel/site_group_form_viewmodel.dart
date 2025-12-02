@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -112,14 +111,14 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       }
       
       // Ajouter tous les autres champs qui ne sont pas des champs de base
-      final baseSiteFields = [
-        'id_base_site', 'base_site_name', 'base_site_code', 'base_site_description',
-        'first_use_date', 'geom', 'uuid_base_site', 'altitude_min', 'altitude_max',
-        'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'id_inventor'
+      final baseSiteGroupFields = [
+        'id_sites_group', 'sites_group_name', 'sites_group_code', 'sites_group_description',
+        'geom', 'uuid_sites_group', 'altitude_min', 'altitude_max',
+        'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'comments'
       ];
       
       for (final entry in processedData.entries) {
-        if (!baseSiteFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
+        if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
           complementData[entry.key] = entry.value;
         }
       }
@@ -156,13 +155,14 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       // Récupérer l'ID de l'utilisateur connecté
       final userId = await _getUserIdUseCase.execute();
 
-      // Mettre à jour le site avec les nouvelles données
+      // Mettre à jour le groupe de sites avec les nouvelles données
       final updatedSite = existingSite.copyWith(
-        sitesGroupName: processedData['base_site_name'] as String?,
-        sitesGroupCode: processedData['base_site_code'] as String?,
-        sitesGroupDescription: processedData['base_site_description'] as String?,
-        altitudeMin: processedData['altitude_min'] as int?,
-        altitudeMax: processedData['altitude_max'] as int?,
+        sitesGroupName: processedData['sites_group_name'] as String?,
+        sitesGroupCode: processedData['sites_group_code'] as String?,
+        sitesGroupDescription: processedData['sites_group_description'] as String?,
+        comments: processedData['comments'] as String?,
+        altitudeMin: _parseIntOrNull(processedData['altitude_min']),
+        altitudeMax: _parseIntOrNull(processedData['altitude_max']),
         metaUpdateDate: DateTime.now(),
       );
 
@@ -198,7 +198,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     }
   }
 
-  /// Prépare un objet BaseSite à partir des données du formulaire
+  /// Prépare un objet SiteGroup à partir des données du formulaire
   SiteGroup _prepareSiteGroupFromFormData(
     Map<String, dynamic> formData, {
     required int moduleId,
@@ -209,8 +209,30 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
 
     return SiteGroup(
       idSitesGroup: 0, // Sera remplacé par la base de données (autoIncrement)
+      sitesGroupName: formData['sites_group_name'] as String?,
+      sitesGroupCode: formData['sites_group_code'] as String?,
+      sitesGroupDescription: formData['sites_group_description'] as String?,
+      comments: formData['comments'] as String?,
+      altitudeMin: _parseIntOrNull(formData['altitude_min']),
+      altitudeMax: _parseIntOrNull(formData['altitude_max']),
+      idDigitiser: userId,
+      metaCreateDate: now,
+      metaUpdateDate: now,
       // geom sera géré séparément si nécessaire
     );
+  }
+
+  /// Convertit une valeur en int? de manière sécurisée
+  /// Gère les cas où la valeur est déjà un int, une String, ou null
+  int? _parseIntOrNull(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is String) {
+      final parsed = int.tryParse(value);
+      return parsed;
+    }
+    if (value is num) return value.toInt();
+    return null;
   }
 }
 

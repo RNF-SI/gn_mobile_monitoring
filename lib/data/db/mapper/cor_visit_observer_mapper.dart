@@ -1,6 +1,5 @@
 import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
-import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
 
 /// Mapper pour convertir entre les objets de base de données et les entités CorVisitObserver

@@ -1087,7 +1087,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           // Informations supplémentaires si disponibles
           if (lines

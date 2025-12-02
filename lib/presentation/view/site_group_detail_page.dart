@@ -14,10 +14,10 @@ class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final ModuleInfo moduleInfo;
 
   const SiteGroupDetailPage({
-    Key? key,
+    super.key,
     required this.siteGroup,
     required this.moduleInfo,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<SiteGroupDetailPage> createState() => _SiteGroupDetailPageState();

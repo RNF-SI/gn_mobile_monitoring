@@ -1,6 +1,4 @@
 import 'package:drift/drift.dart';
-import 'package:gn_mobile_monitoring/data/db/tables/t_datasets.dart';
-import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 
 @DataClassName('CorModuleDataset')
 class CorModuleDatasetTable extends Table {
