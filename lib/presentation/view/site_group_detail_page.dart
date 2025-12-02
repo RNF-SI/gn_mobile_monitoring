@@ -189,44 +189,43 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   ],
                 ),
               ),
-            ),
-          ),
-
-          // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  widget.moduleInfo.module.complement?.configuration?.site
-                          ?.labelList ??
+              // Sites Table Section
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
                       widget.moduleInfo.module.complement?.configuration?.site
-                          ?.label ??
-                      'Sites associés',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                              ?.labelList ??
+                          widget.moduleInfo.module.complement?.configuration?.site
+                              ?.label ??
+                          'Sites associés',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
+              ),
 
-          // Sites Expansion Panel List
-          Expanded(
-            child: sitesState.when(
-              data: (sites) => _buildSitesExpansionPanelList(
-                sites,
-                context,
-                baseSiteNameLabel,
-                baseSiteCodeLabel,
-              ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (error, stack) => Center(
-                child: Text(
-                  'Erreur lors du chargement des sites: $error',
-                  style: const TextStyle(color: Colors.red),
-                ),
-              ),
+              // Sites Expansion Panel List
+              Expanded(
+                child: sitesState.when(
+                  data: (sites) => _buildSitesExpansionPanelList(
+                    sites,
+                    context,
+                    baseSiteNameLabel,
+                    baseSiteCodeLabel,
+                  ),
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (error, stack) => Center(
+                    child: Text(
+                      'Erreur lors du chargement des sites: $error',
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  ),
+                )
+              )
             ],
           ),
           // Bouton carto en bas à droite
