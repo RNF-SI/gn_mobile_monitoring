@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 
 enum Status {
@@ -23,6 +24,7 @@ class _LoginPageState extends State<LoginPage> {
   final _apiUrl = TextEditingController();
 
   bool _isLoading = false;
+  bool _hasSubmitted = false;
 
   void loading() {
     setState(() {
@@ -76,31 +78,25 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Permettre au contenu de se déplacer quand le clavier apparaît
-      resizeToAvoidBottomInset: true,
+      // Garder l'image fixe, le clavier passe par-dessus
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // Image d'arrière-plan occupant tout l'écran
+          // Image d'arrière-plan avec hauteur 100% et largeur adaptée
           Positioned.fill(
-            child: ClipRect(
-              child: OverflowBox(
-                maxWidth: double.infinity,
-                maxHeight: double.infinity,
-                child: Transform.scale(
-                  scale: 1, // Facteur de zoom (plus petit = moins zoomé)
-                  child: Image.asset(
-                    'assets/photo/splash_screen.jpg',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
-                  ),
-                ),
+            child: Center(
+              child: Image.asset(
+                'assets/photo/splash_screen.jpg',
+                fit: BoxFit.fitHeight,
+                alignment: Alignment.center,
+                height: double.infinity,
               ),
             ),
           ),
           // Overlay de couleur verte semi-transparent pour la lisibilité
           Positioned.fill(
             child: Container(
-              color: const Color(0xFF598979).withOpacity(0.2),
+              color: AppColors.dark.withOpacity(0.2),
             ),
           ),
           // Contenu du formulaire
@@ -114,6 +110,9 @@ class _LoginPageState extends State<LoginPage> {
                   final auth = ref.watch(authenticationViewModelProvider);
 
                   Future<void> onPressedFunction() async {
+                    setState(() {
+                      _hasSubmitted = true;
+                    });
                     if (_formKey.currentState!.validate()) {
                       loading();
                       // Normaliser l'URL de base (sans /api)
@@ -131,12 +130,7 @@ class _LoginPageState extends State<LoginPage> {
                   return Form(
                     key: _formKey,
                     child: Padding(
-                      padding: EdgeInsets.only(
-                        // Marge supplémentaire en bas pour éviter le clavier
-                        bottom: MediaQuery.of(context).viewInsets.bottom > 0
-                            ? MediaQuery.of(context).viewInsets.bottom + 20
-                            : 0,
-                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
                       child: Column(
                         mainAxisAlignment:
                             MainAxisAlignment.values[2], // Center the children
@@ -144,14 +138,14 @@ class _LoginPageState extends State<LoginPage> {
                           const Text.rich(
                             TextSpan(
                               text: 'Monitoring',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 34),
+                              style: TextStyle(
+                                  color: AppColors.white, fontSize: 34),
                               children: [
                                 TextSpan(
                                   text: 'Mobile',
                                   style: TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF8AAC3E),
+                                    color: AppColors.primary,
                                     fontSize: 45,
                                   ),
                                 ),
@@ -165,15 +159,11 @@ class _LoginPageState extends State<LoginPage> {
                             child: TextFormField(
                               controller: _identifiant,
                               keyboardType: TextInputType.emailAddress,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
+                              decoration: const InputDecoration(
                                 labelText: 'Identifiant',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               validator: (value) {
                                 if (value!.isEmpty) {
@@ -190,15 +180,11 @@ class _LoginPageState extends State<LoginPage> {
                             child: TextFormField(
                               controller: _password,
                               obscureText: true,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
+                              decoration: const InputDecoration(
                                 labelText: 'Mot de Passe',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               validator: (value) {
                                 if (value!.isEmpty) {
@@ -215,16 +201,12 @@ class _LoginPageState extends State<LoginPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: TextFormField(
                               controller: _apiUrl,
-                              decoration: InputDecoration(
-                                fillColor: const Color(0xFFF4F1E4),
-                                filled: true,
+                              autovalidateMode: _hasSubmitted
+                                  ? AutovalidateMode.onUserInteraction
+                                  : AutovalidateMode.disabled,
+                              decoration: const InputDecoration(
                                 labelText: 'URL du serveur GeoNature',
                                 hintText: 'https://geonature.mondomaine.org',
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                  borderSide: const BorderSide(
-                                      color: Color(0xFF7DAB9C)),
-                                ),
                               ),
                               keyboardType: TextInputType.url,
                               validator: (value) {
@@ -243,7 +225,7 @@ class _LoginPageState extends State<LoginPage> {
                           const SizedBox(height: 20), // Space before the button
                           MaterialButton(
                             onPressed: onPressedFunction,
-                            color: const Color(0xFF8AAC3E),
+                            color: AppColors.primary,
                             textColor: Colors.white,
                             minWidth: 200,
                             padding: const EdgeInsets.symmetric(vertical: 15),
@@ -251,7 +233,7 @@ class _LoginPageState extends State<LoginPage> {
                               borderRadius: BorderRadius.circular(25),
                             ),
                             child: Text(
-                              type == Status.login ? 'Log in' : 'Sign up',
+                              type == Status.login ? 'Se connecter' : 'Sign up',
                               style:
                                   const TextStyle(fontWeight: FontWeight.bold),
                             ),
@@ -260,7 +242,7 @@ class _LoginPageState extends State<LoginPage> {
                           if (_isLoading) ...[
                             const CircularProgressIndicator(
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    Color(0xFF8AAC3E))),
+                                    AppColors.primary)),
                             const SizedBox(height: 16),
                             Consumer(
                               builder: (context, ref, _) {
@@ -302,6 +284,33 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   );
                 }),
+              ),
+            ),
+          ),
+          // Logo LIFE et texte de copyright en bas
+          Positioned(
+            bottom: 15,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset(
+                    'assets/photo/logo_life.png',
+                    height: 100,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    '© B CAUVIN',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
