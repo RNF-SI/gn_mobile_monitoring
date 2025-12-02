@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/data/db/dao/bib_nomenclatures_types_dao.dar
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_detail_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/individuals_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
@@ -27,6 +28,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/bib_type_site.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_module_dataset.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_object_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_individual_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_type.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_taxon_liste.dart';
@@ -35,6 +37,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_actions.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_datasets.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_individuals.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_nomenclatures.dart';
@@ -83,6 +86,7 @@ part 'database.g.dart';
   TObservations,
   TObservationComplements,
   TObservationDetails,
+  TIndividuals,
   BibTablesLocations,
   BibNomenclaturesTypesTable,
   BibTypeSitesTable,
@@ -90,6 +94,7 @@ part 'database.g.dart';
   TActions,
   TPermissionsAvailable,
   TPermissions,
+  CorIndividualModuleTable,
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
   CorObjectModuleTable,
@@ -109,6 +114,7 @@ part 'database.g.dart';
   VisitesDao,
   ObservationDao,
   ObservationDetailDao,
+  IndividualsDao,
   BibNomenclaturesTypesDao,
   TaxonDao,
   AppMetadataDao,
