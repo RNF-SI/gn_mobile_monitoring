@@ -67,16 +67,32 @@ class BaseSiteEntity {
     };
   }
 
-  // Helper method to parse geometry from different formats
-  static String? _parseGeometry(dynamic geometryData) {
-    if (geometryData == null) return null;
+  /// Parse geometry from various formats into JSON string
+  /// Handles: Map<String, dynamic> (GeoJSON object), String (JSON/WKT), null
+  static String? _parseGeometry(dynamic geometry) {
+    if (geometry == null) return null;
     
-    if (geometryData is String) {
-      return geometryData;
-    } else if (geometryData is Map<String, dynamic>) {
-      return jsonEncode(geometryData);
+    if (geometry is String) {
+      // Already a string (JSON or WKT format)
+      return geometry.isEmpty ? null : geometry;
     }
     
-    return null;
+    if (geometry is Map<String, dynamic>) {
+      // GeoJSON object - convert to JSON string
+      try {
+        return jsonEncode(geometry);
+      } catch (e) {
+        print('Error encoding geometry to JSON: $e');
+        return null;
+      }
+    }
+    
+    // Unexpected type - try to convert to string
+    try {
+      return geometry.toString();
+    } catch (e) {
+      print('Error parsing geometry of type ${geometry.runtimeType}: $e');
+      return null;
+    }
   }
 }
