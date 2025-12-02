@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -34,6 +35,7 @@ class SiteGroupDetailPage extends ConsumerStatefulWidget {
 class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   int? _expandedPanelIndex;
   Position? _userPosition;
+  bool _sortByDistance = true; // true = par distance, false = alphabétique
 
   @override
   void initState() {
@@ -276,14 +278,47 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               // Sites Table Section
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  widget.moduleInfo.module.complement?.configuration?.site
-                          ?.labelList ??
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
                       widget.moduleInfo.module.complement?.configuration?.site
-                          ?.label ??
-                      'Sites associés',
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+                              ?.labelList ??
+                          widget.moduleInfo.module.complement?.configuration
+                              ?.site?.label ??
+                          'Sites associés',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    // Bouton pour basculer entre tri par distance et alphabétique
+                    if (_userPosition != null)
+                      ActionChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _sortByDistance
+                                  ? Icons.sort_by_alpha
+                                  : Icons.location_on,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _sortByDistance ? 'Alphabétique' : 'Distance',
+                              style: const TextStyle(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                        side: BorderSide.none,
+                        backgroundColor: AppColors.primary,
+                        onPressed: () {
+                          setState(() {
+                            _sortByDistance = !_sortByDistance;
+                          });
+                        },
+                      ),
+                  ],
                 ),
               ),
 
@@ -364,9 +399,11 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       );
     }
 
-    // Trier les sites par distance si la position GPS est disponible
+    // Trier les sites selon le mode sélectionné
     List<BaseSite> sortedSites = List.from(sites);
-    if (_userPosition != null) {
+
+    if (_sortByDistance && _userPosition != null) {
+      // Tri par distance
       sortedSites.sort((a, b) {
         final distanceA = _calculateDistance(a);
         final distanceB = _calculateDistance(b);
@@ -386,6 +423,24 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         // Si aucune distance n'est disponible, conserver l'ordre original
         return 0;
       });
+    } else {
+      // Tri alphabétique par le premier champ de display_properties
+      final List<String>? displayProperties =
+          siteConfig?.displayList ?? siteConfig?.displayProperties;
+
+      if (displayProperties != null && displayProperties.isNotEmpty) {
+        final firstProperty = displayProperties.first;
+
+        sortedSites.sort((a, b) {
+          // Récupérer les valeurs pour le tri
+          String valueA = _getSitePropertyValue(
+              a, firstProperty, siteConfig, customConfig, parsedSiteConfig);
+          String valueB = _getSitePropertyValue(
+              b, firstProperty, siteConfig, customConfig, parsedSiteConfig);
+
+          return valueA.compareTo(valueB);
+        });
+      }
     }
 
     return ListView.builder(
@@ -662,6 +717,42 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       debugPrint('Erreur lors de la récupération du complément: $e');
       return null;
     }
+  }
+
+  /// Récupère la valeur d'une propriété d'un site pour le tri (synchrone, utilise uniquement les données de base)
+  String _getSitePropertyValue(
+    BaseSite site,
+    String propertyKey,
+    ObjectConfig? siteConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedSiteConfig,
+  ) {
+    // Construire les données du site (uniquement les champs de base pour le tri synchrone)
+    final Map<String, dynamic> siteData = {};
+
+    // Ajouter les champs de base
+    if (site.baseSiteCode != null) {
+      siteData['base_site_code'] = site.baseSiteCode;
+    }
+    if (site.baseSiteName != null) {
+      siteData['base_site_name'] = site.baseSiteName;
+    }
+    if (site.baseSiteDescription != null) {
+      siteData['base_site_description'] = site.baseSiteDescription;
+    }
+    if (site.firstUseDate != null) {
+      siteData['first_use_date'] = site.firstUseDate!.toString();
+    }
+
+    // Récupérer la valeur
+    if (siteData.containsKey(propertyKey)) {
+      final rawValue = siteData[propertyKey];
+      return ValueFormatter.format(rawValue);
+    }
+
+    // Valeur par défaut si la propriété n'existe pas dans les données de base
+    // (les compléments sont asynchrones et ne peuvent pas être utilisés pour le tri)
+    return '';
   }
 
   /// Construit le badge de distance pour le header
