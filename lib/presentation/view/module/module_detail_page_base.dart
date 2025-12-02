@@ -441,6 +441,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     return Scaffold(
       appBar: buildAppBar(),
+      
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -718,6 +719,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   Widget _buildSitesTab() {
+
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
@@ -727,7 +729,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-
+    
     // Déterminer les colonnes à afficher pour les sites
     List<String> standardColumns = [
       'actions',
