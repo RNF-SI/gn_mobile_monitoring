@@ -141,6 +141,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                   'altitude_max': null, // Will be fetched with individual requests
                   'first_use_date': null, // Will be fetched with individual requests
                   'uuid_base_site': null, // Will be fetched with individual requests
+                  'geometry': null,
                 };
 
                 enrichedSites.add(enrichedSite);
@@ -211,6 +212,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
               'altitude_max': null, // Will be fetched with individual requests
               'first_use_date': null, // Will be fetched with individual requests
               'uuid_base_site': null, // Will be fetched with individual requests
+              'geometry': null,
             };
 
             enrichedSites.add(enrichedSite);

@@ -1,30 +1,131 @@
-import 'package:flutter/widgets.dart';
+import 'dart:convert';
+import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:url_launcher/url_launcher.dart';
 
-@override
-Widget build(BuildContext context) {
-  return FlutterMap(
-    options: MapOptions(
-      initialCenter: LatLng(51.509364, -0.128928), // Center the map over London
-      initialZoom: 9.2,
-    ),
-    children: [
-      TileLayer( // Bring your own tiles
-        urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png', // For demonstration only
-        userAgentPackageName: 'com.example.app', // Add your app identifier
-        // And many more recommended properties!
+class GeometriesMapWidget extends StatefulWidget {
+  final String jsonData;
+
+  const GeometriesMapWidget({super.key, required this.jsonData});
+
+  @override
+  State<GeometriesMapWidget> createState() => _GeometriesMapWidgetState();
+}
+
+class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
+  List<Marker> markers = [];
+  List<Polyline> polylines = [];
+  List<Polygon> polygons = [];
+  LatLng? userPosition;
+
+  @override
+  void initState() {
+    super.initState();
+    loadGeometries();
+    loadUserLocation();
+  }
+
+  // -------------------------------
+  // Lecture des géométries depuis le JSON
+  // -------------------------------
+  void loadGeometries() {
+    final List data = jsonDecode(widget.jsonData);
+
+    for (var feature in data) {
+      final geom = feature["geom"];
+      final type = geom["type"];
+      final coords = geom["coordinates"];
+
+      switch (type) {
+        case "Point":
+          markers.add(
+            Marker(
+              point: LatLng(coords[1], coords[0]),
+              width: 40,
+              height: 40,
+              child: const Icon(Icons.location_on, color: Colors.red),
+            ),
+          );
+          break;
+
+        case "LineString":
+          polylines.add(
+            Polyline(
+              points: coords
+                  .map<LatLng>((c) => LatLng(c[1], c[0]))
+                  .toList(),
+              strokeWidth: 4,
+              color: Colors.blue,
+            ),
+          );
+          break;
+
+        case "Polygon":
+          polygons.add(
+            Polygon(
+              points: coords[0].map<LatLng>((c) => LatLng(c[1], c[0])).toList(),
+              color: Colors.green.withValues(alpha: 0.3),
+              borderColor: Colors.green,
+              borderStrokeWidth: 3,
+            ),
+          );
+          break;
+      }
+    }
+  }
+
+  // -------------------------------
+  // Récupération de la position de l'appareil
+  // -------------------------------
+  Future<void> loadUserLocation() async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) return;
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) return;
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    setState(() {
+      userPosition = LatLng(position.latitude, position.longitude);
+
+      // Ajout d'un marqueur "Vous êtes ici"
+      markers.add(
+        Marker(
+          point: userPosition!,
+          width: 40,
+          height: 40,
+          child: const Icon(Icons.my_location, color: Colors.blue, size: 35),
+        ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    LatLng initialCenter = userPosition ?? LatLng(48.85, 2.35);
+
+    return FlutterMap(
+      options: MapOptions(
+        initialCenter: initialCenter,
+        initialZoom: userPosition != null ? 15 : 12,
       ),
-      RichAttributionWidget( // Include a stylish prebuilt attribution widget that meets all requirments
-        attributions: [
-          TextSourceAttribution(
-            'OpenStreetMap contributors',
-            onTap: () => launchUrl(Uri.parse('https://openstreetmap.org/copyright')), // (external)
-          ),
-          // Also add images...
-        ],
-      ),
-    ],
-  );
+      children: [
+        TileLayer(
+          urlTemplate:
+              "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        ),
+        PolylineLayer(polylines: polylines),
+        PolygonLayer(polygons: polygons),
+        MarkerLayer(markers: markers),
+      ],
+    );
+  }
 }
