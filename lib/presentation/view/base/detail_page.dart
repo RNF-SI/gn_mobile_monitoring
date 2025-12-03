@@ -60,6 +60,7 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
       customConfig: customConfig,
       title: propertiesTitle,
       separateEmptyFields: separateEmptyFields,
+      displayProperties: displayProperties,
     );
   }
 

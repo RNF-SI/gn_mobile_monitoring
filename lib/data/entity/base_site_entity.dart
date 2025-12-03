@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class BaseSiteEntity {
   final int idBaseSite;
   final String? baseSiteName;
@@ -35,7 +37,7 @@ class BaseSiteEntity {
       firstUseDate: json['first_use_date'] != null
           ? DateTime.parse(json['first_use_date'])
           : null,
-      geom: json['geom'] as String?,
+      geom: _parseGeometry(json['geometry'] ?? json['geom']),
       uuidBaseSite: json['uuid_base_site'] as String?,
       altitudeMin: json['altitude_min'] as int?,
       altitudeMax: json['altitude_max'] as int?,
@@ -63,5 +65,34 @@ class BaseSiteEntity {
       'meta_create_date': metaCreateDate?.toIso8601String(),
       'meta_update_date': metaUpdateDate?.toIso8601String(),
     };
+  }
+
+  /// Parse geometry from various formats into JSON string
+  /// Handles: Map<String, dynamic> (GeoJSON object), String (JSON/WKT), null
+  static String? _parseGeometry(dynamic geometry) {
+    if (geometry == null) return null;
+    
+    if (geometry is String) {
+      // Already a string (JSON or WKT format)
+      return geometry.isEmpty ? null : geometry;
+    }
+    
+    if (geometry is Map<String, dynamic>) {
+      // GeoJSON object - convert to JSON string
+      try {
+        return jsonEncode(geometry);
+      } catch (e) {
+        print('Error encoding geometry to JSON: $e');
+        return null;
+      }
+    }
+    
+    // Unexpected type - try to convert to string
+    try {
+      return geometry.toString();
+    } catch (e) {
+      print('Error parsing geometry of type ${geometry.runtimeType}: $e');
+      return null;
+    }
   }
 }

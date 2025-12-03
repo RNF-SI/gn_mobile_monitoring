@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_download_button.dart';
 
@@ -25,7 +26,7 @@ class ModuleItemCardWidget extends ConsumerWidget {
                   Text(
                     moduleInfo.module.moduleLabel ?? 'Module sans nom',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: const Color(0xFF598979)), // Brand color
+                        color: AppColors.dark), // Brand color
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),

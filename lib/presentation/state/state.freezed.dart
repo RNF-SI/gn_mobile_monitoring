@@ -83,9 +83,6 @@ class _$StateCopyWithImpl<T, $Res, $Val extends State<T>>
   final $Val _value;
   // ignore: unused_field
   final $Res Function($Val) _then;
-
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -102,9 +99,6 @@ class __$$initImplCopyWithImpl<T, $Res>
   __$$initImplCopyWithImpl(
       _$initImpl<T> _value, $Res Function(_$initImpl<T>) _then)
       : super(_value, _then);
-
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -220,9 +214,6 @@ class __$$loadingImplCopyWithImpl<T, $Res>
   __$$loadingImplCopyWithImpl(
       _$loadingImpl<T> _value, $Res Function(_$loadingImpl<T>) _then)
       : super(_value, _then);
-
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
 }
 
 /// @nodoc
@@ -341,8 +332,6 @@ class __$$successImplCopyWithImpl<T, $Res>
       _$successImpl<T> _value, $Res Function(_$successImpl<T>) _then)
       : super(_value, _then);
 
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -382,9 +371,7 @@ class _$successImpl<T> extends _success<T> {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(data));
 
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$successImplCopyWith<T, _$successImpl<T>> get copyWith =>
@@ -470,10 +457,7 @@ abstract class _success<T> extends State<T> {
   const _success._() : super._();
 
   T get data;
-
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$successImplCopyWith<T, _$successImpl<T>> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -495,8 +479,6 @@ class __$$errorImplCopyWithImpl<T, $Res>
       _$errorImpl<T> _value, $Res Function(_$errorImpl<T>) _then)
       : super(_value, _then);
 
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -536,9 +518,7 @@ class _$errorImpl<T> extends _error<T> {
   @override
   int get hashCode => Object.hash(runtimeType, exception);
 
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$errorImplCopyWith<T, _$errorImpl<T>> get copyWith =>
@@ -624,10 +604,7 @@ abstract class _error<T> extends State<T> {
   const _error._() : super._();
 
   Exception get exception;
-
-  /// Create a copy of State
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$errorImplCopyWith<T, _$errorImpl<T>> get copyWith =>
       throw _privateConstructorUsedError;
 }

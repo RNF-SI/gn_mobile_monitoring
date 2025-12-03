@@ -35,9 +35,7 @@ mixin _$NomenclatureType {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
 
-  /// Create a copy of NomenclatureType
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $NomenclatureTypeCopyWith<NomenclatureType> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -79,8 +77,6 @@ class _$NomenclatureTypeCopyWithImpl<$Res, $Val extends NomenclatureType>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of NomenclatureType
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -217,8 +213,6 @@ class __$$NomenclatureTypeImplCopyWithImpl<$Res>
       $Res Function(_$NomenclatureTypeImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of NomenclatureType
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -440,9 +434,7 @@ class _$NomenclatureTypeImpl implements _NomenclatureType {
       metaCreateDate,
       metaUpdateDate);
 
-  /// Create a copy of NomenclatureType
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$NomenclatureTypeImplCopyWith<_$NomenclatureTypeImpl> get copyWith =>
@@ -507,11 +499,8 @@ abstract class _NomenclatureType implements NomenclatureType {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
-
-  /// Create a copy of NomenclatureType
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$NomenclatureTypeImplCopyWith<_$NomenclatureTypeImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

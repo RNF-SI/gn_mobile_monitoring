@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 
@@ -22,7 +23,7 @@ class ModuleListWidget extends ConsumerWidget {
         }
 
         return RefreshIndicator(
-          color: const Color(0xFF8AAC3E),
+          color: AppColors.primary,
           onRefresh: () async {
             await ref
                 .read(userModuleListeViewModelStateNotifierProvider.notifier)
@@ -42,7 +43,7 @@ class ModuleListWidget extends ConsumerWidget {
       error: (error) => Center(
         child: Text(
           'Erreur: $error',
-          style: const TextStyle(color: Colors.red),
+          style: const TextStyle(color: AppColors.red),
         ),
       ),
     );

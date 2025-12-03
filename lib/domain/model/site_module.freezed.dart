@@ -19,9 +19,7 @@ mixin _$SiteModule {
   int get idSite => throw _privateConstructorUsedError;
   int get idModule => throw _privateConstructorUsedError;
 
-  /// Create a copy of SiteModule
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SiteModuleCopyWith<SiteModule> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -45,8 +43,6 @@ class _$SiteModuleCopyWithImpl<$Res, $Val extends SiteModule>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SiteModule
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -85,8 +81,6 @@ class __$$SiteModuleImplCopyWithImpl<$Res>
       _$SiteModuleImpl _value, $Res Function(_$SiteModuleImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SiteModule
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -134,9 +128,7 @@ class _$SiteModuleImpl implements _SiteModule {
   @override
   int get hashCode => Object.hash(runtimeType, idSite, idModule);
 
-  /// Create a copy of SiteModule
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SiteModuleImplCopyWith<_$SiteModuleImpl> get copyWith =>
@@ -152,11 +144,8 @@ abstract class _SiteModule implements SiteModule {
   int get idSite;
   @override
   int get idModule;
-
-  /// Create a copy of SiteModule
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SiteModuleImplCopyWith<_$SiteModuleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
