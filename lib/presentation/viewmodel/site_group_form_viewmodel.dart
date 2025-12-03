@@ -63,7 +63,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   Future<int?> createSiteGroupFromFormData(
     Map<String, dynamic> formData, {
     int? moduleId,
-    int? selectedSiteTypeId,
   }) async {
     try {
       // Traiter les données du formulaire
@@ -77,7 +76,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         processedData,
         moduleId: moduleId ?? _moduleId,
         userId: userId,
-        selectedSiteTypeId: selectedSiteTypeId,
       );
 
       // Créer le site
@@ -92,18 +90,13 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       // Créer le complément de site si nécessaire
       final complementData = <String, dynamic>{};
       
-      // Ajouter le type de site si spécifié
-      if (selectedSiteTypeId != null) {
-        complementData['id_nomenclature_type_site'] = selectedSiteTypeId;
-      }
-      
       // Ajouter le groupe de sites si spécifié
       if (_siteGroupId != null) {
         complementData['id_sites_group'] = _siteGroupId;
       }
       
-      // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
-      final specificFields = ['id_sites_group', 'id_nomenclature_type_site', 'initial_code'];
+      // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans SiteGroup
+      final specificFields = ['id_sites_group'];
       for (final field in specificFields) {
         if (processedData.containsKey(field) && !complementData.containsKey(field)) {
           complementData[field] = processedData[field];
@@ -112,9 +105,19 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       
       // Ajouter tous les autres champs qui ne sont pas des champs de base
       final baseSiteGroupFields = [
-        'id_sites_group', 'sites_group_name', 'sites_group_code', 'sites_group_description',
-        'geom', 'uuid_sites_group', 'altitude_min', 'altitude_max',
-        'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'comments'
+        "id_sites_group",
+        "sites_group_name",
+        "sites_group_code",
+        "sites_group_description",
+        "comments",
+        "uuid_sites_group",
+        "nb_sites",
+        "nb_visits",
+        "medias",
+        "altitude_min",
+        "altitude_max",
+        "id_digitiser",
+        "modules"
       ];
       
       for (final entry in processedData.entries) {
@@ -141,12 +144,11 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     }
   }
 
-  /// Met à jour un site existant à partir des données du formulaire
-  Future<bool> updateSiteFromFormData(
+  /// Met à jour d'un groupe de site existant à partir des données du formulaire
+  Future<bool> updateSiteGroupFromFormData(
     Map<String, dynamic> formData,
-    SiteGroup existingSite, {
+    SiteGroup existingSiteGroup, {
     int? moduleId,
-    int? selectedSiteTypeId,
   }) async {
     try {
       // Traiter les données du formulaire
@@ -156,7 +158,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       final userId = await _getUserIdUseCase.execute();
 
       // Mettre à jour le groupe de sites avec les nouvelles données
-      final updatedSite = existingSite.copyWith(
+      final updatedSite = existingSiteGroup.copyWith(
         sitesGroupName: processedData['sites_group_name'] as String?,
         sitesGroupCode: processedData['sites_group_code'] as String?,
         sitesGroupDescription: processedData['sites_group_description'] as String?,
@@ -173,7 +175,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
 
       return success;
     } catch (e) {
-      debugPrint('Erreur lors de la mise à jour du site: $e');
+      debugPrint('Erreur lors de la mise à jour du groupe de site: $e');
       return false;
     }
   }
@@ -183,7 +185,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     try {
       return await _deleteSiteGroupUseCase.execute(siteId);
     } catch (e) {
-      debugPrint('Erreur lors de la suppression du site: $e');
+      debugPrint('Erreur lors de la suppression du groupe de site: $e');
       return false;
     }
   }

@@ -389,4 +389,33 @@ class BreadcrumbBuilder {
     
     return items;
   }
+
+  /// Construit un fil d'Ariane standard pour les formulaires de groupe de site
+  static List<BreadcrumbItem> buildSiteGroupBreadcrumb({
+    String? moduleName,
+    String? siteGroupLabel,
+    String? siteGroupName,
+    VoidCallback? onModuleTap,
+    VoidCallback? onSiteGroupTap,
+  }) {
+    final items = <BreadcrumbItem>[];
+    
+    if (moduleName != null && onModuleTap != null) {
+      items.add(BreadcrumbItem(
+        label: 'Module',
+        value: moduleName,
+        onTap: onModuleTap,
+      ));
+    }
+    
+    if (siteGroupName != null && onSiteGroupTap != null) {
+      items.add(BreadcrumbItem(
+        label: siteGroupLabel ?? 'Groupe',
+        value: siteGroupName,
+        onTap: onSiteGroupTap,
+      ));
+    }
+    
+    return items;
+  }
 }
