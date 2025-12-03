@@ -213,111 +213,112 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             '${widget.moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${widget.siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
       ),
       body: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Fil d'Ariane pour la navigation
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        vertical: 8.0, horizontal: 12.0),
-                    child: BreadcrumbNavigation(
-                      items: [
-                        BreadcrumbItem(
-                          label: 'Module',
-                          value:
-                              widget.moduleInfo.module.moduleLabel ?? 'Module',
-                          onTap: () {
-                            Navigator.of(context)
-                                .pop(); // Retour à la page précédente
-                          },
-                        ),
-                        BreadcrumbItem(
-                          label: widget.moduleInfo.module.complement
-                                  ?.configuration?.sitesGroup?.label ??
-                              'Groupe',
-                          value: widget.siteGroup.sitesGroupName ??
-                              widget.siteGroup.sitesGroupCode ??
-                              'Groupe',
-                        ),
-                      ],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Fil d'Ariane pour la navigation
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+                child: BreadcrumbNavigation(
+                  items: [
+                    BreadcrumbItem(
+                      label: 'Module',
+                      value: widget.moduleInfo.module.moduleLabel ?? 'Module',
+                      onTap: () {
+                        Navigator.of(context)
+                            .pop(); // Retour à la page précédente
+                      },
                     ),
-                  ),
+                    BreadcrumbItem(
+                      label: widget.moduleInfo.module.complement?.configuration
+                              ?.sitesGroup?.label ??
+                          'Groupe',
+                      value: widget.siteGroup.sitesGroupName ??
+                          widget.siteGroup.sitesGroupCode ??
+                          'Groupe',
+                    ),
+                  ],
                 ),
               ),
-              // Group Properties Card
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                            widget.moduleInfo.module.complement?.configuration
-                                    ?.sitesGroup?.label ??
-                                'Propriétés du groupe',
-                            style: const TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 8),
-                        _buildPropertyRow(groupNameLabel,
-                            widget.siteGroup.sitesGroupName ?? ''),
-                        _buildPropertyRow(groupCodeLabel,
-                            widget.siteGroup.sitesGroupCode ?? ''),
-                        if (widget.siteGroup.sitesGroupDescription != null &&
-                            widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                          _buildPropertyRow(groupDescriptionLabel,
-                              widget.siteGroup.sitesGroupDescription!),
-                      ],
-                    ),
-                  ),
+            ),
+          ),
+          // Group Properties Card
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                        widget.moduleInfo.module.complement?.configuration
+                                ?.sitesGroup?.label ??
+                            'Propriétés du groupe',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _buildPropertyRow(
+                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
+                    _buildPropertyRow(
+                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                    if (widget.siteGroup.sitesGroupDescription != null &&
+                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
+                      _buildPropertyRow(groupDescriptionLabel,
+                          widget.siteGroup.sitesGroupDescription!),
+                  ],
                 ),
               ),
+            ),
+          ),
 
-              // Propriétés supplémentaires du groupe
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+          // Propriétés supplémentaires du groupe
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                  widget.moduleInfo.module.complement?.configuration
-                                          ?.sitesGroup?.label ??
-                                      'Propriétés du groupe',
-                                  style: const TextStyle(
-                                      fontSize: 16, fontWeight: FontWeight.bold)),
-                            ),
-                          ],
+                        Expanded(
+                          child: Text(
+                              widget.moduleInfo.module.complement?.configuration
+                                      ?.sitesGroup?.label ??
+                                  'Propriétés du groupe',
+                              style: const TextStyle(
+                                  fontSize: 16, fontWeight: FontWeight.bold)),
                         ),
-                        const SizedBox(height: 8),
-                        _buildPropertyRow(
-                            groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                        _buildPropertyRow(
-                            groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                        if (widget.siteGroup.sitesGroupDescription != null &&
-                            widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                          _buildPropertyRow(groupDescriptionLabel,
-                              widget.siteGroup.sitesGroupDescription!),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 8),
+                    _buildPropertyRow(
+                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
+                    _buildPropertyRow(
+                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
+                    if (widget.siteGroup.sitesGroupDescription != null &&
+                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
+                      _buildPropertyRow(groupDescriptionLabel,
+                          widget.siteGroup.sitesGroupDescription!),
+                  ],
                 ),
               ),
+            ),
+          ),
 
-              // Sites Table Section
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Sites Table Section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
                   children: [
                     Text(
                       widget.moduleInfo.module.complement?.configuration?.site
@@ -328,106 +329,96 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    // Bouton pour basculer entre tri par distance et alphabétique
-                    if (_userPosition != null)
-                      ActionChip(
-                        label: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _sortByDistance
-                                  ? Icons.sort_by_alpha
-                                  : Icons.location_on,
-                              size: 16,
-                              color: Colors.white,
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: () {
+                        final siteConfig =
+                            module.complement?.configuration?.site;
+                        if (siteConfig != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SiteFormPageWithTypeSelection(
+                                siteConfig: siteConfig,
+                                customConfig:
+                                    module.complement?.configuration?.custom,
+                                moduleId: module.id,
+                                moduleInfo: widget.moduleInfo,
+                                siteGroup: widget.siteGroup,
+                              ),
                             ),
-                            const SizedBox(width: 4),
-                            Text(
-                              _sortByDistance ? 'Alphabétique' : 'Distance',
-                              style: const TextStyle(color: Colors.white),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Configuration de site non disponible'),
+                              backgroundColor: Colors.red,
                             ),
-                          ],
-                        ),
-                        side: BorderSide.none,
-                        backgroundColor: AppColors.primary,
-                        onPressed: () {
-                          setState(() {
-                            _sortByDistance = !_sortByDistance;
-                          });
-                        },
-                      ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.add_circle),
+                      tooltip:
+                          'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                    ),
                   ],
                 ),
-              ),
-
-          // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    widget.moduleInfo
-                            .module.complement?.configuration?.site?.labelList ??
-                        widget.moduleInfo
-                            .module.complement?.configuration?.site?.label ??
-                        'Sites associés',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    final siteConfig = module.complement?.configuration?.site;
-                    if (siteConfig != null) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SiteFormPageWithTypeSelection(
-                            siteConfig: siteConfig,
-                            customConfig: module.complement?.configuration?.custom,
-                            moduleId: module.id,
-                            moduleInfo: widget.moduleInfo,
-                            siteGroup: widget.siteGroup,
-                          ),
+                // Bouton pour basculer entre tri par distance et alphabétique
+                if (_userPosition != null)
+                  ActionChip(
+                    label: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          _sortByDistance
+                              ? Icons.sort_by_alpha
+                              : Icons.location_on,
+                          size: 16,
+                          color: Colors.white,
                         ),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Configuration de site non disponible'),
-                          backgroundColor: Colors.red,
+                        const SizedBox(width: 4),
+                        Text(
+                          _sortByDistance ? 'Alphabétique' : 'Distance',
+                          style: const TextStyle(color: Colors.white),
                         ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.add_circle),
-                  tooltip: 'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
-              // Sites Expansion Panel List
-              Expanded(
-                child: sitesState.when(
-                  data: (sites) => _buildSitesExpansionPanelList(
-                    sites,
-                    context,
-                    baseSiteNameLabel,
-                    baseSiteCodeLabel,
-                    siteConfig,
-                    customConfig,
-                    parsedSiteConfig,
-                  ),
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (error, stack) => Center(
-                    child: Text(
-                      'Erreur lors du chargement des sites: $error',
-                      style: const TextStyle(color: Colors.red),
+                      ],
                     ),
+                    side: BorderSide.none,
+                    backgroundColor: AppColors.primary,
+                    onPressed: () {
+                      setState(() {
+                        _sortByDistance = !_sortByDistance;
+                      });
+                    },
                   ),
+              ],
+            ),
+          ),
+          // Sites Expansion Panel List
+          Expanded(
+            child: sitesState.when(
+              data: (sites) => _buildSitesExpansionPanelList(
+                sites,
+                context,
+                baseSiteNameLabel,
+                baseSiteCodeLabel,
+                siteConfig,
+                customConfig,
+                parsedSiteConfig,
+              ),
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (error, stack) => Center(
+                child: Text(
+                  'Erreur lors du chargement des sites: $error',
+                  style: const TextStyle(color: Colors.red),
                 ),
               ),
-            ],
+            ),
           ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(
@@ -441,7 +432,8 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   data: (sites) => GeometriesMapWidget(
                     geojsonData: _convertSitesToGeoJSON(sites),
                   ),
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
                     child: Text(
                       'Erreur lors du chargement des sites: $error',
@@ -668,16 +660,16 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   /// Convert list of BaseSite to GeoJSON format expected by GeometriesMapWidget
   String? _convertSitesToGeoJSON(List<BaseSite> sites) {
     if (sites.isEmpty) return null;
-    
+
     final List<Map<String, dynamic>> geoJsonFeatures = [];
-    
+
     for (final site in sites) {
       if (site.geom == null || site.geom!.isEmpty) continue;
-      
+
       try {
         // Parse the geometry JSON string
         final Map<String, dynamic> geometry = jsonDecode(site.geom!);
-        
+
         // Create a feature with site information
         final feature = {
           'id': site.idBaseSite,
@@ -685,16 +677,16 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           'description': site.baseSiteDescription ?? '',
           'geom': geometry,
         };
-        
+
         geoJsonFeatures.add(feature);
       } catch (e) {
         print('Erreur parsing geometry pour site ${site.idBaseSite}: $e');
         // Skip this site if geometry parsing fails
       }
     }
-    
+
     if (geoJsonFeatures.isEmpty) return null;
-    
+
     return jsonEncode(geoJsonFeatures);
   }
 
@@ -919,6 +911,4 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       ),
     );
   }
-
- 
 }
