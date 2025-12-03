@@ -205,7 +205,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     Map<String, dynamic> formData, {
     required int moduleId,
     required int userId,
-    int? selectedSiteTypeId,
   }) {
     final now = DateTime.now();
 

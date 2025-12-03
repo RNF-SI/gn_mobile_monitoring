@@ -1,11 +1,14 @@
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
+
 
 class SitesDatabaseImpl implements SitesDatabase {
   Future<AppDatabase> get _database async => await DB.instance.database;
@@ -241,16 +244,63 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     await db.sitesDao.insertSiteModule(siteModule);
   }
-  
-  @override
+
+   @override
   Future<BaseSite?> getSiteById(int siteId) async {
     final db = await _database;
-    return await db.sitesDao.getSiteById(siteId);
+    await db.sitesDao.getSiteById(siteId);
+  }
+  
+  @override
+  Future<BaseSiteEntity?> getSiteEntityById(int siteId) async {
+    final db = await _database;
+    final site = await db.sitesDao.getSiteEntityById(siteId);
+    if (site == null) {
+      return null;
+    }
+
+    final complement = await db.sitesDao
+        .getSiteComplementById(site.idBaseSite);
+
+    return site.toEntity(complement: complement);
   }
 
   @override
   Future<SiteGroup?> getSiteGroupById(int siteGroupId) async {
     final db = await _database;
     return await db.sitesDao.getSiteGroupById(siteGroupId);
+  }
+}
+
+/// Extension pour ajouter la méthode copyWith à BaseSiteEntity
+extension BaseSiteEntityExtension on BaseSiteEntity {
+  BaseSiteEntity copyWith({
+  int? idBaseSite,
+  String? baseSiteName,
+  String? baseSiteDescription,
+  String? baseSiteCode,
+  DateTime? firstUseDate,
+  String? geom, // GeoJSON representation
+  String? uuidBaseSite,
+  int? altitudeMin,
+  int? altitudeMax,
+  DateTime? metaCreateDate,
+  DateTime? metaUpdateDate,
+  Map<String, dynamic>? data, // Données complémentaires
+  }) {
+    return BaseSiteEntity(
+      idBaseSite: idBaseSite ?? this.idBaseSite,
+      baseSiteName: baseSiteName ?? this.baseSiteName,
+      baseSiteDescription: baseSiteDescription ?? this.baseSiteDescription,
+      baseSiteCode: baseSiteCode ?? this.baseSiteCode,
+      firstUseDate: firstUseDate ?? this.firstUseDate,
+      geom: geom ?? this.geom,
+      uuidBaseSite: uuidBaseSite ?? this.uuidBaseSite,
+      altitudeMin: altitudeMin ?? this.altitudeMin,
+      altitudeMax: altitudeMax ?? this.altitudeMax,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+      data: data ?? this.data,
+    );
   }
 }

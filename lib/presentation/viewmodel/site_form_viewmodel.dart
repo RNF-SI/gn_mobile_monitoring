@@ -9,6 +9,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
@@ -19,7 +20,9 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     void,
     (int, int?)>((ref, params) {
   final (moduleId, siteGroupId) = params;
-
+  final getSitesBySiteGroupUseCase =
+      ref.watch(getSitesBySiteGroupUseCaseProvider);
+  
   final createSiteUseCase = ref.watch(createSiteUseCaseProvider);
   final updateSiteUseCase = ref.watch(updateSiteUseCaseProvider);
   final deleteSiteUseCase = ref.watch(deleteSiteUseCaseProvider);
@@ -32,10 +35,11 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     updateSiteUseCase,
     deleteSiteUseCase,
     getUserIdUseCase,
+    getSitesBySiteGroupUseCase,
     formDataProcessor,
     sitesDatabase,
     moduleId,
-    siteGroupId,
+    siteGroupId ?? 0
   );
 });
 
@@ -43,22 +47,79 @@ class SiteFormViewModel extends StateNotifier<void> {
   final CreateSiteUseCase _createSiteUseCase;
   final UpdateSiteUseCase _updateSiteUseCase;
   final DeleteSiteUseCase _deleteSiteUseCase;
+  final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final FormDataProcessor _formDataProcessor;
   final SitesDatabase _sitesDatabase;
   final int _moduleId;
-  final int? _siteGroupId;
+  final int _siteGroupId;
+
+  bool _mounted = true;
 
   SiteFormViewModel(
     this._createSiteUseCase,
     this._updateSiteUseCase,
     this._deleteSiteUseCase,
     this._getUserIdUseCase,
+    this._getSitesBySiteGroupUseCase,
     this._formDataProcessor,
     this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
-  ) : super(null);
+  ) : super(const AsyncValue.loading()) {
+    if (_siteGroupId > 0) {
+      loadSite();
+    }
+  }
+
+  /// Charge tous les sites pour le groupe de sites
+  Future<void> loadSite() async {
+    if (!_mounted) return;
+
+    try {
+      state = const AsyncValue.loading();
+      final sites =
+          await _getSitesBySiteGroupUseCase.execute(_siteGroupId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedSites =
+          await Future.wait(sites.map((site) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(site.data!);
+        return site.copyWith(data: processedData);
+      }));
+
+      if (_mounted) {
+        state = AsyncValue.data(processedSites);
+      }
+    } catch (e, stack) {
+      if (_mounted) {
+        state = AsyncValue.error(e, stack);
+      }
+    }
+  }
+
+   /// Récupère tous les sites associés à un groupe de sites
+  Future<List<Site>> getSitesBySiteGroup() async {
+    try {
+      final sites =
+          await _getSitesBySiteGroupUseCase.execute(_siteGroupId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedSites =
+          await Future.wait(sites.map((site) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(site.data!);
+        return site.copyWith(data: processedData);
+      }));
+
+      return processedSites;
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des sites: $e');
+      return [];
+    }
+  }
+
 
   /// Crée un nouveau site à partir des données du formulaire
   /// Retourne l'ID du site créé
