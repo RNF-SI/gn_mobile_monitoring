@@ -240,35 +240,13 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                           widget.siteGroup.sitesGroupCode ??
                           'Groupe',
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Group Properties Card
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        widget.moduleInfo.module.complement?.configuration
-                                ?.sitesGroup?.label ??
-                            'Propriétés du groupe',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
+                    // Afficher le code du groupe s'il existe
+                    if (widget.siteGroup.sitesGroupCode != null &&
+                        widget.siteGroup.sitesGroupCode!.trim().isNotEmpty)
+                      BreadcrumbItem(
+                        label: groupCodeLabel,
+                        value: widget.siteGroup.sitesGroupCode!.trim(),
+                      ),
                   ],
                 ),
               ),
