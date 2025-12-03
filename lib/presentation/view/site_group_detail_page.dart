@@ -273,14 +273,6 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             3: FixedColumnWidth(120), // Description column
           },
           children: [
-              ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                  for (final color in Colors.primaries)
-                    Container(width: 160, color: color),
-                  ],
-                ),
-
             TableRow(
               children: [
                 const Padding(
