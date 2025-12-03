@@ -52,6 +52,9 @@ class GenericFormPage extends ConsumerStatefulWidget {
   /// Conflit en cours (optionnel)
   final SyncConflict? currentConflict;
   
+  /// Type d'objet pour appliquer des exclusions spécifiques (ex: 'site', 'sites_group', 'visit', 'observation')
+  final String? objectType;
+  
   /// Fonction personnalisée de normalisation des valeurs initiales
   final Map<String, dynamic> Function(Map<String, dynamic>)? normalizeInitialValues;
 
@@ -71,6 +74,7 @@ class GenericFormPage extends ConsumerStatefulWidget {
     this.displayProperties,
     this.idListTaxonomy,
     this.currentConflict,
+    this.objectType,
     this.normalizeInitialValues,
   });
 
@@ -159,6 +163,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
               : null,
           displayProperties: widget.displayProperties,
           idListTaxonomy: widget.idListTaxonomy,
+          objectType: widget.objectType,
         ),
       ],
     );

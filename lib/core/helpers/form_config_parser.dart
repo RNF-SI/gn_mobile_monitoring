@@ -492,8 +492,12 @@ class FormConfigParser {
   }
 
   /// Génère un schéma unifié complet pour le formulaire
+  /// 
+  /// [objectType] permet de spécifier le type d'objet pour appliquer des exclusions
+  /// spécifiques (ex: 'site', 'sites_group', 'visit', 'observation')
   static Map<String, dynamic> generateUnifiedSchema(
-      ObjectConfig objectConfig, CustomConfig? customConfig) {
+      ObjectConfig objectConfig, CustomConfig? customConfig,
+      {String? objectType}) {
     // Fusionner les configurations generic et specific
     final mergedConfig = mergeConfigurations(objectConfig);
 
@@ -504,8 +508,8 @@ class FormConfigParser {
     // Schéma final unifié
     final unifiedSchema = <String, dynamic>{};
 
-    // Liste des champs à exclure (comme dans l'application web)
-    final fieldsToExclude = [
+    // Liste des champs à exclure globalement (comme dans l'application web)
+    final globalFieldsToExclude = [
       // 'id_dataset', // Nous voulons maintenant afficher le champ dataset
       'uuid_base_visit',
       'uuid_observation',
@@ -519,6 +523,32 @@ class FormConfigParser {
       'observers_txt',
       'id_base_site', // Exclure le champ Site qui n'apparaît pas dans l'application web
     ];
+
+    // Liste des champs à exclure spécifiquement pour les groupes de sites
+    final sitesGroupSpecificFieldsToExclude = [
+      'id_inventor', // Le champ id_inventor n'existe pas dans la configuration des groupes de sites
+    ];
+
+    // Liste des champs à exclure spécifiquement pour les sites (mais pas pour les sites_group)
+    final siteSpecificFieldsToExclude = [
+      'altitude_min',
+      'altitude_max',
+      'nb_passages', // Si ce champ existe dans votre configuration
+      'nb_visits', // Nombre de visites (champ calculé, ne doit pas apparaître dans le formulaire de création)
+    ];
+
+    // Déterminer la liste finale des champs à exclure
+    final List<String> fieldsToExclude;
+    if (objectType == 'site') {
+      // Pour les sites, exclure les champs globaux + les champs spécifiques aux sites
+      fieldsToExclude = [...globalFieldsToExclude, ...siteSpecificFieldsToExclude];
+    } else if (objectType == 'sites_group') {
+      // Pour les groupes de sites, exclure les champs globaux + les champs spécifiques aux groupes de sites
+      fieldsToExclude = [...globalFieldsToExclude, ...sitesGroupSpecificFieldsToExclude];
+    } else {
+      // Pour les autres types (visit, etc.), exclure uniquement les champs globaux
+      fieldsToExclude = globalFieldsToExclude;
+    }
 
     // Pour chaque champ, générer sa configuration complète
     configWithSubstitutions.forEach((fieldName, fieldConfig) {
