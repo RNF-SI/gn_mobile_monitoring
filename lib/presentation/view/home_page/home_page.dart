@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
@@ -46,16 +47,16 @@ class HomePageState extends ConsumerState<HomePage> {
       children: [
         Scaffold(
           appBar: AppBar(
-            backgroundColor: const Color(0xFF598979), // Brand color
+            backgroundColor: AppColors.dark, // Brand color
             title: const Text("Mes Modules"),
-            actions: [
+            actions: const [
               MenuActions(),
             ],
           ),
           body: Column(
-            children: [
-              const SyncStatusWidget(), // Widget de statut de synchronisation
-              const Expanded(
+            children: const [
+              SyncStatusWidget(), // Widget de statut de synchronisation
+              Expanded(
                 child: ModuleListWidget(),
               ),
             ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
@@ -7,14 +8,6 @@ import 'package:gn_mobile_monitoring/presentation/view/module/module_loading_pag
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-// Custom Colors
-const Color colorBlue1 = Color(0xFF598979); // Bleu
-const Color colorGreen = Color(0xFF8AAC3E); // Vert
-const Color colorBlue2 = Color(0xFF7DAB9C); // Bleu
-const Color colorBlack = Color(0xFF1a1a18); // Noir
-const Color colorBeige = Color(0xFFF4F1E4); // Beige
-const Color colorBrown = Color(0xFF8B5500); // Marron
 
 @immutable
 class ModuleDownloadButton extends HookConsumerWidget {
@@ -146,7 +139,7 @@ class ModuleDownloadButton extends HookConsumerWidget {
                   child: Text(
                     'Peut prendre du temps...',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: colorBlue1,
+                      color: AppColors.dark,
                       fontSize: 10,
                     ),
                   ),
@@ -184,7 +177,7 @@ class ButtonShapeWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     var shape = ShapeDecoration(
       shape: StadiumBorder(),
-      color: isDownloaded ? colorBlue1 : colorBeige,
+      color: isDownloaded ? AppColors.dark : AppColors.background,
     );
 
     if (isDownloading || isFetching) {
@@ -228,7 +221,7 @@ class ButtonShapeWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isDownloading ? colorGreen : colorBlack,
+                  color: isDownloading ? AppColors.primary : Colors.black,
                 ),
           ),
         ),
@@ -255,9 +248,9 @@ class ProgressIndicatorWidget extends StatelessWidget {
     return AspectRatio(
         aspectRatio: 1,
         child: CircularProgressIndicator(
-          backgroundColor: colorBeige,
+          backgroundColor: AppColors.background,
           valueColor: AlwaysStoppedAnimation(
-            isFetching ? colorBlue1 : colorGreen,
+            isFetching ? AppColors.dark : AppColors.primary,
           ),
           value: isDownloading ? (progress == 1.0 ? 0.99 : progress) : null,
           strokeWidth: 2,

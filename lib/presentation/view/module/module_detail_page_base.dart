@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
@@ -477,17 +478,17 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
-              color: Colors.blue[50],
+              color: AppColors.primary.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
                   children: [
-                    Icon(Icons.info_outline, color: Colors.blue[700]),
+                    Icon(Icons.info_outline, color: AppColors.dark),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Chargement de la configuration du module...',
-                        style: TextStyle(color: Colors.blue[700]),
+                        style: TextStyle(color: AppColors.dark),
                       ),
                     ),
                     SizedBox(
@@ -496,7 +497,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                       child: CircularProgressIndicator(
                         strokeWidth: 2.0,
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+                            AlwaysStoppedAnimation<Color>(AppColors.dark),
                       ),
                     ),
                   ],
@@ -660,7 +661,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         'Aucun groupe de sites associé à ce module',
         style: TextStyle(
           fontSize: 16,
-          color: Colors.grey[600],
+          color: AppColors.hint,
         ),
       ),
     );
@@ -795,7 +796,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         'Aucun site associé à ce module',
         style: TextStyle(
           fontSize: 16,
-          color: Colors.grey[600],
+          color: AppColors.hint,
         ),
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
@@ -55,7 +56,7 @@ class MenuActions extends ConsumerWidget {
     return PopupMenuItem<String>(
       value: value,
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF1a1a18)),
+        leading: Icon(icon, color: Colors.black),
         title: Text(text),
       ),
     );
@@ -195,9 +196,9 @@ class MenuActions extends ConsumerWidget {
             child: const Text('Annuler'),
             onPressed: () => Navigator.of(context).pop(false),
           ),
-          ElevatedButton(
+            ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.red,
               foregroundColor: Colors.white,
             ),
             child: const Text('Confirmer la déconnexion'),
@@ -243,7 +244,7 @@ class MenuActions extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur lors de la déconnexion: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.red,
             duration: const Duration(seconds: 5),
           ),
         );
@@ -576,7 +577,7 @@ class MenuActions extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur lors de la récupération des modules: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.red,
           ),
         );
       }
@@ -914,7 +915,7 @@ class MenuActions extends ConsumerWidget {
           return AlertDialog(
             title: const Row(
               children: [
-                Icon(Icons.account_circle, color: Color(0xFF598979)),
+                Icon(Icons.account_circle, color: AppColors.dark),
                 SizedBox(width: 8),
                 Expanded(child: Text('Informations de connexion')),
               ],
@@ -960,19 +961,19 @@ class MenuActions extends ConsumerWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF598979).withOpacity(0.1),
+                      color: AppColors.dark.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: const Color(0xFF598979).withOpacity(0.3)),
+                      border: Border.all(color: AppColors.dark.withOpacity(0.3)),
                     ),
-                    child: const Row(
+                    child: Row(
                       children: [
-                        Icon(Icons.info, color: Color(0xFF598979), size: 20),
-                        SizedBox(width: 8),
+                        const Icon(Icons.info, color: AppColors.dark, size: 20),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Ces informations sont utiles pour le débogage et le support technique.',
                             style: TextStyle(
-                              color: Color(0xFF598979),
+                              color: AppColors.dark,
                               fontSize: 13,
                             ),
                           ),
@@ -997,7 +998,7 @@ class MenuActions extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur lors de la récupération des informations: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.red,
           ),
         );
       }
@@ -1016,14 +1017,14 @@ class MenuActions extends ConsumerWidget {
       children: [
         Row(
           children: [
-            Icon(icon, size: 18, color: const Color(0xFF598979)),
+            Icon(icon, size: 18, color: AppColors.dark),
             const SizedBox(width: 6),
             Text(
               title,
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Color(0xFF598979),
+                color: AppColors.dark,
               ),
             ),
           ],

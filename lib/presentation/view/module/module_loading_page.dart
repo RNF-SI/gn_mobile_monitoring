@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/module_detail_viewmodel.dart';
@@ -67,7 +68,7 @@ class ModuleLoadingPage extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.error_outline,
-                        size: 48, color: Colors.red),
+                        size: 48, color: AppColors.red),
                     const SizedBox(height: 16),
                     Text(
                         'Erreur: ${moduleDetailState.errorMessage ?? "Erreur inconnue"}'),
