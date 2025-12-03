@@ -409,6 +409,11 @@ class FormConfigParser {
       return 'DatasetSelector';
     }
 
+    // Vérifier si type_util est "date" (pour les champs comme last_visit)
+    if (fieldConfig['type_util'] == 'date') {
+      return 'DatePicker';
+    }
+
     final String typeWidget = fieldConfig['type_widget']?.toString() ?? 'text';
 
     switch (typeWidget) {
@@ -500,6 +505,20 @@ class FormConfigParser {
       {String? objectType}) {
     // Fusionner les configurations generic et specific
     final mergedConfig = mergeConfigurations(objectConfig);
+    
+    // Debug: vérifier si les champs problématiques sont dans mergedConfig
+    if (objectType == 'site') {
+      print('🔍 DEBUG mergedConfig pour site:');
+      print('  - Champs dans mergedConfig: ${mergedConfig.keys.toList()}');
+      print('  - last_visit présent: ${mergedConfig.containsKey('last_visit')}');
+      print('  - nb_visits présent: ${mergedConfig.containsKey('nb_visits')}');
+      if (mergedConfig.containsKey('last_visit')) {
+        print('  - last_visit config: ${mergedConfig['last_visit']}');
+      }
+      if (mergedConfig.containsKey('nb_visits')) {
+        print('  - nb_visits config: ${mergedConfig['nb_visits']}');
+      }
+    }
 
     // Substituer les variables
     final configWithSubstitutions =
@@ -509,6 +528,7 @@ class FormConfigParser {
     final unifiedSchema = <String, dynamic>{};
 
     // Liste des champs à exclure globalement (comme dans l'application web)
+    // Ces champs sont toujours exclus car ils sont gérés automatiquement ou ne doivent pas apparaître
     final globalFieldsToExclude = [
       // 'id_dataset', // Nous voulons maintenant afficher le champ dataset
       'uuid_base_visit',
@@ -529,29 +549,29 @@ class FormConfigParser {
       'id_inventor', // Le champ id_inventor n'existe pas dans la configuration des groupes de sites
     ];
 
-    // Liste des champs à exclure spécifiquement pour les sites (mais pas pour les sites_group)
-    final siteSpecificFieldsToExclude = [
-      'altitude_min',
-      'altitude_max',
-      'nb_passages', // Si ce champ existe dans votre configuration
-      'nb_visits', // Nombre de visites (champ calculé, ne doit pas apparaître dans le formulaire de création)
-    ];
+    // Récupérer display_properties et display_list de la configuration pour filtrer les champs
+    final displayProperties = objectConfig.displayProperties;
+    final displayList = objectConfig.displayList;
+    final hasDisplayProperties = displayProperties != null && displayProperties.isNotEmpty;
+    final hasDisplayList = displayList != null && displayList.isNotEmpty;
 
-    // Déterminer la liste finale des champs à exclure
+    // Déterminer la liste finale des champs à exclure (uniquement les champs globaux)
     final List<String> fieldsToExclude;
-    if (objectType == 'site') {
-      // Pour les sites, exclure les champs globaux + les champs spécifiques aux sites
-      fieldsToExclude = [...globalFieldsToExclude, ...siteSpecificFieldsToExclude];
-    } else if (objectType == 'sites_group') {
+    if (objectType == 'sites_group') {
       // Pour les groupes de sites, exclure les champs globaux + les champs spécifiques aux groupes de sites
       fieldsToExclude = [...globalFieldsToExclude, ...sitesGroupSpecificFieldsToExclude];
     } else {
-      // Pour les autres types (visit, etc.), exclure uniquement les champs globaux
+      // Pour les autres types (site, visit, etc.), exclure uniquement les champs globaux
+      // Les champs spécifiques aux sites (altitude_min, altitude_max, nb_visits, etc.) 
+      // seront exclus automatiquement s'ils ne sont pas dans display_properties
       fieldsToExclude = globalFieldsToExclude;
     }
 
     // Pour chaque champ, générer sa configuration complète
     configWithSubstitutions.forEach((fieldName, fieldConfig) {
+      // Debug: vérifier les champs problématiques
+      final bool isDebugField = fieldName == 'last_visit' || fieldName == 'nb_visits';
+      
       // Vérifier si le champ doit être caché
       // Si hidden est explicitement défini à true, on cache le champ
       // Si hidden est null ou false, on affiche le champ
@@ -560,15 +580,91 @@ class FormConfigParser {
       // Vérifier si le type de widget est html (à exclure comme dans l'application web)
       final bool isHtmlWidget = fieldConfig['type_widget'] == 'html';
 
-      // Vérifier si le champ est dans la liste des champs à exclure
+      // Vérifier si le champ est dans la liste des champs à exclure globalement
       final bool isExcludedField = fieldsToExclude.contains(fieldName);
 
-      // Ne pas inclure les champs cachés, html ou exclus dans le schéma final
-      if (!isHidden && !isHtmlWidget && !isExcludedField) {
+      // Vérifier si le champ est dans specific (configuration explicite)
+      // Les champs dans specific doivent toujours être inclus (sauf s'ils sont cachés/exclus)
+      final bool isInSpecific = objectConfig.specific?.containsKey(fieldName) ?? false;
+      
+      // Debug pour les champs problématiques
+      if (isDebugField) {
+        print('🔍 DEBUG $fieldName:');
+        print('  - isHidden: $isHidden');
+        print('  - isHtmlWidget: $isHtmlWidget');
+        print('  - isExcludedField: $isExcludedField');
+        print('  - isInSpecific: $isInSpecific');
+        print('  - fieldConfig: $fieldConfig');
+      }
+
+      // Si display_properties ou display_list est défini, vérifier si le champ doit être inclus
+      // Règle : 
+      // - Les champs dans specific sont TOUJOURS inclus (car explicitement configurés)
+      // - Les champs seulement dans generic sont inclus s'ils sont dans display_properties OU display_list
+      // - Si ni display_properties ni display_list n'est défini, inclure tous les champs configurés
+      final bool isInDisplayProperties;
+      if (isInSpecific) {
+        // Les champs dans specific sont toujours inclus (sauf s'ils sont cachés/exclus)
+        isInDisplayProperties = true;
+      } else if (hasDisplayProperties && displayProperties != null) {
+        // Pour les champs seulement dans generic, vérifier s'ils sont dans display_properties
+        // OU dans display_list (si display_list est défini)
+        final bool inDisplayProperties = displayProperties.contains(fieldName);
+        final bool inDisplayList = hasDisplayList && displayList != null && displayList.contains(fieldName);
+        isInDisplayProperties = inDisplayProperties || inDisplayList;
+      } else if (hasDisplayList && displayList != null) {
+        // Si display_properties n'est pas défini mais display_list l'est, utiliser display_list
+        isInDisplayProperties = displayList.contains(fieldName);
+      } else {
+        // Si ni display_properties ni display_list n'est défini, inclure tous les champs configurés
+        isInDisplayProperties = true;
+      }
+
+      // Un champ est inclus si :
+      // 1. Il n'est pas caché (hidden != true)
+      // 2. Il n'est pas un widget HTML
+      // 3. Il n'est pas dans la liste d'exclusion globale
+      // 4. Soit il est dans specific, soit il est dans display_properties, soit display_properties n'est pas défini
+      final bool shouldInclude = !isHidden && 
+          !isHtmlWidget && 
+          !isExcludedField &&
+          isInDisplayProperties;
+
+      // Debug pour les champs problématiques
+      if (isDebugField) {
+        print('  - isInDisplayProperties: $isInDisplayProperties');
+        print('  - shouldInclude: $shouldInclude');
+        print('  - hasDisplayProperties: $hasDisplayProperties');
+        print('  - hasDisplayList: $hasDisplayList');
+        if (displayProperties != null) {
+          print('  - displayProperties: $displayProperties');
+          print('  - in displayProperties: ${displayProperties.contains(fieldName)}');
+        }
+        if (displayList != null) {
+          print('  - displayList: $displayList');
+          print('  - in displayList: ${displayList.contains(fieldName)}');
+        }
+      }
+
+      // Ne pas inclure les champs cachés, html, exclus ou non listés dans display_properties
+      if (shouldInclude) {
+        // Déterminer le type_widget : utiliser type_widget si présent, sinon déduire de type_util
+        String? inferredTypeWidget;
+        if (fieldConfig['type_util'] == 'date') {
+          inferredTypeWidget = 'date';
+        }
+        final String typeWidget = fieldConfig['type_widget']?.toString() ?? inferredTypeWidget ?? 'text';
+        
+        // Créer une copie de fieldConfig avec le type_widget inféré pour determineWidgetType
+        final Map<String, dynamic> fieldConfigForWidgetType = Map<String, dynamic>.from(fieldConfig);
+        if (inferredTypeWidget != null && fieldConfig['type_widget'] == null) {
+          fieldConfigForWidgetType['type_widget'] = inferredTypeWidget;
+        }
+        
         unifiedSchema[fieldName] = {
           'attribut_label': fieldConfig['attribut_label'] ?? fieldName,
-          'type_widget': fieldConfig['type_widget'] ?? 'text',
-          'widget_type': determineWidgetType(fieldConfig),
+          'type_widget': typeWidget,
+          'widget_type': determineWidgetType(fieldConfigForWidgetType),
           // IMPORTANT: Préserver la valeur originale de 'required' (booléen OU expression)
           'required': fieldConfig['required'] ?? false,
           // Ajouter la propriété hidden pour référence future
@@ -594,6 +690,67 @@ class FormConfigParser {
         };
       }
     });
+
+    // IMPORTANT: Inclure les champs de specific qui ne sont pas dans configWithSubstitutions
+    // Cela peut arriver si ces champs ne sont pas dans generic et n'ont pas été fusionnés correctement
+    if (objectConfig.specific != null) {
+      objectConfig.specific!.forEach((fieldName, specificConfig) {
+        // Si le champ n'est pas déjà dans unifiedSchema et n'est pas dans configWithSubstitutions
+        if (!unifiedSchema.containsKey(fieldName) && !configWithSubstitutions.containsKey(fieldName)) {
+          // Vérifier que le champ n'est pas exclu globalement
+          final bool isExcludedField = fieldsToExclude.contains(fieldName);
+          
+          // Convertir specificConfig en Map si nécessaire
+          final Map<String, dynamic> fieldConfig = specificConfig is Map<String, dynamic>
+              ? specificConfig
+              : <String, dynamic>{};
+          
+          final bool isHidden = fieldConfig['hidden'] == true;
+          final bool isHtmlWidget = fieldConfig['type_widget'] == 'html';
+          
+          // Inclure le champ s'il n'est pas caché, html ou exclus
+          if (!isHidden && !isHtmlWidget && !isExcludedField) {
+            // Déterminer le type_widget : utiliser type_widget si présent, sinon déduire de type_util
+            String? inferredTypeWidget;
+            if (fieldConfig['type_util'] == 'date') {
+              inferredTypeWidget = 'date';
+            }
+            final String typeWidget = fieldConfig['type_widget']?.toString() ?? inferredTypeWidget ?? 'text';
+            
+            // Créer une copie de fieldConfig avec le type_widget inféré pour determineWidgetType
+            final Map<String, dynamic> fieldConfigForWidgetType = Map<String, dynamic>.from(fieldConfig);
+            if (inferredTypeWidget != null && fieldConfig['type_widget'] == null) {
+              fieldConfigForWidgetType['type_widget'] = inferredTypeWidget;
+            }
+            
+            print('🔍 DEBUG: Ajout du champ $fieldName depuis specific (non présent dans configWithSubstitutions)');
+            
+            unifiedSchema[fieldName] = {
+              'attribut_label': fieldConfig['attribut_label'] ?? fieldName,
+              'type_widget': typeWidget,
+              'widget_type': determineWidgetType(fieldConfigForWidgetType),
+              'required': fieldConfig['required'] ?? false,
+              'hidden': fieldConfig['hidden'] ?? false,
+              'attribut_name': fieldName,
+              if (fieldConfig['description'] != null)
+                'description': fieldConfig['description'],
+              if (fieldConfig['default'] != null) 'default': fieldConfig['default'],
+              if (fieldConfig['value'] != null) 'value': fieldConfig['value'],
+              if (fieldConfig['values'] != null) 'values': fieldConfig['values'],
+              'validations': determineValidations(fieldConfig),
+              'visibility': determineVisibility(fieldConfig),
+              if (fieldConfig['api'] != null) 'api': fieldConfig['api'],
+              if (fieldConfig['code_nomenclature_type'] != null)
+                'code_nomenclature_type': fieldConfig['code_nomenclature_type'],
+              if (fieldConfig['id_list'] != null) 'id_list': fieldConfig['id_list'],
+              if (fieldConfig['type_util'] != null)
+                'type_util': fieldConfig['type_util'],
+              if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+            };
+          }
+        }
+      });
+    }
 
     return unifiedSchema;
   }
