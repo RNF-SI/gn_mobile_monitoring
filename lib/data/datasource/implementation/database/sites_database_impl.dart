@@ -248,7 +248,7 @@ class SitesDatabaseImpl implements SitesDatabase {
    @override
   Future<BaseSite?> getSiteById(int siteId) async {
     final db = await _database;
-    await db.sitesDao.getSiteById(siteId);
+    return await db.sitesDao.getSitesById(siteId);
   }
   
   @override

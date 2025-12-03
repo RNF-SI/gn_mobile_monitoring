@@ -222,7 +222,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
             );
           } else {
             // Sinon, fermer le formulaire
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(true); // JULES DECONNE PO C LA
           }
         }
       }
