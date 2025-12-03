@@ -12524,6 +12524,440 @@ class AppMetadataTableCompanion extends UpdateCompanion<AppMetadataTableData> {
   }
 }
 
+class $TUserRolesTable extends TUserRoles
+    with TableInfo<$TUserRolesTable, TUserRole> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TUserRolesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idRoleMeta = const VerificationMeta('idRole');
+  @override
+  late final GeneratedColumn<int> idRole = GeneratedColumn<int>(
+      'id_role', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _identifiantMeta =
+      const VerificationMeta('identifiant');
+  @override
+  late final GeneratedColumn<String> identifiant = GeneratedColumn<String>(
+      'identifiant', aliasedName, false,
+      type: DriftSqlType.string,
+      requiredDuringInsert: true,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _nomRoleMeta =
+      const VerificationMeta('nomRole');
+  @override
+  late final GeneratedColumn<String> nomRole = GeneratedColumn<String>(
+      'nom_role', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _prenomRoleMeta =
+      const VerificationMeta('prenomRole');
+  @override
+  late final GeneratedColumn<String> prenomRole = GeneratedColumn<String>(
+      'prenom_role', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _idOrganismeMeta =
+      const VerificationMeta('idOrganisme');
+  @override
+  late final GeneratedColumn<int> idOrganisme = GeneratedColumn<int>(
+      'id_organisme', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _activeMeta = const VerificationMeta('active');
+  @override
+  late final GeneratedColumn<bool> active = GeneratedColumn<bool>(
+      'active', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("active" IN (0, 1))'),
+      defaultValue: const Constant(true));
+  static const VerificationMeta _createdAtMeta =
+      const VerificationMeta('createdAt');
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+      'created_at', aliasedName, false,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  static const VerificationMeta _updatedAtMeta =
+      const VerificationMeta('updatedAt');
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+      'updated_at', aliasedName, true,
+      type: DriftSqlType.dateTime,
+      requiredDuringInsert: false,
+      defaultValue: currentDateAndTime);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idRole,
+        identifiant,
+        nomRole,
+        prenomRole,
+        idOrganisme,
+        active,
+        createdAt,
+        updatedAt
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_user_roles';
+  @override
+  VerificationContext validateIntegrity(Insertable<TUserRole> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_role')) {
+      context.handle(_idRoleMeta,
+          idRole.isAcceptableOrUnknown(data['id_role']!, _idRoleMeta));
+    }
+    if (data.containsKey('identifiant')) {
+      context.handle(
+          _identifiantMeta,
+          identifiant.isAcceptableOrUnknown(
+              data['identifiant']!, _identifiantMeta));
+    } else if (isInserting) {
+      context.missing(_identifiantMeta);
+    }
+    if (data.containsKey('nom_role')) {
+      context.handle(_nomRoleMeta,
+          nomRole.isAcceptableOrUnknown(data['nom_role']!, _nomRoleMeta));
+    } else if (isInserting) {
+      context.missing(_nomRoleMeta);
+    }
+    if (data.containsKey('prenom_role')) {
+      context.handle(
+          _prenomRoleMeta,
+          prenomRole.isAcceptableOrUnknown(
+              data['prenom_role']!, _prenomRoleMeta));
+    } else if (isInserting) {
+      context.missing(_prenomRoleMeta);
+    }
+    if (data.containsKey('id_organisme')) {
+      context.handle(
+          _idOrganismeMeta,
+          idOrganisme.isAcceptableOrUnknown(
+              data['id_organisme']!, _idOrganismeMeta));
+    }
+    if (data.containsKey('active')) {
+      context.handle(_activeMeta,
+          active.isAcceptableOrUnknown(data['active']!, _activeMeta));
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(_createdAtMeta,
+          createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta));
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(_updatedAtMeta,
+          updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idRole};
+  @override
+  TUserRole map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TUserRole(
+      idRole: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_role'])!,
+      identifiant: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}identifiant'])!,
+      nomRole: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}nom_role'])!,
+      prenomRole: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}prenom_role'])!,
+      idOrganisme: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_organisme']),
+      active: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active'])!,
+      createdAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}created_at'])!,
+      updatedAt: attachedDatabase.typeMapping
+          .read(DriftSqlType.dateTime, data['${effectivePrefix}updated_at']),
+    );
+  }
+
+  @override
+  $TUserRolesTable createAlias(String alias) {
+    return $TUserRolesTable(attachedDatabase, alias);
+  }
+}
+
+class TUserRole extends DataClass implements Insertable<TUserRole> {
+  final int idRole;
+  final String identifiant;
+  final String nomRole;
+  final String prenomRole;
+  final int? idOrganisme;
+  final bool active;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+  const TUserRole(
+      {required this.idRole,
+      required this.identifiant,
+      required this.nomRole,
+      required this.prenomRole,
+      this.idOrganisme,
+      required this.active,
+      required this.createdAt,
+      this.updatedAt});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_role'] = Variable<int>(idRole);
+    map['identifiant'] = Variable<String>(identifiant);
+    map['nom_role'] = Variable<String>(nomRole);
+    map['prenom_role'] = Variable<String>(prenomRole);
+    if (!nullToAbsent || idOrganisme != null) {
+      map['id_organisme'] = Variable<int>(idOrganisme);
+    }
+    map['active'] = Variable<bool>(active);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    if (!nullToAbsent || updatedAt != null) {
+      map['updated_at'] = Variable<DateTime>(updatedAt);
+    }
+    return map;
+  }
+
+  TUserRolesCompanion toCompanion(bool nullToAbsent) {
+    return TUserRolesCompanion(
+      idRole: Value(idRole),
+      identifiant: Value(identifiant),
+      nomRole: Value(nomRole),
+      prenomRole: Value(prenomRole),
+      idOrganisme: idOrganisme == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idOrganisme),
+      active: Value(active),
+      createdAt: Value(createdAt),
+      updatedAt: updatedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(updatedAt),
+    );
+  }
+
+  factory TUserRole.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TUserRole(
+      idRole: serializer.fromJson<int>(json['idRole']),
+      identifiant: serializer.fromJson<String>(json['identifiant']),
+      nomRole: serializer.fromJson<String>(json['nomRole']),
+      prenomRole: serializer.fromJson<String>(json['prenomRole']),
+      idOrganisme: serializer.fromJson<int?>(json['idOrganisme']),
+      active: serializer.fromJson<bool>(json['active']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime?>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idRole': serializer.toJson<int>(idRole),
+      'identifiant': serializer.toJson<String>(identifiant),
+      'nomRole': serializer.toJson<String>(nomRole),
+      'prenomRole': serializer.toJson<String>(prenomRole),
+      'idOrganisme': serializer.toJson<int?>(idOrganisme),
+      'active': serializer.toJson<bool>(active),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime?>(updatedAt),
+    };
+  }
+
+  TUserRole copyWith(
+          {int? idRole,
+          String? identifiant,
+          String? nomRole,
+          String? prenomRole,
+          Value<int?> idOrganisme = const Value.absent(),
+          bool? active,
+          DateTime? createdAt,
+          Value<DateTime?> updatedAt = const Value.absent()}) =>
+      TUserRole(
+        idRole: idRole ?? this.idRole,
+        identifiant: identifiant ?? this.identifiant,
+        nomRole: nomRole ?? this.nomRole,
+        prenomRole: prenomRole ?? this.prenomRole,
+        idOrganisme: idOrganisme.present ? idOrganisme.value : this.idOrganisme,
+        active: active ?? this.active,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt.present ? updatedAt.value : this.updatedAt,
+      );
+  TUserRole copyWithCompanion(TUserRolesCompanion data) {
+    return TUserRole(
+      idRole: data.idRole.present ? data.idRole.value : this.idRole,
+      identifiant:
+          data.identifiant.present ? data.identifiant.value : this.identifiant,
+      nomRole: data.nomRole.present ? data.nomRole.value : this.nomRole,
+      prenomRole:
+          data.prenomRole.present ? data.prenomRole.value : this.prenomRole,
+      idOrganisme:
+          data.idOrganisme.present ? data.idOrganisme.value : this.idOrganisme,
+      active: data.active.present ? data.active.value : this.active,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TUserRole(')
+          ..write('idRole: $idRole, ')
+          ..write('identifiant: $identifiant, ')
+          ..write('nomRole: $nomRole, ')
+          ..write('prenomRole: $prenomRole, ')
+          ..write('idOrganisme: $idOrganisme, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(idRole, identifiant, nomRole, prenomRole,
+      idOrganisme, active, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TUserRole &&
+          other.idRole == this.idRole &&
+          other.identifiant == this.identifiant &&
+          other.nomRole == this.nomRole &&
+          other.prenomRole == this.prenomRole &&
+          other.idOrganisme == this.idOrganisme &&
+          other.active == this.active &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class TUserRolesCompanion extends UpdateCompanion<TUserRole> {
+  final Value<int> idRole;
+  final Value<String> identifiant;
+  final Value<String> nomRole;
+  final Value<String> prenomRole;
+  final Value<int?> idOrganisme;
+  final Value<bool> active;
+  final Value<DateTime> createdAt;
+  final Value<DateTime?> updatedAt;
+  const TUserRolesCompanion({
+    this.idRole = const Value.absent(),
+    this.identifiant = const Value.absent(),
+    this.nomRole = const Value.absent(),
+    this.prenomRole = const Value.absent(),
+    this.idOrganisme = const Value.absent(),
+    this.active = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  TUserRolesCompanion.insert({
+    this.idRole = const Value.absent(),
+    required String identifiant,
+    required String nomRole,
+    required String prenomRole,
+    this.idOrganisme = const Value.absent(),
+    this.active = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  })  : identifiant = Value(identifiant),
+        nomRole = Value(nomRole),
+        prenomRole = Value(prenomRole);
+  static Insertable<TUserRole> custom({
+    Expression<int>? idRole,
+    Expression<String>? identifiant,
+    Expression<String>? nomRole,
+    Expression<String>? prenomRole,
+    Expression<int>? idOrganisme,
+    Expression<bool>? active,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (idRole != null) 'id_role': idRole,
+      if (identifiant != null) 'identifiant': identifiant,
+      if (nomRole != null) 'nom_role': nomRole,
+      if (prenomRole != null) 'prenom_role': prenomRole,
+      if (idOrganisme != null) 'id_organisme': idOrganisme,
+      if (active != null) 'active': active,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  TUserRolesCompanion copyWith(
+      {Value<int>? idRole,
+      Value<String>? identifiant,
+      Value<String>? nomRole,
+      Value<String>? prenomRole,
+      Value<int?>? idOrganisme,
+      Value<bool>? active,
+      Value<DateTime>? createdAt,
+      Value<DateTime?>? updatedAt}) {
+    return TUserRolesCompanion(
+      idRole: idRole ?? this.idRole,
+      identifiant: identifiant ?? this.identifiant,
+      nomRole: nomRole ?? this.nomRole,
+      prenomRole: prenomRole ?? this.prenomRole,
+      idOrganisme: idOrganisme ?? this.idOrganisme,
+      active: active ?? this.active,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idRole.present) {
+      map['id_role'] = Variable<int>(idRole.value);
+    }
+    if (identifiant.present) {
+      map['identifiant'] = Variable<String>(identifiant.value);
+    }
+    if (nomRole.present) {
+      map['nom_role'] = Variable<String>(nomRole.value);
+    }
+    if (prenomRole.present) {
+      map['prenom_role'] = Variable<String>(prenomRole.value);
+    }
+    if (idOrganisme.present) {
+      map['id_organisme'] = Variable<int>(idOrganisme.value);
+    }
+    if (active.present) {
+      map['active'] = Variable<bool>(active.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TUserRolesCompanion(')
+          ..write('idRole: $idRole, ')
+          ..write('identifiant: $identifiant, ')
+          ..write('nomRole: $nomRole, ')
+          ..write('prenomRole: $prenomRole, ')
+          ..write('idOrganisme: $idOrganisme, ')
+          ..write('active: $active, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -12573,6 +13007,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $CorTaxonListeTableTable(this);
   late final $AppMetadataTableTable appMetadataTable =
       $AppMetadataTableTable(this);
+  late final $TUserRolesTable tUserRoles = $TUserRolesTable(this);
   late final ModulesDao modulesDao = ModulesDao(this as AppDatabase);
   late final TNomenclaturesDao tNomenclaturesDao =
       TNomenclaturesDao(this as AppDatabase);
@@ -12588,6 +13023,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final TaxonDao taxonDao = TaxonDao(this as AppDatabase);
   late final AppMetadataDao appMetadataDao =
       AppMetadataDao(this as AppDatabase);
+  late final PermissionDao permissionDao = PermissionDao(this as AppDatabase);
+  late final UserRoleDao userRoleDao = UserRoleDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -12621,7 +13058,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tTaxrefs,
         bibListesTable,
         corTaxonListeTable,
-        appMetadataTable
+        appMetadataTable,
+        tUserRoles
       ];
 }
 
@@ -19303,6 +19741,210 @@ typedef $$AppMetadataTableTableProcessedTableManager = ProcessedTableManager<
     ),
     AppMetadataTableData,
     PrefetchHooks Function()>;
+typedef $$TUserRolesTableCreateCompanionBuilder = TUserRolesCompanion Function({
+  Value<int> idRole,
+  required String identifiant,
+  required String nomRole,
+  required String prenomRole,
+  Value<int?> idOrganisme,
+  Value<bool> active,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+});
+typedef $$TUserRolesTableUpdateCompanionBuilder = TUserRolesCompanion Function({
+  Value<int> idRole,
+  Value<String> identifiant,
+  Value<String> nomRole,
+  Value<String> prenomRole,
+  Value<int?> idOrganisme,
+  Value<bool> active,
+  Value<DateTime> createdAt,
+  Value<DateTime?> updatedAt,
+});
+
+class $$TUserRolesTableFilterComposer
+    extends Composer<_$AppDatabase, $TUserRolesTable> {
+  $$TUserRolesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idRole => $composableBuilder(
+      column: $table.idRole, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get identifiant => $composableBuilder(
+      column: $table.identifiant, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get nomRole => $composableBuilder(
+      column: $table.nomRole, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get prenomRole => $composableBuilder(
+      column: $table.prenomRole, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idOrganisme => $composableBuilder(
+      column: $table.idOrganisme, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnFilters(column));
+}
+
+class $$TUserRolesTableOrderingComposer
+    extends Composer<_$AppDatabase, $TUserRolesTable> {
+  $$TUserRolesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idRole => $composableBuilder(
+      column: $table.idRole, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get identifiant => $composableBuilder(
+      column: $table.identifiant, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get nomRole => $composableBuilder(
+      column: $table.nomRole, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get prenomRole => $composableBuilder(
+      column: $table.prenomRole, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idOrganisme => $composableBuilder(
+      column: $table.idOrganisme, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get active => $composableBuilder(
+      column: $table.active, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+      column: $table.createdAt, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+      column: $table.updatedAt, builder: (column) => ColumnOrderings(column));
+}
+
+class $$TUserRolesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TUserRolesTable> {
+  $$TUserRolesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idRole =>
+      $composableBuilder(column: $table.idRole, builder: (column) => column);
+
+  GeneratedColumn<String> get identifiant => $composableBuilder(
+      column: $table.identifiant, builder: (column) => column);
+
+  GeneratedColumn<String> get nomRole =>
+      $composableBuilder(column: $table.nomRole, builder: (column) => column);
+
+  GeneratedColumn<String> get prenomRole => $composableBuilder(
+      column: $table.prenomRole, builder: (column) => column);
+
+  GeneratedColumn<int> get idOrganisme => $composableBuilder(
+      column: $table.idOrganisme, builder: (column) => column);
+
+  GeneratedColumn<bool> get active =>
+      $composableBuilder(column: $table.active, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$TUserRolesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TUserRolesTable,
+    TUserRole,
+    $$TUserRolesTableFilterComposer,
+    $$TUserRolesTableOrderingComposer,
+    $$TUserRolesTableAnnotationComposer,
+    $$TUserRolesTableCreateCompanionBuilder,
+    $$TUserRolesTableUpdateCompanionBuilder,
+    (TUserRole, BaseReferences<_$AppDatabase, $TUserRolesTable, TUserRole>),
+    TUserRole,
+    PrefetchHooks Function()> {
+  $$TUserRolesTableTableManager(_$AppDatabase db, $TUserRolesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TUserRolesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TUserRolesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TUserRolesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idRole = const Value.absent(),
+            Value<String> identifiant = const Value.absent(),
+            Value<String> nomRole = const Value.absent(),
+            Value<String> prenomRole = const Value.absent(),
+            Value<int?> idOrganisme = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+          }) =>
+              TUserRolesCompanion(
+            idRole: idRole,
+            identifiant: identifiant,
+            nomRole: nomRole,
+            prenomRole: prenomRole,
+            idOrganisme: idOrganisme,
+            active: active,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          createCompanionCallback: ({
+            Value<int> idRole = const Value.absent(),
+            required String identifiant,
+            required String nomRole,
+            required String prenomRole,
+            Value<int?> idOrganisme = const Value.absent(),
+            Value<bool> active = const Value.absent(),
+            Value<DateTime> createdAt = const Value.absent(),
+            Value<DateTime?> updatedAt = const Value.absent(),
+          }) =>
+              TUserRolesCompanion.insert(
+            idRole: idRole,
+            identifiant: identifiant,
+            nomRole: nomRole,
+            prenomRole: prenomRole,
+            idOrganisme: idOrganisme,
+            active: active,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TUserRolesTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TUserRolesTable,
+    TUserRole,
+    $$TUserRolesTableFilterComposer,
+    $$TUserRolesTableOrderingComposer,
+    $$TUserRolesTableAnnotationComposer,
+    $$TUserRolesTableCreateCompanionBuilder,
+    $$TUserRolesTableUpdateCompanionBuilder,
+    (TUserRole, BaseReferences<_$AppDatabase, $TUserRolesTable, TUserRole>),
+    TUserRole,
+    PrefetchHooks Function()>;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -19369,4 +20011,6 @@ class $AppDatabaseManager {
       $$CorTaxonListeTableTableTableManager(_db, _db.corTaxonListeTable);
   $$AppMetadataTableTableTableManager get appMetadataTable =>
       $$AppMetadataTableTableTableManager(_db, _db.appMetadataTable);
+  $$TUserRolesTableTableManager get tUserRoles =>
+      $$TUserRolesTableTableManager(_db, _db.tUserRoles);
 }

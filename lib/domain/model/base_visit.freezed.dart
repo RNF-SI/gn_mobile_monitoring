@@ -34,9 +34,14 @@ mixin _$BaseVisit {
   String? get uuidBaseVisit => throw _privateConstructorUsedError;
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
-  List<int>? get observers =>
+  List<int> get observers =>
       throw _privateConstructorUsedError; // Liste des ID des observateurs
-  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get data =>
+      throw _privateConstructorUsedError; // Données spécifiques au module
+  int? get idInventor => throw _privateConstructorUsedError;
+  List<int> get organismeActors =>
+      throw _privateConstructorUsedError; // Permissions CRUVED pour cette visite spécifique (pattern monitoring web)
+  CruvedResponse? get cruved => throw _privateConstructorUsedError;
 
   /// Serializes this BaseVisit to a JSON map.
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -67,8 +72,13 @@ abstract class $BaseVisitCopyWith<$Res> {
       String? uuidBaseVisit,
       String? metaCreateDate,
       String? metaUpdateDate,
-      List<int>? observers,
-      Map<String, dynamic>? data});
+      List<int> observers,
+      Map<String, dynamic>? data,
+      int? idInventor,
+      List<int> organismeActors,
+      CruvedResponse? cruved});
+
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -99,8 +109,11 @@ class _$BaseVisitCopyWithImpl<$Res, $Val extends BaseVisit>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
-    Object? observers = freezed,
+    Object? observers = null,
     Object? data = freezed,
+    Object? idInventor = freezed,
+    Object? organismeActors = null,
+    Object? cruved = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseVisit: null == idBaseVisit
@@ -156,15 +169,41 @@ class _$BaseVisitCopyWithImpl<$Res, $Val extends BaseVisit>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
-      observers: freezed == observers
+      observers: null == observers
           ? _value.observers
           : observers // ignore: cast_nullable_to_non_nullable
-              as List<int>?,
+              as List<int>,
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      organismeActors: null == organismeActors
+          ? _value.organismeActors
+          : organismeActors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ) as $Val);
+  }
+
+  /// Create a copy of BaseVisit
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CruvedResponseCopyWith<$Res>? get cruved {
+    if (_value.cruved == null) {
+      return null;
+    }
+
+    return $CruvedResponseCopyWith<$Res>(_value.cruved!, (value) {
+      return _then(_value.copyWith(cruved: value) as $Val);
+    });
   }
 }
 
@@ -190,8 +229,14 @@ abstract class _$$BaseVisitImplCopyWith<$Res>
       String? uuidBaseVisit,
       String? metaCreateDate,
       String? metaUpdateDate,
-      List<int>? observers,
-      Map<String, dynamic>? data});
+      List<int> observers,
+      Map<String, dynamic>? data,
+      int? idInventor,
+      List<int> organismeActors,
+      CruvedResponse? cruved});
+
+  @override
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -220,8 +265,11 @@ class __$$BaseVisitImplCopyWithImpl<$Res>
     Object? uuidBaseVisit = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
-    Object? observers = freezed,
+    Object? observers = null,
     Object? data = freezed,
+    Object? idInventor = freezed,
+    Object? organismeActors = null,
+    Object? cruved = freezed,
   }) {
     return _then(_$BaseVisitImpl(
       idBaseVisit: null == idBaseVisit
@@ -277,21 +325,33 @@ class __$$BaseVisitImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
-      observers: freezed == observers
+      observers: null == observers
           ? _value._observers
           : observers // ignore: cast_nullable_to_non_nullable
-              as List<int>?,
+              as List<int>,
       data: freezed == data
           ? _value._data
           : data // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      organismeActors: null == organismeActors
+          ? _value._organismeActors
+          : organismeActors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ));
   }
 }
 
 /// @nodoc
 @JsonSerializable()
-class _$BaseVisitImpl implements _BaseVisit {
+class _$BaseVisitImpl extends _BaseVisit {
   const _$BaseVisitImpl(
       {required this.idBaseVisit,
       this.idBaseSite,
@@ -306,10 +366,15 @@ class _$BaseVisitImpl implements _BaseVisit {
       this.uuidBaseVisit,
       this.metaCreateDate,
       this.metaUpdateDate,
-      final List<int>? observers,
-      final Map<String, dynamic>? data})
+      final List<int> observers = const [],
+      final Map<String, dynamic>? data,
+      this.idInventor,
+      final List<int> organismeActors = const [],
+      this.cruved})
       : _observers = observers,
-        _data = data;
+        _data = data,
+        _organismeActors = organismeActors,
+        super._();
 
   factory _$BaseVisitImpl.fromJson(Map<String, dynamic> json) =>
       _$$BaseVisitImplFromJson(json);
@@ -340,14 +405,13 @@ class _$BaseVisitImpl implements _BaseVisit {
   final String? metaCreateDate;
   @override
   final String? metaUpdateDate;
-  final List<int>? _observers;
+  final List<int> _observers;
   @override
-  List<int>? get observers {
-    final value = _observers;
-    if (value == null) return null;
+  @JsonKey()
+  List<int> get observers {
     if (_observers is EqualUnmodifiableListView) return _observers;
     // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
+    return EqualUnmodifiableListView(_observers);
   }
 
 // Liste des ID des observateurs
@@ -362,9 +426,25 @@ class _$BaseVisitImpl implements _BaseVisit {
     return EqualUnmodifiableMapView(value);
   }
 
+// Données spécifiques au module
+  @override
+  final int? idInventor;
+  final List<int> _organismeActors;
+  @override
+  @JsonKey()
+  List<int> get organismeActors {
+    if (_organismeActors is EqualUnmodifiableListView) return _organismeActors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_organismeActors);
+  }
+
+// Permissions CRUVED pour cette visite spécifique (pattern monitoring web)
+  @override
+  final CruvedResponse? cruved;
+
   @override
   String toString() {
-    return 'BaseVisit(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, observers: $observers, data: $data)';
+    return 'BaseVisit(idBaseVisit: $idBaseVisit, idBaseSite: $idBaseSite, idDataset: $idDataset, idModule: $idModule, idDigitiser: $idDigitiser, visitDateMin: $visitDateMin, visitDateMax: $visitDateMax, idNomenclatureTechCollectCampanule: $idNomenclatureTechCollectCampanule, idNomenclatureGrpTyp: $idNomenclatureGrpTyp, comments: $comments, uuidBaseVisit: $uuidBaseVisit, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, observers: $observers, data: $data, idInventor: $idInventor, organismeActors: $organismeActors, cruved: $cruved)';
   }
 
   @override
@@ -402,7 +482,12 @@ class _$BaseVisitImpl implements _BaseVisit {
                 other.metaUpdateDate == metaUpdateDate) &&
             const DeepCollectionEquality()
                 .equals(other._observers, _observers) &&
-            const DeepCollectionEquality().equals(other._data, _data));
+            const DeepCollectionEquality().equals(other._data, _data) &&
+            (identical(other.idInventor, idInventor) ||
+                other.idInventor == idInventor) &&
+            const DeepCollectionEquality()
+                .equals(other._organismeActors, _organismeActors) &&
+            (identical(other.cruved, cruved) || other.cruved == cruved));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -423,7 +508,10 @@ class _$BaseVisitImpl implements _BaseVisit {
       metaCreateDate,
       metaUpdateDate,
       const DeepCollectionEquality().hash(_observers),
-      const DeepCollectionEquality().hash(_data));
+      const DeepCollectionEquality().hash(_data),
+      idInventor,
+      const DeepCollectionEquality().hash(_organismeActors),
+      cruved);
 
   /// Create a copy of BaseVisit
   /// with the given fields replaced by the non-null parameter values.
@@ -441,7 +529,7 @@ class _$BaseVisitImpl implements _BaseVisit {
   }
 }
 
-abstract class _BaseVisit implements BaseVisit {
+abstract class _BaseVisit extends BaseVisit {
   const factory _BaseVisit(
       {required final int idBaseVisit,
       final int? idBaseSite,
@@ -456,8 +544,12 @@ abstract class _BaseVisit implements BaseVisit {
       final String? uuidBaseVisit,
       final String? metaCreateDate,
       final String? metaUpdateDate,
-      final List<int>? observers,
-      final Map<String, dynamic>? data}) = _$BaseVisitImpl;
+      final List<int> observers,
+      final Map<String, dynamic>? data,
+      final int? idInventor,
+      final List<int> organismeActors,
+      final CruvedResponse? cruved}) = _$BaseVisitImpl;
+  const _BaseVisit._() : super._();
 
   factory _BaseVisit.fromJson(Map<String, dynamic> json) =
       _$BaseVisitImpl.fromJson;
@@ -489,9 +581,16 @@ abstract class _BaseVisit implements BaseVisit {
   @override
   String? get metaUpdateDate;
   @override
-  List<int>? get observers; // Liste des ID des observateurs
+  List<int> get observers; // Liste des ID des observateurs
   @override
-  Map<String, dynamic>? get data;
+  Map<String, dynamic>? get data; // Données spécifiques au module
+  @override
+  int? get idInventor;
+  @override
+  List<int>
+      get organismeActors; // Permissions CRUVED pour cette visite spécifique (pattern monitoring web)
+  @override
+  CruvedResponse? get cruved;
 
   /// Create a copy of BaseVisit
   /// with the given fields replaced by the non-null parameter values.

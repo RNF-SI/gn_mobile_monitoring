@@ -23,9 +23,18 @@ _$BaseVisitImpl _$$BaseVisitImplFromJson(Map<String, dynamic> json) =>
       metaCreateDate: json['metaCreateDate'] as String?,
       metaUpdateDate: json['metaUpdateDate'] as String?,
       observers: (json['observers'] as List<dynamic>?)
-          ?.map((e) => (e as num).toInt())
-          .toList(),
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const [],
       data: json['data'] as Map<String, dynamic>?,
+      idInventor: (json['idInventor'] as num?)?.toInt(),
+      organismeActors: (json['organismeActors'] as List<dynamic>?)
+              ?.map((e) => (e as num).toInt())
+              .toList() ??
+          const [],
+      cruved: json['cruved'] == null
+          ? null
+          : CruvedResponse.fromJson(json['cruved'] as Map<String, dynamic>),
     );
 
 Map<String, dynamic> _$$BaseVisitImplToJson(_$BaseVisitImpl instance) =>
@@ -46,4 +55,7 @@ Map<String, dynamic> _$$BaseVisitImplToJson(_$BaseVisitImpl instance) =>
       'metaUpdateDate': instance.metaUpdateDate,
       'observers': instance.observers,
       'data': instance.data,
+      'idInventor': instance.idInventor,
+      'organismeActors': instance.organismeActors,
+      'cruved': instance.cruved,
     };

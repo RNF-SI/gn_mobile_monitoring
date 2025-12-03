@@ -41,12 +41,17 @@ import 'package:gn_mobile_monitoring/data/repository/observations_repository_imp
 import 'package:gn_mobile_monitoring/data/repository/sites_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/taxon_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/permission_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/permission_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/permission_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/permission_sync_repository.dart';
+import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
@@ -148,3 +153,11 @@ final modulesRepositoryProvider =
           ref.watch(taxonRepositoryProvider),
           ref.watch(sitesRepositoryProvider),
         ));
+
+final permissionRepositoryProvider = Provider<PermissionRepository>(
+  (ref) => PermissionRepositoryImpl(),
+);
+
+final permissionSyncRepositoryProvider = Provider<PermissionSyncRepository>(
+  (ref) => PermissionSyncRepositoryImpl(Dio()),
+);

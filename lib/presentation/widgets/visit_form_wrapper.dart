@@ -241,7 +241,7 @@ class VisitFormWrapper extends ConsumerWidget {
               visitDateMax: formData['visit_date_max'],
               comments: formData['comments'],
               idModule: moduleId ?? 1,
-              observers: formData['observers'] as List<int>?,
+              observers: (formData['observers'] as List<int>?) ?? [],
               data: formData,
             );
 

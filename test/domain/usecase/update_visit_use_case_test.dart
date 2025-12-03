@@ -146,7 +146,7 @@ void main() {
         idDataset: 1,
         idModule: 2,
         visitDateMin: '2023-01-01',
-        observers: null, // Liste null
+        observers: [], // Liste vide au lieu de null
         data: {'field1': 'value1'},
       );
       

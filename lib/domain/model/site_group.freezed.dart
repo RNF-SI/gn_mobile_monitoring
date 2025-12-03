@@ -29,6 +29,7 @@ mixin _$SiteGroup {
   String? get geom => throw _privateConstructorUsedError;
   int? get altitudeMin => throw _privateConstructorUsedError;
   int? get altitudeMax => throw _privateConstructorUsedError;
+  CruvedResponse? get cruved => throw _privateConstructorUsedError;
 
   /// Create a copy of SiteGroup
   /// with the given fields replaced by the non-null parameter values.
@@ -55,7 +56,10 @@ abstract class $SiteGroupCopyWith<$Res> {
       int? idDigitiser,
       String? geom,
       int? altitudeMin,
-      int? altitudeMax});
+      int? altitudeMax,
+      CruvedResponse? cruved});
+
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -86,6 +90,7 @@ class _$SiteGroupCopyWithImpl<$Res, $Val extends SiteGroup>
     Object? geom = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? cruved = freezed,
   }) {
     return _then(_value.copyWith(
       idSitesGroup: null == idSitesGroup
@@ -140,7 +145,25 @@ class _$SiteGroupCopyWithImpl<$Res, $Val extends SiteGroup>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ) as $Val);
+  }
+
+  /// Create a copy of SiteGroup
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CruvedResponseCopyWith<$Res>? get cruved {
+    if (_value.cruved == null) {
+      return null;
+    }
+
+    return $CruvedResponseCopyWith<$Res>(_value.cruved!, (value) {
+      return _then(_value.copyWith(cruved: value) as $Val);
+    });
   }
 }
 
@@ -165,7 +188,11 @@ abstract class _$$SiteGroupImplCopyWith<$Res>
       int? idDigitiser,
       String? geom,
       int? altitudeMin,
-      int? altitudeMax});
+      int? altitudeMax,
+      CruvedResponse? cruved});
+
+  @override
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -194,6 +221,7 @@ class __$$SiteGroupImplCopyWithImpl<$Res>
     Object? geom = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? cruved = freezed,
   }) {
     return _then(_$SiteGroupImpl(
       idSitesGroup: null == idSitesGroup
@@ -248,13 +276,17 @@ class __$$SiteGroupImplCopyWithImpl<$Res>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$SiteGroupImpl implements _SiteGroup {
+class _$SiteGroupImpl extends _SiteGroup {
   const _$SiteGroupImpl(
       {required this.idSitesGroup,
       this.sitesGroupName,
@@ -268,7 +300,9 @@ class _$SiteGroupImpl implements _SiteGroup {
       this.idDigitiser,
       this.geom,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.cruved})
+      : super._();
 
   @override
   final int idSitesGroup;
@@ -296,10 +330,12 @@ class _$SiteGroupImpl implements _SiteGroup {
   final int? altitudeMin;
   @override
   final int? altitudeMax;
+  @override
+  final CruvedResponse? cruved;
 
   @override
   String toString() {
-    return 'SiteGroup(idSitesGroup: $idSitesGroup, sitesGroupName: $sitesGroupName, sitesGroupCode: $sitesGroupCode, sitesGroupDescription: $sitesGroupDescription, uuidSitesGroup: $uuidSitesGroup, comments: $comments, data: $data, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idDigitiser: $idDigitiser, geom: $geom, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax)';
+    return 'SiteGroup(idSitesGroup: $idSitesGroup, sitesGroupName: $sitesGroupName, sitesGroupCode: $sitesGroupCode, sitesGroupDescription: $sitesGroupDescription, uuidSitesGroup: $uuidSitesGroup, comments: $comments, data: $data, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idDigitiser: $idDigitiser, geom: $geom, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, cruved: $cruved)';
   }
 
   @override
@@ -330,7 +366,8 @@ class _$SiteGroupImpl implements _SiteGroup {
             (identical(other.altitudeMin, altitudeMin) ||
                 other.altitudeMin == altitudeMin) &&
             (identical(other.altitudeMax, altitudeMax) ||
-                other.altitudeMax == altitudeMax));
+                other.altitudeMax == altitudeMax) &&
+            (identical(other.cruved, cruved) || other.cruved == cruved));
   }
 
   @override
@@ -348,7 +385,8 @@ class _$SiteGroupImpl implements _SiteGroup {
       idDigitiser,
       geom,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      cruved);
 
   /// Create a copy of SiteGroup
   /// with the given fields replaced by the non-null parameter values.
@@ -359,7 +397,7 @@ class _$SiteGroupImpl implements _SiteGroup {
       __$$SiteGroupImplCopyWithImpl<_$SiteGroupImpl>(this, _$identity);
 }
 
-abstract class _SiteGroup implements SiteGroup {
+abstract class _SiteGroup extends SiteGroup {
   const factory _SiteGroup(
       {required final int idSitesGroup,
       final String? sitesGroupName,
@@ -373,7 +411,9 @@ abstract class _SiteGroup implements SiteGroup {
       final int? idDigitiser,
       final String? geom,
       final int? altitudeMin,
-      final int? altitudeMax}) = _$SiteGroupImpl;
+      final int? altitudeMax,
+      final CruvedResponse? cruved}) = _$SiteGroupImpl;
+  const _SiteGroup._() : super._();
 
   @override
   int get idSitesGroup;
@@ -401,6 +441,8 @@ abstract class _SiteGroup implements SiteGroup {
   int? get altitudeMin;
   @override
   int? get altitudeMax;
+  @override
+  CruvedResponse? get cruved;
 
   /// Create a copy of SiteGroup
   /// with the given fields replaced by the non-null parameter values.

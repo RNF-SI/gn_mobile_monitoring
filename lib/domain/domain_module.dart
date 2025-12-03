@@ -1,11 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart' as data_module;
 import 'package:gn_mobile_monitoring/data/repository/composite_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/downstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/permission_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/permission_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
@@ -106,143 +108,143 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case_impl.d
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
         InitLocalMonitoringDataBaseUseCaseImpl(
-            ref.watch(globalDatabaseRepositoryProvider)));
+            ref.watch(data_module.globalDatabaseRepositoryProvider)));
 
 final deleteLocalMonitoringDatabaseUseCaseProvider =
     Provider<DeleteLocalMonitoringDatabaseUseCase>((ref) =>
         DeleteLocalMonitoringDatabaseUseCaseImpl(
-            ref.watch(globalDatabaseRepositoryProvider)));
+            ref.watch(data_module.globalDatabaseRepositoryProvider)));
 
 final loginUseCaseProvider = Provider<LoginUseCase>(
-    (ref) => LoginUseCaseImpl(ref.watch(authenticationRepositoryProvider)));
+    (ref) => LoginUseCaseImpl(ref.watch(data_module.authenticationRepositoryProvider)));
 
 final getIsLoggedInFromLocalStorageUseCaseProvider =
     Provider<GetIsLoggedInFromLocalStorageUseCase>((ref) =>
         GetIsLoggedInFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final setIsLoggedInFromLocalStorageUseCaseProvider =
     Provider<SetIsLoggedInFromLocalStorageUseCase>((ref) =>
         SetIsLoggedInFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final getUserIdFromLocalStorageUseCaseProvider =
     Provider<GetUserIdFromLocalStorageUseCase>((ref) =>
-        GetUserIdFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        GetUserIdFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final setUserIdFromLocalStorageUseCaseProvider =
     Provider<SetUserIdFromLocalStorageUseCase>((ref) =>
-        SetUserIdFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        SetUserIdFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final getUserNameFromLocalStorageUseCaseProvider =
     Provider<GetUserNameFromLocalStorageUseCase>((ref) =>
         GetUserNameFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final setUserNameFromLocalStorageUseCaseProvider =
     Provider<SetUserNameFromLocalStorageUseCase>((ref) =>
         SetUserNameFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final getModulesUseCaseProvider = Provider<GetModulesUseCase>(
-    (ref) => GetModulesUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+    (ref) => GetModulesUseCaseImpl(ref.watch(data_module.modulesRepositoryProvider)));
 
 final setTokenFromLocalStorageUseCaseProvider =
     Provider<SetTokenFromLocalStorageUseCase>((ref) =>
-        SetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        SetTokenFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final getTokenFromLocalStorageUseCaseProvider =
     Provider<GetTokenFromLocalStorageUseCase>((ref) =>
-        GetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        GetTokenFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final clearUserIdFromLocalStorageUseCaseProvider =
     Provider<ClearUserIdFromLocalStorageUseCase>((ref) =>
         ClearUserIdFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final clearUserNameFromLocalStorageUseCaseProvider =
     Provider<ClearUserNameFromLocalStorageUseCase>((ref) =>
         ClearUserNameFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final clearTokenFromLocalStorageUseCaseProvider =
     Provider<ClearTokenFromLocalStorageUseCase>((ref) =>
-        ClearTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        ClearTokenFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final getApiUrlFromLocalStorageUseCaseProvider =
     Provider<GetApiUrlFromLocalStorageUseCase>((ref) =>
-        GetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        GetApiUrlFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final setApiUrlFromLocalStorageUseCaseProvider =
     Provider<SetApiUrlFromLocalStorageUseCase>((ref) =>
-        SetApiUrlFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+        SetApiUrlFromLocalStorageUseCaseImpl(ref.watch(data_module.localStorageProvider)));
 
 final clearApiUrlFromLocalStorageUseCaseProvider =
     Provider<ClearApiUrlFromLocalStorageUseCase>((ref) =>
         ClearApiUrlFromLocalStorageUseCaseImpl(
-            ref.watch(localStorageProvider)));
+            ref.watch(data_module.localStorageProvider)));
 
 final downloadCompleteModuleUseCaseProvider =
     Provider<DownloadCompleteModuleUseCase>(
         (ref) => DownloadCompleteModuleUseCaseImpl(
-              ref.watch(modulesRepositoryProvider),
+              ref.watch(data_module.modulesRepositoryProvider),
             ));
 
 final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
-    (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));
+    (ref) => GetSiteGroupsUseCaseImpl(ref.watch(data_module.sitesRepositoryProvider)));
 
 final fetchModulesUseCaseProvider = Provider<FetchModulesUseCase>(
   (ref) => FetchModulesUseCaseImpl(
-    ref.watch(modulesRepositoryProvider),
+    ref.watch(data_module.modulesRepositoryProvider),
   ),
 );
 
 final fetchSiteGroupsUseCaseProvider = Provider<FetchSiteGroupsUseCase>(
   (ref) => FetchSiteGroupsUseCaseImpl(
-    ref.watch(sitesRepositoryProvider),
+    ref.watch(data_module.sitesRepositoryProvider),
   ),
 );
 
 final incrementalSyncModulesUseCaseProvider =
     Provider<IncrementalSyncModulesUseCase>(
   (ref) => IncrementalSyncModulesUseCaseImpl(
-    ref.watch(modulesRepositoryProvider),
+    ref.watch(data_module.modulesRepositoryProvider),
   ),
 );
 
 final incrementalSyncSiteGroupsUseCaseProvider =
     Provider<IncrementalSyncSiteGroupsUseCase>(
   (ref) => IncrementalSyncSiteGroupsUseCaseImpl(
-    ref.watch(sitesRepositoryProvider),
+    ref.watch(data_module.sitesRepositoryProvider),
   ),
 );
 
 // Fournisseur pour le repository de synchronisation descendante (serveur vers appareil)
 final downstreamSyncRepositoryProvider = Provider<DownstreamSyncRepository>(
   (ref) => DownstreamSyncRepositoryImpl(
-    ref.watch(globalApiProvider),
-    ref.watch(taxonApiProvider),
-    ref.watch(globalDatabaseProvider),
-    ref.watch(nomenclatureDatabaseProvider),
-    ref.watch(datasetsDatabaseProvider),
-    ref.watch(taxonDatabaseProvider),
-    modulesRepository: ref.watch(modulesRepositoryProvider),
-    sitesRepository: ref.watch(sitesRepositoryProvider),
-    visitesDatabase: ref.watch(visitDatabaseProvider),
-    observationsDatabase: ref.watch(observationsDatabaseProvider),
+    ref.watch(data_module.globalApiProvider),
+    ref.watch(data_module.taxonApiProvider),
+    ref.watch(data_module.globalDatabaseProvider),
+    ref.watch(data_module.nomenclatureDatabaseProvider),
+    ref.watch(data_module.datasetsDatabaseProvider),
+    ref.watch(data_module.taxonDatabaseProvider),
+    modulesRepository: ref.watch(data_module.modulesRepositoryProvider),
+    sitesRepository: ref.watch(data_module.sitesRepositoryProvider),
+    visitesDatabase: ref.watch(data_module.visitDatabaseProvider),
+    observationsDatabase: ref.watch(data_module.observationsDatabaseProvider),
   ),
 );
 
 // Fournisseur pour le repository de synchronisation ascendante (appareil vers serveur)
 final upstreamSyncRepositoryProvider = Provider<UpstreamSyncRepository>(
   (ref) => UpstreamSyncRepositoryImpl(
-    ref.watch(globalApiProvider),
-    ref.watch(globalDatabaseProvider),
-    ref.watch(moduleDatabaseProvider),
-    visitRepository: ref.watch(visitRepositoryProvider),
-    observationsRepository: ref.watch(observationsRepositoryProvider),
+    ref.watch(data_module.globalApiProvider),
+    ref.watch(data_module.globalDatabaseProvider),
+    ref.watch(data_module.moduleDatabaseProvider),
+    visitRepository: ref.watch(data_module.visitRepositoryProvider),
+    observationsRepository: ref.watch(data_module.observationsRepositoryProvider),
     observationDetailsRepository:
-        ref.watch(observationDetailsRepositoryImplProvider),
+        ref.watch(data_module.observationDetailsRepositoryImplProvider),
   ),
 );
 
@@ -273,90 +275,90 @@ final updateLastSyncDateUseCaseProvider = Provider<UpdateLastSyncDateUseCase>(
 );
 
 final getVisitWithDetailsUseCaseProvider = Provider<GetVisitWithDetailsUseCase>(
-  (ref) => GetVisitWithDetailsUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => GetVisitWithDetailsUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final createVisitUseCaseProvider = Provider<CreateVisitUseCase>(
-  (ref) => CreateVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => CreateVisitUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final updateVisitUseCaseProvider = Provider<UpdateVisitUseCase>(
-  (ref) => UpdateVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => UpdateVisitUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final deleteVisitUseCaseProvider = Provider<DeleteVisitUseCase>(
-  (ref) => DeleteVisitUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => DeleteVisitUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final getVisitComplementUseCaseProvider = Provider<GetVisitComplementUseCase>(
-  (ref) => GetVisitComplementUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => GetVisitComplementUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final saveVisitComplementUseCaseProvider = Provider<SaveVisitComplementUseCase>(
-  (ref) => SaveVisitComplementUseCaseImpl(ref.watch(visitRepositoryProvider)),
+  (ref) => SaveVisitComplementUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 // Observations use cases
 final getObservationsByVisitIdUseCaseProvider =
     Provider<GetObservationsByVisitIdUseCase>(
   (ref) => GetObservationsByVisitIdUseCaseImpl(
-      ref.watch(observationsRepositoryProvider)),
+      ref.watch(data_module.observationsRepositoryProvider)),
 );
 
 final createObservationUseCaseProvider = Provider<CreateObservationUseCase>(
   (ref) =>
-      CreateObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+      CreateObservationUseCaseImpl(ref.watch(data_module.observationsRepositoryProvider)),
 );
 
 final updateObservationUseCaseProvider = Provider<UpdateObservationUseCase>(
   (ref) =>
-      UpdateObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+      UpdateObservationUseCaseImpl(ref.watch(data_module.observationsRepositoryProvider)),
 );
 
 final deleteObservationUseCaseProvider = Provider<DeleteObservationUseCase>(
   (ref) =>
-      DeleteObservationUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+      DeleteObservationUseCaseImpl(ref.watch(data_module.observationsRepositoryProvider)),
 );
 
 // ObservationDetail Providers
 final getObservationDetailsByObservationIdUseCaseProvider =
     Provider<GetObservationDetailsByObservationIdUseCase>(
   (ref) => GetObservationDetailsByObservationIdUseCaseImpl(
-      ref.watch(observationDetailsRepositoryImplProvider)),
+      ref.watch(data_module.observationDetailsRepositoryImplProvider)),
 );
 
 final getObservationDetailByIdUseCaseProvider =
     Provider<GetObservationDetailByIdUseCase>(
   (ref) => GetObservationDetailByIdUseCaseImpl(
-      ref.watch(observationDetailsRepositoryImplProvider)),
+      ref.watch(data_module.observationDetailsRepositoryImplProvider)),
 );
 
 final saveObservationDetailUseCaseProvider =
     Provider<SaveObservationDetailUseCase>(
   (ref) => SaveObservationDetailUseCaseImpl(
-      ref.watch(observationDetailsRepositoryImplProvider)),
+      ref.watch(data_module.observationDetailsRepositoryImplProvider)),
 );
 
 final deleteObservationDetailUseCaseProvider =
     Provider<DeleteObservationDetailUseCase>(
   (ref) => DeleteObservationDetailUseCaseImpl(
-      ref.watch(observationDetailsRepositoryImplProvider)),
+      ref.watch(data_module.observationDetailsRepositoryImplProvider)),
 );
 
 final deleteObservationDetailsByObservationIdUseCaseProvider =
     Provider<DeleteObservationDetailsByObservationIdUseCase>(
   (ref) => DeleteObservationDetailsByObservationIdUseCaseImpl(
-      ref.watch(observationDetailsRepositoryImplProvider)),
+      ref.watch(data_module.observationDetailsRepositoryImplProvider)),
 );
 
 // UseCase pour récupérer un module complet depuis la base locale
 final getCompleteModuleUseCaseProvider = Provider<GetCompleteModuleUseCase>(
-  (ref) => GetCompleteModuleUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+  (ref) => GetCompleteModuleUseCaseImpl(ref.watch(data_module.modulesRepositoryProvider)),
 );
 
 // UseCase pour récupérer toutes les nomenclatures
 final getNomenclaturesUseCaseProvider = Provider<GetNomenclaturesUseCase>(
-  (ref) => GetNomenclaturesUseCaseImpl(ref.watch(modulesRepositoryProvider)),
+  (ref) => GetNomenclaturesUseCaseImpl(ref.watch(data_module.modulesRepositoryProvider)),
 );
 
 // UseCase pour récupérer une nomenclature par son ID
@@ -367,53 +369,53 @@ final getNomenclatureByIdUseCaseProvider = Provider<GetNomenclatureByIdUseCase>(
 
 // UseCase pour récupérer les sites associés à un groupe de sites
 final getSitesBySiteGroupUseCaseProvider = Provider<GetSitesBySiteGroupUseCase>(
-  (ref) => GetSitesBySiteGroupUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+  (ref) => GetSitesBySiteGroupUseCaseImpl(ref.watch(data_module.sitesRepositoryProvider)),
 );
 
 final getVisitsBySiteAndModuleUseCaseProvider =
     Provider<GetVisitsBySiteAndModuleUseCase>(
   (ref) =>
-      GetVisitsBySiteAndModuleUseCaseImpl(ref.watch(visitRepositoryProvider)),
+      GetVisitsBySiteAndModuleUseCaseImpl(ref.watch(data_module.visitRepositoryProvider)),
 );
 
 final getObservationByIdUseCaseProvider = Provider<GetObservationByIdUseCase>(
   (ref) =>
-      GetObservationByIdUseCaseImpl(ref.watch(observationsRepositoryProvider)),
+      GetObservationByIdUseCaseImpl(ref.watch(data_module.observationsRepositoryProvider)),
 );
 
 // Provider pour le cas d'utilisation des nomenclatures par type
 final getNomenclaturesByTypeCodeUseCaseProvider =
     Provider<GetNomenclaturesByTypeCodeUseCase>(
   (ref) => GetNomenclaturesByTypeCodeUseCaseImpl(
-      ref.watch(modulesRepositoryProvider)),
+      ref.watch(data_module.modulesRepositoryProvider)),
 );
 
 final downloadModuleTaxonsUseCaseProvider =
     Provider<DownloadModuleTaxonsUseCase>(
-  (ref) => DownloadModuleTaxonsUseCaseImpl(ref.watch(taxonRepositoryProvider)),
+  (ref) => DownloadModuleTaxonsUseCaseImpl(ref.watch(data_module.taxonRepositoryProvider)),
 );
 
 final getModuleTaxonsUseCaseProvider = Provider<GetModuleTaxonsUseCase>(
   (ref) => GetModuleTaxonsUseCaseImpl(
-    ref.watch(taxonRepositoryProvider),
+    ref.watch(data_module.taxonRepositoryProvider),
   ),
 );
 
 final getTaxonsByListIdUseCaseProvider = Provider<GetTaxonsByListIdUseCase>(
   (ref) => GetTaxonsByListIdUseCaseImpl(
-    ref.watch(taxonRepositoryProvider),
+    ref.watch(data_module.taxonRepositoryProvider),
   ),
 );
 
 final getTaxonByCdNomUseCaseProvider = Provider<GetTaxonByCdNomUseCase>(
   (ref) => GetTaxonByCdNomUseCaseImpl(
-    ref.watch(taxonRepositoryProvider),
+    ref.watch(data_module.taxonRepositoryProvider),
   ),
 );
 
 final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
   (ref) => SearchTaxonsUseCaseImpl(
-    ref.watch(taxonRepositoryProvider),
+    ref.watch(data_module.taxonRepositoryProvider),
   ),
 );
 
@@ -421,7 +423,7 @@ final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
 final getDatasetsForModuleUseCaseProvider =
     Provider<GetDatasetsForModuleUseCase>(
   (ref) => GetDatasetsForModuleUseCaseImpl(
-    ref.watch(modulesRepositoryProvider),
+    ref.watch(data_module.modulesRepositoryProvider),
   ),
 );
 
@@ -431,4 +433,13 @@ final syncCompleteUseCaseProvider = Provider<SyncCompleteUseCase>(
     ref.watch(syncRepositoryProvider),
     ref.watch(getModulesUseCaseProvider),
   ),
+);
+
+// Permission providers
+final permissionRepositoryProvider = Provider<PermissionRepository>(
+  (ref) => ref.watch(data_module.permissionRepositoryProvider),
+);
+
+final permissionSyncRepositoryProvider = Provider<PermissionSyncRepository>(
+  (ref) => ref.watch(data_module.permissionSyncRepositoryProvider),
 );

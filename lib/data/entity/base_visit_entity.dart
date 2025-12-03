@@ -15,6 +15,7 @@ class BaseVisitEntity {
   final String? metaUpdateDate;
   final List<int>? observers; // Liste des ID des observateurs
   final Map<String, dynamic>? data; // Données spécifiques au module
+  final Map<String, dynamic>? cruved; // Permissions CRUVED
 
   BaseVisitEntity({
     required this.idBaseVisit,
@@ -33,6 +34,7 @@ class BaseVisitEntity {
     this.metaUpdateDate,
     this.observers,
     this.data,
+    this.cruved,
   });
 
   // Factory method to convert JSON to entity
@@ -55,6 +57,7 @@ class BaseVisitEntity {
       metaUpdateDate: json['meta_update_date'] as String?,
       observers: (json['observers'] as List<dynamic>?)?.map((e) => e as int).toList(),
       data: json['data'] as Map<String, dynamic>?,
+      cruved: json['cruved'] as Map<String, dynamic>?,
     );
   }
 
@@ -77,6 +80,7 @@ class BaseVisitEntity {
       'meta_update_date': metaUpdateDate,
       'observers': observers,
       'data': data,
+      'cruved': cruved,
     };
   }
 
@@ -98,6 +102,7 @@ class BaseVisitEntity {
     String? metaUpdateDate,
     List<int>? observers,
     Map<String, dynamic>? data,
+    Map<String, dynamic>? cruved,
   }) {
     return BaseVisitEntity(
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
@@ -116,6 +121,7 @@ class BaseVisitEntity {
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       observers: observers ?? this.observers,
       data: data ?? this.data,
+      cruved: cruved ?? this.cruved,
     );
   }
 }

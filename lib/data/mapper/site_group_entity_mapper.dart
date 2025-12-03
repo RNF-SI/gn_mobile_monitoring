@@ -1,6 +1,7 @@
 import 'dart:convert'; // Needed for JSON encoding and decoding
 
 import '../../domain/model/site_group.dart';
+import '../../domain/model/cruved_response.dart';
 import '../entity/site_group_entity.dart';
 
 extension SiteGroupEntityMapper on SiteGroupEntity {
@@ -19,6 +20,7 @@ extension SiteGroupEntityMapper on SiteGroupEntity {
       geom: geom,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      cruved: cruved != null ? CruvedResponse.fromJson(cruved!) : null,
     );
   }
 }
@@ -39,6 +41,7 @@ extension DomainSiteGroupEntityMapper on SiteGroup {
       geom: geom,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      cruved: cruved?.toJson(),
     );
   }
 }

@@ -28,6 +28,11 @@ mixin _$BaseSite {
   int? get altitudeMax => throw _privateConstructorUsedError;
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
+  int? get idDigitiser => throw _privateConstructorUsedError;
+  int? get idInventor => throw _privateConstructorUsedError;
+  List<int> get organismeActors =>
+      throw _privateConstructorUsedError; // Permissions CRUVED pour ce site spécifique (pattern monitoring web)
+  CruvedResponse? get cruved => throw _privateConstructorUsedError;
 
   /// Create a copy of BaseSite
   /// with the given fields replaced by the non-null parameter values.
@@ -52,7 +57,13 @@ abstract class $BaseSiteCopyWith<$Res> {
       int? altitudeMin,
       int? altitudeMax,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      int? idDigitiser,
+      int? idInventor,
+      List<int> organismeActors,
+      CruvedResponse? cruved});
+
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -81,6 +92,10 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? altitudeMax = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? idDigitiser = freezed,
+    Object? idInventor = freezed,
+    Object? organismeActors = null,
+    Object? cruved = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseSite: null == idBaseSite
@@ -127,7 +142,37 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      organismeActors: null == organismeActors
+          ? _value.organismeActors
+          : organismeActors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ) as $Val);
+  }
+
+  /// Create a copy of BaseSite
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CruvedResponseCopyWith<$Res>? get cruved {
+    if (_value.cruved == null) {
+      return null;
+    }
+
+    return $CruvedResponseCopyWith<$Res>(_value.cruved!, (value) {
+      return _then(_value.copyWith(cruved: value) as $Val);
+    });
   }
 }
 
@@ -150,7 +195,14 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       int? altitudeMin,
       int? altitudeMax,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      int? idDigitiser,
+      int? idInventor,
+      List<int> organismeActors,
+      CruvedResponse? cruved});
+
+  @override
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -177,6 +229,10 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? altitudeMax = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? idDigitiser = freezed,
+    Object? idInventor = freezed,
+    Object? organismeActors = null,
+    Object? cruved = freezed,
   }) {
     return _then(_$BaseSiteImpl(
       idBaseSite: null == idBaseSite
@@ -223,13 +279,29 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      organismeActors: null == organismeActors
+          ? _value._organismeActors
+          : organismeActors // ignore: cast_nullable_to_non_nullable
+              as List<int>,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$BaseSiteImpl implements _BaseSite {
+class _$BaseSiteImpl extends _BaseSite {
   const _$BaseSiteImpl(
       {required this.idBaseSite,
       this.baseSiteName,
@@ -241,7 +313,13 @@ class _$BaseSiteImpl implements _BaseSite {
       this.altitudeMin,
       this.altitudeMax,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      this.idDigitiser,
+      this.idInventor,
+      final List<int> organismeActors = const [],
+      this.cruved})
+      : _organismeActors = organismeActors,
+        super._();
 
   @override
   final int idBaseSite;
@@ -266,10 +344,26 @@ class _$BaseSiteImpl implements _BaseSite {
   final DateTime? metaCreateDate;
   @override
   final DateTime? metaUpdateDate;
+  @override
+  final int? idDigitiser;
+  @override
+  final int? idInventor;
+  final List<int> _organismeActors;
+  @override
+  @JsonKey()
+  List<int> get organismeActors {
+    if (_organismeActors is EqualUnmodifiableListView) return _organismeActors;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_organismeActors);
+  }
+
+// Permissions CRUVED pour ce site spécifique (pattern monitoring web)
+  @override
+  final CruvedResponse? cruved;
 
   @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idDigitiser: $idDigitiser, idInventor: $idInventor, organismeActors: $organismeActors, cruved: $cruved)';
   }
 
   @override
@@ -297,7 +391,14 @@ class _$BaseSiteImpl implements _BaseSite {
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            (identical(other.idDigitiser, idDigitiser) ||
+                other.idDigitiser == idDigitiser) &&
+            (identical(other.idInventor, idInventor) ||
+                other.idInventor == idInventor) &&
+            const DeepCollectionEquality()
+                .equals(other._organismeActors, _organismeActors) &&
+            (identical(other.cruved, cruved) || other.cruved == cruved));
   }
 
   @override
@@ -313,7 +414,11 @@ class _$BaseSiteImpl implements _BaseSite {
       altitudeMin,
       altitudeMax,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      idDigitiser,
+      idInventor,
+      const DeepCollectionEquality().hash(_organismeActors),
+      cruved);
 
   /// Create a copy of BaseSite
   /// with the given fields replaced by the non-null parameter values.
@@ -324,7 +429,7 @@ class _$BaseSiteImpl implements _BaseSite {
       __$$BaseSiteImplCopyWithImpl<_$BaseSiteImpl>(this, _$identity);
 }
 
-abstract class _BaseSite implements BaseSite {
+abstract class _BaseSite extends BaseSite {
   const factory _BaseSite(
       {required final int idBaseSite,
       final String? baseSiteName,
@@ -336,7 +441,12 @@ abstract class _BaseSite implements BaseSite {
       final int? altitudeMin,
       final int? altitudeMax,
       final DateTime? metaCreateDate,
-      final DateTime? metaUpdateDate}) = _$BaseSiteImpl;
+      final DateTime? metaUpdateDate,
+      final int? idDigitiser,
+      final int? idInventor,
+      final List<int> organismeActors,
+      final CruvedResponse? cruved}) = _$BaseSiteImpl;
+  const _BaseSite._() : super._();
 
   @override
   int get idBaseSite;
@@ -360,6 +470,15 @@ abstract class _BaseSite implements BaseSite {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
+  @override
+  int? get idDigitiser;
+  @override
+  int? get idInventor;
+  @override
+  List<int>
+      get organismeActors; // Permissions CRUVED pour ce site spécifique (pattern monitoring web)
+  @override
+  CruvedResponse? get cruved;
 
   /// Create a copy of BaseSite
   /// with the given fields replaced by the non-null parameter values.

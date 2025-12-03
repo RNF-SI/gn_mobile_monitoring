@@ -211,6 +211,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
               'altitude_max': null, // Will be fetched with individual requests
               'first_use_date': null, // Will be fetched with individual requests
               'uuid_base_site': null, // Will be fetched with individual requests
+              // Extract CRUVED permissions if available
+              'cruved': siteData['cruved'] ?? properties['cruved'],
             };
 
             enrichedSites.add(enrichedSite);
@@ -289,6 +291,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           site['altitude_max'] = properties['altitude_max'];
           site['first_use_date'] = properties['first_use_date'];
           site['uuid_base_site'] = properties['uuid_base_site'];
+          
+          // Update CRUVED permissions if available and not already set
+          if (site['cruved'] == null && siteData['cruved'] != null) {
+            site['cruved'] = siteData['cruved'];
+          }
           
           // Also update geometry if available
           if (siteData['geometry'] != null) {
@@ -399,6 +406,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                 'modules': [
                   moduleCode
                 ], // We know this site group belongs to this module
+                // Extract CRUVED permissions if available
+                'cruved': groupData['cruved'] ?? properties['cruved'],
               };
 
               result.add(SiteGroupsWithModulesLabel(

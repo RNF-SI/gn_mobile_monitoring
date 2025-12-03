@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/cruved_response.dart';
 
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 
@@ -39,8 +40,9 @@ extension VisiteEntityMapper on BaseVisitEntity {
       uuidBaseVisit: uuidBaseVisit,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
-      observers: observers,
+      observers: observers ?? [],
       data: normalizedData,
+      cruved: cruved != null ? CruvedResponse.fromJson(cruved!) : null,
     );
   }
 
@@ -93,6 +95,7 @@ extension BaseVisitMapper on BaseVisit {
       metaUpdateDate: metaUpdateDate,
       observers: observers,
       data: data,
+      cruved: cruved?.toJson(),
     );
   }
 }

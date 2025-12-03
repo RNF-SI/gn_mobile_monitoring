@@ -13,6 +13,7 @@ class SiteGroupEntity {
   final String? geom;
   final int? altitudeMin;
   final int? altitudeMax;
+  final Map<String, dynamic>? cruved;
 
   SiteGroupEntity({
     required this.idSitesGroup,
@@ -28,6 +29,7 @@ class SiteGroupEntity {
     this.geom,
     this.altitudeMin,
     this.altitudeMax,
+    this.cruved,
   });
 
   factory SiteGroupEntity.fromJson(Map<String, dynamic> json) {
@@ -62,6 +64,9 @@ class SiteGroupEntity {
         geom: null,
         altitudeMin: json['altitude_min'] as int?,
         altitudeMax: json['altitude_max'] as int?,
+        cruved: json['cruved'] != null
+            ? Map<String, dynamic>.from(json['cruved'])
+            : null,
       );
     } catch (e) {
       throw Exception("Error parsing SiteGroupEntity: $e\nJSON data: $json");
@@ -83,6 +88,7 @@ class SiteGroupEntity {
       'geom': geom,
       'altitudeMin': altitudeMin,
       'altitudeMax': altitudeMax,
+      'cruved': cruved,
     };
   }
 }

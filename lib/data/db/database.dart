@@ -7,10 +7,12 @@ import 'package:gn_mobile_monitoring/data/db/dao/bib_nomenclatures_types_dao.dar
 import 'package:gn_mobile_monitoring/data/db/dao/modules_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/observation_detail_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/permission_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/sites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_dataset_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/t_nomenclatures_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/taxon_dao.dart';
+import 'package:gn_mobile_monitoring/data/db/dao/user_role_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/visites_dao.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/018_add_downloaded_column_in_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/019_add_configuration_column_in_module_complement.dart';
@@ -47,6 +49,7 @@ import 'package:gn_mobile_monitoring/data/db/tables/t_permissions_available.dart
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_groups.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_taxrefs.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_user_roles.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -101,6 +104,7 @@ part 'database.g.dart';
   BibListesTable,
   CorTaxonListeTable,
   AppMetadataTable,
+  TUserRoles,
 ], daos: [
   ModulesDao,
   TNomenclaturesDao,
@@ -112,6 +116,8 @@ part 'database.g.dart';
   BibNomenclaturesTypesDao,
   TaxonDao,
   AppMetadataDao,
+  PermissionDao,
+  UserRoleDao,
 ])
 class AppDatabase extends _$AppDatabase {
   // DAO qui peuvent être remplacés par des mocks pour les tests
@@ -166,7 +172,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -195,6 +201,7 @@ class AppDatabase extends _$AppDatabase {
           await migration22(m, this);
           await migration23(m, this);
           await migration24(m, this);
+          await migration25(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           final db = this; // Access the database instance
@@ -269,6 +276,9 @@ class AppDatabase extends _$AppDatabase {
               case 24:
                 await migration24(m, db);
                 break;
+              case 25:
+                await migration25(m, db);
+                break;
               default:
                 throw Exception("Unexpected schema version: $i");
             }
@@ -305,6 +315,21 @@ Future<void> migration24(Migrator m, AppDatabase db) async {
     print("id_digitiser column added successfully");
   } catch (e) {
     print("Error adding id_digitiser column: $e");
+    rethrow;
+  }
+}
+
+/// Migration pour créer la table t_user_roles
+Future<void> migration25(Migrator m, AppDatabase db) async {
+  print("Executing migration25: Creating t_user_roles table");
+  
+  try {
+    // Créer la table directement avec Drift
+    await m.createTable(db.tUserRoles);
+    
+    print("t_user_roles table created successfully");
+  } catch (e) {
+    print("Error creating t_user_roles table: $e");
     rethrow;
   }
 }
