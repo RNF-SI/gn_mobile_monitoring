@@ -2,29 +2,34 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class ModuleDetailPageBase extends DetailPage {
   final ModuleInfo moduleInfo;
+  final WidgetRef? ref; // Optionnel pour accéder aux providers si nécessaire
   // Note: This class uses a different pattern than the others for accessing Riverpod providers
   // It relies on the GlobalKey<ModuleDetailPageBaseState> and injected use cases rather than WidgetRef
+  // Mais on peut aussi passer ref pour accéder à la base de données
 
   const ModuleDetailPageBase({
     super.key,
     required this.moduleInfo,
+    this.ref,
   });
 
   @override
@@ -48,6 +53,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   String _searchQuery = '';
   bool _configurationLoaded = false;
   bool _isInitialLoading = true;
+
+  // Variables pour les groupes de sites avec ExpansionTile
+  int? _expandedGroupPanelIndex;
+  Position? _userPosition;
+  bool _sortGroupsByDistance =
+      true; // true = par distance, false = alphabétique
 
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
@@ -110,10 +121,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (module.complement?.data != null) {
       // Le champ data est de type String?, nous devons donc le parser en JSON
       try {
-        final Map<String, dynamic> parsedData = 
-            module.complement!.data != null ? 
-            Map<String, dynamic>.from(json.decode(module.complement!.data!)) : 
-            {};
+        final Map<String, dynamic> parsedData = module.complement!.data != null
+            ? Map<String, dynamic>.from(json.decode(module.complement!.data!))
+            : {};
         data.addAll(parsedData);
       } catch (e) {
         // En cas d'erreur de parsing, on ignore silencieusement
@@ -136,6 +146,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     // Ajouter un écouteur pour le défilement
     _sitesScrollController.addListener(_handleScroll);
+
+    // Charger la position GPS
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserLocation();
+    });
 
     // Toujours charger la configuration complète du module quand la propriété est injectée
   }
@@ -413,12 +428,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-
   @override
   String getTitle() {
     return 'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Détails du module'}';
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +451,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     return Scaffold(
       appBar: buildAppBar(),
-      
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -453,39 +465,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                     flex: propertiesFlex,
                     child: buildBaseContent(),
                   ),
-                 Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final groupSiteConfig = module.complement?.configuration?.sitesGroup;
-                if (groupSiteConfig != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteGroupFormPage(
-                         siteConfig: groupSiteConfig,
-                        customConfig: module.complement?.configuration?.custom,
-                        moduleId: module.id,
-                        moduleInfo: widget.moduleInfo,
-                      ),
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Configuration de site non disponible'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: Text(
-                'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
-              ),
-            ),
-          ),
-
                   Expanded(
                     flex: childrenFlex,
                     child: childContent,
@@ -493,7 +472,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ],
               ),
             ),
-            
         ],
       ),
     );
@@ -518,9 +496,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
-                  children: [
+                  children: const [
                     Icon(Icons.info_outline, color: AppColors.dark),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Chargement de la configuration du module...',
@@ -593,111 +571,817 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Récupérer la configuration pour les groupes
     final ObjectConfig? sitesGroupConfig =
         module.complement?.configuration?.sitesGroup;
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
 
     // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
     if (_filteredSiteGroups.isEmpty) {
       _filterSiteGroups();
     }
 
-    // Déterminer les colonnes à afficher pour les groupes de sites
-    List<String> standardColumns = [
-      'actions',
-      'sites_group_name',
-    ];
-
-    List<String> displayColumns = determineDataColumns(
-      standardColumns: standardColumns,
-      itemConfig: sitesGroupConfig,
-      firstItemData: null,
-      filterMetaColumns: true,
-    );
-
-    // Créer les colonnes du DataTable
-    List<DataColumn> columns = buildDataColumns(
-      columns: displayColumns,
-      itemConfig: sitesGroupConfig,
-      predefinedLabels: {
-        'actions': 'Action',
-        'sites_group_name': 'Nom du groupe',
-      },
-    );
-
-    // Générer le schéma pour le formatage des cellules
-    Map<String, dynamic> schema = {};
+    // Générer le schéma unifié pour le formatage
+    Map<String, dynamic> parsedGroupConfig = {};
     if (sitesGroupConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(sitesGroupConfig, customConfig);
+      parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
+          sitesGroupConfig, customConfig);
     }
 
-    // Construire les lignes du tableau
-    List<DataRow> rows = _filteredSiteGroups.map((group) {
-      return DataRow(
-        cells: displayColumns.map((column) {
-          // Colonne d'actions
-          if (column == 'actions') {
-            return DataCell(
-              IconButton(
-                icon: const Icon(Icons.visibility, size: 20),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteGroupDetailPage(
-                        siteGroup: group,
-                        moduleInfo: _updatedModule != null
-                            ? widget.moduleInfo.copyWith(module: _updatedModule!)
-                            : widget.moduleInfo,
+    // Convertir en List<SiteGroup> (sans géométrie depuis le module)
+    final List<SiteGroup> groupsFromModule =
+        _filteredSiteGroups.whereType<SiteGroup>().toList();
+
+    // Charger les groupes depuis la base de données pour avoir la géométrie
+    return FutureBuilder<List<SiteGroup>>(
+      future: _loadGroupsWithGeometry(groupsFromModule),
+      builder: (context, snapshot) {
+        // Utiliser les groupes de la base de données si disponibles, sinon ceux du module
+        final List<SiteGroup> groups =
+            snapshot.hasData && snapshot.data!.isNotEmpty
+                ? snapshot.data!
+                : groupsFromModule;
+
+        return Column(
+          children: [
+            // Header avec titre, bouton d'ajout et bouton de tri
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        sitesGroupConfig?.labelList ??
+                            sitesGroupConfig?.label ??
+                            'Groupes de sites',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold),
                       ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: () {
+                          if (sitesGroupConfig != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SiteGroupFormPage(
+                                  siteConfig: sitesGroupConfig,
+                                  customConfig: customConfig,
+                                  moduleId: module.id,
+                                  moduleInfo: widget.moduleInfo,
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Configuration de groupe de sites non disponible'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.add_circle),
+                        tooltip:
+                            'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
+                      ),
+                    ],
+                  ),
+                  // Bouton pour basculer entre tri par distance et alphabétique
+                  if (_userPosition != null)
+                    ActionChip(
+                      label: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _sortGroupsByDistance
+                                ? Icons.sort_by_alpha
+                                : Icons.location_on,
+                            size: 16,
+                            color: Colors.white,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            _sortGroupsByDistance ? 'Alphabétique' : 'Distance',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      side: BorderSide.none,
+                      backgroundColor: AppColors.primary,
+                      onPressed: () {
+                        setState(() {
+                          _sortGroupsByDistance = !_sortGroupsByDistance;
+                        });
+                      },
                     ),
-                  );
-                },
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
+                ],
               ),
-            );
+            ),
+            // Liste des groupes avec ExpansionTile
+            Expanded(
+              child: snapshot.connectionState == ConnectionState.waiting
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildGroupsExpansionPanelList(
+                      groups,
+                      sitesGroupConfig,
+                      customConfig,
+                      parsedGroupConfig,
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  /// Charge les groupes de sites depuis la base de données avec leur géométrie
+  /// Enrichit les groupes du module avec les géométries de la base de données
+  /// Utilise la même logique que site_group_detail_page.dart pour charger depuis la base de données
+  Future<List<SiteGroup>> _loadGroupsWithGeometry(
+      List<SiteGroup> groupsFromModule) async {
+    debugPrint('=== DÉBUT CHARGEMENT GROUPES AVEC GÉOMÉTRIE ===');
+    debugPrint(
+        'Nombre de groupes depuis le module: ${groupsFromModule.length}');
+
+    if (widget.ref == null) {
+      debugPrint(
+          '⚠️ Pas de ref disponible, retour des groupes du module sans géométrie');
+      return groupsFromModule;
+    }
+
+    try {
+      // Charger tous les groupes depuis la base de données (comme dans site_group_detail_page)
+      debugPrint('Chargement des groupes depuis la base de données...');
+      final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+      final allDbGroups = await sitesDatabase.getAllSiteGroups();
+      debugPrint(
+          '✓ ${allDbGroups.length} groupes chargés depuis la base de données');
+
+      // Log pour vérifier les géométries dans les groupes de la base de données
+      debugPrint('=== VÉRIFICATION GÉOMÉTRIES DANS LA BASE DE DONNÉES ===');
+      for (var dbGroup in allDbGroups) {
+        debugPrint(
+            'Groupe DB ${dbGroup.idSitesGroup} (${dbGroup.sitesGroupName ?? dbGroup.sitesGroupCode ?? "sans nom"}):');
+        if (dbGroup.geom != null && dbGroup.geom!.isNotEmpty) {
+          debugPrint(
+              '  ✓ geom non null et non vide (longueur: ${dbGroup.geom!.length})');
+          try {
+            final geomData = jsonDecode(dbGroup.geom!);
+            debugPrint('  Type: ${geomData['type'] ?? "non défini"}');
+          } catch (e) {
+            debugPrint('  ⚠️ Erreur parsing: $e');
           }
+        } else {
+          debugPrint('  ✗ geom est null ou vide');
+        }
+      }
+      debugPrint('=== FIN VÉRIFICATION GÉOMÉTRIES ===');
 
-          // Propriétés du groupe de sites - mapping dynamique
-          dynamic value = _getSiteGroupValue(group, column);
+      // Créer un map pour un accès rapide par ID
+      final Map<int, SiteGroup> dbGroupsMap = {
+        for (var group in allDbGroups) group.idSitesGroup: group
+      };
 
-          // Formater la valeur et créer la cellule
-          String displayValue = formatDataCellValue(
-            rawValue: value,
-            columnName: column,
-            schema: schema,
-          );
-
-          return buildFormattedDataCell(
-            value: displayValue,
-            enableTooltip: true,
-          );
-        }).toList(),
+      // Enrichir les groupes filtrés avec leur géométrie depuis la base de données
+      // ou calculer la géométrie à partir des sites enfants
+      final enrichedGroups = await Future.wait(
+        groupsFromModule.map((group) async {
+          final dbGroup = dbGroupsMap[group.idSitesGroup];
+          if (dbGroup != null) {
+            debugPrint(
+                'Groupe ${group.idSitesGroup} (${group.sitesGroupName ?? group.sitesGroupCode ?? "sans nom"}):');
+            if (dbGroup.geom != null && dbGroup.geom!.isNotEmpty) {
+              debugPrint('  ✓ Géométrie présente dans la base de données');
+              try {
+                final geomData = jsonDecode(dbGroup.geom!);
+                debugPrint('  Type: ${geomData['type'] ?? "non défini"}');
+                if (geomData['coordinates'] != null) {
+                  final coordsStr = geomData['coordinates'].toString();
+                  debugPrint(
+                      '  Coordonnées: ${coordsStr.length > 100 ? "${coordsStr.substring(0, 100)}..." : coordsStr}');
+                }
+              } catch (e) {
+                debugPrint('  ⚠️ Erreur parsing géométrie: $e');
+              }
+              // Utiliser le groupe de la base de données qui a la géométrie
+              return dbGroup;
+            } else {
+              debugPrint(
+                  '  ✗ Aucune géométrie dans la base de données, calcul depuis les sites enfants...');
+              // Calculer la géométrie à partir des sites enfants
+              final calculatedGeom = await _calculateGroupGeometryFromSites(
+                  group.idSitesGroup, sitesDatabase);
+              if (calculatedGeom != null) {
+                debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
+                // Retourner le groupe avec la géométrie calculée
+                return group.copyWith(geom: calculatedGeom);
+              } else {
+                debugPrint(
+                    '  ✗ Impossible de calculer la géométrie (pas de sites avec géométrie)');
+              }
+            }
+          } else {
+            debugPrint(
+                'Groupe ${group.idSitesGroup} (${group.sitesGroupName ?? group.sitesGroupCode ?? "sans nom"}):');
+            debugPrint(
+                '  ✗ Groupe non trouvé dans la base de données, calcul depuis les sites enfants...');
+            // Calculer la géométrie à partir des sites enfants
+            final calculatedGeom = await _calculateGroupGeometryFromSites(
+                group.idSitesGroup, sitesDatabase);
+            if (calculatedGeom != null) {
+              debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
+              // Retourner le groupe avec la géométrie calculée
+              return group.copyWith(geom: calculatedGeom);
+            } else {
+              debugPrint(
+                  '  ✗ Impossible de calculer la géométrie (pas de sites avec géométrie)');
+            }
+          }
+          // Si pas de géométrie, retourner le groupe du module
+          return group;
+        }),
       );
-    }).toList();
 
-    // Message vide personnalisé
-    Widget emptyMessage = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Text(
-        'Aucun groupe de sites associé à ce module',
-        style: TextStyle(
-          fontSize: 16,
-          color: AppColors.hint,
-        ),
+      debugPrint('=== FIN CHARGEMENT GROUPES AVEC GÉOMÉTRIE ===');
+      return enrichedGroups;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erreur lors du chargement des groupes avec géométrie: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // En cas d'erreur, retourner les groupes du module
+      return groupsFromModule;
+    }
+  }
+
+  /// Calcule la géométrie d'un groupe à partir de ses sites enfants
+  /// Retourne un Point GeoJSON représentant le centroid des sites
+  Future<String?> _calculateGroupGeometryFromSites(
+      int siteGroupId, SitesDatabase sitesDatabase) async {
+    try {
+      // Récupérer tous les sites du groupe
+      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      debugPrint('  Nombre de sites dans le groupe: ${sites.length}');
+
+      // Extraire les coordonnées de tous les sites qui ont une géométrie
+      final List<List<double>> coordinates = [];
+      for (var site in sites) {
+        if (site.geom != null && site.geom!.isNotEmpty) {
+          try {
+            final geomData = jsonDecode(site.geom!);
+            if (geomData is Map<String, dynamic>) {
+              final type = geomData['type'];
+              final coords = geomData['coordinates'];
+
+              if (type == 'Point' && coords is List && coords.length >= 2) {
+                // Format GeoJSON: [longitude, latitude]
+                coordinates.add([
+                  coords[0].toDouble(),
+                  coords[1].toDouble(),
+                ]);
+              } else if (type == 'Polygon' && coords is List) {
+                // Pour un polygon, prendre le premier point du premier ring
+                if (coords.isNotEmpty && coords[0] is List) {
+                  final firstRing = coords[0] as List;
+                  if (firstRing.isNotEmpty && firstRing[0] is List) {
+                    final firstPoint = firstRing[0] as List;
+                    if (firstPoint.length >= 2) {
+                      coordinates.add([
+                        firstPoint[0].toDouble(),
+                        firstPoint[1].toDouble(),
+                      ]);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint(
+                '  ⚠️ Erreur parsing géométrie du site ${site.idBaseSite}: $e');
+          }
+        }
+      }
+
+      if (coordinates.isEmpty) {
+        debugPrint('  ✗ Aucun site avec géométrie valide trouvé');
+        return null;
+      }
+
+      // Calculer le centroid (moyenne des coordonnées)
+      double sumLon = 0;
+      double sumLat = 0;
+      for (var coord in coordinates) {
+        sumLon += coord[0];
+        sumLat += coord[1];
+      }
+      final centroidLon = sumLon / coordinates.length;
+      final centroidLat = sumLat / coordinates.length;
+
+      debugPrint('  Centroid calculé: lon=$centroidLon, lat=$centroidLat');
+
+      // Créer un Point GeoJSON
+      final centroidGeom = {
+        'type': 'Point',
+        'coordinates': [centroidLon, centroidLat],
+      };
+
+      return jsonEncode(centroidGeom);
+    } catch (e) {
+      debugPrint('  ❌ Erreur lors du calcul de la géométrie: $e');
+      return null;
+    }
+  }
+
+  Widget _buildGroupsExpansionPanelList(
+    List<SiteGroup> groups,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    if (groups.isEmpty) {
+      return const Center(
+        child: Text('Aucun groupe de sites associé à ce module'),
+      );
+    }
+
+    // Trier les groupes selon le mode sélectionné
+    List<SiteGroup> sortedGroups = List.from(groups);
+
+    if (_sortGroupsByDistance && _userPosition != null) {
+      // Tri par distance
+      sortedGroups.sort((a, b) {
+        final distanceA = _calculateGroupDistance(a);
+        final distanceB = _calculateGroupDistance(b);
+
+        // Si les deux distances sont disponibles, trier par distance
+        if (distanceA != null && distanceB != null) {
+          return distanceA.compareTo(distanceB);
+        }
+        // Si seule la distance A est disponible, A vient en premier
+        if (distanceA != null && distanceB == null) {
+          return -1;
+        }
+        // Si seule la distance B est disponible, B vient en premier
+        if (distanceA == null && distanceB != null) {
+          return 1;
+        }
+        // Si aucune distance n'est disponible, conserver l'ordre original
+        return 0;
+      });
+    } else {
+      // Tri alphabétique par le premier champ de display_list
+      final List<String>? displayProperties =
+          sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+      if (displayProperties != null && displayProperties.isNotEmpty) {
+        final firstProperty = displayProperties.first;
+
+        sortedGroups.sort((a, b) {
+          // Récupérer les valeurs pour le tri
+          String valueA = _getGroupPropertyValue(a, firstProperty,
+              sitesGroupConfig, customConfig, parsedGroupConfig);
+          String valueB = _getGroupPropertyValue(b, firstProperty,
+              sitesGroupConfig, customConfig, parsedGroupConfig);
+
+          return valueA.compareTo(valueB);
+        });
+      }
+    }
+
+    return ListView.builder(
+      itemCount: sortedGroups.length,
+      itemBuilder: (context, index) {
+        final group = sortedGroups[index];
+        // Trouver l'index original pour gérer l'expansion
+        final originalIndex = groups.indexOf(group);
+        final isExpanded = _expandedGroupPanelIndex == originalIndex;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ExpansionTile(
+            key: ValueKey(
+                'group_expansion_${originalIndex}_$_expandedGroupPanelIndex'),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            collapsedShape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            childrenPadding: EdgeInsets.zero,
+            leading: IconButton(
+              icon: const Icon(Icons.visibility, size: 20),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteGroupDetailPage(
+                      siteGroup: group,
+                      moduleInfo: _updatedModule != null
+                          ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                          : widget.moduleInfo,
+                    ),
+                  ),
+                );
+              },
+              tooltip: 'Voir les détails',
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: _buildGroupTitle(
+                    group,
+                    sitesGroupConfig,
+                    parsedGroupConfig,
+                  ),
+                ),
+                // Afficher la distance à droite
+                if (_userPosition != null && group.geom != null)
+                  _buildGroupDistanceBadge(group),
+              ],
+            ),
+            initiallyExpanded: isExpanded,
+            onExpansionChanged: (bool expanded) {
+              setState(() {
+                if (expanded) {
+                  _expandedGroupPanelIndex = originalIndex;
+                } else if (_expandedGroupPanelIndex == originalIndex) {
+                  _expandedGroupPanelIndex = null;
+                }
+              });
+            },
+            children: [
+              _buildGroupProperties(
+                  group, sitesGroupConfig, customConfig, parsedGroupConfig),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupTitle(
+    SiteGroup group,
+    ObjectConfig? sitesGroupConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (group.data is String) {
+          dataMap = Map<String, dynamic>.from(jsonDecode(group.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(group.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    // Récupérer le premier champ de display_list
+    final List<String>? displayProperties =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+    String displayText = group.sitesGroupName ?? 'Groupe sans nom';
+
+    if (displayProperties != null && displayProperties.isNotEmpty) {
+      final firstProperty = displayProperties.first;
+      if (groupData.containsKey(firstProperty)) {
+        final rawValue = groupData[firstProperty];
+        displayText = ValueFormatter.format(rawValue);
+      }
+    }
+
+    return Text(
+      displayText,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
       ),
     );
+  }
 
-    // Utiliser la méthode factorisée buildDataTable
-    return buildDataTable(
-      columns: columns,
-      rows: rows,
-      showSearch: true,
-      searchHint: "Rechercher un groupe",
-      searchController: _searchController,
-      onSearchChanged: _handleSearch,
-      emptyMessage: emptyMessage,
-      isLoading: false,
+  Widget _buildGroupProperties(
+    SiteGroup group,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (group.data is String) {
+          dataMap = Map<String, dynamic>.from(jsonDecode(group.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(group.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    // Si pas de données, afficher un message
+    if (groupData.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information disponible',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    // Déterminer les colonnes à afficher (uniquement display_list)
+    List<String>? displayProperties =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+    // Si pas de displayProperties, ne rien afficher
+    if (displayProperties == null || displayProperties.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information à afficher',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    // Exclure le premier item de display_list (déjà affiché dans le title)
+    final propertiesToShow = displayProperties.length > 1
+        ? displayProperties.sublist(1)
+        : <String>[];
+
+    // Si plus rien à afficher après exclusion du premier item
+    if (propertiesToShow.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information supplémentaire à afficher',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    // Filtrer les propriétés meta et ne garder que celles présentes dans les données
+    final filteredProperties = propertiesToShow.where((key) {
+      return !key.startsWith('meta_') && groupData.containsKey(key);
+    }).toList();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: filteredProperties.map((propertyKey) {
+          final rawValue = groupData[propertyKey];
+
+          // Obtenir le label depuis la configuration
+          String label = propertyKey;
+          if (parsedGroupConfig.containsKey(propertyKey)) {
+            label =
+                parsedGroupConfig[propertyKey]['attribut_label'] ?? propertyKey;
+          }
+
+          // Formater la valeur
+          String displayValue = ValueFormatter.format(rawValue);
+
+          return _buildPropertyRow(label, displayValue);
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildPropertyRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  /// Récupère la valeur d'une propriété d'un groupe pour le tri
+  String _getGroupPropertyValue(
+    SiteGroup group,
+    String propertyKey,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe (uniquement les champs de base pour le tri synchrone)
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Récupérer la valeur
+    if (groupData.containsKey(propertyKey)) {
+      final rawValue = groupData[propertyKey];
+      return ValueFormatter.format(rawValue);
+    }
+
+    // Valeur par défaut si la propriété n'existe pas dans les données de base
+    return '';
+  }
+
+  /// Charge la position GPS de l'utilisateur
+  Future<void> _loadUserLocation() async {
+    try {
+      debugPrint('Début du chargement de la position GPS');
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('⚠️ Service de localisation désactivé');
+        return;
+      }
+      debugPrint('✓ Service de localisation activé');
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('Permission actuelle: $permission');
+
+      if (permission == LocationPermission.denied) {
+        debugPrint('Demande de permission...');
+        permission = await Geolocator.requestPermission();
+        debugPrint('Permission après demande: $permission');
+        if (permission == LocationPermission.denied) {
+          debugPrint('⚠️ Permission de localisation refusée');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('⚠️ Permission de localisation refusée définitivement');
+        return;
+      }
+
+      debugPrint('Récupération de la position...');
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      debugPrint(
+          '✓ Position récupérée: lat=${position.latitude}, lon=${position.longitude}');
+
+      if (mounted) {
+        setState(() {
+          _userPosition = position;
+        });
+        debugPrint('✓ Position enregistrée dans l\'état');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erreur lors de la récupération de la position: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  /// Calcule la distance entre la position de l'utilisateur et un groupe de sites
+  double? _calculateGroupDistance(SiteGroup group) {
+    if (_userPosition == null || group.geom == null) {
+      return null;
+    }
+
+    try {
+      // Parser la géométrie GeoJSON
+      final geomData = jsonDecode(group.geom!);
+      double? groupLat;
+      double? groupLon;
+
+      // Extraire les coordonnées selon le type de géométrie
+      if (geomData is Map<String, dynamic>) {
+        final type = geomData['type'];
+        final coordinates = geomData['coordinates'];
+
+        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
+          // Format GeoJSON: [longitude, latitude]
+          groupLon = coordinates[0].toDouble();
+          groupLat = coordinates[1].toDouble();
+        }
+      }
+
+      if (groupLat == null || groupLon == null) {
+        return null;
+      }
+
+      // Calculer la distance en mètres
+      return Geolocator.distanceBetween(
+        _userPosition!.latitude,
+        _userPosition!.longitude,
+        groupLat,
+        groupLon,
+      );
+    } catch (e) {
+      debugPrint(
+          'Erreur lors du calcul de la distance pour le groupe ${group.idSitesGroup}: $e');
+      return null;
+    }
+  }
+
+  /// Formate la distance pour l'affichage
+  String _formatDistance(double distanceInMeters) {
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      return '${(distanceInMeters / 1000).toStringAsFixed(2)} km';
+    }
+  }
+
+  /// Construit le badge de distance pour le header
+  Widget _buildGroupDistanceBadge(SiteGroup group) {
+    final distance = _calculateGroupDistance(group);
+
+    if (distance == null) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.blue.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.blue.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.location_on,
+            color: Colors.blue,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _formatDistance(distance),
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.blue,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -746,7 +1430,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   Widget _buildSitesTab() {
-
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
@@ -756,7 +1439,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     // Déterminer les colonnes à afficher pour les sites
     List<String> standardColumns = [
       'actions',

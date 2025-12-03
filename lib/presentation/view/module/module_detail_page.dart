@@ -43,6 +43,7 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage> {
     return ModuleDetailPageBase(
       key: _moduleDetailPageBaseStateKey,
       moduleInfo: widget.moduleInfo,
+      ref: ref,
     );
   }
 }

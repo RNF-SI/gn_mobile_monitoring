@@ -275,43 +275,6 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             ),
           ),
 
-          // Propriétés supplémentaires du groupe
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                              widget.moduleInfo.module.complement?.configuration
-                                      ?.sitesGroup?.label ??
-                                  'Propriétés du groupe',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
           // Sites Table Section
           Padding(
             padding: const EdgeInsets.all(8.0),
