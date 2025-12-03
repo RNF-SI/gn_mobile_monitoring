@@ -372,6 +372,12 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 body: sitesState.when(
                   data: (sites) => GeometriesMapWidget(
                     geojsonData: _convertSitesToGeoJSON(sites),
+                    displayList: siteConfig?.displayList ??
+                        siteConfig?.displayProperties,
+                    siteConfig: siteConfig,
+                    customConfig: customConfig,
+                    moduleInfo: widget.moduleInfo,
+                    siteGroup: widget.siteGroup,
                   ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -611,13 +617,27 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         // Parse the geometry JSON string
         final Map<String, dynamic> geometry = jsonDecode(site.geom!);
 
-        // Create a feature with site information
-        final feature = {
+        // Create a feature with site information (inclure tous les champs de base)
+        final feature = <String, dynamic>{
           'id': site.idBaseSite,
           'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
           'description': site.baseSiteDescription ?? '',
           'geom': geometry,
         };
+
+        // Ajouter les champs de base pour le display_list
+        if (site.baseSiteCode != null) {
+          feature['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          feature['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          feature['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          feature['first_use_date'] = site.firstUseDate!.toString();
+        }
 
         geoJsonFeatures.add(feature);
       } catch (e) {
