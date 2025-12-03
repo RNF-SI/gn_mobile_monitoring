@@ -89,6 +89,7 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       onSave: (formData) => _handleSave(context, ref, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
       displayProperties: _getDisplayProperties(),
+      objectType: 'sites_group', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux groupes de sites
     );
   }
 
@@ -113,22 +114,70 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
 
   /// Construit le widget d'en-tête
   Widget? _buildHeaderWidget(BuildContext context) {
-    if (widget.moduleInfo != null) return null;
+    final List<Widget> widgets = [];
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Text(
-        'Module: ${widget.moduleInfo?.module.moduleLabel ?? 'Module'}',
-        style: TextStyle(
-          fontSize: 14,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
+    // Ajouter le message informatif sur l'observateur en mode création
+    if (!_isEditMode) {
+      widgets.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(12.0),
+          margin: const EdgeInsets.only(bottom: 16.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(4.0),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                Icons.person,
+                color: Theme.of(context).colorScheme.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Vous êtes automatiquement ajouté comme observateur',
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
+      );
+    }
+
+    // Ajouter le widget d'en-tête du module si nécessaire
+    if (widget.moduleInfo == null) {
+      widgets.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Text(
+            'Module: ${widget.moduleInfo?.module.moduleLabel ?? 'Module'}',
+            style: TextStyle(
+              fontSize: 14,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (widgets.isEmpty) return null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: widgets,
     );
   }
 
@@ -157,12 +206,9 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       'first_use_date': DateTime.now().toIso8601String().split('T')[0],
     };
 
-    // Récupérer l'ID de l'utilisateur courant pour initialiser le champ "Observateur principal"
-    final getUserIdUseCase = ref.read(getUserIdFromLocalStorageUseCaseProvider);
-    final userId = await getUserIdUseCase.execute();
-    
-    // Initialiser le champ "Observateur principal" (id_inventor) avec l'utilisateur courant
-    defaultValues['id_inventor'] = userId;
+    // Note: id_inventor n'est pas initialisé ici car il n'existe pas dans la configuration
+    // des groupes de sites (sites_group). Il est uniquement utilisé pour les sites.
+    // L'utilisateur sera automatiquement ajouté comme observateur lors de la sauvegarde.
   
     // Ajouter l'ID du module si disponible
     if (widget.moduleId != null) {

@@ -54,6 +54,7 @@ class SiteFormWrapper extends ConsumerWidget {
       onSave: (formData) => _handleSave(context, ref, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
       displayProperties: _getDisplayProperties(),
+      objectType: 'site', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux sites
     );
   }
 

@@ -38,6 +38,9 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
   /// ID de la liste taxonomique du module
   final int? idListTaxonomy;
 
+  /// Type d'objet pour appliquer des exclusions spécifiques (ex: 'site', 'sites_group', 'visit', 'observation')
+  final String? objectType;
+
   const DynamicFormBuilder({
     super.key,
     required this.objectConfig,
@@ -48,6 +51,7 @@ class DynamicFormBuilder extends ConsumerStatefulWidget {
     this.onChainInputChanged,
     this.displayProperties,
     this.idListTaxonomy,
+    this.objectType,
   });
 
   @override
@@ -75,6 +79,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     _unifiedSchema = FormConfigParser.generateUnifiedSchema(
       widget.objectConfig,
       widget.customConfig,
+      objectType: widget.objectType,
     );
 
 
@@ -1626,8 +1631,28 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   // Pour les champs de type "observers"
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
-    // Initialiser la valeur si elle n'existe pas ou n'est pas une liste
-    if (_formValues[fieldName] == null || _formValues[fieldName] is! List) {
+    // Gérer le cas où la valeur initiale est un entier (pour id_inventor par exemple)
+    // et la convertir en liste si nécessaire
+    if (_formValues[fieldName] != null && _formValues[fieldName] is! List) {
+      final value = _formValues[fieldName];
+      if (value is int) {
+        _formValues[fieldName] = <int>[value];
+      } else if (value is String) {
+        final intValue = int.tryParse(value);
+        if (intValue != null) {
+          _formValues[fieldName] = <int>[intValue];
+        } else {
+          _formValues[fieldName] = <int>[];
+        }
+      } else if (value is num) {
+        _formValues[fieldName] = <int>[value.toInt()];
+      } else {
+        _formValues[fieldName] = <int>[];
+      }
+    }
+
+    // Initialiser la valeur si elle n'existe pas
+    if (_formValues[fieldName] == null) {
       _formValues[fieldName] = <int>[];
     }
 
@@ -1654,6 +1679,19 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       _formValues[fieldName] = safeList;
     }
 
+    // Déterminer si on doit afficher les chips ou seulement le message
+    // En mode création, on n'affiche pas les chips car l'utilisateur sera ajouté automatiquement
+    // On affiche les chips uniquement si la liste contient plusieurs observateurs
+    // (ce qui indique qu'on est en mode édition avec des observateurs supplémentaires)
+    final List<int> observersList = _formValues[fieldName] is List 
+        ? List<int>.from(_formValues[fieldName] as List) 
+        : <int>[];
+    
+    // Ne pas afficher les chips si la liste ne contient qu'un seul observateur
+    // (probablement l'utilisateur courant qui sera ajouté automatiquement)
+    // Afficher les chips uniquement si la liste contient plusieurs observateurs
+    final bool shouldShowChips = observersList.length > 1;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 13.0),
       child: Column(
@@ -1676,14 +1714,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
             ),
           const SizedBox(height: 4),
-          // Afficher les observateurs sélectionnés
-          if (_formValues[fieldName] is List &&
-              (_formValues[fieldName] as List).isNotEmpty)
+          // Afficher les observateurs sélectionnés uniquement en mode édition
+          if (shouldShowChips)
             Wrap(
               spacing: 8.0,
               runSpacing: 4.0,
-              children:
-                  (_formValues[fieldName] as List<int>).map<Widget>((observer) {
+              children: observersList.map<Widget>((observer) {
                 return Chip(
                   label: Text('Observateur #$observer'),
                   backgroundColor:
@@ -1701,7 +1737,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 );
               }).toList(),
             ),
-          const SizedBox(height: 4),
+          if (shouldShowChips) const SizedBox(height: 4),
           // Champ désactivé pour indiquer que les observateurs sont déjà sélectionnés
           Container(
             padding: const EdgeInsets.all(12.0),
