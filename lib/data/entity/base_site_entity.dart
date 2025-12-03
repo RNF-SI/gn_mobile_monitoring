@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+
 class BaseSiteEntity {
   final int idBaseSite;
   final String? baseSiteName;
@@ -12,6 +13,7 @@ class BaseSiteEntity {
   final int? altitudeMax;
   final DateTime? metaCreateDate;
   final DateTime? metaUpdateDate;
+  final Map<String, dynamic>? data; // Données complémentaires
 
   BaseSiteEntity({
     required this.idBaseSite,
@@ -25,6 +27,7 @@ class BaseSiteEntity {
     this.altitudeMax,
     this.metaCreateDate,
     this.metaUpdateDate,
+    this.data,
   });
 
   // Factory method to convert JSON to entity

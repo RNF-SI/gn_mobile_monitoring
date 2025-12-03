@@ -16,5 +16,6 @@ class BaseSite with _$BaseSite {
     int? altitudeMax,
     DateTime? metaCreateDate,
     DateTime? metaUpdateDate,
+    Map<String, dynamic>? data, 
   }) = _BaseSite;
 }

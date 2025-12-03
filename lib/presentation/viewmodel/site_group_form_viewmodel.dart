@@ -10,6 +10,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case.d
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
 final siteGroupFormViewModelProvider = StateNotifierProvider.family<
@@ -17,7 +18,8 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     void,
     (int, int?)>((ref, params) {
   final (moduleId, siteGroupId) = params;
-
+  final getSitesBySiteGroupUseCase =
+      ref.watch(getSitesBySiteGroupUseCaseProvider);
   final createSiteGroupUseCase = ref.watch(createSiteGroupUseCaseProvider);
   final updateSiteGroupUseCase = ref.watch(updateSiteGroupUseCaseProvider);
   final deleteSiteGroupUseCase = ref.watch(deleteSiteGroupUseCaseProvider);
@@ -30,10 +32,11 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     updateSiteGroupUseCase,
     deleteSiteGroupUseCase,
     getUserIdUseCase,
+    getSitesBySiteGroupUseCase,
     formDataProcessor,
     sitesDatabase,
     moduleId,
-    siteGroupId,
+    siteGroupId ?? 0,
   );
 });
 
@@ -42,21 +45,57 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   final UpdateSiteGroupUseCase _updateSiteGroupUseCase;
   final DeleteSiteGroupUseCase _deleteSiteGroupUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
+  final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
   final FormDataProcessor _formDataProcessor;
   final SitesDatabase _sitesDatabase;
   final int _moduleId;
-  final int? _siteGroupId;
+  final int _siteGroupId;
+
+  bool _mounted = true;
 
   SiteGroupFormViewModel(
     this._createSiteGroupUseCase,
     this._updateSiteGroupUseCase,
     this._deleteSiteGroupUseCase,
     this._getUserIdUseCase,
+    this._getSitesBySiteGroupUseCase,
     this._formDataProcessor,
     this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
-  ) : super(null);
+  ) : super(const AsyncValue.loading()) {
+    if (_siteGroupId != null) {
+      loadSite();
+    }
+  }
+
+  /// Charge tous les sites pour le groupe de sites
+  Future<void> loadSite() async {
+    if (!_mounted) return;
+
+    try {
+      state = const AsyncValue.loading();
+      final sites =
+          await _getSitesBySiteGroupUseCase.execute(_siteGroupId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedSites =
+          await Future.wait(sites.map((site) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(site.data!);
+        return site.copyWith(data: processedData);
+      }));
+
+      if (_mounted) {
+        state = AsyncValue.data(processedSites);
+      }
+    } catch (e, stack) {
+      if (_mounted) {
+        state = AsyncValue.error(e, stack);
+      }
+    }
+  }
+
 
   /// Crée un nouveau groupe de site à partir des données du formulaire
   /// Retourne l'ID du site créé
@@ -205,7 +244,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     Map<String, dynamic> formData, {
     required int moduleId,
     required int userId,
-    int? selectedSiteTypeId,
   }) {
     final now = DateTime.now();
 
