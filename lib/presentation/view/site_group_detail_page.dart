@@ -27,7 +27,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   @override
   void initState() {
     super.initState();
-    // Refresh data when page is opened
+    // Actualiser les données à l’ouverture de la page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier).refresh();
     });
