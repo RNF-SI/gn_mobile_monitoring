@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -26,7 +27,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
   late final MapController mapController;
   bool hasAutoCentered = false; // recentrage automatique unique
-  bool userMovedMap = false;    // stoppe l'auto-recentrage
+  bool userMovedMap = false; // stoppe l'auto-recentrage
 
   StreamSubscription<Position>? positionStream;
   CircleMarker? accuracyCircle; // cercle de précision
@@ -68,7 +69,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
   @override
   void initState() {
     super.initState();
-    mapController = MapController();   // 🔥 Initialisation du controller
+    mapController = MapController(); // 🔥 Initialisation du controller
 
     loadTileLayers();
     loadGeometriesSafely();
@@ -80,6 +81,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
     positionStream?.cancel();
     super.dispose();
   }
+
   // -------------------------
   // Charger les layers depuis le JSON de config
   // -------------------------
@@ -154,9 +156,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
         case "LineString":
           polylines.add(
             Polyline(
-              points: coords
-                  .map<LatLng>((c) => LatLng(c[1], c[0]))
-                  .toList(),
+              points: coords.map<LatLng>((c) => LatLng(c[1], c[0])).toList(),
               strokeWidth: 4,
               color: Colors.blue,
             ),
@@ -229,8 +229,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
       // Supprimer ancien marker bleu
       markers.removeWhere((m) =>
-          m.child is Icon &&
-          (m.child as Icon).icon == Icons.my_location);
+          m.child is Icon && (m.child as Icon).icon == Icons.my_location);
 
       // Ajouter marker bleu
       markers.add(
@@ -262,32 +261,13 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    LatLng initialCenter = userPosition ?? computeCentroid() ?? const LatLng(48.85, 2.35);
+    LatLng initialCenter =
+        userPosition ?? computeCentroid() ?? const LatLng(48.85, 2.35);
 
     return Stack(
       children: [
         Column(
           children: [
-            // Dropdown
-            if (tileLayers.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: DropdownButton<Map<String, String>>(
-                  value: selectedLayer,
-                  items: tileLayers
-                      .map((layer) => DropdownMenuItem(
-                            value: layer,
-                            child: Text(layer["name"] ?? "Layer"),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      selectedLayer = value;
-                    });
-                  },
-                ),
-              ),
-
             Expanded(
               child: Stack(
                 children: [
@@ -295,8 +275,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
                     mapController: mapController,
                     options: MapOptions(
                       initialCenter: initialCenter,
-                      initialZoom:
-                          userPosition != null ? 15 : 12,
+                      initialZoom: userPosition != null ? 15 : 12,
 
                       // 🔥 Si l'utilisateur touche la carte → on arrête l'auto recentrage
                       onPointerDown: (_, __) {
@@ -308,7 +287,7 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
                         TileLayer(
                           urlTemplate: selectedLayer!["urlTemplate"]!,
                           userAgentPackageName:
-                            'com.example.gn_mobile_monitoring',
+                              'com.example.gn_mobile_monitoring',
                         ),
                       // 🔵 Cercle de précision GPS
                       if (accuracyCircle != null)
@@ -340,6 +319,71 @@ class _GeometriesMapWidgetState extends State<GeometriesMapWidget> {
             ),
           ],
         ),
+
+        // ---------------------------
+        // Bouton "Layers" en haut à droite
+        // ---------------------------
+        if (tileLayers.isNotEmpty)
+          Positioned(
+            top: 16,
+            right: 16,
+            child: Material(
+              elevation: 4,
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.white,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Text(
+                            'Choisir une couche',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          ...tileLayers.map((layer) {
+                            final isSelected = selectedLayer == layer;
+                            return ListTile(
+                              title: Text(layer["name"] ?? "Layer"),
+                              leading: Icon(
+                                isSelected
+                                    ? Icons.check_circle
+                                    : Icons.circle_outlined,
+                                color: isSelected
+                                    ? Theme.of(context).colorScheme.primary
+                                    : null,
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  selectedLayer = layer;
+                                });
+                                Navigator.pop(context);
+                              },
+                            );
+                          }),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Icon(
+                    Icons.layers,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         // ---------------------------
         // Bouton flottant "Centrer"
