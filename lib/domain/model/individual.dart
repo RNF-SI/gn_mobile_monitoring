@@ -14,7 +14,7 @@ class Individual with _$Individual {
     bool? activeIndividual,
     String? uuidIndividual,
     int? serverIndividualId,
-    String? metaCreateDate,
-    String? metaUpdateDate,
+    DateTime? metaCreateDate,
+    DateTime? metaUpdateDate,
   }) = _Individual;
 }

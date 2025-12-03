@@ -53,9 +53,7 @@ mixin _$SyncConflict {
       throw _privateConstructorUsedError; // Valeur distante spécifique en conflit
   int? get referencesCount => throw _privateConstructorUsedError;
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SyncConflictCopyWith<SyncConflict> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -101,8 +99,6 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -263,8 +259,6 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
       _$SyncConflictImpl _value, $Res Function(_$SyncConflictImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -577,9 +571,7 @@ class _$SyncConflictImpl extends _SyncConflict {
         referencesCount
       ]);
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SyncConflictImplCopyWith<_$SyncConflictImpl> get copyWith =>
@@ -631,40 +623,34 @@ abstract class _SyncConflict extends SyncConflict {
   @override
   String? get resolutionComment;
   @override
-  ConflictType
-      get conflictType; // Pour les références supprimées, on stocke des informations sur l'entité référencée
-  @override
-  String?
-      get referencedEntityType; // Type de l'entité supprimée (nomenclature, taxon, etc.)
-  @override
-  String? get referencedEntityId; // ID de l'entité supprimée
-  @override
-  String? get affectedField; // Champ affecté par la suppression
-  @override
-  String? get navigationPath; // Chemin de navigation pour résoudre le conflit
-  @override
-  bool get isResolved; // Indique si le conflit a été géré
-  @override
-  String?
-      get resolutionType; // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
+  ConflictType get conflictType;
+  @override // Pour les références supprimées, on stocke des informations sur l'entité référencée
+  String? get referencedEntityType;
+  @override // Type de l'entité supprimée (nomenclature, taxon, etc.)
+  String? get referencedEntityId;
+  @override // ID de l'entité supprimée
+  String? get affectedField;
+  @override // Champ affecté par la suppression
+  String? get navigationPath;
+  @override // Chemin de navigation pour résoudre le conflit
+  bool get isResolved;
+  @override // Indique si le conflit a été géré
+  String? get resolutionType;
+  @override // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
 // Nouvelles propriétés pour la gestion améliorée des conflits
-  @override
-  SyncOperation? get operation; // Opération qui a causé le conflit
-  @override
-  String? get message; // Message détaillé du conflit
-  @override
-  ConflictSeverity? get severity; // Sévérité du conflit
-  @override
-  String? get localValue; // Valeur locale spécifique en conflit
-  @override
-  String? get remoteValue; // Valeur distante spécifique en conflit
-  @override
+  SyncOperation? get operation;
+  @override // Opération qui a causé le conflit
+  String? get message;
+  @override // Message détaillé du conflit
+  ConflictSeverity? get severity;
+  @override // Sévérité du conflit
+  String? get localValue;
+  @override // Valeur locale spécifique en conflit
+  String? get remoteValue;
+  @override // Valeur distante spécifique en conflit
   int? get referencesCount;
-
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SyncConflictImplCopyWith<_$SyncConflictImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

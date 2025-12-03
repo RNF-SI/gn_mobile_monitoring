@@ -9,11 +9,6 @@ abstract class IndividualsDatabase {
   Future<void> updateIndividual(Individual individual);
   Future<void> deleteIndividual(int individualId);
   Future<List<Individual>> getAllIndividuals();
-  
-  Future<bool> individualHasOtherModuleReferences(int individualId, int excludeModuleId);
-  Future<void> deleteIndividualCompletely(int individualId);
-
-  Future<List<Individual>> getIndividualsForModule(int moduleId);
 
   /// Methods for handling CorIndividualsModules
   Future<void> clearAllIndividualModules();
@@ -31,15 +26,6 @@ abstract class IndividualsDatabase {
   
   /// Insert a single individual-module relationship
   Future<void> insertIndividualModule(IndividualModule individualModule);
-
-  /// Crée un individu
-  Future<int> createIndividual(IndividualEntity individual);
-  
-  /// Met à jour un individu existant
-  Future<bool> updateIndividualEntity(IndividualEntity individual);
-  
-  /// Supprime un individu
-  Future<bool> deleteIndividualEntity(int individualId);
   
   /// Get a individual by its ID
   Future<Individual?> getIndividualById(int individualId);

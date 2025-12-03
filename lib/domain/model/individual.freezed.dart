@@ -25,12 +25,10 @@ mixin _$Individual {
   bool? get activeIndividual => throw _privateConstructorUsedError;
   String? get uuidIndividual => throw _privateConstructorUsedError;
   int? get serverIndividualId => throw _privateConstructorUsedError;
-  String? get metaCreateDate => throw _privateConstructorUsedError;
-  String? get metaUpdateDate => throw _privateConstructorUsedError;
+  DateTime? get metaCreateDate => throw _privateConstructorUsedError;
+  DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
 
-  /// Create a copy of Individual
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $IndividualCopyWith<Individual> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -51,8 +49,8 @@ abstract class $IndividualCopyWith<$Res> {
       bool? activeIndividual,
       String? uuidIndividual,
       int? serverIndividualId,
-      String? metaCreateDate,
-      String? metaUpdateDate});
+      DateTime? metaCreateDate,
+      DateTime? metaUpdateDate});
 }
 
 /// @nodoc
@@ -65,8 +63,6 @@ class _$IndividualCopyWithImpl<$Res, $Val extends Individual>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Individual
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -122,11 +118,11 @@ class _$IndividualCopyWithImpl<$Res, $Val extends Individual>
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as DateTime?,
       metaUpdateDate: freezed == metaUpdateDate
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as DateTime?,
     ) as $Val);
   }
 }
@@ -144,10 +140,13 @@ abstract class _$$IndividualImplCopyWith<$Res>
       int? idDigitiser,
       int? cdNom,
       String? comment,
+      String? individualName,
+      int? idNomenclatureSex,
+      bool? activeIndividual,
       String? uuidIndividual,
       int? serverIndividualId,
-      String? metaCreateDate,
-      String? metaUpdateDate});
+      DateTime? metaCreateDate,
+      DateTime? metaUpdateDate});
 }
 
 /// @nodoc
@@ -158,8 +157,6 @@ class __$$IndividualImplCopyWithImpl<$Res>
       _$IndividualImpl _value, $Res Function(_$IndividualImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Individual
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -215,11 +212,11 @@ class __$$IndividualImplCopyWithImpl<$Res>
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as DateTime?,
       metaUpdateDate: freezed == metaUpdateDate
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as DateTime?,
     ));
   }
 }
@@ -238,8 +235,7 @@ class _$IndividualImpl implements _Individual {
       this.uuidIndividual,
       this.serverIndividualId,
       this.metaCreateDate,
-      this.metaUpdateDate})
-      : _data = data;
+      this.metaUpdateDate});
 
   @override
   final int idIndividual;
@@ -260,9 +256,10 @@ class _$IndividualImpl implements _Individual {
   @override
   final int? serverIndividualId;
   @override
-  final String? metaCreateDate;
+  final DateTime? metaCreateDate;
   @override
-  final String? metaUpdateDate;
+  final DateTime? metaUpdateDate;
+
   @override
   String toString() {
     return 'Individual(idIndividual: $idIndividual, idDigitiser: $idDigitiser, cdNom: $cdNom, comment: $comment, individualName: $individualName, idNomenclatureSex: $idNomenclatureSex, activeIndividual: $activeIndividual, uuidIndividual: $uuidIndividual, serverIndividualId: $serverIndividualId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
@@ -277,10 +274,8 @@ class _$IndividualImpl implements _Individual {
                 other.idIndividual == idIndividual) &&
             (identical(other.idDigitiser, idDigitiser) ||
                 other.idDigitiser == idDigitiser) &&
-            (identical(other.cdNom, cdNom) || 
-                other.cdNom == cdNom) &&
-            (identical(other.comment, comment) ||
-                other.comment == comment) &&
+            (identical(other.cdNom, cdNom) || other.cdNom == cdNom) &&
+            (identical(other.comment, comment) || other.comment == comment) &&
             (identical(other.individualName, individualName) ||
                 other.individualName == individualName) &&
             (identical(other.idNomenclatureSex, idNomenclatureSex) ||
@@ -312,9 +307,7 @@ class _$IndividualImpl implements _Individual {
       metaCreateDate,
       metaUpdateDate);
 
-  /// Create a copy of Individual
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$IndividualImplCopyWith<_$IndividualImpl> get copyWith =>
@@ -332,8 +325,8 @@ abstract class _Individual implements Individual {
       final bool? activeIndividual,
       final String? uuidIndividual,
       final int? serverIndividualId,
-      final String? metaCreateDate,
-      final String? metaUpdateDate}) = _$IndividualImpl;
+      final DateTime? metaCreateDate,
+      final DateTime? metaUpdateDate}) = _$IndividualImpl;
 
   @override
   int get idIndividual;
@@ -354,14 +347,11 @@ abstract class _Individual implements Individual {
   @override
   int? get serverIndividualId;
   @override
-  String? get metaCreateDate;
+  DateTime? get metaCreateDate;
   @override
-  String? get metaUpdateDate;
-
-  /// Create a copy of Individual
-  /// with the given fields replaced by the non-null parameter values.
+  DateTime? get metaUpdateDate;
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$IndividualImplCopyWith<_$IndividualImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

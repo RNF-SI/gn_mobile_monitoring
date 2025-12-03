@@ -13,10 +13,10 @@ class ModuleConfiguration with _$ModuleConfiguration {
     Map<String, String?>? displayFieldNames,
     ModuleConfig? module,
     ObjectConfig? observation,
-    ObjectConfig?
-        observationDetail, // Nouvelle propriété pour les détails d'observation
+    ObjectConfig? observationDetail, // Nouvelle propriété pour les détails d'observation
     ObjectConfig? site,
     ObjectConfig? sitesGroup,
+    ObjectConfig? individual, // Nouvelle propriété pour les individus
     dynamic synthese,
     TreeConfig? tree,
     ObjectConfig? visit,
@@ -69,6 +69,9 @@ class ModuleConfiguration with _$ModuleConfiguration {
       sitesGroup: json['sites_group'] != null && json['sites_group'] is Map
           ? ObjectConfig.fromJson(toSafeMap(json['sites_group'])!)
           : null,
+      individual: json['individual'] != null && json['individual'] is Map
+          ? ObjectConfig.fromJson(toSafeMap(json['individual'])!)
+          : null,
       synthese: json['synthese'],
       tree: json['tree'] != null && json['tree'] is Map
           ? TreeConfig.fromJson(toSafeMap(json['tree'])!)
@@ -95,6 +98,7 @@ extension ModuleConfigurationX on ModuleConfiguration {
           'observation_detail': observationDetail?.toJson(),
         if (site != null) 'site': site?.toJson(),
         if (sitesGroup != null) 'sites_group': sitesGroup?.toJson(),
+        if (individual != null) 'individual': individual?.toJson(),
         if (synthese != null) 'synthese': synthese,
         if (tree != null) 'tree': tree?.toJson(),
         if (visit != null) 'visit': visit?.toJson(),

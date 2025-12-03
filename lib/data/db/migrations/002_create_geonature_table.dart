@@ -51,6 +51,13 @@ Future<void> migration2(Migrator m, AppDatabase db) async {
   ''');
 
   await db.customStatement('''
+    CREATE TABLE cor_individual_module_table (
+    id_individual integer NOT NULL,
+    id_module integer NOT NULL
+    );
+  ''');
+
+  await db.customStatement('''
     CREATE TABLE cor_site_module_table (
     id_base_site integer NOT NULL,
     id_module integer NOT NULL

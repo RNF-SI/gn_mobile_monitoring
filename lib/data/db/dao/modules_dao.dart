@@ -7,11 +7,13 @@ import 'package:gn_mobile_monitoring/data/db/mapper/t_module_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_module_dataset.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_site_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_sites_group_module.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/cor_individual_module.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_module_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_modules.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/individual_module.dart';
 
 part 'modules_dao.g.dart'; // Updated file name
 
@@ -20,6 +22,7 @@ part 'modules_dao.g.dart'; // Updated file name
   TModuleComplements,
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
+  // CorIndividualModuleTable,
   CorModuleDatasetTable
 ])
 class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
@@ -36,8 +39,9 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       final siteGroups = await db.sitesDao
           .getGroupsByModuleId(dbModule.idModule); // Access SitesDao
       final complement = await getModuleComplementById(dbModule.idModule);
-      final module = dbModule.toDomainWithComplementSitesAndSiteGroups(
-          complement, sites, siteGroups);
+      final individuals = await db.individualsDao.getIndividualsByModuleId(dbModule.idModule);
+      final module = dbModule.toDomainWithComplementSitesSiteGroupsAndIndividuals(
+          complement, sites, siteGroups, individuals);
       modules.add(module);
     }
 
@@ -82,8 +86,9 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final siteGroups =
         await db.sitesDao.getGroupsByModuleId(moduleId); // Access SitesDao
     final complement = await getModuleComplementById(moduleId);
-    return dbModule.toDomainWithComplementSitesAndSiteGroups(
-        complement, sites, siteGroups);
+    final individuals = await db.individualsDao.getIndividualsByModuleId(moduleId);
+    return dbModule.toDomainWithComplementSitesSiteGroupsAndIndividuals(
+        complement, sites, siteGroups, individuals);
   }
 
   /// Récupère uniquement les informations de base d'un module sans charger ses relations
@@ -228,6 +233,32 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       batch.insertAll(corSitesGroupModuleTable, dbEntities);
     });
   }
+
+  // // Clear module individuals
+  // Future<void> clearIndividualModules(int moduleId) async {
+  //   try {
+  //     await (delete(corIndividualModuleTable)
+  //           ..where((t) => t.idModule.equals(moduleId)))
+  //         .go();
+  //   } catch (e) {
+  //     throw Exception("Failed to clear module individuals: ${e.toString()}");
+  //   }
+  // }
+
+  // // Insert module individuals
+  // Future<void> insertIndividualModules(
+  //     List<IndividualModule> individuals) async {
+  //   final dbEntities = individuals
+  //       .map((e) => CorIndividualModuleTableCompanion(
+  //             idIndividual: Value(e.idIndividual),
+  //             idModule: Value(e.idModule),
+  //           ))
+  //       .toList();
+
+  //   await batch((batch) {
+  //     batch.insertAll(corIndividualModuleTable, dbEntities);
+  //   });
+  // }
 
   Future<Module?> getModuleIdByLabel(String moduleLabel) async {
     final query = select(tModules)

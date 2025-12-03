@@ -114,7 +114,7 @@ class UserModulesViewModel
         state.data!.updateModuleInfo(newModuleInfo));
 
     try {
-      // Téléchargement complet du module (configuration, datasets, nomenclatures, sites et groupes de sites)
+      // Téléchargement complet du module (configuration, datasets, nomenclatures, sites et groupes de sites et individus si existant dans config.json)
       await _downloadCompleteModuleUseCase.execute(
         moduleId, 
         token, 

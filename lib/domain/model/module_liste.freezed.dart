@@ -18,9 +18,7 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ModuleListe {
   List<Module> get values => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleListe
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleListeCopyWith<ModuleListe> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -44,8 +42,6 @@ class _$ModuleListeCopyWithImpl<$Res, $Val extends ModuleListe>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleListe
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,8 +75,6 @@ class __$$ModuleListeImplCopyWithImpl<$Res>
       _$ModuleListeImpl _value, $Res Function(_$ModuleListeImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleListe
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -127,9 +121,7 @@ class _$ModuleListeImpl extends _ModuleListe {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_values));
 
-  /// Create a copy of ModuleListe
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleListeImplCopyWith<_$ModuleListeImpl> get copyWith =>
@@ -143,11 +135,8 @@ abstract class _ModuleListe extends ModuleListe {
 
   @override
   List<Module> get values;
-
-  /// Create a copy of ModuleListe
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleListeImplCopyWith<_$ModuleListeImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

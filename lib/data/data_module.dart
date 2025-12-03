@@ -7,6 +7,8 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observat
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/individuals_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/database/individuals_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/dataset_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/global_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/modules_database_impl.dart';
@@ -24,6 +26,8 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/individuals_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/individuals_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
@@ -41,6 +45,8 @@ import 'package:gn_mobile_monitoring/data/repository/observations_repository_imp
 import 'package:gn_mobile_monitoring/data/repository/sites_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/taxon_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/individuals_repository_impl.dart';
+import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
@@ -136,6 +142,17 @@ final observationsApiProvider =
 final observationDetailsApiProvider =
     Provider<ObservationDetailsApi>((_) => ObservationDetailsApiImpl());
 
+final individualsApiProvider =
+    Provider<IndividualsApi>((_) => IndividualsApiImpl());
+final individualsDatabaseProvider =
+    Provider<IndividualsDatabase>((_) => IndividualsDatabaseImpl());
+final individualsRepositoryProvider =
+    Provider<IndividualsRepository>((ref) => IndividualsRepositoryImpl(
+          ref.watch(individualsApiProvider),
+          ref.watch(moduleDatabaseProvider),
+          ref.watch(individualsDatabaseProvider),
+        ));
+
 final modulesRepositoryProvider =
     Provider<ModulesRepository>((ref) => ModulesRepositoryImpl(
           ref.watch(globalApiProvider),
@@ -147,4 +164,5 @@ final modulesRepositoryProvider =
           ref.watch(taxonDatabaseProvider),
           ref.watch(taxonRepositoryProvider),
           ref.watch(sitesRepositoryProvider),
+          // ref.watch(individualsRepositoryProvider),
         ));

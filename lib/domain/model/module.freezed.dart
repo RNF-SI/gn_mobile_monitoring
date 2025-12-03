@@ -37,10 +37,9 @@ mixin _$Module {
   ModuleComplement? get complement => throw _privateConstructorUsedError;
   List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
   List<BaseSite>? get sites => throw _privateConstructorUsedError;
+  List<Individual>? get individuals => throw _privateConstructorUsedError;
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleCopyWith<Module> get copyWith => throw _privateConstructorUsedError;
 }
 
@@ -70,7 +69,8 @@ abstract class $ModuleCopyWith<$Res> {
       bool? downloaded,
       ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
+      List<BaseSite>? sites,
+      List<Individual>? individuals});
 
   $ModuleComplementCopyWith<$Res>? get complement;
 }
@@ -85,8 +85,6 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -111,6 +109,7 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
+    Object? individuals = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -197,11 +196,13 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           ? _value.sites
           : sites // ignore: cast_nullable_to_non_nullable
               as List<BaseSite>?,
+      individuals: freezed == individuals
+          ? _value.individuals
+          : individuals // ignore: cast_nullable_to_non_nullable
+              as List<Individual>?,
     ) as $Val);
   }
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleComplementCopyWith<$Res>? get complement {
@@ -243,7 +244,8 @@ abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
       bool? downloaded,
       ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
+      List<BaseSite>? sites,
+      List<Individual>? individuals});
 
   @override
   $ModuleComplementCopyWith<$Res>? get complement;
@@ -257,8 +259,6 @@ class __$$ModuleImplCopyWithImpl<$Res>
       _$ModuleImpl _value, $Res Function(_$ModuleImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -283,6 +283,7 @@ class __$$ModuleImplCopyWithImpl<$Res>
     Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
+    Object? individuals = freezed,
   }) {
     return _then(_$ModuleImpl(
       id: null == id
@@ -369,6 +370,10 @@ class __$$ModuleImplCopyWithImpl<$Res>
           ? _value._sites
           : sites // ignore: cast_nullable_to_non_nullable
               as List<BaseSite>?,
+      individuals: freezed == individuals
+          ? _value._individuals
+          : individuals // ignore: cast_nullable_to_non_nullable
+              as List<Individual>?,
     ));
   }
 }
@@ -397,9 +402,11 @@ class _$ModuleImpl implements _Module {
       this.downloaded,
       this.complement,
       final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites})
+      final List<BaseSite>? sites,
+      final List<Individual>? individuals})
       : _sitesGroup = sitesGroup,
-        _sites = sites;
+        _sites = sites,
+        _individuals = individuals;
 
   @override
   final int id;
@@ -459,9 +466,19 @@ class _$ModuleImpl implements _Module {
     return EqualUnmodifiableListView(value);
   }
 
+  final List<Individual>? _individuals;
+  @override
+  List<Individual>? get individuals {
+    final value = _individuals;
+    if (value == null) return null;
+    if (_individuals is EqualUnmodifiableListView) return _individuals;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
+    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites, individuals: $individuals)';
   }
 
   @override
@@ -508,7 +525,9 @@ class _$ModuleImpl implements _Module {
                 other.complement == complement) &&
             const DeepCollectionEquality()
                 .equals(other._sitesGroup, _sitesGroup) &&
-            const DeepCollectionEquality().equals(other._sites, _sites));
+            const DeepCollectionEquality().equals(other._sites, _sites) &&
+            const DeepCollectionEquality()
+                .equals(other._individuals, _individuals));
   }
 
   @override
@@ -534,12 +553,11 @@ class _$ModuleImpl implements _Module {
         downloaded,
         complement,
         const DeepCollectionEquality().hash(_sitesGroup),
-        const DeepCollectionEquality().hash(_sites)
+        const DeepCollectionEquality().hash(_sites),
+        const DeepCollectionEquality().hash(_individuals)
       ]);
 
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
@@ -568,7 +586,8 @@ abstract class _Module implements Module {
       final bool? downloaded,
       final ModuleComplement? complement,
       final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites}) = _$ModuleImpl;
+      final List<BaseSite>? sites,
+      final List<Individual>? individuals}) = _$ModuleImpl;
 
   @override
   int get id;
@@ -612,11 +631,10 @@ abstract class _Module implements Module {
   List<SiteGroup>? get sitesGroup;
   @override
   List<BaseSite>? get sites;
-
-  /// Create a copy of Module
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  List<Individual>? get individuals;
+  @override
+  @JsonKey(ignore: true)
   _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

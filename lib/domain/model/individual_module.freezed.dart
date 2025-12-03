@@ -19,9 +19,7 @@ mixin _$IndividualModule {
   int get idIndividual => throw _privateConstructorUsedError;
   int get idModule => throw _privateConstructorUsedError;
 
-  /// Create a copy of IndividualModule
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $IndividualModuleCopyWith<IndividualModule> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -45,8 +43,6 @@ class _$IndividualModuleCopyWithImpl<$Res, $Val extends IndividualModule>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of IndividualModule
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -69,8 +65,8 @@ class _$IndividualModuleCopyWithImpl<$Res, $Val extends IndividualModule>
 /// @nodoc
 abstract class _$$IndividualModuleImplCopyWith<$Res>
     implements $IndividualModuleCopyWith<$Res> {
-  factory _$$IndividualModuleImplCopyWith(
-          _$IndividualModuleImpl value, $Res Function(_$IndividualModuleImpl) then) =
+  factory _$$IndividualModuleImplCopyWith(_$IndividualModuleImpl value,
+          $Res Function(_$IndividualModuleImpl) then) =
       __$$IndividualModuleImplCopyWithImpl<$Res>;
   @override
   @useResult
@@ -81,12 +77,10 @@ abstract class _$$IndividualModuleImplCopyWith<$Res>
 class __$$IndividualModuleImplCopyWithImpl<$Res>
     extends _$IndividualModuleCopyWithImpl<$Res, _$IndividualModuleImpl>
     implements _$$IndividualModuleImplCopyWith<$Res> {
-  __$$IndividualModuleImplCopyWithImpl(
-      _$IndividualModuleImpl _value, $Res Function(_$IndividualModuleImpl) _then)
+  __$$IndividualModuleImplCopyWithImpl(_$IndividualModuleImpl _value,
+      $Res Function(_$IndividualModuleImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of IndividualModule
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -109,7 +103,8 @@ class __$$IndividualModuleImplCopyWithImpl<$Res>
 /// @nodoc
 
 class _$IndividualModuleImpl implements _IndividualModule {
-  const _$IndividualModuleImpl({required this.idIndividual, required this.idModule});
+  const _$IndividualModuleImpl(
+      {required this.idIndividual, required this.idModule});
 
   @override
   final int idIndividual;
@@ -126,7 +121,8 @@ class _$IndividualModuleImpl implements _IndividualModule {
     return identical(this, other) ||
         (other.runtimeType == runtimeType &&
             other is _$IndividualModuleImpl &&
-            (identical(other.idIndividual, idIndividual) || other.idIndividual == idIndividual) &&
+            (identical(other.idIndividual, idIndividual) ||
+                other.idIndividual == idIndividual) &&
             (identical(other.idModule, idModule) ||
                 other.idModule == idModule));
   }
@@ -134,13 +130,12 @@ class _$IndividualModuleImpl implements _IndividualModule {
   @override
   int get hashCode => Object.hash(runtimeType, idIndividual, idModule);
 
-  /// Create a copy of IndividualModule
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$IndividualModuleImplCopyWith<_$IndividualModuleImpl> get copyWith =>
-      __$$IndividualModuleImplCopyWithImpl<_$IndividualModuleImpl>(this, _$identity);
+      __$$IndividualModuleImplCopyWithImpl<_$IndividualModuleImpl>(
+          this, _$identity);
 }
 
 abstract class _IndividualModule implements IndividualModule {
@@ -152,11 +147,8 @@ abstract class _IndividualModule implements IndividualModule {
   int get idIndividual;
   @override
   int get idModule;
-
-  /// Create a copy of IndividualModule
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$IndividualModuleImplCopyWith<_$IndividualModuleImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

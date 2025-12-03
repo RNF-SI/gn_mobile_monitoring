@@ -33,20 +33,14 @@ extension IndividualMapper on Individual {
   TIndividualsCompanion toDatabaseEntity() {
     return TIndividualsCompanion(
       idIndividual: Value(idIndividual),
-      idDigitiser: 
-          idDigitiser == null ? const Value.absent() : Value(idDigitiser),
+      idDigitiser: Value(idDigitiser),
       cdNom: Value(cdNom),
-      comment: comment == null ? const Value.absent() : Value(comment),
+      comment: Value(comment),
       individualName: Value(individualName),
-      idNomenclatureSex == null
-          ? const Value.absent()
-          : Value(idNomenclatureSex),
-      activeIndividual: Value(activeIndividual ?? true),
-      uuidIndividual: 
-          uuidIndividual == null ? const Value.absent() : Value(uuidIndividual),
-      serverIndividualId: serverIndividualId == null ? const Value.absent() : Value(serverIndividualId), // 🔧 FIX: Ajouter le mapping du serverIndividualId
-      metaCreateDate: const Value.absent(),
-      metaUpdateDate: const Value.absent(),
+      idNomenclatureSex: Value(idNomenclatureSex),
+      activeIndividual: Value(activeIndividual),
+      uuidIndividual: Value(uuidIndividual),
+      serverIndividualId: Value(serverIndividualId),
     );
   }
 }

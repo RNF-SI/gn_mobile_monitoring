@@ -21,6 +21,7 @@ import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
   final GlobalApi globalApi;
@@ -32,6 +33,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final TaxonDatabase? taxonDatabase;
   final TaxonRepository taxonRepository;
   final SitesRepository sitesRepository;
+  // final IndividualsRepository? individualsRepository;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -43,6 +45,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.taxonDatabase,
     this.taxonRepository,
     this.sitesRepository,
+    // this.individualsRepository,
   );
 
   @override
@@ -312,7 +315,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
           'sites_group',
           'visit',
           'observation',
-          'observation_detail'
+          'observation_detail',
+          'individual'
         ];
 
         for (final objectType in objectTypes) {
@@ -470,6 +474,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     // - Le module de base
     // - Les sites associés
     // - Les groupes de sites
+    // - Les individus associés
     // - Les compléments de module (configuration de base)
     final module = await database.getModuleWithRelationsById(moduleId);
     final complement = await database.getModuleComplementById(moduleId);

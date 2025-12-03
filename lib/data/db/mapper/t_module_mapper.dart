@@ -3,6 +3,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/individual.dart';
 
 extension TModuleMapper on TModule {
   Module toDomain() {
@@ -17,8 +18,8 @@ extension TModuleMapper on TModule {
     );
   }
 
-  Module toDomainWithComplementSitesAndSiteGroups(ModuleComplement? complement,
-      List<BaseSite> sites, List<SiteGroup> siteGroups) {
+  Module toDomainWithComplementSitesSiteGroupsAndIndividuals(ModuleComplement? complement,
+      List<BaseSite> sites, List<SiteGroup> siteGroups, List<Individual> individuals) {
     return Module(
       id: idModule,
       moduleCode: moduleCode,
@@ -30,6 +31,7 @@ extension TModuleMapper on TModule {
       complement: complement,
       sites: sites,
       sitesGroup: siteGroups, // Attach the fetched site groups
+      individuals: individuals, // Attach the fetched individuals
     );
   }
 }

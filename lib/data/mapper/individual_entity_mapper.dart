@@ -36,31 +36,3 @@ extension IndividualMapper on Individual {
     );
   }
 }
-
-/// Extension pour créer un TIndividualsCompanion à partir d'une entité IndividualEntity
-extension IndividualToCompanion on IndividualEntity {
-  TIndividualsCompanion toCompanion() {
-    return TIndividualsCompanion(
-      idIndividual:
-          idIndividual == 0 ? const Value.absent() : Value(idIndividual),
-      idDigitiser:
-          idDigitiser == null ? const Value.absent() : Value(idDigitiser),
-      cdNom: cdNom == null ? const Value.absent() : Value(cdNom),
-      comment: comment == null ? const Value.absent() : Value(comment),
-      individualName:
-          individualName == null ? const Value.absent() : Value(individualName),
-      idNomenclatureSex: idNomenclatureSex == null
-          ? const Value.absent()
-          : Value(idNomenclatureSex),
-      activeIndividual: Value(activeIndividual ?? true),
-      uuidIndividual: uuidIndividual == null
-          ? const Value.absent()
-          : Value(uuidIndividual),
-      serverIndividualId: serverIndividualId == null
-          ? const Value.absent()
-          : Value(serverIndividualId),
-      metaCreateDate: const Value.absent(),
-      metaUpdateDate: const Value.absent(),
-    );
-  }
-}

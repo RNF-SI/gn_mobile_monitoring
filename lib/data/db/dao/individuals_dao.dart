@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/cor_individual_module_mapper.dart';
 import 'package:gn_mobile_monitoring/data/db/mapper/t_individual_mapper.dart';
@@ -13,7 +14,7 @@ part 'individuals_dao.g.dart';
   TIndividuals,
   CorIndividualModuleTable
 ])
-class IndividualsDao extends DatabaseAccessor<AppDatabase> with _$IndividualDaoMixin {
+class IndividualsDao extends DatabaseAccessor<AppDatabase> with _$IndividualsDaoMixin {
   IndividualsDao(super.db);
 
   /// Operations for TIndividuals
@@ -63,15 +64,17 @@ class IndividualsDao extends DatabaseAccessor<AppDatabase> with _$IndividualDaoM
   }
 
   /// Operations for CorIndividualModuleTable
+  /// A RESOUDRE DEMAIN
 
   Future<List<Individual>> getIndividualsByModuleId(int moduleId) async {
-    final query = select(corIndividualModuleTable).join([
-      leftOuterJoin(tIndividuals,
-          tIndividuals.idIndividual.equalsExp(corIndividualModuleTable.idIndividual))
-    ]);
-    query.where(corIndividualModuleTable.idModule.equals(moduleId));
-    final results = await query.map((row) => row.readTable(tIndividuals)).get();
-    return results.map((e) => e.toDomain()).toList();
+  //   final query = select(corIndividualModuleTable).join([
+  //     leftOuterJoin(tIndividuals,
+  //         tIndividuals.idIndividual.equalsExp(corIndividualModuleTable.idIndividual))
+  //   ]);
+  //   query.where(corIndividualModuleTable.idModule.equals(moduleId));
+  //   final results = await query.map((row) => row.readTable(tIndividuals)).get();
+  //   return results.map((e) => e.toDomain()).toList();
+    return [];
   }
 
   Future<List<IndividualModule>> getAllIndividualModules() async {
@@ -135,21 +138,40 @@ class IndividualsDao extends DatabaseAccessor<AppDatabase> with _$IndividualDaoM
         .toList();
   }
 
-  /// Check if a individual belongs to other modules besides the specified one
-  Future<bool> individualHasOtherModuleReferences(int individualId, int excludeModuleId) async {
-    final query = select(corIndividualModuleTable)
-      ..where((tbl) => tbl.idIndividual.equals(individualId) & tbl.idModule.isNotValue(excludeModuleId));
-    final results = await query.get();
-    return results.isNotEmpty;
-  }
-
-  /// Delete a individual completely with all its related data (respects FK constraints)
-  Future<void> deleteIndividualCompletely(int individualId) async {
-    // Delete individual complement first (FK constraint)
-    await deleteIndividualComplement(individualId);
+  /// Met à jour l'ID serveur d'une individual
+  Future<bool> updateIndividualServerId(int localIndividualId, int serverIndividualId) async {
+    debugPrint('🔄 [INDIVIDUAL_DAO] DÉBUT mise à jour ID serveur: local=$localIndividualId, serveur=$serverIndividualId');
     
-    // Then delete the individual itself
-    await deleteIndividual(individualId);
+    // Vérifier que l'individual existe avant la mise à jour
+    final existingIndividual = await (select(tIndividuals)
+      ..where((tbl) => tbl.idIndividual.equals(localIndividualId)))
+      .getSingleOrNull();
+    
+    if (existingIndividual == null) {
+      debugPrint('❌ [INDIVIDUAL_DAO] Individual $localIndividualId introuvable pour mise à jour ID serveur');
+      return false;
+    }
+    
+    debugPrint('✅ [INDIVIDUAL_DAO] Individual trouvée: ID=${existingIndividual.idIndividual}, currentServerID=${existingIndividual.serverIndividualId}');
+    
+    final updated = await (update(tIndividuals)
+      ..where((tbl) => tbl.idIndividual.equals(localIndividualId)))
+      .write(TIndividualsCompanion(
+        serverIndividualId: Value(serverIndividualId),
+      ));
+    
+    debugPrint('🔄 [INDIVIDUAL_DAO] Résultat mise à jour: $updated lignes affectées');
+    
+    // Vérifier que la mise à jour a bien fonctionné
+    final updatedIndividual = await (select(tIndividuals)
+      ..where((tbl) => tbl.idIndividual.equals(localIndividualId)))
+      .getSingleOrNull();
+    
+    if (updatedIndividual != null) {
+      debugPrint('✅ [INDIVIDUAL_DAO] Vérification: serverIndividualId après mise à jour = ${updatedIndividual.serverIndividualId}');
+    }
+    
+    return updated > 0;
   }
 
 }

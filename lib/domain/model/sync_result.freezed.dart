@@ -28,9 +28,7 @@ mixin _$SyncResult {
   List<SyncConflict>? get conflicts => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
-  /// Create a copy of SyncResult
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SyncResultCopyWith<SyncResult> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -65,8 +63,6 @@ class _$SyncResultCopyWithImpl<$Res, $Val extends SyncResult>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SyncResult
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -161,8 +157,6 @@ class __$$SyncResultImplCopyWithImpl<$Res>
       _$SyncResultImpl _value, $Res Function(_$SyncResultImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SyncResult
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -331,9 +325,7 @@ class _$SyncResultImpl implements _SyncResult {
       const DeepCollectionEquality().hash(_conflicts),
       const DeepCollectionEquality().hash(_data));
 
-  /// Create a copy of SyncResult
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SyncResultImplCopyWith<_$SyncResultImpl> get copyWith =>
@@ -376,11 +368,8 @@ abstract class _SyncResult implements SyncResult {
   List<SyncConflict>? get conflicts;
   @override
   Map<String, dynamic>? get data;
-
-  /// Create a copy of SyncResult
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SyncResultImplCopyWith<_$SyncResultImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

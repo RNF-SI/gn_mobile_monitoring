@@ -5125,6 +5125,12 @@ class $TObservationsTable extends TObservations
   late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
       'id_digitiser', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idIndividualMeta =
+      const VerificationMeta('idIndividual');
+  @override
+  late final GeneratedColumn<int> idIndividual = GeneratedColumn<int>(
+      'id_individual', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
   @override
   late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
@@ -5155,6 +5161,7 @@ class $TObservationsTable extends TObservations
         idObservation,
         idBaseVisit,
         idDigitiser,
+        idIndividual,
         cdNom,
         comments,
         uuidObservation,
@@ -5187,6 +5194,12 @@ class $TObservationsTable extends TObservations
           _idDigitiserMeta,
           idDigitiser.isAcceptableOrUnknown(
               data['id_digitiser']!, _idDigitiserMeta));
+    }
+    if (data.containsKey('id_individual')) {
+      context.handle(
+          _idIndividualMeta,
+          idIndividual.isAcceptableOrUnknown(
+              data['id_individual']!, _idIndividualMeta));
     }
     if (data.containsKey('cd_nom')) {
       context.handle(
@@ -5223,6 +5236,8 @@ class $TObservationsTable extends TObservations
           .read(DriftSqlType.int, data['${effectivePrefix}id_base_visit']),
       idDigitiser: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
+      idIndividual: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_individual']),
       cdNom: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}cd_nom']),
       comments: attachedDatabase.typeMapping
@@ -5244,6 +5259,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
   final int idObservation;
   final int? idBaseVisit;
   final int? idDigitiser;
+  final int? idIndividual;
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
@@ -5252,6 +5268,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       {required this.idObservation,
       this.idBaseVisit,
       this.idDigitiser,
+      this.idIndividual,
       this.cdNom,
       this.comments,
       this.uuidObservation,
@@ -5265,6 +5282,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     }
     if (!nullToAbsent || idDigitiser != null) {
       map['id_digitiser'] = Variable<int>(idDigitiser);
+    }
+    if (!nullToAbsent || idIndividual != null) {
+      map['id_individual'] = Variable<int>(idIndividual);
     }
     if (!nullToAbsent || cdNom != null) {
       map['cd_nom'] = Variable<int>(cdNom);
@@ -5290,6 +5310,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       idDigitiser: idDigitiser == null && nullToAbsent
           ? const Value.absent()
           : Value(idDigitiser),
+      idIndividual: idIndividual == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idIndividual),
       cdNom:
           cdNom == null && nullToAbsent ? const Value.absent() : Value(cdNom),
       comments: comments == null && nullToAbsent
@@ -5311,6 +5334,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       idObservation: serializer.fromJson<int>(json['idObservation']),
       idBaseVisit: serializer.fromJson<int?>(json['idBaseVisit']),
       idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
+      idIndividual: serializer.fromJson<int?>(json['idIndividual']),
       cdNom: serializer.fromJson<int?>(json['cdNom']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidObservation: serializer.fromJson<String?>(json['uuidObservation']),
@@ -5325,6 +5349,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       'idObservation': serializer.toJson<int>(idObservation),
       'idBaseVisit': serializer.toJson<int?>(idBaseVisit),
       'idDigitiser': serializer.toJson<int?>(idDigitiser),
+      'idIndividual': serializer.toJson<int?>(idIndividual),
       'cdNom': serializer.toJson<int?>(cdNom),
       'comments': serializer.toJson<String?>(comments),
       'uuidObservation': serializer.toJson<String?>(uuidObservation),
@@ -5336,6 +5361,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           {int? idObservation,
           Value<int?> idBaseVisit = const Value.absent(),
           Value<int?> idDigitiser = const Value.absent(),
+          Value<int?> idIndividual = const Value.absent(),
           Value<int?> cdNom = const Value.absent(),
           Value<String?> comments = const Value.absent(),
           Value<String?> uuidObservation = const Value.absent(),
@@ -5344,6 +5370,8 @@ class TObservation extends DataClass implements Insertable<TObservation> {
         idObservation: idObservation ?? this.idObservation,
         idBaseVisit: idBaseVisit.present ? idBaseVisit.value : this.idBaseVisit,
         idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
+        idIndividual:
+            idIndividual.present ? idIndividual.value : this.idIndividual,
         cdNom: cdNom.present ? cdNom.value : this.cdNom,
         comments: comments.present ? comments.value : this.comments,
         uuidObservation: uuidObservation.present
@@ -5362,6 +5390,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           data.idBaseVisit.present ? data.idBaseVisit.value : this.idBaseVisit,
       idDigitiser:
           data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
+      idIndividual: data.idIndividual.present
+          ? data.idIndividual.value
+          : this.idIndividual,
       cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
       comments: data.comments.present ? data.comments.value : this.comments,
       uuidObservation: data.uuidObservation.present
@@ -5379,6 +5410,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
           ..write('idDigitiser: $idDigitiser, ')
+          ..write('idIndividual: $idIndividual, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
           ..write('uuidObservation: $uuidObservation, ')
@@ -5389,7 +5421,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
 
   @override
   int get hashCode => Object.hash(idObservation, idBaseVisit, idDigitiser,
-      cdNom, comments, uuidObservation, serverObservationId);
+      idIndividual, cdNom, comments, uuidObservation, serverObservationId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5397,6 +5429,7 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           other.idObservation == this.idObservation &&
           other.idBaseVisit == this.idBaseVisit &&
           other.idDigitiser == this.idDigitiser &&
+          other.idIndividual == this.idIndividual &&
           other.cdNom == this.cdNom &&
           other.comments == this.comments &&
           other.uuidObservation == this.uuidObservation &&
@@ -5407,6 +5440,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
   final Value<int> idObservation;
   final Value<int?> idBaseVisit;
   final Value<int?> idDigitiser;
+  final Value<int?> idIndividual;
   final Value<int?> cdNom;
   final Value<String?> comments;
   final Value<String?> uuidObservation;
@@ -5415,6 +5449,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
     this.idDigitiser = const Value.absent(),
+    this.idIndividual = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
@@ -5424,6 +5459,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
     this.idDigitiser = const Value.absent(),
+    this.idIndividual = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
@@ -5433,6 +5469,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     Expression<int>? idObservation,
     Expression<int>? idBaseVisit,
     Expression<int>? idDigitiser,
+    Expression<int>? idIndividual,
     Expression<int>? cdNom,
     Expression<String>? comments,
     Expression<String>? uuidObservation,
@@ -5442,6 +5479,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
       if (idObservation != null) 'id_observation': idObservation,
       if (idBaseVisit != null) 'id_base_visit': idBaseVisit,
       if (idDigitiser != null) 'id_digitiser': idDigitiser,
+      if (idIndividual != null) 'id_individual': idIndividual,
       if (cdNom != null) 'cd_nom': cdNom,
       if (comments != null) 'comments': comments,
       if (uuidObservation != null) 'uuid_observation': uuidObservation,
@@ -5454,6 +5492,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
       {Value<int>? idObservation,
       Value<int?>? idBaseVisit,
       Value<int?>? idDigitiser,
+      Value<int?>? idIndividual,
       Value<int?>? cdNom,
       Value<String?>? comments,
       Value<String?>? uuidObservation,
@@ -5462,6 +5501,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
       idObservation: idObservation ?? this.idObservation,
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
       idDigitiser: idDigitiser ?? this.idDigitiser,
+      idIndividual: idIndividual ?? this.idIndividual,
       cdNom: cdNom ?? this.cdNom,
       comments: comments ?? this.comments,
       uuidObservation: uuidObservation ?? this.uuidObservation,
@@ -5480,6 +5520,9 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     }
     if (idDigitiser.present) {
       map['id_digitiser'] = Variable<int>(idDigitiser.value);
+    }
+    if (idIndividual.present) {
+      map['id_individual'] = Variable<int>(idIndividual.value);
     }
     if (cdNom.present) {
       map['cd_nom'] = Variable<int>(cdNom.value);
@@ -5502,6 +5545,7 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
           ..write('idDigitiser: $idDigitiser, ')
+          ..write('idIndividual: $idIndividual, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
           ..write('uuidObservation: $uuidObservation, ')
@@ -5981,6 +6025,611 @@ class TObservationDetailsCompanion extends UpdateCompanion<TObservationDetail> {
           ..write('idObservation: $idObservation, ')
           ..write('uuidObservationDetail: $uuidObservationDetail, ')
           ..write('data: $data')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $TIndividualsTable extends TIndividuals
+    with TableInfo<$TIndividualsTable, TIndividual> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $TIndividualsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idIndividualMeta =
+      const VerificationMeta('idIndividual');
+  @override
+  late final GeneratedColumn<int> idIndividual = GeneratedColumn<int>(
+      'id_individual', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _idDigitiserMeta =
+      const VerificationMeta('idDigitiser');
+  @override
+  late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
+      'id_digitiser', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
+  @override
+  late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
+      'cd_nom', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _commentMeta =
+      const VerificationMeta('comment');
+  @override
+  late final GeneratedColumn<String> comment = GeneratedColumn<String>(
+      'comment', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _individualNameMeta =
+      const VerificationMeta('individualName');
+  @override
+  late final GeneratedColumn<String> individualName = GeneratedColumn<String>(
+      'individual_name', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _idNomenclatureSexMeta =
+      const VerificationMeta('idNomenclatureSex');
+  @override
+  late final GeneratedColumn<int> idNomenclatureSex = GeneratedColumn<int>(
+      'id_nomenclature_sex', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _activeIndividualMeta =
+      const VerificationMeta('activeIndividual');
+  @override
+  late final GeneratedColumn<bool> activeIndividual = GeneratedColumn<bool>(
+      'active_individual', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways(
+          'CHECK ("active_individual" IN (0, 1))'));
+  static const VerificationMeta _uuidIndividualMeta =
+      const VerificationMeta('uuidIndividual');
+  @override
+  late final GeneratedColumn<String> uuidIndividual = GeneratedColumn<String>(
+      'uuid_individual', aliasedName, true,
+      type: DriftSqlType.string,
+      requiredDuringInsert: false,
+      defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _serverIndividualIdMeta =
+      const VerificationMeta('serverIndividualId');
+  @override
+  late final GeneratedColumn<int> serverIndividualId = GeneratedColumn<int>(
+      'server_individual_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _metaCreateDateMeta =
+      const VerificationMeta('metaCreateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaCreateDate =
+      GeneratedColumn<DateTime>('meta_create_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  static const VerificationMeta _metaUpdateDateMeta =
+      const VerificationMeta('metaUpdateDate');
+  @override
+  late final GeneratedColumn<DateTime> metaUpdateDate =
+      GeneratedColumn<DateTime>('meta_update_date', aliasedName, true,
+          type: DriftSqlType.dateTime, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idIndividual,
+        idDigitiser,
+        cdNom,
+        comment,
+        individualName,
+        idNomenclatureSex,
+        activeIndividual,
+        uuidIndividual,
+        serverIndividualId,
+        metaCreateDate,
+        metaUpdateDate
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 't_individuals';
+  @override
+  VerificationContext validateIntegrity(Insertable<TIndividual> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_individual')) {
+      context.handle(
+          _idIndividualMeta,
+          idIndividual.isAcceptableOrUnknown(
+              data['id_individual']!, _idIndividualMeta));
+    }
+    if (data.containsKey('id_digitiser')) {
+      context.handle(
+          _idDigitiserMeta,
+          idDigitiser.isAcceptableOrUnknown(
+              data['id_digitiser']!, _idDigitiserMeta));
+    }
+    if (data.containsKey('cd_nom')) {
+      context.handle(
+          _cdNomMeta, cdNom.isAcceptableOrUnknown(data['cd_nom']!, _cdNomMeta));
+    }
+    if (data.containsKey('comment')) {
+      context.handle(_commentMeta,
+          comment.isAcceptableOrUnknown(data['comment']!, _commentMeta));
+    }
+    if (data.containsKey('individual_name')) {
+      context.handle(
+          _individualNameMeta,
+          individualName.isAcceptableOrUnknown(
+              data['individual_name']!, _individualNameMeta));
+    }
+    if (data.containsKey('id_nomenclature_sex')) {
+      context.handle(
+          _idNomenclatureSexMeta,
+          idNomenclatureSex.isAcceptableOrUnknown(
+              data['id_nomenclature_sex']!, _idNomenclatureSexMeta));
+    }
+    if (data.containsKey('active_individual')) {
+      context.handle(
+          _activeIndividualMeta,
+          activeIndividual.isAcceptableOrUnknown(
+              data['active_individual']!, _activeIndividualMeta));
+    }
+    if (data.containsKey('uuid_individual')) {
+      context.handle(
+          _uuidIndividualMeta,
+          uuidIndividual.isAcceptableOrUnknown(
+              data['uuid_individual']!, _uuidIndividualMeta));
+    }
+    if (data.containsKey('server_individual_id')) {
+      context.handle(
+          _serverIndividualIdMeta,
+          serverIndividualId.isAcceptableOrUnknown(
+              data['server_individual_id']!, _serverIndividualIdMeta));
+    }
+    if (data.containsKey('meta_create_date')) {
+      context.handle(
+          _metaCreateDateMeta,
+          metaCreateDate.isAcceptableOrUnknown(
+              data['meta_create_date']!, _metaCreateDateMeta));
+    }
+    if (data.containsKey('meta_update_date')) {
+      context.handle(
+          _metaUpdateDateMeta,
+          metaUpdateDate.isAcceptableOrUnknown(
+              data['meta_update_date']!, _metaUpdateDateMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idIndividual};
+  @override
+  TIndividual map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return TIndividual(
+      idIndividual: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_individual'])!,
+      idDigitiser: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
+      cdNom: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}cd_nom']),
+      comment: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}comment']),
+      individualName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}individual_name']),
+      idNomenclatureSex: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}id_nomenclature_sex']),
+      activeIndividual: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}active_individual']),
+      uuidIndividual: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}uuid_individual']),
+      serverIndividualId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}server_individual_id']),
+      metaCreateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_create_date']),
+      metaUpdateDate: attachedDatabase.typeMapping.read(
+          DriftSqlType.dateTime, data['${effectivePrefix}meta_update_date']),
+    );
+  }
+
+  @override
+  $TIndividualsTable createAlias(String alias) {
+    return $TIndividualsTable(attachedDatabase, alias);
+  }
+}
+
+class TIndividual extends DataClass implements Insertable<TIndividual> {
+  final int idIndividual;
+  final int? idDigitiser;
+  final int? cdNom;
+  final String? comment;
+  final String? individualName;
+  final int? idNomenclatureSex;
+  final bool? activeIndividual;
+  final String? uuidIndividual;
+  final int? serverIndividualId;
+  final DateTime? metaCreateDate;
+  final DateTime? metaUpdateDate;
+  const TIndividual(
+      {required this.idIndividual,
+      this.idDigitiser,
+      this.cdNom,
+      this.comment,
+      this.individualName,
+      this.idNomenclatureSex,
+      this.activeIndividual,
+      this.uuidIndividual,
+      this.serverIndividualId,
+      this.metaCreateDate,
+      this.metaUpdateDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_individual'] = Variable<int>(idIndividual);
+    if (!nullToAbsent || idDigitiser != null) {
+      map['id_digitiser'] = Variable<int>(idDigitiser);
+    }
+    if (!nullToAbsent || cdNom != null) {
+      map['cd_nom'] = Variable<int>(cdNom);
+    }
+    if (!nullToAbsent || comment != null) {
+      map['comment'] = Variable<String>(comment);
+    }
+    if (!nullToAbsent || individualName != null) {
+      map['individual_name'] = Variable<String>(individualName);
+    }
+    if (!nullToAbsent || idNomenclatureSex != null) {
+      map['id_nomenclature_sex'] = Variable<int>(idNomenclatureSex);
+    }
+    if (!nullToAbsent || activeIndividual != null) {
+      map['active_individual'] = Variable<bool>(activeIndividual);
+    }
+    if (!nullToAbsent || uuidIndividual != null) {
+      map['uuid_individual'] = Variable<String>(uuidIndividual);
+    }
+    if (!nullToAbsent || serverIndividualId != null) {
+      map['server_individual_id'] = Variable<int>(serverIndividualId);
+    }
+    if (!nullToAbsent || metaCreateDate != null) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate);
+    }
+    if (!nullToAbsent || metaUpdateDate != null) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate);
+    }
+    return map;
+  }
+
+  TIndividualsCompanion toCompanion(bool nullToAbsent) {
+    return TIndividualsCompanion(
+      idIndividual: Value(idIndividual),
+      idDigitiser: idDigitiser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitiser),
+      cdNom:
+          cdNom == null && nullToAbsent ? const Value.absent() : Value(cdNom),
+      comment: comment == null && nullToAbsent
+          ? const Value.absent()
+          : Value(comment),
+      individualName: individualName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(individualName),
+      idNomenclatureSex: idNomenclatureSex == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idNomenclatureSex),
+      activeIndividual: activeIndividual == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activeIndividual),
+      uuidIndividual: uuidIndividual == null && nullToAbsent
+          ? const Value.absent()
+          : Value(uuidIndividual),
+      serverIndividualId: serverIndividualId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverIndividualId),
+      metaCreateDate: metaCreateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaCreateDate),
+      metaUpdateDate: metaUpdateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaUpdateDate),
+    );
+  }
+
+  factory TIndividual.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return TIndividual(
+      idIndividual: serializer.fromJson<int>(json['idIndividual']),
+      idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
+      cdNom: serializer.fromJson<int?>(json['cdNom']),
+      comment: serializer.fromJson<String?>(json['comment']),
+      individualName: serializer.fromJson<String?>(json['individualName']),
+      idNomenclatureSex: serializer.fromJson<int?>(json['idNomenclatureSex']),
+      activeIndividual: serializer.fromJson<bool?>(json['activeIndividual']),
+      uuidIndividual: serializer.fromJson<String?>(json['uuidIndividual']),
+      serverIndividualId: serializer.fromJson<int?>(json['serverIndividualId']),
+      metaCreateDate: serializer.fromJson<DateTime?>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idIndividual': serializer.toJson<int>(idIndividual),
+      'idDigitiser': serializer.toJson<int?>(idDigitiser),
+      'cdNom': serializer.toJson<int?>(cdNom),
+      'comment': serializer.toJson<String?>(comment),
+      'individualName': serializer.toJson<String?>(individualName),
+      'idNomenclatureSex': serializer.toJson<int?>(idNomenclatureSex),
+      'activeIndividual': serializer.toJson<bool?>(activeIndividual),
+      'uuidIndividual': serializer.toJson<String?>(uuidIndividual),
+      'serverIndividualId': serializer.toJson<int?>(serverIndividualId),
+      'metaCreateDate': serializer.toJson<DateTime?>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
+    };
+  }
+
+  TIndividual copyWith(
+          {int? idIndividual,
+          Value<int?> idDigitiser = const Value.absent(),
+          Value<int?> cdNom = const Value.absent(),
+          Value<String?> comment = const Value.absent(),
+          Value<String?> individualName = const Value.absent(),
+          Value<int?> idNomenclatureSex = const Value.absent(),
+          Value<bool?> activeIndividual = const Value.absent(),
+          Value<String?> uuidIndividual = const Value.absent(),
+          Value<int?> serverIndividualId = const Value.absent(),
+          Value<DateTime?> metaCreateDate = const Value.absent(),
+          Value<DateTime?> metaUpdateDate = const Value.absent()}) =>
+      TIndividual(
+        idIndividual: idIndividual ?? this.idIndividual,
+        idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
+        cdNom: cdNom.present ? cdNom.value : this.cdNom,
+        comment: comment.present ? comment.value : this.comment,
+        individualName:
+            individualName.present ? individualName.value : this.individualName,
+        idNomenclatureSex: idNomenclatureSex.present
+            ? idNomenclatureSex.value
+            : this.idNomenclatureSex,
+        activeIndividual: activeIndividual.present
+            ? activeIndividual.value
+            : this.activeIndividual,
+        uuidIndividual:
+            uuidIndividual.present ? uuidIndividual.value : this.uuidIndividual,
+        serverIndividualId: serverIndividualId.present
+            ? serverIndividualId.value
+            : this.serverIndividualId,
+        metaCreateDate:
+            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
+        metaUpdateDate:
+            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
+      );
+  TIndividual copyWithCompanion(TIndividualsCompanion data) {
+    return TIndividual(
+      idIndividual: data.idIndividual.present
+          ? data.idIndividual.value
+          : this.idIndividual,
+      idDigitiser:
+          data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
+      cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
+      comment: data.comment.present ? data.comment.value : this.comment,
+      individualName: data.individualName.present
+          ? data.individualName.value
+          : this.individualName,
+      idNomenclatureSex: data.idNomenclatureSex.present
+          ? data.idNomenclatureSex.value
+          : this.idNomenclatureSex,
+      activeIndividual: data.activeIndividual.present
+          ? data.activeIndividual.value
+          : this.activeIndividual,
+      uuidIndividual: data.uuidIndividual.present
+          ? data.uuidIndividual.value
+          : this.uuidIndividual,
+      serverIndividualId: data.serverIndividualId.present
+          ? data.serverIndividualId.value
+          : this.serverIndividualId,
+      metaCreateDate: data.metaCreateDate.present
+          ? data.metaCreateDate.value
+          : this.metaCreateDate,
+      metaUpdateDate: data.metaUpdateDate.present
+          ? data.metaUpdateDate.value
+          : this.metaUpdateDate,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TIndividual(')
+          ..write('idIndividual: $idIndividual, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('cdNom: $cdNom, ')
+          ..write('comment: $comment, ')
+          ..write('individualName: $individualName, ')
+          ..write('idNomenclatureSex: $idNomenclatureSex, ')
+          ..write('activeIndividual: $activeIndividual, ')
+          ..write('uuidIndividual: $uuidIndividual, ')
+          ..write('serverIndividualId: $serverIndividualId, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+      idIndividual,
+      idDigitiser,
+      cdNom,
+      comment,
+      individualName,
+      idNomenclatureSex,
+      activeIndividual,
+      uuidIndividual,
+      serverIndividualId,
+      metaCreateDate,
+      metaUpdateDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is TIndividual &&
+          other.idIndividual == this.idIndividual &&
+          other.idDigitiser == this.idDigitiser &&
+          other.cdNom == this.cdNom &&
+          other.comment == this.comment &&
+          other.individualName == this.individualName &&
+          other.idNomenclatureSex == this.idNomenclatureSex &&
+          other.activeIndividual == this.activeIndividual &&
+          other.uuidIndividual == this.uuidIndividual &&
+          other.serverIndividualId == this.serverIndividualId &&
+          other.metaCreateDate == this.metaCreateDate &&
+          other.metaUpdateDate == this.metaUpdateDate);
+}
+
+class TIndividualsCompanion extends UpdateCompanion<TIndividual> {
+  final Value<int> idIndividual;
+  final Value<int?> idDigitiser;
+  final Value<int?> cdNom;
+  final Value<String?> comment;
+  final Value<String?> individualName;
+  final Value<int?> idNomenclatureSex;
+  final Value<bool?> activeIndividual;
+  final Value<String?> uuidIndividual;
+  final Value<int?> serverIndividualId;
+  final Value<DateTime?> metaCreateDate;
+  final Value<DateTime?> metaUpdateDate;
+  const TIndividualsCompanion({
+    this.idIndividual = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
+    this.cdNom = const Value.absent(),
+    this.comment = const Value.absent(),
+    this.individualName = const Value.absent(),
+    this.idNomenclatureSex = const Value.absent(),
+    this.activeIndividual = const Value.absent(),
+    this.uuidIndividual = const Value.absent(),
+    this.serverIndividualId = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  });
+  TIndividualsCompanion.insert({
+    this.idIndividual = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
+    this.cdNom = const Value.absent(),
+    this.comment = const Value.absent(),
+    this.individualName = const Value.absent(),
+    this.idNomenclatureSex = const Value.absent(),
+    this.activeIndividual = const Value.absent(),
+    this.uuidIndividual = const Value.absent(),
+    this.serverIndividualId = const Value.absent(),
+    this.metaCreateDate = const Value.absent(),
+    this.metaUpdateDate = const Value.absent(),
+  });
+  static Insertable<TIndividual> custom({
+    Expression<int>? idIndividual,
+    Expression<int>? idDigitiser,
+    Expression<int>? cdNom,
+    Expression<String>? comment,
+    Expression<String>? individualName,
+    Expression<int>? idNomenclatureSex,
+    Expression<bool>? activeIndividual,
+    Expression<String>? uuidIndividual,
+    Expression<int>? serverIndividualId,
+    Expression<DateTime>? metaCreateDate,
+    Expression<DateTime>? metaUpdateDate,
+  }) {
+    return RawValuesInsertable({
+      if (idIndividual != null) 'id_individual': idIndividual,
+      if (idDigitiser != null) 'id_digitiser': idDigitiser,
+      if (cdNom != null) 'cd_nom': cdNom,
+      if (comment != null) 'comment': comment,
+      if (individualName != null) 'individual_name': individualName,
+      if (idNomenclatureSex != null) 'id_nomenclature_sex': idNomenclatureSex,
+      if (activeIndividual != null) 'active_individual': activeIndividual,
+      if (uuidIndividual != null) 'uuid_individual': uuidIndividual,
+      if (serverIndividualId != null)
+        'server_individual_id': serverIndividualId,
+      if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
+      if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
+    });
+  }
+
+  TIndividualsCompanion copyWith(
+      {Value<int>? idIndividual,
+      Value<int?>? idDigitiser,
+      Value<int?>? cdNom,
+      Value<String?>? comment,
+      Value<String?>? individualName,
+      Value<int?>? idNomenclatureSex,
+      Value<bool?>? activeIndividual,
+      Value<String?>? uuidIndividual,
+      Value<int?>? serverIndividualId,
+      Value<DateTime?>? metaCreateDate,
+      Value<DateTime?>? metaUpdateDate}) {
+    return TIndividualsCompanion(
+      idIndividual: idIndividual ?? this.idIndividual,
+      idDigitiser: idDigitiser ?? this.idDigitiser,
+      cdNom: cdNom ?? this.cdNom,
+      comment: comment ?? this.comment,
+      individualName: individualName ?? this.individualName,
+      idNomenclatureSex: idNomenclatureSex ?? this.idNomenclatureSex,
+      activeIndividual: activeIndividual ?? this.activeIndividual,
+      uuidIndividual: uuidIndividual ?? this.uuidIndividual,
+      serverIndividualId: serverIndividualId ?? this.serverIndividualId,
+      metaCreateDate: metaCreateDate ?? this.metaCreateDate,
+      metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idIndividual.present) {
+      map['id_individual'] = Variable<int>(idIndividual.value);
+    }
+    if (idDigitiser.present) {
+      map['id_digitiser'] = Variable<int>(idDigitiser.value);
+    }
+    if (cdNom.present) {
+      map['cd_nom'] = Variable<int>(cdNom.value);
+    }
+    if (comment.present) {
+      map['comment'] = Variable<String>(comment.value);
+    }
+    if (individualName.present) {
+      map['individual_name'] = Variable<String>(individualName.value);
+    }
+    if (idNomenclatureSex.present) {
+      map['id_nomenclature_sex'] = Variable<int>(idNomenclatureSex.value);
+    }
+    if (activeIndividual.present) {
+      map['active_individual'] = Variable<bool>(activeIndividual.value);
+    }
+    if (uuidIndividual.present) {
+      map['uuid_individual'] = Variable<String>(uuidIndividual.value);
+    }
+    if (serverIndividualId.present) {
+      map['server_individual_id'] = Variable<int>(serverIndividualId.value);
+    }
+    if (metaCreateDate.present) {
+      map['meta_create_date'] = Variable<DateTime>(metaCreateDate.value);
+    }
+    if (metaUpdateDate.present) {
+      map['meta_update_date'] = Variable<DateTime>(metaUpdateDate.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('TIndividualsCompanion(')
+          ..write('idIndividual: $idIndividual, ')
+          ..write('idDigitiser: $idDigitiser, ')
+          ..write('cdNom: $cdNom, ')
+          ..write('comment: $comment, ')
+          ..write('individualName: $individualName, ')
+          ..write('idNomenclatureSex: $idNomenclatureSex, ')
+          ..write('activeIndividual: $activeIndividual, ')
+          ..write('uuidIndividual: $uuidIndividual, ')
+          ..write('serverIndividualId: $serverIndividualId, ')
+          ..write('metaCreateDate: $metaCreateDate, ')
+          ..write('metaUpdateDate: $metaUpdateDate')
           ..write(')'))
         .toString();
   }
@@ -8658,6 +9307,208 @@ class TPermissionsCompanion extends UpdateCompanion<TPermission> {
           ..write('idObject: $idObject, ')
           ..write('scopeValue: $scopeValue, ')
           ..write('sensitivityFilter: $sensitivityFilter')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CorIndividualModuleTableTable extends CorIndividualModuleTable
+    with TableInfo<$CorIndividualModuleTableTable, CorIndividualModule> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CorIndividualModuleTableTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idIndividualMeta =
+      const VerificationMeta('idIndividual');
+  @override
+  late final GeneratedColumn<int> idIndividual = GeneratedColumn<int>(
+      'id_individual', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _idModuleMeta =
+      const VerificationMeta('idModule');
+  @override
+  late final GeneratedColumn<int> idModule = GeneratedColumn<int>(
+      'id_module', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [idIndividual, idModule];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'cor_individual_module_table';
+  @override
+  VerificationContext validateIntegrity(
+      Insertable<CorIndividualModule> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id_individual')) {
+      context.handle(
+          _idIndividualMeta,
+          idIndividual.isAcceptableOrUnknown(
+              data['id_individual']!, _idIndividualMeta));
+    } else if (isInserting) {
+      context.missing(_idIndividualMeta);
+    }
+    if (data.containsKey('id_module')) {
+      context.handle(_idModuleMeta,
+          idModule.isAcceptableOrUnknown(data['id_module']!, _idModuleMeta));
+    } else if (isInserting) {
+      context.missing(_idModuleMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {idIndividual, idModule};
+  @override
+  CorIndividualModule map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CorIndividualModule(
+      idIndividual: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_individual'])!,
+      idModule: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_module'])!,
+    );
+  }
+
+  @override
+  $CorIndividualModuleTableTable createAlias(String alias) {
+    return $CorIndividualModuleTableTable(attachedDatabase, alias);
+  }
+}
+
+class CorIndividualModule extends DataClass
+    implements Insertable<CorIndividualModule> {
+  final int idIndividual;
+  final int idModule;
+  const CorIndividualModule(
+      {required this.idIndividual, required this.idModule});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id_individual'] = Variable<int>(idIndividual);
+    map['id_module'] = Variable<int>(idModule);
+    return map;
+  }
+
+  CorIndividualModuleTableCompanion toCompanion(bool nullToAbsent) {
+    return CorIndividualModuleTableCompanion(
+      idIndividual: Value(idIndividual),
+      idModule: Value(idModule),
+    );
+  }
+
+  factory CorIndividualModule.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CorIndividualModule(
+      idIndividual: serializer.fromJson<int>(json['idIndividual']),
+      idModule: serializer.fromJson<int>(json['idModule']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'idIndividual': serializer.toJson<int>(idIndividual),
+      'idModule': serializer.toJson<int>(idModule),
+    };
+  }
+
+  CorIndividualModule copyWith({int? idIndividual, int? idModule}) =>
+      CorIndividualModule(
+        idIndividual: idIndividual ?? this.idIndividual,
+        idModule: idModule ?? this.idModule,
+      );
+  CorIndividualModule copyWithCompanion(
+      CorIndividualModuleTableCompanion data) {
+    return CorIndividualModule(
+      idIndividual: data.idIndividual.present
+          ? data.idIndividual.value
+          : this.idIndividual,
+      idModule: data.idModule.present ? data.idModule.value : this.idModule,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorIndividualModule(')
+          ..write('idIndividual: $idIndividual, ')
+          ..write('idModule: $idModule')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(idIndividual, idModule);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CorIndividualModule &&
+          other.idIndividual == this.idIndividual &&
+          other.idModule == this.idModule);
+}
+
+class CorIndividualModuleTableCompanion
+    extends UpdateCompanion<CorIndividualModule> {
+  final Value<int> idIndividual;
+  final Value<int> idModule;
+  final Value<int> rowid;
+  const CorIndividualModuleTableCompanion({
+    this.idIndividual = const Value.absent(),
+    this.idModule = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  CorIndividualModuleTableCompanion.insert({
+    required int idIndividual,
+    required int idModule,
+    this.rowid = const Value.absent(),
+  })  : idIndividual = Value(idIndividual),
+        idModule = Value(idModule);
+  static Insertable<CorIndividualModule> custom({
+    Expression<int>? idIndividual,
+    Expression<int>? idModule,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (idIndividual != null) 'id_individual': idIndividual,
+      if (idModule != null) 'id_module': idModule,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  CorIndividualModuleTableCompanion copyWith(
+      {Value<int>? idIndividual, Value<int>? idModule, Value<int>? rowid}) {
+    return CorIndividualModuleTableCompanion(
+      idIndividual: idIndividual ?? this.idIndividual,
+      idModule: idModule ?? this.idModule,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (idIndividual.present) {
+      map['id_individual'] = Variable<int>(idIndividual.value);
+    }
+    if (idModule.present) {
+      map['id_module'] = Variable<int>(idModule.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CorIndividualModuleTableCompanion(')
+          ..write('idIndividual: $idIndividual, ')
+          ..write('idModule: $idModule, ')
+          ..write('rowid: $rowid')
           ..write(')'))
         .toString();
   }
@@ -12543,6 +13394,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $TObservationComplementsTable(this);
   late final $TObservationDetailsTable tObservationDetails =
       $TObservationDetailsTable(this);
+  late final $TIndividualsTable tIndividuals = $TIndividualsTable(this);
   late final $BibTablesLocationsTable bibTablesLocations =
       $BibTablesLocationsTable(this);
   late final $BibNomenclaturesTypesTableTable bibNomenclaturesTypesTable =
@@ -12554,6 +13406,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $TPermissionsAvailableTable tPermissionsAvailable =
       $TPermissionsAvailableTable(this);
   late final $TPermissionsTable tPermissions = $TPermissionsTable(this);
+  late final $CorIndividualModuleTableTable corIndividualModuleTable =
+      $CorIndividualModuleTableTable(this);
   late final $CorSiteModuleTableTable corSiteModuleTable =
       $CorSiteModuleTableTable(this);
   late final $CorSitesGroupModuleTableTable corSitesGroupModuleTable =
@@ -12583,6 +13437,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       ObservationDao(this as AppDatabase);
   late final ObservationDetailDao observationDetailDao =
       ObservationDetailDao(this as AppDatabase);
+  late final IndividualsDao individualsDao =
+      IndividualsDao(this as AppDatabase);
   late final BibNomenclaturesTypesDao bibNomenclaturesTypesDao =
       BibNomenclaturesTypesDao(this as AppDatabase);
   late final TaxonDao taxonDao = TaxonDao(this as AppDatabase);
@@ -12604,6 +13460,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tObservations,
         tObservationComplements,
         tObservationDetails,
+        tIndividuals,
         bibTablesLocations,
         bibNomenclaturesTypesTable,
         bibTypeSitesTable,
@@ -12611,6 +13468,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         tActions,
         tPermissionsAvailable,
         tPermissions,
+        corIndividualModuleTable,
         corSiteModuleTable,
         corSitesGroupModuleTable,
         corObjectModuleTable,
@@ -14869,6 +15727,7 @@ typedef $$TObservationsTableCreateCompanionBuilder = TObservationsCompanion
   Value<int> idObservation,
   Value<int?> idBaseVisit,
   Value<int?> idDigitiser,
+  Value<int?> idIndividual,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
@@ -14879,6 +15738,7 @@ typedef $$TObservationsTableUpdateCompanionBuilder = TObservationsCompanion
   Value<int> idObservation,
   Value<int?> idBaseVisit,
   Value<int?> idDigitiser,
+  Value<int?> idIndividual,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
@@ -14902,6 +15762,9 @@ class $$TObservationsTableFilterComposer
 
   ColumnFilters<int> get idDigitiser => $composableBuilder(
       column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnFilters(column));
@@ -14937,6 +15800,10 @@ class $$TObservationsTableOrderingComposer
   ColumnOrderings<int> get idDigitiser => $composableBuilder(
       column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnOrderings(column));
 
@@ -14969,6 +15836,9 @@ class $$TObservationsTableAnnotationComposer
 
   GeneratedColumn<int> get idDigitiser => $composableBuilder(
       column: $table.idDigitiser, builder: (column) => column);
+
+  GeneratedColumn<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => column);
 
   GeneratedColumn<int> get cdNom =>
       $composableBuilder(column: $table.cdNom, builder: (column) => column);
@@ -15012,6 +15882,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
             Value<int?> idDigitiser = const Value.absent(),
+            Value<int?> idIndividual = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
@@ -15021,6 +15892,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
             idDigitiser: idDigitiser,
+            idIndividual: idIndividual,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
@@ -15030,6 +15902,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
             Value<int?> idDigitiser = const Value.absent(),
+            Value<int?> idIndividual = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
@@ -15039,6 +15912,7 @@ class $$TObservationsTableTableManager extends RootTableManager<
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
             idDigitiser: idDigitiser,
+            idIndividual: idIndividual,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
@@ -15357,6 +16231,278 @@ typedef $$TObservationDetailsTableProcessedTableManager = ProcessedTableManager<
           TObservationDetail>
     ),
     TObservationDetail,
+    PrefetchHooks Function()>;
+typedef $$TIndividualsTableCreateCompanionBuilder = TIndividualsCompanion
+    Function({
+  Value<int> idIndividual,
+  Value<int?> idDigitiser,
+  Value<int?> cdNom,
+  Value<String?> comment,
+  Value<String?> individualName,
+  Value<int?> idNomenclatureSex,
+  Value<bool?> activeIndividual,
+  Value<String?> uuidIndividual,
+  Value<int?> serverIndividualId,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+typedef $$TIndividualsTableUpdateCompanionBuilder = TIndividualsCompanion
+    Function({
+  Value<int> idIndividual,
+  Value<int?> idDigitiser,
+  Value<int?> cdNom,
+  Value<String?> comment,
+  Value<String?> individualName,
+  Value<int?> idNomenclatureSex,
+  Value<bool?> activeIndividual,
+  Value<String?> uuidIndividual,
+  Value<int?> serverIndividualId,
+  Value<DateTime?> metaCreateDate,
+  Value<DateTime?> metaUpdateDate,
+});
+
+class $$TIndividualsTableFilterComposer
+    extends Composer<_$AppDatabase, $TIndividualsTable> {
+  $$TIndividualsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get cdNom => $composableBuilder(
+      column: $table.cdNom, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get comment => $composableBuilder(
+      column: $table.comment, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get individualName => $composableBuilder(
+      column: $table.individualName,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idNomenclatureSex => $composableBuilder(
+      column: $table.idNomenclatureSex,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get activeIndividual => $composableBuilder(
+      column: $table.activeIndividual,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<String> get uuidIndividual => $composableBuilder(
+      column: $table.uuidIndividual,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverIndividualId => $composableBuilder(
+      column: $table.serverIndividualId,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnFilters(column));
+}
+
+class $$TIndividualsTableOrderingComposer
+    extends Composer<_$AppDatabase, $TIndividualsTable> {
+  $$TIndividualsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get cdNom => $composableBuilder(
+      column: $table.cdNom, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get comment => $composableBuilder(
+      column: $table.comment, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get individualName => $composableBuilder(
+      column: $table.individualName,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idNomenclatureSex => $composableBuilder(
+      column: $table.idNomenclatureSex,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get activeIndividual => $composableBuilder(
+      column: $table.activeIndividual,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<String> get uuidIndividual => $composableBuilder(
+      column: $table.uuidIndividual,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverIndividualId => $composableBuilder(
+      column: $table.serverIndividualId,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate,
+      builder: (column) => ColumnOrderings(column));
+}
+
+class $$TIndividualsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $TIndividualsTable> {
+  $$TIndividualsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => column);
+
+  GeneratedColumn<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => column);
+
+  GeneratedColumn<int> get cdNom =>
+      $composableBuilder(column: $table.cdNom, builder: (column) => column);
+
+  GeneratedColumn<String> get comment =>
+      $composableBuilder(column: $table.comment, builder: (column) => column);
+
+  GeneratedColumn<String> get individualName => $composableBuilder(
+      column: $table.individualName, builder: (column) => column);
+
+  GeneratedColumn<int> get idNomenclatureSex => $composableBuilder(
+      column: $table.idNomenclatureSex, builder: (column) => column);
+
+  GeneratedColumn<bool> get activeIndividual => $composableBuilder(
+      column: $table.activeIndividual, builder: (column) => column);
+
+  GeneratedColumn<String> get uuidIndividual => $composableBuilder(
+      column: $table.uuidIndividual, builder: (column) => column);
+
+  GeneratedColumn<int> get serverIndividualId => $composableBuilder(
+      column: $table.serverIndividualId, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaCreateDate => $composableBuilder(
+      column: $table.metaCreateDate, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get metaUpdateDate => $composableBuilder(
+      column: $table.metaUpdateDate, builder: (column) => column);
+}
+
+class $$TIndividualsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $TIndividualsTable,
+    TIndividual,
+    $$TIndividualsTableFilterComposer,
+    $$TIndividualsTableOrderingComposer,
+    $$TIndividualsTableAnnotationComposer,
+    $$TIndividualsTableCreateCompanionBuilder,
+    $$TIndividualsTableUpdateCompanionBuilder,
+    (
+      TIndividual,
+      BaseReferences<_$AppDatabase, $TIndividualsTable, TIndividual>
+    ),
+    TIndividual,
+    PrefetchHooks Function()> {
+  $$TIndividualsTableTableManager(_$AppDatabase db, $TIndividualsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$TIndividualsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$TIndividualsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$TIndividualsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idIndividual = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
+            Value<int?> cdNom = const Value.absent(),
+            Value<String?> comment = const Value.absent(),
+            Value<String?> individualName = const Value.absent(),
+            Value<int?> idNomenclatureSex = const Value.absent(),
+            Value<bool?> activeIndividual = const Value.absent(),
+            Value<String?> uuidIndividual = const Value.absent(),
+            Value<int?> serverIndividualId = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TIndividualsCompanion(
+            idIndividual: idIndividual,
+            idDigitiser: idDigitiser,
+            cdNom: cdNom,
+            comment: comment,
+            individualName: individualName,
+            idNomenclatureSex: idNomenclatureSex,
+            activeIndividual: activeIndividual,
+            uuidIndividual: uuidIndividual,
+            serverIndividualId: serverIndividualId,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          createCompanionCallback: ({
+            Value<int> idIndividual = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
+            Value<int?> cdNom = const Value.absent(),
+            Value<String?> comment = const Value.absent(),
+            Value<String?> individualName = const Value.absent(),
+            Value<int?> idNomenclatureSex = const Value.absent(),
+            Value<bool?> activeIndividual = const Value.absent(),
+            Value<String?> uuidIndividual = const Value.absent(),
+            Value<int?> serverIndividualId = const Value.absent(),
+            Value<DateTime?> metaCreateDate = const Value.absent(),
+            Value<DateTime?> metaUpdateDate = const Value.absent(),
+          }) =>
+              TIndividualsCompanion.insert(
+            idIndividual: idIndividual,
+            idDigitiser: idDigitiser,
+            cdNom: cdNom,
+            comment: comment,
+            individualName: individualName,
+            idNomenclatureSex: idNomenclatureSex,
+            activeIndividual: activeIndividual,
+            uuidIndividual: uuidIndividual,
+            serverIndividualId: serverIndividualId,
+            metaCreateDate: metaCreateDate,
+            metaUpdateDate: metaUpdateDate,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$TIndividualsTableProcessedTableManager = ProcessedTableManager<
+    _$AppDatabase,
+    $TIndividualsTable,
+    TIndividual,
+    $$TIndividualsTableFilterComposer,
+    $$TIndividualsTableOrderingComposer,
+    $$TIndividualsTableAnnotationComposer,
+    $$TIndividualsTableCreateCompanionBuilder,
+    $$TIndividualsTableUpdateCompanionBuilder,
+    (
+      TIndividual,
+      BaseReferences<_$AppDatabase, $TIndividualsTable, TIndividual>
+    ),
+    TIndividual,
     PrefetchHooks Function()>;
 typedef $$BibTablesLocationsTableCreateCompanionBuilder
     = BibTablesLocationsCompanion Function({
@@ -16713,6 +17859,142 @@ typedef $$TPermissionsTableProcessedTableManager = ProcessedTableManager<
     ),
     TPermission,
     PrefetchHooks Function()>;
+typedef $$CorIndividualModuleTableTableCreateCompanionBuilder
+    = CorIndividualModuleTableCompanion Function({
+  required int idIndividual,
+  required int idModule,
+  Value<int> rowid,
+});
+typedef $$CorIndividualModuleTableTableUpdateCompanionBuilder
+    = CorIndividualModuleTableCompanion Function({
+  Value<int> idIndividual,
+  Value<int> idModule,
+  Value<int> rowid,
+});
+
+class $$CorIndividualModuleTableTableFilterComposer
+    extends Composer<_$AppDatabase, $CorIndividualModuleTableTable> {
+  $$CorIndividualModuleTableTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnFilters(column));
+}
+
+class $$CorIndividualModuleTableTableOrderingComposer
+    extends Composer<_$AppDatabase, $CorIndividualModuleTableTable> {
+  $$CorIndividualModuleTableTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get idModule => $composableBuilder(
+      column: $table.idModule, builder: (column) => ColumnOrderings(column));
+}
+
+class $$CorIndividualModuleTableTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CorIndividualModuleTableTable> {
+  $$CorIndividualModuleTableTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get idIndividual => $composableBuilder(
+      column: $table.idIndividual, builder: (column) => column);
+
+  GeneratedColumn<int> get idModule =>
+      $composableBuilder(column: $table.idModule, builder: (column) => column);
+}
+
+class $$CorIndividualModuleTableTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $CorIndividualModuleTableTable,
+    CorIndividualModule,
+    $$CorIndividualModuleTableTableFilterComposer,
+    $$CorIndividualModuleTableTableOrderingComposer,
+    $$CorIndividualModuleTableTableAnnotationComposer,
+    $$CorIndividualModuleTableTableCreateCompanionBuilder,
+    $$CorIndividualModuleTableTableUpdateCompanionBuilder,
+    (
+      CorIndividualModule,
+      BaseReferences<_$AppDatabase, $CorIndividualModuleTableTable,
+          CorIndividualModule>
+    ),
+    CorIndividualModule,
+    PrefetchHooks Function()> {
+  $$CorIndividualModuleTableTableTableManager(
+      _$AppDatabase db, $CorIndividualModuleTableTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CorIndividualModuleTableTableFilterComposer(
+                  $db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CorIndividualModuleTableTableOrderingComposer(
+                  $db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$CorIndividualModuleTableTableAnnotationComposer(
+                  $db: db, $table: table),
+          updateCompanionCallback: ({
+            Value<int> idIndividual = const Value.absent(),
+            Value<int> idModule = const Value.absent(),
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorIndividualModuleTableCompanion(
+            idIndividual: idIndividual,
+            idModule: idModule,
+            rowid: rowid,
+          ),
+          createCompanionCallback: ({
+            required int idIndividual,
+            required int idModule,
+            Value<int> rowid = const Value.absent(),
+          }) =>
+              CorIndividualModuleTableCompanion.insert(
+            idIndividual: idIndividual,
+            idModule: idModule,
+            rowid: rowid,
+          ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ));
+}
+
+typedef $$CorIndividualModuleTableTableProcessedTableManager
+    = ProcessedTableManager<
+        _$AppDatabase,
+        $CorIndividualModuleTableTable,
+        CorIndividualModule,
+        $$CorIndividualModuleTableTableFilterComposer,
+        $$CorIndividualModuleTableTableOrderingComposer,
+        $$CorIndividualModuleTableTableAnnotationComposer,
+        $$CorIndividualModuleTableTableCreateCompanionBuilder,
+        $$CorIndividualModuleTableTableUpdateCompanionBuilder,
+        (
+          CorIndividualModule,
+          BaseReferences<_$AppDatabase, $CorIndividualModuleTableTable,
+              CorIndividualModule>
+        ),
+        CorIndividualModule,
+        PrefetchHooks Function()>;
 typedef $$CorSiteModuleTableTableCreateCompanionBuilder
     = CorSiteModuleTableCompanion Function({
   required int idBaseSite,
@@ -17554,9 +18836,10 @@ final class $$CorVisitObserverTableReferences extends BaseReferences<
       db.tBaseVisits.createAlias($_aliasNameGenerator(
           db.corVisitObserver.idBaseVisit, db.tBaseVisits.idBaseVisit));
 
-  $$TBaseVisitsTableProcessedTableManager get idBaseVisit {
+  $$TBaseVisitsTableProcessedTableManager? get idBaseVisit {
+    if ($_item.idBaseVisit == null) return null;
     final manager = $$TBaseVisitsTableTableManager($_db, $_db.tBaseVisits)
-        .filter((f) => f.idBaseVisit($_item.idBaseVisit));
+        .filter((f) => f.idBaseVisit($_item.idBaseVisit!));
     final item = $_typedResult.readTableOrNull(_idBaseVisitTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18887,9 +20170,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.bibListesTable.createAlias($_aliasNameGenerator(
           db.corTaxonListeTable.idListe, db.bibListesTable.idListe));
 
-  $$BibListesTableTableProcessedTableManager get idListe {
+  $$BibListesTableTableProcessedTableManager? get idListe {
+    if ($_item.idListe == null) return null;
     final manager = $$BibListesTableTableTableManager($_db, $_db.bibListesTable)
-        .filter((f) => f.idListe($_item.idListe));
+        .filter((f) => f.idListe($_item.idListe!));
     final item = $_typedResult.readTableOrNull(_idListeTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18900,9 +20184,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.tTaxrefs.createAlias(
           $_aliasNameGenerator(db.corTaxonListeTable.cdNom, db.tTaxrefs.cdNom));
 
-  $$TTaxrefsTableProcessedTableManager get cdNom {
+  $$TTaxrefsTableProcessedTableManager? get cdNom {
+    if ($_item.cdNom == null) return null;
     final manager = $$TTaxrefsTableTableManager($_db, $_db.tTaxrefs)
-        .filter((f) => f.cdNom($_item.cdNom));
+        .filter((f) => f.cdNom($_item.cdNom!));
     final item = $_typedResult.readTableOrNull(_cdNomTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -19330,6 +20615,8 @@ class $AppDatabaseManager {
           _db, _db.tObservationComplements);
   $$TObservationDetailsTableTableManager get tObservationDetails =>
       $$TObservationDetailsTableTableManager(_db, _db.tObservationDetails);
+  $$TIndividualsTableTableManager get tIndividuals =>
+      $$TIndividualsTableTableManager(_db, _db.tIndividuals);
   $$BibTablesLocationsTableTableManager get bibTablesLocations =>
       $$BibTablesLocationsTableTableManager(_db, _db.bibTablesLocations);
   $$BibNomenclaturesTypesTableTableTableManager
@@ -19346,6 +20633,9 @@ class $AppDatabaseManager {
       $$TPermissionsAvailableTableTableManager(_db, _db.tPermissionsAvailable);
   $$TPermissionsTableTableManager get tPermissions =>
       $$TPermissionsTableTableManager(_db, _db.tPermissions);
+  $$CorIndividualModuleTableTableTableManager get corIndividualModuleTable =>
+      $$CorIndividualModuleTableTableTableManager(
+          _db, _db.corIndividualModuleTable);
   $$CorSiteModuleTableTableTableManager get corSiteModuleTable =>
       $$CorSiteModuleTableTableTableManager(_db, _db.corSiteModuleTable);
   $$CorSitesGroupModuleTableTableTableManager get corSitesGroupModuleTable =>

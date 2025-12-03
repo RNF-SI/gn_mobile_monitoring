@@ -1,6 +1,7 @@
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/individual_module.dart';
 
 abstract class ModulesDatabase {
   // Module operations
@@ -32,6 +33,10 @@ abstract class ModulesDatabase {
   // CorSitesGroupModule operations
   Future<void> clearSitesGroupModules(int moduleId);
   Future<void> insertSitesGroupModules(List<SitesGroupModule> siteGroups);
+
+  // CorIndividualModule operations
+  // Future<void> clearIndividualModules(int moduleId);
+  // Future<void> insertIndividualModules(List<IndividualModule> siteGroups);
 
   // Module-Dataset relationship operations
   Future<void> associateModuleWithDataset(int moduleId, int datasetId);

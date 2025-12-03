@@ -11,8 +11,6 @@ class TIndividuals extends Table {
   BoolColumn get activeIndividual => boolean().nullable()();
   TextColumn get uuidIndividual => text().nullable().unique()();
   IntColumn get serverIndividualId => integer().nullable()();
-  TextColumn get metaCreateDate =>
-      text().withDefault(const Constant('CURRENT_TIMESTAMP'))();
-  TextColumn get metaUpdateDate =>
-      text().withDefault(const Constant('CURRENT_TIMESTAMP'))();
+  DateTimeColumn get metaCreateDate => dateTime().nullable()();
+  DateTimeColumn get metaUpdateDate => dateTime().nullable()();
 }

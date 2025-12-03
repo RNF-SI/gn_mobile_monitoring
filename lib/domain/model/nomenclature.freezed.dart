@@ -42,9 +42,7 @@ mixin _$Nomenclature {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
 
-  /// Create a copy of Nomenclature
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $NomenclatureCopyWith<Nomenclature> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -92,8 +90,6 @@ class _$NomenclatureCopyWithImpl<$Res, $Val extends Nomenclature>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of Nomenclature
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -266,8 +262,6 @@ class __$$NomenclatureImplCopyWithImpl<$Res>
       _$NomenclatureImpl _value, $Res Function(_$NomenclatureImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of Nomenclature
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -555,9 +549,7 @@ class _$NomenclatureImpl implements _Nomenclature {
         metaUpdateDate
       ]);
 
-  /// Create a copy of Nomenclature
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$NomenclatureImplCopyWith<_$NomenclatureImpl> get copyWith =>
@@ -600,8 +592,8 @@ abstract class _Nomenclature implements Nomenclature {
   @override
   String? get mnemonique;
   @override
-  String? get codeType; // Ajout du champ code_type
-  @override
+  String? get codeType;
+  @override // Ajout du champ code_type
   String? get labelDefault;
   @override
   String? get definitionDefault;
@@ -639,11 +631,8 @@ abstract class _Nomenclature implements Nomenclature {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
-
-  /// Create a copy of Nomenclature
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$NomenclatureImplCopyWith<_$NomenclatureImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
