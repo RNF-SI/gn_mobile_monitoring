@@ -59,6 +59,7 @@ dependencies:
   flutter_map: ^8.2.2
   latlong2: ^0.9.1
   geolocator: ^14.0.2
+  point_in_polygon: ^1.0.0
   # Ajout pour le système de rapports d'erreurs
 
 dev_dependencies:

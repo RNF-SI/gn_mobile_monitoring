@@ -18,6 +18,259 @@ import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_pa
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:point_in_polygon/point_in_polygon.dart' as pip;
+
+/// Widget personnalisé pour le breadcrumb avec description du module dans les détails
+class _ModuleBreadcrumbWithDescription extends StatefulWidget {
+  final List<BreadcrumbItem> items;
+  final String? description;
+
+  const _ModuleBreadcrumbWithDescription({
+    required this.items,
+    this.description,
+  });
+
+  @override
+  State<_ModuleBreadcrumbWithDescription> createState() =>
+      _ModuleBreadcrumbWithDescriptionState();
+}
+
+class _ModuleBreadcrumbWithDescriptionState
+    extends State<_ModuleBreadcrumbWithDescription> {
+  bool _showDetails = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Titre du fil d'Ariane
+        Row(
+          children: [
+            Icon(
+              Icons.navigation,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Navigation',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Fil d'Ariane générique (toujours visible)
+        _buildGenericBreadcrumb(context),
+
+        // Bouton pour afficher/masquer les détails
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _showDetails = !_showDetails;
+            });
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _showDetails ? Icons.expand_less : Icons.expand_more,
+                size: 16,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _showDetails ? 'Masquer les détails' : 'Afficher les détails',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Détails (affichés conditionnellement)
+        if (_showDetails) ...[
+          const SizedBox(height: 8),
+          _buildDetailedBreadcrumb(context),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGenericBreadcrumb(BuildContext context) {
+    final breadcrumbItems = <Widget>[];
+
+    for (int i = 0; i < widget.items.length; i++) {
+      final item = widget.items[i];
+      final isLast = i == widget.items.length - 1;
+
+      breadcrumbItems.add(
+        _buildGenericBreadcrumbItem(item, context, isLast),
+      );
+
+      if (!isLast) {
+        breadcrumbItems.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: Icon(
+              Icons.chevron_right,
+              size: 14,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Wrap(
+      alignment: WrapAlignment.start,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: breadcrumbItems,
+    );
+  }
+
+  Widget _buildGenericBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context, bool isLast) {
+    final style = TextStyle(
+      fontSize: 14,
+      fontWeight: isLast ? FontWeight.bold : FontWeight.w500,
+      color: isLast
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+    );
+
+    if (item.onTap != null && !isLast) {
+      return InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+          child: Text(item.label, style: style),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+        child: Text(item.label, style: style),
+      );
+    }
+  }
+
+  Widget _buildDetailedBreadcrumb(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Éléments du breadcrumb
+          ...widget.items
+              .map((item) => _buildDetailedBreadcrumbItem(item, context)),
+          // Description du module
+          if (widget.description != null && widget.description!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Text(
+                      'Description:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.description!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context) {
+    final isLast = widget.items.indexOf(item) == widget.items.length - 1;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '${item.label}:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ),
+          Expanded(
+            child: item.onTap != null && !isLast
+                ? InkWell(
+                    onTap: item.onTap,
+                    child: Text(
+                      item.value,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  )
+                : Text(
+                    item.value,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
+                      color: isLast
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class ModuleDetailPageBase extends DetailPage {
   final ModuleInfo moduleInfo;
@@ -112,9 +365,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Données de base du module
     final module = _updatedModule ?? widget.moduleInfo.module;
     final Map<String, dynamic> data = {
-      'moduleLabel': module.moduleLabel,
-      'moduleDesc': module.moduleDesc,
-      // Ajout d'autres propriétés de base si disponibles
+      // Propriétés de base du module
+      'id_module': module.id,
+      'module_code': module.moduleCode,
+      'module_label': module.moduleLabel,
+      'module_desc': module.moduleDesc,
+      'module_picto': module.modulePicto,
+      'module_group': module.moduleGroup,
+      'module_path': module.modulePath,
+      'module_external_url': module.moduleExternalUrl,
+      'module_target': module.moduleTarget,
+      'module_comment': module.moduleComment,
+      'active_frontend': module.activeFrontend,
+      'active_backend': module.activeBackend,
+      'module_doc_url': module.moduleDocUrl,
+      'module_order': module.moduleOrder,
+      'ng_module': module.ngModule,
+      if (module.metaCreateDate != null)
+        'meta_create_date': module.metaCreateDate!.toIso8601String(),
+      if (module.metaUpdateDate != null)
+        'meta_update_date': module.metaUpdateDate!.toIso8601String(),
+      'downloaded': module.downloaded,
     };
 
     // Ajouter les données complémentaires si disponibles
@@ -127,7 +398,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         data.addAll(parsedData);
       } catch (e) {
         // En cas d'erreur de parsing, on ignore silencieusement
-        print('Erreur de parsing des données complémentaires: $e');
+        debugPrint('Erreur de parsing des données complémentaires: $e');
       }
     }
 
@@ -138,7 +409,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   List<String> get childrenTypes => _childrenTypes;
 
   @override
-  String get propertiesTitle => 'Propriétés';
+  String get propertiesTitle {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final moduleLabel = module.moduleLabel ?? 'Module';
+    return 'Module $moduleLabel';
+  }
+
+  @override
+  Widget buildPropertiesWidget() {
+    // On ne veut plus afficher la card des propriétés
+    return const SizedBox.shrink();
+  }
+
+  @override
+  Widget buildBaseContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildPropertiesWidget(),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -401,6 +695,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   @override
+  Widget buildBreadcrumb() {
+    final items = getBreadcrumbItems();
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final moduleDesc = module.moduleDesc;
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          child: _ModuleBreadcrumbWithDescription(
+            items: items,
+            description: moduleDesc,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   PreferredSizeWidget buildAppBar() {
     // Vérifier si la configuration est en cours de chargement
     final bool isConfiguringModule = _isInitialLoading ||
@@ -449,13 +767,20 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     final int propertiesFlex = isKeyboardVisible ? 1 : 2;
     final int childrenFlex = isKeyboardVisible ? 4 : 3;
 
+    // Si on a des groupes de sites, les afficher directement sous la navigation
+    final hasSiteGroups = _childrenTypes.contains('sites_group');
+
     return Scaffold(
       appBar: buildAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           buildBreadcrumb(),
-          if (childContent == null)
+          if (hasSiteGroups)
+            Expanded(
+              child: _buildGroupsTab(),
+            )
+          else if (childContent == null)
             Expanded(child: buildBaseContent())
           else
             Expanded(
@@ -480,6 +805,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   @override
   Widget? buildChildrenContent() {
     if (_childrenTypes.isEmpty || _tabController == null) {
+      return null;
+    }
+
+    // Si on a des groupes de sites, on ne passe pas par buildChildrenContent
+    // car ils sont affichés directement dans build()
+    if (_childrenTypes.contains('sites_group')) {
       return null;
     }
 
@@ -524,8 +855,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         buildTabBar(
           tabController: _tabController!,
           tabs: [
-            if (_childrenTypes.contains('sites_group'))
-              _buildTabLabel('sites_group'),
             if (_childrenTypes.contains('site')) _buildTabLabel('site'),
           ],
         ),
@@ -535,7 +864,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           child: TabBarView(
             controller: _tabController!,
             children: [
-              if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
               if (_childrenTypes.contains('site')) _buildSitesTab(),
             ],
           ),
@@ -814,7 +1142,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   /// Calcule la géométrie d'un groupe à partir de ses sites enfants
-  /// Retourne un Point GeoJSON représentant le centroid des sites
+  /// Retourne un Polygon GeoJSON représentant l'enveloppe convexe (convex hull) des sites
   Future<String?> _calculateGroupGeometryFromSites(
       int siteGroupId, SitesDatabase sitesDatabase) async {
     try {
@@ -839,15 +1167,14 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                   coords[1].toDouble(),
                 ]);
               } else if (type == 'Polygon' && coords is List) {
-                // Pour un polygon, prendre le premier point du premier ring
+                // Pour un polygon, extraire tous les points du premier ring
                 if (coords.isNotEmpty && coords[0] is List) {
                   final firstRing = coords[0] as List;
-                  if (firstRing.isNotEmpty && firstRing[0] is List) {
-                    final firstPoint = firstRing[0] as List;
-                    if (firstPoint.length >= 2) {
+                  for (var point in firstRing) {
+                    if (point is List && point.length >= 2) {
                       coordinates.add([
-                        firstPoint[0].toDouble(),
-                        firstPoint[1].toDouble(),
+                        point[0].toDouble(),
+                        point[1].toDouble(),
                       ]);
                     }
                   }
@@ -866,29 +1193,101 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         return null;
       }
 
-      // Calculer le centroid (moyenne des coordonnées)
-      double sumLon = 0;
-      double sumLat = 0;
-      for (var coord in coordinates) {
-        sumLon += coord[0];
-        sumLat += coord[1];
+      // Si on a un seul point, retourner un Point GeoJSON
+      if (coordinates.length == 1) {
+        final lon = coordinates[0][0];
+        final lat = coordinates[0][1];
+        final pointGeom = {
+          'type': 'Point',
+          'coordinates': [lon, lat],
+        };
+        debugPrint('  Point unique: lon=$lon, lat=$lat');
+        return jsonEncode(pointGeom);
       }
-      final centroidLon = sumLon / coordinates.length;
-      final centroidLat = sumLat / coordinates.length;
 
-      debugPrint('  Centroid calculé: lon=$centroidLon, lat=$centroidLat');
+      // Calculer l'enveloppe convexe (convex hull) des points
+      final hull = _calculateConvexHull(coordinates);
 
-      // Créer un Point GeoJSON
-      final centroidGeom = {
-        'type': 'Point',
-        'coordinates': [centroidLon, centroidLat],
+      if (hull.isEmpty) {
+        debugPrint('  ✗ Impossible de calculer l\'enveloppe convexe');
+        return null;
+      }
+
+      // Fermer le polygone en ajoutant le premier point à la fin
+      if (hull.first[0] != hull.last[0] || hull.first[1] != hull.last[1]) {
+        hull.add([hull.first[0], hull.first[1]]);
+      }
+
+      debugPrint('  Enveloppe convexe calculée avec ${hull.length} points');
+
+      // Créer un Polygon GeoJSON
+      final polygonGeom = {
+        'type': 'Polygon',
+        'coordinates': [hull],
       };
 
-      return jsonEncode(centroidGeom);
+      return jsonEncode(polygonGeom);
     } catch (e) {
       debugPrint('  ❌ Erreur lors du calcul de la géométrie: $e');
       return null;
     }
+  }
+
+  /// Calcule l'enveloppe convexe (convex hull) d'un ensemble de points
+  /// Utilise l'algorithme de Graham scan
+  List<List<double>> _calculateConvexHull(List<List<double>> points) {
+    if (points.length < 3) {
+      // Si moins de 3 points, retourner tous les points
+      return List.from(points);
+    }
+
+    // Trier les points par x, puis par y
+    final sortedPoints = List<List<double>>.from(points);
+    sortedPoints.sort((a, b) {
+      if (a[0] != b[0]) {
+        return a[0].compareTo(b[0]);
+      }
+      return a[1].compareTo(b[1]);
+    });
+
+    // Fonction pour calculer l'orientation (cross product)
+    int orientation(List<double> p, List<double> q, List<double> r) {
+      final val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]);
+      if (val == 0) return 0; // Collinear
+      return (val > 0) ? 1 : 2; // Clockwise or Counterclockwise
+    }
+
+    // Construire la partie inférieure de l'enveloppe convexe
+    final lower = <List<double>>[];
+    for (var point in sortedPoints) {
+      while (lower.length >= 2 &&
+          orientation(
+                  lower[lower.length - 2], lower[lower.length - 1], point) !=
+              2) {
+        lower.removeLast();
+      }
+      lower.add(point);
+    }
+
+    // Construire la partie supérieure de l'enveloppe convexe
+    final upper = <List<double>>[];
+    for (var i = sortedPoints.length - 1; i >= 0; i--) {
+      final point = sortedPoints[i];
+      while (upper.length >= 2 &&
+          orientation(
+                  upper[upper.length - 2], upper[upper.length - 1], point) !=
+              2) {
+        upper.removeLast();
+      }
+      upper.add(point);
+    }
+
+    // Combiner les deux parties (enlever le dernier point de chaque pour éviter la duplication)
+    lower.removeLast();
+    upper.removeLast();
+    lower.addAll(upper);
+
+    return lower;
   }
 
   Widget _buildGroupsExpansionPanelList(
@@ -1293,7 +1692,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
   }
 
-  /// Calcule la distance entre la position de l'utilisateur et un groupe de sites
+  /// Calcule la distance minimale entre la position de l'utilisateur et un groupe de sites
+  /// Pour un polygone, calcule la distance minimale au polygone (0 si le point est à l'intérieur)
   double? _calculateGroupDistance(SiteGroup group) {
     if (_userPosition == null || group.geom == null) {
       return null;
@@ -1302,37 +1702,200 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     try {
       // Parser la géométrie GeoJSON
       final geomData = jsonDecode(group.geom!);
-      double? groupLat;
-      double? groupLon;
+      final userLat = _userPosition!.latitude;
+      final userLon = _userPosition!.longitude;
 
-      // Extraire les coordonnées selon le type de géométrie
       if (geomData is Map<String, dynamic>) {
         final type = geomData['type'];
         final coordinates = geomData['coordinates'];
 
         if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
           // Format GeoJSON: [longitude, latitude]
-          groupLon = coordinates[0].toDouble();
-          groupLat = coordinates[1].toDouble();
+          final groupLon = coordinates[0].toDouble();
+          final groupLat = coordinates[1].toDouble();
+
+          // Calculer la distance en mètres
+          return Geolocator.distanceBetween(
+            userLat,
+            userLon,
+            groupLat,
+            groupLon,
+          );
+        } else if (type == 'Polygon' && coordinates is List) {
+          // Pour un polygone, calculer la distance minimale au polygone
+          return _calculateDistanceToPolygon(userLat, userLon, coordinates);
+        } else if (type == 'MultiPolygon' && coordinates is List) {
+          // Pour un MultiPolygon, calculer la distance minimale à tous les polygones
+          double? minDistance;
+          for (var polygon in coordinates) {
+            if (polygon is List && polygon.isNotEmpty) {
+              final distance =
+                  _calculateDistanceToPolygon(userLat, userLon, polygon);
+              if (distance != null) {
+                if (minDistance == null || distance < minDistance) {
+                  minDistance = distance;
+                }
+                // Si le point est à l'intérieur d'un polygone, distance = 0
+                if (distance == 0) {
+                  return 0;
+                }
+              }
+            }
+          }
+          return minDistance;
         }
       }
 
-      if (groupLat == null || groupLon == null) {
-        return null;
-      }
-
-      // Calculer la distance en mètres
-      return Geolocator.distanceBetween(
-        _userPosition!.latitude,
-        _userPosition!.longitude,
-        groupLat,
-        groupLon,
-      );
+      return null;
     } catch (e) {
       debugPrint(
           'Erreur lors du calcul de la distance pour le groupe ${group.idSitesGroup}: $e');
       return null;
     }
+  }
+
+  /// Calcule la distance minimale d'un point à un polygone GeoJSON
+  /// Retourne 0 si le point est à l'intérieur du polygone
+  double? _calculateDistanceToPolygon(
+      double lat, double lon, List coordinates) {
+    if (coordinates.isEmpty || coordinates[0] is! List) {
+      return null;
+    }
+
+    // Le premier ring est le contour extérieur du polygone
+    final outerRing = coordinates[0] as List;
+    if (outerRing.isEmpty) {
+      return null;
+    }
+
+    // Convertir les coordonnées du polygone en format pour point_in_polygon
+    // Le package attend des points [x, y] où x=longitude, y=latitude
+    // IMPORTANT: Le polygone GeoJSON peut être fermé (dernier point = premier point)
+    // Le package point_in_polygon peut nécessiter un polygone non fermé
+    final List<pip.Point> polygonPoints = [];
+    for (int i = 0; i < outerRing.length; i++) {
+      var coord = outerRing[i];
+      if (coord is List && coord.length >= 2) {
+        // Format GeoJSON: [longitude, latitude]
+        final point = pip.Point(x: coord[0].toDouble(), y: coord[1].toDouble());
+
+        // Ignorer le dernier point s'il est identique au premier (polygone fermé)
+        if (i == outerRing.length - 1 && polygonPoints.isNotEmpty) {
+          final firstPoint = polygonPoints.first;
+          if ((point.x - firstPoint.x).abs() < 1e-10 &&
+              (point.y - firstPoint.y).abs() < 1e-10) {
+            break;
+          }
+        }
+
+        polygonPoints.add(point);
+      }
+    }
+
+    if (polygonPoints.isEmpty) {
+      return null;
+    }
+
+    // Vérifier si le point est à l'intérieur du polygone
+    // Utilisation d'un algorithme ray casting robuste
+    final isInside = _isPointInPolygonRobust(lat, lon, polygonPoints);
+
+    if (isInside) {
+      return 0.0;
+    }
+
+    // Calculer la distance minimale à chaque segment du polygone
+    double minDistance = double.infinity;
+    for (int i = 0; i < polygonPoints.length; i++) {
+      final p1 = polygonPoints[i];
+      final p2 = polygonPoints[(i + 1) % polygonPoints.length];
+
+      // Convertir de [lon, lat] à [lat, lon] pour _distanceToSegment
+      final distance = _distanceToSegment(lat, lon, p1.y, p1.x, p2.y, p2.x);
+      if (distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+
+    return minDistance.isFinite ? minDistance : null;
+  }
+
+  /// Vérifie si un point est à l'intérieur d'un polygone (algorithme ray casting robuste)
+  /// Les points du polygone sont en format pip.Point (x=longitude, y=latitude)
+  bool _isPointInPolygonRobust(
+      double lat, double lon, List<pip.Point> polygon) {
+    if (polygon.length < 3) {
+      return false;
+    }
+
+    // Algorithme ray casting : compter les intersections avec un rayon horizontal
+    // Le rayon va de (lat, lon) vers (lat, +infini) en longitude
+    bool inside = false;
+    int j = polygon.length - 1;
+
+    for (int i = 0; i < polygon.length; i++) {
+      final xi = polygon[i].x; // longitude du point i
+      final yi = polygon[i].y; // latitude du point i
+      final xj = polygon[j].x; // longitude du point j
+      final yj = polygon[j].y; // latitude du point j
+
+      // Vérifier si le segment (i, j) intersecte le rayon horizontal
+      // Le segment intersecte si :
+      // 1. Les latitudes du segment encadrent la latitude du point
+      // 2. La longitude d'intersection est à droite du point
+      final latStraddles = ((yi > lat) != (yj > lat));
+
+      if (latStraddles) {
+        // Éviter la division par zéro
+        final latDiff = yj - yi;
+        if (latDiff.abs() > 1e-10) {
+          // Calculer la longitude d'intersection du segment avec le rayon horizontal
+          // Équation de la droite : x = xi + (xj - xi) * (lat - yi) / (yj - yi)
+          final lonIntersection = xi + (xj - xi) * (lat - yi) / latDiff;
+
+          // L'intersection est à droite du point si lon < lonIntersection
+          if (lon < lonIntersection) {
+            inside = !inside;
+          }
+        }
+      }
+      j = i;
+    }
+
+    return inside;
+  }
+
+  /// Calcule la distance d'un point à un segment de ligne
+  double _distanceToSegment(double lat, double lon, double lat1, double lon1,
+      double lat2, double lon2) {
+    // Calculer la distance du point au segment en utilisant la formule de distance point-segment
+    // On utilise la projection du point sur le segment
+
+    // Vecteur du segment
+    final dx = lon2 - lon1;
+    final dy = lat2 - lat1;
+
+    // Si le segment est un point, retourner la distance au point
+    if (dx == 0 && dy == 0) {
+      return Geolocator.distanceBetween(lat, lon, lat1, lon1);
+    }
+
+    // Vecteur du point au début du segment
+    final px = lon - lon1;
+    final py = lat - lat1;
+
+    // Produit scalaire pour trouver la projection
+    final t = (px * dx + py * dy) / (dx * dx + dy * dy);
+
+    // Clamper t entre 0 et 1 pour rester sur le segment
+    final clampedT = t.clamp(0.0, 1.0);
+
+    // Point le plus proche sur le segment
+    final closestLon = lon1 + clampedT * dx;
+    final closestLat = lat1 + clampedT * dy;
+
+    // Distance au point le plus proche
+    return Geolocator.distanceBetween(lat, lon, closestLat, closestLon);
   }
 
   /// Formate la distance pour l'affichage
@@ -1352,31 +1915,35 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       return const SizedBox.shrink();
     }
 
+    // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
+    final isInside = distance == 0.0;
+    final badgeColor = isInside ? Colors.green : Colors.blue;
+
     return Container(
       margin: const EdgeInsets.only(left: 8.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
+          color: badgeColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.location_on,
-            color: Colors.blue,
+            color: badgeColor,
             size: 16,
           ),
           const SizedBox(width: 4),
           Text(
             _formatDistance(distance),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.blue,
+              color: badgeColor,
               fontWeight: FontWeight.w600,
             ),
           ),

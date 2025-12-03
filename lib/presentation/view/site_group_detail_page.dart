@@ -842,31 +842,35 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       return const SizedBox.shrink();
     }
 
+    // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
+    final isInside = distance == 0.0;
+    final badgeColor = isInside ? Colors.green : Colors.blue;
+
     return Container(
       margin: const EdgeInsets.only(left: 8.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
+          color: badgeColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.location_on,
-            color: Colors.blue,
+            color: badgeColor,
             size: 16,
           ),
           const SizedBox(width: 4),
           Text(
             _formatDistance(distance),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.blue,
+              color: badgeColor,
               fontWeight: FontWeight.w600,
             ),
           ),

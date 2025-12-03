@@ -805,6 +805,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
+  point_in_polygon:
+    dependency: "direct main"
+    description:
+      name: point_in_polygon
+      sha256: "5a3b96871b06b5c28193421fd6203942d7b89a624bcd1851981020a426dcaf51"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.0"
   pool:
     dependency: transitive
     description:

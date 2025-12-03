@@ -272,16 +272,22 @@ class PropertyDisplayWidget extends ConsumerWidget {
     }
 
     // Filtrer les clés selon displayProperties si défini
-    final keysToShow = displayProperties != null && displayProperties.isNotEmpty
-        ? data.keys.where((key) => displayProperties.contains(key)).toList()
-        : data.keys.toList();
+    // Si displayProperties est défini, respecter son ordre, sinon utiliser l'ordre alphabétique
+    final List<String> keysToShow;
+    if (displayProperties != null && displayProperties.isNotEmpty) {
+      // Respecter l'ordre de displayProperties
+      keysToShow =
+          displayProperties.where((key) => data.containsKey(key)).toList();
+    } else {
+      keysToShow = data.keys.toList()..sort();
+    }
 
     if (!separateEmptyFields) {
       // Affichage simple (sans séparation des champs vides)
       final List<Widget> widgets = [];
-      final sortedKeys = keysToShow.toList()..sort();
+      // Utiliser keysToShow tel quel (déjà dans le bon ordre si displayProperties est défini)
 
-      for (final key in sortedKeys) {
+      for (final key in keysToShow) {
         final value = data[key];
         // Vérifier si la valeur est valide
         bool isValid = false;
@@ -410,9 +416,32 @@ class PropertyDisplayWidget extends ConsumerWidget {
       }
     }
 
-    // Trier les propriétés par ordre alphabétique dans chaque groupe
-    filledProperties.sort((a, b) => a.key.compareTo(b.key));
-    emptyProperties.sort((a, b) => a.key.compareTo(b.key));
+    // Trier les propriétés selon l'ordre de displayProperties si défini
+    if (displayProperties != null && displayProperties.isNotEmpty) {
+      // Respecter l'ordre de displayProperties
+      filledProperties.sort((a, b) {
+        final indexA = displayProperties.indexOf(a.key);
+        final indexB = displayProperties.indexOf(b.key);
+        // Si une clé n'est pas dans displayProperties, la mettre à la fin
+        if (indexA == -1 && indexB == -1) return a.key.compareTo(b.key);
+        if (indexA == -1) return 1;
+        if (indexB == -1) return -1;
+        return indexA.compareTo(indexB);
+      });
+      emptyProperties.sort((a, b) {
+        final indexA = displayProperties.indexOf(a.key);
+        final indexB = displayProperties.indexOf(b.key);
+        // Si une clé n'est pas dans displayProperties, la mettre à la fin
+        if (indexA == -1 && indexB == -1) return a.key.compareTo(b.key);
+        if (indexA == -1) return 1;
+        if (indexB == -1) return -1;
+        return indexA.compareTo(indexB);
+      });
+    } else {
+      // Trier par ordre alphabétique si displayProperties n'est pas défini
+      filledProperties.sort((a, b) => a.key.compareTo(b.key));
+      emptyProperties.sort((a, b) => a.key.compareTo(b.key));
+    }
 
     // Construire les widgets pour les propriétés
     final widgets = <Widget>[];
