@@ -32,7 +32,8 @@ extension TBaseSiteMapper on TBaseSite {
 extension BaseSiteMapper on BaseSite {
   TBaseSitesCompanion toDatabaseEntity() {
     return TBaseSitesCompanion(
-      idBaseSite: Value(idBaseSite),
+      // Si idBaseSite est 0, utiliser Value.absent() pour laisser la base générer l'ID
+      idBaseSite: idBaseSite == 0 ? const Value.absent() : Value(idBaseSite),
       baseSiteName: Value(baseSiteName),
       baseSiteDescription: Value(baseSiteDescription),
       baseSiteCode: Value(baseSiteCode),

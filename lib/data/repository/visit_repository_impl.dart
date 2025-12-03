@@ -443,7 +443,7 @@ class VisitRepositoryImpl implements VisitRepository {
   @override
   Future<List<CorVisitObserverEntity>> getVisitObservers(int visitId) async {
     final observers = await _visitesDatabase.getVisitObservers(visitId);
-    if (observers == null || observers.isEmpty) {
+    if (observers.isEmpty) {
       return [];
     }
     return observers

@@ -88,7 +88,7 @@ class _ObservationDetailPageState extends ConsumerState<ObservationDetailPage> {
       final updatedObservation = await observationsViewModel
           .getObservationById(widget.observation.idObservation);
       
-      if (updatedObservation != null && mounted) {
+      if (mounted) {
         setState(() {
           _currentObservation = updatedObservation;
         });

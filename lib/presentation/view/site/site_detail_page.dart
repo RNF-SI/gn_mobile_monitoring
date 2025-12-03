@@ -4,7 +4,6 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page_base.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 class SiteDetailPage extends ConsumerStatefulWidget {
   final BaseSite site;

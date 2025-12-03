@@ -18,6 +18,7 @@ abstract class DetailPage extends StatefulWidget {
 }
 
 abstract class DetailPageState<T extends DetailPage> extends State<T> {
+  final ScrollController _scrollController = ScrollController();
   /// Configuration de l'objet affiché
   ObjectConfig? get objectConfig;
 
@@ -385,9 +386,11 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
       ),
     );
   }
+  
 
   /// Construit un tableau de données avec le style standardisé
   Widget buildDataTable({
+    
     required List<DataColumn> columns,
     required List<DataRow> rows,
     bool showSearch = true,
@@ -466,7 +469,15 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
                         )
                       : Card(
                           elevation: 2,
+                          child: RawScrollbar(
+                            controller: _scrollController,
+                            thumbVisibility: true,
+                            interactive: true,
+                            thumbColor: Colors.redAccent,
+                            radius: Radius.circular(20),
+                            thickness: 7,
                           child: SingleChildScrollView(
+                            controller: _scrollController,
                             scrollDirection: Axis.horizontal,
                             child: SingleChildScrollView(
                               child: DataTable(
@@ -482,8 +493,10 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
                                   tableHeaderColor,
                                 ),
                               ),
+                  
                             ),
                           ),
+                        ),
                         ),
             ),
           ],

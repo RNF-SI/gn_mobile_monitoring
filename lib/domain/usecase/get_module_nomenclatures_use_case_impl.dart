@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';

@@ -6,11 +6,9 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.d
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
-import 'package:gn_mobile_monitoring/presentation/state/state.dart' as custom_async_state;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../mocks/mocks.dart';
 
 class MockGetModuleTaxonsUseCase extends Mock implements GetModuleTaxonsUseCase {}
 class MockGetTaxonsByListIdUseCase extends Mock implements GetTaxonsByListIdUseCase {}

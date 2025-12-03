@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
-import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page_base.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDeleteVisitUseCase extends Mock implements DeleteVisitUseCase {}

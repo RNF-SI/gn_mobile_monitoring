@@ -15,7 +15,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecas
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 
 /// Provider pour la version du cache - incrémenté après chaque sync pour forcer le rafraîchissement
 final cacheVersionProvider = StateProvider<int>((ref) => 0);
@@ -1094,9 +1094,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       _lastFullSync = await _getLastSyncDateUseCase.execute(fullSyncKey);
 
       // Si c'est la première fois, initialiser avec une date qui forcera une synchro complète bientôt
-      if (_lastFullSync == null) {
-        _lastFullSync = DateTime.now().subtract(const Duration(days: 5));
-      }
+      _lastFullSync ??= DateTime.now().subtract(const Duration(days: 5));
     } catch (e) {
       debugPrint(
           'Erreur lors de la récupération de la date de dernière synchronisation: $e');
@@ -1906,7 +1904,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
       final deletedPart = totalDeleted > 0 ? ", $totalDeleted supprimés" : "";
       summaryLines.insert(1,
-          "• TOTAL: ${totalAdded + totalUpdated} éléments (${totalAdded} ajoutés, ${totalUpdated} mis à jour, ${totalSkipped} ignorés$deletedPart)");
+          "• TOTAL: ${totalAdded + totalUpdated} éléments ($totalAdded ajoutés, $totalUpdated mis à jour, $totalSkipped ignorés$deletedPart)");
     }
 
     return summaryLines.join("\n");

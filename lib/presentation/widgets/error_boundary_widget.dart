@@ -62,7 +62,6 @@ class _DefaultErrorWidget extends StatefulWidget {
   final String? tag;
 
   const _DefaultErrorWidget({
-    super.key,
     required this.errorDetails,
     this.tag,
   });

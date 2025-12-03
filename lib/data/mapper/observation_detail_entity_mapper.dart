@@ -26,7 +26,7 @@ extension ObservationDetailEntityMapper on ObservationDetailEntity {
           stackTrace: stackTrace);
       }
     } else {
-      logger.w('Données JSON nulles ou vides pour l\'observation détail ${idObservationDetail}', tag: 'mapper');
+      logger.w('Données JSON nulles ou vides pour l\'observation détail $idObservationDetail', tag: 'mapper');
     }
 
     return ObservationDetail(
@@ -76,7 +76,7 @@ extension ObservationDetailMapper on ObservationDetail {
         }
       }
     } else {
-      logger.w('Données vides pour l\'observation détail ${idObservationDetail}', tag: 'mapper');
+      logger.w('Données vides pour l\'observation détail $idObservationDetail', tag: 'mapper');
     }
     
     // Vérifier que jsonData n'est pas vide si data ne l'est pas
@@ -97,12 +97,12 @@ extension ObservationDetailMapper on ObservationDetail {
 extension TObservationDetailMapper on TObservationDetail {
   ObservationDetailEntity toEntity() {
     final logger = AppLogger();
-    logger.i('Conversion d\'une entrée DB vers entité: ID=${idObservationDetail}, ID Observation=${idObservation}', tag: 'mapper');
+    logger.i('Conversion d\'une entrée DB vers entité: ID=$idObservationDetail, ID Observation=$idObservation', tag: 'mapper');
     
     if (data != null) {
       logger.i('Données présentes dans DB: ${data!.substring(0, data!.length > 100 ? 100 : data!.length)}...', tag: 'mapper');
     } else {
-      logger.w('Données nulles dans DB pour l\'observation détail ${idObservationDetail}', tag: 'mapper');
+      logger.w('Données nulles dans DB pour l\'observation détail $idObservationDetail', tag: 'mapper');
     }
     
     return ObservationDetailEntity(
@@ -119,7 +119,7 @@ extension ObservationDetailToCompanion on ObservationDetailEntity {
   TObservationDetailsCompanion toCompanion() {
     final logger = AppLogger();
     
-    logger.i('Conversion d\'une entité vers companion: ID=${idObservationDetail}, ID Observation=${idObservation}', tag: 'mapper');
+    logger.i('Conversion d\'une entité vers companion: ID=$idObservationDetail, ID Observation=$idObservation', tag: 'mapper');
     
     // Vérification des données
     if (data != null && data!.isNotEmpty) {

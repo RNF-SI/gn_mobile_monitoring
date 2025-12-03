@@ -15,7 +15,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/conflict_resolution_
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 /// Service gérant la navigation vers les éléments en conflit
@@ -260,138 +260,136 @@ class ConflictNavigationService {
                     final visit = await siteVisitsViewModel
                         .getVisitWithFullDetails(visitId);
 
-                    if (visit != null) {
-                      // Si nous avons une observation
-                      if (contextInfo.containsKey('observation')) {
-                        final observationId = contextInfo['observation'] as int;
-                        final observationsViewModel =
-                            ref.read(observationsProvider(visitId).notifier);
+                    // Si nous avons une observation
+                    if (contextInfo.containsKey('observation')) {
+                      final observationId = contextInfo['observation'] as int;
+                      final observationsViewModel =
+                          ref.read(observationsProvider(visitId).notifier);
 
-                        try {
-                          final observation = await observationsViewModel
-                              .getObservationById(observationId);
+                      try {
+                        final observation = await observationsViewModel
+                            .getObservationById(observationId);
 
-                          if (observation != null) {
-                            // Obtenir la configuration pour les observations
-                            final observationConfig = moduleInfo
-                                .module.complement?.configuration?.observation;
-                            final customConfig = moduleInfo
-                                .module.complement?.configuration?.custom;
-                            final observationDetailConfig = moduleInfo.module
-                                .complement?.configuration?.observationDetail;
+                        if (observation != null) {
+                          // Obtenir la configuration pour les observations
+                          final observationConfig = moduleInfo
+                              .module.complement?.configuration?.observation;
+                          final customConfig = moduleInfo
+                              .module.complement?.configuration?.custom;
+                          final observationDetailConfig = moduleInfo.module
+                              .complement?.configuration?.observationDetail;
 
-                            // Si nous avons un détail d'observation
-                            if (contextInfo.containsKey('detail')) {
-                              final detailId = contextInfo['detail'] as int;
-                              final observationDetailViewModel = ref.read(
-                                  observationDetailsProvider(observationId)
-                                      .notifier);
+                          // Si nous avons un détail d'observation
+                          if (contextInfo.containsKey('detail')) {
+                            final detailId = contextInfo['detail'] as int;
+                            final observationDetailViewModel = ref.read(
+                                observationDetailsProvider(observationId)
+                                    .notifier);
 
-                              try {
-                                final detail = await observationDetailViewModel
-                                    .getObservationDetailById(detailId);
+                            try {
+                              final detail = await observationDetailViewModel
+                                  .getObservationDetailById(detailId);
 
-                                if (detail != null &&
-                                    observationDetailConfig != null) {
-                                  // Fermer l'indicateur de chargement
-                                  hideLoadingIndicator();
+                              if (detail != null &&
+                                  observationDetailConfig != null) {
+                                // Fermer l'indicateur de chargement
+                                hideLoadingIndicator();
 
-                                  // Naviguer vers le détail d'observation
-                                  if (!context.mounted) return false;
-                                  final result = await Navigator.push<bool>(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          ObservationDetailDetailPage(
-                                        observationDetail: detail,
-                                        config: observationDetailConfig,
-                                        customConfig: customConfig,
-                                        index: 0,
-                                        currentConflict: conflict,
-                                      ),
+                                // Naviguer vers le détail d'observation
+                                if (!context.mounted) return false;
+                                final result = await Navigator.push<bool>(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        ObservationDetailDetailPage(
+                                      observationDetail: detail,
+                                      config: observationDetailConfig,
+                                      customConfig: customConfig,
+                                      index: 0,
+                                      currentConflict: conflict,
                                     ),
-                                  );
+                                  ),
+                                );
 
-                                  // Si la modification a réussi, marquer le conflit comme résolu
-                                  if (result == true) {
-                                    ref
-                                        .read(
-                                            conflictResolutionProvider.notifier)
-                                        .markAsResolved(conflict,
-                                            'Détail d\'observation modifié');
-                                  }
-
-                                  return result ?? false;
+                                // Si la modification a réussi, marquer le conflit comme résolu
+                                if (result == true) {
+                                  ref
+                                      .read(
+                                          conflictResolutionProvider.notifier)
+                                      .markAsResolved(conflict,
+                                          'Détail d\'observation modifié');
                                 }
-                              } catch (e) {
-                                debugPrint(
-                                    'Erreur lors du chargement du détail: $e');
+
+                                return result ?? false;
                               }
+                            } catch (e) {
+                              debugPrint(
+                                  'Erreur lors du chargement du détail: $e');
                             }
-
-                            // Si pas de détail ou erreur, naviguer vers l'observation
-                            hideLoadingIndicator();
-
-                            if (!context.mounted) return false;
-                            final result = await Navigator.push<bool>(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => ObservationDetailPage(
-                                  observation: observation,
-                                  visit: visit,
-                                  site: site,
-                                  moduleInfo: moduleInfo,
-                                  observationConfig: observationConfig,
-                                  customConfig: customConfig,
-                                  observationDetailConfig:
-                                      observationDetailConfig,
-                                  currentConflict: conflict,
-                                ),
-                              ),
-                            );
-
-                            // Si la modification a réussi, marquer le conflit comme résolu
-                            if (result == true) {
-                              ref
-                                  .read(conflictResolutionProvider.notifier)
-                                  .markAsResolved(
-                                      conflict, 'Observation modifiée');
-                            }
-
-                            return result ?? false;
                           }
-                        } catch (e) {
-                          debugPrint(
-                              'Erreur lors du chargement de l\'observation: $e');
+
+                          // Si pas de détail ou erreur, naviguer vers l'observation
+                          hideLoadingIndicator();
+
+                          if (!context.mounted) return false;
+                          final result = await Navigator.push<bool>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ObservationDetailPage(
+                                observation: observation,
+                                visit: visit,
+                                site: site,
+                                moduleInfo: moduleInfo,
+                                observationConfig: observationConfig,
+                                customConfig: customConfig,
+                                observationDetailConfig:
+                                    observationDetailConfig,
+                                currentConflict: conflict,
+                              ),
+                            ),
+                          );
+
+                          // Si la modification a réussi, marquer le conflit comme résolu
+                          if (result == true) {
+                            ref
+                                .read(conflictResolutionProvider.notifier)
+                                .markAsResolved(
+                                    conflict, 'Observation modifiée');
+                          }
+
+                          return result ?? false;
                         }
+                      } catch (e) {
+                        debugPrint(
+                            'Erreur lors du chargement de l\'observation: $e');
                       }
-
-                      // Si pas d'observation ou erreur, naviguer vers la visite
-                      hideLoadingIndicator();
-
-                      if (!context.mounted) return false;
-                      final result = await Navigator.push<bool>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => VisitDetailPage(
-                            visit: visit,
-                            site: site,
-                            moduleInfo: moduleInfo,
-                            currentConflict: conflict,
-                          ),
-                        ),
-                      );
-
-                      // Si la modification a réussi, marquer le conflit comme résolu
-                      if (result == true) {
-                        ref
-                            .read(conflictResolutionProvider.notifier)
-                            .markAsResolved(conflict, 'Visite modifiée');
-                      }
-
-                      return result ?? false;
                     }
-                  } catch (e) {
+
+                    // Si pas d'observation ou erreur, naviguer vers la visite
+                    hideLoadingIndicator();
+
+                    if (!context.mounted) return false;
+                    final result = await Navigator.push<bool>(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => VisitDetailPage(
+                          visit: visit,
+                          site: site,
+                          moduleInfo: moduleInfo,
+                          currentConflict: conflict,
+                        ),
+                      ),
+                    );
+
+                    // Si la modification a réussi, marquer le conflit comme résolu
+                    if (result == true) {
+                      ref
+                          .read(conflictResolutionProvider.notifier)
+                          .markAsResolved(conflict, 'Visite modifiée');
+                    }
+
+                    return result ?? false;
+                                    } catch (e) {
                     debugPrint('Erreur lors du chargement de la visite: $e');
                   }
                 }
@@ -426,12 +424,10 @@ class ConflictNavigationService {
 
         // Si on n'a pas trouvé le module dans les données normales,
         // on en crée un par défaut (cas dégradé)
-        if (moduleInfo == null) {
-          moduleInfo = ModuleInfo(
+        moduleInfo ??= ModuleInfo(
             module: Module(id: moduleId),
             downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
           );
-        }
 
         // Naviguer vers le module (cas par défaut)
         hideLoadingIndicator();

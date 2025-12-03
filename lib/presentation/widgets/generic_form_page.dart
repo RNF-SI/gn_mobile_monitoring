@@ -80,7 +80,7 @@ class GenericFormPage extends ConsumerStatefulWidget {
 
 class GenericFormPageState extends ConsumerState<GenericFormPage> {
   bool _isLoading = false;
-  bool _chainInput = false;
+  bool? _chainInput; // Null si pas de provider, pour ne pas afficher le bouton
   final _formBuilderKey = GlobalKey<DynamicFormBuilderState>();
   Map<String, dynamic>? _processedInitialValues;
 
@@ -88,14 +88,17 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
   void initState() {
     super.initState();
     
-    // Initialiser l'état de chaînage si le provider existe
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (widget.chainInputProvider != null) {
+    // Initialiser l'état de chaînage seulement si le provider existe
+    if (widget.chainInputProvider != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
         setState(() {
           _chainInput = ref.read(widget.chainInputProvider!);
         });
-      }
-    });
+      });
+    } else {
+      // Pas de provider = pas de bouton "enchaîner les saisies"
+      _chainInput = null;
+    }
 
     // Traiter les valeurs initiales
     _processedInitialValues = _processInitialValues();
@@ -150,7 +153,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
           objectConfig: widget.objectConfig,
           customConfig: widget.customConfig,
           initialValues: _processedInitialValues ?? {},
-          chainInput: _chainInput,
+          chainInput: _chainInput, // Null si pas de provider = pas de bouton
           onChainInputChanged: widget.chainInputProvider != null 
               ? _handleChainInputChanged 
               : null,
@@ -163,11 +166,11 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
 
   /// Gère le changement de l'état "enchaîner les saisies"
   void _handleChainInputChanged(bool value) {
+    if (widget.chainInputProvider == null) return;
+    
     setState(() {
       _chainInput = value;
-      if (widget.chainInputProvider != null) {
-        ref.read(widget.chainInputProvider!.notifier).state = value;
-      }
+      ref.read(widget.chainInputProvider!.notifier).state = value;
     });
   }
 
@@ -201,7 +204,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
 
         if (success) {
           // En mode enchaînement, réinitialiser le formulaire
-          if (_chainInput) {
+          if (_chainInput == true) {
             _formBuilderKey.currentState?.resetForm();
             setState(() {
               _processedInitialValues = {};
@@ -346,6 +349,42 @@ class BreadcrumbBuilder {
     items.add(BreadcrumbItem(
       label: visitLabel,
       value: visitValue,
+    ));
+    
+    return items;
+  }
+
+  /// Construit un fil d'Ariane standard pour les formulaires de site
+  static List<BreadcrumbItem> buildSiteBreadcrumb({
+    String? moduleName,
+    String? siteGroupLabel,
+    String? siteGroupName,
+    required String siteLabel,
+    required String siteName,
+    VoidCallback? onModuleTap,
+    VoidCallback? onSiteGroupTap,
+  }) {
+    final items = <BreadcrumbItem>[];
+    
+    if (moduleName != null && onModuleTap != null) {
+      items.add(BreadcrumbItem(
+        label: 'Module',
+        value: moduleName,
+        onTap: onModuleTap,
+      ));
+    }
+    
+    if (siteGroupName != null && onSiteGroupTap != null) {
+      items.add(BreadcrumbItem(
+        label: siteGroupLabel ?? 'Groupe',
+        value: siteGroupName,
+        onTap: onSiteGroupTap,
+      ));
+    }
+    
+    items.add(BreadcrumbItem(
+      label: siteLabel,
+      value: siteName,
     ));
     
     return items;

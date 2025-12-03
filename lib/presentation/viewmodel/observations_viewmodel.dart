@@ -133,7 +133,7 @@ class ObservationsViewModel
       // Récupérer l'ID de l'utilisateur courant depuis le stockage local
       final idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
       
-      if (idDigitiser == null || idDigitiser <= 0) {
+      if (idDigitiser <= 0) {
         throw Exception('Impossible de créer une observation : utilisateur non connecté');
       }
       
@@ -193,7 +193,7 @@ class ObservationsViewModel
       if (idDigitiser == null) {
         idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
         
-        if (idDigitiser == null || idDigitiser <= 0) {
+        if (idDigitiser <= 0) {
           throw Exception('Impossible de mettre à jour une observation : utilisateur non connecté');
         }
       }

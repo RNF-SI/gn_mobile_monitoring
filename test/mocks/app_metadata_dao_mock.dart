@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/dao/app_metadata_dao.dart';
 import 'package:mocktail/mocktail.dart';
 

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
-import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';

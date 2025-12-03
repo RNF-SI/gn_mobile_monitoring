@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:dio/dio.dart';
-import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';

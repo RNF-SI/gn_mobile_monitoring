@@ -266,10 +266,12 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     // Si c'est un Map, vérifier s'il a une propriété 'id' ou 'idListe' ou 'id_liste'
     if (value is Map) {
       if (value.containsKey('id')) return _parseIdListTaxonomy(value['id']);
-      if (value.containsKey('idListe'))
+      if (value.containsKey('idListe')) {
         return _parseIdListTaxonomy(value['idListe']);
-      if (value.containsKey('id_liste'))
+      }
+      if (value.containsKey('id_liste')) {
         return _parseIdListTaxonomy(value['id_liste']);
+      }
     }
 
     print(

@@ -1,6 +1,5 @@
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
-import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 

@@ -48,7 +48,7 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     }
     
     final updated = await (update(tObservations)
-      ..where((tbl) => tbl.idObservation.equals(observation.idObservation.value!)))
+      ..where((tbl) => tbl.idObservation.equals(observation.idObservation.value)))
       .write(observation);
     
     return updated > 0;
@@ -96,15 +96,15 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     // Si l'ID observation est présent, on vérifie s'il existe déjà
     if (complement.idObservation.present && complement.idObservation.value != 0) {
       final existing = await (select(tObservationComplements)
-        ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+        ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value)))
         .getSingleOrNull();
       
       if (existing != null) {
         // Update si existe déjà
         final updated = await (update(tObservationComplements)
-          ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+          ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value)))
           .write(complement);
-        return updated > 0 ? complement.idObservation.value! : 0;
+        return updated > 0 ? complement.idObservation.value : 0;
       } else {
         // Insert si n'existe pas
         return await into(tObservationComplements).insert(complement);
@@ -130,7 +130,7 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     }
     
     final updated = await (update(tObservationComplements)
-      ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value!)))
+      ..where((tbl) => tbl.idObservation.equals(complement.idObservation.value)))
       .write(complement);
     
     return updated > 0;

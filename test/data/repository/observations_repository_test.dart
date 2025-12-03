@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/observation_entity.dart';
 import 'package:gn_mobile_monitoring/data/repository/observations_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';

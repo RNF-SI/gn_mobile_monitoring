@@ -6,7 +6,6 @@ import 'package:gn_mobile_monitoring/domain/repository/authentication_repository
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase_impl.dart';
-import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';

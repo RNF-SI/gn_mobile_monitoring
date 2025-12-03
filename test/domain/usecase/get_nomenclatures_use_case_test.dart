@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
-import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case_impl.dart';
 import 'package:mocktail/mocktail.dart';

@@ -10,8 +10,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -417,13 +419,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     return 'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Détails du module'}';
   }
 
-  @override
-  Widget buildBaseContent() {
-    return super.buildBaseContent(); // Utilise la mise en page par défaut
-  }
 
   @override
   Widget build(BuildContext context) {
+    // Récupérer la configuration pour personnaliser les libellés
+    final module = widget.moduleInfo.module;
+
     final childContent = buildChildrenContent();
 
     // Détecter si le clavier est visible
@@ -437,6 +438,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     return Scaffold(
       appBar: buildAppBar(),
+      
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -451,6 +453,39 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                     flex: propertiesFlex,
                     child: buildBaseContent(),
                   ),
+                 Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8.0),
+            child: ElevatedButton.icon(
+              onPressed: () {
+                final groupSiteConfig = module.complement?.configuration?.sitesGroup;
+                if (groupSiteConfig != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteGroupFormPage(
+                         siteConfig: groupSiteConfig,
+                        customConfig: module.complement?.configuration?.custom,
+                        moduleId: module.id,
+                        moduleInfo: widget.moduleInfo,
+                      ),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Configuration de site non disponible'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: Text(
+                'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
+              ),
+            ),
+          ),
+
                   Expanded(
                     flex: childrenFlex,
                     child: childContent,
@@ -458,6 +493,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ],
               ),
             ),
+            
         ],
       ),
     );
@@ -622,22 +658,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             );
           }
 
-          // Propriétés du groupe de sites
-          dynamic value;
-          switch (column) {
-            case 'sites_group_name':
-              value = group.sitesGroupName;
-              break;
-            case 'sites_group_code':
-              value = group.sitesGroupCode;
-              break;
-            case 'sites_group_description':
-              value = group.sitesGroupDescription;
-              break;
-            default:
-              // Pour les autres colonnes, on laisse la valeur à null
-              value = null;
-          }
+          // Propriétés du groupe de sites - mapping dynamique
+          dynamic value = _getSiteGroupValue(group, column);
 
           // Formater la valeur et créer la cellule
           String displayValue = formatDataCellValue(
@@ -679,7 +701,52 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
+  /// Récupère dynamiquement la valeur d'une colonne depuis un SiteGroup
+  /// Cette fonction mappe automatiquement les noms de colonnes aux propriétés du modèle
+  dynamic _getSiteGroupValue(dynamic group, String column) {
+    // Mapping des noms de colonnes vers les propriétés du modèle SiteGroup
+    final Map<String, dynamic Function(dynamic)> propertyMap = {
+      'sites_group_name': (g) => g.sitesGroupName,
+      'sites_group_code': (g) => g.sitesGroupCode,
+      'sites_group_description': (g) => g.sitesGroupDescription,
+      'altitude_min': (g) => g.altitudeMin,
+      'altitude_max': (g) => g.altitudeMax,
+      'comments': (g) => g.comments,
+      'uuid_sites_group': (g) => g.uuidSitesGroup,
+      'id_sites_group': (g) => g.idSitesGroup,
+      'id_digitiser': (g) => g.idDigitiser,
+      'meta_create_date': (g) => g.metaCreateDate?.toIso8601String(),
+      'meta_update_date': (g) => g.metaUpdateDate?.toIso8601String(),
+    };
+
+    // Essayer d'abord le mapping direct des propriétés
+    if (propertyMap.containsKey(column)) {
+      try {
+        return propertyMap[column]!(group);
+      } catch (e) {
+        // Si l'accès échoue, continuer avec les autres méthodes
+      }
+    }
+
+    // Pour nb_sites et nb_visits, ou autres colonnes calculées,
+    // essayer de les récupérer depuis le champ data (JSON)
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        final dataMap = jsonDecode(group.data!) as Map<String, dynamic>;
+        if (dataMap.containsKey(column)) {
+          return dataMap[column];
+        }
+      } catch (e) {
+        // Si le parsing échoue, continuer
+      }
+    }
+
+    // Si aucune valeur n'est trouvée, retourner null
+    return null;
+  }
+
   Widget _buildSitesTab() {
+
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
@@ -689,7 +756,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-
+    
     // Déterminer les colonnes à afficher pour les sites
     List<String> standardColumns = [
       'actions',
@@ -699,7 +766,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     ];
 
     // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
-    Map<String, dynamic>? firstItemData = null;
+    Map<String, dynamic>? firstItemData;
 
     List<String> displayColumns = determineDataColumns(
       standardColumns: standardColumns,

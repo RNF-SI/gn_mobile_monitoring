@@ -450,13 +450,13 @@ void main() {
       ];
       
       List<DataRow> rows = [
-        DataRow(cells: [
-          const DataCell(Text('Row 1 Cell 1')),
-          const DataCell(Text('Row 1 Cell 2')),
+        DataRow(cells: const [
+          DataCell(Text('Row 1 Cell 1')),
+          DataCell(Text('Row 1 Cell 2')),
         ]),
-        DataRow(cells: [
-          const DataCell(Text('Row 2 Cell 1')),
-          const DataCell(Text('Row 2 Cell 2')),
+        DataRow(cells: const [
+          DataCell(Text('Row 2 Cell 1')),
+          DataCell(Text('Row 2 Cell 2')),
         ]),
       ];
       

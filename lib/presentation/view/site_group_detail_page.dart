@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -40,7 +41,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   @override
   void initState() {
     super.initState();
-    // Refresh data when page is opened
+    // Actualiser les données à l’ouverture de la page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
@@ -359,6 +360,50 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 ),
               ),
 
+          // Sites Table Section
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    widget.moduleInfo
+                            .module.complement?.configuration?.site?.labelList ??
+                        widget.moduleInfo
+                            .module.complement?.configuration?.site?.label ??
+                        'Sites associés',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    final siteConfig = module.complement?.configuration?.site;
+                    if (siteConfig != null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteFormPageWithTypeSelection(
+                            siteConfig: siteConfig,
+                            customConfig: module.complement?.configuration?.custom,
+                            moduleId: module.id,
+                            moduleInfo: widget.moduleInfo,
+                            siteGroup: widget.siteGroup,
+                          ),
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Configuration de site non disponible'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  icon: const Icon(Icons.add_circle),
+                  tooltip: 'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
               // Sites Expansion Panel List
               Expanded(
                 child: sitesState.when(
@@ -874,4 +919,6 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       ),
     );
   }
+
+ 
 }

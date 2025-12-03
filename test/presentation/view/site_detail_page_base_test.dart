@@ -316,7 +316,7 @@ void main() {
                 widgetRef: ref,
                 site: testSite,
                 moduleInfo: testModuleInfo,
-                fromSiteGroup: {
+                fromSiteGroup: const {
                   'sitesGroupName': 'Test Site Group',
                   'sitesGroupCode': 'TSG1'
                 },

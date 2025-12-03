@@ -109,7 +109,7 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
             border: const OutlineInputBorder(),
           ),
           isExpanded: true,
-          value: cdNomenclature,
+          initialValue: cdNomenclature,
           items: items,
           onChanged: (value) {
             if (value == null) {

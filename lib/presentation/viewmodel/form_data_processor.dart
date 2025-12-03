@@ -172,6 +172,25 @@ class FormDataProcessor {
       // Si c'est déjà un entier, le laisser tel quel
     }
 
+    // TRAITEMENT DES CHAMPS NUMÉRIQUES GÉNÉRAUX
+    // Convertir les champs numériques connus (altitude, etc.) de String en int si nécessaire
+    final numericFields = ['altitude_min', 'altitude_max', 'id_inventor', 'id_digitiser', 'id_sites_group', 'id_module'];
+    for (final fieldName in numericFields) {
+      if (processedData.containsKey(fieldName)) {
+        final value = processedData[fieldName];
+        if (value is String && value.isNotEmpty) {
+          final parsedInt = int.tryParse(value);
+          if (parsedInt != null) {
+            processedData[fieldName] = parsedInt;
+            debugPrint('  $fieldName: Converti de String à int ($parsedInt)');
+          }
+        } else if (value is num && value is! int) {
+          processedData[fieldName] = value.toInt();
+          debugPrint('  $fieldName: Converti de num à int (${value.toInt()})');
+        }
+      }
+    }
+
     // Vérifier une dernière fois que toutes les valeurs sont sérialisables en JSON
     _validateJsonData(processedData);
 
@@ -600,7 +619,7 @@ class FormDataProcessor {
     // Format: (value) => value['champ1'] && value['champ2']
     if (cleanExpr.startsWith('(value)') &&
         cleanExpr.contains('&&') &&
-        cleanExpr.indexOf("value['") >= 0 &&
+        cleanExpr.contains("value['") &&
         cleanExpr.indexOf("value['", cleanExpr.indexOf('&&')) > 0) {
       // Extraire le nom du premier champ
       final startIndex1 = cleanExpr.indexOf("['") + 2;
@@ -618,13 +637,11 @@ class FormDataProcessor {
         final field2 = cleanExpr.substring(startIndex2, endIndex2);
 
         // Vérifier s'il y a une négation sur l'un des champs
-        if (cleanExpr.contains('!' +
-            cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2))) {
+        if (cleanExpr.contains('!${cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2)}')) {
           // Premier champ nié
           return "NORMALIZED:NOTAND:$field1:$field2";
-        } else if (cleanExpr.contains('!' +
-            cleanExpr.substring(
-                cleanExpr.indexOf("value", endIndex1), startIndex2 - 2))) {
+        } else if (cleanExpr.contains('!${cleanExpr.substring(
+                cleanExpr.indexOf("value", endIndex1), startIndex2 - 2)}')) {
           // Deuxième champ nié
           return "NORMALIZED:ANDNOT:$field1:$field2";
         } else {

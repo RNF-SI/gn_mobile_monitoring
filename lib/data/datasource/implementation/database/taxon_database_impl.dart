@@ -224,7 +224,7 @@ class TaxonDatabaseImpl implements TaxonDatabase {
           final site = visit != null && visit.idBaseSite != null
               ? await db.sitesDao.getSiteById(visit.idBaseSite!)
               : null;
-          final module = visit != null && visit.idModule != null
+          final module = visit != null
               ? await db.modulesDao.getModuleById(visit.idModule)
               : null;
 
@@ -368,7 +368,7 @@ class TaxonDatabaseImpl implements TaxonDatabase {
               final site = visit?.idBaseSite != null
                   ? await db.sitesDao.getSiteById(visit!.idBaseSite!)
                   : null;
-              final module = visit != null && visit.idModule != null
+              final module = visit != null
                   ? await db.modulesDao.getModuleById(visit.idModule)
                   : null;
 
