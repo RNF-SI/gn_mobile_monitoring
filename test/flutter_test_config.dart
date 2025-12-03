@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter_test/flutter_test.dart';
 import 'mocks/mock_setup.dart';
 
 /// Cette fonction s'exécute avant tous les tests

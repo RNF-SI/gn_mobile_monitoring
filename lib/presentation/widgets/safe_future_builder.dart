@@ -15,13 +15,13 @@ class SafeFutureBuilder<T> extends StatelessWidget {
   final String? errorTag;
 
   const SafeFutureBuilder({
-    Key? key,
+    super.key,
     required this.future,
     required this.builder,
     this.loadingWidget,
     this.errorBuilder,
     this.errorTag,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

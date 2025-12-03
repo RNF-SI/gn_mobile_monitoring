@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 /// Représentation d'une observation dans la couche Data
 class ObservationEntity {

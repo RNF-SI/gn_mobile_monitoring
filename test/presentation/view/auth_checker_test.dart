@@ -11,7 +11,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
-import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
 import 'package:gn_mobile_monitoring/presentation/view/error_screen.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';

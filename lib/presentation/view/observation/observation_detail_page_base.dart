@@ -107,7 +107,7 @@ class ObservationDetailPageBaseState
     final updatedObservation = await observationsViewModel
         .getObservationById(widget.observation.idObservation);
     
-    if (updatedObservation != null && mounted) {
+    if (mounted) {
       // Mettre à jour l'état local avec l'observation rechargée
       setState(() {
         _fullObservation = updatedObservation;
@@ -340,15 +340,15 @@ class ObservationDetailPageBaseState
             if (widget.observationConfig != null) {
               // Préparer les informations pour le fil d'Ariane
               final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-              final String? siteLabel = widget.moduleInfo?.module.complement
+              final String siteLabel = widget.moduleInfo?.module.complement
                       ?.configuration?.site?.label ??
                   'Site';
               final String? siteName =
                   widget.site.baseSiteName ?? widget.site.baseSiteCode;
-              final String? visitLabel = widget.moduleInfo?.module.complement
+              final String visitLabel = widget.moduleInfo?.module.complement
                       ?.configuration?.visit?.label ??
                   'Visite';
-              final String? visitDate =
+              final String visitDate =
                   formatDateString(widget.visit.visitDateMin);
 
               Navigator.push(
@@ -974,15 +974,15 @@ class ObservationDetailPageBaseState
 
     // Préparer les informations pour le fil d'Ariane
     final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-    final String? siteLabel = widget.moduleInfo?.module.complement
+    final String siteLabel = widget.moduleInfo?.module.complement
             ?.configuration?.site?.label ??
         'Site';
     final String? siteName =
         widget.site.baseSiteName ?? widget.site.baseSiteCode;
-    final String? visitLabel = widget.moduleInfo?.module.complement
+    final String visitLabel = widget.moduleInfo?.module.complement
             ?.configuration?.visit?.label ??
         'Visite';
-    final String? visitDate =
+    final String visitDate =
         formatDateString(widget.visit.visitDateMin);
 
     // Naviguer vers le formulaire de nouvelle observation

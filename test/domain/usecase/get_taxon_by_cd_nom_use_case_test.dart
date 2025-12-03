@@ -4,7 +4,6 @@ import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:mocktail/mocktail.dart';
 
-import '../../mocks/mocks.dart';
 
 class MockTaxonRepository extends Mock implements TaxonRepository {}
 

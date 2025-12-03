@@ -25,7 +25,8 @@ extension TSitesGroupMapper on TSitesGroup {
 extension SiteGroupMapper on SiteGroup {
   TSitesGroupsCompanion toDatabaseEntity() {
     return TSitesGroupsCompanion(
-      idSitesGroup: Value(idSitesGroup),
+      // Pour les nouveaux groupes de sites (ID=0), utiliser Value.absent() pour laisser SQLite générer un ID
+      idSitesGroup: idSitesGroup == 0 ? const Value.absent() : Value(idSitesGroup),
       sitesGroupName: Value(sitesGroupName),
       sitesGroupCode: Value(sitesGroupCode),
       sitesGroupDescription: Value(sitesGroupDescription),

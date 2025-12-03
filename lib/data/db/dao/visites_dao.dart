@@ -11,7 +11,7 @@ part 'visites_dao.g.dart';
 
 @DriftAccessor(tables: [TBaseVisits, TVisitComplements, CorVisitObserver])
 class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
-  VisitesDao(AppDatabase db) : super(db);
+  VisitesDao(super.db);
 
   Future<List<TBaseVisit>> getAllVisits() => select(tBaseVisits).get();
 

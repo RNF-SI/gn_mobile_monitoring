@@ -13,9 +13,8 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 class VisitsApiImpl extends BaseApi implements VisitsApi {
   final Connectivity _connectivity;
 
-  VisitsApiImpl({Dio? dio, Connectivity? connectivity})
-        : _connectivity = connectivity ?? Connectivity(),
-          super(dio: dio);
+  VisitsApiImpl({super.dio, Connectivity? connectivity})
+        : _connectivity = connectivity ?? Connectivity();
 
   @override
   Future<Map<String, dynamic>> sendVisit(
@@ -30,14 +29,6 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
         logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
             tag: 'sync');
         throw NetworkException('Aucune connexion réseau disponible');
-      }
-
-      // Vérification des champs obligatoires
-      if (visit.idDataset == null) {
-        logger.e('[API] ERREUR: id_dataset manquant pour la visite',
-            tag: 'sync');
-        throw ArgumentError(
-            'Le champ id_dataset est requis pour envoyer une visite');
       }
 
       if (visit.idBaseSite == null) {
@@ -67,10 +58,8 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       };
 
       // Ajouter l'ID du module s'il est disponible dans le modèle
-      if (visit.idModule != null) {
-        requestBody['properties']['id_module'] = visit.idModule;
-      }
-
+      requestBody['properties']['id_module'] = visit.idModule;
+    
       // Ajouter module_code au niveau supérieur du corps de la requête
       // pour éviter les conflits de type avec les propriétés
       debugPrint('Ajout du moduleCode pour la visite: $moduleCode');
@@ -118,7 +107,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('[API] ENVOI VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/visit');
+      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -275,10 +264,8 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       };
 
       // Ajouter l'ID du module s'il est disponible dans le modèle
-      if (visit.idModule != null) {
-        requestBody['properties']['id_module'] = visit.idModule;
-      }
-
+      requestBody['properties']['id_module'] = visit.idModule;
+    
       // Ajouter module_code au niveau supérieur du corps de la requête
       requestBody['module_code'] = moduleCode;
 
@@ -321,7 +308,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('[API] MISE À JOUR VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: ${apiBase}/monitorings/object/$moduleCode/visit/$visitId');
+      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit/$visitId');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)

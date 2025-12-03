@@ -150,7 +150,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
       // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
       final observers = List<int>.from(formData['observers'] ?? []);
-      if (userId != null && !observers.contains(userId)) {
+      if (!observers.contains(userId)) {
         observers.add(userId);
       }
 
@@ -188,7 +188,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
       // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
       final observers = List<int>.from(formData['observers'] ?? []);
-      if (userId != null && !observers.contains(userId)) {
+      if (!observers.contains(userId)) {
         observers.add(userId);
       }
 
@@ -389,7 +389,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     }
 
     // Ajouter l'utilisateur connecté s'il n'est pas déjà inclus
-    if (userId != null && userId > 0 && !observers.contains(userId)) {
+    if (userId > 0 && !observers.contains(userId)) {
       observers.add(userId);
     }
 

@@ -176,12 +176,12 @@ class ConflictDialogWidget extends ConsumerWidget {
     // Créer un rapport structuré des conflits
     final StringBuffer report = StringBuffer();
     report.writeln('RAPPORT DE CONFLITS DE SYNCHRONISATION');
-    report.writeln('${'=' * 50}');
+    report.writeln('=' * 50);
     report.writeln('Date: ${DateTime.now().toIso8601String()}');
     report.writeln('Type: Mise à jour des données (synchronisation descendante)');
     report.writeln('');
     report.writeln('RÉSUMÉ:');
-    report.writeln('${'-' * 40}');
+    report.writeln('-' * 40);
     report.writeln('Nombre total de conflits: ${conflicts.length}');
     
     // Grouper les conflits par type d'entité
@@ -199,7 +199,7 @@ class ConflictDialogWidget extends ConsumerWidget {
     
     report.writeln('');
     report.writeln('DÉTAILS DES CONFLITS:');
-    report.writeln('${'-' * 40}');
+    report.writeln('-' * 40);
     
     int index = 1;
     for (final conflict in conflicts) {
@@ -294,7 +294,7 @@ class ConflictDialogWidget extends ConsumerWidget {
     }
     
     report.writeln('');
-    report.writeln('${'=' * 50}');
+    report.writeln('=' * 50);
     report.writeln('INFORMATIONS SYSTÈME:');
     report.writeln('Application: GeoNature Mobile');
     report.writeln('');

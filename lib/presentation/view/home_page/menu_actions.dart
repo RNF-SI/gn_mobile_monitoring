@@ -670,7 +670,7 @@ class MenuActions extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Theme.of(context)
                                 .colorScheme
-                                .surfaceVariant
+                                .surfaceContainerHighest
                                 .withOpacity(0.3),
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -801,21 +801,21 @@ class MenuActions extends ConsumerWidget {
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
+              children: const [
+                Text(
                   'Une synchronisation complète est nécessaire car:',
                 ),
-                const SizedBox(height: 8),
-                const Text(
+                SizedBox(height: 8),
+                Text(
                   '• La dernière synchronisation complète date de plus d\'une semaine',
                   style: TextStyle(fontSize: 14),
                 ),
-                const Text(
+                Text(
                   '• Ou c\'est la première utilisation de l\'application',
                   style: TextStyle(fontSize: 14),
                 ),
-                const SizedBox(height: 16),
-                const Text(
+                SizedBox(height: 16),
+                Text(
                   'Tous les éléments seront synchronisés pour assurer la cohérence des données.',
                 ),
               ],

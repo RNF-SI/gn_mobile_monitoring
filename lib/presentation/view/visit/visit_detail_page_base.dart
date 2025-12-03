@@ -301,7 +301,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
     
     // Compter les observations de cette visite
     final observationCount = await siteVisitsViewModel
-        .getObservationCountForVisit(widget.visit.idBaseVisit!);
+        .getObservationCountForVisit(widget.visit.idBaseVisit);
     
     if (!mounted) return;
     
@@ -365,7 +365,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
         (widget.site.idBaseSite, widget.visit.idModule)).notifier);
     
     try {
-      final success = await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit!);
+      final success = await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit);
       
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -780,11 +780,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
         // Générer le schéma si ce n'est pas déjà fait
         Map<String, dynamic> schema = {};
-        if (observationConfig != null) {
-          schema = FormConfigParser.generateUnifiedSchema(
-              observationConfig, customConfig);
-        }
-
+        schema = FormConfigParser.generateUnifiedSchema(
+            observationConfig, customConfig);
+      
         // Formater la valeur
         String displayValue = formatDataCellValue(
           rawValue: rawValue,
@@ -805,15 +803,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
   void _showAddObservationDialog(int visitId, ObjectConfig observationConfig) {
     // Préparer les informations pour le fil d'Ariane
     final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-    final String? siteLabel =
+    final String siteLabel =
         widget.moduleInfo?.module.complement?.configuration?.site?.label ??
             'Site';
     final String? siteName =
         widget.site.baseSiteName ?? widget.site.baseSiteCode;
-    final String? visitLabel =
+    final String visitLabel =
         widget.moduleInfo?.module.complement?.configuration?.visit?.label ??
             'Visite';
-    final String? visitDate = formatDateString(widget.visit.visitDateMin);
+    final String visitDate = formatDateString(widget.visit.visitDateMin);
 
     Navigator.push(
       context,
@@ -851,15 +849,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       Map<String, dynamic> observationData, ObjectConfig observationConfig) {
     // Préparer les informations pour le fil d'Ariane
     final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-    final String? siteLabel =
+    final String siteLabel =
         widget.moduleInfo?.module.complement?.configuration?.site?.label ??
             'Site';
     final String? siteName =
         widget.site.baseSiteName ?? widget.site.baseSiteCode;
-    final String? visitLabel =
+    final String visitLabel =
         widget.moduleInfo?.module.complement?.configuration?.visit?.label ??
             'Visite';
-    final String? visitDate = formatDateString(widget.visit.visitDateMin);
+    final String visitDate = formatDateString(widget.visit.visitDateMin);
 
     // Récupérer l'observation complète
     widget.ref

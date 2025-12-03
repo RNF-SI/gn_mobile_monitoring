@@ -280,7 +280,7 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
       logBuffer.writeln(
           '==================================================================');
       logBuffer.writeln(
-          'URL: ${apiBase}/monitorings/object/$moduleCode/observation_detail');
+          'URL: $apiBase/monitorings/object/$moduleCode/observation_detail');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -361,11 +361,11 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
         // Vérifier tous les champs pour trouver où pourraient être les données
         logger.i('Liste de tous les champs de premier niveau dans la réponse:',
             tag: 'sync');
-        serverResponse.keys.forEach((key) {
+        for (var key in serverResponse.keys) {
           logger.i(
               '- Champ "$key": ${serverResponse[key]} (${serverResponse[key]?.runtimeType})',
               tag: 'sync');
-        });
+        }
 
         return serverResponse;
       } else {

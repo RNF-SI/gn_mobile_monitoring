@@ -180,8 +180,8 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     return [];
   }
 
-  Future<int> insertSiteGroupModule(siteGroupModule) async {
-   final dbEntity = siteGroupModule.toDatabaseEntity();
+  Future<int> insertSiteGroupModule(SitesGroupModule siteGroupModule) async {
+    final dbEntity = siteGroupModule.toDatabaseEntity();
     return await into(corSitesGroupModuleTable).insert(dbEntity);
   }
 

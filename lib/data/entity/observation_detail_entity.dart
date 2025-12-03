@@ -1,4 +1,3 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 
 /// Représente un détail d'observation dans la base de données locale
 class ObservationDetailEntity {
