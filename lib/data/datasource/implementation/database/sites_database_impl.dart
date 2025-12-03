@@ -139,6 +139,12 @@ class SitesDatabaseImpl implements SitesDatabase {
     await db.sitesDao.clearSitesGroupModules();
   }
 
+@override
+  Future<void> insertSiteGroupModule(SitesGroupModule siteGroupModule) async {
+    final db = await _database;
+    await db.sitesDao.insertSiteGroupModule(siteGroupModule);
+  }
+
   @override
   Future<void> insertSiteGroupModules(List<SitesGroupModule> modules) async {
     final db = await _database;
@@ -219,9 +225,9 @@ class SitesDatabaseImpl implements SitesDatabase {
   }
   
   @override
-  Future<void> insertSiteGroup(SiteGroup siteGroup) async {
+  Future<int> insertSiteGroup(SiteGroup siteGroup) async {
     final db = await _database;
-    await db.sitesDao.insertGroups([siteGroup]);
+    return await db.sitesDao.insertSiteGroup(siteGroup);
   }
   
   @override
@@ -240,5 +246,11 @@ class SitesDatabaseImpl implements SitesDatabase {
   Future<BaseSite?> getSiteById(int siteId) async {
     final db = await _database;
     return await db.sitesDao.getSiteById(siteId);
+  }
+
+  @override
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId) async {
+    final db = await _database;
+    return await db.sitesDao.getSiteGroupById(siteGroupId);
   }
 }

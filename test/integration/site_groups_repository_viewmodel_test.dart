@@ -7,7 +7,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
 // Mocks

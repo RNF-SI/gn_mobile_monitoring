@@ -108,6 +108,12 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
@@ -337,6 +343,20 @@ final updateSiteUseCaseProvider = Provider<UpdateSiteUseCase>(
 final deleteSiteUseCaseProvider = Provider<DeleteSiteUseCase>(
   (ref) => DeleteSiteUseCaseImpl(ref.watch(siteDatabaseProvider)),
 );
+
+// Sites Group use cases
+final createSiteGroupUseCaseProvider = Provider<CreateSiteGroupUseCase>(
+  (ref) => CreateSiteGroupUseCaseImpl(ref.watch(siteDatabaseProvider)),
+);
+
+final updateSiteGroupUseCaseProvider = Provider<UpdateSiteGroupUseCase>(
+  (ref) => UpdateSiteGroupUseCaseImpl(ref.watch(siteDatabaseProvider)),
+);
+
+final deleteSiteGroupUseCaseProvider = Provider<DeleteSiteGroupUseCase>(
+  (ref) => DeleteSiteGroupUseCaseImpl(ref.watch(siteDatabaseProvider)),
+);
+
 
 // ObservationDetail Providers
 final getObservationDetailsByObservationIdUseCaseProvider =
