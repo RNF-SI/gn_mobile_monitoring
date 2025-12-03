@@ -1,20 +1,17 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
 class ModuleDetailPageBase extends DetailPage {
@@ -110,10 +107,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (module.complement?.data != null) {
       // Le champ data est de type String?, nous devons donc le parser en JSON
       try {
-        final Map<String, dynamic> parsedData = 
-            module.complement!.data != null ? 
-            Map<String, dynamic>.from(json.decode(module.complement!.data!)) : 
-            {};
+        final Map<String, dynamic> parsedData = module.complement!.data != null
+            ? Map<String, dynamic>.from(json.decode(module.complement!.data!))
+            : {};
         data.addAll(parsedData);
       } catch (e) {
         // En cas d'erreur de parsing, on ignore silencieusement
@@ -413,12 +409,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-
   @override
   String getTitle() {
     return 'Module: ${widget.moduleInfo.module.moduleLabel ?? 'Détails du module'}';
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -438,7 +432,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     return Scaffold(
       appBar: buildAppBar(),
-      
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -453,39 +446,41 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                     flex: propertiesFlex,
                     child: buildBaseContent(),
                   ),
-                 Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: ElevatedButton.icon(
-              onPressed: () {
-                final groupSiteConfig = module.complement?.configuration?.sitesGroup;
-                if (groupSiteConfig != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteGroupFormPage(
-                         siteConfig: groupSiteConfig,
-                        customConfig: module.complement?.configuration?.custom,
-                        moduleId: module.id,
-                        moduleInfo: widget.moduleInfo,
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        final groupSiteConfig =
+                            module.complement?.configuration?.sitesGroup;
+                        if (groupSiteConfig != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => SiteGroupFormPage(
+                                siteGroupConfig: groupSiteConfig,
+                                customConfig:
+                                    module.complement?.configuration?.custom,
+                                moduleId: module.id,
+                                moduleInfo: widget.moduleInfo,
+                              ),
+                            )
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Configuration de site non disponible'),
+                              backgroundColor: Colors.red,
+                            ),
+                          );
+                        }
+                      },
+                      icon: const Icon(Icons.add),
+                      label: Text(
+                        'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
                       ),
                     ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Configuration de site non disponible'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              icon: const Icon(Icons.add),
-              label: Text(
-                'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
-              ),
-            ),
-          ),
-
+                  ),
                   Expanded(
                     flex: childrenFlex,
                     child: childContent,
@@ -493,7 +488,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ],
               ),
             ),
-            
         ],
       ),
     );
@@ -625,7 +619,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Générer le schéma pour le formatage des cellules
     Map<String, dynamic> schema = {};
     if (sitesGroupConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(sitesGroupConfig, customConfig);
+      schema = FormConfigParser.generateUnifiedSchema(
+          sitesGroupConfig, customConfig);
     }
 
     // Construire les lignes du tableau
@@ -644,7 +639,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                       builder: (context) => SiteGroupDetailPage(
                         siteGroup: group,
                         moduleInfo: _updatedModule != null
-                            ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                            ? widget.moduleInfo
+                                .copyWith(module: _updatedModule!)
                             : widget.moduleInfo,
                       ),
                     ),
@@ -746,7 +742,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   Widget _buildSitesTab() {
-
     // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
 
@@ -756,7 +751,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     // Déterminer les colonnes à afficher pour les sites
     List<String> standardColumns = [
       'actions',
