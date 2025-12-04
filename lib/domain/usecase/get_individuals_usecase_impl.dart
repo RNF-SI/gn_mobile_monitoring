@@ -3,12 +3,12 @@ import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.da
 import 'package:gn_mobile_monitoring/domain/usecase/get_individuals_usecase.dart';
 
 class GetIndividualsUseCaseImpl implements GetIndividualsUseCase {
-  final IndividualsRepository _sitesRepository;
+  final IndividualsRepository _individualsRepository;
 
-  GetIndividualsUseCaseImpl(this._sitesRepository);
+  GetIndividualsUseCaseImpl(this._individualsRepository);
 
   @override
   Future<List<Individual>> execute() {
-    return _sitesRepository.getIndividuals();
+    return _individualsRepository.getIndividuals();
   }
 }

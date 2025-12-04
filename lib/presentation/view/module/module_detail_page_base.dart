@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/individual_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -42,6 +43,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   List<dynamic> _filteredSites = [];
   List<dynamic> _allSites = [];
   List<dynamic> _filteredSiteGroups = [];
+  List<dynamic> _filteredIndividuals = [];
   String _searchQuery = '';
   bool _configurationLoaded = false;
   bool _isInitialLoading = true;
@@ -209,6 +211,15 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           widget.moduleInfo.module.sitesGroup!.isNotEmpty) {
         _childrenTypes = [..._childrenTypes, 'sites_group'];
       }
+    
+      // Si le module a des individus, ajouter 'individual' au childrenTypes par défaut
+      if (_updatedModule?.individuals != null &&
+          _updatedModule!.individuals!.isNotEmpty) {
+        _childrenTypes = [..._childrenTypes, 'individual'];
+      } else if (widget.moduleInfo.module.individuals != null &&
+          widget.moduleInfo.module.individuals!.isNotEmpty) {
+        _childrenTypes = [..._childrenTypes, 'individual'];
+      }
     }
 
     // Assurer que nous avons au moins un onglet (même si aucun enfant n'est trouvé)
@@ -277,8 +288,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       else if (_tabController!.index == _childrenTypes.indexOf('sites_group')) {
         _filterSiteGroups();
       }
+      // Mettre à jour les individus si on est sur l'onglet individus
+      else if (_tabController!.index == _childrenTypes.indexOf('individual')) {
+        _filterIndividuals();
+      }
+      }
     }
-  }
 
   void _loadInitialSites() {
     setState(() {
@@ -323,6 +338,21 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         final code = group.sitesGroupCode?.toLowerCase() ?? '';
         final query = _searchQuery.toLowerCase();
         return name.contains(query) || code.contains(query);
+      }).toList();
+    }
+  }
+
+  void _filterIndividuals() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final allIndividuals = module.individuals ?? [];
+
+    if (_searchQuery.isEmpty) {
+      _filteredIndividuals = allIndividuals;
+    } else {
+      _filteredIndividuals = allIndividuals.where((group) {
+        final name = group.individualName?.toLowerCase() ?? '';
+        final query = _searchQuery.toLowerCase();
+        return name.contains(query);
       }).toList();
     }
   }
@@ -511,6 +541,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           tabs: [
             if (_childrenTypes.contains('sites_group'))
               _buildTabLabel('sites_group'),
+            if (_childrenTypes.contains('individual'))
+              _buildTabLabel('individual'),
             if (_childrenTypes.contains('site')) _buildTabLabel('site'),
           ],
         ),
@@ -521,6 +553,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             controller: _tabController!,
             children: [
               if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
+              if (_childrenTypes.contains('individual')) _buildIndividualsTab(),
               if (_childrenTypes.contains('site')) _buildSitesTab(),
             ],
           ),
@@ -544,6 +577,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       label = module.complement?.configuration?.sitesGroup?.labelList ??
           module.complement?.configuration?.sitesGroup?.label ??
           'Groupes de sites';
+    } else if (childType == 'individual') {
+      count = module.individuals?.length ?? 0;
+      label = module.complement?.configuration?.individual?.labelList ??
+          module.complement?.configuration?.individual?.label ??
+          'Individus';
     }
 
     return Tab(text: '$label ($count)');
@@ -671,6 +709,129 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       rows: rows,
       showSearch: true,
       searchHint: "Rechercher un groupe",
+      searchController: _searchController,
+      onSearchChanged: _handleSearch,
+      emptyMessage: emptyMessage,
+      isLoading: false,
+    );
+  }
+
+  Widget _buildIndividualsTab() {
+    // Utiliser le module mis à jour s'il est disponible
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
+    // Récupérer la configuration pour les groupes
+    final ObjectConfig? individualConfig =
+        module.complement?.configuration?.individual;
+
+    // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
+    if (_filteredIndividuals.isEmpty) {
+      _filterIndividuals();
+    }
+
+    // Déterminer les colonnes à afficher pour les groupes de sites
+    List<String> standardColumns = [
+      'actions',
+      'individual_name',
+    ];
+
+    List<String> displayColumns = determineDataColumns(
+      standardColumns: standardColumns,
+      itemConfig: individualConfig,
+      firstItemData: null,
+      filterMetaColumns: true,
+    );
+
+    // Créer les colonnes du DataTable
+    List<DataColumn> columns = buildDataColumns(
+      columns: displayColumns,
+      itemConfig: individualConfig,
+      predefinedLabels: {
+        'actions': 'Action',
+        'individual_name': 'Nom de l''individu',
+      },
+    );
+
+    // Générer le schéma pour le formatage des cellules
+    Map<String, dynamic> schema = {};
+    if (individualConfig != null) {
+      schema = FormConfigParser.generateUnifiedSchema(individualConfig, customConfig);
+    }
+
+    // Construire les lignes du tableau
+    List<DataRow> rows = _filteredIndividuals.map((group) {
+      return DataRow(
+        cells: displayColumns.map((column) {
+          // Colonne d'actions
+          if (column == 'actions') {
+            return DataCell(
+              IconButton(
+                icon: const Icon(Icons.visibility, size: 20),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => IndividualDetailPage(
+                        individual: group,
+                        moduleInfo: _updatedModule != null
+                            ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                            : widget.moduleInfo,
+                      ),
+                    ),
+                  );
+                },
+                constraints: const BoxConstraints(
+                  minWidth: 36,
+                  minHeight: 36,
+                ),
+              ),
+            );
+          }
+
+          // Propriétés du groupe de sites
+          dynamic value;
+          switch (column) {
+            case 'individual_name':
+              value = group.individualName;
+              break;
+            default:
+              // Pour les autres colonnes, on laisse la valeur à null
+              value = null;
+          }
+
+          // Formater la valeur et créer la cellule
+          String displayValue = formatDataCellValue(
+            rawValue: value,
+            columnName: column,
+            schema: schema,
+          );
+
+          return buildFormattedDataCell(
+            value: displayValue,
+            enableTooltip: true,
+          );
+        }).toList(),
+      );
+    }).toList();
+
+    // Message vide personnalisé
+    Widget emptyMessage = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Text(
+        'Aucun individu associé à ce module',
+        style: TextStyle(
+          fontSize: 16,
+          color: Colors.grey[600],
+        ),
+      ),
+    );
+
+    // Utiliser la méthode factorisée buildDataTable
+    return buildDataTable(
+      columns: columns,
+      rows: rows,
+      showSearch: true,
+      searchHint: "Rechercher un individu",
       searchController: _searchController,
       onSearchChanged: _handleSearch,
       emptyMessage: emptyMessage,
