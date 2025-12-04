@@ -18,6 +18,89 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dar
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:latlong2/latlong.dart';
 
+// ---------------------------
+// Widget Boussole
+// ---------------------------
+class CompassWidget extends StatefulWidget {
+  final MapController mapController;
+  const CompassWidget({super.key, required this.mapController});
+
+  @override
+  State<CompassWidget> createState() => _CompassWidgetState();
+}
+
+class _CompassWidgetState extends State<CompassWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _rotationAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+  }
+
+  void resetNorth() {
+    final startRotation = widget.mapController.camera.rotation;
+    final endRotation = 0.0;
+
+    _rotationAnimation = Tween<double>(
+      begin: startRotation,
+      end: endRotation,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    )..addListener(() {
+        widget.mapController.rotate(_rotationAnimation.value);
+      });
+
+    _animationController.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final rotation = -widget.mapController.camera.rotation;
+
+    return Positioned(
+      top: 16,
+      left: 16,
+      child: GestureDetector(
+        onTap: resetNorth,
+        child: Transform.rotate(
+          angle: rotation,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.navigation, color: Colors.red, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------
+// Widget Geometries
+// ---------------------------
 class GeometriesMapWidget extends ConsumerStatefulWidget {
   final String? geojsonData; // <--- nullable
   final List<String>? displayList; // Liste des propriétés à afficher
@@ -1057,6 +1140,10 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
               },
             ),
           ),
+        // ---------------------------
+        // Boussole
+        // ---------------------------
+        CompassWidget(mapController: mapController),
       ],
     );
   }
