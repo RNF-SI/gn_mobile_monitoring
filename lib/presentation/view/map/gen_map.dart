@@ -33,6 +33,7 @@ class _CompassWidgetState extends State<CompassWidget>
     with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _rotationAnimation;
+  double currentRotation = 0.0;
 
   @override
   void initState() {
@@ -42,6 +43,15 @@ class _CompassWidgetState extends State<CompassWidget>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
+
+    // Écoute les mouvements et rotations de la carte
+    widget.mapController.mapEventStream.listen((event) {
+      if (event is MapEventMove || event is MapEventRotate) {
+        setState(() {
+          currentRotation = -widget.mapController.camera.rotation;
+        });
+      }
+    });
   }
 
   void resetNorth() {
@@ -68,15 +78,13 @@ class _CompassWidgetState extends State<CompassWidget>
 
   @override
   Widget build(BuildContext context) {
-    final rotation = -widget.mapController.camera.rotation;
-
     return Positioned(
       top: 16,
       left: 16,
       child: GestureDetector(
         onTap: resetNorth,
         child: Transform.rotate(
-          angle: rotation,
+          angle: currentRotation,
           child: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
