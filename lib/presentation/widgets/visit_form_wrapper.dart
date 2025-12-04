@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
@@ -260,6 +262,7 @@ class VisitFormWrapper extends ConsumerWidget {
               } else {
                 // L'utilisateur a dit "Non", naviguer vers la page de détail
                 if (context.mounted) {
+                  await _navigateToSiteDetailPage(context, site, siteGroup, moduleInfo);
                   await _navigateToVisitDetailPage(context, newVisit);
                   return false; // Navigation personnalisée faite, empêcher le pop automatique
                 }
@@ -385,7 +388,10 @@ class VisitFormWrapper extends ConsumerWidget {
       );
     }
 
-    Navigator.pushReplacement(
+    _navigateToSiteDetailPage(context, site, siteGroup, moduleInfo);
+    _navigateToVisitDetailPage(context, visitForNavigation);
+    
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => ObservationFormPage(
@@ -416,7 +422,7 @@ class VisitFormWrapper extends ConsumerWidget {
     final targetVisit = visitToShow ?? visit;
     if (targetVisit == null) return;
 
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => VisitDetailPage(
@@ -427,5 +433,24 @@ class VisitFormWrapper extends ConsumerWidget {
         ),
       ),
     );
+  }}
+
+  /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteDetailPage(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    Navigator.of(context).pop();
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  SiteDetailPage(
+          site: site,
+          moduleInfo: targetModuleInfo,
+          fromSiteGroup: siteGroup,
+        ),
+      ),
+    );
   }
-}
+  

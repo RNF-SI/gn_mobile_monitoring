@@ -9,6 +9,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/site_form_viewmodel.
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/generic_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 
 /// Wrapper spécialisé pour les formulaires de site
 /// Utilise GenericFormPage avec la logique métier spécifique aux sites
@@ -194,7 +195,9 @@ class SiteFormWrapper extends ConsumerWidget {
     final targetModuleInfo = moduleToShow ?? null;
     if (targetModuleInfo == null) return;
 
-    Navigator.pushReplacement(
+    _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
+    _navigateToSiteDetailPage(context, site, siteGroup, moduleInfo);
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => VisitFormPage(
@@ -215,13 +218,34 @@ class SiteFormWrapper extends ConsumerWidget {
     if (targetModuleInfo == null) return;
 
 
-    Navigator.pushReplacement(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) =>  SiteDetailPage(
           site: site,
           moduleInfo: targetModuleInfo,
           fromSiteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
+ /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteGroupDetailPage(BuildContext context, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    Navigator.of(context).pop();
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+    final targetsiteGroup = siteGroup ?? null;
+    if (targetsiteGroup == null) return;
+
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SiteGroupDetailPage(
+          moduleInfo: targetModuleInfo,
+          siteGroup: targetsiteGroup,
         ),
       ),
     );
@@ -297,6 +321,7 @@ class SiteFormWrapper extends ConsumerWidget {
             } else {
                 // L'utilisateur a dit "Non", naviguer vers la page de détail
             if (newSite != null && context.mounted) {
+              await _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
               await _navigateToSiteDetailPage(context, newSite, siteGroup, moduleInfo);
               return false; // Navigation personnalisée faite, empêcher le pop automatique
             }

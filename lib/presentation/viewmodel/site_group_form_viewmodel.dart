@@ -96,7 +96,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     }
   }
 
-
   /// Crée un nouveau groupe de site à partir des données du formulaire
   /// Retourne l'ID du site créé
   Future<int?> createSiteGroupFromFormData(
@@ -183,7 +182,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     }
   }
 
-  /// Met à jour d'un groupe de sites existant à partir des données du formulaire
+  /// Met à jour un groupe de sites existant à partir des données du formulaire
   Future<bool> updateSiteGroupFromFormData(
     Map<String, dynamic> formData,
     SiteGroup existingSiteGroup, {
@@ -220,9 +219,9 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   }
 
   /// Supprime un site
-  Future<bool> deleteSite(int siteId) async {
+  Future<bool> deleteSiteGroup(int siteGroupId) async {
     try {
-      return await _deleteSiteGroupUseCase.execute(siteId);
+      return await _deleteSiteGroupUseCase.execute(siteGroupId);
     } catch (e) {
       debugPrint('Erreur lors de la suppression du groupe de site: $e');
       return false;

@@ -11,6 +11,8 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart'
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_form_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/generic_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 
 /// Wrapper spécialisé pour les formulaires de site
 /// Utilise GenericFormPage avec la logique métier spécifique aux sites
@@ -277,8 +279,8 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
           );
 
           // Naviguer vers le formulaire du site
+          final newSiteGroup = await viewModel.getSiteGroupById(siteGroupId);
           if (context.mounted) {
-            final newSiteGroup = await viewModel.getSiteGroupById(siteGroupId);
             final createSite = await _askForSite(context);
             if (createSite) {
               if (newSiteGroup != null && context.mounted) {
@@ -289,13 +291,14 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
                 // L'utilisateur a dit "Non", naviguer vers la page de détail
             if (context.mounted) {
               await _navigateToModuleDetailPage(context, widget.moduleInfo);
+              await _navigateToSiteGroupDetailPage(context, newSiteGroup, widget.moduleInfo);
               return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
           }
         }
         }
       }
-      // Naviguer vers la page de détail du site
+      // Naviguer vers la page de détail du groupe de site
       if (context.mounted) {
         final updatedSiteGroup =
             await viewModel.getSiteGroupById(widget.siteGroup!.idSitesGroup);
@@ -348,10 +351,23 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
 
   /// Navigue vers le formulaire d'observation
   Future<void> _navigateToSiteForm(BuildContext context, SiteGroup siteGroup, [Map<String, dynamic>? siteFormData]) async {
+    _navigateToModuleDetailPage(context, widget.moduleInfo);
+    _navigateToSiteGroupDetailPage(context, siteGroup, widget.moduleInfo);
     final siteConfig =  widget.moduleInfo!.module.complement?.configuration?.site;
     if (siteConfig == null) return;
 
-    Navigator.pushReplacement(
+    // Navigator.pushReplacement(
+    //   context,
+    //   MaterialPageRoute(
+    //     builder: (context) => SiteDetailPage(
+    //       site: widget.site,
+    //       moduleInfo: widget.moduleInfo,
+    //       fromSiteGroup: siteGroup,
+    //     ),
+    //     ),
+    // );
+
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SiteFormPage(
@@ -367,7 +383,28 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
   }
   
   /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteGroupDetailPage(BuildContext context, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+    final targetsiteGroup = siteGroup ?? null;
+    if (targetsiteGroup == null) return;
+
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SiteGroupDetailPage(
+          moduleInfo: targetModuleInfo,
+          siteGroup: targetsiteGroup,
+        ),
+      ),
+    );
+  }
+  
+  /// Navigue vers la page de détail de la visite
   Future<void> _navigateToModuleDetailPage(BuildContext context, [ModuleInfo? moduleToShow]) async {
+    Navigator.of(context).pop();
     final targetModuleInfo = moduleToShow ?? null;
     if (targetModuleInfo == null) return;
 
@@ -381,7 +418,7 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       ),
     );
   }
-  
+
   /// Supprime le groupe de site avec confirmation
   Future<void> _deleteSiteGroup(BuildContext context, WidgetRef ref) async {
     if (widget.siteGroup == null) return;
@@ -412,7 +449,7 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
           (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
 
       final success =
-          await viewModel.deleteSite(widget.siteGroup!.idSitesGroup);
+          await viewModel.deleteSiteGroup(widget.siteGroup!.idSitesGroup);
 
       if (context.mounted) {
         if (success) {
