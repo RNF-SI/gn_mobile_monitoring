@@ -224,6 +224,16 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     loadGeometriesSafely();
     loadUserLocation();
     // Les compléments seront chargés après le chargement des géométries
+
+    // Écoute la rotation de la carte pour mettre à jour les markers
+    mapController.mapEventStream.listen((event) {
+      if (event is MapEventRotate) {
+        setState(() {
+          // Reconstruire les markers avec la rotation mise à jour
+          _rebuildMarkers();
+        });
+      }
+    });
   }
 
   /// Charge les compléments de sites de manière asynchrone
@@ -313,6 +323,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
           point: marker.point,
           width: 60,
           height: 60,
+          rotate: true,
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
