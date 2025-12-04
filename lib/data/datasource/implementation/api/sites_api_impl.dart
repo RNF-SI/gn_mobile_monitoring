@@ -327,11 +327,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       String moduleCode, String token) async {
     try {
       final response = await dio.get(
-        '/monitorings/object/$moduleCode/module',
-        queryParameters: {
-          'depth': 2,
-          'field_name': 'module_code',
-        },
+        '/monitorings/refacto/$moduleCode/sites_groups',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -353,93 +349,55 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final data = response.data as Map<String, dynamic>;
         final result = <SiteGroupsWithModulesLabel>[];
 
-        // Debug print to understand the response structure
-        print(
-            'API Response structure for module $moduleCode: ${data.keys.toList()}');
-
-        // Handle different API response structures
-        List<dynamic>? siteGroupsList;
-
-        // Try to find site groups in different possible locations
-        if (data['children'] != null &&
-            data['children']['sites_group'] != null) {
-          // Original structure: data.children.sites_group
-          siteGroupsList = data['children']['sites_group'] as List;
-          print(
-              'Found site groups in children.sites_group: ${siteGroupsList.length} groups');
-        } else if (data['sites_group'] != null) {
-          // Alternative structure: data.sites_group directly
-          siteGroupsList = data['sites_group'] as List;
-          print(
-              'Found site groups directly in sites_group: ${siteGroupsList.length} groups');
-        } else if (data['properties'] != null &&
-            data['properties']['sites_group'] != null) {
-          // Another possible structure: data.properties.sites_group
-          siteGroupsList = data['properties']['sites_group'] as List;
-          print(
-              'Found site groups in properties.sites_group: ${siteGroupsList.length} groups');
-        } else {
-          // No site groups found - this might be normal for modules without site groups
-          print(
-              'No site groups found for module $moduleCode. Response keys: ${data.keys.toList()}');
-          if (data['children'] != null) {
-            print(
-                'Children keys: ${(data['children'] as Map<String, dynamic>).keys.toList()}');
-          }
-          if (data['properties'] != null) {
-            print(
-                'Properties keys: ${(data['properties'] as Map<String, dynamic>).keys.toList()}');
-          }
-        }
-
-        // Process site groups if found
-        if (siteGroupsList != null) {
-          for (var group in siteGroupsList) {
+        print('API Response for site groups module $moduleCode: ${data.keys.toList()}');
+        
+        // Extract site groups from the items array
+        final items = data['items'] as List?;
+        if (items != null) {
+          print('Found ${items.length} site groups for module $moduleCode');
+          
+          for (var item in items) {
             try {
-              final groupData = group as Map<String, dynamic>;
-
-              // Extract properties - handle different structures
-              Map<String, dynamic>? properties;
-              if (groupData['properties'] != null) {
-                properties = groupData['properties'] as Map<String, dynamic>;
-              } else {
-                // If no properties field, use the group data itself
-                properties = groupData;
-              }
-
-              // Extract site group data from the properties
+              final groupData = item as Map<String, dynamic>;
+              
+              // Convert the complete API response to our format
               final Map<String, dynamic> formattedGroupData = {
-                'id_sites_group': properties['id_sites_group'] ??
-                    groupData['id_sites_group'] ??
-                    groupData['id'] ??
-                    groupData['id_group'],
-                'sites_group_name': properties['sites_group_name'] ??
-                    groupData['sites_group_name'] ??
-                    groupData['name'] ??
-                    '',
-                'sites_group_code': properties['sites_group_code'] ??
-                    groupData['sites_group_code'] ??
-                    groupData['code'] ??
-                    '',
-                'comments': properties['comments'] ?? groupData['comments'],
-                'nb_sites': properties['nb_sites'] ?? groupData['nb_sites'],
-                'nb_visits': properties['nb_visits'] ?? groupData['nb_visits'],
-                'modules': [
-                  moduleCode
-                ], // We know this site group belongs to this module
+                'id_sites_group': groupData['id_sites_group'],
+                'sites_group_name': groupData['sites_group_name'],
+                'sites_group_code': groupData['sites_group_code'],
+                'sites_group_description': groupData['sites_group_description'],
+                'uuid_sites_group': groupData['uuid_sites_group'],
+                'comments': groupData['comments'],
+                'id_digitiser': groupData['id_digitiser'],
+                'altitude_min': groupData['altitude_min'],
+                'altitude_max': groupData['altitude_max'],
+                // Handle geometry with SRID prefix for site groups
+                'geom': groupData['geometry'] != null 
+                    ? 'SRID=4326;${jsonEncode(groupData['geometry'])}'
+                    : null,
+                // Add any additional data as JSON
+                'data': {
+                  'nb_sites': groupData['nb_sites'],
+                  'nb_visits': groupData['nb_visits'],
+                  'is_geom_from_child': groupData['is_geom_from_child'],
+                  'habitat_principal': groupData['habitat_principal'],
+                  'expertise': groupData['expertise'],
+                },
               };
 
+              print('Creating SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
+              
               result.add(SiteGroupsWithModulesLabel(
                 siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
-                moduleLabelList: [
-                  moduleCode
-                ], // We know this site group belongs to this module
+                moduleLabelList: [moduleCode],
               ));
             } catch (e) {
               print('Error processing site group: $e');
-              print('Group data: $group');
+              print('Group data: $item');
             }
           }
+        } else {
+          print('No items found in site groups response for module $moduleCode');
         }
 
         return result;
@@ -457,4 +415,5 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       throw ApiException('Failed to fetch site groups: $e');
     }
   }
+
 }
