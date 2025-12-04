@@ -50,6 +50,152 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     });
   }
 
+  /// Construit une Map avec les données du groupe de sites pour l'affichage
+  Map<String, dynamic> _buildSiteGroupDataMap() {
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (widget.siteGroup.sitesGroupCode != null) {
+      groupData['sites_group_code'] = widget.siteGroup.sitesGroupCode;
+    }
+    if (widget.siteGroup.sitesGroupName != null) {
+      groupData['sites_group_name'] = widget.siteGroup.sitesGroupName;
+    }
+    if (widget.siteGroup.sitesGroupDescription != null) {
+      groupData['sites_group_description'] =
+          widget.siteGroup.sitesGroupDescription;
+    }
+    if (widget.siteGroup.altitudeMin != null) {
+      groupData['altitude_min'] = widget.siteGroup.altitudeMin;
+    }
+    if (widget.siteGroup.altitudeMax != null) {
+      groupData['altitude_max'] = widget.siteGroup.altitudeMax;
+    }
+    if (widget.siteGroup.comments != null) {
+      groupData['comments'] = widget.siteGroup.comments;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (widget.siteGroup.data != null && widget.siteGroup.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (widget.siteGroup.data is String) {
+          dataMap = Map<String, dynamic>.from(
+              jsonDecode(widget.siteGroup.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(widget.siteGroup.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    return groupData;
+  }
+
+  /// Construit la card avec les propriétés du groupe de sites
+  Widget _buildSiteGroupPropertiesCard(
+    ObjectConfig sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    final displayProperties =
+        sitesGroupConfig.displayProperties ?? sitesGroupConfig.displayList;
+
+    if (displayProperties == null || displayProperties.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final groupData = _buildSiteGroupDataMap();
+
+    // Filtrer les propriétés qui existent dans les données
+    final propertiesToShow = displayProperties.where((property) {
+      return groupData.containsKey(property) && !property.startsWith('meta_');
+    }).toList();
+
+    if (propertiesToShow.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Titre de la section
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  sitesGroupConfig.label ?? 'Propriétés',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Liste des propriétés
+            ...propertiesToShow.map((property) {
+              final rawValue = groupData[property];
+
+              // Obtenir le label depuis la configuration
+              String label = property;
+              if (parsedGroupConfig.containsKey(property)) {
+                label =
+                    parsedGroupConfig[property]['attribut_label'] ?? property;
+              }
+
+              // Formater la valeur
+              String displayValue = ValueFormatter.format(rawValue);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        '$label:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        displayValue,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
   /// Vérifie si les sites sont éditables sur le terrain
   /// Retourne true si is_editable_on_field est true ou absent (par défaut)
   /// Retourne false si is_editable_on_field est explicitement false
@@ -307,6 +453,18 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               ),
             ),
           ),
+
+          // Card avec les display_properties du groupe de sites
+          if (sitesGroupConfig != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _buildSiteGroupPropertiesCard(
+                sitesGroupConfig,
+                customConfig,
+                parsedGroupConfig,
+              ),
+            ),
+          ],
 
           // Sites Table Section
           Padding(

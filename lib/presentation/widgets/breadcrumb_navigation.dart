@@ -5,22 +5,22 @@ import 'package:flutter/material.dart';
 class BreadcrumbNavigation extends StatefulWidget {
   /// Liste des éléments du fil d'Ariane
   final List<BreadcrumbItem> items;
-  
+
   /// Style pour le texte des éléments
   final TextStyle? textStyle;
-  
+
   /// Couleur pour les séparateurs
   final Color? separatorColor;
-  
+
   /// Afficher horizontalement ou verticalement
   final bool isVertical;
-  
+
   /// L'icône à utiliser comme séparateur
   final IconData separatorIcon;
-  
+
   /// Si true, permet d'afficher les éléments dans une ScrollView
   final bool scrollable;
-  
+
   /// Constructeur
   const BreadcrumbNavigation({
     super.key,
@@ -48,11 +48,11 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
       return _buildMobileBreadcrumb(context);
     }
   }
-  
+
   /// Construit un fil d'Ariane adapté au mobile
   Widget _buildMobileBreadcrumb(BuildContext context) {
     if (widget.items.isEmpty) return const SizedBox.shrink();
-    
+
     return Padding(
       padding: const EdgeInsets.all(8.0),
       child: Column(
@@ -79,10 +79,10 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
             ],
           ),
           const SizedBox(height: 8),
-          
+
           // Fil d'Ariane générique (toujours visible)
           _buildGenericBreadcrumb(context),
-          
+
           // Bouton pour afficher/masquer les détails
           const SizedBox(height: 8),
           GestureDetector(
@@ -111,7 +111,7 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
               ],
             ),
           ),
-          
+
           // Détails (affichés conditionnellement)
           if (_showDetails) ...[
             const SizedBox(height: 8),
@@ -121,20 +121,20 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
       ),
     );
   }
-  
+
   /// Construit le fil d'Ariane générique (labels seulement)
   Widget _buildGenericBreadcrumb(BuildContext context) {
     final breadcrumbItems = <Widget>[];
-    
+
     for (int i = 0; i < widget.items.length; i++) {
       final item = widget.items[i];
       final isLast = i == widget.items.length - 1;
-      
+
       // Ajouter l'élément générique
       breadcrumbItems.add(
         _buildGenericBreadcrumbItem(item, context, isLast),
       );
-      
+
       // Ajouter le séparateur si ce n'est pas le dernier élément
       if (!isLast) {
         breadcrumbItems.add(
@@ -143,31 +143,32 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
             child: Icon(
               widget.separatorIcon,
               size: 14,
-              color: widget.separatorColor ?? 
-                Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: widget.separatorColor ??
+                  Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         );
       }
     }
-    
+
     return Wrap(
       alignment: WrapAlignment.start,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: breadcrumbItems,
     );
   }
-  
+
   /// Construit un élément générique du fil d'Ariane
-  Widget _buildGenericBreadcrumbItem(BreadcrumbItem item, BuildContext context, bool isLast) {
+  Widget _buildGenericBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context, bool isLast) {
     final style = TextStyle(
       fontSize: 14,
       fontWeight: isLast ? FontWeight.bold : FontWeight.w500,
-      color: isLast 
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+      color: isLast
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
     );
-    
+
     if (item.onTap != null && !isLast) {
       return InkWell(
         onTap: item.onTap,
@@ -184,7 +185,7 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
       );
     }
   }
-  
+
   /// Construit le fil d'Ariane détaillé (avec les valeurs)
   Widget _buildDetailedBreadcrumb(BuildContext context) {
     return Container(
@@ -198,15 +199,18 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: widget.items.map((item) => _buildDetailedBreadcrumbItem(item, context)).toList(),
+        children: widget.items
+            .map((item) => _buildDetailedBreadcrumbItem(item, context))
+            .toList(),
       ),
     );
   }
-  
+
   /// Construit un élément détaillé du fil d'Ariane
-  Widget _buildDetailedBreadcrumbItem(BreadcrumbItem item, BuildContext context) {
+  Widget _buildDetailedBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context) {
     final isLast = widget.items.indexOf(item) == widget.items.length - 1;
-    
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Row(
@@ -225,27 +229,27 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
           ),
           Expanded(
             child: item.onTap != null && !isLast
-              ? InkWell(
-                  onTap: item.onTap,
-                  child: Text(
+                ? InkWell(
+                    onTap: item.onTap,
+                    child: Text(
+                      item.value,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  )
+                : Text(
                     item.value,
                     style: TextStyle(
                       fontSize: 12,
-                      color: Theme.of(context).colorScheme.primary,
-                      decoration: TextDecoration.underline,
+                      fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
+                      color: isLast
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
-                )
-              : Text(
-                  item.value,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
-                    color: isLast 
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
           ),
         ],
       ),
@@ -254,20 +258,21 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
 
   /// Construit un fil d'Ariane horizontal (par défaut - conservé pour compatibilité)
   Widget _buildHorizontalBreadcrumb(BuildContext context) {
-    final defaultTextStyle = widget.textStyle ?? 
-      TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8));
-    
+    final defaultTextStyle = widget.textStyle ??
+        TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8));
+
     final breadcrumbItems = <Widget>[];
-    
+
     // Construire la liste des éléments avec les séparateurs
     for (int i = 0; i < widget.items.length; i++) {
       final item = widget.items[i];
-      
+
       // Ajouter l'élément
-      breadcrumbItems.add(
-        _buildBreadcrumbItemWidget(item, context, defaultTextStyle, i == widget.items.length - 1)
-      );
-      
+      breadcrumbItems.add(_buildBreadcrumbItemWidget(
+          item, context, defaultTextStyle, i == widget.items.length - 1));
+
       // Ajouter le séparateur si ce n'est pas le dernier élément
       if (i < widget.items.length - 1) {
         breadcrumbItems.add(
@@ -276,13 +281,14 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
             child: Icon(
               widget.separatorIcon,
               size: 14,
-              color: widget.separatorColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: widget.separatorColor ??
+                  Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         );
       }
     }
-    
+
     // Renvoyer le widget final, scrollable ou non
     if (widget.scrollable) {
       return SingleChildScrollView(
@@ -299,23 +305,24 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
       );
     }
   }
-  
+
   /// Construit un fil d'Ariane vertical
   Widget _buildVerticalBreadcrumb(BuildContext context) {
-    final defaultTextStyle = widget.textStyle ?? 
-      TextStyle(fontSize: 14, color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8));
-    
+    final defaultTextStyle = widget.textStyle ??
+        TextStyle(
+            fontSize: 14,
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.8));
+
     final breadcrumbItems = <Widget>[];
-    
+
     // Construire la liste des éléments avec les séparateurs
     for (int i = 0; i < widget.items.length; i++) {
       final item = widget.items[i];
-      
+
       // Ajouter l'élément
-      breadcrumbItems.add(
-        _buildBreadcrumbItemWidget(item, context, defaultTextStyle, i == widget.items.length - 1)
-      );
-      
+      breadcrumbItems.add(_buildBreadcrumbItemWidget(
+          item, context, defaultTextStyle, i == widget.items.length - 1));
+
       // Ajouter le séparateur si ce n'est pas le dernier élément
       if (i < widget.items.length - 1) {
         breadcrumbItems.add(
@@ -324,35 +331,32 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
             child: Icon(
               Icons.arrow_drop_down,
               size: 16,
-              color: widget.separatorColor ?? Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              color: widget.separatorColor ??
+                  Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
             ),
           ),
         );
       }
     }
-    
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: breadcrumbItems,
     );
   }
-  
+
   /// Construit un élément du fil d'Ariane
-  Widget _buildBreadcrumbItemWidget(
-    BreadcrumbItem item, 
-    BuildContext context, 
-    TextStyle defaultTextStyle,
-    bool isLast
-  ) {
+  Widget _buildBreadcrumbItemWidget(BreadcrumbItem item, BuildContext context,
+      TextStyle defaultTextStyle, bool isLast) {
     // Le dernier élément est mis en évidence
     final style = isLast
-      ? defaultTextStyle.copyWith(
-          fontWeight: FontWeight.bold,
-          color: Theme.of(context).colorScheme.primary,
-        )
-      : defaultTextStyle;
-    
+        ? defaultTextStyle.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+          )
+        : defaultTextStyle;
+
     // Si l'élément a une action de navigation, le rendre cliquable
     if (item.onTap != null) {
       return InkWell(
@@ -383,16 +387,16 @@ class _BreadcrumbNavigationState extends State<BreadcrumbNavigation> {
 class BreadcrumbItem {
   /// Le libellé de l'élément (ex: "Module", "Site")
   final String label;
-  
+
   /// La valeur à afficher (ex: "Apollons", "1")
   final String value;
-  
+
   /// L'action à effectuer lorsqu'on clique sur l'élément (optionnel)
   final VoidCallback? onTap;
-  
+
   /// Le contexte associé à cet élément (pour la navigation)
   final Map<String, dynamic>? context;
-  
+
   BreadcrumbItem({
     required this.label,
     required this.value,
