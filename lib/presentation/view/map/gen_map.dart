@@ -10,6 +10,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
@@ -1187,7 +1189,9 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       });
     }
 
-    if (displayProperties.isEmpty) {
+    // Ne pas afficher "Aucune information disponible" si c'est un groupe de sites
+    // (les sites seront affichés dans le FutureBuilder)
+    if (displayProperties.isEmpty && widget.siteGroup != null) {
       displayProperties.add(
         const Padding(
           padding: EdgeInsets.all(8.0),
@@ -1212,6 +1216,167 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               ...displayProperties,
+              // Afficher le nombre de sites et la liste si c'est un groupe de sites
+              if (widget.siteGroup == null && siteId != null)
+                FutureBuilder<List<BaseSite>>(
+                  future: ref
+                      .read(getSitesBySiteGroupUseCaseProvider)
+                      .execute(siteId),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    }
+
+                    if (snapshot.hasError) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'Erreur lors du chargement des sites: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
+                    }
+
+                    final sites = snapshot.data ?? [];
+                    final sitesCount = sites.length;
+
+                    // Récupérer le label des sites depuis la configuration
+                    final siteConfig = widget
+                        .moduleInfo?.module.complement?.configuration?.site;
+                    final siteLabelSingular =
+                        (siteConfig?.label ?? 'site').toLowerCase();
+                    final siteLabelPlural =
+                        (siteConfig?.labelList ?? siteConfig?.label ?? 'sites')
+                            .toLowerCase();
+
+                    // Utiliser le pluriel si plus d'un site, sinon le singulier
+                    final siteLabel =
+                        sitesCount > 1 ? siteLabelPlural : siteLabelSingular;
+
+                    if (sitesCount == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          'Aucun $siteLabelSingular dans ce groupe',
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 8.0,
+                            horizontal: 0,
+                          ),
+                          child: Text(
+                            'Nombre de $siteLabel: $sitesCount ',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Liste des $siteLabel :',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        sitesCount > 10
+                            ? Builder(
+                                builder: (context) {
+                                  final scrollController = ScrollController();
+                                  return SizedBox(
+                                    height: 200, // Hauteur fixe pour le slider
+                                    child: Scrollbar(
+                                      controller: scrollController,
+                                      thumbVisibility: true,
+                                      child: SingleChildScrollView(
+                                        controller: scrollController,
+                                        child: Column(
+                                          children: sites.map((site) {
+                                            final siteName =
+                                                site.baseSiteName ??
+                                                    site.baseSiteCode ??
+                                                    'Site ${site.idBaseSite}';
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8.0,
+                                                top: 4.0,
+                                                bottom: 4.0,
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.location_on,
+                                                    size: 16,
+                                                    color: Colors.red,
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  Expanded(
+                                                    child: Text(
+                                                      siteName,
+                                                      style: const TextStyle(
+                                                          fontSize: 12),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            );
+                                          }).toList(),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              )
+                            : Column(
+                                children: sites.map((site) {
+                                  final siteName = site.baseSiteName ??
+                                      site.baseSiteCode ??
+                                      'Site ${site.idBaseSite}';
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 8.0,
+                                      top: 4.0,
+                                      bottom: 4.0,
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.location_on,
+                                          size: 16,
+                                          color: Colors.red,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            siteName,
+                                            style:
+                                                const TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                      ],
+                    );
+                  },
+                ),
               // Boutons d'action
               if (siteId != null && widget.moduleInfo != null)
                 Padding(
