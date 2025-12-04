@@ -28,6 +28,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case_impl.d
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_individuals_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_individuals_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
@@ -36,6 +38,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_datasets_for_module_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_individuals_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_individuals_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
@@ -200,6 +204,15 @@ final fetchModulesUseCaseProvider = Provider<FetchModulesUseCase>(
 final fetchSiteGroupsUseCaseProvider = Provider<FetchSiteGroupsUseCase>(
   (ref) => FetchSiteGroupsUseCaseImpl(
     ref.watch(sitesRepositoryProvider),
+  ),
+);
+
+final getIndividualsUseCaseProvider = Provider<GetIndividualsUseCase>(
+    (ref) => GetIndividualsUseCaseImpl(ref.watch(individualsRepositoryProvider)));
+
+final fetchIndividualsUseCaseProvider = Provider<FetchIndividualsUseCase>(
+  (ref) => FetchIndividualsUseCaseImpl(
+    ref.watch(individualsRepositoryProvider),
   ),
 );
 

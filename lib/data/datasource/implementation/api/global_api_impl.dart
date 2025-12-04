@@ -290,6 +290,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
           'module': {'children_types': [], 'label': 'Module'},
           'site': {'label': 'Site', 'label_list': 'Sites'},
           'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+          'individual': {'label': 'Individu', 'label_list': 'Individus'},
         };
       }
 
@@ -301,6 +302,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
             'module': {'children_types': [], 'label': 'Module'},
             'site': {'label': 'Site', 'label_list': 'Sites'},
             'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+            'individual': {'label': 'Individu', 'label_list': 'Individus'},
           };
         }
         return data as Map<String, dynamic>;
