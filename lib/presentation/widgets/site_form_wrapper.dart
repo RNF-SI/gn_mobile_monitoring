@@ -187,9 +187,12 @@ class SiteFormWrapper extends ConsumerWidget {
   }
 
   /// Navigue vers le formulaire d'observation
-  Future<void> _navigateToVisitForm(BuildContext context, BaseSite site, SiteGroup? siteGroup, [Map<String, dynamic>? siteFormData]) async {
-    final visitConfig =  moduleInfo!.module.complement?.configuration?.site;
+  Future<void> _navigateToVisitForm(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    final visitConfig =  moduleInfo!.module.complement?.configuration?.visit;
     if (visitConfig == null) return;
+
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
 
     Navigator.pushReplacement(
       context,
@@ -199,7 +202,7 @@ class SiteFormWrapper extends ConsumerWidget {
             visitConfig: visitConfig,
             customConfig: customConfig,
             moduleId: moduleInfo?.module.id,
-            moduleInfo: moduleInfo,
+            moduleInfo: targetModuleInfo,
             siteGroup: siteGroup,
         ),
       ),
@@ -288,7 +291,7 @@ class SiteFormWrapper extends ConsumerWidget {
             final createVisit = await _askForVisit(context);
             if (createVisit) {
             if (newSite != null && context.mounted) {
-              await _navigateToVisitForm(context, newSite, siteGroup, formData);
+              await _navigateToVisitForm(context, newSite, siteGroup, moduleInfo);
                   return false; // Navigation personnalisée faite, empêcher le pop automatique
               }
             } else {
