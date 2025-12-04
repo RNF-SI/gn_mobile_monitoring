@@ -304,8 +304,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   List<dynamic> _allSites = [];
   List<dynamic> _filteredSiteGroups = [];
   String _searchQuery = '';
+  bool _showGroupSearch = false;
+  String _groupSearchQuery = '';
+  final TextEditingController _groupSearchController = TextEditingController();
   bool _configurationLoaded = false;
   bool _isInitialLoading = true;
+  Future<List<SiteGroup>>? _groupsGeometryFuture;
+  List<SiteGroup>? _cachedGroups;
 
   // Variables pour les groupes de sites avec ExpansionTile
   int? _expandedGroupPanelIndex;
@@ -572,6 +577,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
     _sitesScrollController.dispose();
     _searchController.dispose();
+    _groupSearchController.dispose();
     super.dispose();
   }
 
@@ -917,9 +923,28 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     final List<SiteGroup> groupsFromModule =
         _filteredSiteGroups.whereType<SiteGroup>().toList();
 
+    // Utiliser les données en cache si disponibles, sinon créer/mémoriser le Future
+    if (_cachedGroups != null) {
+      // Utiliser les données en cache directement pour éviter le rechargement
+      return _buildGroupsContent(_cachedGroups!, sitesGroupConfig, customConfig,
+          parsedGroupConfig, groupsFromModule);
+    }
+
+    // Mémoriser le Future pour éviter de le recréer à chaque rebuild
+    if (_groupsGeometryFuture == null) {
+      _groupsGeometryFuture = _loadGroupsWithGeometry(groupsFromModule);
+      _groupsGeometryFuture!.then((groups) {
+        if (mounted) {
+          setState(() {
+            _cachedGroups = groups;
+          });
+        }
+      });
+    }
+
     // Charger les groupes depuis la base de données pour avoir la géométrie
     return FutureBuilder<List<SiteGroup>>(
-      future: _loadGroupsWithGeometry(groupsFromModule),
+      future: _groupsGeometryFuture,
       builder: (context, snapshot) {
         // Utiliser les groupes de la base de données si disponibles, sinon ceux du module
         final List<SiteGroup> groups =
@@ -927,118 +952,264 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ? snapshot.data!
                 : groupsFromModule;
 
-        return Column(
-          children: [
-            // Header avec titre, bouton d'ajout et bouton de tri
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        // Mettre en cache les données une fois chargées
+        if (snapshot.hasData && _cachedGroups == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _cachedGroups = snapshot.data;
+              });
+            }
+          });
+        }
+
+        return _buildGroupsContent(groups, sitesGroupConfig, customConfig,
+            parsedGroupConfig, groupsFromModule);
+      },
+    );
+  }
+
+  /// Construit le contenu des groupes (sans FutureBuilder)
+  Widget _buildGroupsContent(
+    List<SiteGroup> groups,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+    List<SiteGroup> groupsFromModule,
+  ) {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
+    return Column(
+      children: [
+        // Header avec titre, bouton d'ajout et bouton de tri
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
                 children: [
-                  Row(
+                  Text(
+                    sitesGroupConfig?.labelList ??
+                        sitesGroupConfig?.label ??
+                        'Groupes de sites',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  // Afficher le bouton uniquement si is_editable_on_field est true ou absent
+                  Builder(
+                    builder: (context) {
+                      final isEditable =
+                          _isSiteGroupEditableOnField(sitesGroupConfig);
+                      debugPrint(
+                          '🎯 Vérification affichage bouton groupe - isEditable: $isEditable');
+                      if (isEditable) {
+                        return Row(
+                          children: [
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showGroupSearch = !_showGroupSearch;
+                                  if (!_showGroupSearch) {
+                                    _groupSearchQuery = '';
+                                    _groupSearchController.clear();
+                                  }
+                                });
+                              },
+                              icon: Icon(
+                                Icons.search,
+                                color: _showGroupSearch
+                                    ? Colors.white
+                                    : AppColors.border,
+                              ),
+                              style: _showGroupSearch
+                                  ? IconButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                    )
+                                  : null,
+                              tooltip: _showGroupSearch
+                                  ? 'Fermer la recherche'
+                                  : 'Rechercher un groupe de sites',
+                            ),
+                            IconButton(
+                              onPressed: () {
+                                if (sitesGroupConfig != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SiteGroupFormPage(
+                                        siteConfig: sitesGroupConfig,
+                                        customConfig: customConfig,
+                                        moduleId: module.id,
+                                        moduleInfo: widget.moduleInfo,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Configuration de groupe de sites non disponible'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: const Icon(Icons.add_circle),
+                              tooltip:
+                                  'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
+                            ),
+                          ],
+                        );
+                      } else {
+                        return Row(
+                          children: [
+                            const SizedBox(width: 8),
+                            IconButton(
+                              onPressed: () {
+                                setState(() {
+                                  _showGroupSearch = !_showGroupSearch;
+                                  if (!_showGroupSearch) {
+                                    _groupSearchQuery = '';
+                                    _groupSearchController.clear();
+                                  }
+                                });
+                              },
+                              icon: Icon(
+                                Icons.search,
+                                color: _showGroupSearch
+                                    ? Colors.white
+                                    : AppColors.border,
+                              ),
+                              style: _showGroupSearch
+                                  ? IconButton.styleFrom(
+                                      backgroundColor:
+                                          Theme.of(context).colorScheme.primary,
+                                    )
+                                  : null,
+                              tooltip: _showGroupSearch
+                                  ? 'Fermer la recherche'
+                                  : 'Rechercher un groupe de sites',
+                            ),
+                          ],
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+              // Bouton pour basculer entre tri par distance et alphabétique
+              if (_userPosition != null)
+                ActionChip(
+                  label: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        sitesGroupConfig?.labelList ??
-                            sitesGroupConfig?.label ??
-                            'Groupes de sites',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                      Icon(
+                        _sortGroupsByDistance
+                            ? Icons.sort_by_alpha
+                            : Icons.location_on,
+                        size: 16,
+                        color: Colors.white,
                       ),
-                      // Afficher le bouton uniquement si is_editable_on_field est true ou absent
-                      Builder(
-                        builder: (context) {
-                          final isEditable =
-                              _isSiteGroupEditableOnField(sitesGroupConfig);
-                          debugPrint(
-                              '🎯 Vérification affichage bouton groupe - isEditable: $isEditable');
-                          if (isEditable) {
-                            return Row(
-                              children: [
-                                const SizedBox(width: 8),
-                                IconButton(
-                                  onPressed: () {
-                                    if (sitesGroupConfig != null) {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SiteGroupFormPage(
-                                            siteConfig: sitesGroupConfig,
-                                            customConfig: customConfig,
-                                            moduleId: module.id,
-                                            moduleInfo: widget.moduleInfo,
-                                          ),
-                                        ),
-                                      );
-                                    } else {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              'Configuration de groupe de sites non disponible'),
-                                          backgroundColor: Colors.red,
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  icon: const Icon(Icons.add_circle),
-                                  tooltip:
-                                      'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
-                                ),
-                              ],
-                            );
-                          } else {
-                            return const SizedBox.shrink();
-                          }
-                        },
+                      const SizedBox(width: 4),
+                      Text(
+                        _sortGroupsByDistance ? 'Alphabétique' : 'Distance',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ],
                   ),
-                  // Bouton pour basculer entre tri par distance et alphabétique
-                  if (_userPosition != null)
-                    ActionChip(
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            _sortGroupsByDistance
-                                ? Icons.sort_by_alpha
-                                : Icons.location_on,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            _sortGroupsByDistance ? 'Alphabétique' : 'Distance',
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                        ],
+                  side: BorderSide.none,
+                  backgroundColor: AppColors.primary,
+                  onPressed: () {
+                    setState(() {
+                      _sortGroupsByDistance = !_sortGroupsByDistance;
+                    });
+                  },
+                ),
+            ],
+          ),
+        ),
+        // Champ de recherche (affiché conditionnellement)
+        if (_showGroupSearch)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _groupSearchController,
+                    autofocus: true,
+                    decoration: InputDecoration(
+                      hintText: 'Rechercher par nom de groupe...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _groupSearchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: 'Effacer la recherche',
+                              onPressed: () {
+                                setState(() {
+                                  _groupSearchQuery = '';
+                                  _groupSearchController.clear();
+                                });
+                              },
+                            )
+                          : null,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8.0),
                       ),
-                      side: BorderSide.none,
-                      backgroundColor: AppColors.primary,
-                      onPressed: () {
-                        setState(() {
-                          _sortGroupsByDistance = !_sortGroupsByDistance;
-                        });
-                      },
+                      filled: true,
+                      fillColor: Theme.of(context).colorScheme.surface,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
                     ),
-                ],
-              ),
+                    onChanged: (value) {
+                      setState(() {
+                        _groupSearchQuery = value.toLowerCase();
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _showGroupSearch = false;
+                      _groupSearchQuery = '';
+                      _groupSearchController.clear();
+                    });
+                  },
+                  icon: const Icon(Icons.close),
+                  tooltip: 'Fermer la recherche',
+                  style: IconButton.styleFrom(
+                    backgroundColor: Theme.of(context).colorScheme.surface,
+                    foregroundColor: Theme.of(context).colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-            // Liste des groupes avec ExpansionTile
-            Expanded(
-              child: snapshot.connectionState == ConnectionState.waiting
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildGroupsExpansionPanelList(
-                      groups,
-                      sitesGroupConfig,
-                      customConfig,
-                      parsedGroupConfig,
-                    ),
-            ),
-          ],
-        );
-      },
+          ),
+        // Liste des groupes avec ExpansionTile
+        Expanded(
+          child: _buildGroupsExpansionPanelList(
+            _groupSearchQuery.isEmpty
+                ? groups
+                : groups.where((group) {
+                    final groupName = group.sitesGroupName?.toLowerCase() ?? '';
+                    final groupCode = group.sitesGroupCode?.toLowerCase() ?? '';
+                    return groupName.contains(_groupSearchQuery) ||
+                        groupCode.contains(_groupSearchQuery);
+                  }).toList(),
+            sitesGroupConfig,
+            customConfig,
+            parsedGroupConfig,
+          ),
+        ),
+      ],
     );
   }
 
