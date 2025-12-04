@@ -198,6 +198,8 @@ class SitesRepositoryImpl implements SitesRepository {
 
         // 7. Mettre à jour les sites existants
         for (final site in sitesToUpdate) {
+          // Mettre à jour avec la version depuis l'API (isLocal = false)
+          // Un site téléversé puis récupéré depuis l'API n'est plus modifiable
           await database.updateSite(site);
           itemsUpdated++;
         }
@@ -302,6 +304,7 @@ class SitesRepositoryImpl implements SitesRepository {
           await database.insertSites([domainSite]);
         } else {
           // Le site existe, le mettre à jour
+          // Un site récupéré depuis l'API a isLocal = false (non modifiable)
           await database.updateSite(domainSite);
         }
 

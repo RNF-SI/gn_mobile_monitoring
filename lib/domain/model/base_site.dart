@@ -16,6 +16,7 @@ class BaseSite with _$BaseSite {
     int? altitudeMax,
     DateTime? metaCreateDate,
     DateTime? metaUpdateDate,
-    Map<String, dynamic>? data, 
+    Map<String, dynamic>? data,
+    bool? isLocal, // true si créé localement, false si récupéré depuis l'API
   }) = _BaseSite;
 }

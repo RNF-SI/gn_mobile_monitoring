@@ -29,6 +29,7 @@ mixin _$BaseSite {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
+  bool? get isLocal => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $BaseSiteCopyWith<BaseSite> get copyWith =>
@@ -52,7 +53,8 @@ abstract class $BaseSiteCopyWith<$Res> {
       int? altitudeMax,
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
-      Map<String, dynamic>? data});
+      Map<String, dynamic>? data,
+      bool? isLocal});
 }
 
 /// @nodoc
@@ -80,6 +82,7 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
+    Object? isLocal = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseSite: null == idBaseSite
@@ -130,6 +133,10 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ) as $Val);
   }
 }
@@ -154,7 +161,8 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       int? altitudeMax,
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
-      Map<String, dynamic>? data});
+      Map<String, dynamic>? data,
+      bool? isLocal});
 }
 
 /// @nodoc
@@ -180,6 +188,7 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
+    Object? isLocal = freezed,
   }) {
     return _then(_$BaseSiteImpl(
       idBaseSite: null == idBaseSite
@@ -230,6 +239,10 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value._data
           : data // ignore: cast_nullable_to_non_nullable
               as Map<String, dynamic>?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
     ));
   }
 }
@@ -249,7 +262,8 @@ class _$BaseSiteImpl implements _BaseSite {
       this.altitudeMax,
       this.metaCreateDate,
       this.metaUpdateDate,
-      final Map<String, dynamic>? data})
+      final Map<String, dynamic>? data,
+      this.isLocal})
       : _data = data;
 
   @override
@@ -286,8 +300,11 @@ class _$BaseSiteImpl implements _BaseSite {
   }
 
   @override
+  final bool? isLocal;
+
+  @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal)';
   }
 
   @override
@@ -316,7 +333,8 @@ class _$BaseSiteImpl implements _BaseSite {
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
                 other.metaUpdateDate == metaUpdateDate) &&
-            const DeepCollectionEquality().equals(other._data, _data));
+            const DeepCollectionEquality().equals(other._data, _data) &&
+            (identical(other.isLocal, isLocal) || other.isLocal == isLocal));
   }
 
   @override
@@ -333,7 +351,8 @@ class _$BaseSiteImpl implements _BaseSite {
       altitudeMax,
       metaCreateDate,
       metaUpdateDate,
-      const DeepCollectionEquality().hash(_data));
+      const DeepCollectionEquality().hash(_data),
+      isLocal);
 
   @JsonKey(ignore: true)
   @override
@@ -355,7 +374,8 @@ abstract class _BaseSite implements BaseSite {
       final int? altitudeMax,
       final DateTime? metaCreateDate,
       final DateTime? metaUpdateDate,
-      final Map<String, dynamic>? data}) = _$BaseSiteImpl;
+      final Map<String, dynamic>? data,
+      final bool? isLocal}) = _$BaseSiteImpl;
 
   @override
   int get idBaseSite;
@@ -381,6 +401,8 @@ abstract class _BaseSite implements BaseSite {
   DateTime? get metaUpdateDate;
   @override
   Map<String, dynamic>? get data;
+  @override
+  bool? get isLocal;
   @override
   @JsonKey(ignore: true)
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>

@@ -10,7 +10,6 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
@@ -190,6 +189,12 @@ class SiteFormViewModel extends StateNotifier<void> {
     int? selectedSiteTypeId,
   }) async {
     try {
+      // Vérifier que le site a été créé localement
+      if (existingSite.isLocal != true) {
+        debugPrint('Erreur: Impossible de modifier un site qui n\'a pas été créé localement');
+        return false;
+      }
+
       // Traiter les données du formulaire
       final processedData = await _formDataProcessor.processFormData(formData);
 
@@ -262,6 +267,7 @@ class SiteFormViewModel extends StateNotifier<void> {
       altitudeMax: formData['altitude_max'] as int?,
       metaCreateDate: now,
       metaUpdateDate: now,
+      isLocal: true, // Site créé localement
       // geom sera géré séparément si nécessaire
     );
   }
