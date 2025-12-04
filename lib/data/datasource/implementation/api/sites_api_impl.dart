@@ -349,17 +349,18 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final data = response.data as Map<String, dynamic>;
         final result = <SiteGroupsWithModulesLabel>[];
 
-        print('API Response for site groups module $moduleCode: ${data.keys.toList()}');
-        
+        print(
+            'API Response for site groups module $moduleCode: ${data.keys.toList()}');
+
         // Extract site groups from the items array
         final items = data['items'] as List?;
         if (items != null) {
           print('Found ${items.length} site groups for module $moduleCode');
-          
+
           for (var item in items) {
             try {
               final groupData = item as Map<String, dynamic>;
-              
+
               // Convert the complete API response to our format
               final Map<String, dynamic> formattedGroupData = {
                 'id_sites_group': groupData['id_sites_group'],
@@ -371,9 +372,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                 'id_digitiser': groupData['id_digitiser'],
                 'altitude_min': groupData['altitude_min'],
                 'altitude_max': groupData['altitude_max'],
-                // Handle geometry with SRID prefix for site groups
-                'geom': groupData['geometry'] != null 
-                    ? 'SRID=4326;${jsonEncode(groupData['geometry'])}'
+                // Handle geometry (store as GeoJSON string, same format as sites)
+                'geom': groupData['geometry'] != null
+                    ? (groupData['geometry'] is Map<String, dynamic>
+                        ? jsonEncode(groupData['geometry'])
+                        : groupData['geometry'].toString())
                     : null,
                 // Add any additional data as JSON
                 'data': {
@@ -385,8 +388,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                 },
               };
 
-              print('Creating SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
-              
+              print(
+                  'Creating SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
+
               result.add(SiteGroupsWithModulesLabel(
                 siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
                 moduleLabelList: [moduleCode],
@@ -397,7 +401,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             }
           }
         } else {
-          print('No items found in site groups response for module $moduleCode');
+          print(
+              'No items found in site groups response for module $moduleCode');
         }
 
         return result;
@@ -415,5 +420,4 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       throw ApiException('Failed to fetch site groups: $e');
     }
   }
-
 }
