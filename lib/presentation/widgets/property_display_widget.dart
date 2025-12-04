@@ -81,6 +81,7 @@ class PropertyDisplayWidget extends ConsumerWidget {
     // Identifier les champs de nomenclature et sites_group depuis la configuration
     final List<String> nomenclatureFields = [];
     final List<String> sitesGroupFields = [];
+    final List<String> taxonFields = [];
 
     // 1. Chercher dans la configuration parsée
     for (final entry in parsedConfig.entries) {
@@ -115,10 +116,17 @@ class PropertyDisplayWidget extends ConsumerWidget {
       sitesGroupFields.add('id_sites_group');
     }
 
+    // 4. Ajouter les noms du taxon selon le cd_nom
+    if (enrichedData.containsKey('cd_nom')) {
+      taxonFields.add('cd_nom');
+    }
+
     debugPrint('Champs de nomenclature trouvés: ${nomenclatureFields.length}');
     debugPrint('Champs nomenclature: ${nomenclatureFields.join(", ")}');
     debugPrint('Champs sites_group trouvés: ${sitesGroupFields.length}');
     debugPrint('Champs sites_group: ${sitesGroupFields.join(", ")}');
+    debugPrint('Champs cd_nom trouvés: ${taxonFields.length}');
+    debugPrint('Champs cd_nom: ${taxonFields.join(", ")}');
 
     // Pour chaque champ de nomenclature, convertir l'ID en objet
     for (final fieldName in nomenclatureFields) {
@@ -247,6 +255,20 @@ class PropertyDisplayWidget extends ConsumerWidget {
       } catch (e) {
         debugPrint('Erreur lors de l\'enrichissement de $fieldName: $e');
         // En cas d'erreur, conserver l'ID tel quel
+      }
+    }
+
+    // Traiter les champs de type sites_group
+    for (final fieldName in taxonFields) {
+      // Créer un objet avec le nom du groupe
+    if (this.customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+        if (data["cd_nom"]["nom_vern"] == null) {
+          enrichedData[fieldName] = data["cd_nom"]["lb_nom"];
+        } else {
+          enrichedData[fieldName] = data["cd_nom"]["nom_vern"];
+        }
+      } else {
+        enrichedData[fieldName] = data["cd_nom"]["lb_nom"];
       }
     }
 

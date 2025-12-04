@@ -348,7 +348,7 @@ class FormDataProcessor {
 
         // Ne pas traiter les champs qui ne sont pas des cd_nom (par exemple, id_nomenclature_*)
         if (key != 'cd_nom' && !key.contains('cd_nom')) {
-          // Vérifier si c'est un taxonomie avec boutons radio en recherchant un champ de config
+          // Vérifier si c'est un taxon avec boutons radio en recherchant un champ de config
           // Pour simplifier, nous préservons la valeur entière pour ces champs
           continue;
         }
