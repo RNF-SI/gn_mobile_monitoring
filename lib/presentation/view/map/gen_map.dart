@@ -48,7 +48,7 @@ class _CompassWidgetState extends State<CompassWidget>
     widget.mapController.mapEventStream.listen((event) {
       if (event is MapEventMove || event is MapEventRotate) {
         setState(() {
-          currentRotation = -widget.mapController.camera.rotation;
+          currentRotation = widget.mapController.camera.rotationRad;
         });
       }
     });
