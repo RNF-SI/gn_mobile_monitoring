@@ -16,9 +16,8 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
 import 'package:point_in_polygon/point_in_polygon.dart' as pip;
@@ -807,22 +806,21 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                             module.complement?.configuration?.sitesGroup;
                         if (groupSiteConfig != null) {
                           Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SiteGroupFormPage(
-                                siteGroupConfig: groupSiteConfig,
-                                customConfig:
-                                    module.complement?.configuration?.custom,
-                                moduleId: module.id,
-                                moduleInfo: widget.moduleInfo,
-                              ),
-                            )
-                          );
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SiteGroupFormPage(
+                                  siteGroupConfig: groupSiteConfig,
+                                  customConfig:
+                                      module.complement?.configuration?.custom,
+                                  moduleId: module.id,
+                                  moduleInfo: widget.moduleInfo,
+                                ),
+                              ));
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content:
-                                  Text('Configuration de site non disponible'),
+                              content: Text(
+                                  'Configuration de groupe de sites non disponible'),
                               backgroundColor: Colors.red,
                             ),
                           );
@@ -1008,12 +1006,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-    // Générer le schéma pour le formatage des cellules
-    Map<String, dynamic> schema = {};
-    if (sitesGroupConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(
-          sitesGroupConfig, customConfig);
-    }
   /// Construit le contenu des groupes (sans FutureBuilder)
   Widget _buildGroupsContent(
     List<SiteGroup> groups,
@@ -1039,7 +1031,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                       context,
                       MaterialPageRoute(
                         builder: (context) => SiteGroupFormPage(
-                          siteConfig: sitesGroupConfig,
+                          siteGroupConfig: sitesGroupConfig,
                           customConfig: customConfig,
                           moduleId: module.id,
                           moduleInfo: widget.moduleInfo,
