@@ -439,6 +439,59 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               builder: (_) => Scaffold(
                 appBar: AppBar(
                   title: const Text('Carte des sites'),
+                  actions: [
+                    // ---- AJOUT DU BOUTON ----
+                    Builder(
+                      builder: (context) {
+                        final siteConfig =
+                            module.complement?.configuration?.site;
+                        final isEditable = _isSiteEditableOnField(siteConfig);
+                        debugPrint(
+                            '🎯 Vérification affichage bouton - isEditable: $isEditable');
+
+                        if (isEditable) {
+                          return Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () {
+                                  if (siteConfig != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SiteFormPageWithTypeSelection(
+                                          siteConfig: siteConfig,
+                                          customConfig: module.complement
+                                              ?.configuration?.custom,
+                                          moduleId: module.id,
+                                          moduleInfo: widget.moduleInfo,
+                                          siteGroup: widget.siteGroup,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Configuration de site non disponible'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.add_circle),
+                                tooltip:
+                                    'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                              ),
+                            ],
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 body: sitesState.when(
                   data: (sites) => GeometriesMapWidget(
@@ -454,7 +507,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                       const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
                     child: Text(
-                      'Erreur lors du chargement des sites: $error',
+                      'Erreur lors du chargement des ${module.complement?.configuration?.site?.label ?? 'site'}: $error',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
