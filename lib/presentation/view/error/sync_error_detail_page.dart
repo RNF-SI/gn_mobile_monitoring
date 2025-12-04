@@ -321,7 +321,8 @@ class SyncErrorDetailPage extends ConsumerWidget {
       // Détecter les erreurs générales de synchronisation
       else if (trimmed.contains('Erreur lors de la synchronisation') ||
                trimmed.contains('Erreur configuration') ||
-               trimmed.contains('Erreur groupes de sites')) {
+               trimmed.contains('Erreur groupes de sites') || 
+               trimmed.contains('Erreur individus')) {
         
         String errorType = 'Erreur de synchronisation';
         String suggestion = 'Vérifiez votre connexion et réessayez';
@@ -330,6 +331,8 @@ class SyncErrorDetailPage extends ConsumerWidget {
           errorType = 'Erreur de configuration';
         } else if (trimmed.contains('groupes de sites')) {
           errorType = 'Erreur groupes de sites';
+        } else if (trimmed.contains('individus')) {
+          errorType = 'Erreur individus';
         }
         
         syncErrors.add({

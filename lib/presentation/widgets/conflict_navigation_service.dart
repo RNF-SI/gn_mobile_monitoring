@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/individual.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
@@ -10,12 +11,14 @@ import 'package:gn_mobile_monitoring/presentation/view/observation/observation_d
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/individual_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/conflict_resolution_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/individuals_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 
 /// Service gérant la navigation vers les éléments en conflit
@@ -37,6 +40,10 @@ class ConflictNavigationService {
       return 'Groupe de sites ${contextInfo['site_group_id']}';
     } else if (contextInfo.containsKey('site_group')) {
       return 'Groupe de sites ${contextInfo['site_group']}';
+    } else if (contextInfo.containsKey('individual_id')) {
+      return 'Individu ${contextInfo['individual_id']}';
+    } else if (contextInfo.containsKey('individual')) {
+      return 'Individu ${contextInfo['individual']}';
     } else if (contextInfo.containsKey('module_id')) {
       return 'Module ${contextInfo['module_id']}';
     } else if (contextInfo.containsKey('module')) {
@@ -130,6 +137,13 @@ class ConflictNavigationService {
           if (siteGroupMatch != null && siteGroupMatch.group(1) != null) {
             contextInfo['site_group_id'] = int.parse(siteGroupMatch.group(1)!);
           }
+
+          // Individual ID extraction
+          final individualMatch =
+              RegExp(r'/individual/(\d+)').firstMatch(contextStr);
+          if (individualMatch != null && individualMatch.group(1) != null) {
+            contextInfo['individual_id'] = int.parse(individualMatch.group(1)!);
+          }
         } else {
           // Format avec deux points: module:22 ou visit:5
 
@@ -172,6 +186,13 @@ class ConflictNavigationService {
           if (siteGroupMatch != null && siteGroupMatch.group(1) != null) {
             contextInfo['site_group_id'] = int.parse(siteGroupMatch.group(1)!);
           }
+
+          // Individual ID extraction
+          final individualMatch =
+              RegExp(r'individual[":]*(\d+)').firstMatch(contextStr);
+          if (individualMatch != null && individualMatch.group(1) != null) {
+            contextInfo['individual_id'] = int.parse(individualMatch.group(1)!);
+          }
         }
       }
 
@@ -202,6 +223,8 @@ class ConflictNavigationService {
         } else if (conflict.entityType.toLowerCase() == 'sitegroup' ||
             conflict.entityType.toLowerCase() == 'site_group') {
           contextInfo['site_group_id'] = int.tryParse(conflict.entityId) ?? 0;
+        } else if (conflict.entityType.toLowerCase() == 'individual') {
+          contextInfo['individual_id'] = int.tryParse(conflict.entityId) ?? 0;
         }
       }
 
@@ -454,6 +477,85 @@ class ConflictNavigationService {
         }
 
         return result ?? false;
+      }
+
+      // Si nous avons un individual_id sans module
+      if (contextInfo.containsKey('individual_id')) {
+        final individualId = contextInfo['individual_id'] as int;
+
+        // Nous devons récupérer le site group et le module
+        showLoadingIndicator();
+        try {
+          // Récupérer les individus de l'utilisateur
+          final individualListState =
+              ref.read(individualViewModelStateNotifierProvider);
+          Individual? individual;
+          individualListState.when(
+            init: () => throw Exception('Individuals not initialized'),
+            success: (individuals) {
+              individual = individuals.firstWhere(
+                (ind) => ind.idIndividual == individualId,
+                orElse: () => throw Exception('Individual not found'),
+              );
+            },
+            loading: () => throw Exception('Individuals loading'),
+            error: (message) =>
+                throw Exception('Error loading individuals: $message'),
+          );
+
+          if (individual == null) throw Exception('Individual not found');
+
+          // Trouver un module associé à cet individu
+          final moduleListState =
+              ref.read(userModuleListeViewModelStateNotifierProvider);
+          ModuleInfo? moduleInfo;
+          moduleListState.when(
+            init: () => throw Exception('Modules not initialized'),
+            success: (modules) {
+              // Chercher le premier module qui contient cet individu
+              moduleInfo = modules.values.firstWhere(
+                (mi) =>
+                    mi.module.individuals
+                        ?.any((ind) => ind.idIndividual == individualId) ??
+                    false,
+                orElse: () =>
+                    throw Exception('Module not found for individual'),
+              );
+            },
+            loading: () => throw Exception('Modules loading'),
+            error: (message) =>
+                throw Exception('Error loading modules: $message'),
+          );
+
+          if (moduleInfo == null) throw Exception('Module not found');
+
+          hideLoadingIndicator();
+
+          if (!context.mounted) return false;
+          final result = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => IndividualDetailPage(
+                individual: individual!,
+                moduleInfo: moduleInfo!,
+              ),
+            ),
+          );
+
+          // Si la modification a réussi, marquer le conflit comme résolu
+          if (result == true) {
+            ref
+                .read(conflictResolutionProvider.notifier)
+                .markAsResolved(conflict, 'Individu modifié');
+          }
+
+          return result ?? false;
+        } catch (e) {
+          hideLoadingIndicator();
+          debugPrint(
+              'Erreur lors de la navigation vers l\'individu: $e');
+          return false;
+        }
       }
 
       // Si nous avons un site_group_id sans module
