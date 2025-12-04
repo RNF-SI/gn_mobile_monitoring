@@ -477,7 +477,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                       },
                       icon: const Icon(Icons.add),
                       label: Text(
-                        'Ajouter un ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
+                        'Ajouter ${(module.complement?.configuration?.sitesGroup?.genre == 'F') ? 'une' : 'un'} ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
                       ),
                     ),
                   ),
