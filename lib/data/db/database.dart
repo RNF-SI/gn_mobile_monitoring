@@ -18,6 +18,7 @@ import 'package:gn_mobile_monitoring/data/db/migrations/020_add_code_type_to_nom
 import 'package:gn_mobile_monitoring/data/db/migrations/021_create_app_metadata_table.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/022_add_server_visit_id_to_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/023_add_server_observation_id_to_observations.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/025_add_is_local_to_sites.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/app_metadata.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
@@ -165,7 +166,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -194,6 +195,7 @@ class AppDatabase extends _$AppDatabase {
           await migration22(m, this);
           await migration23(m, this);
           await migration24(m, this);
+          await migration25(m, this);
         },
         onUpgrade: (Migrator m, int from, int to) async {
           final db = this; // Access the database instance
@@ -267,6 +269,9 @@ class AppDatabase extends _$AppDatabase {
                 break;
               case 24:
                 await migration24(m, db);
+                break;
+              case 25:
+                await migration25(m, db);
                 break;
               default:
                 throw Exception("Unexpected schema version: $i");

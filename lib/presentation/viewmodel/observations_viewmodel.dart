@@ -124,9 +124,11 @@ class ObservationsViewModel
     try {
       // Extraire les données spécifiques et traiter les nomenclatures
       final specificData = _extractObservationSpecificData(formData);
+      final standardData = _extractObservationStandardData(formData);
       final processedData =
           await _formDataProcessor.processFormData(specificData);
 
+      processedData.addAll(standardData);
       // Générer un UUID pour l'observation
       final uuid = _generateUuid();
       
@@ -181,8 +183,11 @@ class ObservationsViewModel
 
       // Extraire les données spécifiques et traiter les nomenclatures
       final specificData = _extractObservationSpecificData(formData);
+      final standardData = _extractObservationStandardData(formData);
       final processedData =
           await _formDataProcessor.processFormData(specificData);
+
+      processedData.addAll(standardData);
 
       // Créer une nouvelle observation avec les données mises à jour
       // S'assurer que l'UUID est défini
@@ -282,6 +287,45 @@ class ObservationsViewModel
     });
 
     return specificData;
+  }
+
+    /// Extrait les données spécifiques à l'observation en excluant les champs standard
+  Map<String, dynamic> _extractObservationStandardData(
+      Map<String, dynamic> formData) {
+    // Liste des champs standard à exclure
+    const standardFields = {
+      'id_observation',
+      'id_base_visit',
+      'cd_nom',
+      'comments',
+      'uuid_observation',
+    };
+
+    // Créer un nouveau Map avec uniquement les données spécifiques
+    final Map<String, dynamic> standardData = {};
+
+    formData.forEach((key, value) {
+      if (standardFields.contains(key) && value != null) {
+        // Conversion des types si nécessaire
+        if (value is String && double.tryParse(value) != null) {
+          if (double.parse(value) % 1 == 0) {
+            standardData[key] = int.parse(value);
+          } else {
+            standardData[key] = double.parse(value);
+          }
+        } else if (value is DateTime) {
+          standardData[key] = value.toIso8601String();
+        } else if (key.toLowerCase().contains('time') &&
+            !key.toLowerCase().contains('date') &&
+            value is String) {
+          standardData[key] = normalizeTimeFormat(value);
+        } else {
+          standardData[key] = value;
+        }
+      }
+    });
+
+    return standardData;
   }
 
   /// Récupère une observation par son ID

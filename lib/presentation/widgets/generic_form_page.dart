@@ -52,6 +52,9 @@ class GenericFormPage extends ConsumerStatefulWidget {
   /// Conflit en cours (optionnel)
   final SyncConflict? currentConflict;
   
+  /// Type d'objet pour appliquer des exclusions spécifiques (ex: 'site', 'sites_group', 'visit', 'observation')
+  final String? objectType;
+  
   /// Fonction personnalisée de normalisation des valeurs initiales
   final Map<String, dynamic> Function(Map<String, dynamic>)? normalizeInitialValues;
 
@@ -71,6 +74,7 @@ class GenericFormPage extends ConsumerStatefulWidget {
     this.displayProperties,
     this.idListTaxonomy,
     this.currentConflict,
+    this.objectType,
     this.normalizeInitialValues,
   });
 
@@ -159,6 +163,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
               : null,
           displayProperties: widget.displayProperties,
           idListTaxonomy: widget.idListTaxonomy,
+          objectType: widget.objectType,
         ),
       ],
     );
@@ -217,7 +222,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
             );
           } else {
             // Sinon, fermer le formulaire
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pop(true); // JULES DECONNE PO C LA
           }
         }
       }
@@ -386,6 +391,35 @@ class BreadcrumbBuilder {
       label: siteLabel,
       value: siteName,
     ));
+    
+    return items;
+  }
+
+  /// Construit un fil d'Ariane standard pour les formulaires de groupe de site
+  static List<BreadcrumbItem> buildSiteGroupBreadcrumb({
+    String? moduleName,
+    String? siteGroupLabel,
+    String? siteGroupName,
+    VoidCallback? onModuleTap,
+    VoidCallback? onSiteGroupTap,
+  }) {
+    final items = <BreadcrumbItem>[];
+    
+    if (moduleName != null && onModuleTap != null) {
+      items.add(BreadcrumbItem(
+        label: 'Module',
+        value: moduleName,
+        onTap: onModuleTap,
+      ));
+    }
+    
+    if (siteGroupName != null && onSiteGroupTap != null) {
+      items.add(BreadcrumbItem(
+        label: siteGroupLabel ?? 'Groupe',
+        value: siteGroupName,
+        onTap: onSiteGroupTap,
+      ));
+    }
     
     return items;
   }

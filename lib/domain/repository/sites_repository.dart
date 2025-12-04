@@ -18,6 +18,9 @@ abstract class SitesRepository {
   /// Gets all site groups from local database
   Future<List<SiteGroup>> getSiteGroups();
 
+  /// Gets site groups from local database
+  Future<SiteGroup?> getSiteGroupsById(int siteGroupId);
+
   /// Gets sites associated with a specific site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
 

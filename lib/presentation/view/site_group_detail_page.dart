@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
@@ -665,7 +666,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  SiteFormPageWithTypeSelection(
+                                  SiteFormPage(
                                 siteConfig: siteConfig,
                                 customConfig:
                                     module.complement?.configuration?.custom,

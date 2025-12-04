@@ -6,8 +6,10 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_form_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/generic_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 
 /// Wrapper spécialisé pour les formulaires de site
 /// Utilise GenericFormPage avec la logique métier spécifique aux sites
@@ -35,6 +37,52 @@ class SiteFormWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Vérifier si on peut éditer le site (uniquement si créé localement)
+    final canEdit = !_isEditMode || (site?.isLocal == true);
+    
+    // Si on est en mode édition mais que le site n'est pas local, afficher un message
+    if (_isEditMode && site?.isLocal != true) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Modifier le site'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.lock_outline,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Ce site ne peut pas être modifié',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Seuls les sites créés localement peuvent être modifiés.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Retour'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return GenericFormPage(
       objectConfig: siteConfig,
       customConfig: customConfig,
@@ -54,6 +102,7 @@ class SiteFormWrapper extends ConsumerWidget {
       onSave: (formData) => _handleSave(context, ref, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
       displayProperties: _getDisplayProperties(),
+      objectType: 'site', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux sites
     );
   }
 
@@ -148,19 +197,115 @@ class SiteFormWrapper extends ConsumerWidget {
   }
 
   /// Récupère les propriétés d'affichage selon le type de site
+  /// Utilise display_form en priorité, puis display_properties si display_form est vide
   List<String>? _getDisplayProperties() {
     if (selectedSiteTypeId != null && moduleInfo != null) {
       final typeSiteConfig = moduleInfo!.module.complement?.configuration?.module
           ?.typesSite?[selectedSiteTypeId.toString()];
+      
+      // TypeSiteConfig n'a que display_properties (pas display_form)
       if (typeSiteConfig?.displayProperties != null &&
           typeSiteConfig!.displayProperties!.isNotEmpty) {
         return typeSiteConfig.displayProperties!.cast<String>();
       }
-
     }
+    
+    // Pour la configuration générale du site, utiliser display_form en priorité
+    if (siteConfig.displayForm != null && siteConfig.displayForm!.isNotEmpty) {
+      return siteConfig.displayForm;
+    }
+    
+    // Sinon, utiliser display_properties
     return siteConfig.displayProperties;
   }
 
+   /// Demande à l'utilisateur s'il souhaite créer une visite
+  Future<bool> _askForVisit(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Créer une visite'),
+            content: const Text(
+                'Voulez-vous créer une visite pour ce site ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Non'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  /// Navigue vers le formulaire d'observation
+  Future<void> _navigateToVisitForm(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    final visitConfig =  moduleInfo!.module.complement?.configuration?.visit;
+    if (visitConfig == null) return;
+
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+    _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
+    _navigateToSiteDetailPage(context, site, siteGroup, moduleInfo);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VisitFormPage(
+            site: site,
+            visitConfig: visitConfig,
+            customConfig: customConfig,
+            moduleId: moduleInfo?.module.id,
+            moduleInfo: targetModuleInfo,
+            siteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
+  /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteDetailPage(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  SiteDetailPage(
+          site: site,
+          moduleInfo: targetModuleInfo,
+          fromSiteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
+ /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteGroupDetailPage(BuildContext context, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    Navigator.of(context).pop();
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+    final targetsiteGroup = siteGroup ?? null;
+    if (targetsiteGroup == null) return;
+
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SiteGroupDetailPage(
+          moduleInfo: targetModuleInfo,
+          siteGroup: targetsiteGroup,
+        ),
+      ),
+    );
+  }
+  
   /// Gère la sauvegarde du site
   Future<bool> _handleSave(BuildContext context, WidgetRef ref, Map<String, dynamic> formData) async {
     final viewModel = ref.read(siteFormViewModelProvider(
@@ -171,6 +316,19 @@ class SiteFormWrapper extends ConsumerWidget {
       int? siteId;
 
       if (_isEditMode && site != null) {
+        // Vérifier que le site peut être modifié (créé localement)
+        if (site!.isLocal != true) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Impossible de modifier un site qui n\'a pas été créé localement'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return false;
+        }
+
         // Mise à jour
         success = await viewModel.updateSiteFromFormData(
           formData,
@@ -209,7 +367,6 @@ class SiteFormWrapper extends ConsumerWidget {
         siteId = await viewModel.createSiteFromFormData(
           formData,
           moduleId: moduleId ?? 1,
-          selectedSiteTypeId: selectedSiteTypeId,
         );
         success = siteId != null && siteId > 0;
 
@@ -223,19 +380,20 @@ class SiteFormWrapper extends ConsumerWidget {
           // Naviguer vers la page de détail du site
           if (context.mounted) {
             final newSite = await viewModel.getSiteById(siteId);
+            final createVisit = await _askForVisit(context);
+            if (createVisit) {
             if (newSite != null && context.mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SiteDetailPage(
-                    site: newSite,
-                    moduleInfo: moduleInfo!,
-                    fromSiteGroup: siteGroup,
-                  ),
-                ),
-              );
-              return false; // Navigation personnalisée
+              await _navigateToVisitForm(context, newSite, siteGroup, moduleInfo);
+                  return false; // Navigation personnalisée faite, empêcher le pop automatique
+              }
+            } else {
+                // L'utilisateur a dit "Non", naviguer vers la page de détail
+            if (newSite != null && context.mounted) {
+              await _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
+              await _navigateToSiteDetailPage(context, newSite, siteGroup, moduleInfo);
+              return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
+          }
           }
         }
       }
@@ -309,5 +467,3 @@ class SiteFormWrapper extends ConsumerWidget {
     }
   }
 }
-
-

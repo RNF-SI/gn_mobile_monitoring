@@ -694,7 +694,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                           observation: Observation(
                             idObservation: observation['id_observation'] as int,
                             idBaseVisit: visitId,
-                            cdNom: observation['cd_nom'] as int?,
+                            cdNom: observation['cd_nom']['cd_nom'] as int?,
                             comments: observation['comments'] as String?,
                             data: observation,
                             metaCreateDate:
@@ -773,7 +773,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
               ],
             ),
           );
-        }
+        } 
 
         // Cellules de données avec la logique factorisée
         final rawValue = observation[column];

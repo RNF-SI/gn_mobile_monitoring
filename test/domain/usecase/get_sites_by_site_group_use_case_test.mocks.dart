@@ -110,6 +110,16 @@ class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
       ) as _i4.Future<List<_i5.SiteGroup>>);
 
   @override
+  _i4.Future<_i5.SiteGroup?> getSiteGroupsById(int? siteGroupId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupsById,
+          [siteGroupId],
+        ),
+        returnValue: _i4.Future<_i5.SiteGroup?>.value(),
+      ) as _i4.Future<_i5.SiteGroup?>);
+
+  @override
   _i4.Future<List<_i6.BaseSite>> getSitesBySiteGroup(int? siteGroupId) =>
       (super.noSuchMethod(
         Invocation.method(

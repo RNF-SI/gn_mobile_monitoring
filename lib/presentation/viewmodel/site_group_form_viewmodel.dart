@@ -10,6 +10,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case.d
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
 final siteGroupFormViewModelProvider = StateNotifierProvider.family<
@@ -17,7 +18,8 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     void,
     (int, int?)>((ref, params) {
   final (moduleId, siteGroupId) = params;
-
+  final getSitesBySiteGroupUseCase =
+      ref.watch(getSitesBySiteGroupUseCaseProvider);
   final createSiteGroupUseCase = ref.watch(createSiteGroupUseCaseProvider);
   final updateSiteGroupUseCase = ref.watch(updateSiteGroupUseCaseProvider);
   final deleteSiteGroupUseCase = ref.watch(deleteSiteGroupUseCaseProvider);
@@ -30,10 +32,11 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     updateSiteGroupUseCase,
     deleteSiteGroupUseCase,
     getUserIdUseCase,
+    getSitesBySiteGroupUseCase,
     formDataProcessor,
     sitesDatabase,
     moduleId,
-    siteGroupId,
+    siteGroupId ?? 0,
   );
 });
 
@@ -42,28 +45,62 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   final UpdateSiteGroupUseCase _updateSiteGroupUseCase;
   final DeleteSiteGroupUseCase _deleteSiteGroupUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
+  final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
   final FormDataProcessor _formDataProcessor;
   final SitesDatabase _sitesDatabase;
   final int _moduleId;
-  final int? _siteGroupId;
+  final int _siteGroupId;
+
+  bool _mounted = true;
 
   SiteGroupFormViewModel(
     this._createSiteGroupUseCase,
     this._updateSiteGroupUseCase,
     this._deleteSiteGroupUseCase,
     this._getUserIdUseCase,
+    this._getSitesBySiteGroupUseCase,
     this._formDataProcessor,
     this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
-  ) : super(null);
+  ) : super(const AsyncValue.loading()) {
+    if (_siteGroupId != null) {
+      loadSite();
+    }
+  }
+
+  /// Charge tous les sites pour le groupe de sites
+  Future<void> loadSite() async {
+    if (!_mounted) return;
+
+    try {
+      state = const AsyncValue.loading();
+      final sites =
+          await _getSitesBySiteGroupUseCase.execute(_siteGroupId);
+
+      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
+      final processedSites =
+          await Future.wait(sites.map((site) async {
+        final processedData = await _formDataProcessor
+            .processFormDataForDisplay(site.data!);
+        return site.copyWith(data: processedData);
+      }));
+
+      if (_mounted) {
+        state = AsyncValue.data(processedSites);
+      }
+    } catch (e, stack) {
+      if (_mounted) {
+        state = AsyncValue.error(e, stack);
+      }
+    }
+  }
 
   /// Crée un nouveau groupe de site à partir des données du formulaire
   /// Retourne l'ID du site créé
   Future<int?> createSiteGroupFromFormData(
     Map<String, dynamic> formData, {
     int? moduleId,
-    int? selectedSiteTypeId,
   }) async {
     try {
       // Traiter les données du formulaire
@@ -77,51 +114,55 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         processedData,
         moduleId: moduleId ?? _moduleId,
         userId: userId,
-        selectedSiteTypeId: selectedSiteTypeId,
       );
 
-      // Créer le site
+      // Créer le groupe de sites
       final siteGroupId = await _createSiteGroupUseCase.execute(siteGroup);
 
-      // Créer la relation site-module
+      // Créer la relation groupe de sites-module
       await _sitesDatabase.insertSiteGroupModule(SitesGroupModule (
         idSitesGroup: siteGroupId,
         idModule: moduleId ?? _moduleId,
       ));
 
-      // Créer le complément de site si nécessaire
-      final complementData = <String, dynamic>{};
+      // // Créer le complément de site si nécessaire
+      // final complementData = <String, dynamic>{};
       
-      // Ajouter le type de site si spécifié
-      if (selectedSiteTypeId != null) {
-        complementData['id_nomenclature_type_site'] = selectedSiteTypeId;
-      }
+      // // Ajouter le groupe de sites si spécifié
+      // if (_siteGroupId != null) {
+      //   complementData['id_sites_group'] = _siteGroupId;
+      // }
       
-      // Ajouter le groupe de sites si spécifié
-      if (_siteGroupId != null) {
-        complementData['id_sites_group'] = _siteGroupId;
-      }
-      
-      // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
-      final specificFields = ['id_sites_group', 'id_nomenclature_type_site', 'initial_code'];
-      for (final field in specificFields) {
-        if (processedData.containsKey(field) && !complementData.containsKey(field)) {
-          complementData[field] = processedData[field];
-        }
-      }
+      // // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans SiteGroup
+      // final specificFields = ['id_sites_group'];
+      // for (final field in specificFields) {
+      //   if (processedData.containsKey(field) && !complementData.containsKey(field)) {
+      //     complementData[field] = processedData[field];
+      //   }
+      // }
       
       // Ajouter tous les autres champs qui ne sont pas des champs de base
       final baseSiteGroupFields = [
-        'id_sites_group', 'sites_group_name', 'sites_group_code', 'sites_group_description',
-        'geom', 'uuid_sites_group', 'altitude_min', 'altitude_max',
-        'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'comments'
+        "id_sites_group",
+        "sites_group_name",
+        "sites_group_code",
+        "sites_group_description",
+        "comments",
+        "uuid_sites_group",
+        "nb_sites",
+        "nb_visits",
+        "medias",
+        "altitude_min",
+        "altitude_max",
+        "id_digitiser",
+        "modules"
       ];
       
-      for (final entry in processedData.entries) {
-        if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
-          complementData[entry.key] = entry.value;
-        }
-      }
+      // for (final entry in processedData.entries) {
+      //   if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
+      //     complementData[entry.key] = entry.value;
+      //   }
+      // }
 
       // // Créer le complément seulement s'il y a des données
       // if (complementData.isNotEmpty) {
@@ -136,17 +177,16 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
 
       return siteGroupId;
     } catch (e) {
-      debugPrint('Erreur lors de la création du site: $e');
+      debugPrint('Erreur lors de la création du groupe sites: $e');
       rethrow;
     }
   }
 
-  /// Met à jour un site existant à partir des données du formulaire
-  Future<bool> updateSiteFromFormData(
+  /// Met à jour un groupe de sites existant à partir des données du formulaire
+  Future<bool> updateSiteGroupFromFormData(
     Map<String, dynamic> formData,
-    SiteGroup existingSite, {
+    SiteGroup existingSiteGroup, {
     int? moduleId,
-    int? selectedSiteTypeId,
   }) async {
     try {
       // Traiter les données du formulaire
@@ -156,7 +196,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       final userId = await _getUserIdUseCase.execute();
 
       // Mettre à jour le groupe de sites avec les nouvelles données
-      final updatedSite = existingSite.copyWith(
+      final updatedSite = existingSiteGroup.copyWith(
         sitesGroupName: processedData['sites_group_name'] as String?,
         sitesGroupCode: processedData['sites_group_code'] as String?,
         sitesGroupDescription: processedData['sites_group_description'] as String?,
@@ -173,17 +213,17 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
 
       return success;
     } catch (e) {
-      debugPrint('Erreur lors de la mise à jour du site: $e');
+      debugPrint('Erreur lors de la mise à jour du groupe de site: $e');
       return false;
     }
   }
 
   /// Supprime un site
-  Future<bool> deleteSite(int siteId) async {
+  Future<bool> deleteSiteGroup(int siteGroupId) async {
     try {
-      return await _deleteSiteGroupUseCase.execute(siteId);
+      return await _deleteSiteGroupUseCase.execute(siteGroupId);
     } catch (e) {
-      debugPrint('Erreur lors de la suppression du site: $e');
+      debugPrint('Erreur lors de la suppression du groupe de site: $e');
       return false;
     }
   }
@@ -203,7 +243,6 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     Map<String, dynamic> formData, {
     required int moduleId,
     required int userId,
-    int? selectedSiteTypeId,
   }) {
     final now = DateTime.now();
 
