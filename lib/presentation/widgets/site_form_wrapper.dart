@@ -150,16 +150,25 @@ class SiteFormWrapper extends ConsumerWidget {
   }
 
   /// Récupère les propriétés d'affichage selon le type de site
+  /// Utilise display_form en priorité, puis display_properties si display_form est vide
   List<String>? _getDisplayProperties() {
     if (selectedSiteTypeId != null && moduleInfo != null) {
       final typeSiteConfig = moduleInfo!.module.complement?.configuration?.module
           ?.typesSite?[selectedSiteTypeId.toString()];
+      
+      // TypeSiteConfig n'a que display_properties (pas display_form)
       if (typeSiteConfig?.displayProperties != null &&
           typeSiteConfig!.displayProperties!.isNotEmpty) {
         return typeSiteConfig.displayProperties!.cast<String>();
       }
-
     }
+    
+    // Pour la configuration générale du site, utiliser display_form en priorité
+    if (siteConfig.displayForm != null && siteConfig.displayForm!.isNotEmpty) {
+      return siteConfig.displayForm;
+    }
+    
+    // Sinon, utiliser display_properties
     return siteConfig.displayProperties;
   }
 
