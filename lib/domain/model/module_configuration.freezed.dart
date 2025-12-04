@@ -3122,6 +3122,8 @@ mixin _$ObjectConfig {
   String? get geometryType => throw _privateConstructorUsedError;
   String? get idFieldName => throw _privateConstructorUsedError;
   int? get idTableLocation => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_editable_on_field')
+  bool? get isEditableOnField => throw _privateConstructorUsedError;
   String? get label => throw _privateConstructorUsedError;
   String? get labelList => throw _privateConstructorUsedError;
   String? get mapLabelFieldName => throw _privateConstructorUsedError;
@@ -3159,6 +3161,7 @@ abstract class $ObjectConfigCopyWith<$Res> {
       String? geometryType,
       String? idFieldName,
       int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
       String? label,
       String? labelList,
       String? mapLabelFieldName,
@@ -3197,6 +3200,7 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
     Object? geometryType = freezed,
     Object? idFieldName = freezed,
     Object? idTableLocation = freezed,
+    Object? isEditableOnField = freezed,
     Object? label = freezed,
     Object? labelList = freezed,
     Object? mapLabelFieldName = freezed,
@@ -3264,6 +3268,10 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
           ? _value.idTableLocation
           : idTableLocation // ignore: cast_nullable_to_non_nullable
               as int?,
+      isEditableOnField: freezed == isEditableOnField
+          ? _value.isEditableOnField
+          : isEditableOnField // ignore: cast_nullable_to_non_nullable
+              as bool?,
       label: freezed == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -3327,6 +3335,7 @@ abstract class _$$ObjectConfigImplCopyWith<$Res>
       String? geometryType,
       String? idFieldName,
       int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
       String? label,
       String? labelList,
       String? mapLabelFieldName,
@@ -3363,6 +3372,7 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
     Object? geometryType = freezed,
     Object? idFieldName = freezed,
     Object? idTableLocation = freezed,
+    Object? isEditableOnField = freezed,
     Object? label = freezed,
     Object? labelList = freezed,
     Object? mapLabelFieldName = freezed,
@@ -3430,6 +3440,10 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
           ? _value.idTableLocation
           : idTableLocation // ignore: cast_nullable_to_non_nullable
               as int?,
+      isEditableOnField: freezed == isEditableOnField
+          ? _value.isEditableOnField
+          : isEditableOnField // ignore: cast_nullable_to_non_nullable
+              as bool?,
       label: freezed == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -3488,6 +3502,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
       this.geometryType,
       this.idFieldName,
       this.idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') this.isEditableOnField,
       this.label,
       this.labelList,
       this.mapLabelFieldName,
@@ -3596,6 +3611,9 @@ class _$ObjectConfigImpl implements _ObjectConfig {
   @override
   final int? idTableLocation;
   @override
+  @JsonKey(name: 'is_editable_on_field')
+  final bool? isEditableOnField;
+  @override
   final String? label;
   @override
   final String? labelList;
@@ -3656,7 +3674,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 
   @override
   String toString() {
-    return 'ObjectConfig(chained: $chained, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
+    return 'ObjectConfig(chained: $chained, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, isEditableOnField: $isEditableOnField, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
   }
 
   @override
@@ -3688,6 +3706,8 @@ class _$ObjectConfigImpl implements _ObjectConfig {
                 other.idFieldName == idFieldName) &&
             (identical(other.idTableLocation, idTableLocation) ||
                 other.idTableLocation == idTableLocation) &&
+            (identical(other.isEditableOnField, isEditableOnField) ||
+                other.isEditableOnField == isEditableOnField) &&
             (identical(other.label, label) || other.label == label) &&
             (identical(other.labelList, labelList) ||
                 other.labelList == labelList) &&
@@ -3722,6 +3742,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         geometryType,
         idFieldName,
         idTableLocation,
+        isEditableOnField,
         label,
         labelList,
         mapLabelFieldName,
@@ -3756,6 +3777,7 @@ abstract class _ObjectConfig implements ObjectConfig {
       final String? geometryType,
       final String? idFieldName,
       final int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') final bool? isEditableOnField,
       final String? label,
       final String? labelList,
       final String? mapLabelFieldName,
@@ -3794,6 +3816,9 @@ abstract class _ObjectConfig implements ObjectConfig {
   String? get idFieldName;
   @override
   int? get idTableLocation;
+  @override
+  @JsonKey(name: 'is_editable_on_field')
+  bool? get isEditableOnField;
   @override
   String? get label;
   @override

@@ -17,9 +17,10 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
   @override
   Dio get dio => createDio(
-    receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les grosses quantités de données
-    sendTimeout: const Duration(seconds: 120),
-  );
+        receiveTimeout: const Duration(
+            seconds: 300), // 5 minutes pour les grosses quantités de données
+        sendTimeout: const Duration(seconds: 120),
+      );
 
   @override
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(
@@ -66,7 +67,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
       // 1. PRIORITY: Récupérer d'abord les sites dans les groupes de sites (avec depth=2)
       List<dynamic>? siteGroupsList;
-      
+
       // Try to find site groups in different possible locations
       if (moduleData['children'] != null &&
           moduleData['children']['sites_group'] != null) {
@@ -75,17 +76,16 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       } else if (moduleData['sites_group'] != null) {
         // Alternative structure: data.sites_group directly
         siteGroupsList = moduleData['sites_group'] as List;
-      } else if (moduleData['properties'] != null && 
-                 moduleData['properties']['sites_group'] != null) {
+      } else if (moduleData['properties'] != null &&
+          moduleData['properties']['sites_group'] != null) {
         // Another possible structure: data.properties.sites_group
         siteGroupsList = moduleData['properties']['sites_group'] as List;
       }
-      
+
       if (siteGroupsList != null) {
-        
         for (var group in siteGroupsList) {
           final groupData = group as Map<String, dynamic>;
-          
+
           // Extract group properties - handle different structures
           Map<String, dynamic> groupProperties;
           if (groupData['properties'] != null) {
@@ -94,15 +94,15 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             // If no properties field, use the group data itself
             groupProperties = groupData;
           }
-          
+
           final groupId = groupProperties['id_sites_group'] as int? ??
-                         groupData['id_sites_group'] as int? ??
-                         groupData['id'] as int? ??
-                         0;
-          
+              groupData['id_sites_group'] as int? ??
+              groupData['id'] as int? ??
+              0;
+
           // Check if the group has sites - handle different structures
           List<dynamic>? sitesList;
-          
+
           if (groupData['children'] != null &&
               groupData['children']['site'] != null) {
             sitesList = groupData['children']['site'] as List;
@@ -111,12 +111,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           } else if (groupData['sites'] != null) {
             sitesList = groupData['sites'] as List;
           }
-          
+
           if (sitesList != null) {
-            
             for (var site in sitesList) {
               final siteData = site as Map<String, dynamic>;
-              
+
               // Extract site properties - handle different structures
               Map<String, dynamic> properties;
               if (siteData['properties'] != null) {
@@ -134,12 +133,18 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                 final Map<String, dynamic> enrichedSite = {
                   'id_base_site': siteId,
                   'base_site_name': properties['base_site_name'],
-                  'base_site_code': null, // Will be fetched with individual requests
-                  'base_site_description': null, // Will be fetched with individual requests
-                  'altitude_min': null, // Will be fetched with individual requests
-                  'altitude_max': null, // Will be fetched with individual requests
-                  'first_use_date': null, // Will be fetched with individual requests
-                  'uuid_base_site': null, // Will be fetched with individual requests
+                  'base_site_code':
+                      null, // Will be fetched with individual requests
+                  'base_site_description':
+                      null, // Will be fetched with individual requests
+                  'altitude_min':
+                      null, // Will be fetched with individual requests
+                  'altitude_max':
+                      null, // Will be fetched with individual requests
+                  'first_use_date':
+                      null, // Will be fetched with individual requests
+                  'uuid_base_site':
+                      null, // Will be fetched with individual requests
                   'geometry': null,
                 };
 
@@ -147,20 +152,23 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
                 // Create site complement data for storage
                 // Use the group ID from the parent group, not from site properties
-                
+
                 // Extract module-specific data from site properties (excluding base site fields)
-                final Map<String, dynamic> siteSpecificData = Map.from(properties);
+                final Map<String, dynamic> siteSpecificData =
+                    Map.from(properties);
                 // Remove base site fields that are stored in the main site table
                 siteSpecificData.remove('id_base_site');
                 siteSpecificData.remove('base_site_name');
                 siteSpecificData.remove('base_site_code');
                 siteSpecificData.remove('base_site_description');
                 siteSpecificData.remove('additional_data_keys');
-                
+
                 final complementEntity = SiteComplementEntity(
                   idBaseSite: siteId,
                   idSitesGroup: groupId,
-                  data: siteSpecificData.isNotEmpty ? jsonEncode(siteSpecificData) : null,
+                  data: siteSpecificData.isNotEmpty
+                      ? jsonEncode(siteSpecificData)
+                      : null,
                 );
 
                 siteComplements.add(complementEntity.toDomain());
@@ -172,7 +180,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
       // 2. Récupérer les sites directement liés au module (hors groupes) qui ne sont pas déjà traités
       List<dynamic>? directSitesList;
-      
+
       // Try to find sites in different possible locations
       if (moduleData['children'] != null &&
           moduleData['children']['site'] != null) {
@@ -182,12 +190,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       } else if (moduleData['sites'] != null) {
         directSitesList = moduleData['sites'] as List;
       }
-      
+
       if (directSitesList != null) {
-        
         for (var site in directSitesList) {
           final siteData = site as Map<String, dynamic>;
-          
+
           // Extract site properties - handle different structures
           Map<String, dynamic> properties;
           if (siteData['properties'] != null) {
@@ -205,12 +212,16 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             final Map<String, dynamic> enrichedSite = {
               'id_base_site': siteId,
               'base_site_name': properties['base_site_name'],
-              'base_site_code': null, // Will be fetched with individual requests
-              'base_site_description': null, // Will be fetched with individual requests
+              'base_site_code':
+                  null, // Will be fetched with individual requests
+              'base_site_description':
+                  null, // Will be fetched with individual requests
               'altitude_min': null, // Will be fetched with individual requests
               'altitude_max': null, // Will be fetched with individual requests
-              'first_use_date': null, // Will be fetched with individual requests
-              'uuid_base_site': null, // Will be fetched with individual requests
+              'first_use_date':
+                  null, // Will be fetched with individual requests
+              'uuid_base_site':
+                  null, // Will be fetched with individual requests
               'geometry': null,
             };
 
@@ -218,7 +229,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
             // Create site complement data for storage
             final int? idSitesGroup = properties['id_sites_group'] as int?;
-            
+
             // Extract module-specific data from site properties (excluding base site fields)
             final Map<String, dynamic> siteSpecificData = Map.from(properties);
             // Remove base site fields that are stored in the main site table
@@ -227,11 +238,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             siteSpecificData.remove('base_site_code');
             siteSpecificData.remove('base_site_description');
             siteSpecificData.remove('additional_data_keys');
-            
+
             final complementEntity = SiteComplementEntity(
               idBaseSite: siteId,
               idSitesGroup: idSitesGroup,
-              data: siteSpecificData.isNotEmpty ? jsonEncode(siteSpecificData) : null,
+              data: siteSpecificData.isNotEmpty
+                  ? jsonEncode(siteSpecificData)
+                  : null,
             );
 
             siteComplements.add(complementEntity.toDomain());
@@ -257,7 +270,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
   /// Fetch additional site details using individual secure requests with depth=0
   Future<void> _fetchAdditionalSiteDetails(
-      List<Map<String, dynamic>> enrichedSites, String moduleCode, String token) async {
+      List<Map<String, dynamic>> enrichedSites,
+      String moduleCode,
+      String token) async {
     for (var site in enrichedSites) {
       try {
         final siteId = site['id_base_site'] as int;
@@ -273,7 +288,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
         if (response.statusCode == 200) {
           final siteData = response.data as Map<String, dynamic>;
-          
+
           // Extract site properties - handle different structures
           Map<String, dynamic> properties;
           if (siteData['properties'] != null) {
@@ -290,7 +305,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           site['altitude_max'] = properties['altitude_max'];
           site['first_use_date'] = properties['first_use_date'];
           site['uuid_base_site'] = properties['uuid_base_site'];
-          
+
           // Also update geometry if available (convert from Map to JSON string)
           if (siteData['geometry'] != null) {
             final geometryData = siteData['geometry'];
@@ -312,11 +327,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       String moduleCode, String token) async {
     try {
       final response = await dio.get(
-        '/monitorings/object/$moduleCode/module',
-        queryParameters: {
-          'depth': 2,
-          'field_name': 'module_code',
-        },
+        '/monitorings/refacto/$moduleCode/sites_groups',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -338,86 +349,40 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final data = response.data as Map<String, dynamic>;
         final result = <SiteGroupsWithModulesLabel>[];
 
-        // Debug print to understand the response structure
-        print('API Response structure for module $moduleCode: ${data.keys.toList()}');
-        
-        // Handle different API response structures
-        List<dynamic>? siteGroupsList;
-        
-        // Try to find site groups in different possible locations
-        if (data['children'] != null &&
-            data['children']['sites_group'] != null) {
-          // Original structure: data.children.sites_group
-          siteGroupsList = data['children']['sites_group'] as List;
-          print('Found site groups in children.sites_group: ${siteGroupsList.length} groups');
-        } else if (data['sites_group'] != null) {
-          // Alternative structure: data.sites_group directly
-          siteGroupsList = data['sites_group'] as List;
-          print('Found site groups directly in sites_group: ${siteGroupsList.length} groups');
-        } else if (data['properties'] != null && 
-                   data['properties']['sites_group'] != null) {
-          // Another possible structure: data.properties.sites_group
-          siteGroupsList = data['properties']['sites_group'] as List;
-          print('Found site groups in properties.sites_group: ${siteGroupsList.length} groups');
-        } else {
-          // No site groups found - this might be normal for modules without site groups
-          print('No site groups found for module $moduleCode. Response keys: ${data.keys.toList()}');
-          if (data['children'] != null) {
-            print('Children keys: ${(data['children'] as Map<String, dynamic>).keys.toList()}');
-          }
-          if (data['properties'] != null) {
-            print('Properties keys: ${(data['properties'] as Map<String, dynamic>).keys.toList()}');
-          }
-        }
-        
-        // Process site groups if found
-        if (siteGroupsList != null) {
-          for (var group in siteGroupsList) {
+        print(
+            'API Response for site groups module $moduleCode: ${data.keys.toList()}');
+
+        // Extract site groups from the items array
+        final items = data['items'] as List?;
+        if (items != null) {
+          print('Found ${items.length} site groups for module $moduleCode');
+
+          for (var item in items) {
             try {
-              final groupData = group as Map<String, dynamic>;
-              
-              // Extract properties - handle different structures
-              Map<String, dynamic>? properties;
-              if (groupData['properties'] != null) {
-                properties = groupData['properties'] as Map<String, dynamic>;
-              } else {
-                // If no properties field, use the group data itself
-                properties = groupData;
+              final groupData = item as Map<String, dynamic>;
+              final groupId = groupData['id_sites_group'];
+
+              // Fetch individual site group to get complete data including 'data' field
+              final detailedGroupData = await _fetchDetailedSiteGroup(
+                moduleCode,
+                groupId,
+                token,
+              );
+
+              if (detailedGroupData != null) {
+                result.add(SiteGroupsWithModulesLabel(
+                  siteGroup: SiteGroupEntity.fromJson(detailedGroupData),
+                  moduleLabelList: [moduleCode],
+                ));
               }
-
-              // Extract site group data from the properties
-              final Map<String, dynamic> formattedGroupData = {
-                'id_sites_group': properties['id_sites_group'] ?? 
-                                 groupData['id_sites_group'] ?? 
-                                 groupData['id'] ??
-                                 groupData['id_group'],
-                'sites_group_name': properties['sites_group_name'] ?? 
-                                   groupData['sites_group_name'] ?? 
-                                   groupData['name'] ?? 
-                                   '',
-                'sites_group_code': properties['sites_group_code'] ?? 
-                                   groupData['sites_group_code'] ?? 
-                                   groupData['code'] ?? 
-                                   '',
-                'comments': properties['comments'] ?? groupData['comments'],
-                'nb_sites': properties['nb_sites'] ?? groupData['nb_sites'],
-                'nb_visits': properties['nb_visits'] ?? groupData['nb_visits'],
-                'modules': [
-                  moduleCode
-                ], // We know this site group belongs to this module
-              };
-
-              result.add(SiteGroupsWithModulesLabel(
-                siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
-                moduleLabelList: [
-                  moduleCode
-                ], // We know this site group belongs to this module
-              ));
             } catch (e) {
               print('Error processing site group: $e');
-              print('Group data: $group');
+              print('Group data: $item');
             }
           }
+        } else {
+          print(
+              'No items found in site groups response for module $moduleCode');
         }
 
         return result;
@@ -434,5 +399,51 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     } catch (e) {
       throw ApiException('Failed to fetch site groups: $e');
     }
+  }
+
+  /// Fetch detailed site group data including 'data' field
+  Future<Map<String, dynamic>?> _fetchDetailedSiteGroup(
+      String moduleCode, int groupId, String token) async {
+    try {
+      final response = await dio.get(
+        '/monitorings/sites_groups/$moduleCode/$groupId',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final groupData = response.data as Map<String, dynamic>;
+
+        // Convert the complete API response to our format
+        final Map<String, dynamic> formattedGroupData = {
+          'id_sites_group': groupData['id_sites_group'],
+          'sites_group_name': groupData['sites_group_name'],
+          'sites_group_code': groupData['sites_group_code'],
+          'sites_group_description': groupData['sites_group_description'],
+          'uuid_sites_group': groupData['uuid_sites_group'],
+          'comments': groupData['comments'],
+          'id_digitiser': groupData['id_digitiser'],
+          'altitude_min': groupData['altitude_min'],
+          'altitude_max': groupData['altitude_max'],
+          // Handle geometry with SRID prefix for site groups
+          'geom': groupData['geometry'] != null
+              ? (groupData['geometry'] is Map<String, dynamic>
+                  ? jsonEncode(groupData['geometry'])
+                  : groupData['geometry'].toString())
+              : null,
+          // Use the 'data' field from the detailed response
+          'data': groupData['data'] ?? {},
+        };
+
+        print(
+            'Creating detailed SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
+
+        return formattedGroupData;
+      }
+    } catch (e) {
+      print('Error fetching detailed site group $groupId: $e');
+    }
+    return null;
   }
 }

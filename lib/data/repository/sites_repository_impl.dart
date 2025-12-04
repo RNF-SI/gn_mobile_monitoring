@@ -1,5 +1,5 @@
-import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
@@ -86,10 +86,8 @@ class SitesRepositoryImpl implements SitesRepository {
               'Sites distants pour le module ${module.moduleCode}: ${remoteSites.length}');
         } catch (e) {
           final errorMessage = ErrorMessageHelper.formatError(
-            'la synchronisation des sites', 
-            e, 
-            moduleCode: module.moduleCode
-          );
+              'la synchronisation des sites', e,
+              moduleCode: module.moduleCode);
           print(errorMessage);
           continue;
         }
@@ -155,25 +153,30 @@ class SitesRepositoryImpl implements SitesRepository {
             );
             allConflicts.add(conflict);
             itemsSkipped++;
-            print('Conflit maintenu pour le site ${site.idBaseSite} : ${visits.length} visite(s) toujours présente(s)');
+            print(
+                'Conflit maintenu pour le site ${site.idBaseSite} : ${visits.length} visite(s) toujours présente(s)');
           } else {
             // Plus de visites - le conflit peut être résolu automatiquement
-            print('Site ${site.idBaseSite} : plus de visites, suppression automatique du site');
-            
+            print(
+                'Site ${site.idBaseSite} : plus de visites, suppression automatique du site');
+
             // Supprimer la relation site-module
             await database.deleteSiteModule(site.idBaseSite, module.id);
 
             // Vérifier si le site appartient à d'autres modules avant suppression complète
-            final hasOtherReferences = await database.siteHasOtherModuleReferences(site.idBaseSite, module.id);
+            final hasOtherReferences = await database
+                .siteHasOtherModuleReferences(site.idBaseSite, module.id);
 
             if (!hasOtherReferences) {
               // Le site n'est lié à aucun autre module, on peut le supprimer complètement
               await database.deleteSiteCompletely(site.idBaseSite);
-              print('Site ${site.idBaseSite} supprimé complètement (pas d\'autres références de modules)');
+              print(
+                  'Site ${site.idBaseSite} supprimé complètement (pas d\'autres références de modules)');
               itemsDeleted++;
             } else {
               // Le site est encore lié à d'autres modules, on ne supprime que la relation
-              print('Site ${site.idBaseSite} conservé (lié à d\'autres modules), relation supprimée uniquement');
+              print(
+                  'Site ${site.idBaseSite} conservé (lié à d\'autres modules), relation supprimée uniquement');
             }
           }
         }
@@ -206,8 +209,9 @@ class SitesRepositoryImpl implements SitesRepository {
 
         // 8. Gérer les site complements pour ce module
         // Récupérer directement les compléments des sites de ce module via la base de données
-        final existingComplementsForModule = await database.getSiteComplementsByModuleId(module.id);
-        
+        final existingComplementsForModule =
+            await database.getSiteComplementsByModuleId(module.id);
+
         final existingComplementsMap = Map.fromEntries(
             existingComplementsForModule.map((c) => MapEntry(c.idBaseSite, c)));
 
@@ -221,17 +225,19 @@ class SitesRepositoryImpl implements SitesRepository {
             // Complément modifié - détailler les changements
             bool hasChanges = false;
             final changes = <String>[];
-            
+
             if (existing.idSitesGroup != complement.idSitesGroup) {
-              changes.add('id_sites_group: ${existing.idSitesGroup} -> ${complement.idSitesGroup}');
+              changes.add(
+                  'id_sites_group: ${existing.idSitesGroup} -> ${complement.idSitesGroup}');
               hasChanges = true;
             }
-            
+
             // Ajouter d'autres vérifications si nécessaire pour d'autres champs du complément
-            
+
             if (hasChanges) {
               await database.insertSiteComplements([complement]);
-              print('Site ${complement.idBaseSite} mis à jour - ${changes.join(', ')}');
+              print(
+                  'Site ${complement.idBaseSite} mis à jour - ${changes.join(', ')}');
             }
           }
         }
@@ -464,13 +470,15 @@ class SitesRepositoryImpl implements SitesRepository {
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
-        print('=== Synchronisation groupes de sites module ${module.moduleCode} ===');
+        print(
+            '=== Synchronisation groupes de sites module ${module.moduleCode} ===');
 
         // NOTE: Les compléments de sites sont mis à jour lors de la synchronisation des sites
         // qui précède cette synchronisation des groupes de sites dans le processus complet
 
         // 1. Récupérer les groupes de sites LOCAUX pour CE MODULE spécifiquement
-        final localSiteGroupsForModule = await database.getSiteGroupsByModuleId(module.id);
+        final localSiteGroupsForModule =
+            await database.getSiteGroupsByModuleId(module.id);
         final localSiteGroupIdsForModule =
             localSiteGroupsForModule.map((sg) => sg.idSitesGroup).toSet();
 
@@ -484,18 +492,15 @@ class SitesRepositoryImpl implements SitesRepository {
           final siteGroups =
               await api.fetchSiteGroupsForModule(module.moduleCode!, token);
 
-          remoteSiteGroups = siteGroups
-              .map((sg) => sg.siteGroup.toDomain())
-              .toList();
+          remoteSiteGroups =
+              siteGroups.map((sg) => sg.siteGroup.toDomain()).toList();
 
           print(
               'Groupes de sites distants pour le module ${module.moduleCode}: ${remoteSiteGroups.length}');
         } catch (e) {
           final errorMessage = ErrorMessageHelper.formatError(
-            'la synchronisation des groupes de sites', 
-            e, 
-            moduleCode: module.moduleCode
-          );
+              'la synchronisation des groupes de sites', e,
+              moduleCode: module.moduleCode);
           print(errorMessage);
           // Si le module n'a pas de groupes de sites, traiter comme une liste vide
           remoteSiteGroups = [];
@@ -503,13 +508,15 @@ class SitesRepositoryImpl implements SitesRepository {
         }
 
         // 3. Créer les ensembles d'IDs pour la comparaison
-        final remoteSiteGroupIds = remoteSiteGroups.map((sg) => sg.idSitesGroup).toSet();
+        final remoteSiteGroupIds =
+            remoteSiteGroups.map((sg) => sg.idSitesGroup).toSet();
 
         // 4. Identifier les changements pour CE MODULE
 
         // Groupes de sites à ajouter : existent sur le serveur mais pas localement pour ce module
         final siteGroupsToAdd = remoteSiteGroups
-            .where((sg) => !localSiteGroupIdsForModule.contains(sg.idSitesGroup))
+            .where(
+                (sg) => !localSiteGroupIdsForModule.contains(sg.idSitesGroup))
             .toList();
 
         // Groupes de sites à supprimer : existent localement pour ce module mais plus sur le serveur
@@ -528,23 +535,29 @@ class SitesRepositoryImpl implements SitesRepository {
         // 5. Gérer les suppressions des groupes de sites - pas de conflit car la suppression
         // d'un groupe n'entraine pas de perte de données (les sites restent, seul id_sites_group devient NULL)
         for (final siteGroup in siteGroupsToDelete) {
-          print('Suppression du groupe de sites ${siteGroup.idSitesGroup} du module ${module.moduleCode}');
-          
+          print(
+              'Suppression du groupe de sites ${siteGroup.idSitesGroup} du module ${module.moduleCode}');
+
           // Supprimer la relation groupe-module
-          await database.deleteSiteGroupModule(siteGroup.idSitesGroup, module.id);
+          await database.deleteSiteGroupModule(
+              siteGroup.idSitesGroup, module.id);
 
           // Vérifier si le groupe appartient à d'autres modules avant suppression complète
-          final hasOtherReferences = await database.siteGroupHasOtherModuleReferences(siteGroup.idSitesGroup, module.id);
+          final hasOtherReferences =
+              await database.siteGroupHasOtherModuleReferences(
+                  siteGroup.idSitesGroup, module.id);
 
           if (!hasOtherReferences) {
             // Le groupe n'est lié à aucun autre module, on peut le supprimer complètement
             // Note: Les compléments de sites ont déjà été mis à jour lors de la synchronisation des sites (qui précède celle des groupes)
             await database.deleteSiteGroup(siteGroup.idSitesGroup);
-            print('Groupe de sites ${siteGroup.idSitesGroup} supprimé complètement (pas d\'autres références de modules)');
+            print(
+                'Groupe de sites ${siteGroup.idSitesGroup} supprimé complètement (pas d\'autres références de modules)');
             itemsDeleted++;
           } else {
             // Le groupe est encore lié à d'autres modules, on ne supprime que la relation
-            print('Groupe de sites ${siteGroup.idSitesGroup} conservé (lié à d\'autres modules), relation supprimée uniquement');
+            print(
+                'Groupe de sites ${siteGroup.idSitesGroup} conservé (lié à d\'autres modules), relation supprimée uniquement');
           }
         }
 
@@ -607,7 +620,8 @@ class SitesRepositoryImpl implements SitesRepository {
         );
       }
     } catch (error) {
-      print('Erreur lors de la synchronisation des groupes de sites par module: $error');
+      print(
+          'Erreur lors de la synchronisation des groupes de sites par module: $error');
       return SyncResult.failure(
         errorMessage: 'Erreur: $error',
       );
@@ -743,7 +757,7 @@ class SitesRepositoryImpl implements SitesRepository {
       // Now check which site groups can be completely deleted (no remaining module associations)
       for (final siteGroupId in siteGroupsToDelete) {
         print('Vérification suppression groupe de sites $siteGroupId');
-        
+
         // Check if the site group is still linked to any module
         final remainingSiteGroupModules =
             await database.getSiteGroupModulesBySiteGroupId(siteGroupId);
@@ -752,9 +766,11 @@ class SitesRepositoryImpl implements SitesRepository {
           // This site group isn't linked to any module anymore, completely remove it
           // Note: Les compléments de sites ont déjà été mis à jour lors de la synchronisation des sites (qui précède celle des groupes)
           await database.deleteSiteGroup(siteGroupId);
-          print('Groupe de sites $siteGroupId supprimé - plus lié à aucun module');
+          print(
+              'Groupe de sites $siteGroupId supprimé - plus lié à aucun module');
         } else {
-          print('Groupe de sites $siteGroupId conservé - encore lié à ${remainingSiteGroupModules.length} module(s)');
+          print(
+              'Groupe de sites $siteGroupId conservé - encore lié à ${remainingSiteGroupModules.length} module(s)');
         }
       }
 

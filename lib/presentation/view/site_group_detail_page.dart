@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
-import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -15,8 +14,11 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
 
 class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final SiteGroup siteGroup;
@@ -37,17 +39,406 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   int? _expandedPanelIndex;
   Position? _userPosition;
   bool _sortByDistance = true; // true = par distance, false = alphabétique
+  bool _showSearch = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  Map<String, dynamic>? _enrichedGroupData;
+  Future<Map<String, dynamic>>? _enrichmentFuture;
 
   @override
   void initState() {
     super.initState();
-    // Actualiser les données à l’ouverture de la page
+    // Actualiser les données à l'ouverture de la page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
           .refresh();
       _loadUserLocation();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  /// Construit une Map avec les données du groupe de sites pour l'affichage
+  Map<String, dynamic> _buildSiteGroupDataMap() {
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (widget.siteGroup.sitesGroupCode != null) {
+      groupData['sites_group_code'] = widget.siteGroup.sitesGroupCode;
+    }
+    if (widget.siteGroup.sitesGroupName != null) {
+      groupData['sites_group_name'] = widget.siteGroup.sitesGroupName;
+    }
+    if (widget.siteGroup.sitesGroupDescription != null) {
+      groupData['sites_group_description'] =
+          widget.siteGroup.sitesGroupDescription;
+    }
+    if (widget.siteGroup.altitudeMin != null) {
+      groupData['altitude_min'] = widget.siteGroup.altitudeMin;
+    }
+    if (widget.siteGroup.altitudeMax != null) {
+      groupData['altitude_max'] = widget.siteGroup.altitudeMax;
+    }
+    if (widget.siteGroup.comments != null) {
+      groupData['comments'] = widget.siteGroup.comments;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (widget.siteGroup.data != null && widget.siteGroup.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (widget.siteGroup.data is String) {
+          dataMap = Map<String, dynamic>.from(
+              jsonDecode(widget.siteGroup.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(widget.siteGroup.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    return groupData;
+  }
+
+  /// Génère le titre de la card des propriétés en fonction du genre et de la première lettre
+  String _generatePropertiesTitle(ObjectConfig sitesGroupConfig) {
+    final label = (sitesGroupConfig.label ?? 'élément').toLowerCase();
+    final genre = sitesGroupConfig.genre; // 'M' pour masculin, 'F' pour féminin
+
+    // Liste des voyelles (en minuscules)
+    const vowels = [
+      'a',
+      'e',
+      'i',
+      'o',
+      'u',
+      'y',
+      'à',
+      'é',
+      'è',
+      'ê',
+      'ë',
+      'î',
+      'ï',
+      'ô',
+      'ö',
+      'ù',
+      'û',
+      'ü'
+    ];
+
+    // Vérifier si la première lettre est une voyelle
+    final firstLetter = label.trim();
+    final isVowel = firstLetter.isNotEmpty && vowels.contains(firstLetter[0]);
+
+    // Construire le titre selon le genre et la voyelle
+    if (isVowel) {
+      return "Propriétés de l'$label";
+    } else if (genre == 'F') {
+      return "Propriétés de la $label";
+    } else {
+      // Masculin par défaut
+      return "Propriétés du $label";
+    }
+  }
+
+  /// Enrichit les données du groupe en convertissant les IDs de nomenclatures en objets avec labels
+  Future<Map<String, dynamic>> _enrichGroupDataWithNomenclatures(
+    Map<String, dynamic> data,
+    Map<String, dynamic> parsedGroupConfig,
+  ) async {
+    final enrichedData = Map<String, dynamic>.from(data);
+    final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+
+    // Identifier les champs de nomenclature depuis la configuration
+    final List<String> nomenclatureFields = [];
+
+    // 1. Chercher dans la configuration parsée
+    for (final entry in parsedGroupConfig.entries) {
+      final fieldName = entry.key;
+      final fieldConfig = entry.value;
+
+      if (fieldConfig is Map<String, dynamic>) {
+        if (FormConfigParser.isNomenclatureField(fieldConfig)) {
+          nomenclatureFields.add(fieldName);
+        }
+      }
+    }
+
+    // 2. Ajouter aussi les champs qui commencent par id_nomenclature_ (pour compatibilité)
+    for (final key in enrichedData.keys) {
+      if (key.startsWith('id_nomenclature_') &&
+          !nomenclatureFields.contains(key)) {
+        nomenclatureFields.add(key);
+      }
+    }
+
+    // Pour chaque champ de nomenclature, convertir l'ID en objet
+    for (final fieldName in nomenclatureFields) {
+      if (!enrichedData.containsKey(fieldName)) {
+        continue;
+      }
+
+      final fieldValue = enrichedData[fieldName];
+
+      // Ignorer si null ou vide
+      if (fieldValue == null || fieldValue == '' || fieldValue == 0) {
+        continue;
+      }
+
+      // Si c'est déjà un Map (objet nomenclature complet), ne rien faire
+      if (fieldValue is Map) {
+        continue;
+      }
+
+      // Convertir en entier si nécessaire
+      int? idNomenclature;
+      if (fieldValue is int) {
+        idNomenclature = fieldValue;
+      } else if (fieldValue is String) {
+        idNomenclature = int.tryParse(fieldValue);
+      }
+
+      if (idNomenclature == null || idNomenclature == 0) {
+        continue;
+      }
+
+      try {
+        // Récupérer la nomenclature par son ID
+        final nomenclatureName =
+            await nomenclatureService.getNomenclatureNameById(idNomenclature);
+
+        // Si on a trouvé un label, créer un objet nomenclature
+        if (nomenclatureName != 'Nomenclature $idNomenclature (non trouvée)') {
+          enrichedData[fieldName] = {
+            'id': idNomenclature,
+            'label': nomenclatureName,
+          };
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de l\'enrichissement de $fieldName: $e');
+      }
+    }
+
+    return enrichedData;
+  }
+
+  /// Construit la card avec les propriétés du groupe de sites
+  Widget _buildSiteGroupPropertiesCard(
+    ObjectConfig sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    final displayProperties =
+        sitesGroupConfig.displayProperties ?? sitesGroupConfig.displayList;
+
+    if (displayProperties == null || displayProperties.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final groupData = _buildSiteGroupDataMap();
+
+    // Filtrer les propriétés qui existent dans les données
+    // Exclure sites_group_name car déjà visible en en-tête de la page
+    final propertiesToShow = displayProperties.where((property) {
+      return groupData.containsKey(property) &&
+          !property.startsWith('meta_') &&
+          property != 'sites_group_name';
+    }).toList();
+
+    if (propertiesToShow.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Utiliser les données enrichies préchargées si disponibles, sinon créer le Future
+    if (_enrichedGroupData != null) {
+      // Utiliser les données déjà chargées pour éviter le rechargement
+      return _buildPropertiesCardContent(propertiesToShow, _enrichedGroupData!,
+          parsedGroupConfig, sitesGroupConfig);
+    }
+
+    // Si les données ne sont pas encore chargées, utiliser le Future mémorisé ou en créer un
+    final future = _enrichmentFuture ??
+        _enrichGroupDataWithNomenclatures(groupData, parsedGroupConfig);
+    if (_enrichmentFuture == null) {
+      _enrichmentFuture = future;
+      future.then((enriched) {
+        if (mounted) {
+          setState(() {
+            _enrichedGroupData = enriched;
+          });
+        }
+      });
+    }
+
+    // Enrichir les données avec les nomenclatures de manière asynchrone
+    return FutureBuilder<Map<String, dynamic>>(
+      future: future,
+      builder: (context, snapshot) {
+        final enrichedData = snapshot.hasData ? snapshot.data! : groupData;
+
+        // Mettre en cache les données enrichies une fois chargées
+        if (snapshot.hasData && _enrichedGroupData == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _enrichedGroupData = snapshot.data;
+              });
+            }
+          });
+        }
+
+        return _buildPropertiesCardContent(propertiesToShow, enrichedData,
+            parsedGroupConfig, sitesGroupConfig);
+      },
+    );
+  }
+
+  /// Construit le contenu de la card des propriétés (sans FutureBuilder)
+  Widget _buildPropertiesCardContent(
+    List<String> propertiesToShow,
+    Map<String, dynamic> enrichedData,
+    Map<String, dynamic> parsedGroupConfig,
+    ObjectConfig sitesGroupConfig,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Titre de la section
+            Row(
+              children: [
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _generatePropertiesTitle(sitesGroupConfig),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Liste des propriétés
+            ...propertiesToShow.map((property) {
+              final rawValue = enrichedData[property];
+
+              // Obtenir le label depuis la configuration
+              String label = property;
+              if (parsedGroupConfig.containsKey(property)) {
+                label =
+                    parsedGroupConfig[property]['attribut_label'] ?? property;
+              }
+
+              // Formater la valeur
+              String displayValue = ValueFormatter.format(rawValue);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        '$label:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        displayValue,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Vérifie si les sites sont éditables sur le terrain
+  /// Retourne true si is_editable_on_field est true ou absent (par défaut)
+  /// Retourne false si is_editable_on_field est explicitement false
+  bool _isSiteEditableOnField(ObjectConfig? siteConfig) {
+    debugPrint(
+        '🔍 _isSiteEditableOnField - siteConfig: ${siteConfig != null ? "non null" : "null"}');
+
+    if (siteConfig == null) {
+      debugPrint('❌ siteConfig est null, retourne false');
+      return false;
+    }
+
+    // Vérifier d'abord la propriété directe isEditableOnField
+    if (siteConfig.isEditableOnField != null) {
+      debugPrint(
+          '✅ Trouvé isEditableOnField (propriété directe): ${siteConfig.isEditableOnField}');
+      return siteConfig.isEditableOnField!;
+    }
+
+    // Vérifier dans le champ specific (fallback)
+    final specific = siteConfig.specific;
+    debugPrint(
+        '🔍 specific: ${specific != null ? "non null (${specific.keys.length} clés)" : "null"}');
+
+    if (specific != null) {
+      debugPrint('🔍 Clés dans specific: ${specific.keys.toList()}');
+
+      if (specific.containsKey('is_editable_on_field')) {
+        final value = specific['is_editable_on_field'];
+        debugPrint(
+            '✅ Trouvé is_editable_on_field dans specific: $value (type: ${value.runtimeType})');
+
+        // Convertir en booléen de manière sécurisée
+        bool result;
+        if (value is bool) {
+          result = value;
+        } else if (value is String) {
+          result = value.toLowerCase() == 'true';
+        } else if (value is num) {
+          result = value != 0;
+        } else {
+          result = false;
+        }
+        debugPrint('📊 Résultat: $result');
+        return result;
+      } else {
+        debugPrint('⚠️ is_editable_on_field non trouvé dans specific');
+      }
+    }
+
+    debugPrint('⚠️ is_editable_on_field non trouvé, retourne true par défaut');
+    // Par défaut, si le paramètre n'est pas présent, on considère que c'est éditable
+    return true;
   }
 
   /// Charge la position GPS de l'utilisateur
@@ -245,95 +636,31 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               ),
             ),
           ),
-          // Group Properties Card
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        widget.moduleInfo.module.complement?.configuration
-                                ?.sitesGroup?.label ??
-                            'Propriétés du groupe',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
-                  ],
-                ),
-              ),
-            ),
-          ),
 
-          // Propriétés supplémentaires du groupe
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                              widget.moduleInfo.module.complement?.configuration
-                                      ?.sitesGroup?.label ??
-                                  'Propriétés du groupe',
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold)),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
-                  ],
-                ),
+          // Card avec les display_properties du groupe de sites
+          if (sitesGroupConfig != null) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: _buildSiteGroupPropertiesCard(
+                sitesGroupConfig,
+                customConfig,
+                parsedGroupConfig,
               ),
             ),
-          ),
+          ],
 
           // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      widget.moduleInfo.module.complement?.configuration?.site
-                              ?.labelList ??
-                          widget.moduleInfo.module.complement?.configuration
-                              ?.site?.label ??
-                          'Sites associés',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
+          Column(
+            children: [
+              // Barre d'outils avec label, recherche, ajout et tri
+              Builder(
+                builder: (context) {
+                  final siteConfig = module.complement?.configuration?.site;
+                  final isEditable = _isSiteEditableOnField(siteConfig);
+                  Widget? addButton;
+                  if (isEditable) {
+                    addButton = IconButton(
                       onPressed: () {
-                        final siteConfig =
-                            module.complement?.configuration?.site;
                         if (siteConfig != null) {
                           Navigator.push(
                             context,
@@ -360,53 +687,77 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                         }
                       },
                       icon: const Icon(Icons.add_circle),
-                      tooltip: 'Ajouter ${(module.complement?.configuration?.site?.genre == 'F') ? 'une' : 'un'} ${module.complement?.configuration?.site?.label ?? 'site'}',
-                    ),
-                  ],
-                ),
-                // Bouton pour basculer entre tri par distance et alphabétique
-                if (_userPosition != null)
-                  ActionChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _sortByDistance
-                              ? Icons.sort_by_alpha
-                              : Icons.location_on,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _sortByDistance ? 'Alphabétique' : 'Distance',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    side: BorderSide.none,
-                    backgroundColor: AppColors.primary,
-                    onPressed: () {
+                      tooltip:
+                          'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                    );
+                  }
+                  return ListToolbarWidget(
+                    label: widget.moduleInfo.module.complement?.configuration
+                            ?.site?.labelList ??
+                        widget.moduleInfo.module.complement?.configuration?.site
+                            ?.label ??
+                        'Sites associés',
+                    showSearch: _showSearch,
+                    searchQuery: _searchQuery,
+                    searchController: _searchController,
+                    onSearchChanged: (value) {
+                      setState(() {
+                        _searchQuery = value;
+                      });
+                    },
+                    onToggleSearch: () {
+                      setState(() {
+                        _showSearch = !_showSearch;
+                        debugPrint('🔍 Recherche: $_showSearch');
+                        if (!_showSearch) {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        }
+                      });
+                    },
+                    onCloseSearch: () {
+                      setState(() {
+                        _showSearch = false;
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
+                    userPosition: _userPosition,
+                    sortByDistance: _sortByDistance,
+                    onToggleSort: () {
                       setState(() {
                         _sortByDistance = !_sortByDistance;
                       });
                     },
-                  ),
-              ],
-            ),
+                    searchHintText: 'Rechercher par nom de site...',
+                    addButton: addButton,
+                  );
+                },
+              ),
+            ],
           ),
           // Sites Expansion Panel List
           Expanded(
             child: sitesState.when(
-              data: (sites) => _buildSitesExpansionPanelList(
-                sites,
-                context,
-                baseSiteNameLabel,
-                baseSiteCodeLabel,
-                siteConfig,
-                customConfig,
-                parsedSiteConfig,
-              ),
+              data: (sites) {
+                // Filtrer les sites par nom si une recherche est active
+                final filteredSites = _searchQuery.isEmpty
+                    ? sites
+                    : sites.where((site) {
+                        final siteName = site.baseSiteName?.toLowerCase() ?? '';
+                        return siteName.contains(_searchQuery);
+                      }).toList();
+
+                return _buildSitesExpansionPanelList(
+                  filteredSites,
+                  context,
+                  baseSiteNameLabel,
+                  baseSiteCodeLabel,
+                  siteConfig,
+                  customConfig,
+                  parsedSiteConfig,
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
                 child: Text(
@@ -426,16 +777,75 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               builder: (_) => Scaffold(
                 appBar: AppBar(
                   title: const Text('Carte des sites'),
+                  actions: [
+                    // ---- AJOUT DU BOUTON ----
+                    Builder(
+                      builder: (context) {
+                        final siteConfig =
+                            module.complement?.configuration?.site;
+                        final isEditable = _isSiteEditableOnField(siteConfig);
+                        debugPrint(
+                            '🎯 Vérification affichage bouton - isEditable: $isEditable');
+
+                        if (isEditable) {
+                          return Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () {
+                                  if (siteConfig != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SiteFormPageWithTypeSelection(
+                                          siteConfig: siteConfig,
+                                          customConfig: module.complement
+                                              ?.configuration?.custom,
+                                          moduleId: module.id,
+                                          moduleInfo: widget.moduleInfo,
+                                          siteGroup: widget.siteGroup,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Configuration de site non disponible'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.add_circle),
+                                tooltip:
+                                    'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                              ),
+                            ],
+                          );
+                        } else {
+                          return const SizedBox.shrink();
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 body: sitesState.when(
                   data: (sites) => GeometriesMapWidget(
                     geojsonData: _convertSitesToGeoJSON(sites),
+                    displayList: siteConfig?.displayList ??
+                        siteConfig?.displayProperties,
+                    siteConfig: siteConfig,
+                    customConfig: customConfig,
+                    moduleInfo: widget.moduleInfo,
+                    siteGroup: widget.siteGroup,
                   ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (error, stack) => Center(
                     child: Text(
-                      'Erreur lors du chargement des sites: $error',
+                      'Erreur lors du chargement des ${module.complement?.configuration?.site?.label ?? 'site'}: $error',
                       style: const TextStyle(color: Colors.red),
                     ),
                   ),
@@ -605,19 +1015,27 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                         }
                       }
 
-                      // Récupérer le premier champ de display_list
+                      // Récupérer le nom du site (base_site_name) depuis display_list ou utiliser le nom par défaut
                       final List<String>? displayProperties =
                           siteConfig?.displayList ??
                               siteConfig?.displayProperties;
 
                       String displayText = site.baseSiteName ?? 'Site sans nom';
 
+                      // Chercher base_site_name dans display_list, peu importe sa position
                       if (displayProperties != null &&
                           displayProperties.isNotEmpty) {
-                        final firstProperty = displayProperties.first;
-                        if (siteData.containsKey(firstProperty)) {
-                          final rawValue = siteData[firstProperty];
+                        if (displayProperties.contains('base_site_name') &&
+                            siteData.containsKey('base_site_name')) {
+                          final rawValue = siteData['base_site_name'];
                           displayText = ValueFormatter.format(rawValue);
+                        } else if (displayProperties.isNotEmpty) {
+                          // Si base_site_name n'est pas dans display_list, utiliser le premier élément
+                          final firstProperty = displayProperties.first;
+                          if (siteData.containsKey(firstProperty)) {
+                            final rawValue = siteData[firstProperty];
+                            displayText = ValueFormatter.format(rawValue);
+                          }
                         }
                       }
 
@@ -669,13 +1087,27 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         // Parse the geometry JSON string
         final Map<String, dynamic> geometry = jsonDecode(site.geom!);
 
-        // Create a feature with site information
-        final feature = {
+        // Create a feature with site information (inclure tous les champs de base)
+        final feature = <String, dynamic>{
           'id': site.idBaseSite,
           'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
           'description': site.baseSiteDescription ?? '',
           'geom': geometry,
         };
+
+        // Ajouter les champs de base pour le display_list
+        if (site.baseSiteCode != null) {
+          feature['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          feature['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          feature['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          feature['first_use_date'] = site.firstUseDate!.toString();
+        }
 
         geoJsonFeatures.add(feature);
       } catch (e) {
@@ -768,12 +1200,12 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           );
         }
 
-        // Exclure le premier item de display_list (déjà affiché dans le title)
-        final propertiesToShow = displayProperties.length > 1
-            ? displayProperties.sublist(1)
-            : <String>[];
+        // Exclure base_site_name (déjà affiché dans le title), peu importe sa position
+        final propertiesToShow = displayProperties.where((key) {
+          return key != 'base_site_name';
+        }).toList();
 
-        // Si plus rien à afficher après exclusion du premier item
+        // Si plus rien à afficher après exclusion de base_site_name
         if (propertiesToShow.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(16.0),
@@ -878,31 +1310,35 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       return const SizedBox.shrink();
     }
 
+    // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
+    final isInside = distance == 0.0;
+    final badgeColor = isInside ? Colors.green : Colors.blue;
+
     return Container(
       margin: const EdgeInsets.only(left: 8.0),
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       decoration: BoxDecoration(
-        color: Colors.blue.withValues(alpha: 0.1),
+        color: badgeColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: Colors.blue.withValues(alpha: 0.3),
+          color: badgeColor.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.location_on,
-            color: Colors.blue,
+            color: badgeColor,
             size: 16,
           ),
           const SizedBox(width: 4),
           Text(
             _formatDistance(distance),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: Colors.blue,
+              color: badgeColor,
               fontWeight: FontWeight.w600,
             ),
           ),

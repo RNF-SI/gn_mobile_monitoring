@@ -298,14 +298,14 @@ LazyDatabase _openConnection() {
 /// Migration pour ajouter le champ id_digitiser à la table t_observations
 Future<void> migration24(Migrator m, AppDatabase db) async {
   print("Executing migration24: Adding id_digitiser to t_observations");
-  
+
   try {
     // Ajouter la colonne id_digitiser à la table t_observations
     await m.addColumn(
       db.tObservations,
       db.tObservations.idDigitiser,
     );
-    
+
     print("id_digitiser column added successfully");
   } catch (e) {
     print("Error adding id_digitiser column: $e");
