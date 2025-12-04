@@ -531,6 +531,18 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<void>);
 
   @override
+  _i5.Future<void> insertSiteGroupModule(
+          _i10.SitesGroupModule? siteGroupModule) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #insertSiteGroupModule,
+          [siteGroupModule],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
   _i5.Future<void> insertSiteGroupModules(
           List<_i10.SitesGroupModule>? modules) =>
       (super.noSuchMethod(
@@ -688,7 +700,7 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<List<_i7.BaseSite>>);
 
   @override
-  _i5.Future<int> insertSite(_i7.BaseSite site) => (super.noSuchMethod(
+  _i5.Future<int> insertSite(_i7.BaseSite? site) => (super.noSuchMethod(
         Invocation.method(
           #insertSite,
           [site],
@@ -698,7 +710,7 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<int>);
 
   @override
-  _i5.Future<int> insertSiteGroup(_i9.SiteGroup siteGroup) =>
+  _i5.Future<int> insertSiteGroup(_i9.SiteGroup? siteGroup) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertSiteGroup,
@@ -741,6 +753,17 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
         returnValue: _i5.Future<_i7.BaseSite?>.value(),
         returnValueForMissingStub: _i5.Future<_i7.BaseSite?>.value(),
       ) as _i5.Future<_i7.BaseSite?>);
+
+  @override
+  _i5.Future<_i9.SiteGroup?> getSiteGroupById(int? siteGroupId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupById,
+          [siteGroupId],
+        ),
+        returnValue: _i5.Future<_i9.SiteGroup?>.value(),
+        returnValueForMissingStub: _i5.Future<_i9.SiteGroup?>.value(),
+      ) as _i5.Future<_i9.SiteGroup?>);
 }
 
 /// A class which mocks [ModulesDatabase].

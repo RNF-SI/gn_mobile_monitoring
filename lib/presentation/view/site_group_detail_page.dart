@@ -50,6 +50,61 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     });
   }
 
+  /// Vérifie si les sites sont éditables sur le terrain
+  /// Retourne true si is_editable_on_field est true ou absent (par défaut)
+  /// Retourne false si is_editable_on_field est explicitement false
+  bool _isSiteEditableOnField(ObjectConfig? siteConfig) {
+    debugPrint(
+        '🔍 _isSiteEditableOnField - siteConfig: ${siteConfig != null ? "non null" : "null"}');
+
+    if (siteConfig == null) {
+      debugPrint('❌ siteConfig est null, retourne false');
+      return false;
+    }
+
+    // Vérifier d'abord la propriété directe isEditableOnField
+    if (siteConfig.isEditableOnField != null) {
+      debugPrint(
+          '✅ Trouvé isEditableOnField (propriété directe): ${siteConfig.isEditableOnField}');
+      return siteConfig.isEditableOnField!;
+    }
+
+    // Vérifier dans le champ specific (fallback)
+    final specific = siteConfig.specific;
+    debugPrint(
+        '🔍 specific: ${specific != null ? "non null (${specific.keys.length} clés)" : "null"}');
+
+    if (specific != null) {
+      debugPrint('🔍 Clés dans specific: ${specific.keys.toList()}');
+
+      if (specific.containsKey('is_editable_on_field')) {
+        final value = specific['is_editable_on_field'];
+        debugPrint(
+            '✅ Trouvé is_editable_on_field dans specific: $value (type: ${value.runtimeType})');
+
+        // Convertir en booléen de manière sécurisée
+        bool result;
+        if (value is bool) {
+          result = value;
+        } else if (value is String) {
+          result = value.toLowerCase() == 'true';
+        } else if (value is num) {
+          result = value != 0;
+        } else {
+          result = false;
+        }
+        debugPrint('📊 Résultat: $result');
+        return result;
+      } else {
+        debugPrint('⚠️ is_editable_on_field non trouvé dans specific');
+      }
+    }
+
+    debugPrint('⚠️ is_editable_on_field non trouvé, retourne true par défaut');
+    // Par défaut, si le paramètre n'est pas présent, on considère que c'est éditable
+    return true;
+  }
+
   /// Charge la position GPS de l'utilisateur
   Future<void> _loadUserLocation() async {
     try {
@@ -240,35 +295,13 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                           widget.siteGroup.sitesGroupCode ??
                           'Groupe',
                     ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-          // Group Properties Card
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        widget.moduleInfo.module.complement?.configuration
-                                ?.sitesGroup?.label ??
-                            'Propriétés du groupe',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    _buildPropertyRow(
-                        groupNameLabel, widget.siteGroup.sitesGroupName ?? ''),
-                    _buildPropertyRow(
-                        groupCodeLabel, widget.siteGroup.sitesGroupCode ?? ''),
-                    if (widget.siteGroup.sitesGroupDescription != null &&
-                        widget.siteGroup.sitesGroupDescription!.isNotEmpty)
-                      _buildPropertyRow(groupDescriptionLabel,
-                          widget.siteGroup.sitesGroupDescription!),
+                    // Afficher le code du groupe s'il existe
+                    if (widget.siteGroup.sitesGroupCode != null &&
+                        widget.siteGroup.sitesGroupCode!.trim().isNotEmpty)
+                      BreadcrumbItem(
+                        label: groupCodeLabel,
+                        value: widget.siteGroup.sitesGroupCode!.trim(),
+                      ),
                   ],
                 ),
               ),
@@ -292,39 +325,55 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                       style: const TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      onPressed: () {
+                    // Afficher le bouton uniquement si is_editable_on_field est true ou absent
+                    Builder(
+                      builder: (context) {
                         final siteConfig =
                             module.complement?.configuration?.site;
-                        if (siteConfig != null) {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  SiteFormPageWithTypeSelection(
-                                siteConfig: siteConfig,
-                                customConfig:
-                                    module.complement?.configuration?.custom,
-                                moduleId: module.id,
-                                moduleInfo: widget.moduleInfo,
-                                siteGroup: widget.siteGroup,
+                        final isEditable = _isSiteEditableOnField(siteConfig);
+                        debugPrint(
+                            '🎯 Vérification affichage bouton - isEditable: $isEditable');
+                        if (isEditable) {
+                          return Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () {
+                                  if (siteConfig != null) {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            SiteFormPageWithTypeSelection(
+                                          siteConfig: siteConfig,
+                                          customConfig: module.complement
+                                              ?.configuration?.custom,
+                                          moduleId: module.id,
+                                          moduleInfo: widget.moduleInfo,
+                                          siteGroup: widget.siteGroup,
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Configuration de site non disponible'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                },
+                                icon: const Icon(Icons.add_circle),
+                                tooltip:
+                                    'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
                               ),
-                            ),
+                            ],
                           );
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content:
-                                  Text('Configuration de site non disponible'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
+                          return const SizedBox.shrink();
                         }
                       },
-                      icon: const Icon(Icons.add_circle),
-                      tooltip:
-                          'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
                     ),
                   ],
                 ),
@@ -394,6 +443,12 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 body: sitesState.when(
                   data: (sites) => GeometriesMapWidget(
                     geojsonData: _convertSitesToGeoJSON(sites),
+                    displayList: siteConfig?.displayList ??
+                        siteConfig?.displayProperties,
+                    siteConfig: siteConfig,
+                    customConfig: customConfig,
+                    moduleInfo: widget.moduleInfo,
+                    siteGroup: widget.siteGroup,
                   ),
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
@@ -633,13 +688,27 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         // Parse the geometry JSON string
         final Map<String, dynamic> geometry = jsonDecode(site.geom!);
 
-        // Create a feature with site information
-        final feature = {
+        // Create a feature with site information (inclure tous les champs de base)
+        final feature = <String, dynamic>{
           'id': site.idBaseSite,
           'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
           'description': site.baseSiteDescription ?? '',
           'geom': geometry,
         };
+
+        // Ajouter les champs de base pour le display_list
+        if (site.baseSiteCode != null) {
+          feature['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          feature['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          feature['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          feature['first_use_date'] = site.firstUseDate!.toString();
+        }
 
         geoJsonFeatures.add(feature);
       } catch (e) {
