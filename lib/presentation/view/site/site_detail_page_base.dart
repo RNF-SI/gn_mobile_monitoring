@@ -15,6 +15,7 @@ import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
@@ -234,16 +235,53 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   PreferredSizeWidget buildAppBar() {
+    final canEdit = widget.site.isLocal == true;
+    
     return AppBar(
       title: Text(getTitle()),
-      // Actions pour éditer
+      // Actions pour éditer (uniquement si le site est local)
       actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            // Logique pour éditer le site (à implémenter si nécessaire)
-          },
-        ),
+        if (canEdit)
+          IconButton(
+            icon: const Icon(Icons.edit),
+            tooltip: 'Modifier le site',
+            onPressed: () {
+              final siteConfig = widget.moduleInfo?.module.complement?.configuration?.site;
+              if (siteConfig != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteFormPage(
+                      site: widget.site,
+                      siteConfig: siteConfig,
+                      customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+                      moduleId: widget.moduleInfo?.module.id,
+                      moduleInfo: widget.moduleInfo,
+                      siteGroup: widget.fromSiteGroup,
+                    ),
+                  ),
+                ).then((_) {
+                  // Rafraîchir la page si nécessaire
+                  if (mounted) {
+                    setState(() {});
+                  }
+                });
+              }
+            },
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            tooltip: 'Ce site ne peut pas être modifié (créé depuis l\'API)',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Seuls les sites créés localement peuvent être modifiés'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
       ],
     );
   }

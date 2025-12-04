@@ -507,6 +507,16 @@ class $TBaseSitesTable extends TBaseSites
   late final GeneratedColumn<int> altitudeMax = GeneratedColumn<int>(
       'altitude_max', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isLocalMeta =
+      const VerificationMeta('isLocal');
+  @override
+  late final GeneratedColumn<bool> isLocal = GeneratedColumn<bool>(
+      'is_local', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_local" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         idBaseSite,
@@ -521,7 +531,8 @@ class $TBaseSitesTable extends TBaseSites
         metaCreateDate,
         metaUpdateDate,
         altitudeMin,
-        altitudeMax
+        altitudeMax,
+        isLocal
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -609,6 +620,10 @@ class $TBaseSitesTable extends TBaseSites
           altitudeMax.isAcceptableOrUnknown(
               data['altitude_max']!, _altitudeMaxMeta));
     }
+    if (data.containsKey('is_local')) {
+      context.handle(_isLocalMeta,
+          isLocal.isAcceptableOrUnknown(data['is_local']!, _isLocalMeta));
+    }
     return context;
   }
 
@@ -644,6 +659,8 @@ class $TBaseSitesTable extends TBaseSites
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_min']),
       altitudeMax: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_max']),
+      isLocal: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_local']),
     );
   }
 
@@ -667,6 +684,7 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
   final DateTime? metaUpdateDate;
   final int? altitudeMin;
   final int? altitudeMax;
+  final bool? isLocal;
   const TBaseSite(
       {required this.idBaseSite,
       this.idInventor,
@@ -680,7 +698,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       this.metaCreateDate,
       this.metaUpdateDate,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.isLocal});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -720,6 +739,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
     }
     if (!nullToAbsent || altitudeMax != null) {
       map['altitude_max'] = Variable<int>(altitudeMax);
+    }
+    if (!nullToAbsent || isLocal != null) {
+      map['is_local'] = Variable<bool>(isLocal);
     }
     return map;
   }
@@ -761,6 +783,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       altitudeMax: altitudeMax == null && nullToAbsent
           ? const Value.absent()
           : Value(altitudeMax),
+      isLocal: isLocal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isLocal),
     );
   }
 
@@ -782,6 +807,7 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
       altitudeMin: serializer.fromJson<int?>(json['altitudeMin']),
       altitudeMax: serializer.fromJson<int?>(json['altitudeMax']),
+      isLocal: serializer.fromJson<bool?>(json['isLocal']),
     );
   }
   @override
@@ -801,6 +827,7 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
       'altitudeMin': serializer.toJson<int?>(altitudeMin),
       'altitudeMax': serializer.toJson<int?>(altitudeMax),
+      'isLocal': serializer.toJson<bool?>(isLocal),
     };
   }
 
@@ -817,7 +844,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           Value<DateTime?> metaCreateDate = const Value.absent(),
           Value<DateTime?> metaUpdateDate = const Value.absent(),
           Value<int?> altitudeMin = const Value.absent(),
-          Value<int?> altitudeMax = const Value.absent()}) =>
+          Value<int?> altitudeMax = const Value.absent(),
+          Value<bool?> isLocal = const Value.absent()}) =>
       TBaseSite(
         idBaseSite: idBaseSite ?? this.idBaseSite,
         idInventor: idInventor.present ? idInventor.value : this.idInventor,
@@ -840,6 +868,7 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
             metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
         altitudeMin: altitudeMin.present ? altitudeMin.value : this.altitudeMin,
         altitudeMax: altitudeMax.present ? altitudeMax.value : this.altitudeMax,
+        isLocal: isLocal.present ? isLocal.value : this.isLocal,
       );
   TBaseSite copyWithCompanion(TBaseSitesCompanion data) {
     return TBaseSite(
@@ -875,6 +904,7 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           data.altitudeMin.present ? data.altitudeMin.value : this.altitudeMin,
       altitudeMax:
           data.altitudeMax.present ? data.altitudeMax.value : this.altitudeMax,
+      isLocal: data.isLocal.present ? data.isLocal.value : this.isLocal,
     );
   }
 
@@ -893,7 +923,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal')
           ..write(')'))
         .toString();
   }
@@ -912,7 +943,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       metaCreateDate,
       metaUpdateDate,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      isLocal);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -929,7 +961,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           other.metaCreateDate == this.metaCreateDate &&
           other.metaUpdateDate == this.metaUpdateDate &&
           other.altitudeMin == this.altitudeMin &&
-          other.altitudeMax == this.altitudeMax);
+          other.altitudeMax == this.altitudeMax &&
+          other.isLocal == this.isLocal);
 }
 
 class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
@@ -946,6 +979,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
   final Value<DateTime?> metaUpdateDate;
   final Value<int?> altitudeMin;
   final Value<int?> altitudeMax;
+  final Value<bool?> isLocal;
   const TBaseSitesCompanion({
     this.idBaseSite = const Value.absent(),
     this.idInventor = const Value.absent(),
@@ -960,6 +994,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     this.metaUpdateDate = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
   });
   TBaseSitesCompanion.insert({
     this.idBaseSite = const Value.absent(),
@@ -975,6 +1010,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     this.metaUpdateDate = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
   });
   static Insertable<TBaseSite> custom({
     Expression<int>? idBaseSite,
@@ -990,6 +1026,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     Expression<DateTime>? metaUpdateDate,
     Expression<int>? altitudeMin,
     Expression<int>? altitudeMax,
+    Expression<bool>? isLocal,
   }) {
     return RawValuesInsertable({
       if (idBaseSite != null) 'id_base_site': idBaseSite,
@@ -1006,6 +1043,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
       if (altitudeMin != null) 'altitude_min': altitudeMin,
       if (altitudeMax != null) 'altitude_max': altitudeMax,
+      if (isLocal != null) 'is_local': isLocal,
     });
   }
 
@@ -1022,7 +1060,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       Value<DateTime?>? metaCreateDate,
       Value<DateTime?>? metaUpdateDate,
       Value<int?>? altitudeMin,
-      Value<int?>? altitudeMax}) {
+      Value<int?>? altitudeMax,
+      Value<bool?>? isLocal}) {
     return TBaseSitesCompanion(
       idBaseSite: idBaseSite ?? this.idBaseSite,
       idInventor: idInventor ?? this.idInventor,
@@ -1037,6 +1076,7 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       altitudeMin: altitudeMin ?? this.altitudeMin,
       altitudeMax: altitudeMax ?? this.altitudeMax,
+      isLocal: isLocal ?? this.isLocal,
     );
   }
 
@@ -1083,6 +1123,9 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     if (altitudeMax.present) {
       map['altitude_max'] = Variable<int>(altitudeMax.value);
     }
+    if (isLocal.present) {
+      map['is_local'] = Variable<bool>(isLocal.value);
+    }
     return map;
   }
 
@@ -1101,7 +1144,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal')
           ..write(')'))
         .toString();
   }
@@ -12831,6 +12875,7 @@ typedef $$TBaseSitesTableCreateCompanionBuilder = TBaseSitesCompanion Function({
   Value<DateTime?> metaUpdateDate,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
 });
 typedef $$TBaseSitesTableUpdateCompanionBuilder = TBaseSitesCompanion Function({
   Value<int> idBaseSite,
@@ -12846,6 +12891,7 @@ typedef $$TBaseSitesTableUpdateCompanionBuilder = TBaseSitesCompanion Function({
   Value<DateTime?> metaUpdateDate,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
 });
 
 class $$TBaseSitesTableFilterComposer
@@ -12898,6 +12944,9 @@ class $$TBaseSitesTableFilterComposer
 
   ColumnFilters<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnFilters(column));
 }
 
 class $$TBaseSitesTableOrderingComposer
@@ -12954,6 +13003,9 @@ class $$TBaseSitesTableOrderingComposer
 
   ColumnOrderings<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnOrderings(column));
 }
 
 class $$TBaseSitesTableAnnotationComposer
@@ -13003,6 +13055,9 @@ class $$TBaseSitesTableAnnotationComposer
 
   GeneratedColumn<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLocal =>
+      $composableBuilder(column: $table.isLocal, builder: (column) => column);
 }
 
 class $$TBaseSitesTableTableManager extends RootTableManager<
@@ -13041,6 +13096,7 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             Value<DateTime?> metaUpdateDate = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
           }) =>
               TBaseSitesCompanion(
             idBaseSite: idBaseSite,
@@ -13056,6 +13112,7 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             metaUpdateDate: metaUpdateDate,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
           ),
           createCompanionCallback: ({
             Value<int> idBaseSite = const Value.absent(),
@@ -13071,6 +13128,7 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             Value<DateTime?> metaUpdateDate = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
           }) =>
               TBaseSitesCompanion.insert(
             idBaseSite: idBaseSite,
@@ -13086,6 +13144,7 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             metaUpdateDate: metaUpdateDate,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

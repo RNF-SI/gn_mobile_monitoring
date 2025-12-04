@@ -776,35 +776,6 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
         returnValue: _i5.Future<_i9.SiteGroup?>.value(),
         returnValueForMissingStub: _i5.Future<_i9.SiteGroup?>.value(),
       ) as _i5.Future<_i9.SiteGroup?>);
-
-  @override
-  _i5.Future<void> updateSiteServerId(
-    int? localSiteId,
-    int? serverId,
-  ) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #updateSiteServerId,
-          [
-            localSiteId,
-            serverId,
-          ],
-        ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
-
-  @override
-  _i5.Future<List<_i7.BaseSite>> getUnsentSitesByModuleId(int? moduleId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getUnsentSitesByModuleId,
-          [moduleId],
-        ),
-        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
-        returnValueForMissingStub:
-            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
-      ) as _i5.Future<List<_i7.BaseSite>>);
 }
 
 /// A class which mocks [ModulesDatabase].

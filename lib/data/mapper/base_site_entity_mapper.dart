@@ -22,6 +22,7 @@ extension BaseSiteEntityMapper on BaseSiteEntity {
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       data: data,
+      isLocal: false, // Sites récupérés depuis l'API ne sont pas locaux
     );
   }
 }

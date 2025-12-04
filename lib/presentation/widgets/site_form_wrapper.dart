@@ -36,6 +36,52 @@ class SiteFormWrapper extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // Vérifier si on peut éditer le site (uniquement si créé localement)
+    final canEdit = !_isEditMode || (site?.isLocal == true);
+    
+    // Si on est en mode édition mais que le site n'est pas local, afficher un message
+    if (_isEditMode && site?.isLocal != true) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Modifier le site'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(
+                  Icons.lock_outline,
+                  size: 64,
+                  color: Colors.grey,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Ce site ne peut pas être modifié',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Seuls les sites créés localement peuvent être modifiés.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Retour'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return GenericFormPage(
       objectConfig: siteConfig,
       customConfig: customConfig,
@@ -246,6 +292,19 @@ class SiteFormWrapper extends ConsumerWidget {
       int? siteId;
 
       if (_isEditMode && site != null) {
+        // Vérifier que le site peut être modifié (créé localement)
+        if (site!.isLocal != true) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Impossible de modifier un site qui n\'a pas été créé localement'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+          return false;
+        }
+
         // Mise à jour
         success = await viewModel.updateSiteFromFormData(
           formData,
