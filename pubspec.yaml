@@ -95,7 +95,7 @@ flutter:
     - assets/photo/splash_screen.jpg
     - assets/photo/logo_life.png
     - assets/logos/
-    - assets/layers_config.json
+    - assets/settings.json
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

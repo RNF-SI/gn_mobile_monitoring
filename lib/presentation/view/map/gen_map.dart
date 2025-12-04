@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
@@ -28,6 +29,7 @@ import 'package:point_in_polygon/point_in_polygon.dart' as pip;
 // ---------------------------
 class CompassWidget extends StatefulWidget {
   final MapController mapController;
+
   const CompassWidget({super.key, required this.mapController});
 
   @override
@@ -116,6 +118,8 @@ class _CompassWidgetState extends State<CompassWidget>
 // ---------------------------
 class GeometriesMapWidget extends ConsumerStatefulWidget {
   final String? geojsonData; // <--- nullable
+
+  final bool showAddMarkerButton;
   final List<String>? displayList; // Liste des propriétés à afficher
   final ObjectConfig? siteConfig; // Configuration du site
   final CustomConfig? customConfig; // Configuration personnalisée
@@ -125,6 +129,7 @@ class GeometriesMapWidget extends ConsumerStatefulWidget {
   const GeometriesMapWidget({
     super.key,
     required this.geojsonData,
+    this.showAddMarkerButton = false,
     this.displayList,
     this.siteConfig,
     this.customConfig,
@@ -258,6 +263,34 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
           // Les étiquettes sont fixes avec rotate: true, pas besoin de reconstruction
         });
       }
+    });
+  }
+
+  void _addMarkerAtCenter() {
+    final LatLng center = mapController.camera.center;
+
+    // Supprime l'ancien marker
+    userMarkers.clear();
+
+    final newMarker = Marker(
+      point: center,
+      width: 40,
+      height: 40,
+      child: const Icon(
+        Icons.location_on,
+        color: Colors.blueGrey,
+        size: 40,
+      ),
+    );
+
+    setState(() {
+      userMarkers.add(newMarker);
+
+      markerProperties[center] = {
+        'type': 'user',
+        'addedAt': DateTime.now().toIso8601String(),
+      };
+      markerSiteIds[center] = -1;
     });
   }
 
@@ -413,10 +446,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   Future<void> loadTileLayers() async {
     try {
       final String jsonString =
-          await rootBundle.loadString('assets/layers_config.json');
-      final List data = jsonDecode(jsonString);
+          await rootBundle.loadString('assets/settings.json');
+
+      final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+
+      final List<dynamic> layers = jsonData["layers"] ?? [];
+
       setState(() {
-        tileLayers = data
+        tileLayers = layers
             .map<Map<String, String>>((e) => {
                   "name": e["name"],
                   "urlTemplate": e["urlTemplate"],
@@ -425,10 +462,12 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             .toList();
 
         // Valeur par défaut
-        if (tileLayers.isNotEmpty) selectedLayer = tileLayers.first;
+        if (tileLayers.isNotEmpty) {
+          selectedLayer = tileLayers.first;
+        }
       });
     } catch (e) {
-      print("Erreur chargement layers.json : $e");
+      print("Erreur chargement settings.json : $e");
     }
   }
 
@@ -1780,7 +1819,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             child: Material(
               elevation: 4,
               borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
+              color: AppColors.dark,
               child: InkWell(
                 borderRadius: BorderRadius.circular(8),
                 onTap: () {
@@ -1828,13 +1867,24 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                   padding: const EdgeInsets.all(12.0),
                   child: Icon(
                     Icons.layers,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Colors.white,
                   ),
                 ),
               ),
             ),
           ),
 
+        if (widget.showAddMarkerButton)
+          Positioned(
+            bottom: 130,
+            right: 20,
+            child: FloatingActionButton(
+              backgroundColor: AppColors.dark, // couleur du bouton
+              foregroundColor: Colors.white, // couleur de l'icône
+              onPressed: _addMarkerAtCenter,
+              child: const Icon(Icons.add_location),
+            ),
+          ),
         // ---------------------------
         // Bouton flottant "Centrer"
         // ---------------------------
@@ -1843,6 +1893,8 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             bottom: 60,
             right: 20,
             child: FloatingActionButton(
+              backgroundColor: AppColors.dark, // couleur du bouton
+              foregroundColor: Colors.white, // couleur de l'icône
               child: const Icon(Icons.my_location),
               onPressed: () {
                 mapController.move(userPosition!, 17);
