@@ -102,6 +102,28 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     );
   }
 
+  // Calcul de l'emprise global des sites
+  LatLngBounds? computeGlobalBounds() {
+    final points = <LatLng>[];
+
+    // Markers
+    points.addAll(siteMarkers.map((m) => m.point));
+
+    // Polylines
+    for (var poly in polylines) {
+      points.addAll(poly.points);
+    }
+
+    // Polygons
+    for (var poly in polygons) {
+      points.addAll(poly.points);
+    }
+
+    if (points.isEmpty) return null;
+
+    return LatLngBounds.fromPoints(points);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -433,6 +455,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         print("GPS désactivé → pas d'affichage de la localisation.");
+        _centerOnGeometries();
         return; // ⛔️ ne rien afficher
       }
 
@@ -443,12 +466,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           print("Permission refusée → pas de localisation.");
+          _centerOnGeometries();
           return; // ⛔️ ne rien afficher
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
         print("Permission bloquée définitivement → pas de localisation.");
+        _centerOnGeometries();
         return; // ⛔️ ne rien afficher
       }
 
@@ -467,6 +492,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       });
     } catch (e) {
       print("Erreur localisation : $e");
+      _centerOnGeometries();
     }
   }
 
@@ -487,6 +513,18 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         ),
       );
 
+      // Dès que la position GPS est connue, recentrer sur l'emprise du cluster
+      final bounds = computeGlobalBounds();
+      if (bounds != null && !userMovedMap) {
+        mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.all(40),
+          ),
+        );
+        hasAutoCentered = true;
+      }
+
       // 🔵 Cercle de précision
       accuracyCircle = CircleMarker(
         point: userPosition!,
@@ -503,6 +541,21 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       mapController.move(userPosition!, 17);
       hasAutoCentered = true;
     }
+  }
+
+  // Gérer le centrage sur un groupe de géométries
+  void _centerOnGeometries() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bounds = computeGlobalBounds();
+      if (bounds == null) return;
+
+      mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(30),
+        ),
+      );
+    });
   }
 
   // Gérer les clics sur la carte
@@ -834,11 +887,13 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                           userAgentPackageName:
                               'com.example.gn_mobile_monitoring',
                         ),
+
                       // 🔵 Cercle de précision GPS
                       if (accuracyCircle != null)
                         CircleLayer(circles: [accuracyCircle!]),
                       PolylineLayer(polylines: polylines),
                       PolygonLayer(polygons: polygons),
+
                       // 🔵 Clustering des markers de sites
                       MarkerClusterLayerWidget(
                         options: MarkerClusterLayerOptions(
