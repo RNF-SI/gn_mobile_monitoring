@@ -527,21 +527,19 @@ class FormConfigParser {
     // Schéma final unifié
     final unifiedSchema = <String, dynamic>{};
 
-    // Liste des champs à exclure globalement (comme dans l'application web)
-    // Ces champs sont toujours exclus car ils sont gérés automatiquement ou ne doivent pas apparaître
+    // Liste des champs à exclure globalement (champs techniques gérés automatiquement)
+    // Ces champs sont toujours exclus car ils sont gérés automatiquement
     final globalFieldsToExclude = [
-      // 'id_dataset', // Nous voulons maintenant afficher le champ dataset
       'uuid_base_visit',
       'uuid_observation',
       'uuid_base_site', 
       'uuid_sites_group',
       'uuid_module_complement',
       'nb_observations',
-      // 'medias', // Le champ media doit être affiché
       'id_module',
       'id_digitiser',
       'observers_txt',
-      'id_base_site', // Exclure le champ Site qui n'apparaît pas dans l'application web
+      'id_base_site',
     ];
 
     // Liste des champs à exclure spécifiquement pour les groupes de sites
@@ -549,9 +547,12 @@ class FormConfigParser {
       'id_inventor', // Le champ id_inventor n'existe pas dans la configuration des groupes de sites
     ];
 
-    // Récupérer display_properties et display_list de la configuration pour filtrer les champs
+    // Récupérer display_form, display_properties et display_list de la configuration pour filtrer les champs
+    // display_form a la priorité sur display_properties (comme dans la version web)
+    final displayForm = objectConfig.displayForm;
     final displayProperties = objectConfig.displayProperties;
     final displayList = objectConfig.displayList;
+    final hasDisplayForm = displayForm != null && displayForm.isNotEmpty;
     final hasDisplayProperties = displayProperties != null && displayProperties.isNotEmpty;
     final hasDisplayList = displayList != null && displayList.isNotEmpty;
 
@@ -597,26 +598,40 @@ class FormConfigParser {
         print('  - fieldConfig: $fieldConfig');
       }
 
-      // Si display_properties ou display_list est défini, vérifier si le champ doit être inclus
-      // Règle : 
+      // Si display_form, display_properties ou display_list est défini, vérifier si le champ doit être inclus
+      // Règle (comme dans la version web - initObjFormDefiniton) : 
       // - Les champs dans specific sont TOUJOURS inclus (car explicitement configurés)
-      // - Les champs seulement dans generic sont inclus s'ils sont dans display_properties OU display_list
-      // - Si ni display_properties ni display_list n'est défini, inclure tous les champs configurés
+      // - display_form a la priorité sur display_properties
+      // - Si un champ n'a pas de type_widget, il est automatiquement exclu du formulaire
+      //   (comme last_visit, nb_visits qui sont calculés automatiquement par le backend)
       final bool isInDisplayProperties;
+      
+      // Vérifier d'abord si le champ a un type_widget (comme dans la version web)
+      // Si pas de type_widget, le champ est calculé automatiquement et ne doit pas être dans le formulaire
+      final bool hasNoWidget = fieldConfig['type_widget'] == null || 
+                               fieldConfig['type_widget'] == '';
+      
       if (isInSpecific) {
         // Les champs dans specific sont toujours inclus (sauf s'ils sont cachés/exclus)
+        // Même s'ils n'ont pas de type_widget, ils sont explicitement configurés
         isInDisplayProperties = true;
+      } else if (hasNoWidget) {
+        // Pas de type_widget = champ calculé automatiquement (comme last_visit, nb_visits)
+        // Exclure du formulaire (comme dans initObjFormDefiniton de la version web)
+        isInDisplayProperties = false;
+      } else if (displayForm != null && displayForm.isNotEmpty) {
+        // display_form est défini et non vide - utiliser uniquement display_form
+        isInDisplayProperties = displayForm.contains(fieldName);
       } else if (hasDisplayProperties && displayProperties != null) {
-        // Pour les champs seulement dans generic, vérifier s'ils sont dans display_properties
-        // OU dans display_list (si display_list est défini)
+        // display_form est vide ou non défini, utiliser display_properties
         final bool inDisplayProperties = displayProperties.contains(fieldName);
         final bool inDisplayList = hasDisplayList && displayList != null && displayList.contains(fieldName);
         isInDisplayProperties = inDisplayProperties || inDisplayList;
       } else if (hasDisplayList && displayList != null) {
-        // Si display_properties n'est pas défini mais display_list l'est, utiliser display_list
+        // Si display_form et display_properties ne sont pas définis mais display_list l'est, utiliser display_list
         isInDisplayProperties = displayList.contains(fieldName);
       } else {
-        // Si ni display_properties ni display_list n'est défini, inclure tous les champs configurés
+        // Si aucun n'est défini, inclure tous les champs configurés (qui ont un type_widget)
         isInDisplayProperties = true;
       }
 
@@ -634,8 +649,13 @@ class FormConfigParser {
       if (isDebugField) {
         print('  - isInDisplayProperties: $isInDisplayProperties');
         print('  - shouldInclude: $shouldInclude');
+        print('  - hasDisplayForm: $hasDisplayForm');
         print('  - hasDisplayProperties: $hasDisplayProperties');
         print('  - hasDisplayList: $hasDisplayList');
+        if (displayForm != null) {
+          print('  - displayForm: $displayForm');
+          print('  - in displayForm: ${displayForm.contains(fieldName)}');
+        }
         if (displayProperties != null) {
           print('  - displayProperties: $displayProperties');
           print('  - in displayProperties: ${displayProperties.contains(fieldName)}');
