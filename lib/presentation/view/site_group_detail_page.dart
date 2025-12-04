@@ -38,17 +38,28 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   int? _expandedPanelIndex;
   Position? _userPosition;
   bool _sortByDistance = true; // true = par distance, false = alphabétique
+  bool _showSearch = false;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  Map<String, dynamic>? _enrichedGroupData;
+  Future<Map<String, dynamic>>? _enrichmentFuture;
 
   @override
   void initState() {
     super.initState();
-    // Actualiser les données à l’ouverture de la page
+    // Actualiser les données à l'ouverture de la page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
           .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
           .refresh();
       _loadUserLocation();
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   /// Construit une Map avec les données du groupe de sites pour l'affichage
@@ -245,95 +256,132 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
       return const SizedBox.shrink();
     }
 
+    // Utiliser les données enrichies préchargées si disponibles, sinon créer le Future
+    if (_enrichedGroupData != null) {
+      // Utiliser les données déjà chargées pour éviter le rechargement
+      return _buildPropertiesCardContent(propertiesToShow, _enrichedGroupData!,
+          parsedGroupConfig, sitesGroupConfig);
+    }
+
+    // Si les données ne sont pas encore chargées, utiliser le Future mémorisé ou en créer un
+    final future = _enrichmentFuture ??
+        _enrichGroupDataWithNomenclatures(groupData, parsedGroupConfig);
+    if (_enrichmentFuture == null) {
+      _enrichmentFuture = future;
+      future.then((enriched) {
+        if (mounted) {
+          setState(() {
+            _enrichedGroupData = enriched;
+          });
+        }
+      });
+    }
+
     // Enrichir les données avec les nomenclatures de manière asynchrone
     return FutureBuilder<Map<String, dynamic>>(
-      future: _enrichGroupDataWithNomenclatures(groupData, parsedGroupConfig),
+      future: future,
       builder: (context, snapshot) {
         final enrichedData = snapshot.hasData ? snapshot.data! : groupData;
 
-        return Card(
-          child: Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        // Mettre en cache les données enrichies une fois chargées
+        if (snapshot.hasData && _enrichedGroupData == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _enrichedGroupData = snapshot.data;
+              });
+            }
+          });
+        }
+
+        return _buildPropertiesCardContent(propertiesToShow, enrichedData,
+            parsedGroupConfig, sitesGroupConfig);
+      },
+    );
+  }
+
+  /// Construit le contenu de la card des propriétés (sans FutureBuilder)
+  Widget _buildPropertiesCardContent(
+    List<String> propertiesToShow,
+    Map<String, dynamic> enrichedData,
+    Map<String, dynamic> parsedGroupConfig,
+    ObjectConfig sitesGroupConfig,
+  ) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Titre de la section
+            Row(
               children: [
-                // Titre de la section
-                Row(
+                Icon(
+                  Icons.info_outline,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _generatePropertiesTitle(sitesGroupConfig),
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Liste des propriétés
+            ...propertiesToShow.map((property) {
+              final rawValue = enrichedData[property];
+
+              // Obtenir le label depuis la configuration
+              String label = property;
+              if (parsedGroupConfig.containsKey(property)) {
+                label =
+                    parsedGroupConfig[property]['attribut_label'] ?? property;
+              }
+
+              // Formater la valeur
+              String displayValue = ValueFormatter.format(rawValue);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      Icons.info_outline,
-                      size: 16,
-                      color: Theme.of(context).colorScheme.primary,
+                    SizedBox(
+                      width: 120,
+                      child: Text(
+                        '$label:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onSurface
+                              .withOpacity(0.7),
+                        ),
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      _generatePropertiesTitle(sitesGroupConfig),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                    Expanded(
+                      child: Text(
+                        displayValue,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(context).colorScheme.onSurface,
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // Liste des propriétés
-                if (snapshot.connectionState == ConnectionState.waiting)
-                  const Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  ...propertiesToShow.map((property) {
-                    final rawValue = enrichedData[property];
-
-                    // Obtenir le label depuis la configuration
-                    String label = property;
-                    if (parsedGroupConfig.containsKey(property)) {
-                      label = parsedGroupConfig[property]['attribut_label'] ??
-                          property;
-                    }
-
-                    // Formater la valeur
-                    String displayValue = ValueFormatter.format(rawValue);
-
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 4.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          SizedBox(
-                            width: 120,
-                            child: Text(
-                              '$label:',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .onSurface
-                                    .withOpacity(0.7),
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              displayValue,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Theme.of(context).colorScheme.onSurface,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-              ],
-            ),
-          ),
-        );
-      },
+              );
+            }),
+          ],
+        ),
+      ),
     );
   }
 
@@ -638,6 +686,34 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                               const SizedBox(width: 8),
                               IconButton(
                                 onPressed: () {
+                                  setState(() {
+                                    _showSearch = !_showSearch;
+                                    debugPrint('🔍 Recherche: $_showSearch');
+                                    if (!_showSearch) {
+                                      _searchQuery = '';
+                                      _searchController.clear();
+                                    }
+                                  });
+                                },
+                                icon: Icon(
+                                  Icons.search,
+                                  color: _showSearch
+                                      ? Colors.white
+                                      : AppColors.border,
+                                ),
+                                style: _showSearch
+                                    ? IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      )
+                                    : null,
+                                tooltip: _showSearch
+                                    ? 'Fermer la recherche'
+                                    : 'Rechercher un site',
+                              ),
+                              IconButton(
+                                onPressed: () {
                                   if (siteConfig != null) {
                                     Navigator.push(
                                       context,
@@ -670,7 +746,39 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                             ],
                           );
                         } else {
-                          return const SizedBox.shrink();
+                          return Row(
+                            children: [
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _showSearch = !_showSearch;
+                                    debugPrint('🔍 Recherche: $_showSearch');
+                                    if (!_showSearch) {
+                                      _searchQuery = '';
+                                      _searchController.clear();
+                                    }
+                                  });
+                                },
+                                icon: Icon(
+                                  Icons.search,
+                                  color: _showSearch
+                                      ? Colors.white
+                                      : Theme.of(context).colorScheme.onSurface,
+                                ),
+                                style: _showSearch
+                                    ? IconButton.styleFrom(
+                                        backgroundColor: Theme.of(context)
+                                            .colorScheme
+                                            .primary,
+                                      )
+                                    : null,
+                                tooltip: _showSearch
+                                    ? 'Fermer la recherche'
+                                    : 'Rechercher un site',
+                              ),
+                            ],
+                          );
                         }
                       },
                     ),
@@ -707,18 +815,91 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               ],
             ),
           ),
+          // Champ de recherche (affiché conditionnellement)
+          if (_showSearch)
+            Container(
+              width: double.infinity,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      decoration: InputDecoration(
+                        hintText: 'Rechercher par nom de site...',
+                        prefixIcon: const Icon(Icons.search),
+                        suffixIcon: _searchQuery.isNotEmpty
+                            ? IconButton(
+                                icon: const Icon(Icons.clear),
+                                tooltip: 'Effacer la recherche',
+                                onPressed: () {
+                                  setState(() {
+                                    _searchQuery = '';
+                                    _searchController.clear();
+                                  });
+                                },
+                              )
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                        filled: true,
+                        fillColor: Theme.of(context).colorScheme.surface,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
+                      ),
+                      onChanged: (value) {
+                        setState(() {
+                          _searchQuery = value.toLowerCase();
+                        });
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _showSearch = false;
+                        _searchQuery = '';
+                        _searchController.clear();
+                      });
+                    },
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Fermer la recherche',
+                    style: IconButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.surface,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Sites Expansion Panel List
           Expanded(
             child: sitesState.when(
-              data: (sites) => _buildSitesExpansionPanelList(
-                sites,
-                context,
-                baseSiteNameLabel,
-                baseSiteCodeLabel,
-                siteConfig,
-                customConfig,
-                parsedSiteConfig,
-              ),
+              data: (sites) {
+                // Filtrer les sites par nom si une recherche est active
+                final filteredSites = _searchQuery.isEmpty
+                    ? sites
+                    : sites.where((site) {
+                        final siteName = site.baseSiteName?.toLowerCase() ?? '';
+                        return siteName.contains(_searchQuery);
+                      }).toList();
+
+                return _buildSitesExpansionPanelList(
+                  filteredSites,
+                  context,
+                  baseSiteNameLabel,
+                  baseSiteCodeLabel,
+                  siteConfig,
+                  customConfig,
+                  parsedSiteConfig,
+                );
+              },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, stack) => Center(
                 child: Text(
