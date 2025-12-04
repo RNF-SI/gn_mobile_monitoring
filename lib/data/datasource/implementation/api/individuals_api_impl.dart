@@ -8,99 +8,143 @@ import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.da
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/individuals_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/individual_entity.dart';
+import 'package:gn_mobile_monitoring/data/entity/individuals_with_modules.dart';
 
 class IndividualsApiImpl extends BaseApi implements IndividualsApi {
   IndividualsApiImpl();
 
-  /// Checks if a individual has sufficient CRUVED permissions
-  /// Returns true if any of the CRUVED values is greater than 0
-  bool _hasIndividualPermissions(Map<String, dynamic> cruved) {
-    // Check if any of the CRUVED values is greater than 0
-    return cruved.values.any((value) => value is num && value > 0);
-  }
+  @override
+  Dio get dio => createDio(
+    receiveTimeout: const Duration(seconds: 300), // 5 minutes pour les grosses quantités de données
+    sendTimeout: const Duration(seconds: 120),
+  );
 
   @override
-  Future<List<IndividualEntity>> fetchAllIndividuals(
-      String token) async {
+  Future<List<IndividualsWithModulesLabel>> fetchEnrichedIndividualsForModule(
+      String moduleCode, String token) async {
     try {
       final response = await dio.get(
-        '/monitorings/refacto/individuals',
+        '/monitorings/object/$moduleCode/module',
+        queryParameters: {
+          'depth': 2,
+          'field_name': 'module_code',
+        },
         options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
+          headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
+      // 204 (No Content) signifie qu'il n'y a pas de groupes de sites disponibles,
+      // mais c'est un cas valide - retourner une liste vide
+      if (response.statusCode == 204) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: réponse 204 (No Content) pour les groupes de sites. '
+          'Aucun groupe de sites disponible pour ce module.',
+          tag: 'sync',
+        );
+        return <IndividualsWithModulesLabel>[];
+      }
+
       if (response.statusCode == 200) {
-        final data = response.data;
+        final data = response.data as Map<String, dynamic>;
+        final result = <IndividualsWithModulesLabel>[];
+
+        // Debug print to understand the response structure
+        print('API Response structure for module $moduleCode: ${data.keys.toList()}');
         
-        List<dynamic> individualsList;
+        // Handle different API response structures
+        List<dynamic>? individualsList;
         
-        // Gérer différents formats de réponse API
-        if (data is List) {
-          // Si la réponse est directement une liste
-          individualsList = data;
-        } else if (data is Map<String, dynamic>) {
-          // Si la réponse est un objet, chercher la liste dans différentes clés possibles
-          if (data.containsKey('individuals')) {
-            individualsList = data['individuals'] as List<dynamic>;
-          } else if (data.containsKey('data')) {
-            individualsList = data['data'] as List<dynamic>;
-          } else if (data.containsKey('results')) {
-            individualsList = data['results'] as List<dynamic>;
-          } else {
-            // Si aucune clé connue, essayer de traiter l'objet comme un individual unique
-            individualsList = [data];
-          }
+        // Try to find individuals in different possible locations
+        if (data['children'] != null &&
+            data['children']['individual'] != null) {
+          // Original structure: data.children.individual
+          individualsList = data['children']['individual'] as List;
+          print('Found individuals in children.individual: ${individualsList.length} groups');
+        } else if (data['individual'] != null) {
+          // Alternative structure: data.individual directly
+          individualsList = data['individual'] as List;
+          print('Found individuals directly in individual: ${individualsList.length} groups');
+        } else if (data['properties'] != null && 
+                   data['properties']['individual'] != null) {
+          // Another possible structure: data.properties.individual
+          individualsList = data['properties']['individual'] as List;
+          print('Found individuals in properties.individual: ${individualsList.length} groups');
         } else {
-          throw Exception('Unexpected response format: ${data.runtimeType}');
+          // No individuals found - this might be normal for modules without individuals
+          print('No individuals found for module $moduleCode. Response keys: ${data.keys.toList()}');
+          if (data['children'] != null) {
+            print('Children keys: ${(data['children'] as Map<String, dynamic>).keys.toList()}');
+          }
+          if (data['properties'] != null) {
+            print('Properties keys: ${(data['properties'] as Map<String, dynamic>).keys.toList()}');
+          }
         }
         
-        final individuals = <IndividualEntity>[];
+        // Process individuals if found
+        if (individualsList != null) {
+          for (var group in individualsList) {
+            try {
+              final groupData = group as Map<String, dynamic>;
+              
+              // Extract properties - handle different structures
+              Map<String, dynamic>? properties;
+              if (groupData['properties'] != null) {
+                properties = groupData['properties'] as Map<String, dynamic>;
+              } else {
+                // If no properties field, use the group data itself
+                properties = groupData;
+              }
 
-        for (var item in individualsList) {
-          final json = item as Map<String, dynamic>;
+              // Extract individual data from the properties
+              final Map<String, dynamic> formattedGroupData = {
+                'id_individual': properties['id_individual'] ?? 
+                                 groupData['id_individual'] ?? 
+                                 groupData['id'],
+                'individual_name': properties['individual_name'] ?? 
+                                   groupData['individual_name'] ?? 
+                                   groupData['name'] ?? 
+                                   '',
+                'id_digitiser': properties['id_digitiser'] ?? groupData['id_digitiser'],
+                'cd_nom': properties['cd_nom'] ?? groupData['cd_nom'],
+                'comment': properties['comment'] ?? groupData['comment'],
+                'id_nomenclature_sex': properties['id_nomenclature_sex'] ?? groupData['id_nomenclature_sex'],
+                'active_individual': properties['active_individual'] ?? groupData['active_individual'],
+                'uuid_individual': properties['uuid_individual'] ?? groupData['uuid_individual'],
+                'meta_create_date': properties['meta_create_date'] ?? groupData['meta_create_date'],
+                'meta_update_date': properties['meta_update_date'] ?? groupData['meta_update_date'],
+                'modules': [
+                  moduleCode
+                ], // We know this individual belongs to this module
+              };
 
-          // Check CRUVED permissions
-          final cruved = json['cruved'] as Map<String, dynamic>?;
-          if (!_hasIndividualPermissions(cruved ?? {})) {
-            continue; // Skip this individual if no permissions
+              result.add(IndividualsWithModulesLabel(
+                individual: IndividualEntity.fromJson(formattedGroupData),
+                moduleLabelList: [
+                  moduleCode
+                ], // We know this individual belongs to this module
+              ));
+            } catch (e) {
+              print('Error processing individual: $e');
+              print('Group data: $group');
+            }
           }
+        }
 
-          // Extract individual data
-          final individualJson = {
-              'id_individual': json['id_individual'],
-              'individual_code': json['individual_code'],
-              'individual_label': json['individual_label'],
-              'individual_picto': json['individual_picto'],
-              'individual_desc': json['individual_desc'],
-              'individual_group': json['individual_group'],
-              'individual_path': json['individual_path'],
-              'individual_external_url': json['individual_external_url'],
-              'individual_target': json['individual_target'],
-              'individual_comment': json['individual_comment'],
-              'active_frontend': json['active_frontend'],
-              'active_backend': json['active_backend'],
-              'individual_doc_url': json['individual_doc_url'],
-              'individual_order': json['individual_order'],
-              'ng_individual': json['ng_individual'],
-              'meta_create_date': json['meta_create_date'],
-              'meta_update_date': json['meta_update_date'],
-              'cruved': json['cruved'],
-            };
-            individuals.add(IndividualEntity.fromJson(individualJson));
-          }
-
-        return (individuals);
-      } else {
-        throw Exception(
-            'Failed to load individuals with status code: ${response.statusCode}');
+        return result;
       }
+
+      throw ApiException(
+        'Failed to fetch individuals for module $moduleCode',
+        statusCode: response.statusCode,
+      );
     } on DioException catch (e) {
-      throw Exception('Network error: ${e.message}');
+      throw NetworkException(
+          'Network error while fetching individuals: ${e.message}',
+          originalDioException: e);
     } catch (e) {
-      throw Exception('Error fetching individuals: $e');
+      throw ApiException('Failed to fetch individuals: $e');
     }
   }
 }
