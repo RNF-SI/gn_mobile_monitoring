@@ -147,15 +147,18 @@ class CalculateDistanceUseCaseImpl implements CalculateDistanceUseCase {
     }
 
     try {
+      // Nettoyer le SRID si présent pour avoir du JSON pur
+      final cleanGeom = _removeSridPrefix(group.geom!);
+      
       // Utiliser un Isolate pour les calculs complexes afin d'éviter le blocage du thread principal
       final calculationData = _DistanceCalculationData(
-        geomJson: group.geom!,
+        geomJson: cleanGeom,
         userLatitude: userPosition.latitude,
         userLongitude: userPosition.longitude,
       );
 
       // Pour des calculs simples (Point), on peut les faire directement
-      final geomData = jsonDecode(group.geom!);
+      final geomData = jsonDecode(cleanGeom);
       if (geomData is Map<String, dynamic> && geomData['type'] == 'Point') {
         final coordinates = geomData['coordinates'] as List;
         if (coordinates.length >= 2) {
@@ -185,6 +188,16 @@ class CalculateDistanceUseCaseImpl implements CalculateDistanceUseCase {
       newPosition.longitude,
     );
     return distance > 10.0; // Seuil de 10 mètres
+  }
+
+  /// Enlève le préfixe SRID d'une géométrie pour obtenir du JSON pur
+  /// Exemple: "SRID=4326;{...}" -> "{...}"
+  String _removeSridPrefix(String geometry) {
+    if (geometry.isEmpty) return geometry;
+    
+    // Enlever le préfixe SRID=xxxx; si présent
+    final sridPattern = RegExp(r'^SRID=\d+;\s*');
+    return geometry.replaceFirst(sridPattern, '');
   }
 }
 

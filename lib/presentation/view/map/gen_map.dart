@@ -15,8 +15,11 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:point_in_polygon/point_in_polygon.dart' as pip;
 
 // ---------------------------
 // Widget Boussole
@@ -149,6 +152,16 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   // Stocker les compléments chargés
   Map<int, SiteComplement?> siteComplements = {};
 
+  // Stocker les associations polygone -> propriétés et polyline -> propriétés
+  Map<Polygon, Map<String, dynamic>> polygonProperties = {};
+  Map<Polyline, Map<String, dynamic>> polylineProperties = {};
+
+  // Markers pour les étiquettes des polygones et lignes (cliquables)
+  List<Marker> geometryLabelMarkers = [];
+
+  // Stocker l'association centroïde -> propriétés pour les étiquettes
+  Map<LatLng, Map<String, dynamic>> geometryLabelProperties = {};
+
   List<Map<String, String>> tileLayers = [];
   Map<String, String>? selectedLayer;
 
@@ -158,6 +171,26 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   StreamSubscription<Position>? positionStream;
   CircleMarker? accuracyCircle; // cercle de précision
+
+  /// Calcule le centroïde d'une liste de points
+  LatLng _calculateCentroid(List<LatLng> points) {
+    if (points.isEmpty) {
+      return const LatLng(0, 0);
+    }
+
+    double sumLat = 0;
+    double sumLng = 0;
+
+    for (var p in points) {
+      sumLat += p.latitude;
+      sumLng += p.longitude;
+    }
+
+    return LatLng(
+      sumLat / points.length,
+      sumLng / points.length,
+    );
+  }
 
   LatLng? computeCentroid() {
     List<LatLng> allPoints = [];
@@ -179,18 +212,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
     if (allPoints.isEmpty) return null;
 
-    double sumLat = 0;
-    double sumLng = 0;
-
-    for (var p in allPoints) {
-      sumLat += p.latitude;
-      sumLng += p.longitude;
-    }
-
-    return LatLng(
-      sumLat / allPoints.length,
-      sumLng / allPoints.length,
-    );
+    return _calculateCentroid(allPoints);
   }
 
   // Calcul de l'emprise global des sites
@@ -231,6 +253,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         setState(() {
           // Reconstruire les markers avec la rotation mise à jour
           _rebuildMarkers();
+          // Les étiquettes sont fixes avec rotate: true, pas besoin de reconstruction
         });
       }
     });
@@ -525,24 +548,206 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
           break;
 
         case "LineString":
-          polylines.add(
-            Polyline(
-              points: coords.map<LatLng>((c) => LatLng(c[1], c[0])).toList(),
-              strokeWidth: 4,
-              color: Colors.blue,
-            ),
+          final linePoints =
+              coords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+
+          // Stocker les propriétés du feature (sauf geom)
+          final properties = <String, dynamic>{};
+          feature.forEach((key, value) {
+            if (key != 'geom') {
+              properties[key] = value;
+            }
+          });
+
+          final polyline = Polyline(
+            points: linePoints,
+            strokeWidth: 4,
+            color: Colors.blue,
           );
+          polylines.add(polyline);
+
+          // Stocker les propriétés associées à cette ligne
+          polylineProperties[polyline] = properties;
+
+          // Calculer le centroïde de la ligne pour placer l'étiquette
+          final centroid = _calculateCentroid(linePoints);
+
+          // Récupérer le premier item de display_list pour l'étiquette
+          String? labelText;
+          if (widget.displayList != null &&
+              widget.displayList!.isNotEmpty &&
+              properties.containsKey(widget.displayList!.first)) {
+            final firstProperty = widget.displayList!.first;
+            final rawValue = properties[firstProperty];
+            labelText = ValueFormatter.format(rawValue);
+          }
+
+          // Créer un marker cliquable au centroïde pour l'étiquette
+          if (labelText != null && labelText.isNotEmpty) {
+            // Stocker les propriétés associées à ce centroïde
+            geometryLabelProperties[centroid] = properties;
+
+            // Calculer la hauteur nécessaire pour le texte
+            final textPainter = TextPainter(
+              text: TextSpan(
+                text: labelText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              maxLines: 2,
+              textDirection: TextDirection.ltr,
+            );
+            textPainter.layout(maxWidth: 150);
+
+            // Hauteur = hauteur du texte + padding vertical (4px * 2 = 8px)
+            final labelHeight = (textPainter.height + 8).clamp(30.0, 60.0);
+
+            geometryLabelMarkers.add(
+              Marker(
+                point: centroid,
+                width: 150,
+                height: labelHeight,
+                rotate: true,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 150,
+                    minWidth: 40,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    labelText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
           break;
 
         case "Polygon":
-          polygons.add(
-            Polygon(
-              points: coords[0].map<LatLng>((c) => LatLng(c[1], c[0])).toList(),
-              color: Colors.green.withValues(alpha: 0.3),
-              borderColor: Colors.green,
-              borderStrokeWidth: 3,
-            ),
+          final polygonPoints =
+              coords[0].map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+
+          // Stocker les propriétés du feature (sauf geom)
+          final properties = <String, dynamic>{};
+          feature.forEach((key, value) {
+            if (key != 'geom') {
+              properties[key] = value;
+            }
+          });
+
+          final polygon = Polygon(
+            points: polygonPoints,
+            color: Colors.green.withValues(alpha: 0.3),
+            borderColor: Colors.green,
+            borderStrokeWidth: 3,
           );
+          polygons.add(polygon);
+
+          // Stocker les propriétés associées à ce polygone
+          polygonProperties[polygon] = properties;
+
+          // Calculer le centroïde du polygone pour placer l'étiquette
+          final centroid = _calculateCentroid(polygonPoints);
+
+          // Récupérer le premier item de display_list pour l'étiquette
+          String? labelText;
+          if (widget.displayList != null &&
+              widget.displayList!.isNotEmpty &&
+              properties.containsKey(widget.displayList!.first)) {
+            final firstProperty = widget.displayList!.first;
+            final rawValue = properties[firstProperty];
+            labelText = ValueFormatter.format(rawValue);
+          }
+
+          // Créer un marker cliquable au centroïde pour l'étiquette
+          if (labelText != null && labelText.isNotEmpty) {
+            // Stocker les propriétés associées à ce centroïde
+            geometryLabelProperties[centroid] = properties;
+
+            // Calculer la hauteur nécessaire pour le texte
+            final textPainter = TextPainter(
+              text: TextSpan(
+                text: labelText,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              maxLines: 2,
+              textDirection: TextDirection.ltr,
+            );
+            textPainter.layout(maxWidth: 150);
+
+            // Hauteur = hauteur du texte + padding vertical (4px * 2 = 8px)
+            final labelHeight = (textPainter.height + 8).clamp(30.0, 60.0);
+
+            geometryLabelMarkers.add(
+              Marker(
+                point: centroid,
+                width: 150,
+                height: labelHeight,
+                rotate: true,
+                child: Container(
+                  constraints: const BoxConstraints(
+                    maxWidth: 150,
+                    minWidth: 40,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(6),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    labelText,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ),
+            );
+          }
           break;
       }
     }
@@ -660,9 +865,206 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     });
   }
 
+  /// Vérifie si un point est à l'intérieur d'un polygone
+  bool _isPointInPolygon(LatLng point, Polygon polygon) {
+    final polygonPoints = polygon.points;
+    if (polygonPoints.length < 3) return false;
+
+    // Convertir en format pip.Point (x=longitude, y=latitude)
+    final pipPoints = polygonPoints
+        .map((p) => pip.Point(x: p.longitude, y: p.latitude))
+        .toList();
+
+    // Utiliser l'algorithme ray casting pour vérifier si le point est dans le polygone
+    return _isPointInPolygonRobust(
+      point.latitude,
+      point.longitude,
+      pipPoints,
+    );
+  }
+
+  /// Vérifie si un point est à l'intérieur d'un polygone (algorithme ray casting robuste)
+  /// Les points du polygone sont en format pip.Point (x=longitude, y=latitude)
+  bool _isPointInPolygonRobust(
+      double lat, double lon, List<pip.Point> polygon) {
+    if (polygon.length < 3) {
+      return false;
+    }
+
+    // Algorithme ray casting : compter les intersections avec un rayon horizontal
+    // Le rayon va de (lat, lon) vers (lat, +infini) en longitude
+    bool inside = false;
+    int j = polygon.length - 1;
+
+    for (int i = 0; i < polygon.length; i++) {
+      final xi = polygon[i].x; // longitude du point i
+      final yi = polygon[i].y; // latitude du point i
+      final xj = polygon[j].x; // longitude du point j
+      final yj = polygon[j].y; // latitude du point j
+
+      // Vérifier si le segment (i, j) intersecte le rayon horizontal
+      // Le segment intersecte si :
+      // 1. Les latitudes du segment encadrent la latitude du point
+      // 2. La longitude d'intersection est à droite du point
+      final latStraddles = ((yi > lat) != (yj > lat));
+
+      if (latStraddles) {
+        // Éviter la division par zéro
+        final latDiff = yj - yi;
+        if (latDiff.abs() > 1e-10) {
+          // Calculer la longitude d'intersection du segment avec le rayon horizontal
+          // Équation de la droite : x = xi + (xj - xi) * (lat - yi) / (yj - yi)
+          final lonIntersection = xi + (xj - xi) * (lat - yi) / latDiff;
+
+          // L'intersection est à droite du point si lon < lonIntersection
+          if (lon < lonIntersection) {
+            inside = !inside;
+          }
+        }
+      }
+      j = i;
+    }
+
+    return inside;
+  }
+
+  /// Calcule la distance minimale d'un point à une ligne
+  double _distanceToLine(LatLng point, List<LatLng> linePoints) {
+    if (linePoints.isEmpty) return double.infinity;
+    if (linePoints.length == 1) {
+      return Geolocator.distanceBetween(
+        point.latitude,
+        point.longitude,
+        linePoints[0].latitude,
+        linePoints[0].longitude,
+      );
+    }
+
+    double minDistance = double.infinity;
+    for (int i = 0; i < linePoints.length - 1; i++) {
+      final p1 = linePoints[i];
+      final p2 = linePoints[i + 1];
+
+      // Calculer la distance au segment
+      final distance = _distanceToSegment(
+        point.latitude,
+        point.longitude,
+        p1.latitude,
+        p1.longitude,
+        p2.latitude,
+        p2.longitude,
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+
+    return minDistance;
+  }
+
+  /// Calcule la distance d'un point à un segment de ligne
+  double _distanceToSegment(
+    double lat,
+    double lon,
+    double lat1,
+    double lon1,
+    double lat2,
+    double lon2,
+  ) {
+    // Calculer la distance en mètres
+    final A = lat - lat1;
+    final B = lon - lon1;
+    final C = lat2 - lat1;
+    final D = lon2 - lon1;
+
+    final dot = A * C + B * D;
+    final lenSq = C * C + D * D;
+    double param = -1;
+
+    if (lenSq != 0) {
+      param = dot / lenSq;
+    }
+
+    double xx, yy;
+
+    if (param < 0) {
+      xx = lat1;
+      yy = lon1;
+    } else if (param > 1) {
+      xx = lat2;
+      yy = lon2;
+    } else {
+      xx = lat1 + param * C;
+      yy = lon1 + param * D;
+    }
+
+    final dx = lat - xx;
+    final dy = lon - yy;
+
+    // Convertir en distance en mètres (approximation)
+    return Geolocator.distanceBetween(lat, lon, xx, yy);
+  }
+
   // Gérer les clics sur la carte
   void _handleMapTap(BuildContext context, LatLng tappedPoint) {
-    // Chercher le marker le plus proche du point cliqué (dans un rayon de ~50m)
+    // 1. Vérifier d'abord si le point est proche d'une étiquette (dans un rayon de ~50m)
+    Marker? closestLabelMarker;
+    double minLabelDistance = double.infinity;
+    const double labelThreshold = 0.0005; // Environ 50 mètres
+
+    for (final marker in geometryLabelMarkers) {
+      final distance = (marker.point.latitude - tappedPoint.latitude).abs() +
+          (marker.point.longitude - tappedPoint.longitude).abs();
+
+      if (distance < labelThreshold && distance < minLabelDistance) {
+        minLabelDistance = distance;
+        closestLabelMarker = marker;
+      }
+    }
+
+    // Si une étiquette a été cliquée, afficher son popup
+    if (closestLabelMarker != null &&
+        geometryLabelProperties.containsKey(closestLabelMarker.point)) {
+      _showMarkerPopup(
+        context,
+        closestLabelMarker.point,
+        geometryLabelProperties[closestLabelMarker.point]!,
+      );
+      return;
+    }
+
+    // 2. Vérifier ensuite si le point est dans un polygone
+    for (final polygon in polygons) {
+      if (polygonProperties.containsKey(polygon) &&
+          _isPointInPolygon(tappedPoint, polygon)) {
+        _showMarkerPopup(context, tappedPoint, polygonProperties[polygon]!);
+        return;
+      }
+    }
+
+    // 2. Vérifier si le point est proche d'une ligne (dans un rayon de ~50m)
+    const double lineThreshold = 50.0; // 50 mètres
+    Polyline? closestPolyline;
+    double minLineDistance = double.infinity;
+
+    for (final polyline in polylines) {
+      if (polylineProperties.containsKey(polyline)) {
+        final distance = _distanceToLine(tappedPoint, polyline.points);
+        if (distance < lineThreshold && distance < minLineDistance) {
+          minLineDistance = distance;
+          closestPolyline = polyline;
+        }
+      }
+    }
+
+    if (closestPolyline != null) {
+      _showMarkerPopup(
+          context, tappedPoint, polylineProperties[closestPolyline]!);
+      return;
+    }
+
+    // 3. Chercher le marker le plus proche du point cliqué (dans un rayon de ~50m)
     Marker? closestMarker;
     double minDistance = double.infinity;
     const double threshold = 0.0005; // Environ 50 mètres
@@ -816,7 +1218,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                   padding: const EdgeInsets.only(top: 16.0),
                   child: Column(
                     children: [
-                      // Bouton pour voir les détails du site
+                      // Bouton pour voir les détails (du site ou du groupe de sites)
                       SizedBox(
                         width: double.infinity,
                         child: OutlinedButton.icon(
@@ -824,34 +1226,76 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                             // Fermer le popup
                             Navigator.of(context).pop();
 
-                            // Récupérer le site depuis la base de données
-                            final sitesDatabase =
-                                ref.read(siteDatabaseProvider);
-                            final site =
-                                await sitesDatabase.getSiteById(siteId);
+                            if (widget.siteGroup == null) {
+                              // On affiche la carte des groupes de sites → naviguer vers la page de détail du groupe
+                              final groupId = properties['id'] as int?;
+                              if (groupId != null) {
+                                // Récupérer le groupe depuis la base de données
+                                final sitesDatabase =
+                                    ref.read(siteDatabaseProvider);
+                                final allGroups =
+                                    await sitesDatabase.getAllSiteGroups();
+                                final group = allGroups
+                                    .where((g) => g.idSitesGroup == groupId)
+                                    .firstOrNull;
 
-                            if (site != null && mounted) {
-                              // Naviguer vers la page de détails du site
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => SiteDetailPage(
-                                    site: site,
-                                    moduleInfo: widget.moduleInfo,
-                                    fromSiteGroup: widget.siteGroup,
-                                  ),
-                                ),
-                              );
+                                if (group != null &&
+                                    widget.moduleInfo != null &&
+                                    mounted) {
+                                  // Naviguer vers la page de détails du groupe de sites
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SiteGroupDetailPage(
+                                        siteGroup: group,
+                                        moduleInfo: widget.moduleInfo!,
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // Afficher un message d'erreur
+                                  if (mounted) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Impossible de charger le groupe de sites'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  }
+                                }
+                              }
                             } else {
-                              // Afficher un message d'erreur
-                              if (mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content:
-                                        Text('Impossible de charger le site'),
-                                    backgroundColor: Colors.red,
+                              // On affiche la carte des sites → naviguer vers la page de détail du site
+                              // Récupérer le site depuis la base de données
+                              final sitesDatabase =
+                                  ref.read(siteDatabaseProvider);
+                              final site =
+                                  await sitesDatabase.getSiteById(siteId);
+
+                              if (site != null && mounted) {
+                                // Naviguer vers la page de détails du site
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => SiteDetailPage(
+                                      site: site,
+                                      moduleInfo: widget.moduleInfo,
+                                      fromSiteGroup: widget.siteGroup,
+                                    ),
                                   ),
                                 );
+                              } else {
+                                // Afficher un message d'erreur
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content:
+                                          Text('Impossible de charger le site'),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                }
                               }
                             }
                           },
@@ -860,7 +1304,88 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      // Bouton pour ajouter une visite
+                      // Bouton pour ajouter un site (si on affiche les groupes de sites) ou une visite (si on affiche les sites)
+                      if (widget.siteGroup == null)
+                        // On affiche la carte des groupes de sites → bouton "+ site" pour ajouter un site au groupe
+                        if (widget.moduleInfo!.module.complement?.configuration
+                                ?.site !=
+                            null)
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () async {
+                                // Fermer le popup
+                                Navigator.of(context).pop();
+
+                                // Récupérer le groupe de sites depuis les propriétés du marker
+                                final groupId = properties['id'] as int?;
+                                if (groupId != null) {
+                                  // Récupérer le groupe depuis la base de données
+                                  final sitesDatabase =
+                                      ref.read(siteDatabaseProvider);
+                                  final allGroups =
+                                      await sitesDatabase.getAllSiteGroups();
+                                  final group = allGroups
+                                      .where((g) => g.idSitesGroup == groupId)
+                                      .firstOrNull;
+
+                                  if (group != null && mounted) {
+                                    // Naviguer vers le formulaire d'ajout de site
+                                    final siteConfig = widget.moduleInfo!.module
+                                        .complement?.configuration?.site;
+                                    if (siteConfig != null) {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              SiteFormPageWithTypeSelection(
+                                            siteConfig: siteConfig,
+                                            customConfig: widget.customConfig,
+                                            moduleId:
+                                                widget.moduleInfo!.module.id,
+                                            moduleInfo: widget.moduleInfo,
+                                            siteGroup: group,
+                                          ),
+                                        ),
+                                      );
+                                    } else {
+                                      // Afficher un message d'erreur
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                                'Configuration de site non disponible'),
+                                            backgroundColor: Colors.red,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    // Afficher un message d'erreur
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              'Impossible de charger le groupe de sites'),
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      );
+                                    }
+                                  }
+                                }
+                              },
+                              icon: const Icon(Icons.add_circle_outline),
+                              label: Text(
+                                'Ajouter un ${widget.moduleInfo?.module.complement?.configuration?.site?.label ?? 'site'}',
+                              ),
+                            ),
+                          )
+                        else
+                          const SizedBox.shrink()
+                      else
+                      // On affiche la carte des sites → bouton "+ visite" pour ajouter une visite au site
                       if (widget.moduleInfo!.module.complement?.configuration
                               ?.visit !=
                           null)
@@ -1054,6 +1579,8 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                       ),
                       // 🔵 Marker de l'utilisateur (pas de clustering)
                       MarkerLayer(markers: userMarkers),
+                      // 🔵 Étiquettes des polygones et lignes (non cliquables)
+                      MarkerLayer(markers: geometryLabelMarkers),
                     ],
                   ),
 

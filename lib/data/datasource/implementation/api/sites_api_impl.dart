@@ -349,55 +349,40 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final data = response.data as Map<String, dynamic>;
         final result = <SiteGroupsWithModulesLabel>[];
 
-        print('API Response for site groups module $moduleCode: ${data.keys.toList()}');
-        
+        print(
+            'API Response for site groups module $moduleCode: ${data.keys.toList()}');
+
         // Extract site groups from the items array
         final items = data['items'] as List?;
         if (items != null) {
           print('Found ${items.length} site groups for module $moduleCode');
-          
+
           for (var item in items) {
             try {
               final groupData = item as Map<String, dynamic>;
-              
-              // Convert the complete API response to our format
-              final Map<String, dynamic> formattedGroupData = {
-                'id_sites_group': groupData['id_sites_group'],
-                'sites_group_name': groupData['sites_group_name'],
-                'sites_group_code': groupData['sites_group_code'],
-                'sites_group_description': groupData['sites_group_description'],
-                'uuid_sites_group': groupData['uuid_sites_group'],
-                'comments': groupData['comments'],
-                'id_digitiser': groupData['id_digitiser'],
-                'altitude_min': groupData['altitude_min'],
-                'altitude_max': groupData['altitude_max'],
-                // Handle geometry with SRID prefix for site groups
-                'geom': groupData['geometry'] != null 
-                    ? 'SRID=4326;${jsonEncode(groupData['geometry'])}'
-                    : null,
-                // Add any additional data as JSON
-                'data': {
-                  'nb_sites': groupData['nb_sites'],
-                  'nb_visits': groupData['nb_visits'],
-                  'is_geom_from_child': groupData['is_geom_from_child'],
-                  'habitat_principal': groupData['habitat_principal'],
-                  'expertise': groupData['expertise'],
-                },
-              };
+              final groupId = groupData['id_sites_group'];
 
-              print('Creating SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
-              
-              result.add(SiteGroupsWithModulesLabel(
-                siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
-                moduleLabelList: [moduleCode],
-              ));
+              // Fetch individual site group to get complete data including 'data' field
+              final detailedGroupData = await _fetchDetailedSiteGroup(
+                moduleCode,
+                groupId,
+                token,
+              );
+
+              if (detailedGroupData != null) {
+                result.add(SiteGroupsWithModulesLabel(
+                  siteGroup: SiteGroupEntity.fromJson(detailedGroupData),
+                  moduleLabelList: [moduleCode],
+                ));
+              }
             } catch (e) {
               print('Error processing site group: $e');
               print('Group data: $item');
             }
           }
         } else {
-          print('No items found in site groups response for module $moduleCode');
+          print(
+              'No items found in site groups response for module $moduleCode');
         }
 
         return result;
@@ -416,4 +401,49 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     }
   }
 
+  /// Fetch detailed site group data including 'data' field
+  Future<Map<String, dynamic>?> _fetchDetailedSiteGroup(
+      String moduleCode, int groupId, String token) async {
+    try {
+      final response = await dio.get(
+        '/monitorings/sites_groups/$moduleCode/$groupId',
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        final groupData = response.data as Map<String, dynamic>;
+
+        // Convert the complete API response to our format
+        final Map<String, dynamic> formattedGroupData = {
+          'id_sites_group': groupData['id_sites_group'],
+          'sites_group_name': groupData['sites_group_name'],
+          'sites_group_code': groupData['sites_group_code'],
+          'sites_group_description': groupData['sites_group_description'],
+          'uuid_sites_group': groupData['uuid_sites_group'],
+          'comments': groupData['comments'],
+          'id_digitiser': groupData['id_digitiser'],
+          'altitude_min': groupData['altitude_min'],
+          'altitude_max': groupData['altitude_max'],
+          // Handle geometry with SRID prefix for site groups
+          'geom': groupData['geometry'] != null
+              ? (groupData['geometry'] is Map<String, dynamic>
+                  ? jsonEncode(groupData['geometry'])
+                  : groupData['geometry'].toString())
+              : null,
+          // Use the 'data' field from the detailed response
+          'data': groupData['data'] ?? {},
+        };
+
+        print(
+            'Creating detailed SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
+
+        return formattedGroupData;
+      }
+    } catch (e) {
+      print('Error fetching detailed site group $groupId: $e');
+    }
+    return null;
+  }
 }

@@ -2,6 +2,17 @@ import 'package:drift/drift.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
+/// Enlève le SRID d'une géométrie pour retourner du GeoJSON pur au domaine
+String? _removeSridFromGeometry(String? geomWithSrid) {
+  if (geomWithSrid == null || geomWithSrid.isEmpty) {
+    return geomWithSrid;
+  }
+  
+  // Si la géométrie commence par SRID=xxxx;, l'enlever
+  final sridPattern = RegExp(r'^SRID=\d+;\s*');
+  return geomWithSrid.replaceFirst(sridPattern, '');
+}
+
 extension TSitesGroupMapper on TSitesGroup {
   SiteGroup toDomain() {
     return SiteGroup(
@@ -15,7 +26,7 @@ extension TSitesGroupMapper on TSitesGroup {
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       idDigitiser: idDigitiser,
-      geom: geom,
+      geom: _removeSridFromGeometry(geom),
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
     );

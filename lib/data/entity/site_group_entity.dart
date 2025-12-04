@@ -90,18 +90,23 @@ class SiteGroupEntity {
 
   /// Parse geometry from various formats into JSON string
   /// Handles: Map<String, dynamic> (GeoJSON object), String (JSON/WKT), null
+  /// Adds SRID prefix if not present to satisfy database trigger
   static String? _parseGeometry(dynamic geometry) {
     if (geometry == null) return null;
     
     if (geometry is String) {
       // Already a string (JSON or WKT format)
-      return geometry.isEmpty ? null : geometry;
+      if (geometry.isEmpty) return null;
+      
+      // Add SRID prefix if not present to satisfy database trigger
+      return _ensureSridPrefix(geometry);
     }
     
     if (geometry is Map<String, dynamic>) {
-      // GeoJSON object - convert to JSON string
+      // GeoJSON object - convert to JSON string and add SRID
       try {
-        return jsonEncode(geometry);
+        String geoJsonString = jsonEncode(geometry);
+        return _ensureSridPrefix(geoJsonString);
       } catch (e) {
         print('Error encoding site group geometry to JSON: $e');
         return null;
@@ -110,10 +115,26 @@ class SiteGroupEntity {
     
     // Unexpected type - try to convert to string
     try {
-      return geometry.toString();
+      String geometryStr = geometry.toString();
+      return _ensureSridPrefix(geometryStr);
     } catch (e) {
       print('Error parsing site group geometry of type ${geometry.runtimeType}: $e');
       return null;
     }
+  }
+
+  /// Ensure SRID prefix is present for database trigger compatibility
+  /// Example: "{...}" -> "SRID=4326;{...}"
+  static String _ensureSridPrefix(String geometry) {
+    if (geometry.isEmpty) return geometry;
+    
+    // Check if geometry already has SRID pattern
+    final sridPattern = RegExp(r'^SRID=\d+;\s*');
+    if (sridPattern.hasMatch(geometry)) {
+      return geometry; // Already has SRID
+    }
+    
+    // Add SRID=4326 prefix to satisfy database trigger
+    return 'SRID=4326;$geometry';
   }
 }
