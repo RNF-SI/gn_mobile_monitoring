@@ -388,10 +388,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   Future<void> loadTileLayers() async {
     try {
       final String jsonString =
-          await rootBundle.loadString('assets/layers_config.json');
-      final List data = jsonDecode(jsonString);
+          await rootBundle.loadString('assets/settings.json');
+
+      final Map<String, dynamic> jsonData = jsonDecode(jsonString);
+
+      final List<dynamic> layers = jsonData["layers"] ?? [];
+
       setState(() {
-        tileLayers = data
+        tileLayers = layers
             .map<Map<String, String>>((e) => {
                   "name": e["name"],
                   "urlTemplate": e["urlTemplate"],
@@ -400,10 +404,12 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             .toList();
 
         // Valeur par défaut
-        if (tileLayers.isNotEmpty) selectedLayer = tileLayers.first;
+        if (tileLayers.isNotEmpty) {
+          selectedLayer = tileLayers.first;
+        }
       });
     } catch (e) {
-      print("Erreur chargement layers.json : $e");
+      print("Erreur chargement settings.json : $e");
     }
   }
 
