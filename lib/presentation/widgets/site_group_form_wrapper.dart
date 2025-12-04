@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_form_viewmodel.dart';
@@ -31,7 +33,8 @@ class SiteGroupFormWrapper extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<SiteGroupFormWrapper> createState() => _SiteGroupFormWrapperState();
+  ConsumerState<SiteGroupFormWrapper> createState() =>
+      _SiteGroupFormWrapperState();
 }
 
 class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
@@ -50,10 +53,10 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
   }
 
   Future<void> _loadInitialValues() async {
-    final defaultValues = _isEditMode 
-        ? _prepareInitialValues() 
+    final defaultValues = _isEditMode
+        ? _prepareInitialValues()
         : await _prepareDefaultValues(ref);
-    
+
     if (mounted) {
       setState(() {
         _initialValues = defaultValues;
@@ -76,20 +79,23 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       title: _isEditMode
           ? 'Modifier le groupe de site'
           : widget.siteGroupConfig.label ?? 'Nouveau groupe de site',
-      appBarActions: _isEditMode ? [
-        IconButton(
-          icon: const Icon(Icons.delete),
-          tooltip: 'Supprimer le groupe de site',
-          onPressed: () => _deleteSiteGroup(context, ref),
-        ),
-      ] : null,
+      appBarActions: _isEditMode
+          ? [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                tooltip: 'Supprimer le groupe de site',
+                onPressed: () => _deleteSiteGroup(context, ref),
+              ),
+            ]
+          : null,
       breadcrumbItems: _buildBreadcrumbItems(context),
       initialValues: _initialValues,
       headerWidget: _buildHeaderWidget(context),
       onSave: (formData) => _handleSave(context, ref, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
       displayProperties: _getDisplayProperties(),
-      objectType: 'sites_group', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux groupes de sites
+      objectType:
+          'sites_group', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux groupes de sites
     );
   }
 
@@ -99,16 +105,20 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
 
     return BreadcrumbBuilder.buildSiteGroupBreadcrumb(
       moduleName: widget.moduleInfo!.module.moduleLabel,
-      siteGroupLabel: widget.moduleInfo!.module.complement?.configuration?.sitesGroup?.label,
-      siteGroupName: widget.siteGroup?.sitesGroupName ?? widget.siteGroup?.sitesGroupCode,
+      siteGroupLabel: widget
+          .moduleInfo!.module.complement?.configuration?.sitesGroup?.label,
+      siteGroupName:
+          widget.siteGroup?.sitesGroupName ?? widget.siteGroup?.sitesGroupCode,
       onModuleTap: () {
         Navigator.of(context).popUntil((route) =>
             route.isFirst || route.settings.name == '/module_detail');
       },
-      onSiteGroupTap: widget.siteGroup != null ? () {
-        int count = 0;
-        Navigator.of(context).popUntil((route) => count++ >= 2);
-      } : null,
+      onSiteGroupTap: widget.siteGroup != null
+          ? () {
+              int count = 0;
+              Navigator.of(context).popUntil((route) => count++ >= 2);
+            }
+          : null,
     );
   }
 
@@ -124,7 +134,10 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
           padding: const EdgeInsets.all(12.0),
           margin: const EdgeInsets.only(bottom: 16.0),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
+            color: Theme.of(context)
+                .colorScheme
+                .surfaceContainerHighest
+                .withOpacity(0.3),
             borderRadius: BorderRadius.circular(4.0),
             border: Border.all(
               color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
@@ -209,7 +222,7 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
     // Note: id_inventor n'est pas initialisé ici car il n'existe pas dans la configuration
     // des groupes de sites (sites_group). Il est uniquement utilisé pour les sites.
     // L'utilisateur sera automatiquement ajouté comme observateur lors de la sauvegarde.
-  
+
     // Ajouter l'ID du module si disponible
     if (widget.moduleId != null) {
       // Le champ id_module sera géré automatiquement
@@ -224,7 +237,8 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
   }
 
   /// Gère la sauvegarde du groupe de site
-  Future<bool> _handleSave(BuildContext context, WidgetRef ref, Map<String, dynamic> formData) async {
+  Future<bool> _handleSave(BuildContext context, WidgetRef ref,
+      Map<String, dynamic> formData) async {
     final viewModel = ref.read(siteGroupFormViewModelProvider(
         (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
 
@@ -246,8 +260,6 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
               content: Text('Groupe de site mis à jour avec succès'),
             ),
           );
-
-          
         }
       } else {
         // Création
@@ -265,45 +277,40 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
           );
 
           // Naviguer vers le formulaire du site
-         if (context.mounted) {
+          if (context.mounted) {
             final newSiteGroup = await viewModel.getSiteGroupById(siteGroupId);
-            final siteConfig = widget.moduleInfo!.module.complement?.configuration?.site;
-            if (newSiteGroup != null && context.mounted) {
-              if (siteConfig != null) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteFormPage(
-                        siteConfig: siteConfig,
-                        customConfig:
-                            widget.moduleInfo!.module.complement?.configuration?.custom,
-                        moduleId: widget.moduleId,
-                        moduleInfo: widget.moduleInfo,
-                        siteGroup: newSiteGroup,
-                      ),
-                    )
-                  );
-                }
-              return false; // Navigation personnalisée
+            final createSite = await _askForSite(context);
+            if (createSite) {
+              if (newSiteGroup != null && context.mounted) {
+                  await _navigateToSiteForm(context, newSiteGroup, formData);
+                  return false; // Navigation personnalisée faite, empêcher le pop automatique
+              }
+           } else {
+                // L'utilisateur a dit "Non", naviguer vers la page de détail
+            if (context.mounted) {
+              await _navigateToModuleDetailPage(context, widget.moduleInfo);
+              return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
           }
         }
+        }
       }
       // Naviguer vers la page de détail du site
-          if (context.mounted) {
-            final updatedSiteGroup = await viewModel.getSiteGroupById(widget.siteGroup!.idSitesGroup);
-            if (updatedSiteGroup != null && context.mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ModuleDetailPage(
-                    moduleInfo: widget.moduleInfo!,
-                  ),
-                ),
-              );
-              return false; // Navigation personnalisée
-            }
-          }
+      if (context.mounted) {
+        final updatedSiteGroup =
+            await viewModel.getSiteGroupById(widget.siteGroup!.idSitesGroup);
+        if (updatedSiteGroup != null && context.mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ModuleDetailPage(
+                moduleInfo: widget.moduleInfo!,
+              ),
+            ),
+          );
+          return false; // Navigation personnalisée
+        }
+      }
       return success;
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -316,6 +323,65 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
     }
   }
 
+  /// Demande à l'utilisateur s'il souhaite créer un site
+  Future<bool> _askForSite(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Créer un site'),
+            content: const Text(
+                'Voulez-vous créer un site pour ce groupe de site ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Non'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  /// Navigue vers le formulaire d'observation
+  Future<void> _navigateToSiteForm(BuildContext context, SiteGroup siteGroup, [Map<String, dynamic>? siteFormData]) async {
+    final siteConfig =  widget.moduleInfo!.module.complement?.configuration?.site;
+    if (siteConfig == null) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SiteFormPage(
+          siteConfig: siteConfig,
+          customConfig: widget.moduleInfo!.module.complement
+              ?.configuration?.custom,
+          moduleId: widget.moduleId,
+          moduleInfo: widget.moduleInfo,
+          siteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
+  /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToModuleDetailPage(BuildContext context, [ModuleInfo? moduleToShow]) async {
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ModuleDetailPage(
+          moduleInfo: targetModuleInfo,
+        ),
+      ),
+    );
+  }
+  
   /// Supprime le groupe de site avec confirmation
   Future<void> _deleteSiteGroup(BuildContext context, WidgetRef ref) async {
     if (widget.siteGroup == null) return;
@@ -324,7 +390,8 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmer la suppression'),
-        content: const Text("Êtes-vous sûr de vouloir supprimer ce groupe de site ?"),
+        content: const Text(
+            "Êtes-vous sûr de vouloir supprimer ce groupe de site ?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -344,13 +411,15 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       final viewModel = ref.read(siteGroupFormViewModelProvider(
           (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
 
-      final success = await viewModel.deleteSite(widget.siteGroup!.idSitesGroup);
+      final success =
+          await viewModel.deleteSite(widget.siteGroup!.idSitesGroup);
 
       if (context.mounted) {
         if (success) {
           Navigator.pop(context, true);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Groupe de site supprimé avec succès')),
+            const SnackBar(
+                content: Text('Groupe de site supprimé avec succès')),
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -373,4 +442,3 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
     }
   }
 }
-
