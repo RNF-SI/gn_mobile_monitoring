@@ -17,6 +17,7 @@ import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:point_in_polygon/point_in_polygon.dart' as pip;
 
@@ -805,6 +806,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             ),
         ],
       ),
+      floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
     );
   }
 
@@ -1932,6 +1934,117 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       debugPrint('Erreur lors du calcul de nb_sites pour le groupe $siteGroupId: $e');
       return 0;
     }
+  }
+
+  /// Construit le bouton flottant pour afficher la carte des groupes de sites
+  Widget _buildGroupsMapButton() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final ObjectConfig? sitesGroupConfig =
+        module.complement?.configuration?.sitesGroup;
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
+
+    // Utiliser les groupes en cache s'ils sont disponibles, sinon ceux du module
+    final List<SiteGroup> groupsToDisplay = _cachedGroups ??
+        _filteredSiteGroups.whereType<SiteGroup>().toList();
+
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Carte des ${sitesGroupConfig?.label ?? 'groupes de sites'}',
+                ),
+              ),
+              body: GeometriesMapWidget(
+                geojsonData: _convertSiteGroupsToGeoJSON(groupsToDisplay),
+                displayList: sitesGroupConfig?.displayList ??
+                    sitesGroupConfig?.displayProperties,
+                siteConfig: null, // Pas de siteConfig pour les groupes
+                customConfig: customConfig,
+                moduleInfo: widget.moduleInfo,
+                siteGroup: null, // Pas de siteGroup spécifique
+              ),
+            ),
+          ),
+        );
+      },
+      child: const Icon(Icons.map),
+      tooltip: 'Afficher la carte des groupes de sites',
+    );
+  }
+
+  /// Convertit une liste de SiteGroup en format GeoJSON pour GeometriesMapWidget
+  String? _convertSiteGroupsToGeoJSON(List<SiteGroup> groups) {
+    if (groups.isEmpty) return null;
+
+    final List<Map<String, dynamic>> geoJsonFeatures = [];
+
+    for (final group in groups) {
+      if (group.geom == null || group.geom!.isEmpty) continue;
+
+      try {
+        // Parser la géométrie JSON string
+        final Map<String, dynamic> geometry = jsonDecode(group.geom!);
+
+        // Créer une feature avec les informations du groupe
+        final feature = <String, dynamic>{
+          'id': group.idSitesGroup,
+          'name': group.sitesGroupName ?? 'Groupe ${group.idSitesGroup}',
+          'description': group.sitesGroupDescription ?? '',
+          'geom': geometry,
+        };
+
+        // Ajouter les champs de base pour le display_list
+        if (group.sitesGroupCode != null) {
+          feature['sites_group_code'] = group.sitesGroupCode;
+        }
+        if (group.sitesGroupName != null) {
+          feature['sites_group_name'] = group.sitesGroupName;
+        }
+        if (group.sitesGroupDescription != null) {
+          feature['sites_group_description'] = group.sitesGroupDescription;
+        }
+        if (group.altitudeMin != null) {
+          feature['altitude_min'] = group.altitudeMin;
+        }
+        if (group.altitudeMax != null) {
+          feature['altitude_max'] = group.altitudeMax;
+        }
+        if (group.comments != null) {
+          feature['comments'] = group.comments;
+        }
+
+        // Ajouter les données du champ data si disponible
+        if (group.data != null && group.data!.isNotEmpty) {
+          try {
+            Map<String, dynamic> dataMap = {};
+            if (group.data is String) {
+              dataMap = Map<String, dynamic>.from(
+                  jsonDecode(group.data as String));
+            } else {
+              dataMap = Map<String, dynamic>.from(group.data as Map);
+            }
+            feature.addAll(dataMap);
+          } catch (e) {
+            debugPrint(
+                'Erreur lors du décodage des données du groupe ${group.idSitesGroup}: $e');
+          }
+        }
+
+        geoJsonFeatures.add(feature);
+      } catch (e) {
+        debugPrint(
+            'Erreur parsing geometry pour groupe ${group.idSitesGroup}: $e');
+        // Skip this group if geometry parsing fails
+      }
+    }
+
+    if (geoJsonFeatures.isEmpty) return null;
+
+    return jsonEncode(geoJsonFeatures);
   }
 
   /// Récupère la valeur d'une propriété d'un groupe pour le tri
