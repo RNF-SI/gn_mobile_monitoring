@@ -607,6 +607,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             // Ajouter les données spécifiques
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
+              if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+                if (obsMap["cd_nom"]["nom_vern"] == null) {
+                  obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
+                } else {
+                  obsMap["cd_nom"] = observation.data!["cd_nom"]["nom_vern"];
+                }
+              } else {
+                obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
+              }
             }
 
             observations.add(obsMap);
@@ -773,7 +782,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
               ],
             ),
           );
-        } 
+        }
 
         // Cellules de données avec la logique factorisée
         final rawValue = observation[column];
