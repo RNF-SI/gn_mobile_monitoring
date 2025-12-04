@@ -428,7 +428,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           'altitude_max': groupData['altitude_max'],
           // Handle geometry with SRID prefix for site groups
           'geom': groupData['geometry'] != null
-              ? 'SRID=4326;${jsonEncode(groupData['geometry'])}'
+              ? (groupData['geometry'] is Map<String, dynamic>
+                  ? jsonEncode(groupData['geometry'])
+                  : groupData['geometry'].toString())
               : null,
           // Use the 'data' field from the detailed response
           'data': groupData['data'] ?? {},
