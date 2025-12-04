@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/string_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -328,12 +329,21 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
 
   /// Demande à l'utilisateur s'il souhaite créer un site
   Future<bool> _askForSite(BuildContext context) async {
+    // Récupérer le label et le genre du groupe de sites depuis la configuration
+    final groupLabel = widget.siteGroupConfig.label ?? 'groupe de sites';
+    final groupGenre = widget.siteGroupConfig.genre;
+    final article = StringFormatter.getArticleForLabel(groupLabel, groupGenre);
+    
+    // Récupérer le label du site depuis la configuration
+    final siteLabel = widget.siteConfig?.label ?? 'site';
+    final siteArticle = StringFormatter.getIndefiniteArticleForLabel(siteLabel, widget.siteConfig?.genre);
+    
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Créer un site'),
-            content: const Text(
-                'Voulez-vous créer un site pour ce groupe de site ?'),
+            title: Text('Créer $siteArticle $siteLabel'),
+            content: Text(
+                'Voulez-vous créer $siteArticle $siteLabel pour $article $groupLabel ?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),

@@ -33,6 +33,45 @@ class StringFormatter {
   static String formatDate(DateTime date) {
     return '${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
+
+  /// Retourne l'article défini approprié (ce/cette/cet) selon le genre et la première lettre
+  /// 
+  /// - [label] : Le label à utiliser (ex: "Aire", "Groupe de sites")
+  /// - [genre] : Le genre ('M' pour masculin, 'F' pour féminin)
+  /// 
+  /// Exemples:
+  /// - getArticleForLabel("Aire", "F") → "cette"
+  /// - getArticleForLabel("Groupe de sites", "M") → "ce"
+  /// - getArticleForLabel("Élément", "M") → "cet" (voyelle)
+  static String getArticleForLabel(String label, String? genre) {
+    final lowerLabel = label.toLowerCase().trim();
+    if (lowerLabel.isEmpty) return 'ce';
+    
+    const vowels = ['a', 'e', 'i', 'o', 'u', 'y', 'à', 'é', 'è', 'ê', 'ë', 'î', 'ï', 'ô', 'ö', 'ù', 'û', 'ü'];
+    final isVowel = lowerLabel.isNotEmpty && vowels.contains(lowerLabel[0]);
+    
+    if (genre == 'F') {
+      return "cette";
+    } else {
+      return isVowel ? "cet" : "ce";
+    }
+  }
+
+  /// Retourne l'article indéfini approprié (un/une) selon le genre
+  /// 
+  /// - [label] : Le label à utiliser (ex: "Aire", "Groupe de sites")
+  /// - [genre] : Le genre ('M' pour masculin, 'F' pour féminin)
+  /// 
+  /// Exemples:
+  /// - getIndefiniteArticleForLabel("Aire", "F") → "une"
+  /// - getIndefiniteArticleForLabel("Groupe de sites", "M") → "un"
+  static String getIndefiniteArticleForLabel(String label, String? genre) {
+    if (genre == 'F') {
+      return "une";
+    } else {
+      return "un";
+    }
+  }
 }
 
 /// Extension pour les opérations sur les chaînes de caractères

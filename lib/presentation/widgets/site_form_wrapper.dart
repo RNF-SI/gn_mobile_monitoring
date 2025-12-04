@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/helpers/string_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
@@ -220,13 +221,24 @@ class SiteFormWrapper extends ConsumerWidget {
   }
 
    /// Demande à l'utilisateur s'il souhaite créer une visite
-  Future<bool> _askForVisit(BuildContext context) async {
+  Future<bool> _askForVisit(BuildContext context, ObjectConfig siteConfig, ModuleInfo? moduleInfo) async {
+    // Récupérer le label et le genre du site depuis la configuration
+    final siteLabel = siteConfig.label ?? 'site';
+    final siteGenre = siteConfig.genre;
+    final siteArticle = StringFormatter.getArticleForLabel(siteLabel, siteGenre);
+    
+    // Récupérer le label et le genre de la visite depuis la configuration
+    final visitConfig = moduleInfo?.module.complement?.configuration?.visit;
+    final visitLabel = visitConfig?.label ?? 'visite';
+    final visitGenre = visitConfig?.genre;
+    final visitArticle = StringFormatter.getIndefiniteArticleForLabel(visitLabel, visitGenre);
+    
     return await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Créer une visite'),
-            content: const Text(
-                'Voulez-vous créer une visite pour ce site ?'),
+            title: Text('Créer $visitArticle $visitLabel'),
+            content: Text(
+                'Voulez-vous créer $visitArticle $visitLabel pour $siteArticle $siteLabel ?'),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),
@@ -380,7 +392,7 @@ class SiteFormWrapper extends ConsumerWidget {
           // Naviguer vers la page de détail du site
           if (context.mounted) {
             final newSite = await viewModel.getSiteById(siteId);
-            final createVisit = await _askForVisit(context);
+            final createVisit = await _askForVisit(context, siteConfig, moduleInfo);
             if (createVisit) {
             if (newSite != null && context.mounted) {
               await _navigateToVisitForm(context, newSite, siteGroup, moduleInfo);
