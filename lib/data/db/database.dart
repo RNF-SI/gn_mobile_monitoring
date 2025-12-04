@@ -20,7 +20,7 @@ import 'package:gn_mobile_monitoring/data/db/migrations/021_create_app_metadata_
 import 'package:gn_mobile_monitoring/data/db/migrations/022_add_server_visit_id_to_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/023_add_server_observation_id_to_observations.dart';
 import 'package:gn_mobile_monitoring/data/db/migrations/024_add_id_digitiser_to_observations.dart';
-import 'package:gn_mobile_monitoring/data/db/migrations/025_add_server_individual_id_to_individuals.dart';
+import 'package:gn_mobile_monitoring/data/db/migrations/025_create_cor_individual_module_table.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/app_metadata.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_listes.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/bib_nomenclatures_types.dart';
@@ -173,7 +173,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
