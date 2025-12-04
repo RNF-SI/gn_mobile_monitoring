@@ -12,51 +12,52 @@ import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 class GenericFormPage extends ConsumerStatefulWidget {
   /// Configuration du formulaire (observation, visite, etc.)
   final ObjectConfig objectConfig;
-  
+
   /// Configuration personnalisée
   final CustomConfig? customConfig;
-  
+
   /// Titre de la page
   final String title;
-  
+
   /// Actions de l'AppBar (ex: bouton supprimer)
   final List<Widget>? appBarActions;
-  
+
   /// Éléments du fil d'Ariane
   final List<BreadcrumbItem>? breadcrumbItems;
-  
+
   /// Valeurs initiales du formulaire
   final Map<String, dynamic>? initialValues;
-  
+
   /// Widget supplémentaire à afficher avant le formulaire (ex: bandeau de conflit)
   final Widget? headerWidget;
-  
+
   /// Fonction appelée lors de la validation du formulaire
   final Future<bool> Function(Map<String, dynamic> formData) onSave;
-  
+
   /// Fonction appelée lors de l'annulation
   final VoidCallback? onCancel;
-  
+
   /// Texte du bouton de sauvegarde
   final String saveButtonText;
-  
+
   /// Provider pour l'état "enchaîner les saisies"
   final StateProvider<bool>? chainInputProvider;
-  
+
   /// Liste de propriétés à afficher
   final List<String>? displayProperties;
-  
+
   /// ID de la liste taxonomique (pour les observations)
   final int? idListTaxonomy;
-  
+
   /// Conflit en cours (optionnel)
   final SyncConflict? currentConflict;
-  
+
   /// Type d'objet pour appliquer des exclusions spécifiques (ex: 'site', 'sites_group', 'visit', 'observation')
   final String? objectType;
-  
+
   /// Fonction personnalisée de normalisation des valeurs initiales
-  final Map<String, dynamic> Function(Map<String, dynamic>)? normalizeInitialValues;
+  final Map<String, dynamic> Function(Map<String, dynamic>)?
+      normalizeInitialValues;
 
   const GenericFormPage({
     super.key,
@@ -91,7 +92,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
   @override
   void initState() {
     super.initState();
-    
+
     // Initialiser l'état de chaînage seulement si le provider existe
     if (widget.chainInputProvider != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,11 +112,11 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
   /// Traite les valeurs initiales en appliquant la fonction de normalisation si fournie
   Map<String, dynamic> _processInitialValues() {
     if (widget.initialValues == null) return {};
-    
+
     if (widget.normalizeInitialValues != null) {
       return widget.normalizeInitialValues!(widget.initialValues!);
     }
-    
+
     return widget.initialValues!;
   }
 
@@ -144,13 +145,13 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
           widget.headerWidget!,
           const SizedBox(height: 16),
         ],
-        
+
         // Bandeau de conflit standard
         if (widget.currentConflict != null) ...[
           ConflictInfoBanner(conflict: widget.currentConflict!),
           const SizedBox(height: 16),
         ],
-        
+
         // Formulaire dynamique
         DynamicFormBuilder(
           key: _formBuilderKey,
@@ -158,8 +159,8 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
           customConfig: widget.customConfig,
           initialValues: _processedInitialValues ?? {},
           chainInput: _chainInput, // Null si pas de provider = pas de bouton
-          onChainInputChanged: widget.chainInputProvider != null 
-              ? _handleChainInputChanged 
+          onChainInputChanged: widget.chainInputProvider != null
+              ? _handleChainInputChanged
               : null,
           displayProperties: widget.displayProperties,
           idListTaxonomy: widget.idListTaxonomy,
@@ -172,7 +173,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
   /// Gère le changement de l'état "enchaîner les saisies"
   void _handleChainInputChanged(bool value) {
     if (widget.chainInputProvider == null) return;
-    
+
     setState(() {
       _chainInput = value;
       ref.read(widget.chainInputProvider!.notifier).state = value;
@@ -198,10 +199,10 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
     try {
       // Récupérer les données du formulaire
       final formData = _formBuilderKey.currentState!.getFormValues();
-      
+
       // Appeler la fonction de sauvegarde
       final success = await widget.onSave(formData);
-      
+
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -214,15 +215,16 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
             setState(() {
               _processedInitialValues = {};
             });
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text('${widget.objectConfig.label ?? 'Élément'} enregistré avec succès'),
+                content: Text(
+                    '${widget.objectConfig.label ?? 'Élément'} enregistré avec succès'),
               ),
             );
           } else {
             // Sinon, fermer le formulaire
-            Navigator.of(context).pop(true); // JULES DECONNE PO C LA
+            Navigator.of(context).pop(true);
           }
         }
       }
@@ -231,7 +233,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
         setState(() {
           _isLoading = false;
         });
-        
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Erreur: ${e.toString()}'),
@@ -244,7 +246,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
 
   /// Méthode publique pour accéder au state du formulaire (si nécessaire)
   DynamicFormBuilderState? get formBuilderState => _formBuilderKey.currentState;
-  
+
   /// Méthode publique pour réinitialiser le formulaire
   void resetForm() {
     _formBuilderKey.currentState?.resetForm();
@@ -252,7 +254,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
       _processedInitialValues = {};
     });
   }
-  
+
   /// Méthode publique pour mettre à jour les valeurs initiales
   void updateInitialValues(Map<String, dynamic> newValues) {
     setState(() {
@@ -279,7 +281,7 @@ class BreadcrumbBuilder {
     VoidCallback? onVisitTap,
   }) {
     final items = <BreadcrumbItem>[];
-    
+
     if (moduleName != null && onModuleTap != null) {
       items.add(BreadcrumbItem(
         label: 'Module',
@@ -287,7 +289,7 @@ class BreadcrumbBuilder {
         onTap: onModuleTap,
       ));
     }
-    
+
     if (siteName != null && onSiteTap != null) {
       items.add(BreadcrumbItem(
         label: siteLabel ?? 'Site',
@@ -295,7 +297,7 @@ class BreadcrumbBuilder {
         onTap: onSiteTap,
       ));
     }
-    
+
     if (visitDate != null && onVisitTap != null) {
       items.add(BreadcrumbItem(
         label: visitLabel ?? 'Visite',
@@ -303,12 +305,12 @@ class BreadcrumbBuilder {
         onTap: onVisitTap,
       ));
     }
-    
+
     items.add(BreadcrumbItem(
       label: observationLabel,
       value: observationValue,
     ));
-    
+
     return items;
   }
 
@@ -326,7 +328,7 @@ class BreadcrumbBuilder {
     VoidCallback? onSiteTap,
   }) {
     final items = <BreadcrumbItem>[];
-    
+
     if (moduleName != null && onModuleTap != null) {
       items.add(BreadcrumbItem(
         label: 'Module',
@@ -334,7 +336,7 @@ class BreadcrumbBuilder {
         onTap: onModuleTap,
       ));
     }
-    
+
     if (siteGroupName != null && onSiteGroupTap != null) {
       items.add(BreadcrumbItem(
         label: siteGroupLabel ?? 'Groupe',
@@ -342,7 +344,7 @@ class BreadcrumbBuilder {
         onTap: onSiteGroupTap,
       ));
     }
-    
+
     if (onSiteTap != null) {
       items.add(BreadcrumbItem(
         label: siteLabel ?? 'Site',
@@ -350,12 +352,12 @@ class BreadcrumbBuilder {
         onTap: onSiteTap,
       ));
     }
-    
+
     items.add(BreadcrumbItem(
       label: visitLabel,
       value: visitValue,
     ));
-    
+
     return items;
   }
 
@@ -370,7 +372,7 @@ class BreadcrumbBuilder {
     VoidCallback? onSiteGroupTap,
   }) {
     final items = <BreadcrumbItem>[];
-    
+
     if (moduleName != null && onModuleTap != null) {
       items.add(BreadcrumbItem(
         label: 'Module',
@@ -378,7 +380,7 @@ class BreadcrumbBuilder {
         onTap: onModuleTap,
       ));
     }
-    
+
     if (siteGroupName != null && onSiteGroupTap != null) {
       items.add(BreadcrumbItem(
         label: siteGroupLabel ?? 'Groupe',
@@ -386,12 +388,12 @@ class BreadcrumbBuilder {
         onTap: onSiteGroupTap,
       ));
     }
-    
+
     items.add(BreadcrumbItem(
       label: siteLabel,
       value: siteName,
     ));
-    
+
     return items;
   }
 
@@ -404,7 +406,7 @@ class BreadcrumbBuilder {
     VoidCallback? onSiteGroupTap,
   }) {
     final items = <BreadcrumbItem>[];
-    
+
     if (moduleName != null && onModuleTap != null) {
       items.add(BreadcrumbItem(
         label: 'Module',
@@ -412,7 +414,7 @@ class BreadcrumbBuilder {
         onTap: onModuleTap,
       ));
     }
-    
+
     if (siteGroupName != null && onSiteGroupTap != null) {
       items.add(BreadcrumbItem(
         label: siteGroupLabel ?? 'Groupe',
@@ -420,7 +422,7 @@ class BreadcrumbBuilder {
         onTap: onSiteGroupTap,
       ));
     }
-    
+
     return items;
   }
 }

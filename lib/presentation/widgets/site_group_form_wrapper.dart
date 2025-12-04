@@ -284,18 +284,19 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
             final createSite = await _askForSite(context);
             if (createSite) {
               if (newSiteGroup != null && context.mounted) {
-                  await _navigateToSiteForm(context, newSiteGroup, formData);
-                  return false; // Navigation personnalisée faite, empêcher le pop automatique
+                await _navigateToSiteForm(context, newSiteGroup, formData);
+                return false; // Navigation personnalisée faite, empêcher le pop automatique
               }
-           } else {
-                // L'utilisateur a dit "Non", naviguer vers la page de détail
-            if (context.mounted) {
-              await _navigateToModuleDetailPage(context, widget.moduleInfo);
-              await _navigateToSiteGroupDetailPage(context, newSiteGroup, widget.moduleInfo);
-              return false; // Navigation personnalisée faite, empêcher le pop automatique
+            } else {
+              // L'utilisateur a dit "Non", naviguer vers la page de détail
+              if (context.mounted) {
+                await _navigateToModuleDetailPage(context, widget.moduleInfo);
+                await _navigateToSiteGroupDetailPage(
+                    context, newSiteGroup, widget.moduleInfo);
+                return false; // Navigation personnalisée faite, empêcher le pop automatique
+              }
             }
           }
-        }
         }
       }
       // Naviguer vers la page de détail du groupe de site
@@ -349,31 +350,27 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
         false;
   }
 
+  /// TO DO: Ce systeme de navigation est fonctionnel mais applique a chaque element
+  /// a chaque fois on peut naviguer au formulaire de l'element suivant a la page de detail
+  /// de l'element modifie ou a la page de detail de l'element precedent
+  /// je pense que c'est grandement ameliorable
+
   /// Navigue vers le formulaire d'observation
-  Future<void> _navigateToSiteForm(BuildContext context, SiteGroup siteGroup, [Map<String, dynamic>? siteFormData]) async {
+  Future<void> _navigateToSiteForm(BuildContext context, SiteGroup siteGroup,
+      [Map<String, dynamic>? siteFormData]) async {
     _navigateToModuleDetailPage(context, widget.moduleInfo);
     _navigateToSiteGroupDetailPage(context, siteGroup, widget.moduleInfo);
-    final siteConfig =  widget.moduleInfo!.module.complement?.configuration?.site;
+    final siteConfig =
+        widget.moduleInfo!.module.complement?.configuration?.site;
     if (siteConfig == null) return;
-
-    // Navigator.pushReplacement(
-    //   context,
-    //   MaterialPageRoute(
-    //     builder: (context) => SiteDetailPage(
-    //       site: widget.site,
-    //       moduleInfo: widget.moduleInfo,
-    //       fromSiteGroup: siteGroup,
-    //     ),
-    //     ),
-    // );
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => SiteFormPage(
           siteConfig: siteConfig,
-          customConfig: widget.moduleInfo!.module.complement
-              ?.configuration?.custom,
+          customConfig:
+              widget.moduleInfo!.module.complement?.configuration?.custom,
           moduleId: widget.moduleId,
           moduleInfo: widget.moduleInfo,
           siteGroup: siteGroup,
@@ -381,15 +378,16 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       ),
     );
   }
-  
-  /// Navigue vers la page de détail de la visite
-  Future<void> _navigateToSiteGroupDetailPage(BuildContext context, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+
+  /// Navigue vers la page de détail du groupe de site
+  Future<void> _navigateToSiteGroupDetailPage(
+      BuildContext context, SiteGroup? siteGroup,
+      [ModuleInfo? moduleToShow]) async {
     final targetModuleInfo = moduleToShow ?? null;
     if (targetModuleInfo == null) return;
 
     final targetsiteGroup = siteGroup ?? null;
     if (targetsiteGroup == null) return;
-
 
     Navigator.push(
       context,
@@ -401,13 +399,13 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
       ),
     );
   }
-  
-  /// Navigue vers la page de détail de la visite
-  Future<void> _navigateToModuleDetailPage(BuildContext context, [ModuleInfo? moduleToShow]) async {
+
+  /// Navigue vers la page de détail du module
+  Future<void> _navigateToModuleDetailPage(BuildContext context,
+      [ModuleInfo? moduleToShow]) async {
     Navigator.of(context).pop();
     final targetModuleInfo = moduleToShow ?? null;
     if (targetModuleInfo == null) return;
-
 
     Navigator.pushReplacement(
       context,

@@ -261,7 +261,9 @@ class PropertyDisplayWidget extends ConsumerWidget {
     // Traiter les champs de type sites_group
     for (final fieldName in taxonFields) {
       // Créer un objet avec le nom du groupe
-    if (this.customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+      // TO DO: est-ce que le traitement des cd_nom a sa place ici, est-ce qu'il doit
+      // etre utilise pour d'autres elements
+      if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom') {
         if (data["cd_nom"]["nom_vern"] == null) {
           enrichedData[fieldName] = data["cd_nom"]["lb_nom"];
         } else {

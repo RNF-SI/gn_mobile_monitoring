@@ -298,13 +298,13 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
   void _showDeleteConfirmationDialog() async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
         (widget.site.idBaseSite, widget.visit.idModule)).notifier);
-    
+
     // Compter les observations de cette visite
     final observationCount = await siteVisitsViewModel
         .getObservationCountForVisit(widget.visit.idBaseVisit);
-    
+
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -363,10 +363,11 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
   void _deleteVisit() async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
         (widget.site.idBaseSite, widget.visit.idModule)).notifier);
-    
+
     try {
-      final success = await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit);
-      
+      final success =
+          await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit);
+
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -374,7 +375,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             backgroundColor: Colors.green,
           ),
         );
-        
+
         // Retourner à la page précédente
         Navigator.of(context).pop();
       } else if (mounted) {
@@ -605,9 +606,12 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             };
 
             // Ajouter les données spécifiques
+            // TO DO: Le MAP obsMap est cree avec 3 elements, puis on ajoute 6 elements du data de observation
+            // puis on modifie l'element avec la cle cd_nom pour ajouter le nom vernaculaire ou scientifique
+            // selon la config du module, grandement améliorable
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
-              if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+              if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom') {
                 if (obsMap["cd_nom"]["nom_vern"] == null) {
                   obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
                 } else {
@@ -791,7 +795,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
         Map<String, dynamic> schema = {};
         schema = FormConfigParser.generateUnifiedSchema(
             observationConfig, customConfig);
-      
+
         // Formater la valeur
         String displayValue = formatDataCellValue(
           rawValue: rawValue,
@@ -832,8 +836,8 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
               widget.moduleInfo?.module.complement?.configuration?.custom,
           moduleId: widget.moduleInfo?.module.id,
           // Ajouter la configuration des détails d'observation
-          observationDetailConfig: 
-              widget.moduleInfo?.module.complement?.configuration?.observationDetail,
+          observationDetailConfig: widget
+              .moduleInfo?.module.complement?.configuration?.observationDetail,
           // Passer les informations pour le fil d'Ariane
           moduleName: moduleName,
           siteLabel: siteLabel,
@@ -891,8 +895,8 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                   widget.moduleInfo?.module.complement?.configuration?.custom,
               moduleId: widget.moduleInfo?.module.id,
               // Ajouter la configuration des détails d'observation
-              observationDetailConfig: 
-                  widget.moduleInfo?.module.complement?.configuration?.observationDetail,
+              observationDetailConfig: widget.moduleInfo?.module.complement
+                  ?.configuration?.observationDetail,
               observation: observation,
               // Passer les informations pour le fil d'Ariane
               moduleName: moduleName,
