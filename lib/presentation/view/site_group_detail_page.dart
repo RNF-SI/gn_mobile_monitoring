@@ -630,13 +630,6 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                           widget.siteGroup.sitesGroupCode ??
                           'Groupe',
                     ),
-                    // Afficher le code du groupe s'il existe
-                    if (widget.siteGroup.sitesGroupCode != null &&
-                        widget.siteGroup.sitesGroupCode!.trim().isNotEmpty)
-                      BreadcrumbItem(
-                        label: groupCodeLabel,
-                        value: widget.siteGroup.sitesGroupCode!.trim(),
-                      ),
                   ],
                 ),
               ),
