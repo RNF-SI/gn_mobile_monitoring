@@ -18,6 +18,97 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dar
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:latlong2/latlong.dart';
 
+// ---------------------------
+// Widget Boussole
+// ---------------------------
+class CompassWidget extends StatefulWidget {
+  final MapController mapController;
+  const CompassWidget({super.key, required this.mapController});
+
+  @override
+  State<CompassWidget> createState() => _CompassWidgetState();
+}
+
+class _CompassWidgetState extends State<CompassWidget>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _rotationAnimation;
+  double currentRotation = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+
+    // Écoute les mouvements et rotations de la carte
+    widget.mapController.mapEventStream.listen((event) {
+      if (event is MapEventMove || event is MapEventRotate) {
+        setState(() {
+          currentRotation = widget.mapController.camera.rotationRad;
+        });
+      }
+    });
+  }
+
+  void resetNorth() {
+    final startRotation = widget.mapController.camera.rotation;
+    final endRotation = 0.0;
+
+    _rotationAnimation = Tween<double>(
+      begin: startRotation,
+      end: endRotation,
+    ).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
+    )..addListener(() {
+        widget.mapController.rotate(_rotationAnimation.value);
+      });
+
+    _animationController.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      top: 16,
+      left: 16,
+      child: GestureDetector(
+        onTap: resetNorth,
+        child: Transform.rotate(
+          angle: currentRotation,
+          child: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.3),
+                  blurRadius: 6,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Icon(Icons.navigation, color: Colors.red, size: 28),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------
+// Widget Geometries
+// ---------------------------
 class GeometriesMapWidget extends ConsumerStatefulWidget {
   final String? geojsonData; // <--- nullable
   final List<String>? displayList; // Liste des propriétés à afficher
@@ -102,6 +193,28 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     );
   }
 
+  // Calcul de l'emprise global des sites
+  LatLngBounds? computeGlobalBounds() {
+    final points = <LatLng>[];
+
+    // Markers
+    points.addAll(siteMarkers.map((m) => m.point));
+
+    // Polylines
+    for (var poly in polylines) {
+      points.addAll(poly.points);
+    }
+
+    // Polygons
+    for (var poly in polygons) {
+      points.addAll(poly.points);
+    }
+
+    if (points.isEmpty) return null;
+
+    return LatLngBounds.fromPoints(points);
+  }
+
   @override
   void initState() {
     super.initState();
@@ -111,6 +224,16 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     loadGeometriesSafely();
     loadUserLocation();
     // Les compléments seront chargés après le chargement des géométries
+
+    // Écoute la rotation de la carte pour mettre à jour les markers
+    mapController.mapEventStream.listen((event) {
+      if (event is MapEventRotate) {
+        setState(() {
+          // Reconstruire les markers avec la rotation mise à jour
+          _rebuildMarkers();
+        });
+      }
+    });
   }
 
   /// Charge les compléments de sites de manière asynchrone
@@ -200,6 +323,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
           point: marker.point,
           width: 60,
           height: 60,
+          rotate: true,
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,
@@ -433,6 +557,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         print("GPS désactivé → pas d'affichage de la localisation.");
+        _centerOnGeometries();
         return; // ⛔️ ne rien afficher
       }
 
@@ -443,12 +568,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           print("Permission refusée → pas de localisation.");
+          _centerOnGeometries();
           return; // ⛔️ ne rien afficher
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
         print("Permission bloquée définitivement → pas de localisation.");
+        _centerOnGeometries();
         return; // ⛔️ ne rien afficher
       }
 
@@ -467,6 +594,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       });
     } catch (e) {
       print("Erreur localisation : $e");
+      _centerOnGeometries();
     }
   }
 
@@ -487,6 +615,18 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         ),
       );
 
+      // Dès que la position GPS est connue, recentrer sur l'emprise du cluster
+      final bounds = computeGlobalBounds();
+      if (bounds != null && !userMovedMap) {
+        mapController.fitCamera(
+          CameraFit.bounds(
+            bounds: bounds,
+            padding: const EdgeInsets.all(40),
+          ),
+        );
+        hasAutoCentered = true;
+      }
+
       // 🔵 Cercle de précision
       accuracyCircle = CircleMarker(
         point: userPosition!,
@@ -503,6 +643,21 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       mapController.move(userPosition!, 17);
       hasAutoCentered = true;
     }
+  }
+
+  // Gérer le centrage sur un groupe de géométries
+  void _centerOnGeometries() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final bounds = computeGlobalBounds();
+      if (bounds == null) return;
+
+      mapController.fitCamera(
+        CameraFit.bounds(
+          bounds: bounds,
+          padding: const EdgeInsets.all(30),
+        ),
+      );
+    });
   }
 
   // Gérer les clics sur la carte
@@ -834,11 +989,13 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                           userAgentPackageName:
                               'com.example.gn_mobile_monitoring',
                         ),
+
                       // 🔵 Cercle de précision GPS
                       if (accuracyCircle != null)
                         CircleLayer(circles: [accuracyCircle!]),
                       PolylineLayer(polylines: polylines),
                       PolygonLayer(polygons: polygons),
+
                       // 🔵 Clustering des markers de sites
                       MarkerClusterLayerWidget(
                         options: MarkerClusterLayerOptions(
@@ -1002,6 +1159,10 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
               },
             ),
           ),
+        // ---------------------------
+        // Boussole
+        // ---------------------------
+        CompassWidget(mapController: mapController),
       ],
     );
   }
