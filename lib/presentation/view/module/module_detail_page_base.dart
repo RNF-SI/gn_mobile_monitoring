@@ -14,11 +14,12 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
 import 'package:point_in_polygon/point_in_polygon.dart' as pip;
 
 /// Widget personnalisé pour le breadcrumb avec description du module dans les détails
@@ -983,218 +984,81 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     return Column(
       children: [
-        // Header avec titre, bouton d'ajout et bouton de tri
-        Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    sitesGroupConfig?.labelList ??
-                        sitesGroupConfig?.label ??
-                        'Groupes de sites',
-                    style: const TextStyle(
-                        fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  // Afficher le bouton uniquement si is_editable_on_field est true ou absent
-                  Builder(
-                    builder: (context) {
-                      final isEditable =
-                          _isSiteGroupEditableOnField(sitesGroupConfig);
-                      debugPrint(
-                          '🎯 Vérification affichage bouton groupe - isEditable: $isEditable');
-                      if (isEditable) {
-                        return Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showGroupSearch = !_showGroupSearch;
-                                  if (!_showGroupSearch) {
-                                    _groupSearchQuery = '';
-                                    _groupSearchController.clear();
-                                  }
-                                });
-                              },
-                              icon: Icon(
-                                Icons.search,
-                                color: _showGroupSearch
-                                    ? Colors.white
-                                    : AppColors.border,
-                              ),
-                              style: _showGroupSearch
-                                  ? IconButton.styleFrom(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                    )
-                                  : null,
-                              tooltip: _showGroupSearch
-                                  ? 'Fermer la recherche'
-                                  : 'Rechercher un groupe de sites',
-                            ),
-                            IconButton(
-                              onPressed: () {
-                                if (sitesGroupConfig != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => SiteGroupFormPage(
-                                        siteConfig: sitesGroupConfig,
-                                        customConfig: customConfig,
-                                        moduleId: module.id,
-                                        moduleInfo: widget.moduleInfo,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                          'Configuration de groupe de sites non disponible'),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.add_circle),
-                              tooltip:
-                                  'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
-                            ),
-                          ],
-                        );
-                      } else {
-                        return Row(
-                          children: [
-                            const SizedBox(width: 8),
-                            IconButton(
-                              onPressed: () {
-                                setState(() {
-                                  _showGroupSearch = !_showGroupSearch;
-                                  if (!_showGroupSearch) {
-                                    _groupSearchQuery = '';
-                                    _groupSearchController.clear();
-                                  }
-                                });
-                              },
-                              icon: Icon(
-                                Icons.search,
-                                color: _showGroupSearch
-                                    ? Colors.white
-                                    : AppColors.border,
-                              ),
-                              style: _showGroupSearch
-                                  ? IconButton.styleFrom(
-                                      backgroundColor:
-                                          Theme.of(context).colorScheme.primary,
-                                    )
-                                  : null,
-                              tooltip: _showGroupSearch
-                                  ? 'Fermer la recherche'
-                                  : 'Rechercher un groupe de sites',
-                            ),
-                          ],
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-              // Bouton pour basculer entre tri par distance et alphabétique
-              if (_userPosition != null)
-                ActionChip(
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _sortGroupsByDistance
-                            ? Icons.sort_by_alpha
-                            : Icons.location_on,
-                        size: 16,
-                        color: Colors.white,
+        // Barre d'outils avec label, recherche, ajout et tri
+        Builder(
+          builder: (context) {
+            final isEditable = _isSiteGroupEditableOnField(sitesGroupConfig);
+            Widget? addButton;
+            if (isEditable) {
+              addButton = IconButton(
+                onPressed: () {
+                  if (sitesGroupConfig != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteGroupFormPage(
+                          siteConfig: sitesGroupConfig,
+                          customConfig: customConfig,
+                          moduleId: module.id,
+                          moduleInfo: widget.moduleInfo,
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _sortGroupsByDistance ? 'Alphabétique' : 'Distance',
-                        style: const TextStyle(color: Colors.white),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Configuration de groupe de sites non disponible'),
+                        backgroundColor: Colors.red,
                       ),
-                    ],
-                  ),
-                  side: BorderSide.none,
-                  backgroundColor: AppColors.primary,
-                  onPressed: () {
-                    setState(() {
-                      _sortGroupsByDistance = !_sortGroupsByDistance;
-                    });
-                  },
-                ),
-            ],
-          ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.add_circle),
+                tooltip:
+                    'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
+              );
+            }
+            return ListToolbarWidget(
+              label: sitesGroupConfig?.labelList ??
+                  sitesGroupConfig?.label ??
+                  'Groupes de sites',
+              showSearch: _showGroupSearch,
+              searchQuery: _groupSearchQuery,
+              searchController: _groupSearchController,
+              onSearchChanged: (value) {
+                setState(() {
+                  _groupSearchQuery = value;
+                });
+              },
+              onToggleSearch: () {
+                setState(() {
+                  _showGroupSearch = !_showGroupSearch;
+                  if (!_showGroupSearch) {
+                    _groupSearchQuery = '';
+                    _groupSearchController.clear();
+                  }
+                });
+              },
+              onCloseSearch: () {
+                setState(() {
+                  _showGroupSearch = false;
+                  _groupSearchQuery = '';
+                  _groupSearchController.clear();
+                });
+              },
+              userPosition: _userPosition,
+              sortByDistance: _sortGroupsByDistance,
+              onToggleSort: () {
+                setState(() {
+                  _sortGroupsByDistance = !_sortGroupsByDistance;
+                });
+              },
+              searchHintText: 'Rechercher par nom de groupe...',
+              addButton: addButton,
+            );
+          },
         ),
-        // Champ de recherche (affiché conditionnellement)
-        if (_showGroupSearch)
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _groupSearchController,
-                    autofocus: true,
-                    decoration: InputDecoration(
-                      hintText: 'Rechercher par nom de groupe...',
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _groupSearchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              tooltip: 'Effacer la recherche',
-                              onPressed: () {
-                                setState(() {
-                                  _groupSearchQuery = '';
-                                  _groupSearchController.clear();
-                                });
-                              },
-                            )
-                          : null,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                      filled: true,
-                      fillColor: Theme.of(context).colorScheme.surface,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 12.0,
-                      ),
-                    ),
-                    onChanged: (value) {
-                      setState(() {
-                        _groupSearchQuery = value.toLowerCase();
-                      });
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _showGroupSearch = false;
-                      _groupSearchQuery = '';
-                      _groupSearchController.clear();
-                    });
-                  },
-                  icon: const Icon(Icons.close),
-                  tooltip: 'Fermer la recherche',
-                  style: IconButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.surface,
-                    foregroundColor: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-              ],
-            ),
-          ),
         // Liste des groupes avec ExpansionTile
         Expanded(
           child: _buildGroupsExpansionPanelList(
@@ -1735,7 +1599,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // pour s'assurer qu'il est à jour
     final needsNbSites = displayProperties.contains('nb_sites');
 
-    debugPrint('🔍 _buildGroupProperties - needsNbSites: $needsNbSites, displayProperties: $displayProperties, groupData keys: ${groupData.keys.toList()}');
+    debugPrint(
+        '🔍 _buildGroupProperties - needsNbSites: $needsNbSites, displayProperties: $displayProperties, groupData keys: ${groupData.keys.toList()}');
 
     // Si nb_sites est dans display_list, utiliser un FutureBuilder pour le calculer
     if (needsNbSites && widget.ref != null) {
@@ -1744,11 +1609,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         builder: (context, snapshot) {
           // Ajouter nb_sites aux données si calculé
           final enrichedGroupData = Map<String, dynamic>.from(groupData);
-          
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             // Pendant le chargement, on peut afficher les autres propriétés
             // mais on ajoute quand même nb_sites avec une valeur par défaut pour éviter le filtre
-            enrichedGroupData['nb_sites'] = 0; // Utiliser 0 au lieu de null pour que le filtre le trouve
+            enrichedGroupData['nb_sites'] =
+                0; // Utiliser 0 au lieu de null pour que le filtre le trouve
             debugPrint('⏳ Calcul de nb_sites en cours...');
           } else if (snapshot.hasData) {
             enrichedGroupData['nb_sites'] = snapshot.data;
@@ -1756,15 +1622,18 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           } else if (snapshot.hasError) {
             // En cas d'erreur, on met 0 pour éviter que le filtre ne trouve rien
             enrichedGroupData['nb_sites'] = 0;
-            debugPrint('❌ Erreur lors du calcul de nb_sites: ${snapshot.error}');
+            debugPrint(
+                '❌ Erreur lors du calcul de nb_sites: ${snapshot.error}');
           }
 
           // Ajouter les autres propriétés calculées si nécessaire
           final List<String>? displayPropsForEnrichment =
-              sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+              sitesGroupConfig?.displayList ??
+                  sitesGroupConfig?.displayProperties;
           if (displayPropsForEnrichment != null) {
             for (final property in displayPropsForEnrichment) {
-              if (property != 'nb_sites' && !enrichedGroupData.containsKey(property)) {
+              if (property != 'nb_sites' &&
+                  !enrichedGroupData.containsKey(property)) {
                 final value = _getSiteGroupValue(group, property);
                 if (value != null) {
                   enrichedGroupData[property] = value;
@@ -1773,7 +1642,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             }
           }
 
-          debugPrint('📊 enrichedGroupData keys: ${enrichedGroupData.keys.toList()}, nb_sites: ${enrichedGroupData['nb_sites']}');
+          debugPrint(
+              '📊 enrichedGroupData keys: ${enrichedGroupData.keys.toList()}, nb_sites: ${enrichedGroupData['nb_sites']}');
 
           return _buildGroupPropertiesContent(
               enrichedGroupData, displayProperties, parsedGroupConfig);
@@ -1802,7 +1672,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 }
                 // Ajouter les autres propriétés
                 for (final prop in displayPropsForEnrichment) {
-                  if (prop != 'nb_sites' && !enrichedGroupData.containsKey(prop)) {
+                  if (prop != 'nb_sites' &&
+                      !enrichedGroupData.containsKey(prop)) {
                     final value = _getSiteGroupValue(group, prop);
                     if (value != null) {
                       enrichedGroupData[prop] = value;
@@ -1875,7 +1746,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       final hasKey = groupData.containsKey(key);
       final isMeta = key.startsWith('meta_');
       final value = groupData[key];
-      debugPrint('🔍 Filtrage propriété $key: hasKey=$hasKey, isMeta=$isMeta, value=$value');
+      debugPrint(
+          '🔍 Filtrage propriété $key: hasKey=$hasKey, isMeta=$isMeta, value=$value');
       return !isMeta && hasKey;
     }).toList();
 
@@ -1884,7 +1756,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     // Si aucune propriété ne correspond après filtrage
     if (filteredProperties.isEmpty) {
-      debugPrint('⚠️ Aucune propriété après filtrage - groupData: ${groupData.keys.toList()}');
+      debugPrint(
+          '⚠️ Aucune propriété après filtrage - groupData: ${groupData.keys.toList()}');
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
@@ -1931,7 +1804,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
       return sites.length;
     } catch (e) {
-      debugPrint('Erreur lors du calcul de nb_sites pour le groupe $siteGroupId: $e');
+      debugPrint(
+          'Erreur lors du calcul de nb_sites pour le groupe $siteGroupId: $e');
       return 0;
     }
   }
@@ -1944,8 +1818,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     final CustomConfig? customConfig = module.complement?.configuration?.custom;
 
     // Utiliser les groupes en cache s'ils sont disponibles, sinon ceux du module
-    final List<SiteGroup> groupsToDisplay = _cachedGroups ??
-        _filteredSiteGroups.whereType<SiteGroup>().toList();
+    final List<SiteGroup> groupsToDisplay =
+        _cachedGroups ?? _filteredSiteGroups.whereType<SiteGroup>().toList();
 
     return FloatingActionButton(
       onPressed: () {
@@ -1971,8 +1845,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           ),
         );
       },
-      child: const Icon(Icons.map),
       tooltip: 'Afficher la carte des groupes de sites',
+      child: const Icon(Icons.map, color: Colors.white),
     );
   }
 
@@ -2022,8 +1896,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           try {
             Map<String, dynamic> dataMap = {};
             if (group.data is String) {
-              dataMap = Map<String, dynamic>.from(
-                  jsonDecode(group.data as String));
+              dataMap =
+                  Map<String, dynamic>.from(jsonDecode(group.data as String));
             } else {
               dataMap = Map<String, dynamic>.from(group.data as Map);
             }

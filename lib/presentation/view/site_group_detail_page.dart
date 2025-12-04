@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
-import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -18,6 +17,7 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
 
 class SiteGroupDetailPage extends ConsumerStatefulWidget {
   final SiteGroup siteGroup;
@@ -649,228 +649,92 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           ],
 
           // Sites Table Section
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      widget.moduleInfo.module.complement?.configuration?.site
-                              ?.labelList ??
-                          widget.moduleInfo.module.complement?.configuration
-                              ?.site?.label ??
-                          'Sites associés',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    // Afficher le bouton uniquement si is_editable_on_field est true ou absent
-                    Builder(
-                      builder: (context) {
-                        final siteConfig =
-                            module.complement?.configuration?.site;
-                        final isEditable = _isSiteEditableOnField(siteConfig);
-                        debugPrint(
-                            '🎯 Vérification affichage bouton - isEditable: $isEditable');
-                        if (isEditable) {
-                          return Row(
-                            children: [
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _showSearch = !_showSearch;
-                                    debugPrint('🔍 Recherche: $_showSearch');
-                                    if (!_showSearch) {
-                                      _searchQuery = '';
-                                      _searchController.clear();
-                                    }
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.search,
-                                  color: _showSearch
-                                      ? Colors.white
-                                      : AppColors.border,
-                                ),
-                                style: _showSearch
-                                    ? IconButton.styleFrom(
-                                        backgroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      )
-                                    : null,
-                                tooltip: _showSearch
-                                    ? 'Fermer la recherche'
-                                    : 'Rechercher un site',
+          Column(
+            children: [
+              // Barre d'outils avec label, recherche, ajout et tri
+              Builder(
+                builder: (context) {
+                  final siteConfig = module.complement?.configuration?.site;
+                  final isEditable = _isSiteEditableOnField(siteConfig);
+                  Widget? addButton;
+                  if (isEditable) {
+                    addButton = IconButton(
+                      onPressed: () {
+                        if (siteConfig != null) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  SiteFormPageWithTypeSelection(
+                                siteConfig: siteConfig,
+                                customConfig:
+                                    module.complement?.configuration?.custom,
+                                moduleId: module.id,
+                                moduleInfo: widget.moduleInfo,
+                                siteGroup: widget.siteGroup,
                               ),
-                              IconButton(
-                                onPressed: () {
-                                  if (siteConfig != null) {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            SiteFormPageWithTypeSelection(
-                                          siteConfig: siteConfig,
-                                          customConfig: module.complement
-                                              ?.configuration?.custom,
-                                          moduleId: module.id,
-                                          moduleInfo: widget.moduleInfo,
-                                          siteGroup: widget.siteGroup,
-                                        ),
-                                      ),
-                                    );
-                                  } else {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text(
-                                            'Configuration de site non disponible'),
-                                        backgroundColor: Colors.red,
-                                      ),
-                                    );
-                                  }
-                                },
-                                icon: const Icon(Icons.add_circle),
-                                tooltip:
-                                    'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
-                              ),
-                            ],
+                            ),
                           );
                         } else {
-                          return Row(
-                            children: [
-                              const SizedBox(width: 8),
-                              IconButton(
-                                onPressed: () {
-                                  setState(() {
-                                    _showSearch = !_showSearch;
-                                    debugPrint('🔍 Recherche: $_showSearch');
-                                    if (!_showSearch) {
-                                      _searchQuery = '';
-                                      _searchController.clear();
-                                    }
-                                  });
-                                },
-                                icon: Icon(
-                                  Icons.search,
-                                  color: _showSearch
-                                      ? Colors.white
-                                      : Theme.of(context).colorScheme.onSurface,
-                                ),
-                                style: _showSearch
-                                    ? IconButton.styleFrom(
-                                        backgroundColor: Theme.of(context)
-                                            .colorScheme
-                                            .primary,
-                                      )
-                                    : null,
-                                tooltip: _showSearch
-                                    ? 'Fermer la recherche'
-                                    : 'Rechercher un site',
-                              ),
-                            ],
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content:
+                                  Text('Configuration de site non disponible'),
+                              backgroundColor: Colors.red,
+                            ),
                           );
                         }
                       },
-                    ),
-                  ],
-                ),
-                // Bouton pour basculer entre tri par distance et alphabétique
-                if (_userPosition != null)
-                  ActionChip(
-                    label: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _sortByDistance
-                              ? Icons.sort_by_alpha
-                              : Icons.location_on,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          _sortByDistance ? 'Alphabétique' : 'Distance',
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      ],
-                    ),
-                    side: BorderSide.none,
-                    backgroundColor: AppColors.primary,
-                    onPressed: () {
+                      icon: const Icon(Icons.add_circle),
+                      tooltip:
+                          'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                    );
+                  }
+                  return ListToolbarWidget(
+                    label: widget.moduleInfo.module.complement?.configuration
+                            ?.site?.labelList ??
+                        widget.moduleInfo.module.complement?.configuration?.site
+                            ?.label ??
+                        'Sites associés',
+                    showSearch: _showSearch,
+                    searchQuery: _searchQuery,
+                    searchController: _searchController,
+                    onSearchChanged: (value) {
                       setState(() {
-                        _sortByDistance = !_sortByDistance;
+                        _searchQuery = value;
                       });
                     },
-                  ),
-              ],
-            ),
-          ),
-          // Champ de recherche (affiché conditionnellement)
-          if (_showSearch)
-            Container(
-              width: double.infinity,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      autofocus: true,
-                      decoration: InputDecoration(
-                        hintText: 'Rechercher par nom de site...',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: _searchQuery.isNotEmpty
-                            ? IconButton(
-                                icon: const Icon(Icons.clear),
-                                tooltip: 'Effacer la recherche',
-                                onPressed: () {
-                                  setState(() {
-                                    _searchQuery = '';
-                                    _searchController.clear();
-                                  });
-                                },
-                              )
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
-                        filled: true,
-                        fillColor: Theme.of(context).colorScheme.surface,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 12.0,
-                        ),
-                      ),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value.toLowerCase();
-                        });
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () {
+                    onToggleSearch: () {
+                      setState(() {
+                        _showSearch = !_showSearch;
+                        debugPrint('🔍 Recherche: $_showSearch');
+                        if (!_showSearch) {
+                          _searchQuery = '';
+                          _searchController.clear();
+                        }
+                      });
+                    },
+                    onCloseSearch: () {
                       setState(() {
                         _showSearch = false;
                         _searchQuery = '';
                         _searchController.clear();
                       });
                     },
-                    icon: const Icon(Icons.close),
-                    tooltip: 'Fermer la recherche',
-                    style: IconButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.surface,
-                      foregroundColor: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                ],
+                    userPosition: _userPosition,
+                    sortByDistance: _sortByDistance,
+                    onToggleSort: () {
+                      setState(() {
+                        _sortByDistance = !_sortByDistance;
+                      });
+                    },
+                    searchHintText: 'Rechercher par nom de site...',
+                    addButton: addButton,
+                  );
+                },
               ),
-            ),
+            ],
+          ),
           // Sites Expansion Panel List
           Expanded(
             child: sitesState.when(
