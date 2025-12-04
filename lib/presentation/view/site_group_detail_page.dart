@@ -1097,19 +1097,27 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                         }
                       }
 
-                      // Récupérer le premier champ de display_list
+                      // Récupérer le nom du site (base_site_name) depuis display_list ou utiliser le nom par défaut
                       final List<String>? displayProperties =
                           siteConfig?.displayList ??
                               siteConfig?.displayProperties;
 
                       String displayText = site.baseSiteName ?? 'Site sans nom';
 
+                      // Chercher base_site_name dans display_list, peu importe sa position
                       if (displayProperties != null &&
                           displayProperties.isNotEmpty) {
-                        final firstProperty = displayProperties.first;
-                        if (siteData.containsKey(firstProperty)) {
-                          final rawValue = siteData[firstProperty];
+                        if (displayProperties.contains('base_site_name') &&
+                            siteData.containsKey('base_site_name')) {
+                          final rawValue = siteData['base_site_name'];
                           displayText = ValueFormatter.format(rawValue);
+                        } else if (displayProperties.isNotEmpty) {
+                          // Si base_site_name n'est pas dans display_list, utiliser le premier élément
+                          final firstProperty = displayProperties.first;
+                          if (siteData.containsKey(firstProperty)) {
+                            final rawValue = siteData[firstProperty];
+                            displayText = ValueFormatter.format(rawValue);
+                          }
                         }
                       }
 
@@ -1274,12 +1282,12 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           );
         }
 
-        // Exclure le premier item de display_list (déjà affiché dans le title)
-        final propertiesToShow = displayProperties.length > 1
-            ? displayProperties.sublist(1)
-            : <String>[];
+        // Exclure base_site_name (déjà affiché dans le title), peu importe sa position
+        final propertiesToShow = displayProperties.where((key) {
+          return key != 'base_site_name';
+        }).toList();
 
-        // Si plus rien à afficher après exclusion du premier item
+        // Si plus rien à afficher après exclusion de base_site_name
         if (propertiesToShow.isEmpty) {
           return const Padding(
             padding: EdgeInsets.all(16.0),

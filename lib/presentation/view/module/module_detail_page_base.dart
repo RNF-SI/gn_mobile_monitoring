@@ -1643,17 +1643,25 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }
     }
 
-    // Récupérer le premier champ de display_list
+    // Récupérer le nom du groupe (sites_group_name) depuis display_list ou utiliser le nom par défaut
     final List<String>? displayProperties =
         sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
 
     String displayText = group.sitesGroupName ?? 'Groupe sans nom';
 
+    // Chercher sites_group_name dans display_list, peu importe sa position
     if (displayProperties != null && displayProperties.isNotEmpty) {
-      final firstProperty = displayProperties.first;
-      if (groupData.containsKey(firstProperty)) {
-        final rawValue = groupData[firstProperty];
+      if (displayProperties.contains('sites_group_name') &&
+          groupData.containsKey('sites_group_name')) {
+        final rawValue = groupData['sites_group_name'];
         displayText = ValueFormatter.format(rawValue);
+      } else if (displayProperties.isNotEmpty) {
+        // Si sites_group_name n'est pas dans display_list, utiliser le premier élément
+        final firstProperty = displayProperties.first;
+        if (groupData.containsKey(firstProperty)) {
+          final rawValue = groupData[firstProperty];
+          displayText = ValueFormatter.format(rawValue);
+        }
       }
     }
 
@@ -1701,21 +1709,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }
     }
 
-    // Si pas de données, afficher un message
-    if (groupData.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.all(16.0),
-        child: Text(
-          'Aucune information disponible',
-          style: TextStyle(
-            fontSize: 14,
-            fontStyle: FontStyle.italic,
-            color: Colors.grey,
-          ),
-        ),
-      );
-    }
-
     // Déterminer les colonnes à afficher (uniquement display_list)
     List<String>? displayProperties =
         sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
@@ -1735,17 +1728,132 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       );
     }
 
-    // Exclure le premier item de display_list (déjà affiché dans le title)
-    final propertiesToShow = displayProperties.length > 1
-        ? displayProperties.sublist(1)
-        : <String>[];
+    // Vérifier si on a besoin de calculer nb_sites de manière asynchrone
+    // On calcule toujours nb_sites s'il est dans display_list, même s'il est déjà dans groupData
+    // pour s'assurer qu'il est à jour
+    final needsNbSites = displayProperties.contains('nb_sites');
 
-    // Si plus rien à afficher après exclusion du premier item
-    if (propertiesToShow.isEmpty) {
+    debugPrint('🔍 _buildGroupProperties - needsNbSites: $needsNbSites, displayProperties: $displayProperties, groupData keys: ${groupData.keys.toList()}');
+
+    // Si nb_sites est dans display_list, utiliser un FutureBuilder pour le calculer
+    if (needsNbSites && widget.ref != null) {
+      return FutureBuilder<int>(
+        future: _calculateNbSites(group.idSitesGroup),
+        builder: (context, snapshot) {
+          // Ajouter nb_sites aux données si calculé
+          final enrichedGroupData = Map<String, dynamic>.from(groupData);
+          
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Pendant le chargement, on peut afficher les autres propriétés
+            // mais on ajoute quand même nb_sites avec une valeur par défaut pour éviter le filtre
+            enrichedGroupData['nb_sites'] = 0; // Utiliser 0 au lieu de null pour que le filtre le trouve
+            debugPrint('⏳ Calcul de nb_sites en cours...');
+          } else if (snapshot.hasData) {
+            enrichedGroupData['nb_sites'] = snapshot.data;
+            debugPrint('✅ nb_sites calculé: ${snapshot.data}');
+          } else if (snapshot.hasError) {
+            // En cas d'erreur, on met 0 pour éviter que le filtre ne trouve rien
+            enrichedGroupData['nb_sites'] = 0;
+            debugPrint('❌ Erreur lors du calcul de nb_sites: ${snapshot.error}');
+          }
+
+          // Ajouter les autres propriétés calculées si nécessaire
+          final List<String>? displayPropsForEnrichment =
+              sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+          if (displayPropsForEnrichment != null) {
+            for (final property in displayPropsForEnrichment) {
+              if (property != 'nb_sites' && !enrichedGroupData.containsKey(property)) {
+                final value = _getSiteGroupValue(group, property);
+                if (value != null) {
+                  enrichedGroupData[property] = value;
+                }
+              }
+            }
+          }
+
+          debugPrint('📊 enrichedGroupData keys: ${enrichedGroupData.keys.toList()}, nb_sites: ${enrichedGroupData['nb_sites']}');
+
+          return _buildGroupPropertiesContent(
+              enrichedGroupData, displayProperties, parsedGroupConfig);
+        },
+      );
+    }
+
+    // Sinon, enrichir les données de manière synchrone
+    // Mais si nb_sites est nécessaire et qu'on n'a pas de ref, on essaie quand même de le calculer
+    final List<String>? displayPropsForEnrichment =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+    if (displayPropsForEnrichment != null) {
+      for (final property in displayPropsForEnrichment) {
+        if (!groupData.containsKey(property)) {
+          if (property == 'nb_sites' && widget.ref != null) {
+            // Si nb_sites est nécessaire mais qu'on n'est pas passé par le FutureBuilder,
+            // on doit quand même le calculer de manière asynchrone
+            return FutureBuilder<int>(
+              future: _calculateNbSites(group.idSitesGroup),
+              builder: (context, snapshot) {
+                final enrichedGroupData = Map<String, dynamic>.from(groupData);
+                if (snapshot.hasData) {
+                  enrichedGroupData['nb_sites'] = snapshot.data;
+                } else {
+                  enrichedGroupData['nb_sites'] = 0;
+                }
+                // Ajouter les autres propriétés
+                for (final prop in displayPropsForEnrichment) {
+                  if (prop != 'nb_sites' && !enrichedGroupData.containsKey(prop)) {
+                    final value = _getSiteGroupValue(group, prop);
+                    if (value != null) {
+                      enrichedGroupData[prop] = value;
+                    }
+                  }
+                }
+                return _buildGroupPropertiesContent(
+                    enrichedGroupData, displayProperties, parsedGroupConfig);
+              },
+            );
+          } else {
+            final value = _getSiteGroupValue(group, property);
+            if (value != null) {
+              groupData[property] = value;
+            }
+          }
+        }
+      }
+    }
+
+    return _buildGroupPropertiesContent(
+        groupData, displayProperties, parsedGroupConfig);
+  }
+
+  Widget _buildPropertyRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  /// Construit le contenu des propriétés du groupe
+  Widget _buildGroupPropertiesContent(
+    Map<String, dynamic> groupData,
+    List<String> displayProperties,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Si pas de données, afficher un message
+    if (groupData.isEmpty) {
       return const Padding(
         padding: EdgeInsets.all(16.0),
         child: Text(
-          'Aucune information supplémentaire à afficher',
+          'Aucune information disponible',
           style: TextStyle(
             fontSize: 14,
             fontStyle: FontStyle.italic,
@@ -1755,10 +1863,38 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       );
     }
 
+    // Exclure sites_group_name (déjà affiché dans le title), peu importe sa position
+    final propertiesToShow = displayProperties.where((key) {
+      return key != 'sites_group_name';
+    }).toList();
+
     // Filtrer les propriétés meta et ne garder que celles présentes dans les données
     final filteredProperties = propertiesToShow.where((key) {
-      return !key.startsWith('meta_') && groupData.containsKey(key);
+      final hasKey = groupData.containsKey(key);
+      final isMeta = key.startsWith('meta_');
+      final value = groupData[key];
+      debugPrint('🔍 Filtrage propriété $key: hasKey=$hasKey, isMeta=$isMeta, value=$value');
+      return !isMeta && hasKey;
     }).toList();
+
+    debugPrint('📋 propertiesToShow: $propertiesToShow');
+    debugPrint('✅ filteredProperties: $filteredProperties');
+
+    // Si aucune propriété ne correspond après filtrage
+    if (filteredProperties.isEmpty) {
+      debugPrint('⚠️ Aucune propriété après filtrage - groupData: ${groupData.keys.toList()}');
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information à afficher',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -1783,21 +1919,19 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-  Widget _buildPropertyRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(label,
-                style: const TextStyle(fontWeight: FontWeight.w500)),
-          ),
-          Expanded(child: Text(value)),
-        ],
-      ),
-    );
+  /// Calcule le nombre de sites pour un groupe de sites
+  Future<int> _calculateNbSites(int siteGroupId) async {
+    if (widget.ref == null) {
+      return 0;
+    }
+    try {
+      final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      return sites.length;
+    } catch (e) {
+      debugPrint('Erreur lors du calcul de nb_sites pour le groupe $siteGroupId: $e');
+      return 0;
+    }
   }
 
   /// Récupère la valeur d'une propriété d'un groupe pour le tri
