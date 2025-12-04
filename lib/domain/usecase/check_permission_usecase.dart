@@ -1,24 +1,20 @@
 import 'package:gn_mobile_monitoring/domain/repository/permission_repository.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'check_permission_usecase.g.dart';
+class CheckPermissionUseCase {
+  final PermissionRepository _permissionRepository;
 
-@riverpod
-class CheckPermissionUseCase extends _$CheckPermissionUseCase {
-  @override
-  Future<bool> build(
-    int idModule,
-    String objectCode,
-    String actionCode,
-  ) async {
-    final permissionRepo = ref.read(permissionRepositoryProvider);
-    
+  CheckPermissionUseCase(this._permissionRepository);
+
+  Future<bool> execute({
+    required int idModule,
+    required String objectCode,
+    required String actionCode,
+  }) async {
     // Récupérer l'utilisateur actuel
-    final currentUser = await permissionRepo.getCurrentUser();
+    final currentUser = await _permissionRepository.getCurrentUser();
     if (currentUser == null) return false;
     
-    return permissionRepo.hasPermission(
+    return _permissionRepository.hasPermission(
       currentUser.idRole,
       idModule,
       objectCode,

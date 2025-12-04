@@ -17608,8 +17608,9 @@ final class $$TBaseVisitsTableReferences
 
   $$CorVisitObserverTableProcessedTableManager get corVisitObserverRefs {
     final manager =
-        $$CorVisitObserverTableTableManager($_db, $_db.corVisitObserver)
-            .filter((f) => f.idBaseVisit.idBaseVisit($_item.idBaseVisit));
+        $$CorVisitObserverTableTableManager($_db, $_db.corVisitObserver).filter(
+            (f) => f.idBaseVisit.idBaseVisit
+                .sqlEquals($_itemColumn<int>('id_base_visit')!));
 
     final cache =
         $_typedResult.readTableOrNull(_corVisitObserverRefsTable($_db));
@@ -17938,7 +17939,8 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (corVisitObserverRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<TBaseVisit, $TBaseVisitsTable,
+                            CorVisitObserverData>(
                         currentTable: table,
                         referencedTable: $$TBaseVisitsTableReferences
                             ._corVisitObserverRefsTable(db),
@@ -17993,8 +17995,10 @@ final class $$CorVisitObserverTableReferences extends BaseReferences<
           db.corVisitObserver.idBaseVisit, db.tBaseVisits.idBaseVisit));
 
   $$TBaseVisitsTableProcessedTableManager get idBaseVisit {
+    final $_column = $_itemColumn<int>('id_base_visit')!;
+
     final manager = $$TBaseVisitsTableTableManager($_db, $_db.tBaseVisits)
-        .filter((f) => f.idBaseVisit($_item.idBaseVisit));
+        .filter((f) => f.idBaseVisit.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_idBaseVisitTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18548,9 +18552,9 @@ final class $$TTaxrefsTableReferences
                   db.tTaxrefs.cdNom, db.corTaxonListeTable.cdNom));
 
   $$CorTaxonListeTableTableProcessedTableManager get corTaxonListeTableRefs {
-    final manager =
-        $$CorTaxonListeTableTableTableManager($_db, $_db.corTaxonListeTable)
-            .filter((f) => f.cdNom.cdNom($_item.cdNom));
+    final manager = $$CorTaxonListeTableTableTableManager(
+            $_db, $_db.corTaxonListeTable)
+        .filter((f) => f.cdNom.cdNom.sqlEquals($_itemColumn<int>('cd_nom')!));
 
     final cache =
         $_typedResult.readTableOrNull(_corTaxonListeTableRefsTable($_db));
@@ -19003,7 +19007,8 @@ class $$TTaxrefsTableTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (corTaxonListeTableRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<TTaxref, $TTaxrefsTable,
+                            CorTaxonListe>(
                         currentTable: table,
                         referencedTable: $$TTaxrefsTableReferences
                             ._corTaxonListeTableRefsTable(db),
@@ -19064,9 +19069,10 @@ final class $$BibListesTableTableReferences
                   db.bibListesTable.idListe, db.corTaxonListeTable.idListe));
 
   $$CorTaxonListeTableTableProcessedTableManager get corTaxonListeTableRefs {
-    final manager =
-        $$CorTaxonListeTableTableTableManager($_db, $_db.corTaxonListeTable)
-            .filter((f) => f.idListe.idListe($_item.idListe));
+    final manager = $$CorTaxonListeTableTableTableManager(
+            $_db, $_db.corTaxonListeTable)
+        .filter(
+            (f) => f.idListe.idListe.sqlEquals($_itemColumn<int>('id_liste')!));
 
     final cache =
         $_typedResult.readTableOrNull(_corTaxonListeTableRefsTable($_db));
@@ -19273,7 +19279,8 @@ class $$BibListesTableTableTableManager extends RootTableManager<
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (corTaxonListeTableRefs)
-                    await $_getPrefetchedData(
+                    await $_getPrefetchedData<TBibListe, $BibListesTableTable,
+                            CorTaxonListe>(
                         currentTable: table,
                         referencedTable: $$BibListesTableTableReferences
                             ._corTaxonListeTableRefsTable(db),
@@ -19326,8 +19333,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
           db.corTaxonListeTable.idListe, db.bibListesTable.idListe));
 
   $$BibListesTableTableProcessedTableManager get idListe {
+    final $_column = $_itemColumn<int>('id_liste')!;
+
     final manager = $$BibListesTableTableTableManager($_db, $_db.bibListesTable)
-        .filter((f) => f.idListe($_item.idListe));
+        .filter((f) => f.idListe.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_idListeTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -19339,8 +19348,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
           $_aliasNameGenerator(db.corTaxonListeTable.cdNom, db.tTaxrefs.cdNom));
 
   $$TTaxrefsTableProcessedTableManager get cdNom {
+    final $_column = $_itemColumn<int>('cd_nom')!;
+
     final manager = $$TTaxrefsTableTableManager($_db, $_db.tTaxrefs)
-        .filter((f) => f.cdNom($_item.cdNom));
+        .filter((f) => f.cdNom.sqlEquals($_column));
     final item = $_typedResult.readTableOrNull(_cdNomTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(

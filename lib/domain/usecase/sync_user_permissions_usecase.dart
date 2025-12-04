@@ -3,19 +3,16 @@ import 'package:gn_mobile_monitoring/domain/model/cruved_response.dart';
 import 'package:gn_mobile_monitoring/domain/repository/permission_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/permission_repository.dart';
 import 'package:gn_mobile_monitoring/core/constants/permission_constants.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
 
-part 'sync_user_permissions_usecase.g.dart';
+class SyncUserPermissionsUseCase {
+  final PermissionSyncRepository _syncRepository;
+  final PermissionRepository _permissionRepository;
 
-@riverpod
-class SyncUserPermissionsUseCase extends _$SyncUserPermissionsUseCase {
-  @override
-  Future<bool> build() async => false;
+  SyncUserPermissionsUseCase(this._syncRepository, this._permissionRepository);
   
   /// Synchronise les permissions de l'utilisateur depuis l'API
   /// À appeler lors du login ou du changement d'utilisateur
-  Future<UserPermissions?> syncPermissions({
+  Future<UserPermissions?> execute({
     required String baseUrl,
     required String authToken,
     required int idRole,
@@ -23,18 +20,16 @@ class SyncUserPermissionsUseCase extends _$SyncUserPermissionsUseCase {
     int? idOrganisme,
   }) async {
     try {
-      final syncRepo = ref.read(permissionSyncRepositoryProvider);
-      final permissionRepo = ref.read(permissionRepositoryProvider);
       
       // Récupérer les permissions pour chaque objet du monitoring
       // Basé sur les patterns du monitoring web
       final futures = await Future.wait([
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_MODULES'),
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_SITES'),
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_GRP_SITES'),
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_VISITES'),
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_INDIVIDUALS'),
-        _getPermissionsForObject(syncRepo, baseUrl, authToken, 'MONITORINGS_MARKINGS'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_MODULES'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_SITES'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_GRP_SITES'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_VISITES'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_INDIVIDUALS'),
+        _getPermissionsForObject(_syncRepository, baseUrl, authToken, 'MONITORINGS_MARKINGS'),
       ]);
       
       final userPermissions = UserPermissions(

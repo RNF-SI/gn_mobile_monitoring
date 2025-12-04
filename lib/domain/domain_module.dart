@@ -104,6 +104,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_current_user_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_permissions_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_user_permissions_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/check_permission_usecase.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -442,4 +446,30 @@ final permissionRepositoryProvider = Provider<PermissionRepository>(
 
 final permissionSyncRepositoryProvider = Provider<PermissionSyncRepository>(
   (ref) => ref.watch(data_module.permissionSyncRepositoryProvider),
+);
+
+// Permission use cases
+final getCurrentUserUseCaseProvider = Provider<GetCurrentUserUseCase>(
+  (ref) => GetCurrentUserUseCase(
+    ref.watch(permissionRepositoryProvider),
+  ),
+);
+
+final getUserPermissionsUseCaseProvider = Provider<GetUserPermissionsUseCase>(
+  (ref) => GetUserPermissionsUseCase(
+    ref.watch(permissionRepositoryProvider),
+  ),
+);
+
+final syncUserPermissionsUseCaseProvider = Provider<SyncUserPermissionsUseCase>(
+  (ref) => SyncUserPermissionsUseCase(
+    ref.watch(permissionSyncRepositoryProvider),
+    ref.watch(permissionRepositoryProvider),
+  ),
+);
+
+final checkPermissionUseCaseProvider = Provider<CheckPermissionUseCase>(
+  (ref) => CheckPermissionUseCase(
+    ref.watch(permissionRepositoryProvider),
+  ),
 );

@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/cruved_response.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_user_permissions_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 
 /// Exemples simples d'utilisation des permissions dans l'interface
 class SimplePermissionsExamples extends ConsumerWidget {
@@ -121,7 +121,13 @@ class SimplePermissionsExamples extends ConsumerWidget {
   
   /// Exemple 2: Utiliser les permissions globales de l'utilisateur
   Widget _buildUserPermissionsExample(WidgetRef ref) {
-    final userPermissionsAsync = ref.watch(getUserPermissionsUseCaseProvider);
+    // Créer un FutureProvider local pour récupérer les permissions
+    final userPermissionsProvider = FutureProvider<UserPermissions?>((ref) async {
+      final useCase = ref.read(getUserPermissionsUseCaseProvider);
+      return useCase.execute();
+    });
+    
+    final userPermissionsAsync = ref.watch(userPermissionsProvider);
     
     return Card(
       child: Padding(

@@ -37,6 +37,7 @@ mixin _$Module {
   ModuleComplement? get complement => throw _privateConstructorUsedError;
   List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
   List<BaseSite>? get sites => throw _privateConstructorUsedError;
+  CruvedResponse? get cruved => throw _privateConstructorUsedError;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.
@@ -70,9 +71,11 @@ abstract class $ModuleCopyWith<$Res> {
       bool? downloaded,
       ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
+      List<BaseSite>? sites,
+      CruvedResponse? cruved});
 
   $ModuleComplementCopyWith<$Res>? get complement;
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -111,6 +114,7 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
     Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
+    Object? cruved = freezed,
   }) {
     return _then(_value.copyWith(
       id: null == id
@@ -197,6 +201,10 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
           ? _value.sites
           : sites // ignore: cast_nullable_to_non_nullable
               as List<BaseSite>?,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ) as $Val);
   }
 
@@ -211,6 +219,20 @@ class _$ModuleCopyWithImpl<$Res, $Val extends Module>
 
     return $ModuleComplementCopyWith<$Res>(_value.complement!, (value) {
       return _then(_value.copyWith(complement: value) as $Val);
+    });
+  }
+
+  /// Create a copy of Module
+  /// with the given fields replaced by the non-null parameter values.
+  @override
+  @pragma('vm:prefer-inline')
+  $CruvedResponseCopyWith<$Res>? get cruved {
+    if (_value.cruved == null) {
+      return null;
+    }
+
+    return $CruvedResponseCopyWith<$Res>(_value.cruved!, (value) {
+      return _then(_value.copyWith(cruved: value) as $Val);
     });
   }
 }
@@ -243,10 +265,13 @@ abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
       bool? downloaded,
       ModuleComplement? complement,
       List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
+      List<BaseSite>? sites,
+      CruvedResponse? cruved});
 
   @override
   $ModuleComplementCopyWith<$Res>? get complement;
+  @override
+  $CruvedResponseCopyWith<$Res>? get cruved;
 }
 
 /// @nodoc
@@ -283,6 +308,7 @@ class __$$ModuleImplCopyWithImpl<$Res>
     Object? complement = freezed,
     Object? sitesGroup = freezed,
     Object? sites = freezed,
+    Object? cruved = freezed,
   }) {
     return _then(_$ModuleImpl(
       id: null == id
@@ -369,13 +395,17 @@ class __$$ModuleImplCopyWithImpl<$Res>
           ? _value._sites
           : sites // ignore: cast_nullable_to_non_nullable
               as List<BaseSite>?,
+      cruved: freezed == cruved
+          ? _value.cruved
+          : cruved // ignore: cast_nullable_to_non_nullable
+              as CruvedResponse?,
     ));
   }
 }
 
 /// @nodoc
 
-class _$ModuleImpl implements _Module {
+class _$ModuleImpl extends _Module {
   const _$ModuleImpl(
       {required this.id,
       this.moduleCode,
@@ -397,9 +427,11 @@ class _$ModuleImpl implements _Module {
       this.downloaded,
       this.complement,
       final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites})
+      final List<BaseSite>? sites,
+      this.cruved})
       : _sitesGroup = sitesGroup,
-        _sites = sites;
+        _sites = sites,
+        super._();
 
   @override
   final int id;
@@ -460,8 +492,11 @@ class _$ModuleImpl implements _Module {
   }
 
   @override
+  final CruvedResponse? cruved;
+
+  @override
   String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
+    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites, cruved: $cruved)';
   }
 
   @override
@@ -508,7 +543,8 @@ class _$ModuleImpl implements _Module {
                 other.complement == complement) &&
             const DeepCollectionEquality()
                 .equals(other._sitesGroup, _sitesGroup) &&
-            const DeepCollectionEquality().equals(other._sites, _sites));
+            const DeepCollectionEquality().equals(other._sites, _sites) &&
+            (identical(other.cruved, cruved) || other.cruved == cruved));
   }
 
   @override
@@ -534,7 +570,8 @@ class _$ModuleImpl implements _Module {
         downloaded,
         complement,
         const DeepCollectionEquality().hash(_sitesGroup),
-        const DeepCollectionEquality().hash(_sites)
+        const DeepCollectionEquality().hash(_sites),
+        cruved
       ]);
 
   /// Create a copy of Module
@@ -546,7 +583,7 @@ class _$ModuleImpl implements _Module {
       __$$ModuleImplCopyWithImpl<_$ModuleImpl>(this, _$identity);
 }
 
-abstract class _Module implements Module {
+abstract class _Module extends Module {
   const factory _Module(
       {required final int id,
       final String? moduleCode,
@@ -568,7 +605,9 @@ abstract class _Module implements Module {
       final bool? downloaded,
       final ModuleComplement? complement,
       final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites}) = _$ModuleImpl;
+      final List<BaseSite>? sites,
+      final CruvedResponse? cruved}) = _$ModuleImpl;
+  const _Module._() : super._();
 
   @override
   int get id;
@@ -612,6 +651,8 @@ abstract class _Module implements Module {
   List<SiteGroup>? get sitesGroup;
   @override
   List<BaseSite>? get sites;
+  @override
+  CruvedResponse? get cruved;
 
   /// Create a copy of Module
   /// with the given fields replaced by the non-null parameter values.
