@@ -28,6 +28,7 @@ mixin _$BaseSite {
   int? get altitudeMax => throw _privateConstructorUsedError;
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $BaseSiteCopyWith<BaseSite> get copyWith =>
@@ -50,7 +51,8 @@ abstract class $BaseSiteCopyWith<$Res> {
       int? altitudeMin,
       int? altitudeMax,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -77,6 +79,7 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? altitudeMax = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? data = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseSite: null == idBaseSite
@@ -123,6 +126,10 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ) as $Val);
   }
 }
@@ -146,7 +153,8 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       int? altitudeMin,
       int? altitudeMax,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      Map<String, dynamic>? data});
 }
 
 /// @nodoc
@@ -171,6 +179,7 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? altitudeMax = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? data = freezed,
   }) {
     return _then(_$BaseSiteImpl(
       idBaseSite: null == idBaseSite
@@ -217,6 +226,10 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      data: freezed == data
+          ? _value._data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
     ));
   }
 }
@@ -235,7 +248,9 @@ class _$BaseSiteImpl implements _BaseSite {
       this.altitudeMin,
       this.altitudeMax,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      final Map<String, dynamic>? data})
+      : _data = data;
 
   @override
   final int idBaseSite;
@@ -260,10 +275,19 @@ class _$BaseSiteImpl implements _BaseSite {
   final DateTime? metaCreateDate;
   @override
   final DateTime? metaUpdateDate;
+  final Map<String, dynamic>? _data;
+  @override
+  Map<String, dynamic>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
 
   @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
   }
 
   @override
@@ -291,7 +315,8 @@ class _$BaseSiteImpl implements _BaseSite {
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            const DeepCollectionEquality().equals(other._data, _data));
   }
 
   @override
@@ -307,7 +332,8 @@ class _$BaseSiteImpl implements _BaseSite {
       altitudeMin,
       altitudeMax,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      const DeepCollectionEquality().hash(_data));
 
   @JsonKey(ignore: true)
   @override
@@ -328,7 +354,8 @@ abstract class _BaseSite implements BaseSite {
       final int? altitudeMin,
       final int? altitudeMax,
       final DateTime? metaCreateDate,
-      final DateTime? metaUpdateDate}) = _$BaseSiteImpl;
+      final DateTime? metaUpdateDate,
+      final Map<String, dynamic>? data}) = _$BaseSiteImpl;
 
   @override
   int get idBaseSite;
@@ -352,6 +379,8 @@ abstract class _BaseSite implements BaseSite {
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
+  @override
+  Map<String, dynamic>? get data;
   @override
   @JsonKey(ignore: true)
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>

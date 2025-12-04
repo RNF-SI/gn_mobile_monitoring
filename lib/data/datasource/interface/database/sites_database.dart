@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
@@ -65,6 +66,9 @@ abstract class SitesDatabase {
   /// Insert a single site-module relationship
   Future<void> insertSiteModule(SiteModule siteModule);
   
+  /// Get a site by its ID
+  Future<BaseSiteEntity?> getSiteEntityById(int siteId);
+
   /// Get a site by its ID
   Future<BaseSite?> getSiteById(int siteId);
 

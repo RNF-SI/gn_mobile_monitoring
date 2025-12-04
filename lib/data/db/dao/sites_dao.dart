@@ -35,14 +35,36 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     final dbSites = await select(tBaseSites).get();
     return dbSites.map((e) => e.toDomain()).toList();
   }
-  
   // Get site by ID
-  Future<BaseSite?> getSiteById(int siteId) async {
+  Future<BaseSite?> getSitesById(int siteId) async {
     final query = select(tBaseSites)
       ..where((tbl) => tbl.idBaseSite.equals(siteId));
     final result = await query.getSingleOrNull();
     if (result == null) return null;
     return result.toDomain();
+  }
+  
+  // Get site table by ID
+  Future<TBaseSite?> getSiteById(int siteId) async {
+     return await (select(tBaseSites)
+          ..where((tbl) => tbl.idBaseSite.equals(siteId)))
+        .getSingleOrNull();
+  }
+
+  // Get site entity by ID
+  Future<TBaseSite?> getSiteEntityById(int siteId) async {
+     return await (select(tBaseSites)
+          ..where((tbl) => tbl.idBaseSite.equals(siteId)))
+        .getSingleOrNull();
+  }
+
+
+    /// Récupère les données complémentaires d'un site
+  Future<TSiteComplement?> getSiteComplementById(
+      int siteId) async {
+    return await (select(tSiteComplements)
+          ..where((tbl) => tbl.idBaseSite.equals(siteId)))
+        .getSingleOrNull();
   }
 
   // Insert multiple sites
@@ -104,6 +126,23 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
       throw Exception("Failed to clear site complements: ${e.toString()}");
     }
   }
+
+  /// Récupère un site avec ses données complémentaires
+  Future<Map<String, dynamic>> getSiteWithComplement(
+      int siteId) async {
+    final site = await getSiteById(siteId);
+    if (site == null) {
+      throw Exception('Site not found');
+    }
+
+    final complement = await getSiteComplementById(siteId);
+
+    return {
+      'observation': site,
+      'complement': complement,
+    };
+  }
+  
   
   // Delete a site complement
   Future<void> deleteSiteComplement(int siteId) async {

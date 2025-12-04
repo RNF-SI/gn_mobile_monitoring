@@ -6,23 +6,24 @@
 import 'dart:async' as _i5;
 
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart'
-    as _i12;
+    as _i13;
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart'
     as _i6;
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart'
     as _i4;
 import 'package:gn_mobile_monitoring/data/db/database.dart' as _i2;
+import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart' as _i12;
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i7;
 import 'package:gn_mobile_monitoring/domain/model/module.dart' as _i3;
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart'
-    as _i14;
+    as _i15;
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart' as _i8;
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart' as _i9;
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart' as _i11;
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart'
     as _i10;
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:mockito/src/dummies.dart' as _i13;
+import 'package:mockito/src/dummies.dart' as _i14;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -745,14 +746,15 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<void>);
 
   @override
-  _i5.Future<_i7.BaseSite?> getSiteById(int? siteId) => (super.noSuchMethod(
+  _i5.Future<_i12.BaseSiteEntity?> getSiteById(int? siteId) =>
+      (super.noSuchMethod(
         Invocation.method(
           #getSiteById,
           [siteId],
         ),
-        returnValue: _i5.Future<_i7.BaseSite?>.value(),
-        returnValueForMissingStub: _i5.Future<_i7.BaseSite?>.value(),
-      ) as _i5.Future<_i7.BaseSite?>);
+        returnValue: _i5.Future<_i12.BaseSiteEntity?>.value(),
+        returnValueForMissingStub: _i5.Future<_i12.BaseSiteEntity?>.value(),
+      ) as _i5.Future<_i12.BaseSiteEntity?>);
 
   @override
   _i5.Future<_i9.SiteGroup?> getSiteGroupById(int? siteGroupId) =>
@@ -769,7 +771,7 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
 /// A class which mocks [ModulesDatabase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
+class MockModulesDatabase extends _i1.Mock implements _i13.ModulesDatabase {
   @override
   _i5.Future<void> clearModules() => (super.noSuchMethod(
         Invocation.method(
@@ -819,7 +821,7 @@ class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
           #getModuleCodeFromIdModule,
           [moduleId],
         ),
-        returnValue: _i5.Future<String>.value(_i13.dummyValue<String>(
+        returnValue: _i5.Future<String>.value(_i14.dummyValue<String>(
           this,
           Invocation.method(
             #getModuleCodeFromIdModule,
@@ -827,7 +829,7 @@ class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
           ),
         )),
         returnValueForMissingStub:
-            _i5.Future<String>.value(_i13.dummyValue<String>(
+            _i5.Future<String>.value(_i14.dummyValue<String>(
           this,
           Invocation.method(
             #getModuleCodeFromIdModule,
@@ -848,7 +850,7 @@ class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
 
   @override
   _i5.Future<void> insertModuleComplements(
-          List<_i14.ModuleComplement>? moduleComplements) =>
+          List<_i15.ModuleComplement>? moduleComplements) =>
       (super.noSuchMethod(
         Invocation.method(
           #insertModuleComplements,
@@ -859,45 +861,45 @@ class MockModulesDatabase extends _i1.Mock implements _i12.ModulesDatabase {
       ) as _i5.Future<void>);
 
   @override
-  _i5.Future<_i14.ModuleComplement?> getModuleComplementById(int? moduleId) =>
+  _i5.Future<_i15.ModuleComplement?> getModuleComplementById(int? moduleId) =>
       (super.noSuchMethod(
         Invocation.method(
           #getModuleComplementById,
           [moduleId],
         ),
-        returnValue: _i5.Future<_i14.ModuleComplement?>.value(),
-        returnValueForMissingStub: _i5.Future<_i14.ModuleComplement?>.value(),
-      ) as _i5.Future<_i14.ModuleComplement?>);
+        returnValue: _i5.Future<_i15.ModuleComplement?>.value(),
+        returnValueForMissingStub: _i5.Future<_i15.ModuleComplement?>.value(),
+      ) as _i5.Future<_i15.ModuleComplement?>);
 
   @override
-  _i5.Future<_i14.ModuleComplement?> getModuleComplementByModuleCode(
+  _i5.Future<_i15.ModuleComplement?> getModuleComplementByModuleCode(
           String? moduleCode) =>
       (super.noSuchMethod(
         Invocation.method(
           #getModuleComplementByModuleCode,
           [moduleCode],
         ),
-        returnValue: _i5.Future<_i14.ModuleComplement?>.value(),
-        returnValueForMissingStub: _i5.Future<_i14.ModuleComplement?>.value(),
-      ) as _i5.Future<_i14.ModuleComplement?>);
+        returnValue: _i5.Future<_i15.ModuleComplement?>.value(),
+        returnValueForMissingStub: _i5.Future<_i15.ModuleComplement?>.value(),
+      ) as _i5.Future<_i15.ModuleComplement?>);
 
   @override
-  _i5.Future<List<_i14.ModuleComplement>> getAllModuleComplements() =>
+  _i5.Future<List<_i15.ModuleComplement>> getAllModuleComplements() =>
       (super.noSuchMethod(
         Invocation.method(
           #getAllModuleComplements,
           [],
         ),
-        returnValue: _i5.Future<List<_i14.ModuleComplement>>.value(
-            <_i14.ModuleComplement>[]),
+        returnValue: _i5.Future<List<_i15.ModuleComplement>>.value(
+            <_i15.ModuleComplement>[]),
         returnValueForMissingStub:
-            _i5.Future<List<_i14.ModuleComplement>>.value(
-                <_i14.ModuleComplement>[]),
-      ) as _i5.Future<List<_i14.ModuleComplement>>);
+            _i5.Future<List<_i15.ModuleComplement>>.value(
+                <_i15.ModuleComplement>[]),
+      ) as _i5.Future<List<_i15.ModuleComplement>>);
 
   @override
   _i5.Future<void> updateModuleComplement(
-          _i14.ModuleComplement? moduleComplement) =>
+          _i15.ModuleComplement? moduleComplement) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateModuleComplement,

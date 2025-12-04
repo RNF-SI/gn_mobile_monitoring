@@ -41,6 +41,7 @@ class ModuleDetailViewModelState {
       errorMessage: message,
     );
   }
+
 }
 
 // ViewModel pour la page de détail du module
