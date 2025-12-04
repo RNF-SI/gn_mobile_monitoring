@@ -13,92 +13,127 @@ import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.da
 class IndividualsRepositoryImpl implements IndividualsRepository {
   final IndividualsApi api;
   final ModulesDatabase modulesDatabase;
-  final IndividualsDatabase _individualsDatabase;
+  final IndividualsDatabase database;
 
   IndividualsRepositoryImpl(
-      this.api, this.modulesDatabase, this._individualsDatabase);
+      this.api, this.modulesDatabase, this.database);
 
-  // @override
-  // Future<void> fetchAllIndividuals(String token) async {
-  //   try {
-  //     final individualsEntities = await api.fetchAllIndividuals(token);
-  //     final List<Map<String, dynamic>> enrichedIndividuals =
-  //             (individualsEntities as List).cast<Map<String, dynamic>>();
 
-  //         for (final individualJson in enrichedIndividuals) {
-  //           final individual = IndividualEntity.fromJson(individualJson);
-  //           final domainIndividual = individual.toDomain();
+  @override
+  Future<void> fetchIndividualsAndIndividualModules(String token) async {
+    try {
+      // Récupérer uniquement les modules téléchargés
+      final modules = await modulesDatabase.getDownloadedModules();
 
-  //           final existingIndividual =
-  //           await _individualsDatabase.getIndividualById(domainIndividual.idIndividual);
+      if (modules.isEmpty) {
+        print(
+            'Aucun module téléchargé trouvé, récupération des groupes de sites ignorée');
+        return;
+      }
 
-  //           if (existingIndividual == null) {
-  //             await _individualsDatabase.insertIndividuals([domainIndividual]);
-  //           } else {
-  //             await _individualsDatabase.updateIndividual(domainIndividual);
-  //           }
-  //         }
-  //         print('Fetched ${enrichedIndividuals.length} individuals');
-  //           } catch (error) {
-  //         print('Error fetching individuals: $error');
-  //         throw Exception('Failed to fetch individuals');
-  //           }
-  // }
+      // Maps to store unique site groups and the relationships to modules
+      final Map<int, Individual> uniqueIndividuals = {};
+      final List<IndividualModule> individualModules = [];
 
-  // // @override
-  // // Future<void> fetchIndividualsForModule(String moduleCode, String token) async {
-  // //   try {
-  // //     // Récupérer le module par son code
-  // //     final module = await modulesDatabase.getModuleByCode(moduleCode);
-  // //     if (module == null) {
-  // //       throw Exception('Module $moduleCode not found');
-  // //     }
+      // Pour chaque module téléchargé, récupérer ses groupes de sites
+      print(
+          'Récupération des groupes de sites pour ${modules.length} modules téléchargés');
+      for (final module in modules) {
+        if (module.moduleCode == null) continue;
 
-  // //     // Récupérer les individuals enrichis pour ce module
-  // //     final enrichedData =
-  // //         await api.fetchEnrichedIndividualsForModule(moduleCode, token);
+        try {
+          // Fetch site groups for this module using the new method
+          final individuals =
+              await api.fetchEnrichedIndividualsForModule(module.moduleCode!, token);
 
-  // //     final List<Map<String, dynamic>> enrichedIndividuals =
-  // //         (enrichedData['enriched_individuals'] as List).cast<Map<String, dynamic>>();
+          // Add site groups to our map and create site-group-module relationships
+          for (final individual in individuals) {
+            final domainIndividual = individual.individual.toDomain();
+            uniqueIndividuals[domainIndividual.idIndividual] = domainIndividual;
 
-  // //     // Traiter les individuals
-  // //     for (final individualJson in enrichedIndividuals) {
-  // //       final individual = IndividualEntity.fromJson(individualJson);
-  // //       final domainIndividual = individual.toDomain();
+            // Create site-group-module relationship
+            individualModules.add(IndividualModule(
+              idIndividual: domainIndividual.idIndividual,
+              idModule: module.id,
+            ));
+          }
+        } catch (e) {
+          print(
+              'Error fetching site groups for module ${module.moduleCode}: $e');
+          // Continue with next module instead of failing completely
+          continue;
+        }
+      }
 
-  // //       // Vérifier si le individual existe déjà
-  // //       final existingIndividual = await _individualsDatabase.getIndividualById(domainIndividual.idIndividual);
+      // Save unique site groups to database
+      await database.clearIndividuals();
+      await database.insertIndividuals(uniqueIndividuals.values.toList());
 
-  // //       if (existingIndividual == null) {
-  // //         // Le individual n'existe pas, l'ajouter
-  // //         await _individualsDatabase.insertIndividuals([domainIndividual]);
-  // //       } else {
-  // //         // Le individual existe, le mettre à jour
-  // //         await _individualsDatabase.updateIndividual(domainIndividual);
-  // //       }
+      // Save site-group-module relationships
+      await database.clearAllIndividualModules();
+      await database.insertIndividualModules(individualModules);
+    } catch (error) {
+      print('Error fetching site groups: $error');
+      throw Exception('Failed to fetch site groups');
+    }
+  }
 
-  // //       // Créer la relation individual-module (même si elle existe déjà, ça ne fait pas de doublon)
-  // //       await _individualsDatabase.insertIndividualModule(IndividualModule(
-  // //         idIndividual: domainIndividual.idIndividual,
-  // //         idModule: module.id,
-  // //       ));
-  // //     }
-  // //     print('Fetched ${enrichedIndividuals.length} individuals for module $moduleCode');
-  // //   } catch (error) {
-  // //     print('Error fetching individuals for module $moduleCode: $error');
-  // //     throw Exception('Failed to fetch individuals for module $moduleCode');
-  // //   }
-  // // }
+  @override
+  Future<List<Individual>> getIndividuals() async {
+    try {
+      final groups = await database.getAllIndividuals();
+      return groups;
+    } catch (error) {
+      print('Error getting site groups: $error');
+      throw Exception('Failed to get site groups');
+    }
+  }
 
-  // @override
-  // Future<Individual?> getIndividualById(int individualId) async {
-  //   final entity =
-  //       await _individualsDatabase.getIndividualById(individualId);
-  //   return entity;
-  // }
+  @override
+  Future<void> fetchIndividualsForModule(String moduleCode, String token) async {
+    try {
+      // Récupérer le module par son code
+      final module = await modulesDatabase.getModuleByCode(moduleCode);
+      if (module == null) {
+        throw Exception('Module $moduleCode not found');
+      }
 
-  // @override
-  // Future<bool> updateIndividualServerId(int localIndividualId, int serverIndividualId) async {
-  //   return await _individualsDatabase.updateIndividualServerId(localIndividualId, serverIndividualId);
-  // }
+      // Récupérer les groupes de sites pour ce module
+      final individuals = await api.fetchEnrichedIndividualsForModule(moduleCode, token);
+
+      for (final individual in individuals) {
+        final domainIndividual = individual.individual.toDomain();
+
+        // Vérifier si le groupe existe déjà
+        final existingGroups = await database.getAllIndividuals();
+        final existingGroup = existingGroups.firstWhere(
+          (g) => g.idIndividual == domainIndividual.idIndividual,
+          orElse: () => const Individual(
+            idIndividual: -1,
+          ),
+        );
+
+        if (existingGroup.idIndividual == -1) {
+          // Le groupe n'existe pas, l'ajouter
+          await database.insertIndividuals([domainIndividual]);
+        } else {
+          // Le groupe existe, le mettre à jour
+          await database.updateIndividual(domainIndividual);
+        }
+
+        // Créer la relation groupe-module
+        await database.insertIndividualModules([
+          IndividualModule(
+            idIndividual: domainIndividual.idIndividual,
+            idModule: module.id,
+          )
+        ]);
+      }
+
+      print('Fetched ${individuals.length} site groups for module $moduleCode');
+    } catch (error) {
+      print('Error fetching site groups for module $moduleCode: $error');
+      throw Exception('Failed to fetch site groups for module $moduleCode');
+    }
+  }
 }

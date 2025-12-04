@@ -1,17 +1,17 @@
-import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/fetch_individuals_usecase.dart';
 
-class FetchSiteGroupsUseCaseImpl implements FetchSiteGroupsUseCase {
-  final SitesRepository _sitesRepository;
+class FetchindividualsUseCaseImpl implements FetchIndividualsUseCase {
+  final IndividualsRepository _individualsRepository;
 
-  const FetchSiteGroupsUseCaseImpl(this._sitesRepository);
+  const FetchindividualsUseCaseImpl(this._individualsRepository);
 
   @override
   Future<void> execute(String token) async {
     try {
-      await _sitesRepository.fetchSiteGroupsAndSitesGroupModules(token);
+      await _individualsRepository.fetchIndividualsAndIndividualModules(token);
     } catch (e) {
-      print('Error in FetchSiteGroupsUseCase: $e');
+      print('Error in FetchindividualsUseCase: $e');
       rethrow;
     }
   }
