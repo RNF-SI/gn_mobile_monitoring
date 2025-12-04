@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_distance_viewmodel.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
@@ -312,6 +313,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   Position? _userPosition;
   bool _sortGroupsByDistance =
       true; // true = par distance, false = alphabétique
+
+  // Cache des distances pour éviter les recalculs
+  final Map<int, double?> _distanceCache = {};
+  Position? _lastCachePosition;
 
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
@@ -918,14 +923,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         _filteredSiteGroups.whereType<SiteGroup>().toList();
 
     // Charger les groupes depuis la base de données pour avoir la géométrie
-    return FutureBuilder<List<SiteGroup>>(
-      future: _loadGroupsWithGeometry(groupsFromModule),
-      builder: (context, snapshot) {
-        // Utiliser les groupes de la base de données si disponibles, sinon ceux du module
-        final List<SiteGroup> groups =
-            snapshot.hasData && snapshot.data!.isNotEmpty
-                ? snapshot.data!
-                : groupsFromModule;
+    return Consumer(
+      builder: (context, ref, child) {
+        return FutureBuilder<List<SiteGroup>>(
+          future: _loadGroupsWithGeometry(groupsFromModule),
+          builder: (context, snapshot) {
+            // Utiliser les groupes de la base de données si disponibles, sinon ceux du module
+            final List<SiteGroup> groups =
+                snapshot.hasData && snapshot.data!.isNotEmpty
+                    ? snapshot.data!
+                    : groupsFromModule;
+
+            // Calculer les distances quand les groupes avec géométrie sont chargés
+            if (snapshot.hasData && snapshot.data!.isNotEmpty && _userPosition != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  final distanceViewModel = ref.read(siteGroupDistanceViewModelProvider.notifier);
+                  distanceViewModel.updateUserPosition(_userPosition!);
+                  distanceViewModel.calculateDistances(snapshot.data!);
+                }
+              });
+            }
 
         return Column(
           children: [
@@ -1037,6 +1055,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                     ),
             ),
           ],
+            );
+          },
         );
       },
     );
@@ -1414,7 +1434,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                   ),
                 ),
                 // Afficher la distance à droite
-                if (_userPosition != null && group.geom != null)
+                if (group.geom != null)
                   _buildGroupDistanceBadge(group),
               ],
             ),
@@ -1758,6 +1778,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         setState(() {
           _userPosition = position;
         });
+        
+        // Marquer que la position est disponible pour déclencher le calcul des distances
+        
         debugPrint('✓ Position enregistrée dans l\'état');
       }
     } catch (e, stackTrace) {
@@ -1768,9 +1791,22 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   /// Calcule la distance minimale entre la position de l'utilisateur et un groupe de sites
   /// Pour un polygone, calcule la distance minimale au polygone (0 si le point est à l'intérieur)
+  /// Utilise un cache pour éviter les recalculs inutiles
   double? _calculateGroupDistance(SiteGroup group) {
     if (_userPosition == null || group.geom == null) {
       return null;
+    }
+
+    // Vérifier si la position a changé (invalider le cache si nécessaire)
+    if (_lastCachePosition == null || 
+        _hasPositionChanged(_lastCachePosition!, _userPosition!)) {
+      _distanceCache.clear();
+      _lastCachePosition = _userPosition;
+    }
+
+    // Vérifier le cache
+    if (_distanceCache.containsKey(group.idSitesGroup)) {
+      return _distanceCache[group.idSitesGroup];
     }
 
     try {
@@ -1811,21 +1847,57 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 }
                 // Si le point est à l'intérieur d'un polygone, distance = 0
                 if (distance == 0) {
+                  _distanceCache[group.idSitesGroup] = 0.0;
                   return 0;
                 }
               }
             }
           }
+          _distanceCache[group.idSitesGroup] = minDistance;
           return minDistance;
+        }
+
+        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
+          // Format GeoJSON: [longitude, latitude]
+          final groupLon = coordinates[0].toDouble();
+          final groupLat = coordinates[1].toDouble();
+
+          // Calculer la distance en mètres
+          final distance = Geolocator.distanceBetween(
+            userLat,
+            userLon,
+            groupLat,
+            groupLon,
+          );
+          _distanceCache[group.idSitesGroup] = distance;
+          return distance;
+        } else if (type == 'Polygon' && coordinates is List) {
+          // Pour un polygone, calculer la distance minimale au polygone
+          final distance = _calculateDistanceToPolygon(userLat, userLon, coordinates);
+          _distanceCache[group.idSitesGroup] = distance;
+          return distance;
         }
       }
 
+      _distanceCache[group.idSitesGroup] = null;
       return null;
     } catch (e) {
       debugPrint(
           'Erreur lors du calcul de la distance pour le groupe ${group.idSitesGroup}: $e');
+      _distanceCache[group.idSitesGroup] = null;
       return null;
     }
+  }
+
+  /// Vérifie si la position a significativement changé (plus de 10 mètres)
+  bool _hasPositionChanged(Position oldPosition, Position newPosition) {
+    final distance = Geolocator.distanceBetween(
+      oldPosition.latitude,
+      oldPosition.longitude,
+      newPosition.latitude,
+      newPosition.longitude,
+    );
+    return distance > 10.0; // Seuil de 10 mètres
   }
 
   /// Calcule la distance minimale d'un point à un polygone GeoJSON
@@ -1983,46 +2055,53 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   /// Construit le badge de distance pour le header
   Widget _buildGroupDistanceBadge(SiteGroup group) {
-    final distance = _calculateGroupDistance(group);
+    return Consumer(
+      builder: (context, ref, child) {
+        final distanceState = ref.watch(siteGroupDistanceViewModelProvider);
+        final distanceViewModel = ref.read(siteGroupDistanceViewModelProvider.notifier);
+        
+        final distance = distanceState.distances[group.idSitesGroup];
 
-    if (distance == null) {
-      return const SizedBox.shrink();
-    }
+        if (distance == null) {
+          return const SizedBox.shrink();
+        }
 
-    // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
-    final isInside = distance == 0.0;
-    final badgeColor = isInside ? Colors.green : Colors.blue;
+        // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
+        final isInside = distance == 0.0;
+        final badgeColor = isInside ? Colors.green : Colors.blue;
 
-    return Container(
-      margin: const EdgeInsets.only(left: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      decoration: BoxDecoration(
-        color: badgeColor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: badgeColor.withValues(alpha: 0.3),
-          width: 1,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.location_on,
-            color: badgeColor,
-            size: 16,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            _formatDistance(distance),
-            style: TextStyle(
-              fontSize: 12,
-              color: badgeColor,
-              fontWeight: FontWeight.w600,
+        return Container(
+          margin: const EdgeInsets.only(left: 8.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          decoration: BoxDecoration(
+            color: badgeColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: badgeColor.withValues(alpha: 0.3),
+              width: 1,
             ),
           ),
-        ],
-      ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.location_on,
+                color: badgeColor,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                distanceViewModel.formatDistance(distance),
+                style: TextStyle(
+                  fontSize: 12,
+                  color: badgeColor,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 
