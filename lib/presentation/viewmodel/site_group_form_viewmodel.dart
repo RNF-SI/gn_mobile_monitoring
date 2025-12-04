@@ -78,30 +78,30 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         userId: userId,
       );
 
-      // Créer le site
+      // Créer le groupe de sites
       final siteGroupId = await _createSiteGroupUseCase.execute(siteGroup);
 
-      // Créer la relation site-module
+      // Créer la relation groupe de sites-module
       await _sitesDatabase.insertSiteGroupModule(SitesGroupModule (
         idSitesGroup: siteGroupId,
         idModule: moduleId ?? _moduleId,
       ));
 
-      // Créer le complément de site si nécessaire
-      final complementData = <String, dynamic>{};
+      // // Créer le complément de site si nécessaire
+      // final complementData = <String, dynamic>{};
       
-      // Ajouter le groupe de sites si spécifié
-      if (_siteGroupId != null) {
-        complementData['id_sites_group'] = _siteGroupId;
-      }
+      // // Ajouter le groupe de sites si spécifié
+      // if (_siteGroupId != null) {
+      //   complementData['id_sites_group'] = _siteGroupId;
+      // }
       
-      // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans SiteGroup
-      final specificFields = ['id_sites_group'];
-      for (final field in specificFields) {
-        if (processedData.containsKey(field) && !complementData.containsKey(field)) {
-          complementData[field] = processedData[field];
-        }
-      }
+      // // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans SiteGroup
+      // final specificFields = ['id_sites_group'];
+      // for (final field in specificFields) {
+      //   if (processedData.containsKey(field) && !complementData.containsKey(field)) {
+      //     complementData[field] = processedData[field];
+      //   }
+      // }
       
       // Ajouter tous les autres champs qui ne sont pas des champs de base
       final baseSiteGroupFields = [
@@ -120,11 +120,11 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         "modules"
       ];
       
-      for (final entry in processedData.entries) {
-        if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
-          complementData[entry.key] = entry.value;
-        }
-      }
+      // for (final entry in processedData.entries) {
+      //   if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
+      //     complementData[entry.key] = entry.value;
+      //   }
+      // }
 
       // // Créer le complément seulement s'il y a des données
       // if (complementData.isNotEmpty) {
@@ -139,12 +139,12 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
 
       return siteGroupId;
     } catch (e) {
-      debugPrint('Erreur lors de la création du site: $e');
+      debugPrint('Erreur lors de la création du groupe sites: $e');
       rethrow;
     }
   }
 
-  /// Met à jour d'un groupe de site existant à partir des données du formulaire
+  /// Met à jour d'un groupe de sites existant à partir des données du formulaire
   Future<bool> updateSiteGroupFromFormData(
     Map<String, dynamic> formData,
     SiteGroup existingSiteGroup, {

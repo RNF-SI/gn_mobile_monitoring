@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_form_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/generic_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -162,6 +163,67 @@ class SiteFormWrapper extends ConsumerWidget {
     return siteConfig.displayProperties;
   }
 
+   /// Demande à l'utilisateur s'il souhaite créer une visite
+  Future<bool> _askForVisit(BuildContext context) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Créer une visite'),
+            content: const Text(
+                'Voulez-vous créer une visite pour ce site ?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Non'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Oui'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  /// Navigue vers le formulaire d'observation
+  Future<void> _navigateToVisitForm(BuildContext context, BaseSite site, SiteGroup? siteGroup, [Map<String, dynamic>? siteFormData]) async {
+    final visitConfig =  moduleInfo!.module.complement?.configuration?.site;
+    if (visitConfig == null) return;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => VisitFormPage(
+            site: site,
+            visitConfig: visitConfig,
+            customConfig: customConfig,
+            moduleId: moduleInfo?.module.id,
+            moduleInfo: moduleInfo,
+            siteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
+  /// Navigue vers la page de détail de la visite
+  Future<void> _navigateToSiteDetailPage(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
+    final targetModuleInfo = moduleToShow ?? null;
+    if (targetModuleInfo == null) return;
+
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) =>  SiteDetailPage(
+          site: site,
+          moduleInfo: targetModuleInfo,
+          fromSiteGroup: siteGroup,
+        ),
+      ),
+    );
+  }
+  
   /// Gère la sauvegarde du site
   Future<bool> _handleSave(BuildContext context, WidgetRef ref, Map<String, dynamic> formData) async {
     final viewModel = ref.read(siteFormViewModelProvider(
@@ -210,7 +272,6 @@ class SiteFormWrapper extends ConsumerWidget {
         siteId = await viewModel.createSiteFromFormData(
           formData,
           moduleId: moduleId ?? 1,
-          selectedSiteTypeId: selectedSiteTypeId,
         );
         success = siteId != null && siteId > 0;
 
@@ -224,19 +285,19 @@ class SiteFormWrapper extends ConsumerWidget {
           // Naviguer vers la page de détail du site
           if (context.mounted) {
             final newSite = await viewModel.getSiteById(siteId);
+            final createVisit = await _askForVisit(context);
+            if (createVisit) {
             if (newSite != null && context.mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => SiteDetailPage(
-                    site: newSite,
-                    moduleInfo: moduleInfo!,
-                    fromSiteGroup: siteGroup,
-                  ),
-                ),
-              );
-              return false; // Navigation personnalisée
+              await _navigateToVisitForm(context, newSite, siteGroup, formData);
+                  return false; // Navigation personnalisée faite, empêcher le pop automatique
+              }
+            } else {
+                // L'utilisateur a dit "Non", naviguer vers la page de détail
+            if (newSite != null && context.mounted) {
+              await _navigateToSiteDetailPage(context, newSite, siteGroup, moduleInfo);
+              return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
+          }
           }
         }
       }
