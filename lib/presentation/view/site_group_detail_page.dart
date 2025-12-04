@@ -360,8 +360,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                         }
                       },
                       icon: const Icon(Icons.add_circle),
-                      tooltip:
-                          'Ajouter un ${module.complement?.configuration?.site?.label ?? 'site'}',
+                      tooltip: 'Ajouter ${(module.complement?.configuration?.site?.genre == 'F') ? 'une' : 'un'} ${module.complement?.configuration?.site?.label ?? 'site'}',
                     ),
                   ],
                 ),
