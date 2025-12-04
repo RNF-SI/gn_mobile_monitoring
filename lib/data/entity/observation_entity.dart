@@ -11,6 +11,7 @@ class ObservationEntity {
   final int? serverObservationId;
   final String? metaCreateDate;
   final String? metaUpdateDate;
+  final int? idIndividual;
   final Map<String, dynamic>? data; // Données complémentaires
   
   ObservationEntity({
@@ -23,6 +24,7 @@ class ObservationEntity {
     this.serverObservationId,
     this.metaCreateDate,
     this.metaUpdateDate,
+    this.idIndividual,
     this.data,
   });
 }

@@ -184,6 +184,52 @@ class FormConfigParser {
     return false;
   }
 
+  /// Détermine si un champ est de type individu
+  /// Prend en compte les différentes façons d'identifier un champ taxonomique:
+  /// 1. type_widget: "individuals"
+  /// 2. Présence de la propriété id_list référençant une liste taxonomique
+  /// 2. Présence de la propriété cd_nom référençant un taxon
+  static bool isIndividualField(Map<String, dynamic> fieldConfig) {
+    // Vérifier le type de widget
+    if (fieldConfig['type_widget'] == 'individuals') {
+      return true;
+    }
+
+    // Vérifier si le champ contient une référence ou valeur de liste taxonomique
+    final dynamic idList = fieldConfig['id_list'];
+    
+    // Si c'est une référence chaîne à une liste taxonomique
+    if (idList is String && idList.contains('ID_LIST_TAXONOMY')) {
+      return true;
+    }
+    
+    // Si c'est une valeur entière directe (id_list numérique)
+    if (idList is int || (idList is String && int.tryParse(idList) != null)) {
+      return true;
+    }
+    
+    // Vérifier si le champ contient une référence ou valeur de cd_nom
+    final dynamic cdNom = fieldConfig['cd_nom'];
+    
+    // Si c'est une référence chaîne à un cd_nom
+    if (cdNom is String && cdNom.contains('CD_NOM')) {
+      return true;
+    }
+    
+    // Si c'est une valeur entière directe (cd_nom numérique)
+    if (cdNom is int || (cdNom is String && int.tryParse(cdNom) != null)) {
+      return true;
+    }
+
+    // Vérifier si le nom de l'attribut est id_individual
+    final attributName = fieldConfig['attribut_name'] as String?;
+    if (attributName == 'id_individual') {
+      return true;
+    }
+
+    return false;
+  }
+
   /// Récupère les données de nomenclature depuis la configuration du champ
   /// Prend en compte tous les formats possibles:
   /// 1. Ancienne méthode: avec type_util et value contenant les informations

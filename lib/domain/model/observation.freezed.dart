@@ -25,6 +25,7 @@ mixin _$Observation {
   int? get serverObservationId => throw _privateConstructorUsedError;
   String? get metaCreateDate => throw _privateConstructorUsedError;
   String? get metaUpdateDate => throw _privateConstructorUsedError;
+  int? get idIndividual => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
@@ -48,6 +49,7 @@ abstract class $ObservationCopyWith<$Res> {
       int? serverObservationId,
       String? metaCreateDate,
       String? metaUpdateDate,
+      int? idIndividual,
       Map<String, dynamic>? data});
 }
 
@@ -73,6 +75,7 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
     Object? serverObservationId = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? idIndividual = freezed,
     Object? data = freezed,
   }) {
     return _then(_value.copyWith(
@@ -112,6 +115,10 @@ class _$ObservationCopyWithImpl<$Res, $Val extends Observation>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      idIndividual: freezed == idIndividual
+          ? _value.idIndividual
+          : idIndividual // ignore: cast_nullable_to_non_nullable
+              as int?,
       data: freezed == data
           ? _value.data
           : data // ignore: cast_nullable_to_non_nullable
@@ -138,6 +145,7 @@ abstract class _$$ObservationImplCopyWith<$Res>
       int? serverObservationId,
       String? metaCreateDate,
       String? metaUpdateDate,
+      int? idIndividual,
       Map<String, dynamic>? data});
 }
 
@@ -161,6 +169,7 @@ class __$$ObservationImplCopyWithImpl<$Res>
     Object? serverObservationId = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? idIndividual = freezed,
     Object? data = freezed,
   }) {
     return _then(_$ObservationImpl(
@@ -200,6 +209,10 @@ class __$$ObservationImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as String?,
+      idIndividual: freezed == idIndividual
+          ? _value.idIndividual
+          : idIndividual // ignore: cast_nullable_to_non_nullable
+              as int?,
       data: freezed == data
           ? _value._data
           : data // ignore: cast_nullable_to_non_nullable
@@ -221,6 +234,7 @@ class _$ObservationImpl implements _Observation {
       this.serverObservationId,
       this.metaCreateDate,
       this.metaUpdateDate,
+      this.idIndividual,
       final Map<String, dynamic>? data})
       : _data = data;
 
@@ -242,6 +256,8 @@ class _$ObservationImpl implements _Observation {
   final String? metaCreateDate;
   @override
   final String? metaUpdateDate;
+  @override
+  final int? idIndividual;
   final Map<String, dynamic>? _data;
   @override
   Map<String, dynamic>? get data {
@@ -254,7 +270,7 @@ class _$ObservationImpl implements _Observation {
 
   @override
   String toString() {
-    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, idDigitiser: $idDigitiser, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, serverObservationId: $serverObservationId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data)';
+    return 'Observation(idObservation: $idObservation, idBaseVisit: $idBaseVisit, idDigitiser: $idDigitiser, cdNom: $cdNom, comments: $comments, uuidObservation: $uuidObservation, serverObservationId: $serverObservationId, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idIndividual: $idIndividual, data: $data)';
   }
 
   @override
@@ -279,6 +295,8 @@ class _$ObservationImpl implements _Observation {
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
                 other.metaUpdateDate == metaUpdateDate) &&
+            (identical(other.idIndividual, idIndividual) ||
+                other.idIndividual == idIndividual) &&
             const DeepCollectionEquality().equals(other._data, _data));
   }
 
@@ -294,6 +312,7 @@ class _$ObservationImpl implements _Observation {
       serverObservationId,
       metaCreateDate,
       metaUpdateDate,
+      idIndividual,
       const DeepCollectionEquality().hash(_data));
 
   @JsonKey(ignore: true)
@@ -314,6 +333,7 @@ abstract class _Observation implements Observation {
       final int? serverObservationId,
       final String? metaCreateDate,
       final String? metaUpdateDate,
+      final int? idIndividual,
       final Map<String, dynamic>? data}) = _$ObservationImpl;
 
   @override
@@ -334,6 +354,8 @@ abstract class _Observation implements Observation {
   String? get metaCreateDate;
   @override
   String? get metaUpdateDate;
+  @override
+  int? get idIndividual;
   @override
   Map<String, dynamic>? get data;
   @override

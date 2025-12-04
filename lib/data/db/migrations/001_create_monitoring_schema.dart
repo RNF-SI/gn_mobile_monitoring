@@ -57,6 +57,7 @@ Future<void> migration1(Migrator m, AppDatabase db) async {
       cd_nom INTEGER,
       comments TEXT,
       uuid_observation TEXT DEFAULT (randomblob(16)) UNIQUE
+      id_individual INTEGER,
     );
   ''');
 

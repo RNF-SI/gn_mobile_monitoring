@@ -14,6 +14,7 @@ class Observation with _$Observation {
     int? serverObservationId,
     String? metaCreateDate,
     String? metaUpdateDate,
+    int? idIndividual,
     Map<String, dynamic>? data, // Données complémentaires
   }) = _Observation;
 }

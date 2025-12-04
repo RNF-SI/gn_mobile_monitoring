@@ -110,6 +110,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = true,
     bool isManualSync =
         true, // Indique si cette synchronisation est déclenchée manuellement
   }) async {
@@ -140,6 +141,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       syncModules: syncModules,
       syncSites: syncSites,
       syncSiteGroups: syncSiteGroups,
+      syncIndividuals: syncIndividuals,
     );
 
     try {
@@ -168,6 +170,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           syncModules: syncModules,
           syncSites: syncSites,
           syncSiteGroups: syncSiteGroups,
+          syncIndividuals: syncIndividuals,
         ),
         completedSteps: [],
         itemsProcessed: 0,
@@ -563,7 +566,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       }
 
       // Synchroniser les individus
-      if (syncSiteGroups && _isSyncing) {
+      if (syncIndividuals && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
 
@@ -726,7 +729,8 @@ class SyncService extends StateNotifier<SyncStatus> {
             syncConfiguration, syncNomenclatures, syncTaxons, syncObservers,
             syncModules: syncModules,
             syncSites: syncSites,
-            syncSiteGroups: syncSiteGroups);
+            syncSiteGroups: syncSiteGroups,
+            syncIndividuals: syncIndividuals);
 
         // Mise à jour de la date de synchronisation complète
         if (isFullSync) {
@@ -766,6 +770,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           syncModules: syncModules,
           syncSites: syncSites,
           syncSiteGroups: syncSiteGroups,
+          syncIndividuals: syncIndividuals,
         ).where((step) => !completedSteps.contains(step)).toList(),
         itemsProcessed: totalItemsProcessed,
         itemsTotal: totalItemsToProcess,
@@ -820,6 +825,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       'syncModules': false,
       'syncSites': false,
       'syncSiteGroups': false,
+      'syncIndividuals': false,
       'syncVisitsToServer': false,
       'syncObservationsToServer': false,
       'syncObservationDetailsToServer': false,
@@ -907,6 +913,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       syncModules: params['syncModules'],
       syncSites: params['syncSites'],
       syncSiteGroups: params['syncSiteGroups'],
+      syncIndividuals: params['syncIndividuals'],
     );
 
     // Retourner le résultat de cette étape
@@ -1469,6 +1476,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = true,
   }) {
     return syncConfiguration &&
         syncNomenclatures &&
@@ -1476,7 +1484,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         syncObservers &&
         syncModules &&
         syncSites &&
-        syncSiteGroups;
+        syncSiteGroups &&
+        syncIndividuals;
   }
 
   /// Effectue une synchronisation complète automatique
@@ -1561,6 +1570,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           syncModules: true,
           syncSites: true,
           syncSiteGroups: true,
+          syncIndividuals: true,
           isManualSync: true,
         );
 
