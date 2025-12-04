@@ -15,6 +15,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 
@@ -136,6 +137,87 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     }
   }
 
+  /// Enrichit les données du groupe en convertissant les IDs de nomenclatures en objets avec labels
+  Future<Map<String, dynamic>> _enrichGroupDataWithNomenclatures(
+    Map<String, dynamic> data,
+    Map<String, dynamic> parsedGroupConfig,
+  ) async {
+    final enrichedData = Map<String, dynamic>.from(data);
+    final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+
+    // Identifier les champs de nomenclature depuis la configuration
+    final List<String> nomenclatureFields = [];
+
+    // 1. Chercher dans la configuration parsée
+    for (final entry in parsedGroupConfig.entries) {
+      final fieldName = entry.key;
+      final fieldConfig = entry.value;
+
+      if (fieldConfig is Map<String, dynamic>) {
+        if (FormConfigParser.isNomenclatureField(fieldConfig)) {
+          nomenclatureFields.add(fieldName);
+        }
+      }
+    }
+
+    // 2. Ajouter aussi les champs qui commencent par id_nomenclature_ (pour compatibilité)
+    for (final key in enrichedData.keys) {
+      if (key.startsWith('id_nomenclature_') &&
+          !nomenclatureFields.contains(key)) {
+        nomenclatureFields.add(key);
+      }
+    }
+
+    // Pour chaque champ de nomenclature, convertir l'ID en objet
+    for (final fieldName in nomenclatureFields) {
+      if (!enrichedData.containsKey(fieldName)) {
+        continue;
+      }
+
+      final fieldValue = enrichedData[fieldName];
+
+      // Ignorer si null ou vide
+      if (fieldValue == null || fieldValue == '' || fieldValue == 0) {
+        continue;
+      }
+
+      // Si c'est déjà un Map (objet nomenclature complet), ne rien faire
+      if (fieldValue is Map) {
+        continue;
+      }
+
+      // Convertir en entier si nécessaire
+      int? idNomenclature;
+      if (fieldValue is int) {
+        idNomenclature = fieldValue;
+      } else if (fieldValue is String) {
+        idNomenclature = int.tryParse(fieldValue);
+      }
+
+      if (idNomenclature == null || idNomenclature == 0) {
+        continue;
+      }
+
+      try {
+        // Récupérer la nomenclature par son ID
+        final nomenclatureName =
+            await nomenclatureService.getNomenclatureNameById(idNomenclature);
+
+        // Si on a trouvé un label, créer un objet nomenclature
+        if (nomenclatureName != 'Nomenclature $idNomenclature (non trouvée)') {
+          enrichedData[fieldName] = {
+            'id': idNomenclature,
+            'label': nomenclatureName,
+          };
+        }
+      } catch (e) {
+        debugPrint('Erreur lors de l\'enrichissement de $fieldName: $e');
+      }
+    }
+
+    return enrichedData;
+  }
+
   /// Construit la card avec les propriétés du groupe de sites
   Widget _buildSiteGroupPropertiesCard(
     ObjectConfig sitesGroupConfig,
@@ -152,89 +234,106 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     final groupData = _buildSiteGroupDataMap();
 
     // Filtrer les propriétés qui existent dans les données
+    // Exclure sites_group_name car déjà visible en en-tête de la page
     final propertiesToShow = displayProperties.where((property) {
-      return groupData.containsKey(property) && !property.startsWith('meta_');
+      return groupData.containsKey(property) &&
+          !property.startsWith('meta_') &&
+          property != 'sites_group_name';
     }).toList();
 
     if (propertiesToShow.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Titre de la section
-            Row(
+    // Enrichir les données avec les nomenclatures de manière asynchrone
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _enrichGroupDataWithNomenclatures(groupData, parsedGroupConfig),
+      builder: (context, snapshot) {
+        final enrichedData = snapshot.hasData ? snapshot.data! : groupData;
+
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 16,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  _generatePropertiesTitle(sitesGroupConfig),
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // Liste des propriétés
-            ...propertiesToShow.map((property) {
-              final rawValue = groupData[property];
-
-              // Obtenir le label depuis la configuration
-              String label = property;
-              if (parsedGroupConfig.containsKey(property)) {
-                label =
-                    parsedGroupConfig[property]['attribut_label'] ?? property;
-              }
-
-              // Formater la valeur
-              String displayValue = ValueFormatter.format(rawValue);
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                // Titre de la section
+                Row(
                   children: [
-                    SizedBox(
-                      width: 120,
-                      child: Text(
-                        '$label:',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(context)
-                              .colorScheme
-                              .onSurface
-                              .withOpacity(0.7),
-                        ),
-                      ),
+                    Icon(
+                      Icons.info_outline,
+                      size: 16,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
-                    Expanded(
-                      child: Text(
-                        displayValue,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _generatePropertiesTitle(sitesGroupConfig),
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ],
                 ),
-              );
-            }),
-          ],
-        ),
-      ),
+                const SizedBox(height: 12),
+                // Liste des propriétés
+                if (snapshot.connectionState == ConnectionState.waiting)
+                  const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                else
+                  ...propertiesToShow.map((property) {
+                    final rawValue = enrichedData[property];
+
+                    // Obtenir le label depuis la configuration
+                    String label = property;
+                    if (parsedGroupConfig.containsKey(property)) {
+                      label = parsedGroupConfig[property]['attribut_label'] ??
+                          property;
+                    }
+
+                    // Formater la valeur
+                    String displayValue = ValueFormatter.format(rawValue);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              '$label:',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .onSurface
+                                    .withOpacity(0.7),
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              displayValue,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
