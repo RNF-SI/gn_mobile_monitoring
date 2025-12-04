@@ -16,6 +16,7 @@ import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/individuals_utilisateur_viewmodel.dart';
 
 /// Provider pour la version du cache - incrémenté après chaque sync pour forcer le rafraîchissement
 final cacheVersionProvider = StateProvider<int>((ref) => 0);
@@ -313,6 +314,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         ref.invalidate(nomenclatureServiceProvider);
         ref.invalidate(userModuleListeViewModelStateNotifierProvider);
         ref.invalidate(siteGroupViewModelStateNotifierProvider);
+        ref.invalidate(individualViewModelStateNotifierProvider);
 
         // Invalider tous les providers de type family qui dépendent des nomenclatures
         // Cela forcera le rechargement des nomenclatures dans les formulaires
@@ -560,6 +562,53 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
       }
 
+      // Synchroniser les individus
+      if (syncSiteGroups && _isSyncing) {
+        // Mise à jour du résumé avec les étapes déjà complétées
+        final currentSummary = _buildIncrementalSyncSummary(completedSteps);
+
+        state = SyncStatus.inProgress(
+          currentStep: SyncStep.individuals,
+          completedSteps: completedSteps,
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          currentEntityName: "Individus",
+          additionalInfo: currentSummary.isNotEmpty
+              ? "$currentSummary\n\nTéléchargement des individus..."
+              : "Téléchargement des individus...",
+        );
+
+        try {
+          final individualsResult =
+              await _executeSingleSync(token, 'individuals');
+          if (individualsResult.success) {
+            completedSteps.add(SyncStep.individuals);
+
+            // Mise à jour avec le nouveau résumé incluant cette étape
+            final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
+            state = SyncStatus.inProgress(
+              currentStep: SyncStep.individuals,
+              completedSteps: completedSteps,
+              itemsProcessed: totalItemsProcessed + 1,
+              itemsTotal: totalItemsToProcess,
+              currentEntityName: "Individus",
+              itemsAdded: individualsResult.itemsAdded,
+              itemsUpdated: individualsResult.itemsUpdated,
+              itemsSkipped: individualsResult.itemsSkipped,
+              additionalInfo: updatedSummary,
+            );
+          } else {
+            failedSteps.add(SyncStep.individuals);
+          }
+          totalItemsProcessed += 1;
+        } catch (e) {
+          failedSteps.add(SyncStep.individuals);
+          totalItemsProcessed += 1;
+          debugPrint(
+              'Erreur lors de la synchronisation des individus: $e');
+        }
+      }
+
       // Générer un résumé des statistiques de synchronisation
       final syncSummary = getSyncSummary();
 
@@ -745,6 +794,11 @@ class SyncService extends StateNotifier<SyncStatus> {
             .removeWhere((conflict) => conflict.entityType == 'siteGroup');
         debugPrint('Nettoyage des anciens conflits de groupes de sites');
         break;
+      case 'individuals':
+        allConflicts
+            .removeWhere((conflict) => conflict.entityType == 'individual');
+        debugPrint('Nettoyage des anciens conflits d\'individus');
+        break;
       case 'nomenclatures':
       case 'nomenclatures_datasets':
         allConflicts.removeWhere(
@@ -794,6 +848,9 @@ class SyncService extends StateNotifier<SyncStatus> {
         break;
       case 'siteGroups':
         params['syncSiteGroups'] = true;
+        break;
+      case 'individuals':
+        params['syncIndividuals'] = true;
         break;
       case 'visitsToServer':
         params['syncVisitsToServer'] = true;
@@ -898,6 +955,10 @@ class SyncService extends StateNotifier<SyncStatus> {
           case 'siteGroups':
             entityName = "Groupes de sites";
             currentStep = SyncStep.siteGroups;
+            break;
+          case 'individuals':
+            entityName = "Individus";
+            currentStep = SyncStep.individuals;
             break;
           case 'visitsToServer':
             entityName = "Visites (envoi)";
@@ -1015,6 +1076,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         return SyncStep.sites;
       case 'siteGroups':
         return SyncStep.siteGroups;
+      case 'individuals':
+        return SyncStep.individuals;
       case 'visitsToServer':
         return SyncStep.visitsToServer;
       case 'observationsToServer':
@@ -1350,6 +1413,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         ref.invalidate(nomenclatureServiceProvider);
         ref.invalidate(userModuleListeViewModelStateNotifierProvider);
         ref.invalidate(siteGroupViewModelStateNotifierProvider);
+        ref.invalidate(individualViewModelStateNotifierProvider);
 
         // Invalider tous les providers de type family qui dépendent des nomenclatures
         // Cela forcera le rechargement des nomenclatures dans les formulaires
@@ -1510,6 +1574,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             SyncStep.modules,
             SyncStep.sites,
             SyncStep.siteGroups,
+            SyncStep.individuals,
           ]);
           debugPrint('Étape 1 terminée avec succès');
         } else {
@@ -1521,6 +1586,7 @@ class SyncService extends StateNotifier<SyncStatus> {
             SyncStep.modules,
             SyncStep.sites,
             SyncStep.siteGroups,
+            SyncStep.individuals,
           ]);
           if (downloadResult.errorMessage != null) {
             errorMessages.add('Téléchargement: ${downloadResult.errorMessage}');
@@ -1537,6 +1603,7 @@ class SyncService extends StateNotifier<SyncStatus> {
           SyncStep.modules,
           SyncStep.sites,
           SyncStep.siteGroups,
+          SyncStep.individuals,
         ]);
         totalItemsProcessed += 1;
         AppLogger().e('Échec du téléchargement de données', tag: 'SYNC', error: e);
@@ -1614,6 +1681,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         ref.invalidate(nomenclatureServiceProvider);
         ref.invalidate(userModuleListeViewModelStateNotifierProvider);
         ref.invalidate(siteGroupViewModelStateNotifierProvider);
+        ref.invalidate(individualViewModelStateNotifierProvider);
 
         // Invalider tous les providers de type family qui dépendent des nomenclatures
         // Cela forcera le rechargement des nomenclatures dans les formulaires
@@ -1673,6 +1741,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = true,
     bool syncVisitsToServer = false,
   }) {
     if (syncConfiguration) return SyncStep.configuration;
@@ -1682,6 +1751,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) return SyncStep.modules;
     if (syncSites) return SyncStep.sites;
     if (syncSiteGroups) return SyncStep.siteGroups;
+    if (syncIndividuals) return SyncStep.individuals;
     if (syncVisitsToServer) return SyncStep.visitsToServer;
 
     return SyncStep.configuration; // Valeur par défaut
@@ -1696,6 +1766,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = true,
     bool syncVisitsToServer = false,
   }) {
     int count = 0;
@@ -1706,6 +1777,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) count++;
     if (syncSites) count++;
     if (syncSiteGroups) count++;
+    if (syncIndividuals) count++;
     if (syncVisitsToServer) count++;
 
     return count;
@@ -1720,6 +1792,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = true,
     bool syncVisitsToServer = false,
   }) {
     final steps = <SyncStep>[];
@@ -1730,6 +1803,7 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (syncModules) steps.add(SyncStep.modules);
     if (syncSites) steps.add(SyncStep.sites);
     if (syncSiteGroups) steps.add(SyncStep.siteGroups);
+    if (syncIndividuals) steps.add(SyncStep.individuals);
     if (syncVisitsToServer) steps.add(SyncStep.visitsToServer);
 
     return steps;
@@ -1752,6 +1826,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'siteGroups';
+      case SyncStep.individuals:
+        return 'individuals';
       case SyncStep.visitsToServer:
         return 'visitsToServer';
       case SyncStep.observationsToServer:
@@ -1778,6 +1854,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'groupes de sites';
+      case SyncStep.individuals:
+        return 'individus';
       case SyncStep.visitsToServer:
         return 'envoi des visites';
       case SyncStep.observationsToServer:
@@ -1854,6 +1932,16 @@ class SyncService extends StateNotifier<SyncStatus> {
         _syncResults.containsKey('siteGroups')) {
       final stats = _syncResults['siteGroups']!;
       summaryLines.add("• Groupes de sites: ${_formatSyncStats(stats)}");
+      totalAdded += stats.itemsAdded.round();
+      totalUpdated += stats.itemsUpdated.round();
+      totalSkipped += stats.itemsSkipped.round();
+    }
+
+    // Ajouter les infos pour les individus si terminé
+    if (completedSteps.contains(SyncStep.individuals) &&
+        _syncResults.containsKey('individuals')) {
+      final stats = _syncResults['individuals']!;
+      summaryLines.add("• Individus: ${_formatSyncStats(stats)}");
       totalAdded += stats.itemsAdded.round();
       totalUpdated += stats.itemsUpdated.round();
       totalSkipped += stats.itemsSkipped.round();
@@ -1943,6 +2031,11 @@ class SyncService extends StateNotifier<SyncStatus> {
     if (_syncResults.containsKey('siteGroups')) {
       summaryLines
           .add("• Groupes de sites: ${_getSyncStatsForStep('siteGroups')}");
+    }
+
+    if (_syncResults.containsKey('individuals')) {
+      summaryLines
+          .add("• Individus: ${_getSyncStatsForStep('individuals')}");
     }
 
     if (_syncResults.containsKey('nomenclatures_datasets')) {

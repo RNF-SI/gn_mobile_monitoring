@@ -15,6 +15,7 @@ import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
@@ -34,6 +35,8 @@ class SyncRepositoryImpl implements SyncRepository {
     TaxonDatabase taxonDatabase, {
     required ModulesRepository modulesRepository,
     required SitesRepository sitesRepository,
+    required IndividualsRepository individualsRepository,
+    // required IndividualsRepository? individualsRepository,
     required VisitRepository visitRepository,
     required ObservationsRepository observationsRepository,
     required ObservationDetailsRepository observationDetailsRepository,
@@ -51,6 +54,7 @@ class SyncRepositoryImpl implements SyncRepository {
             observationsDatabase: observationsDatabase,
             modulesRepository: modulesRepository,
             sitesRepository: sitesRepository,
+            individualsRepository: individualsRepository,
           ),
           upstreamRepo: UpstreamSyncRepositoryImpl(
             globalApi,
@@ -109,6 +113,10 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<SyncResult> syncSiteGroups(String token, {DateTime? lastSync}) =>
       _compositeSync.syncSiteGroups(token, lastSync: lastSync);
+
+  @override
+  Future<SyncResult> syncIndividuals(String token, {DateTime? lastSync}) =>
+      _compositeSync.syncIndividuals(token, lastSync: lastSync);
 
   // ===== Méthodes de synchronisation ascendante =====
 

@@ -10,4 +10,7 @@ abstract class IndividualsRepository {
   
   /// Fetches individuals for a specific module
   Future<void> fetchIndividualsForModule(String moduleCode, String token);
+
+  /// Fetches individuals with conflict management and returns a SyncResult
+  Future<SyncResult> incrementalSyncIndividualsWithConflictHandling(String token);
  }

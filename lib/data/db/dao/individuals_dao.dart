@@ -68,6 +68,14 @@ class IndividualsDao extends DatabaseAccessor<AppDatabase> with _$IndividualsDao
     return results.map((e) => e.toDomain()).toList();
   }
 
+  /// Check if an individual belongs to other modules besides the specified one
+  Future<bool> individualHasOtherModuleReferences(int individualId, int excludeModuleId) async {
+    final query = select(corIndividualModuleTable)
+      ..where((tbl) => tbl.idIndividual.equals(individualId) & tbl.idModule.isNotValue(excludeModuleId));
+    final results = await query.get();
+    return results.isNotEmpty;
+  }
+
   Future<List<IndividualModule>> getAllIndividualModules() async {
     final results = await select(corIndividualModuleTable).get();
     return results

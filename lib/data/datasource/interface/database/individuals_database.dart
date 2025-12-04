@@ -10,6 +10,7 @@ abstract class IndividualsDatabase {
   Future<List<Individual>> getAllIndividuals();
 
   Future<List<Individual>> getIndividualsByModuleId(int moduleId);
+  Future<bool> individualHasOtherModuleReferences(int individualId, int excludeModuleId);
 
   /// Methods for handling CorIndividualModules
   Future<void> clearAllIndividualModules();

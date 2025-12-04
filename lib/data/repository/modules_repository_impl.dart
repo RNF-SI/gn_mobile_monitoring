@@ -33,7 +33,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final TaxonDatabase? taxonDatabase;
   final TaxonRepository taxonRepository;
   final SitesRepository sitesRepository;
-  // final IndividualsRepository? individualsRepository;
+  final IndividualsRepository? individualsRepository;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -45,7 +45,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.taxonDatabase,
     this.taxonRepository,
     this.sitesRepository,
-    // this.individualsRepository,
+    this.individualsRepository,
   );
 
   @override
@@ -462,6 +462,11 @@ class ModulesRepositoryImpl implements ModulesRepository {
       onStepUpdate?.call('Groupes de sites');
       onProgressUpdate?.call(0.95);
       await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
+
+      // 7. Download individual for the module
+      onStepUpdate?.call('Individus');
+      onProgressUpdate?.call(0.95);
+      await individualsRepository?.fetchIndividualsForModule(moduleCode, token);
     } catch (e) {
       throw Exception('Failed to download module data: $e');
     }

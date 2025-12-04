@@ -18,6 +18,7 @@ enum SyncStep {
   modules,
   sites,
   siteGroups,
+  individuals,
   
   // === Étapes de TÉLÉVERSEMENT (appareil -> serveur) ===
   // Ces étapes sont pour l'envoi des données vers le serveur

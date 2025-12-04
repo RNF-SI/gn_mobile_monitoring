@@ -11,6 +11,8 @@ class EntityNameHelper {
         return plural ? 'sites' : 'Site';
       case 'sitegroup':
         return plural ? 'groupes de sites' : 'Groupe de sites';
+      case 'individual':
+        return plural ? 'individus' : 'Individu';
       case 'visit':
         return plural ? 'visites' : 'Visite';
       case 'observation':
@@ -34,6 +36,8 @@ class EntityNameHelper {
         return Icons.place;
       case 'sitegroup':
         return Icons.folder;
+      case 'animal':
+        return Icons.pets;
       case 'visit':
         return Icons.calendar_today;
       case 'observation':

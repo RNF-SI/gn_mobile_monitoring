@@ -18,6 +18,7 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = false,
   }) async {
     final results = <String, SyncResult>{};
 
@@ -38,6 +39,7 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
           'modules': failureResult,
           'sites': failureResult,
           'siteGroups': failureResult,
+          'individuals': failureResult,
         };
       }
 
@@ -133,6 +135,20 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
         }
       }
 
+      // Synchroniser les individus
+      if (syncIndividuals) {
+        try {
+          results['individuals'] = await _repository.syncIndividuals(token);
+        } catch (e) {
+          debugPrint(
+              'Erreur lors de la synchronisation des individus: $e');
+          results['individuals'] = SyncResult.failure(
+            errorMessage:
+                'Erreur lors de la synchronisation des individus: $e',
+          );
+        }
+      }
+
       // La synchronisation des observations sera implémentée dans une future version
 
       return results;
@@ -151,6 +167,7 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
         'modules': failureResult,
         'sites': failureResult,
         'siteGroups': failureResult,
+        'individuals': failureResult,
       };
     }
   }

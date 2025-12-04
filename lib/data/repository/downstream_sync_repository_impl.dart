@@ -18,6 +18,7 @@ import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/individuals_repository.dart';
 
 /// Implémentation du repository de synchronisation descendante (serveur vers appareil)
 class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
@@ -33,6 +34,7 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
   // Repositories pour la délégation des tâches de synchronisation
   final ModulesRepository _modulesRepository;
   final SitesRepository _sitesRepository;
+  final IndividualsRepository _individualsRepository;
 
   final AppLogger _logger = AppLogger();
 
@@ -45,10 +47,12 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
     this._taxonDatabase, {
     required ModulesRepository modulesRepository,
     required SitesRepository sitesRepository,
+    required IndividualsRepository individualsRepository,
     required VisitesDatabase visitesDatabase,
     required ObservationsDatabase observationsDatabase,
   })  : _modulesRepository = modulesRepository,
         _sitesRepository = sitesRepository,
+        _individualsRepository = individualsRepository,
         _visitesDatabase = visitesDatabase,
         _observationsDatabase = observationsDatabase;
 
@@ -982,6 +986,47 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       return SyncResult.failure(
         errorMessage:
             'Erreur lors de la synchronisation des groupes de sites: $e',
+      );
+    }
+  }
+
+  @override
+  Future<SyncResult> syncIndividuals(String token, {DateTime? lastSync}) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      try {
+        // Utiliser la nouvelle méthode qui gère les conflits
+        final result = await _individualsRepository
+            .incrementalSyncIndividualsWithConflictHandling(token);
+
+        // Mettre à jour la date de synchronisation si succès ou conflits
+        if (result.success ||
+            (result.conflicts != null && result.conflicts!.isNotEmpty)) {
+          await updateLastSyncDate('individuals', DateTime.now());
+        }
+
+        return result;
+      } catch (e) {
+        debugPrint(
+            'Erreur lors de la synchronisation des individus: $e');
+        return SyncResult.failure(
+          errorMessage:
+              'Erreur lors de la synchronisation des individus: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint(
+          'Erreur générale lors de la synchronisation des individus: $e');
+      return SyncResult.failure(
+        errorMessage:
+            'Erreur lors de la synchronisation des individus: $e',
       );
     }
   }

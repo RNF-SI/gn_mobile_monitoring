@@ -13,6 +13,7 @@ enum SyncOperation {
   modules,
   sites,
   siteGroups,
+  individuals,
   visits,
   observations,
   nomenclatures,

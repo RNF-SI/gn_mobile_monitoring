@@ -34,4 +34,7 @@ abstract class DownstreamSyncRepository {
 
   /// Synchronise les groupes de sites (téléchargement)
   Future<SyncResult> syncSiteGroups(String token, {DateTime? lastSync});
+
+  /// Synchronise les individus (téléchargement)
+  Future<SyncResult> syncIndividuals(String token, {DateTime? lastSync});
 }

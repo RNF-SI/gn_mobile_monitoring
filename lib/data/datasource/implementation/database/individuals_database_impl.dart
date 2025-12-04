@@ -44,6 +44,12 @@ class IndividualsDatabaseImpl implements IndividualsDatabase {
   }
 
   @override
+  Future<bool> individualHasOtherModuleReferences(int individualId, int excludeModuleId) async {
+    final db = await _database;
+    return await db.individualsDao.individualHasOtherModuleReferences(individualId, excludeModuleId);
+  }
+
+  @override
   Future<List<IndividualModule>> getAllIndividualModules() async {
     final db = await _database;
     return await db.individualsDao.getAllIndividualModules();

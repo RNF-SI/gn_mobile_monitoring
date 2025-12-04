@@ -164,5 +164,5 @@ final modulesRepositoryProvider =
           ref.watch(taxonDatabaseProvider),
           ref.watch(taxonRepositoryProvider),
           ref.watch(sitesRepositoryProvider),
-          // ref.watch(individualsRepositoryProvider),
+          ref.watch(individualsRepositoryProvider),
         ));

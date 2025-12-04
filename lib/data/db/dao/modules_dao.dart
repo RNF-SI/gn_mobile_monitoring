@@ -22,7 +22,7 @@ part 'modules_dao.g.dart'; // Updated file name
   TModuleComplements,
   CorSiteModuleTable,
   CorSitesGroupModuleTable,
-  // CorIndividualModuleTable,
+  CorIndividualModuleTable,
   CorModuleDatasetTable
 ])
 class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
@@ -234,17 +234,6 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     });
   }
 
-  // // Clear module individuals
-  // Future<void> clearIndividualModules(int moduleId) async {
-  //   try {
-  //     await (delete(corIndividualModuleTable)
-  //           ..where((t) => t.idModule.equals(moduleId)))
-  //         .go();
-  //   } catch (e) {
-  //     throw Exception("Failed to clear module individuals: ${e.toString()}");
-  //   }
-  // }
-
   // // Insert module individuals
   // Future<void> insertIndividualModules(
   //     List<IndividualModule> individuals) async {
@@ -256,7 +245,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
   //       .toList();
 
   //   await batch((batch) {
-  //     batch.insertAll(corIndividualModuleTable, dbEntities);
+  //     batch.insertAll(db.corIndividualModuleTable, dbEntities);
   //   });
   // }
 

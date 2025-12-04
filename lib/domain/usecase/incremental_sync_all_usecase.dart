@@ -12,6 +12,7 @@ abstract class IncrementalSyncAllUseCase {
   /// - syncModules: Indique si les modules doivent être synchronisés
   /// - syncSites: Indique si les sites doivent être synchronisés
   /// - syncSiteGroups: Indique si les groupes de sites doivent être synchronisés
+  /// - syncIndividuals: Indique si les individus doivent être synchronisés
   /// La synchronisation des observations sera implémentée dans une version future
   /// 
   /// Retourne un Map contenant les résultats de chaque opération de synchronisation
@@ -24,5 +25,6 @@ abstract class IncrementalSyncAllUseCase {
     bool syncModules = true,
     bool syncSites = true,
     bool syncSiteGroups = true,
+    bool syncIndividuals = false,
   });
 }

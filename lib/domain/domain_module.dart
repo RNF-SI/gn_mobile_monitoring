@@ -241,6 +241,7 @@ final downstreamSyncRepositoryProvider = Provider<DownstreamSyncRepository>(
     ref.watch(taxonDatabaseProvider),
     modulesRepository: ref.watch(modulesRepositoryProvider),
     sitesRepository: ref.watch(sitesRepositoryProvider),
+    individualsRepository: ref.watch(individualsRepositoryProvider),
     visitesDatabase: ref.watch(visitDatabaseProvider),
     observationsDatabase: ref.watch(observationsDatabaseProvider),
   ),

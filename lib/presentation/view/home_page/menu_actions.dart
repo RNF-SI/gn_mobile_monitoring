@@ -305,6 +305,7 @@ class MenuActions extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 const Text('📥 Sites et groupes de sites'),
+                const Text('📥 Individus'),
                 const Text('📥 Taxons et listes taxonomiques'),
                 const Text('📥 Nomenclatures et types'),
                 const Text('📥 Configuration des modules'),
