@@ -94,6 +94,48 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     return groupData;
   }
 
+  /// Génère le titre de la card des propriétés en fonction du genre et de la première lettre
+  String _generatePropertiesTitle(ObjectConfig sitesGroupConfig) {
+    final label = (sitesGroupConfig.label ?? 'élément').toLowerCase();
+    final genre = sitesGroupConfig.genre; // 'M' pour masculin, 'F' pour féminin
+
+    // Liste des voyelles (en minuscules)
+    const vowels = [
+      'a',
+      'e',
+      'i',
+      'o',
+      'u',
+      'y',
+      'à',
+      'é',
+      'è',
+      'ê',
+      'ë',
+      'î',
+      'ï',
+      'ô',
+      'ö',
+      'ù',
+      'û',
+      'ü'
+    ];
+
+    // Vérifier si la première lettre est une voyelle
+    final firstLetter = label.trim();
+    final isVowel = firstLetter.isNotEmpty && vowels.contains(firstLetter[0]);
+
+    // Construire le titre selon le genre et la voyelle
+    if (isVowel) {
+      return "Propriétés de l'$label";
+    } else if (genre == 'F') {
+      return "Propriétés de la $label";
+    } else {
+      // Masculin par défaut
+      return "Propriétés du $label";
+    }
+  }
+
   /// Construit la card avec les propriétés du groupe de sites
   Widget _buildSiteGroupPropertiesCard(
     ObjectConfig sitesGroupConfig,
@@ -134,7 +176,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  sitesGroupConfig.label ?? 'Propriétés',
+                  _generatePropertiesTitle(sitesGroupConfig),
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
