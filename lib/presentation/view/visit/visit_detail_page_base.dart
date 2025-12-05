@@ -609,19 +609,24 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             // TO DO: Le MAP obsMap est cree avec 3 elements, puis on ajoute 6 elements du data de observation
             // puis on modifie l'element avec la cle cd_nom pour ajouter le nom vernaculaire ou scientifique
             // selon la config du module, grandement améliorable
+            // if (observation.data != null) {
+            //   obsMap.addAll(observation.data!);
+            //   if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom') {
+            //     if (obsMap["cd_nom"]["nom_vern"] == null) {
+            //       obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
+            //     } else {
+            //       obsMap["cd_nom"] = observation.data!["cd_nom"]["nom_vern"];
+            //     }
+            //   } else {
+            //     obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
+            //   }
+            // }
+
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
-              if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom') {
-                if (obsMap["cd_nom"]["nom_vern"] == null) {
-                  obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
-                } else {
-                  obsMap["cd_nom"] = observation.data!["cd_nom"]["nom_vern"];
-                }
-              } else {
-                obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
-              }
+              
+              obsMap["cd_nom"] = observation.data!["cd_nom"]["cd_nom"];
             }
-
             observations.add(obsMap);
           }
         }
@@ -707,7 +712,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                           observation: Observation(
                             idObservation: observation['id_observation'] as int,
                             idBaseVisit: visitId,
-                            cdNom: observation['cd_nom']['cd_nom'] as int?,
+                            cdNom: observation['cd_nom'] as int?,
                             comments: observation['comments'] as String?,
                             data: observation,
                             metaCreateDate:
