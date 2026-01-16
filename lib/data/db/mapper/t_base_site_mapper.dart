@@ -26,6 +26,7 @@ extension TBaseSiteMapper on TBaseSite {
       metaCreateDate: parseDate(metaCreateDate?.toIso8601String()),
       metaUpdateDate: parseDate(metaUpdateDate?.toIso8601String()),
       isLocal: isLocal,
+      serverSiteId: serverSiteId,
     );
   }
 }
@@ -44,6 +45,7 @@ extension BaseSiteMapper on BaseSite {
       altitudeMin: Value(altitudeMin),
       altitudeMax: Value(altitudeMax),
       isLocal: Value(isLocal),
+      serverSiteId: Value(serverSiteId),
     );
   }
 }

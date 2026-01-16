@@ -18,5 +18,6 @@ class BaseSite with _$BaseSite {
     DateTime? metaUpdateDate,
     Map<String, dynamic>? data,
     bool? isLocal, // true si créé localement, false si récupéré depuis l'API
+    int? serverSiteId, // ID du site sur le serveur (pour la synchronisation)
   }) = _BaseSite;
 }

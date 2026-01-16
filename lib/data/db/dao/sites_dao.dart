@@ -401,4 +401,12 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     final results = await query.map((row) => row.readTable(tSiteComplements)).get();
     return results.map((e) => e.toDomain()).toList();
   }
+
+  /// Updates the server site ID after successful sync
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId) async {
+    await (update(tBaseSites)..where((tbl) => tbl.idBaseSite.equals(localSiteId)))
+        .write(TBaseSitesCompanion(
+      serverSiteId: Value(serverSiteId),
+    ));
+  }
 }

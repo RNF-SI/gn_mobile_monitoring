@@ -29,7 +29,9 @@ mixin _$BaseSite {
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
-  bool? get isLocal => throw _privateConstructorUsedError;
+  bool? get isLocal =>
+      throw _privateConstructorUsedError; // true si créé localement, false si récupéré depuis l'API
+  int? get serverSiteId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $BaseSiteCopyWith<BaseSite> get copyWith =>
@@ -54,7 +56,8 @@ abstract class $BaseSiteCopyWith<$Res> {
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       Map<String, dynamic>? data,
-      bool? isLocal});
+      bool? isLocal,
+      int? serverSiteId});
 }
 
 /// @nodoc
@@ -83,6 +86,7 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
     Object? isLocal = freezed,
+    Object? serverSiteId = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseSite: null == idBaseSite
@@ -137,6 +141,10 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.isLocal
           : isLocal // ignore: cast_nullable_to_non_nullable
               as bool?,
+      serverSiteId: freezed == serverSiteId
+          ? _value.serverSiteId
+          : serverSiteId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -162,7 +170,8 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       Map<String, dynamic>? data,
-      bool? isLocal});
+      bool? isLocal,
+      int? serverSiteId});
 }
 
 /// @nodoc
@@ -189,6 +198,7 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
     Object? isLocal = freezed,
+    Object? serverSiteId = freezed,
   }) {
     return _then(_$BaseSiteImpl(
       idBaseSite: null == idBaseSite
@@ -243,6 +253,10 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.isLocal
           : isLocal // ignore: cast_nullable_to_non_nullable
               as bool?,
+      serverSiteId: freezed == serverSiteId
+          ? _value.serverSiteId
+          : serverSiteId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -263,7 +277,8 @@ class _$BaseSiteImpl implements _BaseSite {
       this.metaCreateDate,
       this.metaUpdateDate,
       final Map<String, dynamic>? data,
-      this.isLocal})
+      this.isLocal,
+      this.serverSiteId})
       : _data = data;
 
   @override
@@ -301,10 +316,13 @@ class _$BaseSiteImpl implements _BaseSite {
 
   @override
   final bool? isLocal;
+// true si créé localement, false si récupéré depuis l'API
+  @override
+  final int? serverSiteId;
 
   @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal, serverSiteId: $serverSiteId)';
   }
 
   @override
@@ -334,7 +352,9 @@ class _$BaseSiteImpl implements _BaseSite {
             (identical(other.metaUpdateDate, metaUpdateDate) ||
                 other.metaUpdateDate == metaUpdateDate) &&
             const DeepCollectionEquality().equals(other._data, _data) &&
-            (identical(other.isLocal, isLocal) || other.isLocal == isLocal));
+            (identical(other.isLocal, isLocal) || other.isLocal == isLocal) &&
+            (identical(other.serverSiteId, serverSiteId) ||
+                other.serverSiteId == serverSiteId));
   }
 
   @override
@@ -352,7 +372,8 @@ class _$BaseSiteImpl implements _BaseSite {
       metaCreateDate,
       metaUpdateDate,
       const DeepCollectionEquality().hash(_data),
-      isLocal);
+      isLocal,
+      serverSiteId);
 
   @JsonKey(ignore: true)
   @override
@@ -375,7 +396,8 @@ abstract class _BaseSite implements BaseSite {
       final DateTime? metaCreateDate,
       final DateTime? metaUpdateDate,
       final Map<String, dynamic>? data,
-      final bool? isLocal}) = _$BaseSiteImpl;
+      final bool? isLocal,
+      final int? serverSiteId}) = _$BaseSiteImpl;
 
   @override
   int get idBaseSite;
@@ -403,6 +425,8 @@ abstract class _BaseSite implements BaseSite {
   Map<String, dynamic>? get data;
   @override
   bool? get isLocal;
+  @override // true si créé localement, false si récupéré depuis l'API
+  int? get serverSiteId;
   @override
   @JsonKey(ignore: true)
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>
