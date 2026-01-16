@@ -1,13 +1,10 @@
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
-import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relations_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_by_id_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
@@ -20,51 +17,52 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
   final (moduleId, siteGroupId) = params;
   final getSitesBySiteGroupUseCase =
       ref.watch(getSitesBySiteGroupUseCaseProvider);
-  final createSiteGroupUseCase = ref.watch(createSiteGroupUseCaseProvider);
+  final createSiteGroupWithRelationsUseCase =
+      ref.watch(createSiteGroupWithRelationsUseCaseProvider);
   final updateSiteGroupUseCase = ref.watch(updateSiteGroupUseCaseProvider);
   final deleteSiteGroupUseCase = ref.watch(deleteSiteGroupUseCaseProvider);
   final getUserIdUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
+  final getSiteGroupByIdUseCase = ref.watch(getSiteGroupByIdUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
-  final sitesDatabase = ref.watch(siteDatabaseProvider);
 
   return SiteGroupFormViewModel(
-    createSiteGroupUseCase,
+    createSiteGroupWithRelationsUseCase,
     updateSiteGroupUseCase,
     deleteSiteGroupUseCase,
     getUserIdUseCase,
     getSitesBySiteGroupUseCase,
+    getSiteGroupByIdUseCase,
     formDataProcessor,
-    sitesDatabase,
     moduleId,
     siteGroupId ?? 0,
   );
 });
 
 class SiteGroupFormViewModel extends StateNotifier<void> {
-  final CreateSiteGroupUseCase _createSiteGroupUseCase;
+  final CreateSiteGroupWithRelationsUseCase _createSiteGroupWithRelationsUseCase;
   final UpdateSiteGroupUseCase _updateSiteGroupUseCase;
   final DeleteSiteGroupUseCase _deleteSiteGroupUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
+  final GetSiteGroupsByIdUseCase _getSiteGroupByIdUseCase;
   final FormDataProcessor _formDataProcessor;
-  final SitesDatabase _sitesDatabase;
   final int _moduleId;
   final int _siteGroupId;
 
   bool _mounted = true;
 
   SiteGroupFormViewModel(
-    this._createSiteGroupUseCase,
+    this._createSiteGroupWithRelationsUseCase,
     this._updateSiteGroupUseCase,
     this._deleteSiteGroupUseCase,
     this._getUserIdUseCase,
     this._getSitesBySiteGroupUseCase,
+    this._getSiteGroupByIdUseCase,
     this._formDataProcessor,
-    this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
   ) : super(const AsyncValue.loading()) {
-    if (_siteGroupId != null) {
+    if (_siteGroupId > 0) {
       loadSite();
     }
   }
@@ -109,71 +107,18 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       // Récupérer l'ID de l'utilisateur connecté
       final userId = await _getUserIdUseCase.execute();
 
-      // Convertir les données en BaseSite
+      // Convertir les données en SiteGroup
       final siteGroup = _prepareSiteGroupFromFormData(
         processedData,
         moduleId: moduleId ?? _moduleId,
         userId: userId,
       );
 
-      // Créer le groupe de sites
-      final siteGroupId = await _createSiteGroupUseCase.execute(siteGroup);
-
-      // Créer la relation groupe de sites-module
-      await _sitesDatabase.insertSiteGroupModule(SitesGroupModule (
-        idSitesGroup: siteGroupId,
-        idModule: moduleId ?? _moduleId,
-      ));
-
-      // // Créer le complément de site si nécessaire
-      // final complementData = <String, dynamic>{};
-      
-      // // Ajouter le groupe de sites si spécifié
-      // if (_siteGroupId != null) {
-      //   complementData['id_sites_group'] = _siteGroupId;
-      // }
-      
-      // // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans SiteGroup
-      // final specificFields = ['id_sites_group'];
-      // for (final field in specificFields) {
-      //   if (processedData.containsKey(field) && !complementData.containsKey(field)) {
-      //     complementData[field] = processedData[field];
-      //   }
-      // }
-      
-      // Ajouter tous les autres champs qui ne sont pas des champs de base
-      final baseSiteGroupFields = [
-        "id_sites_group",
-        "sites_group_name",
-        "sites_group_code",
-        "sites_group_description",
-        "comments",
-        "uuid_sites_group",
-        "nb_sites",
-        "nb_visits",
-        "medias",
-        "altitude_min",
-        "altitude_max",
-        "id_digitiser",
-        "modules"
-      ];
-      
-      // for (final entry in processedData.entries) {
-      //   if (!baseSiteGroupFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
-      //     complementData[entry.key] = entry.value;
-      //   }
-      // }
-
-      // // Créer le complément seulement s'il y a des données
-      // if (complementData.isNotEmpty) {
-      //   await _sitesDatabase.insertSiteComplements([
-      //     SiteComplement(
-      //       idBaseSite: siteId,
-      //       idSitesGroup: _siteGroupId,
-      //       data: jsonEncode(complementData),
-      //     ),
-      //   ]);
-      // }
+      // Créer le groupe de sites avec ses relations via le use case
+      final siteGroupId = await _createSiteGroupWithRelationsUseCase.execute(
+        siteGroup: siteGroup,
+        moduleId: moduleId ?? _moduleId,
+      );
 
       return siteGroupId;
     } catch (e) {
@@ -228,10 +173,10 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     }
   }
 
-   /// Récupère un site group par son ID
+  /// Récupère un site group par son ID
   Future<SiteGroup?> getSiteGroupById(int siteGroupId) async {
     try {
-      return await _sitesDatabase.getSiteGroupById(siteGroupId);
+      return await _getSiteGroupByIdUseCase.execute(siteGroupId);
     } catch (e) {
       debugPrint('Erreur lors de la récupération du groupe de site: $e');
       return null;

@@ -2,13 +2,11 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
-import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
-import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/create_site_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_with_relations_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
@@ -22,47 +20,48 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
   final (moduleId, siteGroupId) = params;
   final getSitesBySiteGroupUseCase =
       ref.watch(getSitesBySiteGroupUseCaseProvider);
-  final createSiteUseCase = ref.watch(createSiteUseCaseProvider);
+  final createSiteWithRelationsUseCase =
+      ref.watch(createSiteWithRelationsUseCaseProvider);
   final updateSiteUseCase = ref.watch(updateSiteUseCaseProvider);
   final deleteSiteUseCase = ref.watch(deleteSiteUseCaseProvider);
   final getUserIdUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
+  final getSiteByIdUseCase = ref.watch(getSiteByIdUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
-  final sitesDatabase = ref.watch(siteDatabaseProvider);
 
   return SiteFormViewModel(
-    createSiteUseCase,
+    createSiteWithRelationsUseCase,
     updateSiteUseCase,
     deleteSiteUseCase,
     getUserIdUseCase,
     getSitesBySiteGroupUseCase,
+    getSiteByIdUseCase,
     formDataProcessor,
-    sitesDatabase,
     moduleId,
-    siteGroupId ?? 0
+    siteGroupId ?? 0,
   );
 });
 
 class SiteFormViewModel extends StateNotifier<void> {
-  final CreateSiteUseCase _createSiteUseCase;
+  final CreateSiteWithRelationsUseCase _createSiteWithRelationsUseCase;
   final UpdateSiteUseCase _updateSiteUseCase;
   final DeleteSiteUseCase _deleteSiteUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
+  final GetSiteByIdUseCase _getSiteByIdUseCase;
   final FormDataProcessor _formDataProcessor;
-  final SitesDatabase _sitesDatabase;
   final int _moduleId;
   final int _siteGroupId;
 
   bool _mounted = true;
 
   SiteFormViewModel(
-    this._createSiteUseCase,
+    this._createSiteWithRelationsUseCase,
     this._updateSiteUseCase,
     this._deleteSiteUseCase,
     this._getUserIdUseCase,
     this._getSitesBySiteGroupUseCase,
+    this._getSiteByIdUseCase,
     this._formDataProcessor,
-    this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
   ) : super(const AsyncValue.loading()) {
@@ -120,65 +119,75 @@ class SiteFormViewModel extends StateNotifier<void> {
         selectedSiteTypeId: selectedSiteTypeId,
       );
 
-      // Créer le site
-      final siteId = await _createSiteUseCase.execute(site);
-
-      // Créer la relation site-module
-      await _sitesDatabase.insertSiteModule(SiteModule(
-        idSite: siteId,
-        idModule: moduleId ?? _moduleId,
-      ));
-
-      // Créer le complément de site si nécessaire
-      final complementData = <String, dynamic>{};
-      
-      // Ajouter le type de site si spécifié
-      if (selectedSiteTypeId != null) {
-        complementData['id_nomenclature_type_site'] = selectedSiteTypeId;
-      }
-      
-      // Ajouter le groupe de sites si spécifié
-      if (_siteGroupId != null) {
-        complementData['id_sites_group'] = _siteGroupId;
-      }
-      
-      // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
-      final specificFields = ['id_sites_group', 'id_nomenclature_type_site', 'initial_code'];
-      for (final field in specificFields) {
-        if (processedData.containsKey(field) && !complementData.containsKey(field)) {
-          complementData[field] = processedData[field];
-        }
-      }
-      
-      // Ajouter tous les autres champs qui ne sont pas des champs de base
-      final baseSiteFields = [
-        'id_base_site', 'base_site_name', 'base_site_code', 'base_site_description',
-        'first_use_date', 'geom', 'uuid_base_site', 'altitude_min', 'altitude_max',
-        'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'id_inventor'
-      ];
-      
-      for (final entry in processedData.entries) {
-        if (!baseSiteFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
-          complementData[entry.key] = entry.value;
-        }
-      }
+      // Préparer le complément de site
+      final complementData = _prepareComplementData(
+        processedData,
+        selectedSiteTypeId: selectedSiteTypeId,
+      );
 
       // Créer le complément seulement s'il y a des données
+      SiteComplement? complement;
       if (complementData.isNotEmpty) {
-        await _sitesDatabase.insertSiteComplements([
-          SiteComplement(
-            idBaseSite: siteId,
-            idSitesGroup: _siteGroupId,
-            data: jsonEncode(complementData),
-          ),
-        ]);
+        complement = SiteComplement(
+          idBaseSite: 0, // Sera mis à jour par le use case
+          idSitesGroup: _siteGroupId,
+          data: jsonEncode(complementData),
+        );
       }
+
+      // Créer le site avec ses relations via le use case
+      final siteId = await _createSiteWithRelationsUseCase.execute(
+        site: site,
+        moduleId: moduleId ?? _moduleId,
+        complement: complement,
+      );
 
       return siteId;
     } catch (e) {
       debugPrint('Erreur lors de la création du site: $e');
       rethrow;
     }
+  }
+
+  /// Prépare les données du complément de site
+  Map<String, dynamic> _prepareComplementData(
+    Map<String, dynamic> processedData, {
+    int? selectedSiteTypeId,
+  }) {
+    final complementData = <String, dynamic>{};
+
+    // Ajouter le type de site si spécifié
+    if (selectedSiteTypeId != null) {
+      complementData['id_nomenclature_type_site'] = selectedSiteTypeId;
+    }
+
+    // Ajouter le groupe de sites si spécifié
+    if (_siteGroupId > 0) {
+      complementData['id_sites_group'] = _siteGroupId;
+    }
+
+    // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
+    final specificFields = ['id_sites_group', 'id_nomenclature_type_site', 'initial_code'];
+    for (final field in specificFields) {
+      if (processedData.containsKey(field) && !complementData.containsKey(field)) {
+        complementData[field] = processedData[field];
+      }
+    }
+
+    // Ajouter tous les autres champs qui ne sont pas des champs de base
+    final baseSiteFields = [
+      'id_base_site', 'base_site_name', 'base_site_code', 'base_site_description',
+      'first_use_date', 'geom', 'uuid_base_site', 'altitude_min', 'altitude_max',
+      'meta_create_date', 'meta_update_date', 'id_module', 'id_digitiser', 'id_inventor'
+    ];
+
+    for (final entry in processedData.entries) {
+      if (!baseSiteFields.contains(entry.key) && !complementData.containsKey(entry.key)) {
+        complementData[entry.key] = entry.value;
+      }
+    }
+
+    return complementData;
   }
 
   /// Met à jour un site existant à partir des données du formulaire
@@ -239,7 +248,7 @@ class SiteFormViewModel extends StateNotifier<void> {
   /// Récupère un site par son ID
   Future<BaseSite?> getSiteById(int siteId) async {
     try {
-      return await _sitesDatabase.getSiteById(siteId);
+      return await _getSiteByIdUseCase.execute(siteId);
     } catch (e) {
       debugPrint('Erreur lors de la récupération du site: $e');
       return null;
