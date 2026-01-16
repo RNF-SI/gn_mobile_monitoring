@@ -23,6 +23,12 @@ class NomenclatureService extends StateNotifier<
   final GetNomenclaturesByTypeCodeUseCase _getNomenclaturesByTypeCodeUseCase;
   final GetNomenclatureByIdUseCase _getNomenclatureByIdUseCase;
 
+  /// Cache des nomenclatures indexé par ID pour un accès rapide
+  Map<int, Nomenclature> _nomenclatureByIdCache = {};
+
+  /// Getter pour le cache des nomenclatures par ID
+  Map<int, Nomenclature> get nomenclatureByIdCache => _nomenclatureByIdCache;
+
   NomenclatureService(
     this.ref,
     this._getNomenclaturesByTypeCodeUseCase,
@@ -86,6 +92,9 @@ class NomenclatureService extends StateNotifier<
         state = custom_async_state.State.success({typeCode: nomenclatures});
       }
 
+      // Reconstruire le cache indexé par ID
+      _rebuildIdCache();
+
       return nomenclatures;
     } catch (e) {
       print(
@@ -98,6 +107,26 @@ class NomenclatureService extends StateNotifier<
   /// Effacer le cache pour forcer un rechargement
   void clearCache() {
     state = const custom_async_state.State.init();
+    _nomenclatureByIdCache.clear();
+  }
+
+  /// Reconstruit le cache indexé par ID à partir du cache principal
+  void _rebuildIdCache() {
+    _nomenclatureByIdCache.clear();
+    if (state.isSuccess) {
+      final cachedData = state.data as Map<String, List<Nomenclature>>;
+      for (final nomenclatures in cachedData.values) {
+        for (final n in nomenclatures) {
+          _nomenclatureByIdCache[n.id] = n;
+        }
+      }
+    }
+  }
+
+  /// Récupère une nomenclature par son ID depuis le cache
+  /// Retourne null si la nomenclature n'est pas dans le cache
+  Nomenclature? getNomenclatureByIdFromCache(int id) {
+    return _nomenclatureByIdCache[id];
   }
 
   /// Précharger les nomenclatures pour plusieurs types à la fois
@@ -115,6 +144,9 @@ class NomenclatureService extends StateNotifier<
       }
 
       state = custom_async_state.State.success(cache);
+
+      // Reconstruire le cache indexé par ID
+      _rebuildIdCache();
     } catch (e) {
       print('Erreur lors du préchargement des nomenclatures: $e');
       state = custom_async_state.State.error(Exception(e));

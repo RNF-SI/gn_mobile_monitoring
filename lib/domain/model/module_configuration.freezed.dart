@@ -2479,6 +2479,10 @@ mixin _$GenericFieldConfig {
   @JsonKey(name: 'id_list')
   dynamic get idList => throw _privateConstructorUsedError;
 
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  dynamic get change => throw _privateConstructorUsedError;
+
   @JsonKey(ignore: true)
   $GenericFieldConfigCopyWith<GenericFieldConfig> get copyWith =>
       throw _privateConstructorUsedError;
@@ -2508,7 +2512,8 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       dynamic default_,
       String? designStyle,
       String? dataPath,
-      @JsonKey(name: 'id_list') dynamic idList});
+      @JsonKey(name: 'id_list') dynamic idList,
+      dynamic change});
 }
 
 /// @nodoc
@@ -2542,6 +2547,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
     Object? designStyle = freezed,
     Object? dataPath = freezed,
     Object? idList = freezed,
+    Object? change = freezed,
   }) {
     return _then(_value.copyWith(
       attributLabel: freezed == attributLabel
@@ -2616,6 +2622,10 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
           ? _value.idList
           : idList // ignore: cast_nullable_to_non_nullable
               as dynamic,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ) as $Val);
   }
 }
@@ -2646,7 +2656,8 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       dynamic default_,
       String? designStyle,
       String? dataPath,
-      @JsonKey(name: 'id_list') dynamic idList});
+      @JsonKey(name: 'id_list') dynamic idList,
+      dynamic change});
 }
 
 /// @nodoc
@@ -2678,6 +2689,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
     Object? designStyle = freezed,
     Object? dataPath = freezed,
     Object? idList = freezed,
+    Object? change = freezed,
   }) {
     return _then(_$GenericFieldConfigImpl(
       attributLabel: freezed == attributLabel
@@ -2752,6 +2764,10 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           ? _value.idList
           : idList // ignore: cast_nullable_to_non_nullable
               as dynamic,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
+              as dynamic,
     ));
   }
 }
@@ -2777,7 +2793,8 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       this.default_,
       this.designStyle,
       this.dataPath,
-      @JsonKey(name: 'id_list') this.idList});
+      @JsonKey(name: 'id_list') this.idList,
+      this.change});
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -2818,9 +2835,14 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   @JsonKey(name: 'id_list')
   final dynamic idList;
 
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  @override
+  final dynamic change;
+
   @override
   String toString() {
-    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, value: $value, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
+    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, value: $value, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList, change: $change)';
   }
 
   @override
@@ -2857,30 +2879,33 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
                 other.designStyle == designStyle) &&
             (identical(other.dataPath, dataPath) ||
                 other.dataPath == dataPath) &&
-            const DeepCollectionEquality().equals(other.idList, idList));
+            const DeepCollectionEquality().equals(other.idList, idList) &&
+            const DeepCollectionEquality().equals(other.change, change));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      attributLabel,
-      definition,
-      const DeepCollectionEquality().hash(hidden),
-      required,
-      typeWidget,
-      typeUtil,
-      multiSelect,
-      api,
-      application,
-      keyLabel,
-      keyValue,
-      multiple,
-      const DeepCollectionEquality().hash(values),
-      const DeepCollectionEquality().hash(value),
-      const DeepCollectionEquality().hash(default_),
-      designStyle,
-      dataPath,
-      const DeepCollectionEquality().hash(idList));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        attributLabel,
+        definition,
+        const DeepCollectionEquality().hash(hidden),
+        required,
+        typeWidget,
+        typeUtil,
+        multiSelect,
+        api,
+        application,
+        keyLabel,
+        keyValue,
+        multiple,
+        const DeepCollectionEquality().hash(values),
+        const DeepCollectionEquality().hash(value),
+        const DeepCollectionEquality().hash(default_),
+        designStyle,
+        dataPath,
+        const DeepCollectionEquality().hash(idList),
+        const DeepCollectionEquality().hash(change)
+      ]);
 
   @JsonKey(ignore: true)
   @override
@@ -2892,25 +2917,25 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
 
 abstract class _GenericFieldConfig implements GenericFieldConfig {
   const factory _GenericFieldConfig(
-          {@JsonKey(name: 'attribut_label') final String? attributLabel,
-          final String? definition,
-          final dynamic hidden,
-          final bool? required,
-          final String? typeWidget,
-          final String? typeUtil,
-          final bool? multiSelect,
-          final String? api,
-          final String? application,
-          final String? keyLabel,
-          final String? keyValue,
-          final bool? multiple,
-          final dynamic values,
-          final dynamic value,
-          final dynamic default_,
-          final String? designStyle,
-          final String? dataPath,
-          @JsonKey(name: 'id_list') final dynamic idList}) =
-      _$GenericFieldConfigImpl;
+      {@JsonKey(name: 'attribut_label') final String? attributLabel,
+      final String? definition,
+      final dynamic hidden,
+      final bool? required,
+      final String? typeWidget,
+      final String? typeUtil,
+      final bool? multiSelect,
+      final String? api,
+      final String? application,
+      final String? keyLabel,
+      final String? keyValue,
+      final bool? multiple,
+      final dynamic values,
+      final dynamic value,
+      final dynamic default_,
+      final String? designStyle,
+      final String? dataPath,
+      @JsonKey(name: 'id_list') final dynamic idList,
+      final dynamic change}) = _$GenericFieldConfigImpl;
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -2950,6 +2975,11 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   @JsonKey(name: 'id_list')
   dynamic get idList;
+  @override
+
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  dynamic get change;
   @override
   @JsonKey(ignore: true)
   _$$GenericFieldConfigImplCopyWith<_$GenericFieldConfigImpl> get copyWith =>
@@ -3108,6 +3138,10 @@ abstract class _TypeSiteConfig implements TypeSiteConfig {
 /// @nodoc
 mixin _$ObjectConfig {
   bool? get chained => throw _privateConstructorUsedError;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  List<dynamic>? get change => throw _privateConstructorUsedError;
   List<String>? get childrenTypes => throw _privateConstructorUsedError;
   String? get descriptionFieldName => throw _privateConstructorUsedError;
   List<String>? get displayForm => throw _privateConstructorUsedError;
@@ -3148,6 +3182,7 @@ abstract class $ObjectConfigCopyWith<$Res> {
   @useResult
   $Res call(
       {bool? chained,
+      List<dynamic>? change,
       List<String>? childrenTypes,
       String? descriptionFieldName,
       List<String>? displayForm,
@@ -3187,6 +3222,7 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
   @override
   $Res call({
     Object? chained = freezed,
+    Object? change = freezed,
     Object? childrenTypes = freezed,
     Object? descriptionFieldName = freezed,
     Object? displayForm = freezed,
@@ -3216,6 +3252,10 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
           ? _value.chained
           : chained // ignore: cast_nullable_to_non_nullable
               as bool?,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>?,
       childrenTypes: freezed == childrenTypes
           ? _value.childrenTypes
           : childrenTypes // ignore: cast_nullable_to_non_nullable
@@ -3322,6 +3362,7 @@ abstract class _$$ObjectConfigImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool? chained,
+      List<dynamic>? change,
       List<String>? childrenTypes,
       String? descriptionFieldName,
       List<String>? displayForm,
@@ -3359,6 +3400,7 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
   @override
   $Res call({
     Object? chained = freezed,
+    Object? change = freezed,
     Object? childrenTypes = freezed,
     Object? descriptionFieldName = freezed,
     Object? displayForm = freezed,
@@ -3388,6 +3430,10 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
           ? _value.chained
           : chained // ignore: cast_nullable_to_non_nullable
               as bool?,
+      change: freezed == change
+          ? _value._change
+          : change // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>?,
       childrenTypes: freezed == childrenTypes
           ? _value._childrenTypes
           : childrenTypes // ignore: cast_nullable_to_non_nullable
@@ -3489,6 +3535,7 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
 class _$ObjectConfigImpl implements _ObjectConfig {
   const _$ObjectConfigImpl(
       {this.chained,
+      final List<dynamic>? change,
       final List<String>? childrenTypes,
       this.descriptionFieldName,
       final List<String>? displayForm,
@@ -3512,7 +3559,8 @@ class _$ObjectConfigImpl implements _ObjectConfig {
       final Map<String, dynamic>? specific,
       final Map<String, TypeSiteConfig>? typesSite,
       this.uuidFieldName})
-      : _childrenTypes = childrenTypes,
+      : _change = change,
+        _childrenTypes = childrenTypes,
         _displayForm = displayForm,
         _displayList = displayList,
         _displayProperties = displayProperties,
@@ -3527,6 +3575,22 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 
   @override
   final bool? chained;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  final List<dynamic>? _change;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  @override
+  List<dynamic>? get change {
+    final value = _change;
+    if (value == null) return null;
+    if (_change is EqualUnmodifiableListView) return _change;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   final List<String>? _childrenTypes;
   @override
   List<String>? get childrenTypes {
@@ -3674,7 +3738,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 
   @override
   String toString() {
-    return 'ObjectConfig(chained: $chained, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, isEditableOnField: $isEditableOnField, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
+    return 'ObjectConfig(chained: $chained, change: $change, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, isEditableOnField: $isEditableOnField, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
   }
 
   @override
@@ -3683,6 +3747,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         (other.runtimeType == runtimeType &&
             other is _$ObjectConfigImpl &&
             (identical(other.chained, chained) || other.chained == chained) &&
+            const DeepCollectionEquality().equals(other._change, _change) &&
             const DeepCollectionEquality()
                 .equals(other._childrenTypes, _childrenTypes) &&
             (identical(other.descriptionFieldName, descriptionFieldName) ||
@@ -3729,6 +3794,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
   int get hashCode => Object.hashAll([
         runtimeType,
         chained,
+        const DeepCollectionEquality().hash(_change),
         const DeepCollectionEquality().hash(_childrenTypes),
         descriptionFieldName,
         const DeepCollectionEquality().hash(_displayForm),
@@ -3764,6 +3830,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 abstract class _ObjectConfig implements ObjectConfig {
   const factory _ObjectConfig(
       {final bool? chained,
+      final List<dynamic>? change,
       final List<String>? childrenTypes,
       final String? descriptionFieldName,
       final List<String>? displayForm,
@@ -3790,6 +3857,11 @@ abstract class _ObjectConfig implements ObjectConfig {
 
   @override
   bool? get chained;
+  @override
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  List<dynamic>? get change;
   @override
   List<String>? get childrenTypes;
   @override

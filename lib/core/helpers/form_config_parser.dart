@@ -59,6 +59,7 @@ class FormConfigParser {
       if (config.default_ != null) 'default': config.default_,
       if (config.designStyle != null) 'designStyle': config.designStyle,
       if (config.dataPath != null) 'data_path': config.dataPath,
+      if (config.change != null) 'change': config.change,
     };
   }
 
@@ -707,6 +708,8 @@ class FormConfigParser {
             'type_util': fieldConfig['type_util'],
           // Ajouter la propriété multiple pour les sélections multiples
           if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+          // Ajouter la configuration des règles de changement automatique
+          if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
         };
       }
     });
@@ -744,7 +747,7 @@ class FormConfigParser {
             }
             
             print('🔍 DEBUG: Ajout du champ $fieldName depuis specific (non présent dans configWithSubstitutions)');
-            
+
             unifiedSchema[fieldName] = {
               'attribut_label': fieldConfig['attribut_label'] ?? fieldName,
               'type_widget': typeWidget,
@@ -766,6 +769,8 @@ class FormConfigParser {
               if (fieldConfig['type_util'] != null)
                 'type_util': fieldConfig['type_util'],
               if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+              // Ajouter la configuration des règles de changement automatique
+              if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
             };
           }
         }

@@ -473,6 +473,9 @@ class GenericFieldConfig with _$GenericFieldConfig {
     String? designStyle,
     String? dataPath,
     @JsonKey(name: 'id_list') dynamic idList,
+    /// Configuration des règles de changement automatique
+    /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+    dynamic change,
   }) = _GenericFieldConfig;
 
   factory GenericFieldConfig.fromJson(Map<String, dynamic> json) {
@@ -495,6 +498,7 @@ class GenericFieldConfig with _$GenericFieldConfig {
       designStyle: json['designStyle'] as String?,
       dataPath: json['data_path'] as String?,
       idList: json['id_list'],
+      change: json['change'],
     );
   }
 }
@@ -518,6 +522,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
         if (designStyle != null) 'designStyle': designStyle,
         if (dataPath != null) 'data_path': dataPath,
         if (idList != null) 'id_list': idList,
+        if (change != null) 'change': change,
       };
 }
 
@@ -547,6 +552,9 @@ extension TypeSiteConfigX on TypeSiteConfig {
 class ObjectConfig with _$ObjectConfig {
   const factory ObjectConfig({
     bool? chained,
+    /// Configuration des règles de changement automatique (format JS)
+    /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+    List<dynamic>? change,
     List<String>? childrenTypes,
     String? descriptionFieldName,
     List<String>? displayForm,
@@ -685,8 +693,16 @@ class ObjectConfig with _$ObjectConfig {
       }
     }
 
+    // Safe conversion for change array (List<dynamic> of strings)
+    List<dynamic>? toChangeList(dynamic value) {
+      if (value == null) return null;
+      if (value is List) return value;
+      return null;
+    }
+
     return ObjectConfig(
       chained: toBool(json['chained']),
+      change: toChangeList(json['change']),
       childrenTypes: toStringList(json['children_types']),
       descriptionFieldName: toString(json['description_field_name']),
       displayForm: toStringList(json['display_form']),
@@ -717,6 +733,7 @@ class ObjectConfig with _$ObjectConfig {
 extension ObjectConfigX on ObjectConfig {
   Map<String, dynamic> toJson() => {
         if (chained != null) 'chained': chained,
+        if (change != null) 'change': change,
         if (childrenTypes != null) 'children_types': childrenTypes,
         if (descriptionFieldName != null)
           'description_field_name': descriptionFieldName,

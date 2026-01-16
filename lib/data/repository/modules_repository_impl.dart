@@ -336,6 +336,52 @@ class ModulesRepositoryImpl implements ModulesRepository {
         // Continuer malgré les erreurs de conversion
       }
 
+      // Prétraiter les expressions "change" en JavaScript et les convertir en format structuré
+      try {
+        int changeRulesConverted = 0;
+
+        final changeObjectTypes = [
+          'module',
+          'site',
+          'sites_group',
+          'visit',
+          'observation',
+          'observation_detail'
+        ];
+
+        for (final objectType in changeObjectTypes) {
+          if (config.containsKey(objectType) &&
+              config[objectType] is Map<String, dynamic>) {
+            final objectConfig = config[objectType] as Map<String, dynamic>;
+
+            // Vérifier si le champ "change" existe et est un tableau
+            if (objectConfig.containsKey('change') &&
+                objectConfig['change'] is List) {
+              final changeArray = objectConfig['change'] as List;
+
+              // Convertir le tableau de strings JS en format structuré
+              final convertedRules = _convertChangeRulesToStructured(changeArray);
+
+              if (convertedRules.isNotEmpty) {
+                // Remplacer le format JS par le format structuré
+                objectConfig['change'] = convertedRules;
+                changeRulesConverted += convertedRules.length;
+                print(
+                    'Converted ${convertedRules.length} change rules in $objectType section');
+              }
+            }
+          }
+        }
+
+        if (changeRulesConverted > 0) {
+          print(
+              'Total change rules converted in module configuration: $changeRulesConverted');
+        }
+      } catch (e) {
+        print('Erreur lors de la conversion des règles change: $e');
+        // Continuer malgré les erreurs de conversion
+      }
+
       // Convert the Map to a properly formatted JSON string
       final jsonConfig = json.encode(config);
 
@@ -625,5 +671,169 @@ class ModulesRepositoryImpl implements ModulesRepository {
     } catch (e) {
       throw Exception('Failed to get module configuration: $e');
     }
+  }
+
+  /// Convertit un tableau de strings JavaScript "change" en format structuré
+  ///
+  /// Format d'entrée (JS):
+  /// ["({objForm, meta}) => {", "if (condition) {", "objForm.patchValue({...})", "}", ...]
+  ///
+  /// Format de sortie (structuré):
+  /// [{"condition": "...", "patchValues": {...}}, ...]
+  List<Map<String, dynamic>> _convertChangeRulesToStructured(List<dynamic> changeArray) {
+    final List<Map<String, dynamic>> rules = [];
+
+    // Reconstituer le code complet
+    final fullCode = changeArray.map((e) => e.toString()).join('\n');
+
+    // Extraire tous les blocs if/patchValue
+    final ifBlockPattern = RegExp(
+      r'if\s*\((.+?)\)\s*\{[^}]*?(?:objForm\.)?patchValue\s*\((\{.+?\})(?:\s*,\s*\{[^}]*\})?\s*\)',
+      multiLine: true,
+      dotAll: true,
+    );
+
+    final matches = ifBlockPattern.allMatches(fullCode);
+
+    for (final match in matches) {
+      final condition = match.group(1)?.trim() ?? '';
+      final patchValueStr = match.group(2)?.trim() ?? '{}';
+
+      if (condition.isNotEmpty) {
+        // Parser l'objet patchValue
+        final patchValues = _parseJavaScriptObject(patchValueStr);
+
+        rules.add({
+          'condition': condition,
+          'patchValues': patchValues,
+        });
+      }
+    }
+
+    return rules;
+  }
+
+  /// Parse un objet JavaScript en Map Dart
+  Map<String, dynamic> _parseJavaScriptObject(String jsObject) {
+    final Map<String, dynamic> result = {};
+
+    // Retirer les accolades externes
+    String content = jsObject.trim();
+    if (content.startsWith('{')) {
+      content = content.substring(1);
+    }
+    if (content.endsWith('}')) {
+      content = content.substring(0, content.length - 1);
+    }
+
+    // Parser les propriétés en gérant les objets imbriqués
+    int depth = 0;
+    int start = 0;
+    bool inString = false;
+    String? stringChar;
+    final List<String> properties = [];
+
+    for (int i = 0; i < content.length; i++) {
+      final char = content[i];
+
+      if (!inString && (char == "'" || char == '"')) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char == stringChar) {
+        inString = false;
+        stringChar = null;
+      } else if (!inString) {
+        if (char == '{') {
+          depth++;
+        } else if (char == '}') {
+          depth--;
+        } else if (char == ',' && depth == 0) {
+          properties.add(content.substring(start, i).trim());
+          start = i + 1;
+        }
+      }
+    }
+
+    // Ajouter la dernière propriété
+    if (start < content.length) {
+      properties.add(content.substring(start).trim());
+    }
+
+    // Parser chaque propriété
+    for (final prop in properties) {
+      if (prop.isEmpty) continue;
+
+      // Trouver le premier ':' qui n'est pas dans un objet imbriqué ou une string
+      int colonIndex = -1;
+      int depth2 = 0;
+      bool inStr = false;
+      String? strChar;
+
+      for (int i = 0; i < prop.length; i++) {
+        final char = prop[i];
+
+        if (!inStr && (char == "'" || char == '"')) {
+          inStr = true;
+          strChar = char;
+        } else if (inStr && char == strChar) {
+          inStr = false;
+          strChar = null;
+        } else if (!inStr) {
+          if (char == '{') {
+            depth2++;
+          } else if (char == '}') {
+            depth2--;
+          } else if (char == ':' && depth2 == 0) {
+            colonIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (colonIndex == -1) continue;
+
+      String key = prop.substring(0, colonIndex).trim();
+
+      // Retirer les guillemets de la clé si présents
+      if ((key.startsWith("'") && key.endsWith("'")) ||
+          (key.startsWith('"') && key.endsWith('"'))) {
+        key = key.substring(1, key.length - 1);
+      }
+
+      final valueStr = prop.substring(colonIndex + 1).trim();
+      result[key] = _parseJavaScriptValue(valueStr);
+    }
+
+    return result;
+  }
+
+  /// Parse une valeur JavaScript individuelle
+  dynamic _parseJavaScriptValue(String valueStr) {
+    final trimmed = valueStr.trim();
+
+    if (trimmed == 'null') return null;
+    if (trimmed == 'true') return true;
+    if (trimmed == 'false') return false;
+
+    final numValue = num.tryParse(trimmed);
+    if (numValue != null) return numValue;
+
+    // String (simple ou double quotes)
+    if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+      return trimmed.substring(1, trimmed.length - 1);
+    }
+
+    // Objet imbriqué
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      return _parseJavaScriptObject(trimmed);
+    }
+
+    // Référence dynamique (objForm.value.xxx)
+    if (trimmed.startsWith('objForm.value.')) {
+      return '@value.${trimmed.substring('objForm.value.'.length)}';
+    }
+
+    return trimmed;
   }
 }

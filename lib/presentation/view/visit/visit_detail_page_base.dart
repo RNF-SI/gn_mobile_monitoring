@@ -76,6 +76,27 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
     super.dispose();
   }
 
+  /// Extrait le cd_nom depuis différents formats possibles
+  /// - Si c'est une Map avec 'cd_nom' → retourne la valeur
+  /// - Si c'est un int → retourne directement
+  /// - Si c'est une String → essaie de parser en int
+  /// - Sinon → retourne null
+  int? _extractCdNom(dynamic cdNomValue) {
+    if (cdNomValue == null) return null;
+
+    if (cdNomValue is Map) {
+      final innerCdNom = cdNomValue['cd_nom'];
+      if (innerCdNom is int) return innerCdNom;
+      if (innerCdNom is String) return int.tryParse(innerCdNom);
+      return null;
+    }
+
+    if (cdNomValue is int) return cdNomValue;
+    if (cdNomValue is String) return int.tryParse(cdNomValue);
+
+    return null;
+  }
+
   // Charger les détails de la visite
   void _loadVisitDetails() {
     final viewModel = widget.ref.read(siteVisitsViewModelProvider(
@@ -703,7 +724,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                           observation: Observation(
                             idObservation: observation['id_observation'] as int,
                             idBaseVisit: visitId,
-                            cdNom: observation['cd_nom']['cd_nom'] as int?,
+                            cdNom: _extractCdNom(observation['cd_nom']),
                             comments: observation['comments'] as String?,
                             data: observation,
                             metaCreateDate:

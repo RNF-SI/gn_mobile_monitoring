@@ -493,15 +493,25 @@ class HiddenExpressionEvaluator {
     if (a is num && b is num) {
       return a.compareTo(b);
     }
-    
-    if (a is String && b is String) {
-      return a.compareTo(b);
+
+    // Essayer de convertir les strings en nombres pour une comparaison numérique
+    if (a is String || b is String) {
+      final numA = a is num ? a : num.tryParse(a.toString());
+      final numB = b is num ? b : num.tryParse(b.toString());
+
+      // Si les deux peuvent être convertis en nombres, comparer numériquement
+      if (numA != null && numB != null) {
+        return numA.compareTo(numB);
+      }
+
+      // Sinon, comparer comme strings
+      return a.toString().compareTo(b.toString());
     }
-    
+
     if (a is bool && b is bool) {
       return a == b ? 0 : (a ? 1 : -1);
     }
-    
+
     // Si les types sont différents, convertir en chaîne pour comparer
     return a.toString().compareTo(b.toString());
   }

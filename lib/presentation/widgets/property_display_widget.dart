@@ -147,7 +147,53 @@ class PropertyDisplayWidget extends ConsumerWidget {
         continue;
       }
 
-      // Convertir en entier si nécessaire
+      // Gérer le cas multi-select (List de IDs)
+      if (fieldValue is List) {
+        debugPrint('  $fieldName: Champ multi-select détecté avec ${fieldValue.length} valeurs');
+        try {
+          final List<Map<String, dynamic>> nomenclatureObjects = [];
+          final List<String> labels = [];
+
+          for (final item in fieldValue) {
+            int? itemId;
+            if (item is int) {
+              itemId = item;
+            } else if (item is String) {
+              itemId = int.tryParse(item);
+            } else if (item is Map && item.containsKey('id')) {
+              final id = item['id'];
+              itemId = id is int ? id : int.tryParse(id.toString());
+            }
+
+            if (itemId != null && itemId != 0) {
+              final nomenclatureName =
+                  await nomenclatureService.getNomenclatureNameById(itemId);
+
+              if (nomenclatureName != 'Nomenclature $itemId (non trouvée)') {
+                nomenclatureObjects.add({
+                  'id': itemId,
+                  'label': nomenclatureName,
+                });
+                labels.add(nomenclatureName);
+              }
+            }
+          }
+
+          if (nomenclatureObjects.isNotEmpty) {
+            // Stocker la liste des objets nomenclature
+            enrichedData[fieldName] = {
+              'items': nomenclatureObjects,
+              'label': labels.join(', '),
+            };
+            debugPrint('  $fieldName: Multi-select enrichi avec ${nomenclatureObjects.length} valeurs: ${labels.join(", ")}');
+          }
+        } catch (e) {
+          debugPrint('Erreur lors de l\'enrichissement multi-select de $fieldName: $e');
+        }
+        continue;
+      }
+
+      // Convertir en entier si nécessaire (cas simple: une seule valeur)
       int? idNomenclature;
       if (fieldValue is int) {
         idNomenclature = fieldValue;
@@ -211,7 +257,58 @@ class PropertyDisplayWidget extends ConsumerWidget {
         continue;
       }
 
-      // Convertir en entier si nécessaire
+      // Gérer le cas multi-select (List de IDs) - rare pour sites_group mais possible
+      if (fieldValue is List) {
+        debugPrint('  $fieldName: Champ multi-select sites_group détecté avec ${fieldValue.length} valeurs');
+        try {
+          final sitesDatabase = ref.read(siteDatabaseProvider);
+          final allSiteGroups = await sitesDatabase.getAllSiteGroups();
+          final List<Map<String, dynamic>> siteGroupObjects = [];
+          final List<String> labels = [];
+
+          for (final item in fieldValue) {
+            int? itemId;
+            if (item is int) {
+              itemId = item;
+            } else if (item is String) {
+              itemId = int.tryParse(item);
+            } else if (item is Map && item.containsKey('id')) {
+              final id = item['id'];
+              itemId = id is int ? id : int.tryParse(id.toString());
+            }
+
+            if (itemId != null && itemId != 0) {
+              final siteGroup = allSiteGroups
+                  .where((sg) => sg.idSitesGroup == itemId)
+                  .firstOrNull;
+
+              if (siteGroup != null) {
+                final label = siteGroup.sitesGroupName ??
+                    siteGroup.sitesGroupCode ??
+                    'Groupe $itemId';
+                siteGroupObjects.add({
+                  'id': itemId,
+                  'label': label,
+                });
+                labels.add(label);
+              }
+            }
+          }
+
+          if (siteGroupObjects.isNotEmpty) {
+            enrichedData[fieldName] = {
+              'items': siteGroupObjects,
+              'label': labels.join(', '),
+            };
+            debugPrint('  $fieldName: Multi-select sites_group enrichi avec ${siteGroupObjects.length} valeurs');
+          }
+        } catch (e) {
+          debugPrint('Erreur lors de l\'enrichissement multi-select de $fieldName: $e');
+        }
+        continue;
+      }
+
+      // Convertir en entier si nécessaire (cas simple: une seule valeur)
       int? siteGroupId;
       if (fieldValue is int) {
         siteGroupId = fieldValue;
@@ -258,17 +355,32 @@ class PropertyDisplayWidget extends ConsumerWidget {
       }
     }
 
-    // Traiter les champs de type sites_group
+    // Traiter les champs de type taxon (cd_nom)
     for (final fieldName in taxonFields) {
-      // Créer un objet avec le nom du groupe
-    if (this.customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
-        if (data["cd_nom"]["nom_vern"] == null) {
-          enrichedData[fieldName] = data["cd_nom"]["lb_nom"];
+      final cdNomValue = data["cd_nom"];
+
+      // Vérifier que cd_nom existe et est une Map
+      if (cdNomValue == null) {
+        debugPrint('  $fieldName: cd_nom est null, ignoré');
+        continue;
+      }
+
+      if (cdNomValue is! Map) {
+        // Si cd_nom n'est pas une Map (peut être un int ou String),
+        // on ne peut pas extraire nom_vern ou lb_nom
+        debugPrint('  $fieldName: cd_nom n\'est pas une Map (type: ${cdNomValue.runtimeType}), ignoré');
+        continue;
+      }
+
+      // Maintenant on sait que cdNomValue est une Map
+      if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom') {
+        if (cdNomValue["nom_vern"] == null) {
+          enrichedData[fieldName] = cdNomValue["lb_nom"];
         } else {
-          enrichedData[fieldName] = data["cd_nom"]["nom_vern"];
+          enrichedData[fieldName] = cdNomValue["nom_vern"];
         }
       } else {
-        enrichedData[fieldName] = data["cd_nom"]["lb_nom"];
+        enrichedData[fieldName] = cdNomValue["lb_nom"];
       }
     }
 

@@ -4,6 +4,7 @@ import 'package:meta/meta.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/change_rule_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
@@ -65,6 +66,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   late Map<String, dynamic> _unifiedSchema;
   final Set<String> _userClearedFields = <String>{};
   late Set<String> _criticalFields;
+
+  /// Flag pour éviter les boucles infinies lors de l'application des règles de changement
+  bool _isApplyingChangeRules = false;
+
+  /// Champs qui ont été définis par les règles de changement
+  /// Ces champs doivent être préservés à la sauvegarde même s'ils sont cachés
+  final Set<String> _fieldsSetByChangeRules = <String>{};
 
   /// Returns the onSubmit callback from the widget
   Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
@@ -443,8 +451,15 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
           if (fieldName == 'cd_nom') {
             debugPrint('🐛 [DEBUG] cd_nom inclus (caché mais required): $fieldValue');
           }
+        } else if (_fieldsSetByChangeRules.contains(fieldName)) {
+          // Champ caché mais défini par une règle de changement → conserver
+          // C'est le comportement voulu : ex. présence="Non" → cd_nom="Amphibia"
+          filteredValues[fieldName] = fieldValue;
+          if (fieldName == 'cd_nom') {
+            debugPrint('🐛 [DEBUG] cd_nom inclus (caché mais défini par règle de changement): $fieldValue');
+          }
         } else {
-          // Champ caché et non-required → supprimer
+          // Champ caché et non-required et non défini par règle → supprimer
           if (fieldName == 'cd_nom') {
             debugPrint('🐛 [DEBUG] cd_nom SUPPRIMÉ (caché et non-required): $fieldValue');
           }
@@ -472,6 +487,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
 
     setState(() {
+      // Si l'utilisateur modifie manuellement un champ (pas via règle de changement),
+      // retirer ce champ de la liste des champs définis par règle
+      if (!_isApplyingChangeRules && _fieldsSetByChangeRules.contains(fieldName)) {
+        _fieldsSetByChangeRules.remove(fieldName);
+        debugPrint('📝 [ChangeRule] Champ "$fieldName" retiré des règles (modification manuelle)');
+      }
+
       if (value == null) {
         if (fieldName == 'cd_nom') {
           debugPrint('🐛 [DEBUG] ⚠️ SUPPRESSION de cd_nom car value=null !');
@@ -491,10 +513,78 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       }
     });
 
+    // Traiter les règles de changement si on n'est pas déjà en train de les appliquer
+    if (!_isApplyingChangeRules) {
+      _processChangeRules(fieldName);
+    }
+
     // Si c'est un champ critique (qui affecte la visibilité/validation d'autres champs),
     // forcer un rafraîchissement supplémentaire pour mettre à jour les labels et validations
     if (_criticalFields.contains(fieldName)) {
       setState(() {});
+    }
+  }
+
+  /// Traite les règles de changement après modification d'un champ
+  void _processChangeRules(String triggerFieldName) {
+    // Récupérer la configuration "change" depuis l'objectConfig
+    final changeConfig = widget.objectConfig.change;
+
+    // Si pas de configuration change, rien à faire
+    if (changeConfig == null || changeConfig.isEmpty) {
+      return;
+    }
+
+    final processor = ref.read(changeRuleProcessorProvider);
+
+    final result = processor.processChangeRules(
+      formValues: _formValues,
+      changeConfig: changeConfig,
+      triggerFieldName: triggerFieldName,
+      metadata: {
+        'bChainInput': widget.chainInput ?? false,
+        'parents': {
+          'site': widget.objectConfig,
+          'module': widget.customConfig?.idModule,
+        },
+        'dataset': widget.customConfig?.idListTaxonomy,
+      },
+    );
+
+    if (result.hasChanges) {
+      _applyChangeRuleResults(result);
+    }
+  }
+
+  /// Applique les résultats des règles de changement
+  void _applyChangeRuleResults(ChangeRuleResult result) {
+    _isApplyingChangeRules = true;
+    try {
+      setState(() {
+        // Appliquer les nouvelles valeurs
+        result.fieldsToUpdate.forEach((fieldName, newValue) {
+          _formValues[fieldName] = newValue;
+
+          // Marquer ce champ comme défini par une règle de changement
+          // pour qu'il soit préservé même s'il est caché
+          _fieldsSetByChangeRules.add(fieldName);
+          debugPrint('📝 [ChangeRule] Champ "$fieldName" marqué comme défini par règle de changement');
+
+          // Mettre à jour le TextEditingController si nécessaire
+          if (_textControllers.containsKey(fieldName)) {
+            final controller = _textControllers[fieldName]!;
+            final newText = newValue?.toString() ?? '';
+            if (controller.text != newText) {
+              controller.text = newText;
+            }
+          }
+
+          // Supprimer des champs effacés par l'utilisateur puisqu'on définit une nouvelle valeur
+          _userClearedFields.remove(fieldName);
+        });
+      });
+    } finally {
+      _isApplyingChangeRules = false;
     }
   }
   
@@ -1142,7 +1232,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               return null;
             },
             onChanged: (value) {
-              _formValues[fieldName] = int.tryParse(value) ?? value;
+              final parsedValue = int.tryParse(value);
+              updateFormValue(fieldName, parsedValue ?? (value.isEmpty ? null : value));
             },
           ),
         ],
@@ -1219,9 +1310,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             },
             onChanged: (value) {
               if (value != null) {
-                setState(() {
-                  _formValues[fieldName] = value;
-                });
+                updateFormValue(fieldName, value);
               }
             },
           ),
