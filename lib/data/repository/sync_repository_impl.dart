@@ -59,6 +59,7 @@ class SyncRepositoryImpl implements SyncRepository {
             visitRepository: visitRepository,
             observationsRepository: observationsRepository,
             observationDetailsRepository: observationDetailsRepository,
+            sitesRepository: sitesRepository,
           ),
         );
 
@@ -129,4 +130,8 @@ class SyncRepositoryImpl implements SyncRepository {
       _compositeSync.syncObservationDetailsToServer(
           token, moduleCode, observationId,
           serverObservationId: serverObservationId);
+
+  @override
+  Future<SyncResult> syncSitesToServer(String token, String moduleCode) =>
+      _compositeSync.syncSitesToServer(token, moduleCode);
 }

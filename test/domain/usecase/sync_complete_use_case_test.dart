@@ -5,22 +5,27 @@ import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_sites_to_server_use_case.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockSyncRepository extends Mock implements SyncRepository {}
 class MockGetModulesUseCase extends Mock implements GetModulesUseCase {}
+class MockSyncSitesToServerUseCase extends Mock implements SyncSitesToServerUseCase {}
 
 void main() {
   late SyncCompleteUseCase syncCompleteUseCase;
   late MockSyncRepository mockSyncRepository;
   late MockGetModulesUseCase mockGetModulesUseCase;
+  late MockSyncSitesToServerUseCase mockSyncSitesToServerUseCase;
 
   setUp(() {
     mockSyncRepository = MockSyncRepository();
     mockGetModulesUseCase = MockGetModulesUseCase();
+    mockSyncSitesToServerUseCase = MockSyncSitesToServerUseCase();
     syncCompleteUseCase = SyncCompleteUseCaseImpl(
       mockSyncRepository,
       mockGetModulesUseCase,
+      mockSyncSitesToServerUseCase,
     );
   });
 
@@ -57,7 +62,16 @@ void main() {
 
       when(() => mockGetModulesUseCase.execute())
           .thenAnswer((_) async => testModules);
-      
+
+      when(() => mockSyncSitesToServerUseCase.execute(any(), any()))
+          .thenAnswer((_) async => SyncResult.success(
+            itemsProcessed: 1,
+            itemsAdded: 1,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+            itemsDeleted: 0,
+          ));
+
       when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.success(
             itemsProcessed: 2,
@@ -72,8 +86,10 @@ void main() {
 
       // Assert
       expect(result.success, isTrue);
-      expect(result.itemsProcessed, equals(4)); // 2 modules * 2 items each
-      expect(result.itemsAdded, equals(2)); // 2 modules * 1 item each
+      expect(result.itemsProcessed, equals(6)); // 2 modules * (1 site + 2 visits) each
+      expect(result.itemsAdded, equals(4)); // 2 modules * (1 site + 1 visit) each
+      verify(() => mockSyncSitesToServerUseCase.execute('test-token', 'TEST1')).called(1);
+      verify(() => mockSyncSitesToServerUseCase.execute('test-token', 'TEST2')).called(1);
       verify(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST1')).called(1);
       verify(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST2')).called(1);
     });
@@ -97,7 +113,16 @@ void main() {
 
       when(() => mockGetModulesUseCase.execute())
           .thenAnswer((_) async => testModules);
-      
+
+      when(() => mockSyncSitesToServerUseCase.execute(any(), any()))
+          .thenAnswer((_) async => SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+            itemsDeleted: 0,
+          ));
+
       when(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST1'))
           .thenAnswer((_) async => SyncResult.success(
             itemsProcessed: 1,
@@ -106,7 +131,7 @@ void main() {
             itemsSkipped: 0,
             itemsDeleted: 0,
           ));
-      
+
       when(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST2'))
           .thenAnswer((_) async => SyncResult.failure(
             errorMessage: 'Network error',
@@ -141,7 +166,16 @@ void main() {
 
       when(() => mockGetModulesUseCase.execute())
           .thenAnswer((_) async => testModules);
-      
+
+      when(() => mockSyncSitesToServerUseCase.execute(any(), any()))
+          .thenAnswer((_) async => SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+            itemsDeleted: 0,
+          ));
+
       when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.success(
             itemsProcessed: 1,
@@ -156,8 +190,10 @@ void main() {
 
       // Assert
       expect(result.success, isTrue);
+      verify(() => mockSyncSitesToServerUseCase.execute('test-token', 'TEST1')).called(1);
       verify(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST1')).called(1);
       // Verify that the second module (without code) was not synced
+      verifyNever(() => mockSyncSitesToServerUseCase.execute('test-token', 'TEST2'));
       verifyNever(() => mockSyncRepository.syncVisitsToServer('test-token', 'TEST2'));
     });
   });

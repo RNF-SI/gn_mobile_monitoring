@@ -12,6 +12,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
 
@@ -23,6 +24,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   final VisitRepository _visitRepository;
   final ObservationsRepository _observationsRepository;
   final ObservationDetailsRepository _observationDetailsRepository;
+  final SitesRepository _sitesRepository;
 
   final AppLogger _logger = AppLogger();
 
@@ -35,9 +37,11 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
     required VisitRepository visitRepository,
     required ObservationsRepository observationsRepository,
     required ObservationDetailsRepository observationDetailsRepository,
+    required SitesRepository sitesRepository,
   })  : _visitRepository = visitRepository,
         _observationsRepository = observationsRepository,
-        _observationDetailsRepository = observationDetailsRepository;
+        _observationDetailsRepository = observationDetailsRepository,
+        _sitesRepository = sitesRepository;
 
   /// Vérifie la connectivité avec le serveur
   @override
@@ -1018,4 +1022,161 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
     }
   }
 
+  @override
+  Future<SyncResult> syncSitesToServer(String token, String moduleCode) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+      List<String> errors = [];
+
+      try {
+        _logger.i(
+            '\n==================================================================',
+            tag: 'sync');
+        _logger.i(
+            '[SYNC_REPO] DÉBUT TÉLÉVERSEMENT SITES - MODULE: $moduleCode',
+            tag: 'sync');
+        _logger.i(
+            '==================================================================',
+            tag: 'sync');
+
+        // Récupérer les sites locaux pour ce module
+        final localSites =
+            await _sitesRepository.getLocalSitesByModuleCode(moduleCode);
+        _logger.i('Sites locaux trouvés: ${localSites.length}', tag: 'sync');
+
+        // Si aucun site local, renvoyer un succès vide
+        if (localSites.isEmpty) {
+          _logger.i('AUCUN SITE LOCAL TROUVÉ - SYNCHRONISATION TERMINÉE\n',
+              tag: 'sync');
+          return SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+          );
+        }
+
+        // Séparer les sites en deux groupes : nouveaux (POST) et existants (PATCH)
+        final newSites = localSites
+            .where((site) => site.serverSiteId == null)
+            .toList();
+        final existingSites = localSites
+            .where((site) => site.serverSiteId != null)
+            .toList();
+
+        _logger.i(
+            'Répartition des sites: ${newSites.length} nouveaux, ${existingSites.length} existants',
+            tag: 'sync');
+
+        // PARTIE 1: Traiter les nouveaux sites (POST)
+        for (final site in newSites) {
+          try {
+            _logger.i(
+                'Traitement du nouveau site ID: ${site.idBaseSite} (${site.baseSiteName})',
+                tag: 'sync');
+
+            // POST - Créer un nouveau site
+            final serverResponse =
+                await _globalApi.sendSite(token, moduleCode, site);
+
+            final serverId = serverResponse['id'] ?? serverResponse['ID'];
+            if (serverId == null) {
+              throw Exception('Réponse du serveur invalide pour le site');
+            }
+
+            _logger.i('Site créé avec succès, ID serveur: $serverId',
+                tag: 'sync');
+            itemsAdded++;
+
+            // Mettre à jour l'ID serveur pour les futures tentatives de synchronisation
+            await _sitesRepository.updateSiteServerId(
+                site.idBaseSite, serverId);
+            _logger.i(
+                'ID serveur du site enregistré: local=${site.idBaseSite}, serveur=$serverId',
+                tag: 'sync');
+
+            itemsProcessed++;
+          } catch (e) {
+            _logger.e(
+                'Erreur lors de l\'envoi du site ${site.idBaseSite}: $e',
+                tag: 'sync',
+                error: e);
+            errors.add('Site ${site.idBaseSite}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        // PARTIE 2: Traiter les sites existants (PATCH)
+        for (final site in existingSites) {
+          try {
+            _logger.i(
+                'Mise à jour du site ID: ${site.idBaseSite} (serverId: ${site.serverSiteId})',
+                tag: 'sync');
+
+            // PATCH - Mettre à jour un site existant
+            await _globalApi.updateSite(
+                token, moduleCode, site.serverSiteId!, site);
+
+            _logger.i(
+                'Site mis à jour avec succès, ID serveur: ${site.serverSiteId}',
+                tag: 'sync');
+            itemsUpdated++;
+
+            itemsProcessed++;
+          } catch (e) {
+            _logger.e(
+                'Erreur lors de la mise à jour du site ${site.idBaseSite}: $e',
+                tag: 'sync',
+                error: e);
+            errors.add('Site ${site.idBaseSite}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        // Mettre à jour la date de synchronisation
+        await updateLastSyncDate('sitesToServer', DateTime.now());
+
+        if (errors.isNotEmpty) {
+          String errorMessage =
+              'Erreurs lors de la synchronisation des sites:\n${errors.join('\n')}';
+
+          return SyncResult.failure(
+            errorMessage: errorMessage,
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded,
+            itemsUpdated: itemsUpdated,
+            itemsSkipped: itemsSkipped,
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+        );
+      } catch (e) {
+        debugPrint('Erreur lors de la synchronisation des sites: $e');
+        return SyncResult.failure(
+          errorMessage: 'Erreur lors de la synchronisation des sites: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur générale lors de la synchronisation des sites: $e');
+      return SyncResult.failure(
+        errorMessage: 'Erreur lors de la synchronisation des sites: $e',
+      );
+    }
+  }
 }

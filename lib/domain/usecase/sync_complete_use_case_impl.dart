@@ -3,15 +3,18 @@ import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_sites_to_server_use_case.dart';
 
 /// Implémentation du use case de synchronisation complète
 class SyncCompleteUseCaseImpl implements SyncCompleteUseCase {
   final SyncRepository _syncRepository;
   final GetModulesUseCase _getModulesUseCase;
+  final SyncSitesToServerUseCase _syncSitesToServerUseCase;
 
   SyncCompleteUseCaseImpl(
     this._syncRepository,
     this._getModulesUseCase,
+    this._syncSitesToServerUseCase,
   );
 
   @override
@@ -40,18 +43,56 @@ class SyncCompleteUseCaseImpl implements SyncCompleteUseCase {
 
       debugPrint('[SYNC_COMPLETE] ${modules.length} module(s) trouvé(s)');
 
-      // 2. Synchroniser les visites pour chaque module
+      // 2. Synchroniser les sites locaux pour chaque module
+      for (final module in modules) {
+        if (module.moduleCode == null) {
+          debugPrint('[SYNC_COMPLETE] Module sans code ignoré pour sites: ${module.moduleLabel}');
+          continue;
+        }
+
+        debugPrint('[SYNC_COMPLETE] Synchronisation des sites du module: ${module.moduleCode}');
+
+        try {
+          final sitesResult = await _syncSitesToServerUseCase.execute(
+            token,
+            module.moduleCode!,
+          );
+
+          // Consolider les statistiques des sites
+          totalItemsProcessed += sitesResult.itemsProcessed;
+          totalItemsAdded += sitesResult.itemsAdded;
+          totalItemsUpdated += sitesResult.itemsUpdated;
+          totalItemsSkipped += sitesResult.itemsSkipped;
+          totalItemsDeleted += sitesResult.itemsDeleted ?? 0;
+
+          if (sitesResult.success) {
+            hasAnySuccess = true;
+            if (sitesResult.itemsProcessed > 0) {
+              debugPrint('[SYNC_COMPLETE] Sites du module ${module.moduleCode} synchronisés avec succès');
+            }
+          } else {
+            allErrors.add('Sites ${module.moduleCode}: ${sitesResult.errorMessage}');
+            debugPrint('[SYNC_COMPLETE] Erreur sites module ${module.moduleCode}: ${sitesResult.errorMessage}');
+          }
+        } catch (e) {
+          final errorMsg = 'Erreur lors de la synchronisation des sites du module ${module.moduleCode}: $e';
+          allErrors.add(errorMsg);
+          debugPrint('[SYNC_COMPLETE] $errorMsg');
+        }
+      }
+
+      // 3. Synchroniser les visites pour chaque module
       for (final module in modules) {
         if (module.moduleCode == null) {
           debugPrint('[SYNC_COMPLETE] Module sans code ignoré: ${module.moduleLabel}');
           continue;
         }
 
-        debugPrint('[SYNC_COMPLETE] Synchronisation du module: ${module.moduleCode}');
-        
+        debugPrint('[SYNC_COMPLETE] Synchronisation des visites du module: ${module.moduleCode}');
+
         try {
           final result = await _syncRepository.syncVisitsToServer(
-            token, 
+            token,
             module.moduleCode!,
           );
 
@@ -81,7 +122,7 @@ class SyncCompleteUseCaseImpl implements SyncCompleteUseCase {
         }
       }
 
-      // 3. Construire le résultat final
+      // 4. Construire le résultat final
       final hasErrors = allErrors.isNotEmpty;
       final success = hasAnySuccess && !hasErrors;
 

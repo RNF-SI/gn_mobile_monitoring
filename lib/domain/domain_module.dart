@@ -97,6 +97,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_sto
 import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_sites_to_server_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_sites_to_server_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case_impl.dart';
@@ -114,6 +116,18 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.d
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_complements_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_complements_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_by_id_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_by_id_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_with_relations_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_with_relations_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relations_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relations_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/service/map_geometry_service.dart';
+import 'package:gn_mobile_monitoring/data/service/map_geometry_service_impl.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -255,6 +269,7 @@ final upstreamSyncRepositoryProvider = Provider<UpstreamSyncRepository>(
     observationsRepository: ref.watch(observationsRepositoryProvider),
     observationDetailsRepository:
         ref.watch(observationDetailsRepositoryImplProvider),
+    sitesRepository: ref.watch(sitesRepositoryProvider),
   ),
 );
 
@@ -465,9 +480,52 @@ final getDatasetsForModuleUseCaseProvider =
 );
 
 // Provider pour la synchronisation complète
+final syncSitesToServerUseCaseProvider = Provider<SyncSitesToServerUseCase>(
+  (ref) => SyncSitesToServerUseCaseImpl(
+    ref.watch(upstreamSyncRepositoryProvider),
+  ),
+);
+
 final syncCompleteUseCaseProvider = Provider<SyncCompleteUseCase>(
   (ref) => SyncCompleteUseCaseImpl(
     ref.watch(syncRepositoryProvider),
     ref.watch(getModulesUseCaseProvider),
+    ref.watch(syncSitesToServerUseCaseProvider),
+  ),
+);
+
+// Provider pour le service de géométrie de carte
+final mapGeometryServiceProvider = Provider<MapGeometryService>(
+  (ref) => const MapGeometryServiceImpl(),
+);
+
+// Provider pour récupérer les compléments de sites
+final getSiteComplementsUseCaseProvider = Provider<GetSiteComplementsUseCase>(
+  (ref) => GetSiteComplementsUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+);
+
+// Provider pour récupérer un site par son ID
+final getSiteByIdUseCaseProvider = Provider<GetSiteByIdUseCase>(
+  (ref) => GetSiteByIdUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+);
+
+// Provider pour récupérer un groupe de sites par son ID
+final getSiteGroupByIdUseCaseProvider = Provider<GetSiteGroupsByIdUseCase>(
+  (ref) => GetSiteGroupsByIdUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+);
+
+// Provider pour créer un site avec ses relations (module et complément)
+final createSiteWithRelationsUseCaseProvider = Provider<CreateSiteWithRelationsUseCase>(
+  (ref) => CreateSiteWithRelationsUseCaseImpl(
+    ref.watch(createSiteUseCaseProvider),
+    ref.watch(siteDatabaseProvider),
+  ),
+);
+
+// Provider pour créer un groupe de sites avec ses relations (module)
+final createSiteGroupWithRelationsUseCaseProvider = Provider<CreateSiteGroupWithRelationsUseCase>(
+  (ref) => CreateSiteGroupWithRelationsUseCaseImpl(
+    ref.watch(createSiteGroupUseCaseProvider),
+    ref.watch(siteDatabaseProvider),
   ),
 );

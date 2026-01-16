@@ -6,6 +6,7 @@
 import 'dart:async' as _i4;
 
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i6;
+import 'package:gn_mobile_monitoring/domain/model/site_complement.dart' as _i7;
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart' as _i5;
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart' as _i2;
 import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart'
@@ -157,6 +158,64 @@ class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
           [
             moduleCode,
             token,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i7.SiteComplement>> getAllSiteComplements() =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getAllSiteComplements,
+          [],
+        ),
+        returnValue:
+            _i4.Future<List<_i7.SiteComplement>>.value(<_i7.SiteComplement>[]),
+      ) as _i4.Future<List<_i7.SiteComplement>>);
+
+  @override
+  _i4.Future<_i6.BaseSite?> getSiteById(int? siteId) => (super.noSuchMethod(
+        Invocation.method(
+          #getSiteById,
+          [siteId],
+        ),
+        returnValue: _i4.Future<_i6.BaseSite?>.value(),
+      ) as _i4.Future<_i6.BaseSite?>);
+
+  @override
+  _i4.Future<_i5.SiteGroup?> getSiteGroupById(int? siteGroupId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteGroupById,
+          [siteGroupId],
+        ),
+        returnValue: _i4.Future<_i5.SiteGroup?>.value(),
+      ) as _i4.Future<_i5.SiteGroup?>);
+
+  @override
+  _i4.Future<List<_i6.BaseSite>> getLocalSitesByModuleCode(
+          String? moduleCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getLocalSitesByModuleCode,
+          [moduleCode],
+        ),
+        returnValue: _i4.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
+      ) as _i4.Future<List<_i6.BaseSite>>);
+
+  @override
+  _i4.Future<void> updateSiteServerId(
+    int? localSiteId,
+    int? serverSiteId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteServerId,
+          [
+            localSiteId,
+            serverSiteId,
           ],
         ),
         returnValue: _i4.Future<void>.value(),
