@@ -8,13 +8,16 @@ import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.da
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
@@ -25,6 +28,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   final VisitsApi _visitsApi;
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
+  final SitesApi _sitesApi;
 
   GlobalApiImpl({
     super.dio,
@@ -32,11 +36,13 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     VisitsApi? visitsApi,
     ObservationsApi? observationsApi,
     ObservationDetailsApi? observationDetailsApi,
+    SitesApi? sitesApi,
   })  : _connectivity = connectivity ?? Connectivity(),
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
-            observationDetailsApi ?? ObservationDetailsApiImpl();
+            observationDetailsApi ?? ObservationDetailsApiImpl(),
+        _sitesApi = sitesApi ?? SitesApiImpl();
 
   @override
   Future<
@@ -658,5 +664,17 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       String token, String moduleCode, ObservationDetail detail) async {
     return _observationDetailsApi.sendObservationDetail(
         token, moduleCode, detail);
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSite(
+      String token, String moduleCode, BaseSite site) async {
+    return _sitesApi.sendSite(token, moduleCode, site);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateSite(
+      String token, String moduleCode, int siteId, BaseSite site) async {
+    return _sitesApi.updateSite(token, moduleCode, siteId, site);
   }
 }

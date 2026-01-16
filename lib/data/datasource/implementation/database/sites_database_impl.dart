@@ -270,6 +270,12 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     return await db.sitesDao.getSiteGroupById(siteGroupId);
   }
+
+  @override
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId) async {
+    final db = await _database;
+    await db.sitesDao.updateSiteServerId(localSiteId, serverSiteId);
+  }
 }
 
 /// Extension pour ajouter la méthode copyWith à BaseSiteEntity

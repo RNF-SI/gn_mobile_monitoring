@@ -828,4 +828,75 @@ class SitesRepositoryImpl implements SitesRepository {
       throw Exception('Failed to get sites by site group');
     }
   }
+
+  @override
+  Future<List<SiteComplement>> getAllSiteComplements() async {
+    try {
+      return await database.getAllSiteComplements();
+    } catch (error) {
+      print('Error getting all site complements: $error');
+      throw Exception('Failed to get all site complements');
+    }
+  }
+
+  @override
+  Future<BaseSite?> getSiteById(int siteId) async {
+    try {
+      return await database.getSiteById(siteId);
+    } catch (error) {
+      print('Error getting site by id: $error');
+      throw Exception('Failed to get site by id');
+    }
+  }
+
+  @override
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId) async {
+    try {
+      return await database.getSiteGroupById(siteGroupId);
+    } catch (error) {
+      print('Error getting site group by id: $error');
+      throw Exception('Failed to get site group by id');
+    }
+  }
+
+  @override
+  Future<List<BaseSite>> getLocalSitesByModuleCode(String moduleCode) async {
+    try {
+      // 1. Récupérer le module par son code
+      final modules = await modulesDatabase.getDownloadedModules();
+      final module = modules.where((m) => m.moduleCode == moduleCode).firstOrNull;
+
+      if (module == null) {
+        return [];
+      }
+
+      // 2. Récupérer les site_modules pour ce module
+      final siteModules = await database.getSiteModulesByModuleId(module.id);
+      final siteIds = siteModules.map((sm) => sm.idSite).toSet();
+
+      // 3. Récupérer les sites et filtrer ceux qui sont locaux
+      final localSites = <BaseSite>[];
+      for (final siteId in siteIds) {
+        final site = await database.getSiteById(siteId);
+        if (site != null && site.isLocal == true) {
+          localSites.add(site);
+        }
+      }
+
+      return localSites;
+    } catch (error) {
+      print('Error getting local sites by module code: $error');
+      throw Exception('Failed to get local sites by module code');
+    }
+  }
+
+  @override
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId) async {
+    try {
+      await database.updateSiteServerId(localSiteId, serverSiteId);
+    } catch (error) {
+      print('Error updating site server id: $error');
+      throw Exception('Failed to update site server id');
+    }
+  }
 }

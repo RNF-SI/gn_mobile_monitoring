@@ -1,5 +1,6 @@
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
@@ -89,4 +90,12 @@ abstract class GlobalApi {
   /// Returns the created observation detail's server ID if successful
   Future<Map<String, dynamic>> sendObservationDetail(
       String token, String moduleCode, ObservationDetail detail);
+
+  /// Envoie un site au serveur (POST)
+  /// Returns the created site's server ID if successful
+  Future<Map<String, dynamic>> sendSite(String token, String moduleCode, BaseSite site);
+
+  /// Met à jour un site existant sur le serveur (PATCH)
+  /// Returns the updated site data if successful
+  Future<Map<String, dynamic>> updateSite(String token, String moduleCode, int siteId, BaseSite site);
 }

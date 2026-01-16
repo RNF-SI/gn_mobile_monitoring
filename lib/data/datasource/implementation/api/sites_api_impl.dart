@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
@@ -10,10 +11,14 @@ import 'package:gn_mobile_monitoring/data/entity/site_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_complement_entity_mapper.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 
 class SitesApiImpl extends BaseApi implements SitesApi {
-  SitesApiImpl();
+  final Connectivity _connectivity;
+
+  SitesApiImpl({Connectivity? connectivity})
+      : _connectivity = connectivity ?? Connectivity();
 
   @override
   Dio get dio => createDio(
@@ -445,5 +450,349 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       print('Error fetching detailed site group $groupId: $e');
     }
     return null;
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSite(
+      String token, String moduleCode, BaseSite site) async {
+    try {
+      final logger = AppLogger();
+
+      // Vérifier la connectivité
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) ||
+          connectivityResults.isEmpty) {
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      // Préparer le corps de la requête selon le format attendu par l'API
+      final Map<String, dynamic> requestBody = {
+        'properties': {
+          'base_site_name': site.baseSiteName,
+          'base_site_code': site.baseSiteCode,
+          'base_site_description': site.baseSiteDescription,
+          'altitude_min': site.altitudeMin,
+          'altitude_max': site.altitudeMax,
+          'first_use_date': site.firstUseDate?.toIso8601String(),
+        },
+      };
+
+      // Ajouter module_code au niveau supérieur
+      requestBody['module_code'] = moduleCode;
+
+      // Ajouter la géométrie si disponible
+      if (site.geom != null && site.geom!.isNotEmpty) {
+        try {
+          final geomMap = jsonDecode(site.geom!);
+          requestBody['geometry'] = geomMap;
+        } catch (e) {
+          // Si la géométrie n'est pas un JSON valide, l'ignorer
+          logger.w('[API] Géométrie invalide ignorée: ${site.geom}', tag: 'sync');
+        }
+      }
+
+      // Ajouter les données complémentaires si disponibles
+      if (site.data != null && site.data!.isNotEmpty) {
+        final properties = requestBody['properties'] as Map<String, dynamic>;
+        site.data!.forEach((key, value) {
+          properties[key] = value;
+        });
+      }
+
+      // Log détaillé pour le débogage
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ENVOI SITE AU SERVEUR');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/site');
+      logBuffer.writeln('MÉTHODE: POST');
+
+      if (token.length > 10) {
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+      } else {
+        logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
+      }
+
+      logBuffer.writeln('BODY:');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      // Envoyer la requête
+      final response = await dio.post(
+        '/monitorings/object/$moduleCode/site',
+        data: requestBody,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      // Log de la réponse
+      logBuffer = StringBuffer();
+      logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      if (response.data is Map || response.data is List) {
+        logBuffer
+            .writeln(const JsonEncoder.withIndent('  ').convert(response.data));
+      } else {
+        logBuffer.writeln(response.data.toString());
+      }
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception(
+            'Erreur lors de l\'envoi du site. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ERREUR DIO LORS DE L\'ENVOI DU SITE');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.type}');
+      logBuffer.writeln('Message: ${e.message}');
+      logBuffer.writeln('URL: ${e.requestOptions.uri}');
+      logBuffer.writeln('Méthode: ${e.requestOptions.method}');
+
+      if (e.response != null) {
+        logBuffer.writeln('\nRÉPONSE ERREUR:');
+        logBuffer.writeln('Status code: ${e.response?.statusCode}');
+        if (e.response?.data != null) {
+          if (e.response?.data is Map || e.response?.data is List) {
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
+          } else {
+            logBuffer.writeln(e.response?.data.toString());
+          }
+        }
+      }
+
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(), tag: 'sync', error: e);
+
+      String completeErrorMessage =
+          'Erreur réseau lors de l\'envoi du site: ${e.message}';
+
+      if (e.response?.data != null) {
+        String responseData = e.response!.data.toString();
+        if (responseData.isNotEmpty) {
+          completeErrorMessage += '\n\nDétails du serveur:\n$responseData';
+        }
+      }
+
+      throw NetworkException(completeErrorMessage, originalDioException: e);
+    } catch (e, stackTrace) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DU SITE');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.runtimeType}');
+      logBuffer.writeln('Message: $e');
+      logBuffer.writeln('\nSTACK TRACE:');
+      logBuffer.writeln(stackTrace);
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
+
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateSite(
+      String token, String moduleCode, int siteId, BaseSite site) async {
+    try {
+      final logger = AppLogger();
+
+      // Vérifier la connectivité
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) ||
+          connectivityResults.isEmpty) {
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      // Préparer le corps de la requête selon le format attendu par l'API
+      final Map<String, dynamic> requestBody = {
+        'properties': {
+          'base_site_name': site.baseSiteName,
+          'base_site_code': site.baseSiteCode,
+          'base_site_description': site.baseSiteDescription,
+          'altitude_min': site.altitudeMin,
+          'altitude_max': site.altitudeMax,
+          'first_use_date': site.firstUseDate?.toIso8601String(),
+        },
+      };
+
+      // Ajouter module_code au niveau supérieur
+      requestBody['module_code'] = moduleCode;
+
+      // Ajouter la géométrie si disponible
+      if (site.geom != null && site.geom!.isNotEmpty) {
+        try {
+          final geomMap = jsonDecode(site.geom!);
+          requestBody['geometry'] = geomMap;
+        } catch (e) {
+          logger.w('[API] Géométrie invalide ignorée: ${site.geom}', tag: 'sync');
+        }
+      }
+
+      // Ajouter les données complémentaires si disponibles
+      if (site.data != null && site.data!.isNotEmpty) {
+        final properties = requestBody['properties'] as Map<String, dynamic>;
+        site.data!.forEach((key, value) {
+          properties[key] = value;
+        });
+      }
+
+      // Log détaillé pour le débogage
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] MISE À JOUR SITE AU SERVEUR');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer
+          .writeln('URL: $apiBase/monitorings/object/$moduleCode/site/$siteId');
+      logBuffer.writeln('MÉTHODE: PATCH');
+
+      if (token.length > 10) {
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+      } else {
+        logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
+      }
+
+      logBuffer.writeln('BODY:');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      // Envoyer la requête PATCH
+      final response = await dio.patch(
+        '/monitorings/object/$moduleCode/site/$siteId',
+        data: requestBody,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      // Log de la réponse
+      logBuffer = StringBuffer();
+      logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      if (response.data is Map || response.data is List) {
+        logBuffer
+            .writeln(const JsonEncoder.withIndent('  ').convert(response.data));
+      } else {
+        logBuffer.writeln(response.data.toString());
+      }
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception(
+            'Erreur lors de la mise à jour du site. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ERREUR DIO LORS DE LA MISE À JOUR DU SITE');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.type}');
+      logBuffer.writeln('Message: ${e.message}');
+      logBuffer.writeln('URL: ${e.requestOptions.uri}');
+      logBuffer.writeln('Méthode: ${e.requestOptions.method}');
+
+      if (e.response != null) {
+        logBuffer.writeln('\nRÉPONSE ERREUR:');
+        logBuffer.writeln('Status code: ${e.response?.statusCode}');
+        if (e.response?.data != null) {
+          if (e.response?.data is Map || e.response?.data is List) {
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
+          } else {
+            logBuffer.writeln(e.response?.data.toString());
+          }
+        }
+      }
+
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(), tag: 'sync', error: e);
+
+      String completeErrorMessage =
+          'Erreur réseau lors de la mise à jour du site: ${e.message}';
+
+      if (e.response?.data != null) {
+        String responseData = e.response!.data.toString();
+        if (responseData.isNotEmpty) {
+          completeErrorMessage += '\n\nDétails du serveur:\n$responseData';
+        }
+      }
+
+      throw NetworkException(completeErrorMessage, originalDioException: e);
+    } catch (e, stackTrace) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE LA MISE À JOUR DU SITE');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.runtimeType}');
+      logBuffer.writeln('Message: $e');
+      logBuffer.writeln('\nSTACK TRACE:');
+      logBuffer.writeln(stackTrace);
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
+
+      rethrow;
+    }
   }
 }

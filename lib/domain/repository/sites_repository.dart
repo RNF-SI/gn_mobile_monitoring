@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
@@ -29,4 +30,19 @@ abstract class SitesRepository {
 
   /// Fetches site groups for a specific module
   Future<void> fetchSiteGroupsForModule(String moduleCode, String token);
+
+  /// Gets all site complements from local database
+  Future<List<SiteComplement>> getAllSiteComplements();
+
+  /// Gets a site by its ID
+  Future<BaseSite?> getSiteById(int siteId);
+
+  /// Gets a site group by its ID
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId);
+
+  /// Gets local sites by module code (isLocal = true)
+  Future<List<BaseSite>> getLocalSitesByModuleCode(String moduleCode);
+
+  /// Updates the server site ID after successful sync
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId);
 }

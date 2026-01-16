@@ -74,4 +74,7 @@ abstract class SitesDatabase {
 
   /// Get a site group by its ID
   Future<SiteGroup?> getSiteGroupById(int siteGroupId);
+
+  /// Update server site ID after successful sync
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId);
 }
