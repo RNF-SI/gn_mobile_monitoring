@@ -10,7 +10,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -21,100 +20,11 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dar
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/map/compass_widget.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:point_in_polygon/point_in_polygon.dart' as pip;
 
 // ---------------------------
-// Widget Boussole
-// ---------------------------
-class CompassWidget extends StatefulWidget {
-  final MapController mapController;
-
-  const CompassWidget({super.key, required this.mapController});
-
-  @override
-  State<CompassWidget> createState() => _CompassWidgetState();
-}
-
-class _CompassWidgetState extends State<CompassWidget>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _animationController;
-  late Animation<double> _rotationAnimation;
-  double currentRotation = 0.0;
-
-  @override
-  void initState() {
-    super.initState();
-
-    _animationController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-
-    // Écoute les mouvements et rotations de la carte
-    widget.mapController.mapEventStream.listen((event) {
-      if (event is MapEventMove || event is MapEventRotate) {
-        setState(() {
-          currentRotation = widget.mapController.camera.rotationRad;
-        });
-      }
-    });
-  }
-
-  void resetNorth() {
-    final startRotation = widget.mapController.camera.rotation;
-    final endRotation = 0.0;
-
-    _rotationAnimation = Tween<double>(
-      begin: startRotation,
-      end: endRotation,
-    ).animate(
-      CurvedAnimation(parent: _animationController, curve: Curves.easeOut),
-    )..addListener(() {
-        widget.mapController.rotate(_rotationAnimation.value);
-      });
-
-    _animationController.forward(from: 0);
-  }
-
-  @override
-  void dispose() {
-    _animationController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      top: 16,
-      left: 16,
-      child: GestureDetector(
-        onTap: resetNorth,
-        child: Transform.rotate(
-          angle: currentRotation,
-          child: Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 6,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.navigation, color: Colors.red, size: 28),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ---------------------------
-// Widget Geometries
+// Widget Geometries (Carte avec géométries)
 // ---------------------------
 class GeometriesMapWidget extends ConsumerStatefulWidget {
   final String? geojsonData; // <--- nullable
@@ -299,15 +209,10 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     if (markerSiteIds.isEmpty) return;
 
     try {
-      final sitesDatabase = ref.read(siteDatabaseProvider);
-      final allComplements = await sitesDatabase.getAllSiteComplements();
-
-      final Map<int, SiteComplement?> loadedComplements = {};
-      for (final siteId in markerSiteIds.values) {
-        final complement =
-            allComplements.where((c) => c.idBaseSite == siteId).firstOrNull;
-        loadedComplements[siteId] = complement;
-      }
+      final getSiteComplementsUseCase = ref.read(getSiteComplementsUseCaseProvider);
+      final loadedComplements = await getSiteComplementsUseCase.executeForSites(
+        markerSiteIds.values.toList(),
+      );
 
       if (mounted) {
         setState(() {
@@ -911,23 +816,17 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     final polygonPoints = polygon.points;
     if (polygonPoints.length < 3) return false;
 
-    // Convertir en format pip.Point (x=longitude, y=latitude)
-    final pipPoints = polygonPoints
-        .map((p) => pip.Point(x: p.longitude, y: p.latitude))
-        .toList();
-
-    // Utiliser l'algorithme ray casting pour vérifier si le point est dans le polygone
+    // Utiliser l'algorithme ray casting robuste directement avec les LatLng
     return _isPointInPolygonRobust(
       point.latitude,
       point.longitude,
-      pipPoints,
+      polygonPoints,
     );
   }
 
   /// Vérifie si un point est à l'intérieur d'un polygone (algorithme ray casting robuste)
-  /// Les points du polygone sont en format pip.Point (x=longitude, y=latitude)
   bool _isPointInPolygonRobust(
-      double lat, double lon, List<pip.Point> polygon) {
+      double lat, double lon, List<LatLng> polygon) {
     if (polygon.length < 3) {
       return false;
     }
@@ -938,10 +837,10 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     int j = polygon.length - 1;
 
     for (int i = 0; i < polygon.length; i++) {
-      final xi = polygon[i].x; // longitude du point i
-      final yi = polygon[i].y; // latitude du point i
-      final xj = polygon[j].x; // longitude du point j
-      final yj = polygon[j].y; // latitude du point j
+      final xi = polygon[i].longitude; // longitude du point i
+      final yi = polygon[i].latitude; // latitude du point i
+      final xj = polygon[j].longitude; // longitude du point j
+      final yj = polygon[j].latitude; // latitude du point j
 
       // Vérifier si le segment (i, j) intersecte le rayon horizontal
       // Le segment intersecte si :
@@ -1434,14 +1333,11 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                               // On affiche la carte des groupes de sites → naviguer vers la page de détail du groupe
                               final groupId = properties['id'] as int?;
                               if (groupId != null) {
-                                // Récupérer le groupe depuis la base de données
-                                final sitesDatabase =
-                                    ref.read(siteDatabaseProvider);
-                                final allGroups =
-                                    await sitesDatabase.getAllSiteGroups();
-                                final group = allGroups
-                                    .where((g) => g.idSitesGroup == groupId)
-                                    .firstOrNull;
+                                // Récupérer le groupe via le use case
+                                final getSiteGroupByIdUseCase =
+                                    ref.read(getSiteGroupByIdUseCaseProvider);
+                                final group =
+                                    await getSiteGroupByIdUseCase.execute(groupId);
 
                                 if (group != null &&
                                     widget.moduleInfo != null &&
@@ -1471,11 +1367,11 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                               }
                             } else {
                               // On affiche la carte des sites → naviguer vers la page de détail du site
-                              // Récupérer le site depuis la base de données
-                              final sitesDatabase =
-                                  ref.read(siteDatabaseProvider);
+                              // Récupérer le site via le use case
+                              final getSiteByIdUseCase =
+                                  ref.read(getSiteByIdUseCaseProvider);
                               final site =
-                                  await sitesDatabase.getSiteById(siteId);
+                                  await getSiteByIdUseCase.execute(siteId);
 
                               if (site != null && mounted) {
                                 // Naviguer vers la page de détails du site
@@ -1524,14 +1420,11 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                                 // Récupérer le groupe de sites depuis les propriétés du marker
                                 final groupId = properties['id'] as int?;
                                 if (groupId != null) {
-                                  // Récupérer le groupe depuis la base de données
-                                  final sitesDatabase =
-                                      ref.read(siteDatabaseProvider);
-                                  final allGroups =
-                                      await sitesDatabase.getAllSiteGroups();
-                                  final group = allGroups
-                                      .where((g) => g.idSitesGroup == groupId)
-                                      .firstOrNull;
+                                  // Récupérer le groupe via le use case
+                                  final getSiteGroupByIdUseCase =
+                                      ref.read(getSiteGroupByIdUseCaseProvider);
+                                  final group =
+                                      await getSiteGroupByIdUseCase.execute(groupId);
 
                                   if (group != null && mounted) {
                                     // Naviguer vers le formulaire d'ajout de site
@@ -1600,11 +1493,11 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                               // Fermer le popup
                               Navigator.of(context).pop();
 
-                              // Récupérer le site depuis la base de données
-                              final sitesDatabase =
-                                  ref.read(siteDatabaseProvider);
+                              // Récupérer le site via le use case
+                              final getSiteByIdUseCase =
+                                  ref.read(getSiteByIdUseCaseProvider);
                               final site =
-                                  await sitesDatabase.getSiteById(siteId);
+                                  await getSiteByIdUseCase.execute(siteId);
 
                               if (site != null && mounted) {
                                 // Naviguer vers le formulaire de visite
