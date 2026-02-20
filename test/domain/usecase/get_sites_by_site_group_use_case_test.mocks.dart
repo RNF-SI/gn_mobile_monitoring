@@ -221,4 +221,59 @@ class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
         returnValue: _i4.Future<void>.value(),
         returnValueForMissingStub: _i4.Future<void>.value(),
       ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<List<_i5.SiteGroup>> getLocalSiteGroupsByModuleCode(
+          String? moduleCode) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getLocalSiteGroupsByModuleCode,
+          [moduleCode],
+        ),
+        returnValue: _i4.Future<List<_i5.SiteGroup>>.value(<_i5.SiteGroup>[]),
+      ) as _i4.Future<List<_i5.SiteGroup>>);
+
+  @override
+  _i4.Future<void> updateSiteGroupServerId(
+    int? localSiteGroupId,
+    int? serverSiteGroupId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteGroupServerId,
+          [
+            localSiteGroupId,
+            serverSiteGroupId,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<void> updateSiteComplementsGroupId(
+    int? oldGroupId,
+    int? newGroupId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteComplementsGroupId,
+          [
+            oldGroupId,
+            newGroupId,
+          ],
+        ),
+        returnValue: _i4.Future<void>.value(),
+        returnValueForMissingStub: _i4.Future<void>.value(),
+      ) as _i4.Future<void>);
+
+  @override
+  _i4.Future<_i7.SiteComplement?> getSiteComplementBySiteId(int? siteId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteComplementBySiteId,
+          [siteId],
+        ),
+        returnValue: _i4.Future<_i7.SiteComplement?>.value(),
+      ) as _i4.Future<_i7.SiteComplement?>);
 }

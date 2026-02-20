@@ -521,4 +521,48 @@ class MockSitesDatabase extends _i1.Mock implements _i5.SitesDatabase {
         returnValue: _i3.Future<void>.value(),
         returnValueForMissingStub: _i3.Future<void>.value(),
       ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updateSiteGroupServerId(
+    int? localSiteGroupId,
+    int? serverSiteGroupId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteGroupServerId,
+          [
+            localSiteGroupId,
+            serverSiteGroupId,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<void> updateSiteComplementsGroupId(
+    int? oldGroupId,
+    int? newGroupId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateSiteComplementsGroupId,
+          [
+            oldGroupId,
+            newGroupId,
+          ],
+        ),
+        returnValue: _i3.Future<void>.value(),
+        returnValueForMissingStub: _i3.Future<void>.value(),
+      ) as _i3.Future<void>);
+
+  @override
+  _i3.Future<_i6.SiteComplement?> getSiteComplementBySiteId(int? siteId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSiteComplementBySiteId,
+          [siteId],
+        ),
+        returnValue: _i3.Future<_i6.SiteComplement?>.value(),
+      ) as _i3.Future<_i6.SiteComplement?>);
 }

@@ -189,4 +189,29 @@ class MockUpstreamSyncRepository extends _i1.Mock
           ),
         )),
       ) as _i4.Future<_i2.SyncResult>);
+
+  @override
+  _i4.Future<_i2.SyncResult> syncSiteGroupsToServer(
+    String? token,
+    String? moduleCode,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #syncSiteGroupsToServer,
+          [
+            token,
+            moduleCode,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.SyncResult>.value(_FakeSyncResult_0(
+          this,
+          Invocation.method(
+            #syncSiteGroupsToServer,
+            [
+              token,
+              moduleCode,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.SyncResult>);
 }
