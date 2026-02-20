@@ -669,8 +669,8 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
 
   @override
   Future<Map<String, dynamic>> sendSite(
-      String token, String moduleCode, BaseSite site) async {
-    return _sitesApi.sendSite(token, moduleCode, site);
+      String token, String moduleCode, BaseSite site, {int? moduleId}) async {
+    return _sitesApi.sendSite(token, moduleCode, site, moduleId: moduleId);
   }
 
   @override
@@ -681,7 +681,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
 
   @override
   Future<Map<String, dynamic>> sendSiteGroup(
-      String token, String moduleCode, SiteGroup siteGroup) async {
-    return _sitesApi.sendSiteGroup(token, moduleCode, siteGroup);
+      String token, String moduleCode, SiteGroup siteGroup, {int? moduleId}) async {
+    return _sitesApi.sendSiteGroup(token, moduleCode, siteGroup, moduleId: moduleId);
   }
 }

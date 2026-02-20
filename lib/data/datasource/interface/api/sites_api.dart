@@ -13,11 +13,13 @@ abstract class SitesApi {
 
   /// Envoie un site au serveur (POST)
   /// Returns the created site's server ID if successful
+  /// [moduleId] est requis pour associer le site au module via cor_site_module
   Future<Map<String, dynamic>> sendSite(
     String token,
     String moduleCode,
-    BaseSite site,
-  );
+    BaseSite site, {
+    int? moduleId,
+  });
 
   /// Met à jour un site existant sur le serveur (PATCH)
   /// Returns the updated site data if successful
@@ -30,9 +32,11 @@ abstract class SitesApi {
 
   /// Envoie un groupe de sites au serveur (POST)
   /// Returns the created site group's server response if successful
+  /// [moduleId] est requis pour associer le groupe au module via cor_sites_group_module
   Future<Map<String, dynamic>> sendSiteGroup(
     String token,
     String moduleCode,
-    SiteGroup siteGroup,
-  );
+    SiteGroup siteGroup, {
+    int? moduleId,
+  });
 }

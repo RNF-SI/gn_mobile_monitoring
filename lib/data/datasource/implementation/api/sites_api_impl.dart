@@ -455,7 +455,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
   @override
   Future<Map<String, dynamic>> sendSite(
-      String token, String moduleCode, BaseSite site) async {
+      String token, String moduleCode, BaseSite site, {int? moduleId}) async {
     try {
       final logger = AppLogger();
 
@@ -484,15 +484,23 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       // Ajouter module_code au niveau supérieur
       requestBody['module_code'] = moduleCode;
 
-      // Ajouter la géométrie si disponible
+      // Associer le site au module via cor_site_module
+      if (moduleId != null) {
+        (requestBody['properties'] as Map<String, dynamic>)['modules'] = [moduleId];
+      }
+
+      // Ajouter la géométrie (toujours inclure la clé, même null, car le serveur
+      // fait post_data["geometry"] au lieu de post_data.get("geometry"))
       if (site.geom != null && site.geom!.isNotEmpty) {
         try {
           final geomMap = jsonDecode(site.geom!);
           requestBody['geometry'] = geomMap;
         } catch (e) {
-          // Si la géométrie n'est pas un JSON valide, l'ignorer
           logger.w('[API] Géométrie invalide ignorée: ${site.geom}', tag: 'sync');
+          requestBody['geometry'] = null;
         }
+      } else {
+        requestBody['geometry'] = null;
       }
 
       // Ajouter les données complémentaires si disponibles
@@ -813,7 +821,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
   @override
   Future<Map<String, dynamic>> sendSiteGroup(
-      String token, String moduleCode, SiteGroup siteGroup) async {
+      String token, String moduleCode, SiteGroup siteGroup, {int? moduleId}) async {
     try {
       final logger = AppLogger();
 
@@ -839,7 +847,16 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         },
       };
 
-      // Ajouter la géométrie si disponible
+      // Ajouter module_code au niveau supérieur (requis par l'API)
+      requestBody['module_code'] = moduleCode;
+
+      // Associer le groupe au module via cor_sites_group_module
+      if (moduleId != null) {
+        (requestBody['properties'] as Map<String, dynamic>)['modules'] = [moduleId];
+      }
+
+      // Ajouter la géométrie (toujours inclure la clé, même null, car le serveur
+      // fait post_data["geometry"] au lieu de post_data.get("geometry"))
       if (siteGroup.geom != null && siteGroup.geom!.isNotEmpty) {
         try {
           final geomMap = jsonDecode(siteGroup.geom!);
@@ -847,7 +864,10 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         } catch (e) {
           logger.w('[API] Géométrie invalide ignorée: ${siteGroup.geom}',
               tag: 'sync');
+          requestBody['geometry'] = null;
         }
+      } else {
+        requestBody['geometry'] = null;
       }
 
       // Ajouter les données complémentaires si disponibles

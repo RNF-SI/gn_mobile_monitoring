@@ -1096,6 +1096,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             '==================================================================',
             tag: 'sync');
 
+        // Récupérer l'ID du module pour l'association via cor_sites_group_module
+        final module = await _modulesDatabase.getModuleByCode(moduleCode);
+        final moduleId = module?.id;
+        if (moduleId != null) {
+          _logger.i('Module ID résolu: $moduleId pour $moduleCode', tag: 'sync');
+        } else {
+          _logger.w('Impossible de résoudre l\'ID du module $moduleCode', tag: 'sync');
+        }
+
         // Récupérer les groupes de sites locaux pour ce module
         final localSiteGroups =
             await _sitesRepository.getLocalSiteGroupsByModuleCode(moduleCode);
@@ -1135,7 +1144,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // POST - Créer un nouveau groupe de sites
             final serverResponse =
-                await _globalApi.sendSiteGroup(token, moduleCode, group);
+                await _globalApi.sendSiteGroup(token, moduleCode, group, moduleId: moduleId);
 
             final serverId = serverResponse['id'] ?? serverResponse['ID'];
             if (serverId == null) {
@@ -1250,6 +1259,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             '==================================================================',
             tag: 'sync');
 
+        // Récupérer l'ID du module pour l'association via cor_site_module
+        final module = await _modulesDatabase.getModuleByCode(moduleCode);
+        final moduleId = module?.id;
+        if (moduleId != null) {
+          _logger.i('Module ID résolu: $moduleId pour $moduleCode', tag: 'sync');
+        } else {
+          _logger.w('Impossible de résoudre l\'ID du module $moduleCode', tag: 'sync');
+        }
+
         // Récupérer les sites locaux pour ce module
         _logger.i('Appel de getLocalSitesByModuleCode pour module: $moduleCode', tag: 'sync');
         final localSites =
@@ -1352,7 +1370,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // POST - Créer un nouveau site
             final serverResponse =
-                await _globalApi.sendSite(token, moduleCode, siteWithComplementData);
+                await _globalApi.sendSite(token, moduleCode, siteWithComplementData, moduleId: moduleId);
 
             final serverId = serverResponse['id'] ?? serverResponse['ID'];
             if (serverId == null) {
