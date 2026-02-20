@@ -1849,7 +1849,10 @@ class SyncService extends StateNotifier<SyncStatus> {
     final syncTotal = result.itemsAdded + result.itemsUpdated;
     final deletedPart =
         result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
-    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
+    final localPendingPart = result.itemsLocalPending > 0
+        ? ", ${result.itemsLocalPending} locaux en attente de téléversement"
+        : "";
+    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart$localPendingPart)";
   }
 
   /// Génère un résumé des statistiques de synchronisation pour les étapes complétées
@@ -1968,7 +1971,10 @@ class SyncService extends StateNotifier<SyncStatus> {
     final syncTotal = result.itemsAdded + result.itemsUpdated;
     final deletedPart =
         result.itemsDeleted > 0 ? ", ${result.itemsDeleted} supprimés" : "";
-    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart)";
+    final localPendingPart = result.itemsLocalPending > 0
+        ? ", ${result.itemsLocalPending} locaux en attente de téléversement"
+        : "";
+    return "$syncTotal éléments (${result.itemsAdded} ajoutés, ${result.itemsUpdated} mis à jour, ${result.itemsSkipped} ignorés$deletedPart$localPendingPart)";
   }
 
   /// Génère un résumé complet des statistiques de synchronisation

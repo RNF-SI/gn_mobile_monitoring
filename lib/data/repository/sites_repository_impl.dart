@@ -34,6 +34,7 @@ class SitesRepositoryImpl implements SitesRepository {
     int itemsUpdated = 0;
     int itemsDeleted = 0;
     int itemsSkipped = 0;
+    int itemsLocalPending = 0;
 
     try {
       // Récupérer tous les modules téléchargés
@@ -103,9 +104,18 @@ class SitesRepositoryImpl implements SitesRepository {
             .toList();
 
         // Sites à supprimer : existent localement pour ce module mais plus sur le serveur
+        // Exclure les sites créés localement (jamais synchronisés) car ils n'ont jamais existé sur le serveur
         final sitesToDelete = localSitesForModule
-            .where((s) => !remoteSiteIds.contains(s.idBaseSite))
+            .where((s) =>
+                !remoteSiteIds.contains(s.idBaseSite) &&
+                !(s.isLocal == true && s.serverSiteId == null))
             .toList();
+
+        // Sites locaux en attente de téléversement : créés localement et pas encore synchronisés
+        final localPendingUpload = localSitesForModule
+            .where((s) => s.isLocal == true && s.serverSiteId == null)
+            .toList();
+        itemsLocalPending += localPendingUpload.length;
 
         // Sites à mettre à jour : existent des deux côtés
         final sitesToUpdate = remoteSites
@@ -113,7 +123,7 @@ class SitesRepositoryImpl implements SitesRepository {
             .toList();
 
         print(
-            'Module ${module.moduleCode} - À ajouter: ${sitesToAdd.length}, À supprimer: ${sitesToDelete.length}, À mettre à jour: ${sitesToUpdate.length}');
+            'Module ${module.moduleCode} - À ajouter: ${sitesToAdd.length}, À supprimer: ${sitesToDelete.length}, À mettre à jour: ${sitesToUpdate.length}, Locaux en attente: ${localPendingUpload.length}');
 
         // 5. Gérer les suppressions avec détection de conflits
         for (final site in sitesToDelete) {
@@ -247,7 +257,7 @@ class SitesRepositoryImpl implements SitesRepository {
 
       print('=== Résumé de la synchronisation ===');
       print(
-          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Conflits: ${allConflicts.length}');
+          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Locaux en attente: $itemsLocalPending, Conflits: ${allConflicts.length}');
 
       if (allConflicts.isNotEmpty) {
         return SyncResult.withConflicts(
@@ -256,6 +266,7 @@ class SitesRepositoryImpl implements SitesRepository {
           itemsUpdated: itemsUpdated,
           itemsDeleted: itemsDeleted,
           itemsSkipped: itemsSkipped,
+          itemsLocalPending: itemsLocalPending,
           itemsFailed: 0,
           conflicts: allConflicts,
           errorMessage:
@@ -268,6 +279,7 @@ class SitesRepositoryImpl implements SitesRepository {
           itemsUpdated: itemsUpdated,
           itemsDeleted: itemsDeleted,
           itemsSkipped: itemsSkipped,
+          itemsLocalPending: itemsLocalPending,
         );
       }
     } catch (error) {
@@ -450,6 +462,7 @@ class SitesRepositoryImpl implements SitesRepository {
     int itemsUpdated = 0;
     int itemsDeleted = 0;
     int itemsSkipped = 0;
+    int itemsLocalPending = 0;
 
     try {
       // Récupérer uniquement les modules téléchargés
@@ -520,9 +533,18 @@ class SitesRepositoryImpl implements SitesRepository {
             .toList();
 
         // Groupes de sites à supprimer : existent localement pour ce module mais plus sur le serveur
+        // Exclure les groupes créés localement (jamais synchronisés) car ils n'ont jamais existé sur le serveur
         final siteGroupsToDelete = localSiteGroupsForModule
-            .where((sg) => !remoteSiteGroupIds.contains(sg.idSitesGroup))
+            .where((sg) =>
+                !remoteSiteGroupIds.contains(sg.idSitesGroup) &&
+                !(sg.isLocal == true && sg.serverSiteGroupId == null))
             .toList();
+
+        // Groupes de sites locaux en attente de téléversement : créés localement et pas encore synchronisés
+        final localSiteGroupsPendingUpload = localSiteGroupsForModule
+            .where((sg) => sg.isLocal == true && sg.serverSiteGroupId == null)
+            .toList();
+        itemsLocalPending += localSiteGroupsPendingUpload.length;
 
         // Groupes de sites à mettre à jour : existent des deux côtés
         final siteGroupsToUpdate = remoteSiteGroups
@@ -530,7 +552,7 @@ class SitesRepositoryImpl implements SitesRepository {
             .toList();
 
         print(
-            'Module ${module.moduleCode} - À ajouter: ${siteGroupsToAdd.length}, À supprimer: ${siteGroupsToDelete.length}, À mettre à jour: ${siteGroupsToUpdate.length}');
+            'Module ${module.moduleCode} - À ajouter: ${siteGroupsToAdd.length}, À supprimer: ${siteGroupsToDelete.length}, À mettre à jour: ${siteGroupsToUpdate.length}, Locaux en attente: ${localSiteGroupsPendingUpload.length}');
 
         // 5. Gérer les suppressions des groupes de sites - pas de conflit car la suppression
         // d'un groupe n'entraine pas de perte de données (les sites restent, seul id_sites_group devient NULL)
@@ -596,7 +618,7 @@ class SitesRepositoryImpl implements SitesRepository {
 
       print('=== Résumé de la synchronisation des groupes de sites ===');
       print(
-          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Conflits: ${allConflicts.length}');
+          'Traités: $itemsProcessed, Ajoutés: $itemsAdded, Mis à jour: $itemsUpdated, Supprimés: $itemsDeleted, Locaux en attente: $itemsLocalPending, Conflits: ${allConflicts.length}');
 
       if (allConflicts.isNotEmpty) {
         return SyncResult.withConflicts(
@@ -605,6 +627,7 @@ class SitesRepositoryImpl implements SitesRepository {
           itemsUpdated: itemsUpdated,
           itemsDeleted: itemsDeleted,
           itemsSkipped: itemsSkipped,
+          itemsLocalPending: itemsLocalPending,
           itemsFailed: 0,
           conflicts: allConflicts,
           errorMessage:
@@ -617,6 +640,7 @@ class SitesRepositoryImpl implements SitesRepository {
           itemsUpdated: itemsUpdated,
           itemsDeleted: itemsDeleted,
           itemsSkipped: itemsSkipped,
+          itemsLocalPending: itemsLocalPending,
         );
       }
     } catch (error) {

@@ -783,6 +783,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 'updated': 0,
                 'skipped': 0,
                 'deleted': 0,
+                'localPending': 0,
                 'hasConflicts': false,
               };
             }
@@ -791,7 +792,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             final statsStr = parts[1].trim();
             if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
               final regex = RegExp(
-                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
               final match = regex.firstMatch(statsStr);
 
               if (match != null) {
@@ -805,6 +806,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                     int.parse(match.group(4) ?? '0');
                 statsByCategory[currentCategory]!['deleted'] =
                     int.parse(match.group(5) ?? '0');
+                statsByCategory[currentCategory]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
               }
             }
 
@@ -835,6 +838,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 'updated': 0,
                 'skipped': 0,
                 'deleted': 0,
+                'localPending': 0,
                 'hasConflicts': false,
               };
             }
@@ -843,7 +847,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             final statsStr = parts[1].trim();
             if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
               final regex = RegExp(
-                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
               final match = regex.firstMatch(statsStr);
 
               if (match != null) {
@@ -857,6 +861,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                     int.parse(match.group(4) ?? '0');
                 statsByCategory[category]!['deleted'] =
                     int.parse(match.group(5) ?? '0');
+                statsByCategory[category]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
               }
             }
 
@@ -884,6 +890,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 'updated': 0,
                 'skipped': 0,
                 'deleted': 0,
+                'localPending': 0,
                 'hasConflicts': false,
               };
             }
@@ -892,7 +899,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             final statsStr = parts[1].trim();
             if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
               final regex = RegExp(
-                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
               final match = regex.firstMatch(statsStr);
 
               if (match != null) {
@@ -906,6 +913,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                     int.parse(match.group(4) ?? '0');
                 statsByCategory[category]!['deleted'] =
                     int.parse(match.group(5) ?? '0');
+                statsByCategory[category]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
               }
             }
 
@@ -1051,9 +1060,48 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                               stats['deleted'] as int,
                               Theme.of(context).colorScheme.error,
                             ),
+                            if ((stats['localPending'] as int?) != null &&
+                                (stats['localPending'] as int) > 0) ...[
+                              const SizedBox(width: 4.0),
+                              _buildStatIndicator(
+                                context,
+                                'En attente',
+                                stats['localPending'] as int,
+                                Colors.orange,
+                              ),
+                            ],
                           ],
                         ),
                       ),
+
+                      if ((stats['localPending'] as int?) != null &&
+                          (stats['localPending'] as int) > 0) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 12,
+                              color: Colors.orange.withOpacity(0.8),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Éléments créés sur le terrain, en attente de téléversement vers le serveur.',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontStyle: FontStyle.italic,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
 
                       if (hasConflicts) ...[
                         const SizedBox(height: 8),
