@@ -1,19 +1,25 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/location_picker_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_form_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/generic_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/map/location_preview_header.dart';
+import 'package:latlong2/latlong.dart';
 
 /// Wrapper spécialisé pour les formulaires de site
 /// Utilise GenericFormPage avec la logique métier spécifique aux sites
-class SiteFormWrapper extends ConsumerWidget {
+class SiteFormWrapper extends ConsumerStatefulWidget {
   final ObjectConfig siteConfig;
   final CustomConfig? customConfig;
   final BaseSite? site; // En mode édition, site existant
@@ -33,15 +39,95 @@ class SiteFormWrapper extends ConsumerWidget {
     this.selectedSiteTypeId,
   });
 
-  bool get _isEditMode => site != null;
+  @override
+  ConsumerState<SiteFormWrapper> createState() => _SiteFormWrapperState();
+}
+
+class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
+  LatLng? _selectedPosition;
+  bool _isLoadingLocation = true;
+  bool _isPositionAdjusted = false;
+
+  bool get _isEditMode => widget.site != null;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    // Vérifier si on peut éditer le site (uniquement si créé localement)
-    final canEdit = !_isEditMode || (site?.isLocal == true);
-    
-    // Si on est en mode édition mais que le site n'est pas local, afficher un message
-    if (_isEditMode && site?.isLocal != true) {
+  void initState() {
+    super.initState();
+    _initLocation();
+  }
+
+  Future<void> _initLocation() async {
+    if (_isEditMode && widget.site?.geom != null) {
+      // Mode édition : parser le GeoJSON existant
+      try {
+        final geojson = jsonDecode(widget.site!.geom!) as Map<String, dynamic>;
+        final coords = geojson['coordinates'] as List<dynamic>;
+        if (coords.length >= 2) {
+          setState(() {
+            _selectedPosition = LatLng(
+              (coords[1] as num).toDouble(),
+              (coords[0] as num).toDouble(),
+            );
+            _isLoadingLocation = false;
+          });
+          return;
+        }
+      } catch (_) {
+        // Erreur de parsing, on continue avec le GPS
+      }
+    }
+
+    // Mode création ou geom absent : récupérer la position GPS
+    try {
+      final useCase = ref.read(getUserLocationUseCaseProvider);
+      final result = await useCase.execute();
+      if (mounted) {
+        setState(() {
+          _selectedPosition = result?.position;
+          _isLoadingLocation = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _isLoadingLocation = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openLocationPicker(BuildContext context) async {
+    if (_selectedPosition == null) return;
+
+    final result = await Navigator.push<LatLng>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LocationPickerPage(
+          initialPosition: _selectedPosition!,
+        ),
+      ),
+    );
+
+    if (result != null && mounted) {
+      setState(() {
+        _selectedPosition = result;
+        _isPositionAdjusted = true;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Vérifier si le site peut être modifié
+    final bool isSynced = widget.site?.serverSiteId != null;
+    final bool isNotLocal = _isEditMode && widget.site?.isLocal != true;
+    final bool isLocked = isNotLocal || (_isEditMode && isSynced);
+
+    if (isLocked) {
+      final String message = isSynced
+          ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié.'
+          : 'Seuls les sites créés localement peuvent être modifiés.';
+
       return Scaffold(
         appBar: AppBar(
           title: const Text('Modifier le site'),
@@ -52,8 +138,8 @@ class SiteFormWrapper extends ConsumerWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(
-                  Icons.lock_outline,
+                Icon(
+                  isSynced ? Icons.cloud_done : Icons.lock_outline,
                   size: 64,
                   color: Colors.grey,
                 ),
@@ -66,10 +152,10 @@ class SiteFormWrapper extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
-                  'Seuls les sites créés localement peuvent être modifiés.',
+                Text(
+                  message,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
+                  style: const TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
@@ -84,81 +170,70 @@ class SiteFormWrapper extends ConsumerWidget {
     }
 
     return GenericFormPage(
-      objectConfig: siteConfig,
-      customConfig: customConfig,
+      objectConfig: widget.siteConfig,
+      customConfig: widget.customConfig,
       title: _isEditMode
           ? 'Modifier le site'
-          : siteConfig.label ?? 'Nouveau site',
+          : widget.siteConfig.label ?? 'Nouveau site',
       appBarActions: _isEditMode ? [
         IconButton(
           icon: const Icon(Icons.delete),
           tooltip: 'Supprimer le site',
-          onPressed: () => _deleteSite(context, ref),
+          onPressed: () => _deleteSite(context),
         ),
       ] : null,
       breadcrumbItems: _buildBreadcrumbItems(context),
       initialValues: _isEditMode ? _prepareInitialValues() : _prepareDefaultValues(),
       headerWidget: _buildHeaderWidget(context),
-      onSave: (formData) => _handleSave(context, ref, formData),
+      onSave: (formData) => _handleSave(context, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
       displayProperties: _getDisplayProperties(),
-      objectType: 'site', // Spécifier le type d'objet pour appliquer les exclusions spécifiques aux sites
+      objectType: 'site',
     );
   }
 
   /// Construit les éléments du fil d'Ariane
   List<BreadcrumbItem> _buildBreadcrumbItems(BuildContext context) {
-    if (moduleInfo == null) return [];
+    if (widget.moduleInfo == null) return [];
 
     return BreadcrumbBuilder.buildSiteBreadcrumb(
-      moduleName: moduleInfo!.module.moduleLabel,
-      siteGroupLabel: moduleInfo!.module.complement?.configuration?.sitesGroup?.label,
-      siteGroupName: siteGroup?.sitesGroupName ?? siteGroup?.sitesGroupCode,
-      siteLabel: siteConfig.label ?? 'Site',
-      siteName: site?.baseSiteName ?? site?.baseSiteCode ?? 'Nouveau',
+      moduleName: widget.moduleInfo!.module.moduleLabel,
+      siteGroupLabel: widget.moduleInfo!.module.complement?.configuration?.sitesGroup?.label,
+      siteGroupName: widget.siteGroup?.sitesGroupName ?? widget.siteGroup?.sitesGroupCode,
+      siteLabel: widget.siteConfig.label ?? 'Site',
+      siteName: widget.site?.baseSiteName ?? widget.site?.baseSiteCode ?? 'Nouveau',
       onModuleTap: () {
         Navigator.of(context).popUntil((route) =>
             route.isFirst || route.settings.name == '/module_detail');
       },
-      onSiteGroupTap: siteGroup != null ? () {
+      onSiteGroupTap: widget.siteGroup != null ? () {
         int count = 0;
         Navigator.of(context).popUntil((route) => count++ >= 2);
       } : null,
     );
   }
 
-  /// Construit le widget d'en-tête
+  /// Construit le widget d'en-tête avec l'aperçu de la position GPS
   Widget? _buildHeaderWidget(BuildContext context) {
-    if (moduleInfo != null) return null;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: Text(
-        'Module: ${moduleInfo?.module.moduleLabel ?? 'Module'}',
-        style: TextStyle(
-          fontSize: 14,
-          color: Theme.of(context).colorScheme.onSurfaceVariant,
-        ),
-      ),
+    return LocationPreviewHeader(
+      position: _selectedPosition,
+      isLoading: _isLoadingLocation,
+      isAdjusted: _isPositionAdjusted,
+      onAdjustPressed: () => _openLocationPicker(context),
     );
   }
 
   /// Prépare les valeurs initiales pour le mode édition
   Map<String, dynamic> _prepareInitialValues() {
-    if (site == null) return {};
+    if (widget.site == null) return {};
 
     final initialValues = <String, dynamic>{
-      'base_site_name': site!.baseSiteName,
-      'base_site_code': site!.baseSiteCode,
-      'base_site_description': site!.baseSiteDescription,
-      'first_use_date': site!.firstUseDate?.toIso8601String().split('T')[0],
-      'altitude_min': site!.altitudeMin,
-      'altitude_max': site!.altitudeMax,
+      'base_site_name': widget.site!.baseSiteName,
+      'base_site_code': widget.site!.baseSiteCode,
+      'base_site_description': widget.site!.baseSiteDescription,
+      'first_use_date': widget.site!.firstUseDate?.toIso8601String().split('T')[0],
+      'altitude_min': widget.site!.altitudeMin,
+      'altitude_max': widget.site!.altitudeMax,
     };
 
     // Ajouter les données complémentaires si elles existent
@@ -174,20 +249,20 @@ class SiteFormWrapper extends ConsumerWidget {
     };
 
     // Ajouter l'ID du module si disponible
-    if (moduleId != null) {
+    if (widget.moduleId != null) {
       // Le champ id_module sera géré automatiquement
     }
 
     // Ajouter l'ID du groupe de sites si disponible
-    if (siteGroup != null) {
-      defaultValues['id_sites_group'] = siteGroup!.idSitesGroup;
+    if (widget.siteGroup != null) {
+      defaultValues['id_sites_group'] = widget.siteGroup!.idSitesGroup;
     }
 
     // Ajouter le type de site sélectionné
-    if (selectedSiteTypeId != null) {
-      defaultValues['id_nomenclature_type_site'] = selectedSiteTypeId;
+    if (widget.selectedSiteTypeId != null) {
+      defaultValues['id_nomenclature_type_site'] = widget.selectedSiteTypeId;
       // Si le type de site est dans specific avec une valeur fixe, l'utiliser
-      final specificTypeSite = siteConfig.specific?['id_nomenclature_type_site'];
+      final specificTypeSite = widget.siteConfig.specific?['id_nomenclature_type_site'];
       if (specificTypeSite != null && specificTypeSite['value'] != null) {
         // Le type est déjà défini dans la config, ne pas l'écraser
       }
@@ -199,24 +274,24 @@ class SiteFormWrapper extends ConsumerWidget {
   /// Récupère les propriétés d'affichage selon le type de site
   /// Utilise display_form en priorité, puis display_properties si display_form est vide
   List<String>? _getDisplayProperties() {
-    if (selectedSiteTypeId != null && moduleInfo != null) {
-      final typeSiteConfig = moduleInfo!.module.complement?.configuration?.module
-          ?.typesSite?[selectedSiteTypeId.toString()];
-      
+    if (widget.selectedSiteTypeId != null && widget.moduleInfo != null) {
+      final typeSiteConfig = widget.moduleInfo!.module.complement?.configuration?.module
+          ?.typesSite?[widget.selectedSiteTypeId.toString()];
+
       // TypeSiteConfig n'a que display_properties (pas display_form)
       if (typeSiteConfig?.displayProperties != null &&
           typeSiteConfig!.displayProperties!.isNotEmpty) {
         return typeSiteConfig.displayProperties!.cast<String>();
       }
     }
-    
+
     // Pour la configuration générale du site, utiliser display_form en priorité
-    if (siteConfig.displayForm != null && siteConfig.displayForm!.isNotEmpty) {
-      return siteConfig.displayForm;
+    if (widget.siteConfig.displayForm != null && widget.siteConfig.displayForm!.isNotEmpty) {
+      return widget.siteConfig.displayForm;
     }
-    
+
     // Sinon, utiliser display_properties
-    return siteConfig.displayProperties;
+    return widget.siteConfig.displayProperties;
   }
 
    /// Demande à l'utilisateur s'il souhaite créer une visite
@@ -244,29 +319,29 @@ class SiteFormWrapper extends ConsumerWidget {
 
   /// Navigue vers le formulaire d'observation
   Future<void> _navigateToVisitForm(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
-    final visitConfig =  moduleInfo!.module.complement?.configuration?.visit;
+    final visitConfig =  widget.moduleInfo!.module.complement?.configuration?.visit;
     if (visitConfig == null) return;
 
     final targetModuleInfo = moduleToShow ?? null;
     if (targetModuleInfo == null) return;
 
-    _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
-    _navigateToSiteDetailPage(context, site, siteGroup, moduleInfo);
+    _navigateToSiteGroupDetailPage(context, siteGroup, widget.moduleInfo);
+    _navigateToSiteDetailPage(context, site, siteGroup, widget.moduleInfo);
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => VisitFormPage(
             site: site,
             visitConfig: visitConfig,
-            customConfig: customConfig,
-            moduleId: moduleInfo?.module.id,
+            customConfig: widget.customConfig,
+            moduleId: widget.moduleInfo?.module.id,
             moduleInfo: targetModuleInfo,
             siteGroup: siteGroup,
         ),
       ),
     );
   }
-  
+
   /// Navigue vers la page de détail de la visite
   Future<void> _navigateToSiteDetailPage(BuildContext context, BaseSite site, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
     final targetModuleInfo = moduleToShow ?? null;
@@ -284,7 +359,7 @@ class SiteFormWrapper extends ConsumerWidget {
       ),
     );
   }
-  
+
  /// Navigue vers la page de détail de la visite
   Future<void> _navigateToSiteGroupDetailPage(BuildContext context, SiteGroup? siteGroup, [ModuleInfo? moduleToShow]) async {
     Navigator.of(context).pop();
@@ -305,23 +380,38 @@ class SiteFormWrapper extends ConsumerWidget {
       ),
     );
   }
-  
+
+  /// Construit le GeoJSON depuis la position sélectionnée
+  String? _buildGeomOverride() {
+    if (_selectedPosition == null) return null;
+    return jsonEncode({
+      'type': 'Point',
+      'coordinates': [_selectedPosition!.longitude, _selectedPosition!.latitude],
+    });
+  }
+
   /// Gère la sauvegarde du site
-  Future<bool> _handleSave(BuildContext context, WidgetRef ref, Map<String, dynamic> formData) async {
+  Future<bool> _handleSave(BuildContext context, Map<String, dynamic> formData) async {
     final viewModel = ref.read(siteFormViewModelProvider(
-        (moduleId ?? 1, siteGroup?.idSitesGroup)).notifier);
+        (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
+
+    final geomOverride = _buildGeomOverride();
 
     try {
       bool success;
       int? siteId;
 
-      if (_isEditMode && site != null) {
-        // Vérifier que le site peut être modifié (créé localement)
-        if (site!.isLocal != true) {
+      if (_isEditMode && widget.site != null) {
+        // Vérifier que le site peut être modifié (créé localement et non synchronisé)
+        if (widget.site!.isLocal != true || widget.site!.serverSiteId != null) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Impossible de modifier un site qui n\'a pas été créé localement'),
+              SnackBar(
+                content: Text(
+                  widget.site!.serverSiteId != null
+                      ? 'Ce site a déjà été synchronisé et ne peut plus être modifié'
+                      : 'Impossible de modifier un site qui n\'a pas été créé localement',
+                ),
                 backgroundColor: Colors.red,
               ),
             );
@@ -332,9 +422,10 @@ class SiteFormWrapper extends ConsumerWidget {
         // Mise à jour
         success = await viewModel.updateSiteFromFormData(
           formData,
-          site!,
-          moduleId: moduleId ?? 1,
-          selectedSiteTypeId: selectedSiteTypeId,
+          widget.site!,
+          moduleId: widget.moduleId ?? 1,
+          selectedSiteTypeId: widget.selectedSiteTypeId,
+          geomOverride: geomOverride,
         );
 
         if (success) {
@@ -346,15 +437,15 @@ class SiteFormWrapper extends ConsumerWidget {
 
           // Naviguer vers la page de détail du site
           if (context.mounted) {
-            final updatedSite = await viewModel.getSiteById(site!.idBaseSite);
+            final updatedSite = await viewModel.getSiteById(widget.site!.idBaseSite);
             if (updatedSite != null && context.mounted) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
                   builder: (context) => SiteDetailPage(
                     site: updatedSite,
-                    moduleInfo: moduleInfo!,
-                    fromSiteGroup: siteGroup,
+                    moduleInfo: widget.moduleInfo!,
+                    fromSiteGroup: widget.siteGroup,
                   ),
                 ),
               );
@@ -366,7 +457,9 @@ class SiteFormWrapper extends ConsumerWidget {
         // Création
         siteId = await viewModel.createSiteFromFormData(
           formData,
-          moduleId: moduleId ?? 1,
+          moduleId: widget.moduleId ?? 1,
+          selectedSiteTypeId: widget.selectedSiteTypeId,
+          geomOverride: geomOverride,
         );
         success = siteId != null && siteId > 0;
 
@@ -383,14 +476,14 @@ class SiteFormWrapper extends ConsumerWidget {
             final createVisit = await _askForVisit(context);
             if (createVisit) {
             if (newSite != null && context.mounted) {
-              await _navigateToVisitForm(context, newSite, siteGroup, moduleInfo);
+              await _navigateToVisitForm(context, newSite, widget.siteGroup, widget.moduleInfo);
                   return false; // Navigation personnalisée faite, empêcher le pop automatique
               }
             } else {
                 // L'utilisateur a dit "Non", naviguer vers la page de détail
             if (newSite != null && context.mounted) {
-              await _navigateToSiteGroupDetailPage(context, siteGroup, moduleInfo);
-              await _navigateToSiteDetailPage(context, newSite, siteGroup, moduleInfo);
+              await _navigateToSiteGroupDetailPage(context, widget.siteGroup, widget.moduleInfo);
+              await _navigateToSiteDetailPage(context, newSite, widget.siteGroup, widget.moduleInfo);
               return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
           }
@@ -411,8 +504,8 @@ class SiteFormWrapper extends ConsumerWidget {
   }
 
   /// Supprime le site avec confirmation
-  Future<void> _deleteSite(BuildContext context, WidgetRef ref) async {
-    if (site == null) return;
+  Future<void> _deleteSite(BuildContext context) async {
+    if (widget.site == null) return;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -436,9 +529,9 @@ class SiteFormWrapper extends ConsumerWidget {
 
     try {
       final viewModel = ref.read(siteFormViewModelProvider(
-          (moduleId ?? 1, siteGroup?.idSitesGroup)).notifier);
+          (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
 
-      final success = await viewModel.deleteSite(site!.idBaseSite);
+      final success = await viewModel.deleteSite(widget.site!.idBaseSite);
 
       if (context.mounted) {
         if (success) {

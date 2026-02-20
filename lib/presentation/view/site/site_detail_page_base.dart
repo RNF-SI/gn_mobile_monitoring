@@ -235,11 +235,13 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   PreferredSizeWidget buildAppBar() {
-    final canEdit = widget.site.isLocal == true;
-    
+    final isLocal = widget.site.isLocal == true;
+    final isSynced = widget.site.serverSiteId != null;
+    final canEdit = isLocal && !isSynced;
+
     return AppBar(
       title: Text(getTitle()),
-      // Actions pour éditer (uniquement si le site est local)
+      // Actions pour éditer (uniquement si le site est local et non synchronisé)
       actions: [
         if (canEdit)
           IconButton(
@@ -272,12 +274,18 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         else
           IconButton(
             icon: const Icon(Icons.lock_outline),
-            tooltip: 'Ce site ne peut pas être modifié (créé depuis l\'API)',
+            tooltip: isSynced
+                ? 'Ce site a été synchronisé et ne peut plus être modifié'
+                : 'Ce site ne peut pas être modifié (créé depuis le serveur)',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Seuls les sites créés localement peuvent être modifiés'),
-                  duration: Duration(seconds: 2),
+                SnackBar(
+                  content: Text(
+                    isSynced
+                        ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié'
+                        : 'Seuls les sites créés localement peuvent être modifiés',
+                  ),
+                  duration: const Duration(seconds: 2),
                 ),
               );
             },

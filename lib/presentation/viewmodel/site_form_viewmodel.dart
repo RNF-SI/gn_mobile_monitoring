@@ -10,6 +10,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case.dart
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
@@ -26,6 +27,7 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
   final deleteSiteUseCase = ref.watch(deleteSiteUseCaseProvider);
   final getUserIdUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
   final getSiteByIdUseCase = ref.watch(getSiteByIdUseCaseProvider);
+  final getUserLocationUseCase = ref.watch(getUserLocationUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
 
   return SiteFormViewModel(
@@ -35,6 +37,7 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     getUserIdUseCase,
     getSitesBySiteGroupUseCase,
     getSiteByIdUseCase,
+    getUserLocationUseCase,
     formDataProcessor,
     moduleId,
     siteGroupId ?? 0,
@@ -48,6 +51,7 @@ class SiteFormViewModel extends StateNotifier<void> {
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
   final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
   final GetSiteByIdUseCase _getSiteByIdUseCase;
+  final GetUserLocationUseCase _getUserLocationUseCase;
   final FormDataProcessor _formDataProcessor;
   final int _moduleId;
   final int _siteGroupId;
@@ -61,6 +65,7 @@ class SiteFormViewModel extends StateNotifier<void> {
     this._getUserIdUseCase,
     this._getSitesBySiteGroupUseCase,
     this._getSiteByIdUseCase,
+    this._getUserLocationUseCase,
     this._formDataProcessor,
     this._moduleId,
     this._siteGroupId,
@@ -99,10 +104,13 @@ class SiteFormViewModel extends StateNotifier<void> {
 
   /// Crée un nouveau site à partir des données du formulaire
   /// Retourne l'ID du site créé
+  /// Si [geomOverride] est fourni, il est utilisé directement comme géométrie GeoJSON.
+  /// Sinon, la position GPS de l'utilisateur est récupérée automatiquement.
   Future<int?> createSiteFromFormData(
     Map<String, dynamic> formData, {
     int? moduleId,
     int? selectedSiteTypeId,
+    String? geomOverride,
   }) async {
     try {
       // Traiter les données du formulaire
@@ -111,12 +119,30 @@ class SiteFormViewModel extends StateNotifier<void> {
       // Récupérer l'ID de l'utilisateur connecté
       final userId = await _getUserIdUseCase.execute();
 
+      // Utiliser la géométrie fournie ou récupérer la position GPS
+      String? geomGeoJson;
+      if (geomOverride != null) {
+        geomGeoJson = geomOverride;
+      } else {
+        final locationResult = await _getUserLocationUseCase.execute();
+        if (locationResult != null) {
+          geomGeoJson = jsonEncode({
+            'type': 'Point',
+            'coordinates': [
+              locationResult.position.longitude,
+              locationResult.position.latitude,
+            ],
+          });
+        }
+      }
+
       // Convertir les données en BaseSite
       final site = _prepareSiteFromFormData(
         processedData,
         moduleId: moduleId ?? _moduleId,
         userId: userId,
         selectedSiteTypeId: selectedSiteTypeId,
+        geom: geomGeoJson,
       );
 
       // Préparer le complément de site
@@ -190,17 +216,23 @@ class SiteFormViewModel extends StateNotifier<void> {
     return complementData;
   }
 
-  /// Met à jour un site existant à partir des données du formulaire
+  /// Met à jour un site existant à partir des données du formulaire.
+  /// Si [geomOverride] est fourni, il est utilisé directement comme géométrie GeoJSON.
   Future<bool> updateSiteFromFormData(
     Map<String, dynamic> formData,
     BaseSite existingSite, {
     int? moduleId,
     int? selectedSiteTypeId,
+    String? geomOverride,
   }) async {
     try {
-      // Vérifier que le site a été créé localement
+      // Vérifier que le site a été créé localement et n'a pas été synchronisé
       if (existingSite.isLocal != true) {
         debugPrint('Erreur: Impossible de modifier un site qui n\'a pas été créé localement');
+        return false;
+      }
+      if (existingSite.serverSiteId != null) {
+        debugPrint('Erreur: Impossible de modifier un site déjà synchronisé avec le serveur');
         return false;
       }
 
@@ -220,6 +252,7 @@ class SiteFormViewModel extends StateNotifier<void> {
             : existingSite.firstUseDate,
         altitudeMin: processedData['altitude_min'] as int?,
         altitudeMax: processedData['altitude_max'] as int?,
+        geom: geomOverride ?? existingSite.geom,
         metaUpdateDate: DateTime.now(),
       );
 
@@ -261,6 +294,7 @@ class SiteFormViewModel extends StateNotifier<void> {
     required int moduleId,
     required int userId,
     int? selectedSiteTypeId,
+    String? geom,
   }) {
     final now = DateTime.now();
 
@@ -272,12 +306,12 @@ class SiteFormViewModel extends StateNotifier<void> {
       firstUseDate: formData['first_use_date'] != null
           ? DateTime.tryParse(formData['first_use_date'] as String)
           : now,
+      geom: geom,
       altitudeMin: formData['altitude_min'] as int?,
       altitudeMax: formData['altitude_max'] as int?,
       metaCreateDate: now,
       metaUpdateDate: now,
       isLocal: true, // Site créé localement
-      // geom sera géré séparément si nécessaire
     );
   }
 }

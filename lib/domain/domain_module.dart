@@ -128,6 +128,16 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relat
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relations_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/service/map_geometry_service.dart';
 import 'package:gn_mobile_monitoring/data/service/map_geometry_service_impl.dart';
+import 'package:gn_mobile_monitoring/domain/service/geojson_parser_service.dart';
+import 'package:gn_mobile_monitoring/data/service/geojson_parser_service_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/load_map_features_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/load_map_features_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/load_map_tile_layers_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/load_map_tile_layers_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/find_feature_at_point_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/find_feature_at_point_use_case_impl.dart';
 
 final initLocalMonitoringDataBaseUseCaseProvider =
     Provider<InitLocalMonitoringDataBaseUseCase>((ref) =>
@@ -528,4 +538,33 @@ final createSiteGroupWithRelationsUseCaseProvider = Provider<CreateSiteGroupWith
     ref.watch(createSiteGroupUseCaseProvider),
     ref.watch(siteDatabaseProvider),
   ),
+);
+
+// ============================================================================
+// Providers pour la carte (Map)
+// ============================================================================
+
+// Provider pour le service de parsing GeoJSON
+final geoJsonParserServiceProvider = Provider<GeoJsonParserService>(
+  (ref) => const GeoJsonParserServiceImpl(),
+);
+
+// Provider pour charger les features de la carte
+final loadMapFeaturesUseCaseProvider = Provider<LoadMapFeaturesUseCase>(
+  (ref) => LoadMapFeaturesUseCaseImpl(ref.watch(geoJsonParserServiceProvider)),
+);
+
+// Provider pour charger les couches de tuiles
+final loadMapTileLayersUseCaseProvider = Provider<LoadMapTileLayersUseCase>(
+  (ref) => const LoadMapTileLayersUseCaseImpl(),
+);
+
+// Provider pour récupérer la position utilisateur
+final getUserLocationUseCaseProvider = Provider<GetUserLocationUseCase>(
+  (ref) => const GetUserLocationUseCaseImpl(),
+);
+
+// Provider pour trouver une feature à un point donné
+final findFeatureAtPointUseCaseProvider = Provider<FindFeatureAtPointUseCase>(
+  (ref) => FindFeatureAtPointUseCaseImpl(ref.watch(mapGeometryServiceProvider)),
 );

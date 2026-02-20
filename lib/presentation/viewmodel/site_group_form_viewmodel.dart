@@ -202,6 +202,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       idDigitiser: userId,
       metaCreateDate: now,
       metaUpdateDate: now,
+      isLocal: true,
       // geom sera géré séparément si nécessaire
     );
   }
