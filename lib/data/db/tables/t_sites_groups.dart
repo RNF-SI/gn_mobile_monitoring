@@ -16,4 +16,6 @@ class TSitesGroups extends Table {
   TextColumn get geom => text().nullable()(); // Geometry support
   IntColumn get altitudeMin => integer().nullable()(); // Altitude min
   IntColumn get altitudeMax => integer().nullable()(); // Altitude max
+  BoolColumn get isLocal => boolean().nullable().withDefault(const Constant(false))();
+  IntColumn get serverSiteGroupId => integer().nullable()();
 }

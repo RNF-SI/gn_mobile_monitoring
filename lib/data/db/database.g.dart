@@ -4176,6 +4176,22 @@ class $TSitesGroupsTable extends TSitesGroups
   late final GeneratedColumn<int> altitudeMax = GeneratedColumn<int>(
       'altitude_max', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isLocalMeta =
+      const VerificationMeta('isLocal');
+  @override
+  late final GeneratedColumn<bool> isLocal = GeneratedColumn<bool>(
+      'is_local', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_local" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _serverSiteGroupIdMeta =
+      const VerificationMeta('serverSiteGroupId');
+  @override
+  late final GeneratedColumn<int> serverSiteGroupId = GeneratedColumn<int>(
+      'server_site_group_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idSitesGroup,
@@ -4190,7 +4206,9 @@ class $TSitesGroupsTable extends TSitesGroups
         idDigitiser,
         geom,
         altitudeMin,
-        altitudeMax
+        altitudeMax,
+        isLocal,
+        serverSiteGroupId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4274,6 +4292,16 @@ class $TSitesGroupsTable extends TSitesGroups
           altitudeMax.isAcceptableOrUnknown(
               data['altitude_max']!, _altitudeMaxMeta));
     }
+    if (data.containsKey('is_local')) {
+      context.handle(_isLocalMeta,
+          isLocal.isAcceptableOrUnknown(data['is_local']!, _isLocalMeta));
+    }
+    if (data.containsKey('server_site_group_id')) {
+      context.handle(
+          _serverSiteGroupIdMeta,
+          serverSiteGroupId.isAcceptableOrUnknown(
+              data['server_site_group_id']!, _serverSiteGroupIdMeta));
+    }
     return context;
   }
 
@@ -4310,6 +4338,10 @@ class $TSitesGroupsTable extends TSitesGroups
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_min']),
       altitudeMax: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_max']),
+      isLocal: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_local']),
+      serverSiteGroupId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}server_site_group_id']),
     );
   }
 
@@ -4333,6 +4365,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
   final String? geom;
   final int? altitudeMin;
   final int? altitudeMax;
+  final bool? isLocal;
+  final int? serverSiteGroupId;
   const TSitesGroup(
       {required this.idSitesGroup,
       this.sitesGroupName,
@@ -4346,7 +4380,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       this.idDigitiser,
       this.geom,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.isLocal,
+      this.serverSiteGroupId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -4387,6 +4423,12 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
     if (!nullToAbsent || altitudeMax != null) {
       map['altitude_max'] = Variable<int>(altitudeMax);
     }
+    if (!nullToAbsent || isLocal != null) {
+      map['is_local'] = Variable<bool>(isLocal);
+    }
+    if (!nullToAbsent || serverSiteGroupId != null) {
+      map['server_site_group_id'] = Variable<int>(serverSiteGroupId);
+    }
     return map;
   }
 
@@ -4425,6 +4467,12 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       altitudeMax: altitudeMax == null && nullToAbsent
           ? const Value.absent()
           : Value(altitudeMax),
+      isLocal: isLocal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isLocal),
+      serverSiteGroupId: serverSiteGroupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverSiteGroupId),
     );
   }
 
@@ -4446,6 +4494,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       geom: serializer.fromJson<String?>(json['geom']),
       altitudeMin: serializer.fromJson<int?>(json['altitudeMin']),
       altitudeMax: serializer.fromJson<int?>(json['altitudeMax']),
+      isLocal: serializer.fromJson<bool?>(json['isLocal']),
+      serverSiteGroupId: serializer.fromJson<int?>(json['serverSiteGroupId']),
     );
   }
   @override
@@ -4466,6 +4516,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       'geom': serializer.toJson<String?>(geom),
       'altitudeMin': serializer.toJson<int?>(altitudeMin),
       'altitudeMax': serializer.toJson<int?>(altitudeMax),
+      'isLocal': serializer.toJson<bool?>(isLocal),
+      'serverSiteGroupId': serializer.toJson<int?>(serverSiteGroupId),
     };
   }
 
@@ -4482,7 +4534,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           Value<int?> idDigitiser = const Value.absent(),
           Value<String?> geom = const Value.absent(),
           Value<int?> altitudeMin = const Value.absent(),
-          Value<int?> altitudeMax = const Value.absent()}) =>
+          Value<int?> altitudeMax = const Value.absent(),
+          Value<bool?> isLocal = const Value.absent(),
+          Value<int?> serverSiteGroupId = const Value.absent()}) =>
       TSitesGroup(
         idSitesGroup: idSitesGroup ?? this.idSitesGroup,
         sitesGroupName:
@@ -4504,6 +4558,10 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
         geom: geom.present ? geom.value : this.geom,
         altitudeMin: altitudeMin.present ? altitudeMin.value : this.altitudeMin,
         altitudeMax: altitudeMax.present ? altitudeMax.value : this.altitudeMax,
+        isLocal: isLocal.present ? isLocal.value : this.isLocal,
+        serverSiteGroupId: serverSiteGroupId.present
+            ? serverSiteGroupId.value
+            : this.serverSiteGroupId,
       );
   TSitesGroup copyWithCompanion(TSitesGroupsCompanion data) {
     return TSitesGroup(
@@ -4537,6 +4595,10 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           data.altitudeMin.present ? data.altitudeMin.value : this.altitudeMin,
       altitudeMax:
           data.altitudeMax.present ? data.altitudeMax.value : this.altitudeMax,
+      isLocal: data.isLocal.present ? data.isLocal.value : this.isLocal,
+      serverSiteGroupId: data.serverSiteGroupId.present
+          ? data.serverSiteGroupId.value
+          : this.serverSiteGroupId,
     );
   }
 
@@ -4555,7 +4617,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           ..write('idDigitiser: $idDigitiser, ')
           ..write('geom: $geom, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteGroupId: $serverSiteGroupId')
           ..write(')'))
         .toString();
   }
@@ -4574,7 +4638,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       idDigitiser,
       geom,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      isLocal,
+      serverSiteGroupId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4591,7 +4657,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           other.idDigitiser == this.idDigitiser &&
           other.geom == this.geom &&
           other.altitudeMin == this.altitudeMin &&
-          other.altitudeMax == this.altitudeMax);
+          other.altitudeMax == this.altitudeMax &&
+          other.isLocal == this.isLocal &&
+          other.serverSiteGroupId == this.serverSiteGroupId);
 }
 
 class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
@@ -4608,6 +4676,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
   final Value<String?> geom;
   final Value<int?> altitudeMin;
   final Value<int?> altitudeMax;
+  final Value<bool?> isLocal;
+  final Value<int?> serverSiteGroupId;
   const TSitesGroupsCompanion({
     this.idSitesGroup = const Value.absent(),
     this.sitesGroupName = const Value.absent(),
@@ -4622,6 +4692,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     this.geom = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteGroupId = const Value.absent(),
   });
   TSitesGroupsCompanion.insert({
     this.idSitesGroup = const Value.absent(),
@@ -4637,6 +4709,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     this.geom = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteGroupId = const Value.absent(),
   });
   static Insertable<TSitesGroup> custom({
     Expression<int>? idSitesGroup,
@@ -4652,6 +4726,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     Expression<String>? geom,
     Expression<int>? altitudeMin,
     Expression<int>? altitudeMax,
+    Expression<bool>? isLocal,
+    Expression<int>? serverSiteGroupId,
   }) {
     return RawValuesInsertable({
       if (idSitesGroup != null) 'id_sites_group': idSitesGroup,
@@ -4668,6 +4744,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       if (geom != null) 'geom': geom,
       if (altitudeMin != null) 'altitude_min': altitudeMin,
       if (altitudeMax != null) 'altitude_max': altitudeMax,
+      if (isLocal != null) 'is_local': isLocal,
+      if (serverSiteGroupId != null) 'server_site_group_id': serverSiteGroupId,
     });
   }
 
@@ -4684,7 +4762,9 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       Value<int?>? idDigitiser,
       Value<String?>? geom,
       Value<int?>? altitudeMin,
-      Value<int?>? altitudeMax}) {
+      Value<int?>? altitudeMax,
+      Value<bool?>? isLocal,
+      Value<int?>? serverSiteGroupId}) {
     return TSitesGroupsCompanion(
       idSitesGroup: idSitesGroup ?? this.idSitesGroup,
       sitesGroupName: sitesGroupName ?? this.sitesGroupName,
@@ -4700,6 +4780,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       geom: geom ?? this.geom,
       altitudeMin: altitudeMin ?? this.altitudeMin,
       altitudeMax: altitudeMax ?? this.altitudeMax,
+      isLocal: isLocal ?? this.isLocal,
+      serverSiteGroupId: serverSiteGroupId ?? this.serverSiteGroupId,
     );
   }
 
@@ -4746,6 +4828,12 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     if (altitudeMax.present) {
       map['altitude_max'] = Variable<int>(altitudeMax.value);
     }
+    if (isLocal.present) {
+      map['is_local'] = Variable<bool>(isLocal.value);
+    }
+    if (serverSiteGroupId.present) {
+      map['server_site_group_id'] = Variable<int>(serverSiteGroupId.value);
+    }
     return map;
   }
 
@@ -4764,7 +4852,9 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
           ..write('idDigitiser: $idDigitiser, ')
           ..write('geom: $geom, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteGroupId: $serverSiteGroupId')
           ..write(')'))
         .toString();
   }
@@ -14436,6 +14526,8 @@ typedef $$TSitesGroupsTableCreateCompanionBuilder = TSitesGroupsCompanion
   Value<String?> geom,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteGroupId,
 });
 typedef $$TSitesGroupsTableUpdateCompanionBuilder = TSitesGroupsCompanion
     Function({
@@ -14452,6 +14544,8 @@ typedef $$TSitesGroupsTableUpdateCompanionBuilder = TSitesGroupsCompanion
   Value<String?> geom,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteGroupId,
 });
 
 class $$TSitesGroupsTableFilterComposer
@@ -14507,6 +14601,13 @@ class $$TSitesGroupsTableFilterComposer
 
   ColumnFilters<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TSitesGroupsTableOrderingComposer
@@ -14563,6 +14664,13 @@ class $$TSitesGroupsTableOrderingComposer
 
   ColumnOrderings<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TSitesGroupsTableAnnotationComposer
@@ -14612,6 +14720,12 @@ class $$TSitesGroupsTableAnnotationComposer
 
   GeneratedColumn<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLocal =>
+      $composableBuilder(column: $table.isLocal, builder: (column) => column);
+
+  GeneratedColumn<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId, builder: (column) => column);
 }
 
 class $$TSitesGroupsTableTableManager extends RootTableManager<
@@ -14653,6 +14767,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             Value<String?> geom = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteGroupId = const Value.absent(),
           }) =>
               TSitesGroupsCompanion(
             idSitesGroup: idSitesGroup,
@@ -14668,6 +14784,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             geom: geom,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteGroupId: serverSiteGroupId,
           ),
           createCompanionCallback: ({
             Value<int> idSitesGroup = const Value.absent(),
@@ -14683,6 +14801,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             Value<String?> geom = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteGroupId = const Value.absent(),
           }) =>
               TSitesGroupsCompanion.insert(
             idSitesGroup: idSitesGroup,
@@ -14698,6 +14818,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             geom: geom,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteGroupId: serverSiteGroupId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))

@@ -24,6 +24,8 @@ extension TSitesGroupMapper on TSitesGroup {
       geom: cleanedGeom,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      isLocal: isLocal,
+      serverSiteGroupId: serverSiteGroupId,
     );
   }
 }
@@ -52,6 +54,8 @@ extension SiteGroupMapper on SiteGroup {
       geom: Value(geomWithSrid),
       altitudeMin: Value(altitudeMin),
       altitudeMax: Value(altitudeMax),
+      isLocal: Value(isLocal),
+      serverSiteGroupId: Value(serverSiteGroupId),
     );
   }
 }

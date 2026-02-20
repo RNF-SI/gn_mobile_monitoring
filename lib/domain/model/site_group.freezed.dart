@@ -29,6 +29,8 @@ mixin _$SiteGroup {
   String? get geom => throw _privateConstructorUsedError;
   int? get altitudeMin => throw _privateConstructorUsedError;
   int? get altitudeMax => throw _privateConstructorUsedError;
+  bool? get isLocal => throw _privateConstructorUsedError;
+  int? get serverSiteGroupId => throw _privateConstructorUsedError;
 
   @JsonKey(ignore: true)
   $SiteGroupCopyWith<SiteGroup> get copyWith =>
@@ -53,7 +55,9 @@ abstract class $SiteGroupCopyWith<$Res> {
       int? idDigitiser,
       String? geom,
       int? altitudeMin,
-      int? altitudeMax});
+      int? altitudeMax,
+      bool? isLocal,
+      int? serverSiteGroupId});
 }
 
 /// @nodoc
@@ -82,6 +86,8 @@ class _$SiteGroupCopyWithImpl<$Res, $Val extends SiteGroup>
     Object? geom = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? isLocal = freezed,
+    Object? serverSiteGroupId = freezed,
   }) {
     return _then(_value.copyWith(
       idSitesGroup: null == idSitesGroup
@@ -136,6 +142,14 @@ class _$SiteGroupCopyWithImpl<$Res, $Val extends SiteGroup>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      serverSiteGroupId: freezed == serverSiteGroupId
+          ? _value.serverSiteGroupId
+          : serverSiteGroupId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -161,7 +175,9 @@ abstract class _$$SiteGroupImplCopyWith<$Res>
       int? idDigitiser,
       String? geom,
       int? altitudeMin,
-      int? altitudeMax});
+      int? altitudeMax,
+      bool? isLocal,
+      int? serverSiteGroupId});
 }
 
 /// @nodoc
@@ -188,6 +204,8 @@ class __$$SiteGroupImplCopyWithImpl<$Res>
     Object? geom = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? isLocal = freezed,
+    Object? serverSiteGroupId = freezed,
   }) {
     return _then(_$SiteGroupImpl(
       idSitesGroup: null == idSitesGroup
@@ -242,6 +260,14 @@ class __$$SiteGroupImplCopyWithImpl<$Res>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      serverSiteGroupId: freezed == serverSiteGroupId
+          ? _value.serverSiteGroupId
+          : serverSiteGroupId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -262,7 +288,9 @@ class _$SiteGroupImpl implements _SiteGroup {
       this.idDigitiser,
       this.geom,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.isLocal,
+      this.serverSiteGroupId});
 
   @override
   final int idSitesGroup;
@@ -290,10 +318,14 @@ class _$SiteGroupImpl implements _SiteGroup {
   final int? altitudeMin;
   @override
   final int? altitudeMax;
+  @override
+  final bool? isLocal;
+  @override
+  final int? serverSiteGroupId;
 
   @override
   String toString() {
-    return 'SiteGroup(idSitesGroup: $idSitesGroup, sitesGroupName: $sitesGroupName, sitesGroupCode: $sitesGroupCode, sitesGroupDescription: $sitesGroupDescription, uuidSitesGroup: $uuidSitesGroup, comments: $comments, data: $data, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idDigitiser: $idDigitiser, geom: $geom, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax)';
+    return 'SiteGroup(idSitesGroup: $idSitesGroup, sitesGroupName: $sitesGroupName, sitesGroupCode: $sitesGroupCode, sitesGroupDescription: $sitesGroupDescription, uuidSitesGroup: $uuidSitesGroup, comments: $comments, data: $data, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, idDigitiser: $idDigitiser, geom: $geom, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, isLocal: $isLocal, serverSiteGroupId: $serverSiteGroupId)';
   }
 
   @override
@@ -324,7 +356,10 @@ class _$SiteGroupImpl implements _SiteGroup {
             (identical(other.altitudeMin, altitudeMin) ||
                 other.altitudeMin == altitudeMin) &&
             (identical(other.altitudeMax, altitudeMax) ||
-                other.altitudeMax == altitudeMax));
+                other.altitudeMax == altitudeMax) &&
+            (identical(other.isLocal, isLocal) || other.isLocal == isLocal) &&
+            (identical(other.serverSiteGroupId, serverSiteGroupId) ||
+                other.serverSiteGroupId == serverSiteGroupId));
   }
 
   @override
@@ -342,7 +377,9 @@ class _$SiteGroupImpl implements _SiteGroup {
       idDigitiser,
       geom,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      isLocal,
+      serverSiteGroupId);
 
   @JsonKey(ignore: true)
   @override
@@ -365,7 +402,9 @@ abstract class _SiteGroup implements SiteGroup {
       final int? idDigitiser,
       final String? geom,
       final int? altitudeMin,
-      final int? altitudeMax}) = _$SiteGroupImpl;
+      final int? altitudeMax,
+      final bool? isLocal,
+      final int? serverSiteGroupId}) = _$SiteGroupImpl;
 
   @override
   int get idSitesGroup;
@@ -393,6 +432,10 @@ abstract class _SiteGroup implements SiteGroup {
   int? get altitudeMin;
   @override
   int? get altitudeMax;
+  @override
+  bool? get isLocal;
+  @override
+  int? get serverSiteGroupId;
   @override
   @JsonKey(ignore: true)
   _$$SiteGroupImplCopyWith<_$SiteGroupImpl> get copyWith =>
