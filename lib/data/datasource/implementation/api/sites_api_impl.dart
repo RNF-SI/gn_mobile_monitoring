@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/data/mapper/site_complement_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
 class SitesApiImpl extends BaseApi implements SitesApi {
   final Connectivity _connectivity;
@@ -467,8 +468,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
-      // Préparer le corps de la requête selon le format attendu par l'API
+      // Préparer le corps de la requête au format GeoJSON Feature attendu par l'API
       final Map<String, dynamic> requestBody = {
+        'type': 'Feature',
         'properties': {
           'base_site_name': site.baseSiteName,
           'base_site_code': site.baseSiteCode,
@@ -497,7 +499,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       if (site.data != null && site.data!.isNotEmpty) {
         final properties = requestBody['properties'] as Map<String, dynamic>;
         site.data!.forEach((key, value) {
-          properties[key] = value;
+          if (value == null) return; // Ignorer les valeurs nulles
+          // Si c'est un objet nomenclature (Map avec un champ 'id'), extraire l'ID
+          if (value is Map<String, dynamic> && value.containsKey('id')) {
+            properties[key] = value['id'];
+          } else {
+            properties[key] = value;
+          }
         });
       }
 
@@ -639,8 +647,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         throw NetworkException('Aucune connexion réseau disponible');
       }
 
-      // Préparer le corps de la requête selon le format attendu par l'API
+      // Préparer le corps de la requête au format GeoJSON Feature attendu par l'API
       final Map<String, dynamic> requestBody = {
+        'type': 'Feature',
         'properties': {
           'base_site_name': site.baseSiteName,
           'base_site_code': site.baseSiteCode,
@@ -668,7 +677,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       if (site.data != null && site.data!.isNotEmpty) {
         final properties = requestBody['properties'] as Map<String, dynamic>;
         site.data!.forEach((key, value) {
-          properties[key] = value;
+          if (value == null) return; // Ignorer les valeurs nulles
+          // Si c'est un objet nomenclature (Map avec un champ 'id'), extraire l'ID
+          if (value is Map<String, dynamic> && value.containsKey('id')) {
+            properties[key] = value['id'];
+          } else {
+            properties[key] = value;
+          }
         });
       }
 
@@ -780,6 +795,190 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln(
           '\n==================================================================');
       logBuffer.writeln('[API] ERREUR GÉNÉRALE LORS DE LA MISE À JOUR DU SITE');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.runtimeType}');
+      logBuffer.writeln('Message: $e');
+      logBuffer.writeln('\nSTACK TRACE:');
+      logBuffer.writeln(stackTrace);
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(),
+          tag: 'sync', error: e, stackTrace: stackTrace);
+
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSiteGroup(
+      String token, String moduleCode, SiteGroup siteGroup) async {
+    try {
+      final logger = AppLogger();
+
+      // Vérifier la connectivité
+      final connectivityResults = await _connectivity.checkConnectivity();
+      if (connectivityResults.contains(ConnectivityResult.none) ||
+          connectivityResults.isEmpty) {
+        logger.e('[API] ERREUR RÉSEAU: Aucune connexion Internet disponible',
+            tag: 'sync');
+        throw NetworkException('Aucune connexion réseau disponible');
+      }
+
+      // Préparer le corps de la requête au format GeoJSON Feature
+      final Map<String, dynamic> requestBody = {
+        'type': 'Feature',
+        'properties': {
+          'sites_group_name': siteGroup.sitesGroupName,
+          'sites_group_code': siteGroup.sitesGroupCode,
+          'sites_group_description': siteGroup.sitesGroupDescription,
+          'comments': siteGroup.comments,
+          'altitude_min': siteGroup.altitudeMin,
+          'altitude_max': siteGroup.altitudeMax,
+        },
+      };
+
+      // Ajouter la géométrie si disponible
+      if (siteGroup.geom != null && siteGroup.geom!.isNotEmpty) {
+        try {
+          final geomMap = jsonDecode(siteGroup.geom!);
+          requestBody['geometry'] = geomMap;
+        } catch (e) {
+          logger.w('[API] Géométrie invalide ignorée: ${siteGroup.geom}',
+              tag: 'sync');
+        }
+      }
+
+      // Ajouter les données complémentaires si disponibles
+      if (siteGroup.data != null && siteGroup.data!.isNotEmpty) {
+        try {
+          final dataMap = jsonDecode(siteGroup.data!) as Map<String, dynamic>;
+          final properties = requestBody['properties'] as Map<String, dynamic>;
+          dataMap.forEach((key, value) {
+            if (value == null) return;
+            if (value is Map<String, dynamic> && value.containsKey('id')) {
+              properties[key] = value['id'];
+            } else {
+              properties[key] = value;
+            }
+          });
+        } catch (e) {
+          logger.w('[API] Données complémentaires invalides ignorées: ${siteGroup.data}',
+              tag: 'sync');
+        }
+      }
+
+      // Log détaillé pour le débogage
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ENVOI GROUPE DE SITES AU SERVEUR');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln(
+          'URL: $apiBase/monitorings/object/$moduleCode/sites_group');
+      logBuffer.writeln('MÉTHODE: POST');
+
+      if (token.length > 10) {
+        logBuffer.writeln(
+            'HEADERS: Authorization: Bearer ${token.substring(0, 10)}...[MASQUÉ]');
+      } else {
+        logBuffer.writeln('HEADERS: Authorization: Bearer [MASQUÉ]');
+      }
+
+      logBuffer.writeln('BODY:');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      logBuffer.writeln(
+          const JsonEncoder.withIndent('  ').convert(requestBody));
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      // Envoyer la requête
+      final response = await dio.post(
+        '/monitorings/object/$moduleCode/sites_group',
+        data: requestBody,
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+        ),
+      );
+
+      // Log de la réponse
+      logBuffer = StringBuffer();
+      logBuffer.writeln('\n[API] RÉPONSE SERVEUR (${response.statusCode})');
+      logBuffer.writeln(
+          '------------------------------------------------------------------');
+      if (response.data is Map || response.data is List) {
+        logBuffer.writeln(
+            const JsonEncoder.withIndent('  ').convert(response.data));
+      } else {
+        logBuffer.writeln(response.data.toString());
+      }
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.i(logBuffer.toString(), tag: 'sync');
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception(
+            'Erreur lors de l\'envoi du groupe de sites. Status code: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln('[API] ERREUR DIO LORS DE L\'ENVOI DU GROUPE DE SITES');
+      logBuffer.writeln(
+          '==================================================================');
+      logBuffer.writeln('Type: ${e.type}');
+      logBuffer.writeln('Message: ${e.message}');
+      logBuffer.writeln('URL: ${e.requestOptions.uri}');
+      logBuffer.writeln('Méthode: ${e.requestOptions.method}');
+
+      if (e.response != null) {
+        logBuffer.writeln('\nRÉPONSE ERREUR:');
+        logBuffer.writeln('Status code: ${e.response?.statusCode}');
+        if (e.response?.data != null) {
+          if (e.response?.data is Map || e.response?.data is List) {
+            logBuffer.writeln(
+                const JsonEncoder.withIndent('  ').convert(e.response?.data));
+          } else {
+            logBuffer.writeln(e.response?.data.toString());
+          }
+        }
+      }
+
+      logBuffer.writeln(
+          '==================================================================');
+
+      logger.e(logBuffer.toString(), tag: 'sync', error: e);
+
+      String completeErrorMessage =
+          'Erreur réseau lors de l\'envoi du groupe de sites: ${e.message}';
+
+      if (e.response?.data != null) {
+        String responseData = e.response!.data.toString();
+        if (responseData.isNotEmpty) {
+          completeErrorMessage += '\n\nDétails du serveur:\n$responseData';
+        }
+      }
+
+      throw NetworkException(completeErrorMessage, originalDioException: e);
+    } catch (e, stackTrace) {
+      final logger = AppLogger();
+
+      StringBuffer logBuffer = StringBuffer();
+      logBuffer.writeln(
+          '\n==================================================================');
+      logBuffer.writeln(
+          '[API] ERREUR GÉNÉRALE LORS DE L\'ENVOI DU GROUPE DE SITES');
       logBuffer.writeln(
           '==================================================================');
       logBuffer.writeln('Type: ${e.runtimeType}');

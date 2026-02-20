@@ -409,4 +409,20 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
       serverSiteId: Value(serverSiteId),
     ));
   }
+
+  /// Updates the server site group ID after successful sync
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId) async {
+    await (update(tSitesGroups)..where((tbl) => tbl.idSitesGroup.equals(localSiteGroupId)))
+        .write(TSitesGroupsCompanion(
+      serverSiteGroupId: Value(serverSiteGroupId),
+    ));
+  }
+
+  /// Updates idSitesGroup references in site complements when a local group gets a server ID
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId) async {
+    await (update(tSiteComplements)..where((tbl) => tbl.idSitesGroup.equals(oldGroupId)))
+        .write(TSiteComplementsCompanion(
+      idSitesGroup: Value(newGroupId),
+    ));
+  }
 }

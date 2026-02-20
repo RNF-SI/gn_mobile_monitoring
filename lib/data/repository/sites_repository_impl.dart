@@ -862,26 +862,41 @@ class SitesRepositoryImpl implements SitesRepository {
   @override
   Future<List<BaseSite>> getLocalSitesByModuleCode(String moduleCode) async {
     try {
+      print('[getLocalSitesByModuleCode] Recherche sites locaux pour module: $moduleCode');
+
       // 1. Récupérer le module par son code
       final modules = await modulesDatabase.getDownloadedModules();
+      print('[getLocalSitesByModuleCode] Modules téléchargés: ${modules.map((m) => '${m.moduleCode}(id=${m.id})').join(', ')}');
+
       final module = modules.where((m) => m.moduleCode == moduleCode).firstOrNull;
 
       if (module == null) {
+        print('[getLocalSitesByModuleCode] Module $moduleCode non trouvé dans les modules téléchargés');
         return [];
       }
+
+      print('[getLocalSitesByModuleCode] Module trouvé: ${module.moduleCode} avec id=${module.id}');
 
       // 2. Récupérer les site_modules pour ce module
       final siteModules = await database.getSiteModulesByModuleId(module.id);
       final siteIds = siteModules.map((sm) => sm.idSite).toSet();
+      print('[getLocalSitesByModuleCode] Site_modules pour module.id=${module.id}: ${siteIds.length} sites (IDs: ${siteIds.join(', ')})');
 
       // 3. Récupérer les sites et filtrer ceux qui sont locaux
       final localSites = <BaseSite>[];
       for (final siteId in siteIds) {
         final site = await database.getSiteById(siteId);
-        if (site != null && site.isLocal == true) {
-          localSites.add(site);
+        if (site != null) {
+          print('[getLocalSitesByModuleCode] Site $siteId: isLocal=${site.isLocal}, serverSiteId=${site.serverSiteId}');
+          if (site.isLocal == true) {
+            localSites.add(site);
+          }
+        } else {
+          print('[getLocalSitesByModuleCode] Site $siteId non trouvé dans la base');
         }
       }
+
+      print('[getLocalSitesByModuleCode] Sites locaux trouvés: ${localSites.length}');
 
       return localSites;
     } catch (error) {
@@ -897,6 +912,67 @@ class SitesRepositoryImpl implements SitesRepository {
     } catch (error) {
       print('Error updating site server id: $error');
       throw Exception('Failed to update site server id');
+    }
+  }
+
+  @override
+  Future<List<SiteGroup>> getLocalSiteGroupsByModuleCode(String moduleCode) async {
+    try {
+      print('[getLocalSiteGroupsByModuleCode] Recherche groupes de sites locaux pour module: $moduleCode');
+
+      // 1. Récupérer le module par son code
+      final modules = await modulesDatabase.getDownloadedModules();
+      final module = modules.where((m) => m.moduleCode == moduleCode).firstOrNull;
+
+      if (module == null) {
+        print('[getLocalSiteGroupsByModuleCode] Module $moduleCode non trouvé dans les modules téléchargés');
+        return [];
+      }
+
+      print('[getLocalSiteGroupsByModuleCode] Module trouvé: ${module.moduleCode} avec id=${module.id}');
+
+      // 2. Récupérer les groupes de sites pour ce module
+      final siteGroups = await database.getSiteGroupsByModuleId(module.id);
+      print('[getLocalSiteGroupsByModuleCode] Groupes de sites pour module.id=${module.id}: ${siteGroups.length}');
+
+      // 3. Filtrer ceux qui sont locaux
+      final localSiteGroups = siteGroups.where((g) => g.isLocal == true).toList();
+      print('[getLocalSiteGroupsByModuleCode] Groupes de sites locaux trouvés: ${localSiteGroups.length}');
+
+      return localSiteGroups;
+    } catch (error) {
+      print('Error getting local site groups by module code: $error');
+      throw Exception('Failed to get local site groups by module code');
+    }
+  }
+
+  @override
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId) async {
+    try {
+      await database.updateSiteGroupServerId(localSiteGroupId, serverSiteGroupId);
+    } catch (error) {
+      print('Error updating site group server id: $error');
+      throw Exception('Failed to update site group server id');
+    }
+  }
+
+  @override
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId) async {
+    try {
+      await database.updateSiteComplementsGroupId(oldGroupId, newGroupId);
+    } catch (error) {
+      print('Error updating site complements group id: $error');
+      throw Exception('Failed to update site complements group id');
+    }
+  }
+
+  @override
+  Future<SiteComplement?> getSiteComplementBySiteId(int siteId) async {
+    try {
+      return await database.getSiteComplementBySiteId(siteId);
+    } catch (error) {
+      print('Error getting site complement by site id: $error');
+      throw Exception('Failed to get site complement by site id');
     }
   }
 }

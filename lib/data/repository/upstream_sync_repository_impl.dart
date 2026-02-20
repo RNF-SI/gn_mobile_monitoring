@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/helpers/sync_cache_manager.dart';
@@ -211,11 +213,11 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             
             // 2. Ensuite seulement, mettre à jour la visite (PATCH)
             _logger.i('Mise à jour de la visite existante après synchronisation réussie des observations', tag: 'sync');
-            
+
             Map<String, dynamic> serverResponse;
             bool visitProcessedSuccessfully = false;
             int serverId = visit.serverVisitId!;
-            
+
             try {
               // Prétraitement des observateurs pour éviter les erreurs
               List<int> safeObservers = [];
@@ -225,10 +227,32 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 }
               }
 
+              // IMPORTANT: Mapper l'ID local du site vers l'ID serveur si le site a été créé localement
+              // Pour les sites téléchargés du serveur, idBaseSite EST déjà l'ID serveur (serverSiteId est null, isLocal est false/null)
+              // Pour les sites créés localement et synchronisés, on utilise serverSiteId
+              // Pour les sites créés localement mais non synchronisés, on génère une erreur
+              int? effectiveSiteId = visit.idBaseSite;
+              if (visit.idBaseSite != null) {
+                final site = await _sitesRepository.getSiteById(visit.idBaseSite!);
+                if (site != null && site.serverSiteId != null) {
+                  // Site créé localement et déjà synchronisé - utiliser l'ID serveur
+                  _logger.i('Mapping site local ${visit.idBaseSite} -> serveur ${site.serverSiteId}', tag: 'sync');
+                  effectiveSiteId = site.serverSiteId;
+                } else if (site != null && site.serverSiteId == null && site.isLocal == true) {
+                  // Site créé localement mais pas encore synchronisé - erreur fatale
+                  throw Exception(
+                    'Le site local ${visit.idBaseSite} n\'a pas encore été synchronisé avec le serveur. '
+                    'Veuillez d\'abord synchroniser les sites avant les visites.'
+                  );
+                }
+                // Si site.isLocal == false/null et serverSiteId == null,
+                // c'est un site téléchargé du serveur, idBaseSite EST l'ID serveur
+              }
+
               // Créer une nouvelle entité avec des observateurs sécurisés
               final safeEntity = BaseVisitEntity(
                 idBaseVisit: visit.idBaseVisit,
-                idBaseSite: visit.idBaseSite,
+                idBaseSite: effectiveSiteId,
                 idDataset: visit.idDataset,
                 idModule: visit.idModule,
                 idDigitiser: visit.idDigitiser,
@@ -246,7 +270,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
               // Convertir l'entité sécurisée en modèle de domaine
               final visitModel = safeEntity.toDomain();
-              
+
               _logger.i('PATCH visite: ${visitEntity.idBaseVisit} -> serverId: $serverId', tag: 'sync');
               serverResponse = await _globalApi.updateVisit(token, realModuleCode, serverId, visitModel);
 
@@ -321,10 +345,32 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 }
               }
 
+              // IMPORTANT: Mapper l'ID local du site vers l'ID serveur si le site a été créé localement
+              // Pour les sites téléchargés du serveur, idBaseSite EST déjà l'ID serveur (serverSiteId est null, isLocal est false/null)
+              // Pour les sites créés localement et synchronisés, on utilise serverSiteId
+              // Pour les sites créés localement mais non synchronisés, on génère une erreur
+              int? effectiveSiteId = visit.idBaseSite;
+              if (visit.idBaseSite != null) {
+                final site = await _sitesRepository.getSiteById(visit.idBaseSite!);
+                if (site != null && site.serverSiteId != null) {
+                  // Site créé localement et déjà synchronisé - utiliser l'ID serveur
+                  _logger.i('Mapping site local ${visit.idBaseSite} -> serveur ${site.serverSiteId}', tag: 'sync');
+                  effectiveSiteId = site.serverSiteId;
+                } else if (site != null && site.serverSiteId == null && site.isLocal == true) {
+                  // Site créé localement mais pas encore synchronisé - erreur fatale
+                  throw Exception(
+                    'Le site local ${visit.idBaseSite} n\'a pas encore été synchronisé avec le serveur. '
+                    'Veuillez d\'abord synchroniser les sites avant les visites.'
+                  );
+                }
+                // Si site.isLocal == false/null et serverSiteId == null,
+                // c'est un site téléchargé du serveur, idBaseSite EST l'ID serveur
+              }
+
               // Créer une nouvelle entité avec des observateurs sécurisés
               final safeEntity = BaseVisitEntity(
                 idBaseVisit: visit.idBaseVisit,
-                idBaseSite: visit.idBaseSite,
+                idBaseSite: effectiveSiteId,
                 idDataset: visit.idDataset,
                 idModule: visit.idModule,
                 idDigitiser: visit.idDigitiser,
@@ -1023,6 +1069,160 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
   }
 
   @override
+  Future<SyncResult> syncSiteGroupsToServer(String token, String moduleCode) async {
+    try {
+      // Vérifier la connectivité
+      final isConnected = await checkConnectivity();
+      if (!isConnected) {
+        return SyncResult.failure(
+          errorMessage: 'Pas de connexion Internet',
+        );
+      }
+
+      int itemsProcessed = 0;
+      int itemsAdded = 0;
+      int itemsUpdated = 0;
+      int itemsSkipped = 0;
+      List<String> errors = [];
+
+      try {
+        _logger.i(
+            '\n==================================================================',
+            tag: 'sync');
+        _logger.i(
+            '[SYNC_REPO] DÉBUT TÉLÉVERSEMENT GROUPES DE SITES - MODULE: $moduleCode',
+            tag: 'sync');
+        _logger.i(
+            '==================================================================',
+            tag: 'sync');
+
+        // Récupérer les groupes de sites locaux pour ce module
+        final localSiteGroups =
+            await _sitesRepository.getLocalSiteGroupsByModuleCode(moduleCode);
+        _logger.i('Groupes de sites locaux trouvés: ${localSiteGroups.length}',
+            tag: 'sync');
+
+        if (localSiteGroups.isEmpty) {
+          _logger.i(
+              'AUCUN GROUPE DE SITES LOCAL TROUVÉ POUR MODULE $moduleCode - SYNCHRONISATION TERMINÉE\n',
+              tag: 'sync');
+          return SyncResult.success(
+            itemsProcessed: 0,
+            itemsAdded: 0,
+            itemsUpdated: 0,
+            itemsSkipped: 0,
+          );
+        }
+
+        // Séparer les groupes en nouveaux (POST) et existants
+        final newGroups = localSiteGroups
+            .where((g) => g.serverSiteGroupId == null)
+            .toList();
+        final existingGroups = localSiteGroups
+            .where((g) => g.serverSiteGroupId != null)
+            .toList();
+
+        _logger.i(
+            'Répartition des groupes: ${newGroups.length} nouveaux, ${existingGroups.length} existants',
+            tag: 'sync');
+
+        // Traiter les nouveaux groupes (POST)
+        for (final group in newGroups) {
+          try {
+            _logger.i(
+                'Traitement du nouveau groupe ID: ${group.idSitesGroup} (${group.sitesGroupName})',
+                tag: 'sync');
+
+            // POST - Créer un nouveau groupe de sites
+            final serverResponse =
+                await _globalApi.sendSiteGroup(token, moduleCode, group);
+
+            final serverId = serverResponse['id'] ?? serverResponse['ID'];
+            if (serverId == null) {
+              throw Exception(
+                  'Réponse du serveur invalide pour le groupe de sites');
+            }
+
+            _logger.i(
+                'Groupe de sites créé avec succès, ID serveur: $serverId',
+                tag: 'sync');
+            itemsAdded++;
+
+            // Mettre à jour l'ID serveur du groupe
+            await _sitesRepository.updateSiteGroupServerId(
+                group.idSitesGroup, serverId);
+            _logger.i(
+                'ID serveur du groupe enregistré: local=${group.idSitesGroup}, serveur=$serverId',
+                tag: 'sync');
+
+            // Mettre à jour les références id_sites_group dans les site complements
+            // Les sites locaux qui référencent l'ancien ID local doivent maintenant référencer l'ID serveur
+            await _sitesRepository.updateSiteComplementsGroupId(
+                group.idSitesGroup, serverId);
+            _logger.i(
+                'Références id_sites_group mises à jour: ${group.idSitesGroup} -> $serverId',
+                tag: 'sync');
+
+            itemsProcessed++;
+          } catch (e) {
+            _logger.e(
+                'Erreur lors de l\'envoi du groupe de sites ${group.idSitesGroup}: $e',
+                tag: 'sync',
+                error: e);
+            errors.add('Groupe ${group.idSitesGroup}: $e');
+            itemsSkipped++;
+          }
+        }
+
+        // Les groupes existants (avec serverSiteGroupId) sont déjà synchronisés
+        for (final group in existingGroups) {
+          _logger.i(
+              'Groupe ${group.idSitesGroup} déjà synchronisé (serverId: ${group.serverSiteGroupId})',
+              tag: 'sync');
+          itemsProcessed++;
+        }
+
+        // Mettre à jour la date de synchronisation
+        await updateLastSyncDate('siteGroupsToServer', DateTime.now());
+
+        if (errors.isNotEmpty) {
+          String errorMessage =
+              'Erreurs lors de la synchronisation des groupes de sites:\n${errors.join('\n')}';
+
+          return SyncResult.failure(
+            errorMessage: errorMessage,
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded,
+            itemsUpdated: itemsUpdated,
+            itemsSkipped: itemsSkipped,
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+        );
+      } catch (e) {
+        debugPrint(
+            'Erreur lors de la synchronisation des groupes de sites: $e');
+        return SyncResult.failure(
+          errorMessage:
+              'Erreur lors de la synchronisation des groupes de sites: $e',
+        );
+      }
+    } catch (e) {
+      debugPrint(
+          'Erreur générale lors de la synchronisation des groupes de sites: $e');
+      return SyncResult.failure(
+        errorMessage:
+            'Erreur lors de la synchronisation des groupes de sites: $e',
+      );
+    }
+  }
+
+  @override
   Future<SyncResult> syncSitesToServer(String token, String moduleCode) async {
     try {
       // Vérifier la connectivité
@@ -1051,13 +1251,25 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             tag: 'sync');
 
         // Récupérer les sites locaux pour ce module
+        _logger.i('Appel de getLocalSitesByModuleCode pour module: $moduleCode', tag: 'sync');
         final localSites =
             await _sitesRepository.getLocalSitesByModuleCode(moduleCode);
         _logger.i('Sites locaux trouvés: ${localSites.length}', tag: 'sync');
 
+        // Afficher les détails de chaque site local trouvé
+        if (localSites.isNotEmpty) {
+          for (final site in localSites) {
+            _logger.i(
+              'Site local: id=${site.idBaseSite}, nom="${site.baseSiteName}", '
+              'isLocal=${site.isLocal}, serverSiteId=${site.serverSiteId}',
+              tag: 'sync',
+            );
+          }
+        }
+
         // Si aucun site local, renvoyer un succès vide
         if (localSites.isEmpty) {
-          _logger.i('AUCUN SITE LOCAL TROUVÉ - SYNCHRONISATION TERMINÉE\n',
+          _logger.i('AUCUN SITE LOCAL TROUVÉ POUR MODULE $moduleCode - SYNCHRONISATION TERMINÉE\n',
               tag: 'sync');
           return SyncResult.success(
             itemsProcessed: 0,
@@ -1086,9 +1298,61 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 'Traitement du nouveau site ID: ${site.idBaseSite} (${site.baseSiteName})',
                 tag: 'sync');
 
+            // Récupérer le complément du site pour obtenir types_site et autres données
+            final siteComplement = await _sitesRepository.getSiteComplementBySiteId(site.idBaseSite);
+
+            // Fusionner les données du site avec celles du complément
+            Map<String, dynamic> mergedData = Map<String, dynamic>.from(site.data ?? {});
+
+            if (siteComplement != null && siteComplement.data != null) {
+              try {
+                final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
+                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
+
+                // Fusionner les données du complément avec celles du site
+                // Le complément a priorité sur les données du site
+                mergedData.addAll(complementData);
+              } catch (e) {
+                _logger.w('Erreur lors du parsing des données du complément pour site ${site.idBaseSite}: $e', tag: 'sync');
+              }
+            }
+
+            // Ajouter id_sites_group si présent dans le complément
+            if (siteComplement != null && siteComplement.idSitesGroup != null) {
+              mergedData['id_sites_group'] = siteComplement.idSitesGroup;
+            }
+
+            // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
+            // Le serveur attend types_site comme une liste d'entiers
+            if (mergedData.containsKey('id_nomenclature_type_site') && !mergedData.containsKey('types_site')) {
+              final typeId = mergedData['id_nomenclature_type_site'];
+              if (typeId != null) {
+                mergedData['types_site'] = [typeId];
+                _logger.i('Conversion id_nomenclature_type_site=$typeId en types_site=[$typeId]', tag: 'sync');
+              }
+              // Supprimer l'ancien champ pour éviter la confusion
+              mergedData.remove('id_nomenclature_type_site');
+            }
+
+            // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
+            if (!mergedData.containsKey('types_site')) {
+              final typesSiteFromConfig = await _getTypesSiteFromModuleConfig(moduleCode);
+              if (typesSiteFromConfig != null && typesSiteFromConfig.isNotEmpty) {
+                mergedData['types_site'] = typesSiteFromConfig;
+                _logger.i('Fallback types_site depuis config module: $typesSiteFromConfig', tag: 'sync');
+              } else {
+                _logger.w('ATTENTION: types_site absent pour site ${site.idBaseSite} et non trouvé dans la config module', tag: 'sync');
+              }
+            }
+
+            _logger.i('Données fusionnées pour site ${site.idBaseSite}: $mergedData', tag: 'sync');
+
+            // Créer un site modifié avec les données fusionnées
+            final siteWithComplementData = site.copyWith(data: mergedData);
+
             // POST - Créer un nouveau site
             final serverResponse =
-                await _globalApi.sendSite(token, moduleCode, site);
+                await _globalApi.sendSite(token, moduleCode, siteWithComplementData);
 
             final serverId = serverResponse['id'] ?? serverResponse['ID'];
             if (serverId == null) {
@@ -1124,9 +1388,58 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 'Mise à jour du site ID: ${site.idBaseSite} (serverId: ${site.serverSiteId})',
                 tag: 'sync');
 
+            // Récupérer le complément du site pour obtenir types_site et autres données
+            final siteComplement = await _sitesRepository.getSiteComplementBySiteId(site.idBaseSite);
+
+            // Fusionner les données du site avec celles du complément
+            Map<String, dynamic> mergedData = Map<String, dynamic>.from(site.data ?? {});
+
+            if (siteComplement != null && siteComplement.data != null) {
+              try {
+                final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
+                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
+
+                // Fusionner les données du complément avec celles du site
+                mergedData.addAll(complementData);
+              } catch (e) {
+                _logger.w('Erreur lors du parsing des données du complément pour site ${site.idBaseSite}: $e', tag: 'sync');
+              }
+            }
+
+            // Ajouter id_sites_group si présent dans le complément
+            if (siteComplement != null && siteComplement.idSitesGroup != null) {
+              mergedData['id_sites_group'] = siteComplement.idSitesGroup;
+            }
+
+            // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
+            // Le serveur attend types_site comme une liste d'entiers
+            if (mergedData.containsKey('id_nomenclature_type_site') && !mergedData.containsKey('types_site')) {
+              final typeId = mergedData['id_nomenclature_type_site'];
+              if (typeId != null) {
+                mergedData['types_site'] = [typeId];
+                _logger.i('Conversion id_nomenclature_type_site=$typeId en types_site=[$typeId]', tag: 'sync');
+              }
+              // Supprimer l'ancien champ pour éviter la confusion
+              mergedData.remove('id_nomenclature_type_site');
+            }
+
+            // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
+            if (!mergedData.containsKey('types_site')) {
+              final typesSiteFromConfig = await _getTypesSiteFromModuleConfig(moduleCode);
+              if (typesSiteFromConfig != null && typesSiteFromConfig.isNotEmpty) {
+                mergedData['types_site'] = typesSiteFromConfig;
+                _logger.i('Fallback types_site depuis config module: $typesSiteFromConfig', tag: 'sync');
+              } else {
+                _logger.w('ATTENTION: types_site absent pour site ${site.idBaseSite} et non trouvé dans la config module', tag: 'sync');
+              }
+            }
+
+            // Créer un site modifié avec les données fusionnées
+            final siteWithComplementData = site.copyWith(data: mergedData);
+
             // PATCH - Mettre à jour un site existant
             await _globalApi.updateSite(
-                token, moduleCode, site.serverSiteId!, site);
+                token, moduleCode, site.serverSiteId!, siteWithComplementData);
 
             _logger.i(
                 'Site mis à jour avec succès, ID serveur: ${site.serverSiteId}',
@@ -1177,6 +1490,70 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
       return SyncResult.failure(
         errorMessage: 'Erreur lors de la synchronisation des sites: $e',
       );
+    }
+  }
+
+  /// Récupère les types_site depuis la configuration du module
+  /// Retourne une liste d'entiers [id_nomenclature_type_site] ou null
+  Future<List<int>?> _getTypesSiteFromModuleConfig(String moduleCode) async {
+    try {
+      final moduleComplement = await _modulesDatabase.getModuleComplementByModuleCode(moduleCode);
+      if (moduleComplement == null) {
+        _logger.w('Module complement non trouvé pour $moduleCode', tag: 'sync');
+        return null;
+      }
+
+      final config = moduleComplement.configuration;
+      if (config == null) {
+        _logger.w('Configuration non trouvée pour module $moduleCode', tag: 'sync');
+        return null;
+      }
+
+      // Essayer d'abord depuis custom.__MODULE.TYPES_SITE
+      final typesSiteList = config.custom?.typesSite;
+      if (typesSiteList != null && typesSiteList.isNotEmpty) {
+        final ids = typesSiteList
+            .where((t) => t.idNomenclatureTypeSite != null)
+            .map((t) => t.idNomenclatureTypeSite!)
+            .toList();
+        if (ids.isNotEmpty) {
+          _logger.i('types_site depuis customConfig: $ids', tag: 'sync');
+          return ids;
+        }
+      }
+
+      // Essayer depuis la config site (types_site comme Map<String, TypeSiteConfig>)
+      final siteConfig = config.site;
+      if (siteConfig != null && siteConfig.typesSite != null && siteConfig.typesSite!.isNotEmpty) {
+        final ids = siteConfig.typesSite!.keys
+            .map((k) => int.tryParse(k))
+            .where((id) => id != null)
+            .map((id) => id!)
+            .toList();
+        if (ids.isNotEmpty) {
+          _logger.i('types_site depuis siteConfig: $ids', tag: 'sync');
+          return ids;
+        }
+      }
+
+      // Essayer depuis la config module
+      final moduleConfig = config.module;
+      if (moduleConfig != null && moduleConfig.typesSite != null && moduleConfig.typesSite!.isNotEmpty) {
+        final ids = moduleConfig.typesSite!.keys
+            .map((k) => int.tryParse(k))
+            .where((id) => id != null)
+            .map((id) => id!)
+            .toList();
+        if (ids.isNotEmpty) {
+          _logger.i('types_site depuis moduleConfig: $ids', tag: 'sync');
+          return ids;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      _logger.w('Erreur lors de la récupération types_site depuis config: $e', tag: 'sync');
+      return null;
     }
   }
 }

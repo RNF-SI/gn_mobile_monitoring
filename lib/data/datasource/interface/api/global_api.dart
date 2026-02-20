@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
 abstract class GlobalApi {
@@ -98,4 +99,8 @@ abstract class GlobalApi {
   /// Met à jour un site existant sur le serveur (PATCH)
   /// Returns the updated site data if successful
   Future<Map<String, dynamic>> updateSite(String token, String moduleCode, int siteId, BaseSite site);
+
+  /// Envoie un groupe de sites au serveur (POST)
+  /// Returns the created site group's server response if successful
+  Future<Map<String, dynamic>> sendSiteGroup(String token, String moduleCode, SiteGroup siteGroup);
 }

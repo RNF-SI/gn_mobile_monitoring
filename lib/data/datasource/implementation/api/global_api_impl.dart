@@ -21,6 +21,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
 class GlobalApiImpl extends BaseApi implements GlobalApi {
@@ -676,5 +677,11 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   Future<Map<String, dynamic>> updateSite(
       String token, String moduleCode, int siteId, BaseSite site) async {
     return _sitesApi.updateSite(token, moduleCode, siteId, site);
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSiteGroup(
+      String token, String moduleCode, SiteGroup siteGroup) async {
+    return _sitesApi.sendSiteGroup(token, moduleCode, siteGroup);
   }
 }

@@ -1252,18 +1252,78 @@ class SyncService extends StateNotifier<SyncStatus> {
       }
 
       // Initialiser le statut de synchronisation
+      totalItemsToProcess = 3; // Groupes de sites + Sites + Visites
       state = SyncStatus.inProgress(
-        currentStep: SyncStep.visitsToServer,
+        currentStep: SyncStep.siteGroupsToServer,
         completedSteps: [],
         itemsProcessed: 0,
         itemsTotal: totalItemsToProcess,
-        currentEntityName: "Visites (envoi)",
+        currentEntityName: "Groupes de sites (envoi)",
       ).copyWith(currentSyncType: SyncType.upload);
 
       // Log avant de commencer le téléversement
       debugPrint('Démarrage du téléversement - module: $moduleCode');
 
+      // Déclarer les résultats ici pour le résumé final
+      domain.SyncResult? siteGroupsResult;
+      domain.SyncResult? sitesResult;
+
       try {
+        // ÉTAPE 1: Synchroniser les groupes de sites avant les sites
+        // Les sites référencent les groupes (id_sites_group), il faut d'abord envoyer les groupes
+        debugPrint('Démarrage de la synchronisation des groupes de sites vers le serveur');
+        siteGroupsResult = await _syncRepository.syncSiteGroupsToServer(token, moduleCode);
+
+        if (siteGroupsResult.success) {
+          completedSteps.add(SyncStep.siteGroupsToServer);
+          debugPrint('Groupes de sites synchronisés avec succès: ${siteGroupsResult.itemsAdded} ajoutés');
+        } else {
+          failedSteps.add(SyncStep.siteGroupsToServer);
+          if (siteGroupsResult.errorMessage != null) {
+            errorMessages.add('Groupes de sites: ${siteGroupsResult.errorMessage}');
+          }
+          debugPrint('Erreur lors de la synchronisation des groupes de sites: ${siteGroupsResult.errorMessage}');
+          // On continue quand même avec les sites et visites
+        }
+        totalItemsProcessed += 1;
+
+        // Mettre à jour la progression
+        state = SyncStatus.inProgress(
+          currentStep: SyncStep.sitesToServer,
+          completedSteps: List.from(completedSteps),
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          currentEntityName: "Sites (envoi)",
+        ).copyWith(currentSyncType: SyncType.upload);
+
+        // ÉTAPE 2: Synchroniser les sites avant les visites
+        // Les visites peuvent référencer des sites créés localement qui n'ont pas encore d'ID serveur
+        debugPrint('Démarrage de la synchronisation des sites vers le serveur');
+        sitesResult = await _syncRepository.syncSitesToServer(token, moduleCode);
+
+        if (sitesResult.success) {
+          completedSteps.add(SyncStep.sitesToServer);
+          debugPrint('Sites synchronisés avec succès: ${sitesResult.itemsAdded} ajoutés, ${sitesResult.itemsUpdated} mis à jour');
+        } else {
+          failedSteps.add(SyncStep.sitesToServer);
+          if (sitesResult.errorMessage != null) {
+            errorMessages.add('Sites: ${sitesResult.errorMessage}');
+          }
+          debugPrint('Erreur lors de la synchronisation des sites: ${sitesResult.errorMessage}');
+          // On continue quand même avec les visites
+        }
+        totalItemsProcessed += 1;
+
+        // Mettre à jour la progression
+        state = SyncStatus.inProgress(
+          currentStep: SyncStep.visitsToServer,
+          completedSteps: List.from(completedSteps),
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          currentEntityName: "Visites (envoi)",
+        ).copyWith(currentSyncType: SyncType.upload);
+
+        // ÉTAPE 3: Synchroniser les visites
         debugPrint(
             'Démarrage de la synchronisation des visites vers le serveur');
 
@@ -1273,25 +1333,6 @@ class SyncService extends StateNotifier<SyncStatus> {
         // Ajouter les statistiques
         if (result.success) {
           completedSteps.add(SyncStep.visitsToServer);
-
-          // Mettre à jour avec le nouveau résumé incluant cette étape
-          final updatedSummary =
-              "Synchronisation des visites terminée avec succès:\n"
-              "• ${result.itemsAdded} visites envoyées\n"
-              "• ${result.itemsDeleted} visites supprimées localement";
-
-          state = SyncStatus.inProgress(
-            currentStep: SyncStep.visitsToServer,
-            completedSteps: completedSteps,
-            itemsProcessed: 1,
-            itemsTotal: totalItemsToProcess,
-            currentEntityName: "Visites (envoi)",
-            itemsAdded: result.itemsAdded,
-            itemsUpdated: result.itemsUpdated,
-            itemsSkipped: result.itemsSkipped,
-            itemsDeleted: result.itemsDeleted,
-            additionalInfo: updatedSummary,
-          ).copyWith(currentSyncType: SyncType.upload);
 
           debugPrint(
               'Synchronisation des visites vers le serveur terminée avec succès');
@@ -1315,7 +1356,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       }
 
       // Générer un résumé des statistiques de synchronisation ascendante
-      final syncSummary = _buildUpstreamSyncSummary(result);
+      final syncSummary = _buildUpstreamSyncSummary(result, sitesResult: sitesResult, siteGroupsResult: siteGroupsResult);
 
       // Mettre à jour la date de dernière synchronisation
       if (isManualSync && completedSteps.isNotEmpty) {
@@ -1750,6 +1791,10 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'siteGroups';
+      case SyncStep.siteGroupsToServer:
+        return 'siteGroupsToServer';
+      case SyncStep.sitesToServer:
+        return 'sitesToServer';
       case SyncStep.visitsToServer:
         return 'visitsToServer';
       case SyncStep.observationsToServer:
@@ -1776,6 +1821,10 @@ class SyncService extends StateNotifier<SyncStatus> {
         return 'sites';
       case SyncStep.siteGroups:
         return 'groupes de sites';
+      case SyncStep.siteGroupsToServer:
+        return 'envoi des groupes de sites';
+      case SyncStep.sitesToServer:
+        return 'envoi des sites';
       case SyncStep.visitsToServer:
         return 'envoi des visites';
       case SyncStep.observationsToServer:
@@ -1964,87 +2013,128 @@ class SyncService extends StateNotifier<SyncStatus> {
 
   /// Construit un résumé détaillé pour le téléversement (envoi vers serveur)
   /// avec les statistiques par type d'objet
-  String _buildUpstreamSyncSummary(domain.SyncResult? result) {
-    if (result == null) {
-      return "";
-    }
-
+  String _buildUpstreamSyncSummary(domain.SyncResult? result, {domain.SyncResult? sitesResult, domain.SyncResult? siteGroupsResult}) {
     final List<String> summaryLines = [];
     summaryLines.add("Résumé du téléversement:");
 
-    final totalAdded = result.itemsAdded;
-    final totalUpdated = result.itemsUpdated;
-    final totalDeleted = result.itemsDeleted ?? 0;
-    final totalSkipped = result.itemsSkipped;
+    // Compteurs globaux incluant groupes + sites + visites
+    int grandTotalAdded = 0;
+    int grandTotalUpdated = 0;
+    int grandTotalSkipped = 0;
+    int grandTotalDeleted = 0;
 
-    if (totalAdded == 0 &&
-        totalUpdated == 0 &&
-        totalDeleted == 0 &&
-        totalSkipped == 0) {
+    // --- Groupes de sites ---
+    if (siteGroupsResult != null) {
+      final groupsAdded = siteGroupsResult.itemsAdded;
+      final groupsUpdated = siteGroupsResult.itemsUpdated;
+      final groupsSkipped = siteGroupsResult.itemsSkipped;
+
+      summaryLines.add(
+          "• Groupes de sites: ${_formatUpstreamStats(groupsAdded, groupsUpdated, groupsSkipped, 0)}");
+
+      grandTotalAdded += groupsAdded;
+      grandTotalUpdated += groupsUpdated;
+      grandTotalSkipped += groupsSkipped;
+    }
+
+    // --- Sites ---
+    if (sitesResult != null) {
+      final sitesAdded = sitesResult.itemsAdded;
+      final sitesUpdated = sitesResult.itemsUpdated;
+      final sitesSkipped = sitesResult.itemsSkipped;
+
+      summaryLines.add(
+          "• Sites: ${_formatUpstreamStats(sitesAdded, sitesUpdated, sitesSkipped, 0)}");
+
+      grandTotalAdded += sitesAdded;
+      grandTotalUpdated += sitesUpdated;
+      grandTotalSkipped += sitesSkipped;
+    }
+
+    // --- Visites / Observations / Détails ---
+    if (result != null) {
+      if (result.data != null && result.data!.isNotEmpty) {
+        final visitesAdded = result.data!['visits_added'] as int? ?? 0;
+        final observationsAdded = result.data!['observations_added'] as int? ?? 0;
+        final detailsAdded =
+            result.data!['observation_details_added'] as int? ?? 0;
+
+        final visitesDeleted = result.data!['visits_deleted'] as int? ?? 0;
+        final observationsDeleted =
+            result.data!['observations_deleted'] as int? ?? 0;
+        final detailsDeleted =
+            result.data!['observation_details_deleted'] as int? ?? 0;
+
+        summaryLines.add(
+            "• Visites: ${_formatUpstreamStats(visitesAdded, 0, 0, visitesDeleted)}");
+        summaryLines.add(
+            "• Observations: ${_formatUpstreamStats(observationsAdded, 0, 0, observationsDeleted)}");
+        summaryLines.add(
+            "• Détails d'observations: ${_formatUpstreamStats(detailsAdded, 0, 0, detailsDeleted)}");
+
+        grandTotalAdded += result.itemsAdded;
+        grandTotalUpdated += result.itemsUpdated;
+        grandTotalSkipped += result.itemsSkipped;
+        grandTotalDeleted += result.itemsDeleted ?? 0;
+      } else {
+        // Fallback avec estimation
+        final totalAdded = result.itemsAdded;
+        final totalUpdated = result.itemsUpdated;
+        final totalDeleted = result.itemsDeleted ?? 0;
+        final totalSkipped = result.itemsSkipped;
+
+        final visitesRatio = 0.2;
+        final observationsRatio = 0.3;
+
+        final visitesAdded = (totalAdded * visitesRatio).round();
+        final observationsAdded = (totalAdded * observationsRatio).round();
+        final detailsAdded = totalAdded - visitesAdded - observationsAdded;
+
+        final visitesUpdated = (totalUpdated * visitesRatio).round();
+        final observationsUpdated = (totalUpdated * observationsRatio).round();
+        final detailsUpdated =
+            totalUpdated - visitesUpdated - observationsUpdated;
+
+        final visitesSkipped = (totalSkipped * visitesRatio).round();
+        final observationsSkipped = (totalSkipped * observationsRatio).round();
+        final detailsSkipped =
+            totalSkipped - visitesSkipped - observationsSkipped;
+
+        final visitesDeleted = totalDeleted;
+
+        summaryLines.add(
+            "• Visites (estimation): ${_formatUpstreamStats(visitesAdded, visitesUpdated, visitesSkipped, visitesDeleted)}");
+        summaryLines.add(
+            "• Observations (estimation): ${_formatUpstreamStats(observationsAdded, observationsUpdated, observationsSkipped, 0)}");
+        summaryLines.add(
+            "• Détails d'observations (estimation): ${_formatUpstreamStats(detailsAdded, detailsUpdated, detailsSkipped, 0)}");
+
+        grandTotalAdded += totalAdded;
+        grandTotalUpdated += totalUpdated;
+        grandTotalSkipped += totalSkipped;
+        grandTotalDeleted += totalDeleted;
+      }
+    }
+
+    // Vérifier s'il y a eu quelque chose à synchroniser
+    if (grandTotalAdded == 0 &&
+        grandTotalUpdated == 0 &&
+        grandTotalDeleted == 0 &&
+        grandTotalSkipped == 0) {
+      summaryLines.clear();
+      summaryLines.add("Résumé du téléversement:");
       summaryLines.add("• Aucune donnée n'a été trouvée à synchroniser");
       return summaryLines.join("\n");
     }
 
-    // Utiliser les statistiques détaillées si disponibles
-    if (result.data != null && result.data!.isNotEmpty) {
-      final visitesAdded = result.data!['visits_added'] as int? ?? 0;
-      final observationsAdded = result.data!['observations_added'] as int? ?? 0;
-      final detailsAdded =
-          result.data!['observation_details_added'] as int? ?? 0;
+    // Total
+    summaryLines.add("");
+    summaryLines.add(
+        "• TOTAL: ${_formatUpstreamStats(grandTotalAdded, grandTotalUpdated, grandTotalSkipped, grandTotalDeleted)}");
 
-      final visitesDeleted = result.data!['visits_deleted'] as int? ?? 0;
-      final observationsDeleted =
-          result.data!['observations_deleted'] as int? ?? 0;
-      final detailsDeleted =
-          result.data!['observation_details_deleted'] as int? ?? 0;
-
-      // Afficher les statistiques par catégorie avec les vraies données
-      summaryLines.add(
-          "• Visites: ${_formatUpstreamStats(visitesAdded, 0, 0, visitesDeleted)}");
-      summaryLines.add(
-          "• Observations: ${_formatUpstreamStats(observationsAdded, 0, 0, observationsDeleted)}");
-      summaryLines.add(
-          "• Détails d'observations: ${_formatUpstreamStats(detailsAdded, 0, 0, detailsDeleted)}");
-
-      // Ajouter une ligne de séparation
-      summaryLines.add("");
-      summaryLines.add(
-          "• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
-    } else {
-      // Fallback vers l'ancienne méthode avec estimation si les données détaillées ne sont pas disponibles
-      final visitesRatio = 0.2;
-      final observationsRatio = 0.3;
-
-      final visitesAdded = (totalAdded * visitesRatio).round();
-      final observationsAdded = (totalAdded * observationsRatio).round();
-      final detailsAdded = totalAdded - visitesAdded - observationsAdded;
-
-      final visitesUpdated = (totalUpdated * visitesRatio).round();
-      final observationsUpdated = (totalUpdated * observationsRatio).round();
-      final detailsUpdated =
-          totalUpdated - visitesUpdated - observationsUpdated;
-
-      final visitesSkipped = (totalSkipped * visitesRatio).round();
-      final observationsSkipped = (totalSkipped * observationsRatio).round();
-      final detailsSkipped =
-          totalSkipped - visitesSkipped - observationsSkipped;
-
-      final visitesDeleted = totalDeleted;
-
-      summaryLines.add(
-          "• Visites (estimation): ${_formatUpstreamStats(visitesAdded, visitesUpdated, visitesSkipped, visitesDeleted)}");
-      summaryLines.add(
-          "• Observations (estimation): ${_formatUpstreamStats(observationsAdded, observationsUpdated, observationsSkipped, 0)}");
-      summaryLines.add(
-          "• Détails d'observations (estimation): ${_formatUpstreamStats(detailsAdded, detailsUpdated, detailsSkipped, 0)}");
-
-      summaryLines.add("");
-      summaryLines.add(
-          "• TOTAL: ${_formatUpstreamStats(totalAdded, totalUpdated, totalSkipped, totalDeleted)}");
-    }
-
-    // Ajouter une note explicative
-    if (result.success) {
+    // Note explicative
+    final allSuccess = (result == null || result.success) && (sitesResult == null || sitesResult.success);
+    if (allSuccess) {
       summaryLines.add("");
       summaryLines.add("✅ Synchronisation terminée avec succès");
     } else {

@@ -1,5 +1,6 @@
 import 'package:gn_mobile_monitoring/data/entity/site_groups_with_modules.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
 abstract class SitesApi {
   /// Fetches sites for a specific module with detailed information
@@ -25,5 +26,13 @@ abstract class SitesApi {
     String moduleCode,
     int siteId,
     BaseSite site,
+  );
+
+  /// Envoie un groupe de sites au serveur (POST)
+  /// Returns the created site group's server response if successful
+  Future<Map<String, dynamic>> sendSiteGroup(
+    String token,
+    String moduleCode,
+    SiteGroup siteGroup,
   );
 }

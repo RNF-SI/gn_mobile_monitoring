@@ -77,4 +77,13 @@ abstract class SitesDatabase {
 
   /// Update server site ID after successful sync
   Future<void> updateSiteServerId(int localSiteId, int serverSiteId);
+
+  /// Update server site group ID after successful sync
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId);
+
+  /// Update idSitesGroup references in site complements when a local group gets a server ID
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId);
+
+  /// Get site complement by site ID
+  Future<SiteComplement?> getSiteComplementBySiteId(int siteId);
 }

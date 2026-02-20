@@ -22,6 +22,8 @@ enum SyncStep {
   // === Étapes de TÉLÉVERSEMENT (appareil -> serveur) ===
   // Ces étapes sont pour l'envoi des données vers le serveur
   // Une fois envoyées et confirmées par le serveur, les données sont supprimées localement
+  siteGroupsToServer,
+  sitesToServer,
   visitsToServer,
   observationsToServer,
   observationDetailsToServer,

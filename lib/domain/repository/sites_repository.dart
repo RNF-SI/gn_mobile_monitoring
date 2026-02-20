@@ -45,4 +45,16 @@ abstract class SitesRepository {
 
   /// Updates the server site ID after successful sync
   Future<void> updateSiteServerId(int localSiteId, int serverSiteId);
+
+  /// Gets local site groups by module code (isLocal = true)
+  Future<List<SiteGroup>> getLocalSiteGroupsByModuleCode(String moduleCode);
+
+  /// Updates the server site group ID after successful sync
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId);
+
+  /// Updates idSitesGroup references in site complements when a local group gets a server ID
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId);
+
+  /// Gets site complement by site ID
+  Future<SiteComplement?> getSiteComplementBySiteId(int siteId);
 }

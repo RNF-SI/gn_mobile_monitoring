@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/mapper/base_site_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
+import 'package:gn_mobile_monitoring/data/db/mapper/t_site_complement_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
@@ -275,6 +276,25 @@ class SitesDatabaseImpl implements SitesDatabase {
   Future<void> updateSiteServerId(int localSiteId, int serverSiteId) async {
     final db = await _database;
     await db.sitesDao.updateSiteServerId(localSiteId, serverSiteId);
+  }
+
+  @override
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId) async {
+    final db = await _database;
+    await db.sitesDao.updateSiteGroupServerId(localSiteGroupId, serverSiteGroupId);
+  }
+
+  @override
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId) async {
+    final db = await _database;
+    await db.sitesDao.updateSiteComplementsGroupId(oldGroupId, newGroupId);
+  }
+
+  @override
+  Future<SiteComplement?> getSiteComplementBySiteId(int siteId) async {
+    final db = await _database;
+    final complement = await db.sitesDao.getSiteComplementById(siteId);
+    return complement?.toDomain();
   }
 }
 

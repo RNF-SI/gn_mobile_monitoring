@@ -134,4 +134,8 @@ class SyncRepositoryImpl implements SyncRepository {
   @override
   Future<SyncResult> syncSitesToServer(String token, String moduleCode) =>
       _compositeSync.syncSitesToServer(token, moduleCode);
+
+  @override
+  Future<SyncResult> syncSiteGroupsToServer(String token, String moduleCode) =>
+      _compositeSync.syncSiteGroupsToServer(token, moduleCode);
 }

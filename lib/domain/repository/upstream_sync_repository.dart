@@ -52,4 +52,13 @@ abstract class UpstreamSyncRepository {
   /// @param token Jeton d'authentification
   /// @param moduleCode Code du module
   Future<SyncResult> syncSitesToServer(String token, String moduleCode);
+
+  /// Envoie les groupes de sites locaux vers le serveur
+  /// Envoie les groupes créés localement (isLocal = true)
+  /// Met à jour serverSiteGroupId après création sur le serveur
+  /// Doit être appelé AVANT syncSitesToServer car les sites référencent les groupes
+  ///
+  /// @param token Jeton d'authentification
+  /// @param moduleCode Code du module
+  Future<SyncResult> syncSiteGroupsToServer(String token, String moduleCode);
 }
