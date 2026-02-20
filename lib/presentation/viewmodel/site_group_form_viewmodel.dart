@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -140,6 +142,9 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       // Récupérer l'ID de l'utilisateur connecté
       final userId = await _getUserIdUseCase.execute();
 
+      // Collecter les champs dynamiques (non base) dans data
+      final dynamicData = _extractDynamicFields(processedData);
+
       // Mettre à jour le groupe de sites avec les nouvelles données
       final updatedSite = existingSiteGroup.copyWith(
         sitesGroupName: processedData['sites_group_name'] as String?,
@@ -149,12 +154,11 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         altitudeMin: _parseIntOrNull(processedData['altitude_min']),
         altitudeMax: _parseIntOrNull(processedData['altitude_max']),
         metaUpdateDate: DateTime.now(),
+        data: dynamicData.isNotEmpty ? jsonEncode(dynamicData) : null,
       );
 
       // Mettre à jour le site
       final success = await _updateSiteGroupUseCase.execute(updatedSite);
-
-      // TODO: Mettre à jour SiteComplement si nécessaire
 
       return success;
     } catch (e) {
@@ -191,6 +195,9 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   }) {
     final now = DateTime.now();
 
+    // Collecter les champs dynamiques (non base) dans data
+    final dynamicData = _extractDynamicFields(formData);
+
     return SiteGroup(
       idSitesGroup: 0, // Sera remplacé par la base de données (autoIncrement)
       sitesGroupName: formData['sites_group_name'] as String?,
@@ -203,8 +210,34 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
       metaCreateDate: now,
       metaUpdateDate: now,
       isLocal: true,
-      // geom sera géré séparément si nécessaire
+      data: dynamicData.isNotEmpty ? jsonEncode(dynamicData) : null,
     );
+  }
+
+  /// Extrait les champs dynamiques du formulaire (non mappés aux champs de base de SiteGroup)
+  Map<String, dynamic> _extractDynamicFields(Map<String, dynamic> formData) {
+    const baseFields = {
+      'sites_group_name',
+      'sites_group_code',
+      'sites_group_description',
+      'comments',
+      'altitude_min',
+      'altitude_max',
+      'id_digitiser',
+      'id_sites_group',
+      'meta_create_date',
+      'meta_update_date',
+      'geom',
+      'uuid_sites_group',
+    };
+
+    final dynamicData = <String, dynamic>{};
+    for (final entry in formData.entries) {
+      if (!baseFields.contains(entry.key) && entry.value != null) {
+        dynamicData[entry.key] = entry.value;
+      }
+    }
+    return dynamicData;
   }
 
   /// Convertit une valeur en int? de manière sécurisée

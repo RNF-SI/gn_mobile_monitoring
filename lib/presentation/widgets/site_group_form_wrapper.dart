@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -202,15 +204,32 @@ class _SiteGroupFormWrapperState extends ConsumerState<SiteGroupFormWrapper> {
 
     final initialValues = <String, dynamic>{
       'id_sites_group': widget.siteGroup!.idSitesGroup,
-      // 'base_site_code': widget.site!.baseSiteCode,
-      // 'base_site_description': widget.site!.baseSiteDescription,
-      // 'first_use_date': widget.site!.firstUseDate?.toIso8601String().split('T')[0],
-      // 'altitude_min': widget.site!.altitudeMin,
-      // 'altitude_max': widget.site!.altitudeMax,
+      'sites_group_name': widget.siteGroup!.sitesGroupName,
+      'sites_group_code': widget.siteGroup!.sitesGroupCode,
+      'sites_group_description': widget.siteGroup!.sitesGroupDescription,
+      'altitude_min': widget.siteGroup!.altitudeMin,
+      'altitude_max': widget.siteGroup!.altitudeMax,
+      'comments': widget.siteGroup!.comments,
     };
 
-    // Ajouter les données complémentaires si elles existent
-    // (sera géré par le viewmodel)
+    // Ajouter les données du champ data (champs dynamiques additionnels)
+    if (widget.siteGroup!.data != null &&
+        widget.siteGroup!.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (widget.siteGroup!.data is String) {
+          dataMap = Map<String, dynamic>.from(
+              jsonDecode(widget.siteGroup!.data as String));
+        } else {
+          dataMap =
+              Map<String, dynamic>.from(widget.siteGroup!.data as Map);
+        }
+        initialValues.addAll(dataMap);
+      } catch (e) {
+        debugPrint(
+            'Erreur lors du décodage des données du groupe: $e');
+      }
+    }
 
     return initialValues;
   }

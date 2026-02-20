@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -47,6 +48,8 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   LatLng? _selectedPosition;
   bool _isLoadingLocation = true;
   bool _isPositionAdjusted = false;
+  Map<String, dynamic>? _initialValues;
+  bool _isLoadingInitialValues = true;
 
   bool get _isEditMode => widget.site != null;
 
@@ -54,6 +57,22 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   void initState() {
     super.initState();
     _initLocation();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadInitialValues();
+    });
+  }
+
+  Future<void> _loadInitialValues() async {
+    final values = _isEditMode
+        ? await _prepareInitialValues()
+        : _prepareDefaultValues();
+
+    if (mounted) {
+      setState(() {
+        _initialValues = values;
+        _isLoadingInitialValues = false;
+      });
+    }
   }
 
   Future<void> _initLocation() async {
@@ -169,6 +188,17 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       );
     }
 
+    if (_isLoadingInitialValues) {
+      return Scaffold(
+        appBar: AppBar(
+          title: Text(_isEditMode
+              ? 'Modifier le site'
+              : widget.siteConfig.label ?? 'Nouveau site'),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return GenericFormPage(
       objectConfig: widget.siteConfig,
       customConfig: widget.customConfig,
@@ -183,7 +213,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
         ),
       ] : null,
       breadcrumbItems: _buildBreadcrumbItems(context),
-      initialValues: _isEditMode ? _prepareInitialValues() : _prepareDefaultValues(),
+      initialValues: _initialValues,
       headerWidget: _buildHeaderWidget(context),
       onSave: (formData) => _handleSave(context, formData),
       saveButtonText: _isEditMode ? 'Mettre à jour' : 'Enregistrer',
@@ -224,7 +254,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   }
 
   /// Prépare les valeurs initiales pour le mode édition
-  Map<String, dynamic> _prepareInitialValues() {
+  Future<Map<String, dynamic>> _prepareInitialValues() async {
     if (widget.site == null) return {};
 
     final initialValues = <String, dynamic>{
@@ -236,8 +266,26 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       'altitude_max': widget.site!.altitudeMax,
     };
 
-    // Ajouter les données complémentaires si elles existent
-    // (sera géré par le viewmodel)
+    // Charger les données complémentaires depuis la base
+    try {
+      final sitesDatabase = ref.read(siteDatabaseProvider);
+      final complement = await sitesDatabase.getSiteComplementBySiteId(
+          widget.site!.idBaseSite);
+
+      if (complement?.data != null) {
+        Map<String, dynamic> complementData = {};
+        if (complement!.data is String) {
+          complementData = Map<String, dynamic>.from(
+              jsonDecode(complement.data as String));
+        } else {
+          complementData =
+              Map<String, dynamic>.from(complement.data as Map);
+        }
+        initialValues.addAll(complementData);
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement du complément du site: $e');
+    }
 
     return initialValues;
   }

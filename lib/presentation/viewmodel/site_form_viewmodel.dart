@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
@@ -29,6 +31,7 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
   final getSiteByIdUseCase = ref.watch(getSiteByIdUseCaseProvider);
   final getUserLocationUseCase = ref.watch(getUserLocationUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
+  final sitesDatabase = ref.watch(siteDatabaseProvider);
 
   return SiteFormViewModel(
     createSiteWithRelationsUseCase,
@@ -39,6 +42,7 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     getSiteByIdUseCase,
     getUserLocationUseCase,
     formDataProcessor,
+    sitesDatabase,
     moduleId,
     siteGroupId ?? 0,
   );
@@ -53,6 +57,7 @@ class SiteFormViewModel extends StateNotifier<void> {
   final GetSiteByIdUseCase _getSiteByIdUseCase;
   final GetUserLocationUseCase _getUserLocationUseCase;
   final FormDataProcessor _formDataProcessor;
+  final SitesDatabase _sitesDatabase;
   final int _moduleId;
   final int _siteGroupId;
 
@@ -67,6 +72,7 @@ class SiteFormViewModel extends StateNotifier<void> {
     this._getSiteByIdUseCase,
     this._getUserLocationUseCase,
     this._formDataProcessor,
+    this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
   ) : super(const AsyncValue.loading()) {
@@ -259,7 +265,22 @@ class SiteFormViewModel extends StateNotifier<void> {
       // Mettre à jour le site
       final success = await _updateSiteUseCase.execute(updatedSite);
 
-      // TODO: Mettre à jour SiteComplement si nécessaire
+      // Mettre à jour SiteComplement avec les champs dynamiques
+      if (success) {
+        final complementData = _prepareComplementData(
+          processedData,
+          selectedSiteTypeId: selectedSiteTypeId,
+        );
+
+        if (complementData.isNotEmpty) {
+          final complement = SiteComplement(
+            idBaseSite: existingSite.idBaseSite,
+            idSitesGroup: _siteGroupId > 0 ? _siteGroupId : null,
+            data: jsonEncode(complementData),
+          );
+          await _sitesDatabase.insertSiteComplements([complement]);
+        }
+      }
 
       return success;
     } catch (e) {

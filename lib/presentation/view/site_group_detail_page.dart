@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
@@ -237,7 +238,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     Map<String, dynamic> parsedGroupConfig,
   ) {
     final displayProperties =
-        sitesGroupConfig.displayProperties ?? sitesGroupConfig.displayList;
+        sitesGroupConfig.displayProperties ?? sitesGroupConfig.displayList ?? sitesGroupConfig.displayForm;
 
     if (displayProperties == null || displayProperties.isEmpty) {
       return const SizedBox.shrink();
@@ -598,10 +599,62 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                 'Description'
             : 'Description';
 
+    final isLocal = widget.siteGroup.isLocal == true;
+    final isSynced = widget.siteGroup.serverSiteGroupId != null;
+    final canEdit = isLocal && !isSynced;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
             '${widget.moduleInfo.module.complement?.configuration?.sitesGroup?.label ?? 'Groupe'}: ${widget.siteGroup.sitesGroupName ?? 'Détail du groupe'}'),
+        actions: [
+          if (canEdit)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Modifier le groupe de sites',
+              onPressed: () {
+                if (sitesGroupConfig != null) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SiteGroupFormPage(
+                        siteGroup: widget.siteGroup,
+                        siteGroupConfig: sitesGroupConfig,
+                        siteConfig: widget.moduleInfo.module.complement
+                            ?.configuration?.site,
+                        customConfig: customConfig,
+                        moduleId: widget.moduleInfo.module.id,
+                        moduleInfo: widget.moduleInfo,
+                      ),
+                    ),
+                  ).then((_) {
+                    if (mounted) {
+                      setState(() {});
+                    }
+                  });
+                }
+              },
+            )
+          else
+            IconButton(
+              icon: const Icon(Icons.lock_outline),
+              tooltip: isSynced
+                  ? 'Ce groupe a été synchronisé et ne peut plus être modifié'
+                  : 'Ce groupe ne peut pas être modifié (créé depuis le serveur)',
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      isSynced
+                          ? 'Ce groupe a déjà été synchronisé avec le serveur et ne peut plus être modifié'
+                          : 'Seuls les groupes créés localement peuvent être modifiés',
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
