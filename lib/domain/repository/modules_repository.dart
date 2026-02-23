@@ -83,6 +83,12 @@ abstract class ModulesRepository {
   /// Récupère l'ID de la liste taxonomique associée à un module
   Future<int?> getModuleTaxonomyListId(int moduleId);
 
+  /// Supprime les anciennes associations module-dataset pour un module donné
+  Future<void> clearDatasetAssociationsForModule(int moduleId);
+
+  /// Associe un dataset à un module
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId);
+
   /// Récupère les identifiants de datasets associés à un module
   Future<List<int>> getDatasetIdsForModule(int moduleId);
 

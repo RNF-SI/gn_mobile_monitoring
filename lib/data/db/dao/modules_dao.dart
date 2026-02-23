@@ -357,6 +357,12 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     }
   }
 
+  Future<void> clearDatasetAssociationsForModule(int moduleId) async {
+    await (delete(corModuleDatasetTable)
+          ..where((tbl) => tbl.idModule.equals(moduleId)))
+        .go();
+  }
+
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {
     try {
       final results = await (select(corModuleDatasetTable)

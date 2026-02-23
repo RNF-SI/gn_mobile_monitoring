@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart'
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 
@@ -308,6 +309,7 @@ class SyncService extends StateNotifier<SyncStatus> {
       if (nomenclatureStepDone) {
         // Vider le cache des nomenclatures
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
+        ref.read(datasetServiceProvider).clearAllCache();
 
         // Forcer le rechargement de tous les providers liés au cache
         ref.invalidate(nomenclatureServiceProvider);
@@ -1383,6 +1385,7 @@ class SyncService extends StateNotifier<SyncStatus> {
         // Tout s'est bien passé
         // Vider et recharger tous les caches après une synchronisation ascendante réussie
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
+        ref.read(datasetServiceProvider).clearAllCache();
 
         // Forcer le rechargement de tous les providers liés au cache qui sont utilisés dans l'application
         // Cela va forcer un rechargement des données depuis la base de données locale
@@ -1647,6 +1650,7 @@ class SyncService extends StateNotifier<SyncStatus> {
 
         // Vider et recharger tous les caches après une synchronisation complète réussie
         ref.read(nomenclatureServiceProvider.notifier).clearCache();
+        ref.read(datasetServiceProvider).clearAllCache();
 
         // Forcer le rechargement de tous les providers liés au cache qui sont utilisés dans l'application
         // Cela va forcer un rechargement des données depuis la base de données locale

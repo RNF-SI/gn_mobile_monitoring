@@ -225,6 +225,9 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // Ne pas effacer les datasets existants, juste insérer/mettre à jour
       await datasetsDatabase.insertDatasets(datasets);
 
+      // Clear old module-dataset associations before inserting new ones
+      await database.clearDatasetAssociationsForModule(moduleId);
+
       // Associate each dataset with this module
       for (final dataset in datasets) {
         await database.associateModuleWithDataset(moduleId, dataset.id);
@@ -584,6 +587,16 @@ class ModulesRepositoryImpl implements ModulesRepository {
       final mapping = await getNomenclatureTypeMapping();
       return mapping[mnemonique];
     }
+  }
+
+  @override
+  Future<void> clearDatasetAssociationsForModule(int moduleId) async {
+    await database.clearDatasetAssociationsForModule(moduleId);
+  }
+
+  @override
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId) async {
+    await database.associateModuleWithDataset(moduleId, datasetId);
   }
 
   @override

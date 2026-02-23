@@ -247,6 +247,12 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
           final datasets = data.datasets.map((e) => e.toDomain()).toList();
           await _datasetsDatabase.insertDatasets(datasets);
 
+          // Recréer les associations module-dataset
+          await _modulesRepository.clearDatasetAssociationsForModule(moduleId);
+          for (final dataset in datasets) {
+            await _modulesRepository.associateModuleWithDataset(moduleId, dataset.id);
+          }
+
           // Mettre à jour les compteurs
           itemsProcessed += nomenclatures.length +
               datasets.length +

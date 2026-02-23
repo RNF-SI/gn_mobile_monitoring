@@ -1069,6 +1069,17 @@ class MockModulesDatabase extends _i1.Mock implements _i13.ModulesDatabase {
       ) as _i5.Future<void>);
 
   @override
+  _i5.Future<void> clearDatasetAssociationsForModule(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #clearDatasetAssociationsForModule,
+          [moduleId],
+        ),
+        returnValue: _i5.Future<void>.value(),
+        returnValueForMissingStub: _i5.Future<void>.value(),
+      ) as _i5.Future<void>);
+
+  @override
   _i5.Future<List<int>> getDatasetIdsForModule(int? moduleId) =>
       (super.noSuchMethod(
         Invocation.method(

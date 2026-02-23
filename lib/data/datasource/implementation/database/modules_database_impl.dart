@@ -195,6 +195,12 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   }
 
   @override
+  Future<void> clearDatasetAssociationsForModule(int moduleId) async {
+    final db = await _database;
+    await db.modulesDao.clearDatasetAssociationsForModule(moduleId);
+  }
+
+  @override
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {
     final db = await _database;
     return await db.modulesDao.getDatasetIdsForModule(moduleId);

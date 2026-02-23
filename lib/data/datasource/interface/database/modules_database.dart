@@ -35,6 +35,7 @@ abstract class ModulesDatabase {
 
   // Module-Dataset relationship operations
   Future<void> associateModuleWithDataset(int moduleId, int datasetId);
+  Future<void> clearDatasetAssociationsForModule(int moduleId);
   Future<List<int>> getDatasetIdsForModule(int moduleId);
 
   // Configuration operations
