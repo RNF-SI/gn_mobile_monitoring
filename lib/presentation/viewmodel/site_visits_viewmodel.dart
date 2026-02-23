@@ -351,7 +351,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       // Champs obligatoires avec valeurs par défaut
       'idBaseVisit': visitId ?? 0,
       'idBaseSite': site.idBaseSite,
-      'idDataset': datasetId > 0 ? datasetId : 1, // Utiliser l'ID du dataset sélectionné ou par défaut
+      'idDataset': datasetId > 0 ? datasetId : 0, // Utiliser l'ID du dataset sélectionné (0 = invalide)
       'idModule': moduleId ?? _moduleId, // Utiliser l'ID du module fourni ou celui courant
       'visitDateMin': _formatDateValue(processedFormData['visit_date_min']) ??
           DateTime.now().toIso8601String(),

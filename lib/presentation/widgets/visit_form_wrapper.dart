@@ -55,7 +55,7 @@ class VisitFormWrapper extends ConsumerWidget {
         if (intValue > 0) return intValue;
       }
     }
-    return 1; // Valeur par défaut
+    return 0; // Valeur par défaut (0 = invalide, sera détecté lors de la validation)
   }
 
 
