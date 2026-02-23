@@ -172,7 +172,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // Récupérer tous les détails de la visite
             final visit = await _visitRepository
                 .getVisitWithFullDetails(visitEntity.idBaseVisit);
-            
+
+            // Validation pré-sync : vérifier que id_dataset est valide
+            if (visit.idDataset == null || visit.idDataset! <= 0) {
+              errors.add('Visite ${visitEntity.idBaseVisit} : id_dataset manquant. Veuillez sélectionner un jeu de données.');
+              itemsSkipped++;
+              itemsProcessed++;
+              continue;
+            }
+
             // Récupérer le vrai code du module pour les observations
             final realModuleCode = await _modulesDatabase.getModuleCodeFromIdModule(visit.idModule);
 
@@ -330,6 +338,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Récupérer tous les détails de la visite
             final visit = await _visitRepository.getVisitWithFullDetails(visitEntity.idBaseVisit);
+
+            // Validation pré-sync : vérifier que id_dataset est valide
+            if (visit.idDataset == null || visit.idDataset! <= 0) {
+              errors.add('Visite ${visitEntity.idBaseVisit} : id_dataset manquant. Veuillez sélectionner un jeu de données.');
+              itemsSkipped++;
+              itemsProcessed++;
+              continue;
+            }
 
             // 1. Envoyer d'abord la visite au serveur (ordre normal pour les POST)
             Map<String, dynamic> serverResponse;
@@ -1363,6 +1379,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               }
             }
 
+            // Validation pré-sync : vérifier que types_site est présent
+            if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
+              errors.add('Site ${site.idBaseSite} : types_site manquant. Veuillez vérifier la configuration du module.');
+              itemsSkipped++;
+              itemsProcessed++;
+              continue;
+            }
+
             _logger.i('Données fusionnées pour site ${site.idBaseSite}: $mergedData', tag: 'sync');
 
             // Créer un site modifié avec les données fusionnées
@@ -1450,6 +1474,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               } else {
                 _logger.w('ATTENTION: types_site absent pour site ${site.idBaseSite} et non trouvé dans la config module', tag: 'sync');
               }
+            }
+
+            // Validation pré-sync : vérifier que types_site est présent
+            if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
+              errors.add('Site ${site.idBaseSite} : types_site manquant. Veuillez vérifier la configuration du module.');
+              itemsSkipped++;
+              itemsProcessed++;
+              continue;
             }
 
             // Créer un site modifié avec les données fusionnées
