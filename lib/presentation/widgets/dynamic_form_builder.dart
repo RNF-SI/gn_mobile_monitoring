@@ -1427,7 +1427,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       _formValues[fieldName] = <String>[];
     } else if (_formValues[fieldName] is Map) {
       _formValues[fieldName] = <String>[];
-    } else if (_formValues[fieldName] is! List) {
+    } else if (_formValues[fieldName] is List) {
+      // Normaliser : convertir tous les éléments en strings pour la comparaison avec les valeurs du datalist
+      _formValues[fieldName] = (_formValues[fieldName] as List)
+          .map((e) => e.toString())
+          .toList();
+    } else {
       // Convertir une valeur unique en liste
       final currentValue = _formValues[fieldName];
       _formValues[fieldName] = currentValue != null ? [currentValue.toString()] : <String>[];
@@ -2223,9 +2228,15 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 );
               }
 
-              // Si nous avons une seule valeur et aucune valeur initiale,
+              // Vérifier que initialValue correspond bien à un dataset existant
+              final validInitialValue = initialValue != null &&
+                      datasets.any((d) => d.id == initialValue)
+                  ? initialValue
+                  : null;
+
+              // Si nous avons une seule valeur et aucune valeur initiale valide,
               // sélectionner automatiquement cette valeur
-              if (datasets.length == 1 && initialValue == null) {
+              if (datasets.length == 1 && validInitialValue == null) {
                 // Mettre à jour après la construction du widget pour éviter des erreurs
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   if (mounted) {
@@ -2240,7 +2251,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                 ),
-                initialValue: initialValue,
+                initialValue: validInitialValue,
                 hint: Text('Sélectionner un jeu de données'),
                 items: datasets.map((dataset) {
                   return DropdownMenuItem<int>(
