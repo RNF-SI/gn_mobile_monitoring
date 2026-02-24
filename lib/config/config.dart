@@ -51,9 +51,10 @@ class Config {
 
   // Check if the current URL is a development environment (local server)
   static bool _isDevEnvironment(String url) {
-    return url.contains('localhost') || 
-           url.contains('127.0.0.1') || 
+    return url.contains('localhost') ||
+           url.contains('127.0.0.1') ||
            url.contains(':8000') ||
+           url.contains(':8001') ||
            url.contains(':5000') ||
            url.contains(':3000') ||
            url.contains(':4000');

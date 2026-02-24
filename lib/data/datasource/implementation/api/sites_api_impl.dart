@@ -399,6 +399,16 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         statusCode: response.statusCode,
       );
     } on DioException catch (e) {
+      // 403 = le module ne supporte pas les groupes de sites
+      if (e.response?.statusCode == 403) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: 403 pour les groupes de sites. '
+          'Ce module ne supporte probablement pas les groupes de sites.',
+          tag: 'sync',
+        );
+        return <SiteGroupsWithModulesLabel>[];
+      }
       throw NetworkException(
           'Network error while fetching site groups: ${e.message}',
           originalDioException: e);

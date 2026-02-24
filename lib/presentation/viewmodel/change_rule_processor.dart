@@ -70,6 +70,7 @@ class ChangeRuleProcessor {
   /// [changeConfig] - Configuration "change" (format structuré ou JS legacy)
   /// [triggerFieldName] - Nom du champ qui a déclenché le traitement
   /// [metadata] - Métadonnées additionnelles
+  /// [dirtyFields] - Ensemble des champs modifiés manuellement par l'utilisateur
   ///
   /// Retourne un [ChangeRuleResult] avec les champs à modifier
   ChangeRuleResult processChangeRules({
@@ -77,6 +78,7 @@ class ChangeRuleProcessor {
     required dynamic changeConfig,
     required String triggerFieldName,
     Map<String, dynamic>? metadata,
+    Set<String>? dirtyFields,
   }) {
     // Protection contre les appels ré-entrants
     if (_isProcessing) {
@@ -120,6 +122,7 @@ class ChangeRuleProcessor {
       final context = {
         'value': formValues,
         if (metadata != null) 'meta': metadata,
+        if (dirtyFields != null) 'dirtyFields': dirtyFields,
       };
 
       final Map<String, dynamic> fieldsToUpdate = {};
@@ -131,15 +134,20 @@ class ChangeRuleProcessor {
         debugPrint('📝 [ChangeRuleProcessor] Évaluation règle $i: ${rule.condition}');
 
         // Log des valeurs pertinentes pour le debug
-        if (rule.condition.contains('count_min') || rule.condition.contains('count_max')) {
+        if (rule.condition != null && (rule.condition!.contains('count_min') || rule.condition!.contains('count_max'))) {
           debugPrint('📝 [ChangeRuleProcessor] Valeurs actuelles: count_min=${formValues['count_min']} (${formValues['count_min']?.runtimeType}), count_max=${formValues['count_max']} (${formValues['count_max']?.runtimeType})');
         }
 
-        // Évaluer la condition
-        final conditionResult = evaluator.evaluateJsCondition(
-          rule.condition,
-          context,
-        );
+        // Évaluer la condition (null = inconditionnelle → toujours vrai)
+        final bool? conditionResult;
+        if (rule.condition == null) {
+          conditionResult = true;
+        } else {
+          conditionResult = evaluator.evaluateJsCondition(
+            rule.condition!,
+            context,
+          );
+        }
 
         debugPrint('📝 [ChangeRuleProcessor] Résultat condition: $conditionResult');
 
@@ -148,6 +156,7 @@ class ChangeRuleProcessor {
           final resolvedValues = evaluator.resolvePatchValues(
             rule.patchValues,
             formValues,
+            dirtyFields: dirtyFields,
           );
 
           debugPrint('📝 [ChangeRuleProcessor] Valeurs à appliquer: $resolvedValues');
@@ -213,12 +222,13 @@ class ChangeRuleProcessor {
 
     for (final item in changeConfig) {
       if (item is Map<String, dynamic>) {
-        final condition = item['condition'] as String? ?? '';
+        final condition = item['condition'] as String?;
         final patchValues = item['patchValues'];
 
-        if (condition.isNotEmpty && patchValues is Map) {
+        if (patchValues is Map) {
+          // Accept both conditional (condition != null) and unconditional (condition == null or empty) rules
           rules.add(ParsedChangeRule(
-            condition: condition,
+            condition: (condition != null && condition.isNotEmpty) ? condition : null,
             patchValues: Map<String, dynamic>.from(patchValues),
           ));
         }

@@ -175,7 +175,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que id_dataset est valide
             if (visit.idDataset == null || visit.idDataset! <= 0) {
-              errors.add('Visite ${visitEntity.idBaseVisit} : id_dataset manquant. Veuillez sélectionner un jeu de données.');
+              errors.add('Visite ${visitEntity.idBaseVisit}: id_dataset manquant. Veuillez sélectionner un jeu de données.');
               itemsSkipped++;
               itemsProcessed++;
               continue;
@@ -341,7 +341,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que id_dataset est valide
             if (visit.idDataset == null || visit.idDataset! <= 0) {
-              errors.add('Visite ${visitEntity.idBaseVisit} : id_dataset manquant. Veuillez sélectionner un jeu de données.');
+              errors.add('Visite ${visitEntity.idBaseVisit}: id_dataset manquant. Veuillez sélectionner un jeu de données.');
               itemsSkipped++;
               itemsProcessed++;
               continue;
@@ -1381,7 +1381,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que types_site est présent
             if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
-              errors.add('Site ${site.idBaseSite} : types_site manquant. Veuillez vérifier la configuration du module.');
+              errors.add('Site ${site.idBaseSite}: types_site manquant. Veuillez vérifier la configuration du module.');
               itemsSkipped++;
               itemsProcessed++;
               continue;
@@ -1478,7 +1478,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que types_site est présent
             if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
-              errors.add('Site ${site.idBaseSite} : types_site manquant. Veuillez vérifier la configuration du module.');
+              errors.add('Site ${site.idBaseSite}: types_site manquant. Veuillez vérifier la configuration du module.');
               itemsSkipped++;
               itemsProcessed++;
               continue;

@@ -19,7 +19,8 @@ class SyncErrorNavigationService {
     // "ERREUR - Observation 456: ..."
     // "ERREUR - Detail 789: ..."
     
-    final visitMatch = RegExp(r'ERREUR - Visite (\d+):').firstMatch(errorMessage);
+    // \s* avant le : pour gérer les espaces optionnels
+    final visitMatch = RegExp(r'(?:ERREUR - )?Visite (\d+)\s*:').firstMatch(errorMessage);
     if (visitMatch != null) {
       return {
         'type': 'visit',
@@ -27,17 +28,26 @@ class SyncErrorNavigationService {
         'rawMessage': errorMessage,
       };
     }
-    
-    final observationMatch = RegExp(r'ERREUR - Observation (\d+):').firstMatch(errorMessage);
+
+    final observationMatch = RegExp(r'(?:ERREUR - )?Observation (\d+)\s*:').firstMatch(errorMessage);
     if (observationMatch != null) {
       return {
-        'type': 'observation', 
+        'type': 'observation',
         'id': int.parse(observationMatch.group(1)!),
         'rawMessage': errorMessage,
       };
     }
-    
-    final detailMatch = RegExp(r'ERREUR - Detail (\d+):').firstMatch(errorMessage);
+
+    final siteMatch = RegExp(r'(?:ERREUR - )?Site (\d+)\s*:').firstMatch(errorMessage);
+    if (siteMatch != null) {
+      return {
+        'type': 'site',
+        'id': int.parse(siteMatch.group(1)!),
+        'rawMessage': errorMessage,
+      };
+    }
+
+    final detailMatch = RegExp(r'(?:ERREUR - )?Detail (\d+)\s*:').firstMatch(errorMessage);
     if (detailMatch != null) {
       return {
         'type': 'observation_detail',
@@ -45,7 +55,7 @@ class SyncErrorNavigationService {
         'rawMessage': errorMessage,
       };
     }
-    
+
     return null;
   }
   

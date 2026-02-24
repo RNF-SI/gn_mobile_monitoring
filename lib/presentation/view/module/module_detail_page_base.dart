@@ -761,9 +761,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   @override
   Widget build(BuildContext context) {
-    // Récupérer la configuration pour personnaliser les libellés
-    final module = widget.moduleInfo.module;
-
     final childContent = buildChildrenContent();
 
     // Détecter si le clavier est visible
@@ -797,40 +794,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                   Expanded(
                     flex: propertiesFlex,
                     child: buildBaseContent(),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        final groupSiteConfig =
-                            module.complement?.configuration?.sitesGroup;
-                        if (groupSiteConfig != null) {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => SiteGroupFormPage(
-                                  siteGroupConfig: groupSiteConfig,
-                                  customConfig:
-                                      module.complement?.configuration?.custom,
-                                  moduleId: module.id,
-                                  moduleInfo: widget.moduleInfo,
-                                ),
-                              ));
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Configuration de groupe de sites non disponible'),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.add),
-                      label: Text(
-                        'Ajouter ${(module.complement?.configuration?.sitesGroup?.genre == 'F') ? 'une' : 'un'} ${module.complement?.configuration?.sitesGroup?.label ?? 'groupe de site'}',
-                      ),
-                    ),
                   ),
                   Expanded(
                     flex: childrenFlex,

@@ -719,7 +719,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  SiteFormPage(
+                                  SiteFormPageWithTypeSelection(
                                 siteConfig: siteConfig,
                                 customConfig:
                                     module.complement?.configuration?.custom,

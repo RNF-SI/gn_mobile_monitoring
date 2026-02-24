@@ -6,6 +6,9 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/site_type_selector.dart';
 
+/// Valeur sentinelle indiquant qu'aucun type de site n'est requis
+const int _noTypeSelection = -1;
+
 /// Page qui gère la sélection du type de site avant d'afficher le formulaire
 class SiteFormPageWithTypeSelection extends StatefulWidget {
   final BaseSite? site; // En mode édition, site existant
@@ -37,10 +40,16 @@ class _SiteFormPageWithTypeSelectionState
   @override
   void initState() {
     super.initState();
-    // Si un seul type est disponible, le sélectionner automatiquement
     final typesSite = widget.moduleInfo?.module.complement?.configuration?.module?.typesSite;
-    if (typesSite != null && typesSite.length == 1) {
-      _selectedSiteTypeId = int.parse(typesSite.keys.first);
+    if (typesSite == null || typesSite.isEmpty) {
+      // Pas de types_site configurés : afficher le formulaire directement sans sélection de type
+      // (comportement identique à l'ancien SiteFormPage)
+      _selectedSiteTypeId = _noTypeSelection;
+    } else if (typesSite.length == 1) {
+      // Si un seul type est disponible, le sélectionner automatiquement
+      _selectedSiteTypeId = int.tryParse(typesSite.keys.first);
+      // Fallback : si le parsing échoue, afficher le formulaire sans type
+      _selectedSiteTypeId ??= _noTypeSelection;
     }
   }
 
@@ -55,7 +64,10 @@ class _SiteFormPageWithTypeSelectionState
         moduleId: widget.moduleId,
         moduleInfo: widget.moduleInfo,
         siteGroup: widget.siteGroup,
-        selectedSiteTypeId: _selectedSiteTypeId,
+        // Ne pas passer la valeur sentinelle _noTypeSelection comme vrai type
+        selectedSiteTypeId: _selectedSiteTypeId == _noTypeSelection
+            ? null
+            : _selectedSiteTypeId,
       );
     }
 
@@ -86,4 +98,3 @@ class _SiteFormPageWithTypeSelectionState
     );
   }
 }
-

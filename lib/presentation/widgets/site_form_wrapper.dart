@@ -309,11 +309,6 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     // Ajouter le type de site sélectionné
     if (widget.selectedSiteTypeId != null) {
       defaultValues['id_nomenclature_type_site'] = widget.selectedSiteTypeId;
-      // Si le type de site est dans specific avec une valeur fixe, l'utiliser
-      final specificTypeSite = widget.siteConfig.specific?['id_nomenclature_type_site'];
-      if (specificTypeSite != null && specificTypeSite['value'] != null) {
-        // Le type est déjà défini dans la config, ne pas l'écraser
-      }
     }
 
     return defaultValues;
@@ -329,7 +324,9 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       // TypeSiteConfig n'a que display_properties (pas display_form)
       if (typeSiteConfig?.displayProperties != null &&
           typeSiteConfig!.displayProperties!.isNotEmpty) {
-        return typeSiteConfig.displayProperties!.cast<String>();
+        return typeSiteConfig.displayProperties!
+            .map((e) => e.toString())
+            .toList();
       }
     }
 

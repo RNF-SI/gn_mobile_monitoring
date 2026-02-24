@@ -25,10 +25,12 @@ class SyncErrorDetailPage extends ConsumerWidget {
 
     for (final line in lines) {
       final errorVisitMatch =
-          RegExp(r'ERREUR - Visite (\d+):|Visite (\d+):').firstMatch(line);
+          RegExp(r'ERREUR - Visite (\d+)\s*:|Visite (\d+)\s*:').firstMatch(line);
       final errorObservationMatch =
-          RegExp(r'ERREUR - Observation (\d+):|Observation (\d+):')
+          RegExp(r'ERREUR - Observation (\d+)\s*:|Observation (\d+)\s*:')
               .firstMatch(line);
+      final errorSiteMatch =
+          RegExp(r'ERREUR - Site (\d+)\s*:|Site (\d+)\s*:').firstMatch(line);
 
       if (errorVisitMatch != null) {
         final id = errorVisitMatch.group(1) ?? errorVisitMatch.group(2);
@@ -37,6 +39,9 @@ class SyncErrorDetailPage extends ConsumerWidget {
         final id =
             errorObservationMatch.group(1) ?? errorObservationMatch.group(2);
         if (id != null) uniqueEntities.add('Observation-$id');
+      } else if (errorSiteMatch != null) {
+        final id = errorSiteMatch.group(1) ?? errorSiteMatch.group(2);
+        if (id != null) uniqueEntities.add('Site-$id');
       }
     }
 
@@ -163,15 +168,22 @@ class SyncErrorDetailPage extends ConsumerWidget {
     for (final line in lines) {
       if (line.trim().isNotEmpty) {
         final errorVisitMatch =
-            RegExp(r'ERREUR - Visite (\d+): (.+)').firstMatch(line);
+            RegExp(r'ERREUR - Visite (\d+)\s*:\s*(.+)|Visite (\d+)\s*:\s*(.+)').firstMatch(line);
         final errorObservationMatch =
-            RegExp(r'ERREUR - Observation (\d+): (.+)').firstMatch(line);
+            RegExp(r'ERREUR - Observation (\d+)\s*:\s*(.+)|Observation (\d+)\s*:\s*(.+)').firstMatch(line);
+        final errorSiteMatch =
+            RegExp(r'ERREUR - Site (\d+)\s*:\s*(.+)|Site (\d+)\s*:\s*(.+)').firstMatch(line);
 
         String? entityKey;
         if (errorVisitMatch != null) {
-          entityKey = 'Visite-${errorVisitMatch.group(1)}';
+          final id = errorVisitMatch.group(1) ?? errorVisitMatch.group(3);
+          entityKey = 'Visite-$id';
         } else if (errorObservationMatch != null) {
-          entityKey = 'Observation-${errorObservationMatch.group(1)}';
+          final id = errorObservationMatch.group(1) ?? errorObservationMatch.group(3);
+          entityKey = 'Observation-$id';
+        } else if (errorSiteMatch != null) {
+          final id = errorSiteMatch.group(1) ?? errorSiteMatch.group(3);
+          entityKey = 'Site-$id';
         }
 
         // Éviter les duplications d'entités
@@ -358,10 +370,13 @@ class SyncErrorDetailPage extends ConsumerWidget {
     for (final line in lines) {
       if (line.trim().isNotEmpty) {
         // Priorité aux patterns avec ERREUR - (plus informatifs)
+        // \s* avant le : pour gérer "Visite 1 : ..." et "Visite 1: ..."
         final errorVisitMatch =
-            RegExp(r'ERREUR - Visite (\d+): (.+)').firstMatch(line);
+            RegExp(r'ERREUR - Visite (\d+)\s*:\s*(.+)').firstMatch(line);
         final errorObservationMatch =
-            RegExp(r'ERREUR - Observation (\d+): (.+)').firstMatch(line);
+            RegExp(r'ERREUR - Observation (\d+)\s*:\s*(.+)').firstMatch(line);
+        final errorSiteMatch =
+            RegExp(r'ERREUR - Site (\d+)\s*:\s*(.+)').firstMatch(line);
 
         String? entityKey;
         Map<String, String>? errorItem;
@@ -382,11 +397,20 @@ class SyncErrorDetailPage extends ConsumerWidget {
             'error': errorObservationMatch.group(2) ?? '',
             'rawLine': line,
           };
+        } else if (errorSiteMatch != null) {
+          entityKey = 'Site-${errorSiteMatch.group(1)}';
+          errorItem = {
+            'type': 'Site',
+            'id': errorSiteMatch.group(1) ?? '',
+            'error': errorSiteMatch.group(2) ?? '',
+            'rawLine': line,
+          };
         } else {
           // Patterns alternatifs seulement si on n'a pas déjà vu cette entité
           final observationMatch =
-              RegExp(r'Observation (\d+): (.+)').firstMatch(line);
-          final visitMatch = RegExp(r'Visite (\d+): (.+)').firstMatch(line);
+              RegExp(r'Observation (\d+)\s*:\s*(.+)').firstMatch(line);
+          final visitMatch = RegExp(r'Visite (\d+)\s*:\s*(.+)').firstMatch(line);
+          final siteMatch = RegExp(r'Site (\d+)\s*:\s*(.+)').firstMatch(line);
 
           if (observationMatch != null) {
             entityKey = 'Observation-${observationMatch.group(1)}';
@@ -408,8 +432,17 @@ class SyncErrorDetailPage extends ConsumerWidget {
                 'rawLine': line,
               };
             }
+          } else if (siteMatch != null) {
+            entityKey = 'Site-${siteMatch.group(1)}';
+            if (!seenEntities.contains(entityKey)) {
+              errorItem = {
+                'type': 'Site',
+                'id': siteMatch.group(1) ?? '',
+                'error': siteMatch.group(2) ?? '',
+                'rawLine': line,
+              };
+            }
           }
-          // Note: On ne traite plus les erreurs générales ici - elles n'auront pas de carte
         }
 
         // Ajouter l'erreur si elle n'est pas déjà vue et correspond à une entité

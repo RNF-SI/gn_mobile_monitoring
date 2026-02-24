@@ -23,11 +23,13 @@ class SiteTypeSelector extends StatelessWidget {
 
     // Si un seul type est disponible, le sélectionner automatiquement
     if (typesSite.length == 1) {
-      final singleTypeId = int.parse(typesSite.keys.first);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        onSiteTypeSelected(singleTypeId);
-      });
-      return const SizedBox.shrink();
+      final singleTypeId = int.tryParse(typesSite.keys.first);
+      if (singleTypeId != null) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          onSiteTypeSelected(singleTypeId);
+        });
+        return const SizedBox.shrink();
+      }
     }
 
     // Si plusieurs types sont disponibles, afficher un sélecteur
@@ -45,7 +47,8 @@ class SiteTypeSelector extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             ...typesSite.entries.map((entry) {
-              final typeId = int.parse(entry.key);
+              final typeId = int.tryParse(entry.key);
+              if (typeId == null) return const SizedBox.shrink();
               final typeConfig = entry.value;
               final typeName = typeConfig.name ?? 'Type de site $typeId';
 

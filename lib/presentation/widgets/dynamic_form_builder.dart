@@ -74,6 +74,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   /// Ces champs doivent être préservés à la sauvegarde même s'ils sont cachés
   final Set<String> _fieldsSetByChangeRules = <String>{};
 
+  /// Champs modifiés manuellement par l'utilisateur (pas via règle de changement)
+  /// Utilisé pour résoudre objForm.controls.xxx.dirty dans les règles de changement
+  final Set<String> _dirtyFields = <String>{};
+
   /// Returns the onSubmit callback from the widget
   Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
 
@@ -489,9 +493,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     setState(() {
       // Si l'utilisateur modifie manuellement un champ (pas via règle de changement),
       // retirer ce champ de la liste des champs définis par règle
-      if (!_isApplyingChangeRules && _fieldsSetByChangeRules.contains(fieldName)) {
-        _fieldsSetByChangeRules.remove(fieldName);
-        debugPrint('📝 [ChangeRule] Champ "$fieldName" retiré des règles (modification manuelle)');
+      // et marquer le champ comme "dirty" (modifié manuellement)
+      if (!_isApplyingChangeRules) {
+        _dirtyFields.add(fieldName);
+        if (_fieldsSetByChangeRules.contains(fieldName)) {
+          _fieldsSetByChangeRules.remove(fieldName);
+          debugPrint('📝 [ChangeRule] Champ "$fieldName" retiré des règles (modification manuelle)');
+        }
       }
 
       if (value == null) {
@@ -541,6 +549,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       formValues: _formValues,
       changeConfig: changeConfig,
       triggerFieldName: triggerFieldName,
+      dirtyFields: _dirtyFields,
       metadata: {
         'bChainInput': widget.chainInput ?? false,
         'parents': {

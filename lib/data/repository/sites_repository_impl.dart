@@ -389,6 +389,11 @@ class SitesRepositoryImpl implements SitesRepository {
       print('Fetched ${siteGroups.length} site groups for module $moduleCode');
     } catch (error) {
       print('Error fetching site groups for module $moduleCode: $error');
+      final errorStr = error.toString().toLowerCase();
+      if (errorStr.contains('403') || errorStr.contains('forbidden')) {
+        print('Module $moduleCode ne supporte pas les groupes de sites (403). Continuing.');
+        return;
+      }
       throw Exception('Failed to fetch site groups for module $moduleCode');
     }
   }
