@@ -263,157 +263,9 @@ class ModulesRepositoryImpl implements ModulesRepository {
       onProgressUpdate?.call(0.30);
       final config = data.configuration;
 
-      // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
-      try {
-        // Variable pour compter le nombre total de fonctions converties
-        int totalConverted = 0;
-
-        // Fonction pour remplacer les fonctions hidden de JavaScript par du Dart
-        void replaceHiddenFunctions(Map<String, dynamic> configSection) {
-          // Pour les champs génériques
-          if (configSection.containsKey('generic') &&
-              configSection['generic'] is Map) {
-            final generic = configSection['generic'] as Map<String, dynamic>;
-
-            for (final entry in generic.entries) {
-              final fieldId = entry.key;
-              final fieldConfig = entry.value;
-
-              if (fieldConfig is Map<String, dynamic> &&
-                  fieldConfig.containsKey('hidden') &&
-                  fieldConfig['hidden'] is String &&
-                  fieldConfig['hidden'].toString().startsWith('({')) {
-                try {
-                  final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction =
-                      TsToDartConverter.convertToDart(jsFunction);
-
-                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
-                  fieldConfig['hidden'] = dartFunction;
-                  totalConverted++;
-                  print(
-                      'Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
-                } catch (e) {
-                  print(
-                      'Error converting hidden function for field $fieldId: $e');
-                }
-              }
-            }
-          }
-
-          // Pour les champs spécifiques
-          if (configSection.containsKey('specific') &&
-              configSection['specific'] is Map) {
-            final specific = configSection['specific'] as Map<String, dynamic>;
-
-            for (final entry in specific.entries) {
-              final fieldId = entry.key;
-              final fieldConfig = entry.value;
-
-              if (fieldConfig is Map<String, dynamic> &&
-                  fieldConfig.containsKey('hidden') &&
-                  fieldConfig['hidden'] is String &&
-                  fieldConfig['hidden'].toString().startsWith('({')) {
-                try {
-                  final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction =
-                      TsToDartConverter.convertToDart(jsFunction);
-
-                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
-                  fieldConfig['hidden'] = dartFunction;
-                  totalConverted++;
-                  print(
-                      'Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
-                } catch (e) {
-                  print(
-                      'Error converting hidden function for specific field $fieldId: $e');
-                }
-              }
-            }
-          }
-        }
-
-        // Parcourir les sections principales du module pour remplacer les fonctions hidden
-        final objectTypes = [
-          'module',
-          'site',
-          'sites_group',
-          'visit',
-          'observation',
-          'observation_detail'
-        ];
-
-        for (final objectType in objectTypes) {
-          if (config.containsKey(objectType) &&
-              config[objectType] is Map<String, dynamic>) {
-            final prevCount = totalConverted;
-            replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
-            final convertedInSection = totalConverted - prevCount;
-
-            if (convertedInSection > 0) {
-              print(
-                  'Converted $convertedInSection hidden functions in $objectType section');
-            }
-          }
-        }
-
-        print(
-            'Total hidden functions converted in module configuration: $totalConverted');
-      } catch (e) {
-        print('Erreur lors de la conversion des fonctions hidden: $e');
-        // Continuer malgré les erreurs de conversion
-      }
-
-      // Prétraiter les expressions "change" en JavaScript et les convertir en format structuré
-      try {
-        int changeRulesConverted = 0;
-
-        final changeObjectTypes = [
-          'module',
-          'site',
-          'sites_group',
-          'visit',
-          'observation',
-          'observation_detail'
-        ];
-
-        for (final objectType in changeObjectTypes) {
-          if (config.containsKey(objectType) &&
-              config[objectType] is Map<String, dynamic>) {
-            final objectConfig = config[objectType] as Map<String, dynamic>;
-
-            // Vérifier si le champ "change" existe et est un tableau
-            if (objectConfig.containsKey('change') &&
-                objectConfig['change'] is List) {
-              final changeArray = objectConfig['change'] as List;
-
-              // Convertir le tableau de strings JS en format structuré
-              final convertedRules = _convertChangeRulesToStructured(changeArray);
-
-              if (convertedRules.isNotEmpty) {
-                // Remplacer le format JS par le format structuré
-                objectConfig['change'] = convertedRules;
-                changeRulesConverted += convertedRules.length;
-                print(
-                    'Converted ${convertedRules.length} change rules in $objectType section');
-              }
-            }
-          }
-        }
-
-        if (changeRulesConverted > 0) {
-          print(
-              'Total change rules converted in module configuration: $changeRulesConverted');
-        }
-      } catch (e) {
-        print('Erreur lors de la conversion des règles change: $e');
-        // Continuer malgré les erreurs de conversion
-      }
-
-      // Convert the Map to a properly formatted JSON string
+      // Prétraiter et stocker la configuration
+      _preprocessConfiguration(config);
       final jsonConfig = json.encode(config);
-
-      // Store the JSON string in the database
       await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
 
       // 3. Fetch Site Types
@@ -720,6 +572,152 @@ class ModulesRepositoryImpl implements ModulesRepository {
     } catch (e) {
       throw Exception('Failed to get module configuration: $e');
     }
+  }
+
+  /// Prétraite la configuration du module : conversion des fonctions hidden JS→Dart
+  /// et des règles "change" en format structuré.
+  void _preprocessConfiguration(Map<String, dynamic> config) {
+    // Prétraiter les expressions hidden en JavaScript et les convertir en Dart
+    try {
+      int totalConverted = 0;
+
+      void replaceHiddenFunctions(Map<String, dynamic> configSection) {
+        // Pour les champs génériques
+        if (configSection.containsKey('generic') &&
+            configSection['generic'] is Map) {
+          final generic = configSection['generic'] as Map<String, dynamic>;
+
+          for (final entry in generic.entries) {
+            final fieldId = entry.key;
+            final fieldConfig = entry.value;
+
+            if (fieldConfig is Map<String, dynamic> &&
+                fieldConfig.containsKey('hidden') &&
+                fieldConfig['hidden'] is String &&
+                fieldConfig['hidden'].toString().startsWith('({')) {
+              try {
+                final jsFunction = fieldConfig['hidden'].toString();
+                final dartFunction =
+                    TsToDartConverter.convertToDart(jsFunction);
+                fieldConfig['hidden'] = dartFunction;
+                totalConverted++;
+                print(
+                    'Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
+              } catch (e) {
+                print(
+                    'Error converting hidden function for field $fieldId: $e');
+              }
+            }
+          }
+        }
+
+        // Pour les champs spécifiques
+        if (configSection.containsKey('specific') &&
+            configSection['specific'] is Map) {
+          final specific = configSection['specific'] as Map<String, dynamic>;
+
+          for (final entry in specific.entries) {
+            final fieldId = entry.key;
+            final fieldConfig = entry.value;
+
+            if (fieldConfig is Map<String, dynamic> &&
+                fieldConfig.containsKey('hidden') &&
+                fieldConfig['hidden'] is String &&
+                fieldConfig['hidden'].toString().startsWith('({')) {
+              try {
+                final jsFunction = fieldConfig['hidden'].toString();
+                final dartFunction =
+                    TsToDartConverter.convertToDart(jsFunction);
+                fieldConfig['hidden'] = dartFunction;
+                totalConverted++;
+                print(
+                    'Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
+              } catch (e) {
+                print(
+                    'Error converting hidden function for specific field $fieldId: $e');
+              }
+            }
+          }
+        }
+      }
+
+      final objectTypes = [
+        'module',
+        'site',
+        'sites_group',
+        'visit',
+        'observation',
+        'observation_detail'
+      ];
+
+      for (final objectType in objectTypes) {
+        if (config.containsKey(objectType) &&
+            config[objectType] is Map<String, dynamic>) {
+          final prevCount = totalConverted;
+          replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
+          final convertedInSection = totalConverted - prevCount;
+
+          if (convertedInSection > 0) {
+            print(
+                'Converted $convertedInSection hidden functions in $objectType section');
+          }
+        }
+      }
+
+      print(
+          'Total hidden functions converted in module configuration: $totalConverted');
+    } catch (e) {
+      print('Erreur lors de la conversion des fonctions hidden: $e');
+    }
+
+    // Prétraiter les expressions "change" en JavaScript
+    try {
+      int changeRulesConverted = 0;
+
+      final changeObjectTypes = [
+        'module',
+        'site',
+        'sites_group',
+        'visit',
+        'observation',
+        'observation_detail'
+      ];
+
+      for (final objectType in changeObjectTypes) {
+        if (config.containsKey(objectType) &&
+            config[objectType] is Map<String, dynamic>) {
+          final objectConfig = config[objectType] as Map<String, dynamic>;
+
+          if (objectConfig.containsKey('change') &&
+              objectConfig['change'] is List) {
+            final changeArray = objectConfig['change'] as List;
+            final convertedRules =
+                _convertChangeRulesToStructured(changeArray);
+
+            if (convertedRules.isNotEmpty) {
+              objectConfig['change'] = convertedRules;
+              changeRulesConverted += convertedRules.length;
+              print(
+                  'Converted ${convertedRules.length} change rules in $objectType section');
+            }
+          }
+        }
+      }
+
+      if (changeRulesConverted > 0) {
+        print(
+            'Total change rules converted in module configuration: $changeRulesConverted');
+      }
+    } catch (e) {
+      print('Erreur lors de la conversion des règles change: $e');
+    }
+  }
+
+  @override
+  Future<void> refreshModuleConfiguration(int moduleId, Map<String, dynamic> configuration) async {
+    _preprocessConfiguration(configuration);
+    final jsonConfig = json.encode(configuration);
+    await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
   }
 
   /// Convertit un tableau de strings JavaScript "change" en format structuré

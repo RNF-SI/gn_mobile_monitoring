@@ -108,4 +108,7 @@ abstract class ModulesRepository {
 
   /// Récupère la configuration complète d'un module
   Future<ModuleConfiguration> getModuleConfiguration(String moduleCode);
+
+  /// Rafraîchit la configuration d'un module (prétraitement JS→Dart + stockage)
+  Future<void> refreshModuleConfiguration(int moduleId, Map<String, dynamic> configuration);
 }
