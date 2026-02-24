@@ -25,6 +25,15 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
   FlutterErrorDetails? _error;
 
   @override
+  void initState() {
+    super.initState();
+    // Configurer le gestionnaire d'erreurs Flutter une seule fois
+    FlutterError.onError = (FlutterErrorDetails errorDetails) {
+      _reportError(errorDetails);
+    };
+  }
+
+  @override
   Widget build(BuildContext context) {
     if (_error != null) {
       return widget.fallbackBuilder?.call(context, _error!) ??
@@ -33,11 +42,6 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
             tag: widget.tag,
           );
     }
-
-    // Configurer le gestionnaire d'erreurs Flutter
-    FlutterError.onError = (FlutterErrorDetails errorDetails) {
-      _reportError(errorDetails);
-    };
 
     return widget.child;
   }
@@ -50,8 +54,13 @@ class _ErrorBoundaryState extends State<ErrorBoundary> {
       stackTrace: details.stack,
     );
 
-    setState(() {
-      _error = details;
+    // Différer le setState pour éviter l'appel pendant la phase de build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() {
+          _error = details;
+        });
+      }
     });
   }
 }
