@@ -323,7 +323,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           } catch (e) {
             _logger.e('Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e',
                 tag: 'sync', error: e);
-            errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            // Ne pas ajouter l'erreur si c'est une erreur cascadée de site non synchronisé
+            // (l'erreur du site est déjà visible séparément)
+            if (!e.toString().contains('n\'a pas encore été synchronisé avec le serveur')) {
+              errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            } else {
+              _logger.w('Erreur cascadée ignorée pour visite ${visitEntity.idBaseVisit}: site non encore synchronisé', tag: 'sync');
+            }
             itemsSkipped++;
           }
         }
@@ -494,7 +500,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           } catch (e) {
             _logger.e('Erreur lors du traitement de la visite ${visitEntity.idBaseVisit}: $e',
                 tag: 'sync', error: e);
-            errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            // Ne pas ajouter l'erreur si c'est une erreur cascadée de site non synchronisé
+            // (l'erreur du site est déjà visible séparément)
+            if (!e.toString().contains('n\'a pas encore été synchronisé avec le serveur')) {
+              errors.add('Visite ${visitEntity.idBaseVisit}: $e');
+            } else {
+              _logger.w('Erreur cascadée ignorée pour visite ${visitEntity.idBaseVisit}: site non encore synchronisé', tag: 'sync');
+            }
             itemsSkipped++;
           }
         }
@@ -1358,6 +1370,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
             // Le serveur attend types_site comme une liste d'entiers
+            // Rétro-compatibilité avec les sites créés avant le multi-select types_site
             if (mergedData.containsKey('id_nomenclature_type_site') && !mergedData.containsKey('types_site')) {
               final typeId = mergedData['id_nomenclature_type_site'];
               if (typeId != null) {
@@ -1366,6 +1379,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               }
               // Supprimer l'ancien champ pour éviter la confusion
               mergedData.remove('id_nomenclature_type_site');
+            }
+
+            // Normaliser types_site : s'assurer que tous les éléments sont des entiers
+            if (mergedData.containsKey('types_site') && mergedData['types_site'] is List) {
+              mergedData['types_site'] = (mergedData['types_site'] as List)
+                  .map((e) => e is int ? e : int.tryParse(e.toString()))
+                  .where((e) => e != null)
+                  .toList();
             }
 
             // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
@@ -1455,6 +1476,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
             // Le serveur attend types_site comme une liste d'entiers
+            // Rétro-compatibilité avec les sites créés avant le multi-select types_site
             if (mergedData.containsKey('id_nomenclature_type_site') && !mergedData.containsKey('types_site')) {
               final typeId = mergedData['id_nomenclature_type_site'];
               if (typeId != null) {
@@ -1463,6 +1485,14 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               }
               // Supprimer l'ancien champ pour éviter la confusion
               mergedData.remove('id_nomenclature_type_site');
+            }
+
+            // Normaliser types_site : s'assurer que tous les éléments sont des entiers
+            if (mergedData.containsKey('types_site') && mergedData['types_site'] is List) {
+              mergedData['types_site'] = (mergedData['types_site'] as List)
+                  .map((e) => e is int ? e : int.tryParse(e.toString()))
+                  .where((e) => e != null)
+                  .toList();
             }
 
             // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
