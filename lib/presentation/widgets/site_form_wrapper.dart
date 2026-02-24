@@ -27,7 +27,6 @@ class SiteFormWrapper extends ConsumerStatefulWidget {
   final int? moduleId;
   final ModuleInfo? moduleInfo;
   final SiteGroup? siteGroup;
-  final int? selectedSiteTypeId; // Type de site sélectionné
 
   const SiteFormWrapper({
     super.key,
@@ -37,7 +36,6 @@ class SiteFormWrapper extends ConsumerStatefulWidget {
     this.moduleId,
     this.moduleInfo,
     this.siteGroup,
-    this.selectedSiteTypeId,
   });
 
   @override
@@ -135,8 +133,56 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     }
   }
 
+  /// Enrichit la configuration du site avec les options types_site depuis le module
+  ObjectConfig _enrichSiteConfigWithTypesSite() {
+    final typesSite = widget.moduleInfo?.module.complement?.configuration?.module?.typesSite;
+    if (typesSite == null || typesSite.isEmpty) {
+      return widget.siteConfig;
+    }
+
+    // Construire la liste de valeurs pour le datalist
+    final values = typesSite.entries.map((e) => {
+      'value': e.key,
+      'label': e.value.name ?? 'Type ${e.key}',
+    }).toList();
+
+    final currentGeneric = Map<String, GenericFieldConfig>.from(
+        widget.siteConfig.generic ?? {});
+
+    if (currentGeneric.containsKey('types_site')) {
+      // Mettre à jour le champ existant avec les valeurs et le rendre visible
+      final existing = currentGeneric['types_site']!;
+      currentGeneric['types_site'] = GenericFieldConfig(
+        attributLabel: existing.attributLabel ?? 'Type(s) de site',
+        typeWidget: existing.typeWidget ?? 'datalist',
+        multiple: true,
+        required: existing.required ?? true,
+        keyLabel: existing.keyLabel ?? 'label',
+        keyValue: existing.keyValue ?? 'value',
+        values: values,
+        hidden: false,
+        definition: existing.definition,
+      );
+    } else {
+      // Ajouter un nouveau champ types_site
+      currentGeneric['types_site'] = GenericFieldConfig(
+        attributLabel: 'Type(s) de site',
+        typeWidget: 'datalist',
+        multiple: true,
+        required: true,
+        keyLabel: 'label',
+        keyValue: 'value',
+        values: values,
+      );
+    }
+
+    return widget.siteConfig.copyWith(generic: currentGeneric);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final enrichedConfig = _enrichSiteConfigWithTypesSite();
+
     // Vérifier si le site peut être modifié
     final bool isSynced = widget.site?.serverSiteId != null;
     final bool isNotLocal = _isEditMode && widget.site?.isLocal != true;
@@ -200,11 +246,11 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     }
 
     return GenericFormPage(
-      objectConfig: widget.siteConfig,
+      objectConfig: enrichedConfig,
       customConfig: widget.customConfig,
       title: _isEditMode
           ? 'Modifier le site'
-          : widget.siteConfig.label ?? 'Nouveau site',
+          : enrichedConfig.label ?? 'Nouveau site',
       appBarActions: _isEditMode ? [
         IconButton(
           icon: const Icon(Icons.delete),
@@ -287,6 +333,12 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       debugPrint('Erreur lors du chargement du complément du site: $e');
     }
 
+    // Rétro-compatibilité : convertir id_nomenclature_type_site en types_site
+    if (initialValues.containsKey('id_nomenclature_type_site') &&
+        !initialValues.containsKey('types_site')) {
+      initialValues['types_site'] = [initialValues['id_nomenclature_type_site'].toString()];
+    }
+
     return initialValues;
   }
 
@@ -306,9 +358,10 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       defaultValues['id_sites_group'] = widget.siteGroup!.idSitesGroup;
     }
 
-    // Ajouter le type de site sélectionné
-    if (widget.selectedSiteTypeId != null) {
-      defaultValues['id_nomenclature_type_site'] = widget.selectedSiteTypeId;
+    // Si un seul type de site est disponible, le pré-sélectionner
+    final typesSite = widget.moduleInfo?.module.complement?.configuration?.module?.typesSite;
+    if (typesSite != null && typesSite.length == 1) {
+      defaultValues['types_site'] = [typesSite.keys.first];
     }
 
     return defaultValues;
@@ -317,19 +370,6 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   /// Récupère les propriétés d'affichage selon le type de site
   /// Utilise display_form en priorité, puis display_properties si display_form est vide
   List<String>? _getDisplayProperties() {
-    if (widget.selectedSiteTypeId != null && widget.moduleInfo != null) {
-      final typeSiteConfig = widget.moduleInfo!.module.complement?.configuration?.module
-          ?.typesSite?[widget.selectedSiteTypeId.toString()];
-
-      // TypeSiteConfig n'a que display_properties (pas display_form)
-      if (typeSiteConfig?.displayProperties != null &&
-          typeSiteConfig!.displayProperties!.isNotEmpty) {
-        return typeSiteConfig.displayProperties!
-            .map((e) => e.toString())
-            .toList();
-      }
-    }
-
     // Pour la configuration générale du site, utiliser display_form en priorité
     if (widget.siteConfig.displayForm != null && widget.siteConfig.displayForm!.isNotEmpty) {
       return widget.siteConfig.displayForm;
@@ -469,7 +509,6 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
           formData,
           widget.site!,
           moduleId: widget.moduleId ?? 1,
-          selectedSiteTypeId: widget.selectedSiteTypeId,
           geomOverride: geomOverride,
         );
 
@@ -503,7 +542,6 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
         siteId = await viewModel.createSiteFromFormData(
           formData,
           moduleId: widget.moduleId ?? 1,
-          selectedSiteTypeId: widget.selectedSiteTypeId,
           geomOverride: geomOverride,
         );
         success = siteId != null && siteId > 0;

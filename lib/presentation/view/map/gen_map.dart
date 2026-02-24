@@ -13,7 +13,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/map_state.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/map_viewmodel.dart';
@@ -923,7 +923,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SiteFormPageWithTypeSelection(
+              builder: (context) => SiteFormPage(
                 siteConfig: siteConfig,
                 customConfig: widget.customConfig,
                 moduleId: widget.moduleInfo!.module.id,

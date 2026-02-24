@@ -115,7 +115,6 @@ class SiteFormViewModel extends StateNotifier<void> {
   Future<int?> createSiteFromFormData(
     Map<String, dynamic> formData, {
     int? moduleId,
-    int? selectedSiteTypeId,
     String? geomOverride,
   }) async {
     try {
@@ -147,15 +146,11 @@ class SiteFormViewModel extends StateNotifier<void> {
         processedData,
         moduleId: moduleId ?? _moduleId,
         userId: userId,
-        selectedSiteTypeId: selectedSiteTypeId,
         geom: geomGeoJson,
       );
 
       // Préparer le complément de site
-      final complementData = _prepareComplementData(
-        processedData,
-        selectedSiteTypeId: selectedSiteTypeId,
-      );
+      final complementData = _prepareComplementData(processedData);
 
       // Créer le complément seulement s'il y a des données
       SiteComplement? complement;
@@ -183,15 +178,9 @@ class SiteFormViewModel extends StateNotifier<void> {
 
   /// Prépare les données du complément de site
   Map<String, dynamic> _prepareComplementData(
-    Map<String, dynamic> processedData, {
-    int? selectedSiteTypeId,
-  }) {
+    Map<String, dynamic> processedData,
+  ) {
     final complementData = <String, dynamic>{};
-
-    // Ajouter le type de site si spécifié
-    if (selectedSiteTypeId != null) {
-      complementData['id_nomenclature_type_site'] = selectedSiteTypeId;
-    }
 
     // Ajouter le groupe de sites si spécifié
     if (_siteGroupId > 0) {
@@ -219,6 +208,14 @@ class SiteFormViewModel extends StateNotifier<void> {
       }
     }
 
+    // Convertir types_site de List<String> (format datalist) en List<int>
+    if (complementData.containsKey('types_site') && complementData['types_site'] is List) {
+      complementData['types_site'] = (complementData['types_site'] as List)
+          .map((e) => int.tryParse(e.toString()))
+          .where((e) => e != null)
+          .toList();
+    }
+
     return complementData;
   }
 
@@ -228,7 +225,6 @@ class SiteFormViewModel extends StateNotifier<void> {
     Map<String, dynamic> formData,
     BaseSite existingSite, {
     int? moduleId,
-    int? selectedSiteTypeId,
     String? geomOverride,
   }) async {
     try {
@@ -267,10 +263,7 @@ class SiteFormViewModel extends StateNotifier<void> {
 
       // Mettre à jour SiteComplement avec les champs dynamiques
       if (success) {
-        final complementData = _prepareComplementData(
-          processedData,
-          selectedSiteTypeId: selectedSiteTypeId,
-        );
+        final complementData = _prepareComplementData(processedData);
 
         if (complementData.isNotEmpty) {
           final complement = SiteComplement(
@@ -314,7 +307,6 @@ class SiteFormViewModel extends StateNotifier<void> {
     Map<String, dynamic> formData, {
     required int moduleId,
     required int userId,
-    int? selectedSiteTypeId,
     String? geom,
   }) {
     final now = DateTime.now();

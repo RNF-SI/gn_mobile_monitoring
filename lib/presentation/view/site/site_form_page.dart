@@ -13,7 +13,6 @@ class SiteFormPage extends StatelessWidget {
   final int? moduleId;
   final ModuleInfo? moduleInfo;
   final SiteGroup? siteGroup;
-  final int? selectedSiteTypeId; // Type de site sélectionné
 
   const SiteFormPage({
     super.key,
@@ -23,7 +22,6 @@ class SiteFormPage extends StatelessWidget {
     this.moduleId,
     this.moduleInfo,
     this.siteGroup,
-    this.selectedSiteTypeId,
   });
 
   @override
@@ -35,7 +33,6 @@ class SiteFormPage extends StatelessWidget {
       moduleId: moduleId,
       moduleInfo: moduleInfo,
       siteGroup: siteGroup,
-      selectedSiteTypeId: selectedSiteTypeId,
     );
   }
 }
