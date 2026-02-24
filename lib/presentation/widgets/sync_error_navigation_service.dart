@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -225,6 +226,8 @@ class SyncErrorNavigationService {
         return await _navigateToObservation(context, ref, entityId, hideLoadingIndicator);
       } else if (entityType == 'observation_detail') {
         return await _navigateToObservationDetail(context, ref, entityId, hideLoadingIndicator);
+      } else if (entityType == 'site') {
+        return await _navigateToSite(context, ref, entityId, hideLoadingIndicator);
       }
       
       hideLoadingIndicator();
@@ -452,8 +455,79 @@ class SyncErrorNavigationService {
     }
   }
   
+  /// Navigation vers un site spécifique
+  static Future<bool> _navigateToSite(BuildContext context, WidgetRef ref,
+      int siteId, VoidCallback hideLoading) async {
+
+    try {
+      // Récupérer le site via le use case
+      final getSiteByIdUseCase = ref.read(getSiteByIdUseCaseProvider);
+      final site = await getSiteByIdUseCase.execute(siteId);
+
+      if (site == null) {
+        hideLoading();
+        if (!context.mounted) return false;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Site $siteId introuvable'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+        return false;
+      }
+
+      // Récupérer les modules de l'utilisateur pour trouver le module associé
+      final modulesState = ref.read(userModuleListeProvider);
+
+      if (modulesState.isLoading) {
+        await Future.delayed(const Duration(milliseconds: 500));
+      }
+
+      ModuleInfo? moduleInfo;
+
+      if (modulesState.data != null) {
+        // Chercher le module qui contient ce site
+        for (final info in modulesState.data!.values) {
+          final hasSite = info.module.sites
+              ?.any((s) => s.idBaseSite == siteId) ?? false;
+          if (hasSite) {
+            moduleInfo = info;
+            break;
+          }
+        }
+      }
+
+      // Cas dégradé si le module n'est pas trouvé
+      moduleInfo ??= ModuleInfo(
+        module: Module(id: 0),
+        downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+      );
+
+      hideLoading();
+
+      if (!context.mounted) return false;
+
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SiteDetailPage(
+            site: site,
+            moduleInfo: moduleInfo,
+          ),
+        ),
+      );
+
+      return result ?? false;
+
+    } catch (e) {
+      hideLoading();
+      debugPrint('Erreur lors de la navigation vers le site: $e');
+      rethrow;
+    }
+  }
+
   /// Navigation vers un détail d'observation spécifique
-  static Future<bool> _navigateToObservationDetail(BuildContext context, WidgetRef ref, 
+  static Future<bool> _navigateToObservationDetail(BuildContext context, WidgetRef ref,
       int detailId, VoidCallback hideLoading) async {
     
     hideLoading();

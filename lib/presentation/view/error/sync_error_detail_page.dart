@@ -766,7 +766,7 @@ class SyncErrorDetailPage extends ConsumerWidget {
 
     // Déterminer si on peut naviguer vers cet élément
     final bool canNavigate =
-        id.isNotEmpty && (type == 'Observation' || type == 'Visite');
+        id.isNotEmpty && (type == 'Observation' || type == 'Visite' || type == 'Site');
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
