@@ -1,8 +1,148 @@
+import 'dart:convert';
+
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 
 /// Classe utilitaire pour parser la configuration des formulaires dynamiques
 /// basés sur la configuration des modules GeoNature Monitoring
 class FormConfigParser {
+  /// Extrait tous les IDs de listes taxonomiques depuis une configuration de module.
+  ///
+  /// Recherche récursivement dans la configuration :
+  /// 1. Les champs avec `type_util == 'taxonomy'` ou `type_widget == 'taxonomy'`
+  ///    et extrait leur `id_list` ou l'ID depuis leur champ `api`
+  /// 2. Le `id_list_taxonomy` au niveau module (custom.__MODULE.ID_LIST_TAXONOMY,
+  ///    module.id_list_taxonomy, ou racine)
+  ///
+  /// [configuration] peut être un Map<String, dynamic>, une String JSON,
+  /// ou un objet avec toJson() (ex: ModuleConfiguration).
+  static Set<int> extractAllTaxonomyListIds(dynamic configuration) {
+    final Set<int> listIds = {};
+
+    // Convertir la configuration en Map si nécessaire
+    final configMap = _toMap(configuration);
+    if (configMap == null) return listIds;
+
+    // 1. Extraire les IDs de listes depuis les champs taxonomy (prioritaire)
+    _searchForTaxonomyFieldListIds(configMap, listIds);
+
+    // 2. Extraire le id_list_taxonomy au niveau module (fallback)
+    _extractModuleLevelTaxonomyListId(configMap, listIds);
+
+    return listIds;
+  }
+
+  /// Convertit une configuration dynamique en Map<String, dynamic>
+  static Map<String, dynamic>? _toMap(dynamic configuration) {
+    if (configuration == null) return null;
+
+    if (configuration is Map<String, dynamic>) {
+      return configuration;
+    }
+
+    if (configuration is String) {
+      try {
+        return jsonDecode(configuration) as Map<String, dynamic>;
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // Pour les objets freezed (ModuleConfiguration, etc.) avec toJson()
+    try {
+      final json = (configuration as dynamic).toJson();
+      if (json is Map<String, dynamic>) return json;
+    } catch (_) {}
+
+    return null;
+  }
+
+  /// Recherche récursivement les champs taxonomy avec id_list dans la config
+  static void _searchForTaxonomyFieldListIds(
+      dynamic obj, Set<int> listIds) {
+    if (obj is Map<String, dynamic>) {
+      // Si c'est un champ de taxonomie, extraire l'id_list
+      if (obj['type_util'] == 'taxonomy' || obj['type_widget'] == 'taxonomy') {
+        int? listId;
+
+        // Méthode 1: Chercher dans id_list
+        if (obj.containsKey('id_list')) {
+          final rawListId = obj['id_list'];
+          if (rawListId is int) {
+            listId = rawListId;
+          } else if (rawListId is String) {
+            listId = int.tryParse(rawListId);
+          }
+        }
+
+        // Méthode 2: Extraire depuis le champ api (ex: "taxref/allnamebylist/100")
+        if (listId == null && obj.containsKey('api')) {
+          final api = obj['api'] as String?;
+          if (api != null && api.contains('allnamebylist/')) {
+            final parts = api.split('/');
+            if (parts.length > 2 &&
+                parts[parts.length - 2] == 'allnamebylist') {
+              listId = int.tryParse(parts.last);
+            }
+          }
+        }
+
+        if (listId != null) {
+          listIds.add(listId);
+        }
+      }
+
+      // Recherche récursive dans tous les sous-objets
+      for (final value in obj.values) {
+        _searchForTaxonomyFieldListIds(value, listIds);
+      }
+    } else if (obj is List) {
+      for (final item in obj) {
+        _searchForTaxonomyFieldListIds(item, listIds);
+      }
+    }
+  }
+
+  /// Extrait le id_list_taxonomy au niveau module depuis la configuration
+  static void _extractModuleLevelTaxonomyListId(
+      Map<String, dynamic> configMap, Set<int> listIds) {
+    int? parsed;
+
+    // Chercher dans custom.__MODULE.ID_LIST_TAXONOMY
+    if (configMap.containsKey('custom') && configMap['custom'] is Map) {
+      final custom = configMap['custom'] as Map<String, dynamic>;
+      parsed = _tryParseInt(custom['__MODULE.ID_LIST_TAXONOMY']);
+      if (parsed != null) {
+        listIds.add(parsed);
+        return;
+      }
+    }
+
+    // Chercher dans module.id_list_taxonomy
+    if (configMap.containsKey('module') && configMap['module'] is Map) {
+      final module = configMap['module'] as Map<String, dynamic>;
+      parsed = _tryParseInt(module['id_list_taxonomy']);
+      if (parsed != null) {
+        listIds.add(parsed);
+        return;
+      }
+    }
+
+    // Chercher à la racine
+    parsed = _tryParseInt(configMap['id_list_taxonomy']);
+    if (parsed != null) {
+      listIds.add(parsed);
+    }
+  }
+
+  /// Tente de parser une valeur en int
+  static int? _tryParseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   /// Fusionne les configurations generiques et spécifiques en un seul schéma
   /// pour un type d'objet donné (visit, site, etc.)
   static Map<String, Map<String, dynamic>> mergeConfigurations(

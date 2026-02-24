@@ -15,7 +15,6 @@ import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
-import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page_with_type_selection.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
@@ -704,6 +703,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
 
           // Sites Table Section
           Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               // Barre d'outils avec label, recherche, ajout et tri
               Builder(
@@ -719,7 +719,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  SiteFormPageWithTypeSelection(
+                                  SiteFormPage(
                                 siteConfig: siteConfig,
                                 customConfig:
                                     module.complement?.configuration?.custom,
@@ -851,7 +851,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            SiteFormPageWithTypeSelection(
+                                            SiteFormPage(
                                           siteConfig: siteConfig,
                                           customConfig: module.complement
                                               ?.configuration?.custom,

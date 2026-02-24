@@ -240,7 +240,12 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final query = select(tModules)
       ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
-    return result?.toDomain();
+    if (result == null) return null;
+
+    // Charger le complement pour avoir accès à la configuration et idListTaxonomy
+    final complement = await getModuleComplementById(result.idModule);
+    return result.toDomainWithComplementSitesAndSiteGroups(
+        complement, const [], const []);
   }
 
   // Méthode d'aide pour convertir différents types de valeurs en int
@@ -334,6 +339,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
               'Erreur de parsing de la configuration du module $moduleId: $e');
         }
       }
+
+      // Fallback: utiliser la colonne directe idListTaxonomy du complement
+      // (remplie depuis le champ de premier niveau de la réponse API)
+      if (moduleComplement?.idListTaxonomy != null) {
+        print(
+            'getModuleTaxonomyListId - Utilisation du fallback idListTaxonomy=${moduleComplement!.idListTaxonomy} pour le module $moduleId');
+        return moduleComplement.idListTaxonomy;
+      }
+
       return null;
     } catch (e) {
       print('Erreur lors de la récupération de l\'ID de liste taxonomique: $e');

@@ -336,52 +336,6 @@ class SyncService extends StateNotifier<SyncStatus> {
         ref.read(cacheVersionProvider.notifier).update((state) => state + 1);
       }
 
-      // Synchroniser les taxons
-      if (syncTaxons && _isSyncing) {
-        // Mise à jour du résumé avec les étapes déjà complétées
-        final currentSummary = _buildIncrementalSyncSummary(completedSteps);
-
-        state = SyncStatus.inProgress(
-          currentStep: SyncStep.taxons,
-          completedSteps: completedSteps,
-          itemsProcessed: totalItemsProcessed,
-          itemsTotal: totalItemsToProcess,
-          currentEntityName: "Référentiel taxonomique",
-          additionalInfo: currentSummary,
-        );
-
-        try {
-          AppLogger().d('Démarrage de la synchronisation des taxons', tag: 'SYNC');
-          final taxonsResult = await _executeSingleSync(token, 'taxons');
-          if (taxonsResult.success) {
-            AppLogger().i('Synchronisation des taxons terminée avec succès', tag: 'SYNC', error: 'Ajoutés: ${taxonsResult.itemsAdded}, Mis à jour: ${taxonsResult.itemsUpdated}');
-            completedSteps.add(SyncStep.taxons);
-
-            // Mise à jour avec le nouveau résumé incluant cette étape
-            final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
-            state = SyncStatus.inProgress(
-              currentStep: SyncStep.taxons,
-              completedSteps: completedSteps,
-              itemsProcessed: totalItemsProcessed + 1,
-              itemsTotal: totalItemsToProcess,
-              currentEntityName: "Référentiel taxonomique",
-              itemsAdded: taxonsResult.itemsAdded,
-              itemsUpdated: taxonsResult.itemsUpdated,
-              itemsSkipped: taxonsResult.itemsSkipped,
-              additionalInfo: updatedSummary,
-            );
-          } else {
-            AppLogger().e('Échec de la synchronisation des taxons', tag: 'SYNC', error: taxonsResult.errorMessage);
-            failedSteps.add(SyncStep.taxons);
-          }
-          totalItemsProcessed += 1;
-        } catch (e) {
-          failedSteps.add(SyncStep.taxons);
-          totalItemsProcessed += 1;
-          AppLogger().e('Exception lors de la synchronisation des taxons', tag: 'SYNC', error: e);
-        }
-      }
-
       // Synchroniser les observateurs
       if (syncObservers && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
@@ -425,7 +379,8 @@ class SyncService extends StateNotifier<SyncStatus> {
         }
       }
 
-      // Synchroniser les modules
+      // Synchroniser les modules AVANT les taxons
+      // (les taxons ont besoin des modules pour déterminer quelles listes télécharger)
       if (syncModules && _isSyncing) {
         // Mise à jour du résumé avec les étapes déjà complétées
         final currentSummary = _buildIncrementalSyncSummary(completedSteps);
@@ -467,6 +422,53 @@ class SyncService extends StateNotifier<SyncStatus> {
           failedSteps.add(SyncStep.modules);
           totalItemsProcessed += 1;
           AppLogger().e('Échec de la synchronisation des modules', tag: 'SYNC', error: e);
+        }
+      }
+
+      // Synchroniser les taxons APRÈS les modules
+      // (syncTaxons a besoin des modules téléchargés et de leur idListTaxonomy)
+      if (syncTaxons && _isSyncing) {
+        // Mise à jour du résumé avec les étapes déjà complétées
+        final currentSummary = _buildIncrementalSyncSummary(completedSteps);
+
+        state = SyncStatus.inProgress(
+          currentStep: SyncStep.taxons,
+          completedSteps: completedSteps,
+          itemsProcessed: totalItemsProcessed,
+          itemsTotal: totalItemsToProcess,
+          currentEntityName: "Référentiel taxonomique",
+          additionalInfo: currentSummary,
+        );
+
+        try {
+          AppLogger().d('Démarrage de la synchronisation des taxons', tag: 'SYNC');
+          final taxonsResult = await _executeSingleSync(token, 'taxons');
+          if (taxonsResult.success) {
+            AppLogger().i('Synchronisation des taxons terminée avec succès', tag: 'SYNC', error: 'Ajoutés: ${taxonsResult.itemsAdded}, Mis à jour: ${taxonsResult.itemsUpdated}');
+            completedSteps.add(SyncStep.taxons);
+
+            // Mise à jour avec le nouveau résumé incluant cette étape
+            final updatedSummary = _buildIncrementalSyncSummary(completedSteps);
+            state = SyncStatus.inProgress(
+              currentStep: SyncStep.taxons,
+              completedSteps: completedSteps,
+              itemsProcessed: totalItemsProcessed + 1,
+              itemsTotal: totalItemsToProcess,
+              currentEntityName: "Référentiel taxonomique",
+              itemsAdded: taxonsResult.itemsAdded,
+              itemsUpdated: taxonsResult.itemsUpdated,
+              itemsSkipped: taxonsResult.itemsSkipped,
+              additionalInfo: updatedSummary,
+            );
+          } else {
+            AppLogger().e('Échec de la synchronisation des taxons', tag: 'SYNC', error: taxonsResult.errorMessage);
+            failedSteps.add(SyncStep.taxons);
+          }
+          totalItemsProcessed += 1;
+        } catch (e) {
+          failedSteps.add(SyncStep.taxons);
+          totalItemsProcessed += 1;
+          AppLogger().e('Exception lors de la synchronisation des taxons', tag: 'SYNC', error: e);
         }
       }
 

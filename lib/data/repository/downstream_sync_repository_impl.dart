@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
@@ -253,6 +254,9 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
             await _modulesRepository.associateModuleWithDataset(moduleId, dataset.id);
           }
 
+          // Rafraîchir la configuration du module (y compris types_site)
+          await _modulesRepository.refreshModuleConfiguration(moduleId, data.configuration);
+
           // Mettre à jour les compteurs
           itemsProcessed += nomenclatures.length +
               datasets.length +
@@ -442,10 +446,12 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
         );
       }
 
-      // Récupérer la liste des modules téléchargés
-      final downloadedModules = await _modulesRepository.getModulesFromLocal();
-      final downloadedModuleCodes = downloadedModules
+      // Récupérer la liste des modules téléchargés (avec complements chargés)
+      final allModules = await _modulesRepository.getModulesFromLocal();
+      final downloadedModules = allModules
           .where((module) => module.downloaded == true)
+          .toList();
+      final downloadedModuleCodes = downloadedModules
           .map((module) => module.moduleCode)
           .whereType<String>()
           .toList();
@@ -480,28 +486,45 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
         final serverListIds = <int>{};
 
         // Récupérer les IDs de listes taxonomiques pour les modules téléchargés
-        final taxonomyListIds = <int>[];
-        for (final moduleCode in downloadedModuleCodes) {
+        // Utilise directement les modules déjà chargés (avec complements)
+        // et la logique unifiée qui extrait à la fois :
+        // - les IDs des champs taxonomy (id_list) dans la configuration
+        // - le id_list_taxonomy au niveau module
+        final taxonomyListIdsSet = <int>{};
+        for (final module in downloadedModules) {
+          final moduleCode = module.moduleCode ?? 'unknown';
           try {
-            final module = await _modulesRepository.getModuleByCode(moduleCode);
-            if (module != null) {
-              final taxonomyListId =
-                  await _modulesRepository.getModuleTaxonomyListId(module.id);
-              if (taxonomyListId != null) {
-                taxonomyListIds.add(taxonomyListId);
+            // Extraire tous les IDs depuis la configuration stockée du module
+            final config = module.complement?.configuration;
+            if (config != null) {
+              final configListIds =
+                  FormConfigParser.extractAllTaxonomyListIds(config);
+              if (configListIds.isNotEmpty) {
+                taxonomyListIdsSet.addAll(configListIds);
                 debugPrint(
-                    'DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: ID liste taxonomique $taxonomyListId trouvé');
-              } else {
-                debugPrint(
-                    'DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: Aucun ID liste taxonomique trouvé');
+                    'DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: ${configListIds.length} listes taxonomiques trouvées dans la configuration: $configListIds');
               }
+            }
+
+            // Fallback: colonne directe idListTaxonomy du complement
+            final complementListId = module.complement?.idListTaxonomy;
+            if (complementListId != null) {
+              taxonomyListIdsSet.add(complementListId);
+              debugPrint(
+                  'DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: ID liste taxonomique $complementListId depuis le complement');
+            }
+
+            if (config == null && complementListId == null) {
+              debugPrint(
+                  'DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: Aucun complement ou configuration trouvé');
             }
           } catch (e) {
             debugPrint(
-                'DownstreamSyncRepositoryImpl.syncTaxons - Erreur lors de la récupération de l\'ID liste taxonomique pour le module $moduleCode: $e');
+                'DownstreamSyncRepositoryImpl.syncTaxons - Erreur lors de la récupération des IDs listes taxonomiques pour le module $moduleCode: $e');
           }
         }
 
+        final taxonomyListIds = taxonomyListIdsSet.toList();
         debugPrint(
             'DownstreamSyncRepositoryImpl.syncTaxons - ${taxonomyListIds.length} listes taxonomiques uniques à synchroniser: $taxonomyListIds');
 

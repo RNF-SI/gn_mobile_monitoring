@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
@@ -126,13 +127,19 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
   /// Télécharge toutes les listes taxonomiques mentionnées dans la configuration
   ///
-  /// Analyse la configuration pour trouver les champs de type 'taxonomy' avec un 'id_list'
-  /// et télécharge les taxons correspondants
+  /// Utilise la méthode unifiée FormConfigParser.extractAllTaxonomyListIds
+  /// qui extrait à la fois les IDs des champs taxonomy (id_list) et
+  /// le id_list_taxonomy au niveau module.
   @override
   Future<void> downloadTaxonsFromConfig(Map<String, dynamic> config) async {
     try {
       // Extraire tous les IDs de listes taxonomiques de la configuration
-      final Set<int> taxonomyListIds = _extractTaxonomyListIds(config);
+      // (champs taxonomy avec id_list + id_list_taxonomy au niveau module)
+      final Set<int> taxonomyListIds =
+          FormConfigParser.extractAllTaxonomyListIds(config);
+
+      print(
+          'downloadTaxonsFromConfig - ${taxonomyListIds.length} listes taxonomiques trouvées: $taxonomyListIds');
 
       // Pour chaque liste taxonomique trouvée dans la configuration
       for (final listId in taxonomyListIds) {
@@ -143,7 +150,7 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
           // Télécharger les taxons associés à cette liste
           final taxons = await _taxonApi.getTaxonsByList(listId);
-          
+
           // Sauvegarder chaque taxon individuellement pour éviter les erreurs de contrainte
           for (final taxon in taxons) {
             try {
@@ -167,58 +174,5 @@ class TaxonRepositoryImpl implements TaxonRepository {
     } catch (e) {
       print('Error processing taxonomy lists from configuration: $e');
     }
-  }
-
-  /// Extrait tous les IDs de listes taxonomiques de la configuration
-  Set<int> _extractTaxonomyListIds(Map<String, dynamic> config) {
-    final Set<int> listIds = {};
-
-    void searchForTaxonomyFields(dynamic obj) {
-      if (obj is Map<String, dynamic>) {
-        // Si c'est un champ de taxonomie
-        if (obj['type_util'] == 'taxonomy' || obj['type_widget'] == 'taxonomy') {
-          int? listId;
-          
-          // Méthode 1: Chercher dans id_list
-          if (obj.containsKey('id_list')) {
-            dynamic rawListId = obj['id_list'];
-            
-            if (rawListId is int) {
-              listId = rawListId;
-            } else if (rawListId is String) {
-              listId = int.tryParse(rawListId);
-            }
-          }
-          
-          // Méthode 2: Extraire depuis le champ api
-          if (listId == null && obj.containsKey('api')) {
-            final api = obj['api'] as String?;
-            if (api != null && api.contains('allnamebylist/')) {
-              // Format attendu: "taxref/allnamebylist/100" -> retourne 100
-              final parts = api.split('/');
-              if (parts.length > 2 && parts[parts.length - 2] == 'allnamebylist') {
-                final listIdStr = parts.last;
-                listId = int.tryParse(listIdStr);
-              }
-            }
-          }
-          
-          if (listId != null) {
-            listIds.add(listId);
-            print('Found taxonomy list ID: $listId from field config');
-          }
-        }
-
-        // Recherche récursive dans tous les sous-objets
-        obj.values.forEach(searchForTaxonomyFields);
-      } else if (obj is List) {
-        // Recherche dans les tableaux
-        obj.forEach(searchForTaxonomyFields);
-      }
-    }
-
-    searchForTaxonomyFields(config);
-    print('Total taxonomy list IDs found: ${listIds.length} - IDs: $listIds');
-    return listIds;
   }
 }

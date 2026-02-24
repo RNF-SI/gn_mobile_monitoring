@@ -70,18 +70,6 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
         }
       }
 
-      // Synchroniser les taxons
-      if (syncTaxons) {
-        try {
-          results['taxons'] = await _repository.syncTaxons(token);
-        } catch (e) {
-          debugPrint('Erreur lors de la synchronisation des taxons: $e');
-          results['taxons'] = SyncResult.failure(
-            errorMessage: 'Erreur lors de la synchronisation des taxons: $e',
-          );
-        }
-      }
-
       // Synchroniser les observateurs
       if (syncObservers) {
         try {
@@ -95,7 +83,8 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
         }
       }
 
-      // Synchroniser les modules
+      // Synchroniser les modules AVANT les taxons
+      // (les taxons ont besoin des modules pour déterminer quelles listes télécharger)
       if (syncModules) {
         try {
           results['modules'] = await _repository.syncModules(token);
@@ -103,6 +92,18 @@ class IncrementalSyncAllUseCaseImpl implements IncrementalSyncAllUseCase {
           debugPrint('Erreur lors de la synchronisation des modules: $e');
           results['modules'] = SyncResult.failure(
             errorMessage: 'Erreur lors de la synchronisation des modules: $e',
+          );
+        }
+      }
+
+      // Synchroniser les taxons APRÈS les modules
+      if (syncTaxons) {
+        try {
+          results['taxons'] = await _repository.syncTaxons(token);
+        } catch (e) {
+          debugPrint('Erreur lors de la synchronisation des taxons: $e');
+          results['taxons'] = SyncResult.failure(
+            errorMessage: 'Erreur lors de la synchronisation des taxons: $e',
           );
         }
       }
