@@ -211,6 +211,82 @@ void main() {
         expect(result.hasChanges, isTrue);
         expect(result.fieldsToUpdate['count_max'], equals(5));
       });
+
+      test('should evaluate nomenclature condition when form value is a Map (NomenclatureSelectorWidget format)', () {
+        final nomenclatureCache = {
+          42: const Nomenclature(
+            id: 42,
+            idType: 10,
+            cdNomenclature: 'Co',
+            labelDefault: 'Compté',
+          ),
+        };
+
+        final processorWithCache = ChangeRuleProcessor(
+          nomenclatureByIdCache: nomenclatureCache,
+        );
+
+        // Le NomenclatureSelectorWidget stocke la valeur comme {'id': 42}
+        final formValues = {
+          'count_min': 5,
+          'count_max': 10,
+          'id_nomenclature_typ_denbr': {'id': 42},
+        };
+        final changeConfig = [
+          "({objForm, meta}) => {",
+          "if (!!objForm.value.count_min && meta.nomenclatures[objForm.value.id_nomenclature_typ_denbr].cd_nomenclature === 'Co' && objForm.value.count_max !== objForm.value.count_min) {",
+          "objForm.patchValue({count_max : objForm.value.count_min})",
+          "}",
+          "}",
+        ];
+
+        final result = processorWithCache.processChangeRules(
+          formValues: formValues,
+          changeConfig: changeConfig,
+          triggerFieldName: 'count_min',
+        );
+
+        expect(result.hasChanges, isTrue);
+        expect(result.fieldsToUpdate['count_max'], equals(5));
+      });
+
+      test('should evaluate nomenclature condition when form value is a String', () {
+        final nomenclatureCache = {
+          42: const Nomenclature(
+            id: 42,
+            idType: 10,
+            cdNomenclature: 'Co',
+            labelDefault: 'Compté',
+          ),
+        };
+
+        final processorWithCache = ChangeRuleProcessor(
+          nomenclatureByIdCache: nomenclatureCache,
+        );
+
+        // La valeur peut aussi être une String (depuis TextEditingController)
+        final formValues = {
+          'count_min': 5,
+          'count_max': 10,
+          'id_nomenclature_typ_denbr': '42',
+        };
+        final changeConfig = [
+          "({objForm, meta}) => {",
+          "if (!!objForm.value.count_min && meta.nomenclatures[objForm.value.id_nomenclature_typ_denbr].cd_nomenclature === 'Co' && objForm.value.count_max !== objForm.value.count_min) {",
+          "objForm.patchValue({count_max : objForm.value.count_min})",
+          "}",
+          "}",
+        ];
+
+        final result = processorWithCache.processChangeRules(
+          formValues: formValues,
+          changeConfig: changeConfig,
+          triggerFieldName: 'count_min',
+        );
+
+        expect(result.hasChanges, isTrue);
+        expect(result.fieldsToUpdate['count_max'], equals(5));
+      });
     });
 
     group('ChangeRuleResult', () {

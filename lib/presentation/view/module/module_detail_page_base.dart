@@ -17,6 +17,7 @@ import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
@@ -2005,6 +2006,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     return true;
   }
 
+  /// Vérifie si les sites sont éditables sur le terrain
+  bool _isSiteEditableOnField(ObjectConfig? siteConfig) {
+    if (siteConfig == null) return false;
+
+    if (siteConfig.isEditableOnField != null) {
+      return siteConfig.isEditableOnField!;
+    }
+
+    final specific = siteConfig.specific;
+    if (specific != null && specific.containsKey('is_editable_on_field')) {
+      final value = specific['is_editable_on_field'];
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true';
+      if (value is num) return value != 0;
+      return false;
+    }
+
+    // Par défaut, éditable
+    return true;
+  }
+
   /// Charge la position GPS de l'utilisateur
   Future<void> _loadUserLocation() async {
     try {
@@ -2481,6 +2503,37 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       ),
     );
 
+    // Bouton d'ajout de site si éditable
+    Widget? addButton;
+    final isEditable = _isSiteEditableOnField(siteConfig);
+    if (isEditable && siteConfig != null) {
+      final customConfig = module.complement?.configuration?.custom;
+      final currentModuleInfo = _updatedModule != null
+          ? widget.moduleInfo.copyWith(module: _updatedModule!)
+          : widget.moduleInfo;
+      addButton = IconButton(
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SiteFormPage(
+                siteConfig: siteConfig,
+                customConfig: customConfig,
+                moduleId: module.id,
+                moduleInfo: currentModuleInfo,
+              ),
+            ),
+          );
+          // Recharger les sites après retour du formulaire
+          if (mounted) {
+            loadCompleteModule();
+          }
+        },
+        icon: const Icon(Icons.add_circle),
+        tooltip: 'Ajouter un ${siteConfig.label ?? 'site'}',
+      );
+    }
+
     // Utiliser notre méthode factorisée buildDataTable
     return buildDataTable(
       columns: columns,
@@ -2489,6 +2542,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       searchHint: "Rechercher un site",
       searchController: _searchController,
       onSearchChanged: _handleSearch,
+      headerActions: addButton,
       emptyMessage: emptyMessage,
       isLoading: _isLoadingSites,
     );

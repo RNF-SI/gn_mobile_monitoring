@@ -741,7 +741,24 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
           final formValues = context['value'] as Map<String, dynamic>?;
           if (formValues == null) return "'_UNKNOWN_'";
 
-          final nomenclatureId = formValues[fieldName];
+          final rawNomenclatureId = formValues[fieldName];
+          if (rawNomenclatureId == null) return "'_NULL_'";
+
+          // Extraire l'ID entier : la valeur peut être un int, une String,
+          // ou une Map {'id': int} (format du NomenclatureSelectorWidget)
+          int? nomenclatureId;
+          if (rawNomenclatureId is int) {
+            nomenclatureId = rawNomenclatureId;
+          } else if (rawNomenclatureId is String) {
+            nomenclatureId = int.tryParse(rawNomenclatureId);
+          } else if (rawNomenclatureId is Map) {
+            final idValue = rawNomenclatureId['id'];
+            if (idValue is int) {
+              nomenclatureId = idValue;
+            } else if (idValue is String) {
+              nomenclatureId = int.tryParse(idValue);
+            }
+          }
           if (nomenclatureId == null) return "'_NULL_'";
 
           final nomenclature = nomenclatureCache[nomenclatureId];
