@@ -99,6 +99,24 @@ class TaxonDatabaseImpl implements TaxonDatabase {
   }
 
   @override
+  Future<Set<int>> getAllTaxonCdNoms() async {
+    final db = await _database;
+    return db.taxonDao.getAllTaxonCdNoms();
+  }
+
+  @override
+  Future<Set<int>> getCdNomsByListId(int idListe) async {
+    final db = await _database;
+    return db.taxonDao.getCdNomsByListId(idListe);
+  }
+
+  @override
+  Future<Set<int>> getAllListIds() async {
+    final db = await _database;
+    return db.taxonDao.getAllListIds();
+  }
+
+  @override
   Future<SyncResult> saveTaxonsWithSync(
       List<Map<String, dynamic>> taxons) async {
     final db = await _database;

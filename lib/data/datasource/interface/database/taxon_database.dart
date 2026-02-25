@@ -24,6 +24,11 @@ abstract class TaxonDatabase {
   Future<void> saveTaxonsToList(int idListe, List<int> cdNoms);
   Future<void> clearCorTaxonListe();
 
+  // Lightweight ID-only queries for sync
+  Future<Set<int>> getAllTaxonCdNoms();
+  Future<Set<int>> getCdNomsByListId(int idListe);
+  Future<Set<int>> getAllListIds();
+
   // Methods added for synchronization
 
   /// Sauvegarde les taxons avec gestion des résultats de synchronisation

@@ -1,4 +1,3 @@
-import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 
@@ -7,12 +6,10 @@ abstract class TaxonApi {
   Future<TaxonList> getTaxonList(int idListe);
   Future<Taxon> getTaxonByCdNom(int cdNom);
 
-  // Methods added for synchronization
-
-  /// Récupère les taxons modifiés depuis la dernière synchronisation
-  Future<SyncResult> syncTaxonsFromAPI(
-      String token, List<String> downloadedModuleCodes, List<int> taxonomyListIds,
-      {DateTime? lastSync});
+  /// Retourne une page de taxons pour une liste donnée.
+  /// hasMore = result.length >= limit.
+  Future<List<Taxon>> fetchTaxonPage(int idListe,
+      {required int page, int limit = 5000});
 
   /// Recherche des taxons correspondant à un terme
   Future<List<Taxon>> searchTaxons(String token, String searchTerm,
