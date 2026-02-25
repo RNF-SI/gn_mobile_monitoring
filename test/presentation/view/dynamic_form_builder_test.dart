@@ -643,6 +643,70 @@ void main() {
       expect(find.text('Aucun dataset disponible pour ce module'), findsOneWidget);
     });
   });
+
+  group('DynamicFormBuilder - Hidden Fields with Change Rules', () {
+    testWidgets('getFormValues should include hidden fields set by change rules',
+        (WidgetTester tester) async {
+      final container = createContainer();
+      final formKey = GlobalKey<DynamicFormBuilderState>();
+
+      // Configuration avec un champ hidden (comme base_site_name dans suivi_phytosocio)
+      final objectConfig = ObjectConfig(
+        label: 'Site Form',
+        generic: {
+          'num_transect': GenericFieldConfig(
+            attributLabel: 'Numéro transect',
+            typeWidget: 'number',
+          ),
+        },
+        specific: {
+          'base_site_name': {
+            'attribut_label': 'Nom du site',
+            'type_widget': 'text',
+            'hidden': true,
+          },
+        },
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DynamicFormBuilder(
+                  key: formKey,
+                  objectConfig: objectConfig,
+                  customConfig: testCustomConfig,
+                  initialValues: const {'num_transect': 1},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Vérifier que base_site_name n'est PAS dans getFormValues() initialement
+      // (champ hidden sans valeur calculée)
+      final valuesBefore = formKey.currentState!.getFormValues();
+      expect(valuesBefore.containsKey('base_site_name'), isFalse);
+
+      // Simuler une règle de changement qui calcule base_site_name
+      formKey.currentState!.simulateChangeRuleResult('base_site_name', 'T1Q1');
+      await tester.pump();
+
+      // Vérifier que base_site_name EST maintenant dans getFormValues()
+      final valuesAfter = formKey.currentState!.getFormValues();
+      expect(valuesAfter.containsKey('base_site_name'), isTrue);
+      expect(valuesAfter['base_site_name'], 'T1Q1');
+
+      // Vérifier que les champs visibles sont aussi présents
+      expect(valuesAfter.containsKey('num_transect'), isTrue);
+    });
+  });
 }
 
 // Implémentation de test pour FormDataProcessor qui ne fait rien de complexe

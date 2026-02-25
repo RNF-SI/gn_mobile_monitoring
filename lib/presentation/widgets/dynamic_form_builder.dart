@@ -470,7 +470,17 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         }
       }
     });
-    
+
+    // Inclure les champs calculés par les règles de changement qui ne sont pas dans le schema
+    // (ex: base_site_name hidden: true mais calculé par les change rules)
+    for (final fieldName in _fieldsSetByChangeRules) {
+      if (!filteredValues.containsKey(fieldName) &&
+          _formValues.containsKey(fieldName) &&
+          _formValues[fieldName] != null) {
+        filteredValues[fieldName] = _formValues[fieldName];
+      }
+    }
+
     return filteredValues;
   }
 
@@ -479,6 +489,16 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   @visibleForTesting
   Map<String, dynamic> getAllFormValues() {
     return Map<String, dynamic>.from(_formValues);
+  }
+
+  /// Simule le résultat d'une règle de changement pour les tests
+  /// Ajoute une valeur dans _formValues et la marque comme définie par une règle de changement
+  @visibleForTesting
+  void simulateChangeRuleResult(String fieldName, dynamic value) {
+    setState(() {
+      _formValues[fieldName] = value;
+      _fieldsSetByChangeRules.add(fieldName);
+    });
   }
 
   // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité

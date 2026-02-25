@@ -311,9 +311,13 @@ class SiteFormViewModel extends StateNotifier<void> {
   }) {
     final now = DateTime.now();
 
+    // Filet de sécurité : générer un nom de site si null
+    final siteName = formData['base_site_name'] as String?;
+    final fallbackName = siteName ?? 'Site-${now.millisecondsSinceEpoch}';
+
     return BaseSite(
       idBaseSite: 0, // Sera remplacé par la base de données (autoIncrement)
-      baseSiteName: formData['base_site_name'] as String?,
+      baseSiteName: fallbackName,
       baseSiteCode: formData['base_site_code'] as String?,
       baseSiteDescription: formData['base_site_description'] as String?,
       firstUseDate: formData['first_use_date'] != null
