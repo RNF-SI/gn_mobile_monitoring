@@ -1312,6 +1312,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           DropdownButtonFormField<String>(
+            key: ValueKey('select_${fieldName}_${_formValues[fieldName]}'),
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

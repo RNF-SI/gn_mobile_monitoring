@@ -104,6 +104,7 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
         }
 
         return DropdownButtonFormField<String>(
+          key: ValueKey('nomenclature_${typeCode}_$cdNomenclature'),
           decoration: InputDecoration(
             labelText: label,
             border: const OutlineInputBorder(),
