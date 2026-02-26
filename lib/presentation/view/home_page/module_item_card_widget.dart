@@ -12,6 +12,7 @@ class ModuleItemCardWidget extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
+      key: Key('module-card-${moduleInfo.module.moduleCode}'),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       elevation: 4,
       child: Padding(

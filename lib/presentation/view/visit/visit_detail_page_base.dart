@@ -575,6 +575,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
     // Bouton d'ajout d'observation
     Widget addObservationButton = ElevatedButton.icon(
+      key: const Key('add-observation-button'),
       onPressed: () {
         _showAddObservationDialog(fullVisit.idBaseVisit, observationConfig);
       },
@@ -628,14 +629,17 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             // Ajouter les données spécifiques
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
-              if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
-                if (obsMap["cd_nom"]["nom_vern"] == null) {
-                  obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
+              final cdNomData = observation.data!["cd_nom"];
+              if (cdNomData is Map) {
+                if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+                  if (cdNomData["nom_vern"] == null) {
+                    obsMap["cd_nom"] = cdNomData["lb_nom"];
+                  } else {
+                    obsMap["cd_nom"] = cdNomData["nom_vern"];
+                  }
                 } else {
-                  obsMap["cd_nom"] = observation.data!["cd_nom"]["nom_vern"];
+                  obsMap["cd_nom"] = cdNomData["lb_nom"];
                 }
-              } else {
-                obsMap["cd_nom"] = observation.data!["cd_nom"]["lb_nom"];
               }
             }
 

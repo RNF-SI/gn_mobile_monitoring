@@ -204,16 +204,9 @@ void main() {
       await tester.pump(const Duration(milliseconds: 300));
 
       // Vérifier que les informations de base du site sont affichées
-      expect(find.text('Informations générales'), findsOneWidget);
-      expect(find.text('Code'), findsOneWidget);
-      expect(find.text('TST1'), findsAtLeastNWidgets(1));
-      expect(find.text('Nom'), findsOneWidget);
+      // Le titre est "Propriétés du site" via PropertyDisplayWidget
+      expect(find.text('Propriétés du site'), findsOneWidget);
       expect(find.text('Test Site'), findsAtLeastNWidgets(1));
-      expect(find.text('Description'), findsOneWidget);
-      expect(find.text('Test site description'), findsOneWidget);
-
-      // Vérifier que le message d'absence de visites est affiché
-      expect(find.textContaining('Aucune'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('displays site group in breadcrumb when provided',

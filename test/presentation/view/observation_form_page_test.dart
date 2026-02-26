@@ -53,7 +53,7 @@ void main() {
   setUp(() {
     testObservationConfig = ObjectConfig(
       label: 'Observation',
-      displayProperties: ['cd_nom', 'comments'],
+      displayProperties: ['cd_nom', 'comments', 'test_field'],
       generic: {
         'cd_nom': GenericFieldConfig(
           attributLabel: 'Cd Nom',

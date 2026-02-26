@@ -1,0 +1,32 @@
+[
+  {
+    "cd_nom": 67111,
+    "cd_ref": 67111,
+    "nom_complet": "Parus major Linnaeus, 1758",
+    "nom_vern": "Mésange charbonnière",
+    "lb_nom": "Parus major",
+    "id_rang": "ES",
+    "regne": "Animalia",
+    "group2_inpn": "Oiseaux"
+  },
+  {
+    "cd_nom": 3120,
+    "cd_ref": 3120,
+    "nom_complet": "Bufo bufo (Linnaeus, 1758)",
+    "nom_vern": "Crapaud commun",
+    "lb_nom": "Bufo bufo",
+    "id_rang": "ES",
+    "regne": "Animalia",
+    "group2_inpn": "Amphibiens"
+  },
+  {
+    "cd_nom": 4525,
+    "cd_ref": 4525,
+    "nom_complet": "Salamandra salamandra (Linnaeus, 1758)",
+    "nom_vern": "Salamandre tachetée",
+    "lb_nom": "Salamandra salamandra",
+    "id_rang": "ES",
+    "regne": "Animalia",
+    "group2_inpn": "Amphibiens"
+  }
+]

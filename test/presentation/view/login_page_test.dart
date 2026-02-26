@@ -58,7 +58,7 @@ void main() {
     // Assert - find form fields and button (now 3 TextFormFields including API URL)
     expect(find.byType(TextFormField), findsNWidgets(3));
     expect(find.byType(MaterialButton), findsOneWidget);
-    expect(find.text('Log in'), findsOneWidget);
+    expect(find.text('Se connecter'), findsOneWidget);
     
     // Check for labels in the TextFormFields using simpler assertions
     expect(find.text('Identifiant'), findsOneWidget);

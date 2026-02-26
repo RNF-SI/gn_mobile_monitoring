@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -113,23 +114,29 @@ void main() {
       ));
     });
 
-    testWidgets('buildPropertiesWidget should display property cards correctly', 
+    testWidgets('buildPropertiesWidget should display property cards correctly',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return Scaffold(
-                body: testState.buildPropertiesWidget(),
-              );
-            },
+        ProviderScope(
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) {
+                return Scaffold(
+                  body: testState.buildPropertiesWidget(),
+                );
+              },
+            ),
           ),
         ),
       );
 
+      // Attendre le FutureBuilder dans PropertyDisplayWidget
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
       // Vérifier que le titre est affiché
       expect(find.text('Propriétés'), findsOneWidget);
-      
+
       // Vérifier que les propriétés sont affichées
       expect(find.text('Nom'), findsOneWidget);
       expect(find.text('Test Object'), findsOneWidget);

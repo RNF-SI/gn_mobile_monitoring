@@ -157,6 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: TextFormField(
+                              key: const Key('login-identifiant-field'),
                               controller: _identifiant,
                               keyboardType: TextInputType.emailAddress,
                               autovalidateMode: _hasSubmitted
@@ -178,6 +179,7 @@ class _LoginPageState extends State<LoginPage> {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: TextFormField(
+                              key: const Key('login-password-field'),
                               controller: _password,
                               obscureText: true,
                               autovalidateMode: _hasSubmitted
@@ -224,6 +226,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           const SizedBox(height: 20), // Space before the button
                           MaterialButton(
+                            key: const Key('login-button'),
                             onPressed: onPressedFunction,
                             color: AppColors.primary,
                             textColor: Colors.white,

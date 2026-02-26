@@ -1,0 +1,66 @@
+{
+  "module": {
+    "label": "Module de test",
+    "children_types": ["site"],
+    "display_properties": ["module_label", "module_desc"],
+    "display_list": ["module_label"]
+  },
+  "site": {
+    "label": "Site",
+    "label_list": "Sites",
+    "generic": {
+      "base_site_name": {
+        "type_widget": "text",
+        "attribut_label": "Nom du site",
+        "required": true
+      },
+      "base_site_code": {
+        "type_widget": "text",
+        "attribut_label": "Code du site",
+        "required": true
+      }
+    },
+    "specific": {},
+    "display_properties": ["base_site_name", "base_site_code"],
+    "display_list": ["base_site_name", "base_site_code"]
+  },
+  "visit": {
+    "label": "Visite",
+    "label_list": "Visites",
+    "generic": {
+      "visit_date_min": {
+        "type_widget": "date",
+        "attribut_label": "Date",
+        "required": true
+      },
+      "comments": {
+        "type_widget": "textarea",
+        "attribut_label": "Commentaires",
+        "required": false
+      }
+    },
+    "specific": {},
+    "display_properties": ["visit_date_min", "comments"],
+    "display_list": ["visit_date_min", "comments"]
+  },
+  "observation": {
+    "label": "Observation",
+    "label_list": "Observations",
+    "generic": {
+      "cd_nom": {
+        "type_widget": "taxonomy",
+        "attribut_label": "Taxon",
+        "required": true
+      },
+      "comments": {
+        "type_widget": "textarea",
+        "attribut_label": "Commentaires",
+        "required": false
+      }
+    },
+    "specific": {},
+    "display_properties": ["cd_nom", "comments"],
+    "display_list": ["cd_nom", "comments"]
+  },
+  "custom": {}
+}

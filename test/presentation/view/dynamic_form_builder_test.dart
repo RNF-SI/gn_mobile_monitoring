@@ -706,6 +706,221 @@ void main() {
       // Vérifier que les champs visibles sont aussi présents
       expect(valuesAfter.containsKey('num_transect'), isTrue);
     });
+
+    testWidgets('hidden fields are excluded from schema and only included via change rules',
+        (WidgetTester tester) async {
+      final container = createContainer();
+      final formKey = GlobalKey<DynamicFormBuilderState>();
+
+      // Les champs hidden: true sont exclus du schéma par FormConfigParser.
+      // Ils ne sont inclus dans getFormValues() que s'ils sont définis par une change rule.
+      final objectConfig = ObjectConfig(
+        label: 'Hidden Field Form',
+        generic: {
+          'visible_field': GenericFieldConfig(
+            attributLabel: 'Visible Field',
+            typeWidget: 'text',
+          ),
+          'hidden_field': GenericFieldConfig(
+            attributLabel: 'Hidden Field',
+            typeWidget: 'text',
+            hidden: true,
+          ),
+        },
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DynamicFormBuilder(
+                  key: formKey,
+                  objectConfig: objectConfig,
+                  customConfig: testCustomConfig,
+                  initialValues: const {
+                    'visible_field': 'visible',
+                    'hidden_field': 'should_not_appear',
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Le champ hidden est exclu du schéma, donc pas dans getFormValues
+      final valuesBefore = formKey.currentState!.getFormValues();
+      expect(valuesBefore.containsKey('hidden_field'), isFalse);
+      expect(valuesBefore['visible_field'], 'visible');
+
+      // Mais via une change rule, le champ hidden peut être inclus
+      formKey.currentState!.simulateChangeRuleResult('hidden_field', 'computed_value');
+      await tester.pump();
+
+      final valuesAfter = formKey.currentState!.getFormValues();
+      expect(valuesAfter['hidden_field'], 'computed_value');
+    });
+
+    testWidgets('getFormValues should exclude hidden non-required fields without change rules',
+        (WidgetTester tester) async {
+      final container = createContainer();
+      final formKey = GlobalKey<DynamicFormBuilderState>();
+
+      // Configuration avec un champ hidden + non-required (doit être exclu)
+      final objectConfig = ObjectConfig(
+        label: 'Hidden Non-Required Form',
+        generic: {
+          'visible_field': GenericFieldConfig(
+            attributLabel: 'Visible Field',
+            typeWidget: 'text',
+          ),
+        },
+        specific: {
+          'hidden_optional': {
+            'attribut_label': 'Hidden Optional',
+            'type_widget': 'text',
+            'hidden': true,
+            'required': false,
+          },
+        },
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DynamicFormBuilder(
+                  key: formKey,
+                  objectConfig: objectConfig,
+                  customConfig: testCustomConfig,
+                  initialValues: const {
+                    'visible_field': 'visible',
+                    'hidden_optional': 'should_be_excluded',
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Le champ hidden + non-required + pas de change rule ne doit PAS être dans getFormValues
+      final values = formKey.currentState!.getFormValues();
+      expect(values.containsKey('hidden_optional'), isFalse);
+      expect(values['visible_field'], 'visible');
+    });
+
+    testWidgets('getFormValues should include change rule fields not in schema',
+        (WidgetTester tester) async {
+      final container = createContainer();
+      final formKey = GlobalKey<DynamicFormBuilderState>();
+
+      // Configuration minimale - le champ calculé n'est pas dans le schema
+      final objectConfig = ObjectConfig(
+        label: 'Extra Field Form',
+        generic: {
+          'input_field': GenericFieldConfig(
+            attributLabel: 'Input Field',
+            typeWidget: 'text',
+          ),
+        },
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DynamicFormBuilder(
+                  key: formKey,
+                  objectConfig: objectConfig,
+                  customConfig: testCustomConfig,
+                  initialValues: const {'input_field': 'test'},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Simuler une règle de changement qui crée un champ non présent dans le schema
+      formKey.currentState!.simulateChangeRuleResult(
+          'computed_field', 'auto_generated_value');
+      await tester.pump();
+
+      // Le champ calculé par change rule doit être inclus même s'il n'est pas dans le schema
+      final values = formKey.currentState!.getFormValues();
+      expect(values['computed_field'], 'auto_generated_value');
+      expect(values['input_field'], 'test');
+    });
+
+    testWidgets('getFormValues should handle multiple change rule updates',
+        (WidgetTester tester) async {
+      final container = createContainer();
+      final formKey = GlobalKey<DynamicFormBuilderState>();
+
+      final objectConfig = ObjectConfig(
+        label: 'Multi Update Form',
+        generic: {
+          'presence': GenericFieldConfig(
+            attributLabel: 'Présence',
+            typeWidget: 'text',
+          ),
+        },
+        specific: {
+          'cd_nom': {
+            'attribut_label': 'Taxon',
+            'type_widget': 'text',
+            'hidden': true,
+          },
+        },
+      );
+
+      await tester.pumpWidget(
+        UncontrolledProviderScope(
+          container: container,
+          child: MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: DynamicFormBuilder(
+                  key: formKey,
+                  objectConfig: objectConfig,
+                  customConfig: testCustomConfig,
+                  initialValues: const {'presence': 'Oui'},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Première mise à jour par change rule
+      formKey.currentState!.simulateChangeRuleResult('cd_nom', 100);
+      await tester.pump();
+      expect(formKey.currentState!.getFormValues()['cd_nom'], 100);
+
+      // Deuxième mise à jour par change rule (valeur modifiée)
+      formKey.currentState!.simulateChangeRuleResult('cd_nom', 200);
+      await tester.pump();
+      expect(formKey.currentState!.getFormValues()['cd_nom'], 200);
+    });
   });
 }
 

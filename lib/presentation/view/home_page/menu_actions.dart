@@ -54,6 +54,7 @@ class MenuActions extends ConsumerWidget {
   PopupMenuItem<String> _buildMenuItem(
       IconData icon, String text, String value) {
     return PopupMenuItem<String>(
+      key: Key('menu-$value'),
       value: value,
       child: ListTile(
         leading: Icon(icon, color: Colors.black),

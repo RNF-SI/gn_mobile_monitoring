@@ -1,0 +1,28 @@
+[
+  {
+    "id_base_site": 1,
+    "id_module": 101,
+    "base_site_name": "Site de test Alpha",
+    "base_site_code": "SITE_ALPHA",
+    "base_site_description": "Premier site de test",
+    "first_use_date": "2024-01-15",
+    "last_visit": "2024-06-15",
+    "nb_visits": 3,
+    "altitude_min": 100,
+    "altitude_max": 200,
+    "geom": "{\"type\": \"Point\", \"coordinates\": [5.0, 45.0]}"
+  },
+  {
+    "id_base_site": 2,
+    "id_module": 101,
+    "base_site_name": "Site de test Beta",
+    "base_site_code": "SITE_BETA",
+    "base_site_description": "Deuxième site de test",
+    "first_use_date": "2024-02-01",
+    "last_visit": null,
+    "nb_visits": 0,
+    "altitude_min": 300,
+    "altitude_max": 400,
+    "geom": "{\"type\": \"Point\", \"coordinates\": [5.1, 45.1]}"
+  }
+]

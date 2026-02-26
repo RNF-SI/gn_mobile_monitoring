@@ -204,11 +204,13 @@ void main() {
           'taxon_field': GenericFieldConfig(
             attributLabel: 'Taxon',
             typeUtil: 'taxonomy',
+            typeWidget: 'taxonomy',
             default_: {'cd_nom': 12345, 'nom_complet': 'Pinus sylvestris'},
           ),
           'nomenclature_field': GenericFieldConfig(
             attributLabel: 'Nomenclature',
             typeUtil: 'nomenclature',
+            typeWidget: 'nomenclature',
             api: 'nomenclatures/nomenclature/STADE_VIE',
           ),
         },

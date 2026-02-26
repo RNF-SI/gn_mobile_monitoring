@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/data/entity/module_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/module_entity.dart';
 
 class ModulesApiImpl extends BaseApi implements ModulesApi {
-  ModulesApiImpl();
+  ModulesApiImpl({super.dio});
 
   /// Checks if a module has sufficient CRUVED permissions
   /// Returns true if any of the CRUVED values is greater than 0

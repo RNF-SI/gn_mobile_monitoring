@@ -7,6 +7,8 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/authenticatio
 import 'package:gn_mobile_monitoring/data/entity/user_entity.dart';
 
 class AuthenticationApiImpl extends BaseApi implements AuthenticationApi {
+  AuthenticationApiImpl({super.dio});
+
   @override
   Future<UserEntity> login(String identifiant, String password) async {
     final options = {

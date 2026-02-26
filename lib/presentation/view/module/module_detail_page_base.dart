@@ -989,6 +989,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             Widget? addButton;
             if (isEditable) {
               addButton = IconButton(
+                key: const Key('create-site-group-button'),
                 onPressed: () {
                   if (sitesGroupConfig != null) {
                     Navigator.push(
@@ -2512,6 +2513,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           ? widget.moduleInfo.copyWith(module: _updatedModule!)
           : widget.moduleInfo;
       addButton = IconButton(
+        key: const Key('create-site-button'),
         onPressed: () async {
           await Navigator.push(
             context,

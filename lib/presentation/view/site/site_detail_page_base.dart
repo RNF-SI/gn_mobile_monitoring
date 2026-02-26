@@ -245,6 +245,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       actions: [
         if (canEdit)
           IconButton(
+            key: const Key('edit-site-button'),
             icon: const Icon(Icons.edit),
             tooltip: 'Modifier le site',
             onPressed: () {
@@ -367,6 +368,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     // Bouton d'ajout de visite
     Widget? addVisitButton = visitConfig != null
         ? ElevatedButton.icon(
+            key: const Key('create-visit-button'),
             onPressed: () {
               _showAddVisitForm(visitConfig);
             },

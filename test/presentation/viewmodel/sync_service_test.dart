@@ -12,6 +12,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart'
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -30,9 +31,15 @@ class MockRef extends Mock implements WidgetRef {}
 // Mocks pour NomenclatureService
 class MockNomenclatureService extends StateNotifier<State<Map<String, List<Nomenclature>>>> with Mock implements NomenclatureService {
   MockNomenclatureService() : super(const State.init());
-  
+
   @override
   void clearCache() {
+    // Stub implementation
+  }
+}
+class MockDatasetService extends Mock implements DatasetService {
+  @override
+  void clearAllCache() {
     // Stub implementation
   }
 }
@@ -74,11 +81,25 @@ void main() {
     when(() => mockUpdateLastSyncDateUseCase.execute(any(), any())).thenAnswer((_) async => {});
 
     // Configurer le mock SyncRepository
+    when(() => mockSyncRepository.syncSiteGroupsToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
+      itemsProcessed: 0,
+      itemsAdded: 0,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
+      itemsSkipped: 0,
+    ));
+    when(() => mockSyncRepository.syncSitesToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
+      itemsProcessed: 0,
+      itemsAdded: 0,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
+      itemsSkipped: 0,
+    ));
     when(() => mockSyncRepository.syncVisitsToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
       itemsProcessed: 1,
-      itemsAdded: 1, 
-      itemsUpdated: 0, 
-      itemsDeleted: 0, 
+      itemsAdded: 1,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
       itemsSkipped: 0
     ));
 
@@ -204,9 +225,11 @@ void main() {
 
   group('SyncService syncToServer tests', () {
     test('should not start sync if already syncing', () async {
-      // Configurer mockRef pour retourner le mockNomenclatureService
+      // Configurer mockRef pour retourner les providers nécessaires
       when(() => mockRef.read(nomenclatureServiceProvider.notifier))
           .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
       when(() => mockRef.read(cacheVersionProvider.notifier))
           .thenReturn(StateController<int>(0));
       when(() => mockRef.invalidate(any())).thenReturn(null);
@@ -232,6 +255,8 @@ void main() {
       // Configurer mockRef pour retourner les providers nécessaires
       when(() => mockRef.read(nomenclatureServiceProvider.notifier))
           .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
       when(() => mockRef.read(cacheVersionProvider.notifier))
           .thenReturn(StateController<int>(0));
       when(() => mockRef.invalidate(any())).thenReturn(null);
@@ -256,15 +281,24 @@ void main() {
     });
 
     test('should show failure state when sync fails', () async {
-      // Arrange
-      when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
+      // Configurer mockRef pour retourner les providers nécessaires
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
+      // Arrange - faire échouer syncSiteGroupsToServer pour déclencher le failure
+      when(() => mockSyncRepository.syncSiteGroupsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.failure(
                 errorMessage: 'Test error message',
               ));
-      
+
       // Act
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
-      
+
       // Assert
       expect(result.state, equals(SyncState.failure));
       expect(result.errorMessage, contains('Test error message'));
@@ -288,7 +322,7 @@ void main() {
       final mockNomenclatureService = MockNomenclatureService();
 
       when(() => mockRef.read(nomenclatureServiceProvider.notifier)).thenReturn(mockNomenclatureService);
-      // clearCache() est déjà implémentée dans MockNomenclatureService, pas besoin de mocker
+      when(() => mockRef.read(datasetServiceProvider)).thenReturn(MockDatasetService());
 
       // Mock cacheVersionProvider.notifier pour éviter l'erreur type 'Null' is not a subtype of type 'StateController<int>'
       when(() => mockRef.read(cacheVersionProvider.notifier)).thenReturn(StateController<int>(0));

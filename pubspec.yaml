@@ -64,6 +64,8 @@ dependencies:
   # Ajout pour le système de rapports d'erreurs
 
 dev_dependencies:
+  integration_test:
+    sdk: flutter
   flutter_test:
     sdk: flutter
   drift_dev: ^2.21.0

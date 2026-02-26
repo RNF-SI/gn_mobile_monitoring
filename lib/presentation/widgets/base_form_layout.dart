@@ -109,11 +109,13 @@ class BaseFormLayout extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           TextButton(
+            key: const Key('form-cancel-button'),
             onPressed: isSaving ? null : onCancel,
             child: const Text('Annuler'),
           ),
           const SizedBox(width: 16),
           ElevatedButton(
+            key: const Key('form-save-button'),
             onPressed: (isSaving || onSave == null) ? null : onSave,
             child: isSaving
                 ? const SizedBox(

@@ -275,7 +275,9 @@ void main() {
           context,
         );
 
-        expect(result, null);
+        // L'expression "true" est un littéral qui s'évalue à true
+        // indépendamment du contexte
+        expect(result, true);
       });
     });
   });
