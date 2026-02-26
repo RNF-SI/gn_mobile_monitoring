@@ -18,8 +18,9 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 class SitesApiImpl extends BaseApi implements SitesApi {
   final Connectivity _connectivity;
 
-  SitesApiImpl({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity();
+  SitesApiImpl({Connectivity? connectivity, Dio? dio})
+      : _connectivity = connectivity ?? Connectivity(),
+        super(dio: dio);
 
   @override
   Dio get dio => createDio(

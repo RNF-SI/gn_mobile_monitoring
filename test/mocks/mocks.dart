@@ -9,8 +9,17 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
@@ -66,7 +75,28 @@ class MockDatasetsDatabase extends Mock implements DatasetsDatabase {}
 
 class MockSitesDatabase extends Mock implements SitesDatabase {}
 
+class MockVisitesDatabase extends Mock implements VisitesDatabase {}
+
+class MockObservationsDatabase extends Mock implements ObservationsDatabase {}
+
+class MockTaxonDatabase extends Mock implements TaxonDatabase {}
+
+class MockTaxonApi extends Mock implements TaxonApi {}
+
 // Domain layer mocks - Repositories
+class MockDownstreamSyncRepository extends Mock
+    implements DownstreamSyncRepository {}
+
+class MockUpstreamSyncRepository extends Mock
+    implements UpstreamSyncRepository {}
+
+class MockVisitRepository extends Mock implements VisitRepository {}
+
+class MockObservationsRepository extends Mock
+    implements ObservationsRepository {}
+
+class MockObservationDetailsRepository extends Mock
+    implements ObservationDetailsRepository {}
 class MockAuthenticationRepository extends Mock
     implements AuthenticationRepository {}
 

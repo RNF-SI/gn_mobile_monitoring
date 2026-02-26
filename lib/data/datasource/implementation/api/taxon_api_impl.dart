@@ -8,7 +8,7 @@ import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 
 class TaxonApiImpl extends BaseApi implements TaxonApi {
-  TaxonApiImpl();
+  TaxonApiImpl({Dio? dio}) : super(dio: dio);
 
   @override
   Dio get dio => createDio(
