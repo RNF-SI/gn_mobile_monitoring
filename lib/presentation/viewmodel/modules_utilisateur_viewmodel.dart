@@ -77,6 +77,15 @@ class UserModulesViewModel
         );
       }).toList();
 
+      // Trier les modules : téléchargés en premier, puis à télécharger
+      moduleInfos.sort((a, b) {
+        final aDownloaded =
+            a.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
+        final bDownloaded =
+            b.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
+        return aDownloaded.compareTo(bDownloaded);
+      });
+
       state =
           custom_async_state.State.success(ModuleInfoList(values: moduleInfos));
     } catch (e) {
