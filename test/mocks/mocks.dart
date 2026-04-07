@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/authenticatio
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
@@ -63,6 +64,8 @@ class MockGlobalApi extends Mock implements GlobalApi {}
 class MockModulesApi extends Mock implements ModulesApi {}
 
 class MockSitesApi extends Mock implements SitesApi {}
+
+class MockVersionApi extends Mock implements VersionApi {}
 
 // Data layer mocks - Database
 class MockGlobalDatabase extends Mock implements GlobalDatabase {}

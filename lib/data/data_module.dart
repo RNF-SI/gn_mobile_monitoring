@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observat
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/version_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/dataset_database_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/global_database_impl.dart';
@@ -23,6 +24,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_d
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
@@ -128,6 +130,8 @@ final taxonRepositoryProvider =
           ref.watch(moduleDatabaseProvider),
         ));
 
+final versionApiProvider = Provider<VersionApi>((_) => VersionApiImpl());
+
 final visitsApiProvider = Provider<VisitsApi>((_) => VisitsApiImpl());
 
 final observationsApiProvider =
@@ -147,4 +151,5 @@ final modulesRepositoryProvider =
           ref.watch(taxonDatabaseProvider),
           ref.watch(taxonRepositoryProvider),
           ref.watch(sitesRepositoryProvider),
+          ref.watch(versionApiProvider),
         ));

@@ -33,6 +33,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(
       String moduleCode, String token) async {
     try {
+      // @since monitoring 0.1.0
       // Fetch sites for the module using the secure endpoint with depth=2
       final moduleResponse = await dio.get(
         '/monitorings/object/$moduleCode/module',
@@ -333,6 +334,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
   Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsForModule(
       String moduleCode, String token) async {
     try {
+      // @since monitoring 1.2.0
       final response = await dio.get(
         '/monitorings/refacto/$moduleCode/sites_groups',
         options: Options(
@@ -422,6 +424,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
   Future<Map<String, dynamic>?> _fetchDetailedSiteGroup(
       String moduleCode, int groupId, String token) async {
     try {
+      // @since monitoring 1.2.0
       final response = await dio.get(
         '/monitorings/sites_groups/$moduleCode/$groupId',
         options: Options(

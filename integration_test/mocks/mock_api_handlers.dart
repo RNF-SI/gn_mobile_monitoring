@@ -165,6 +165,35 @@ class MockApiHandlers {
     });
   }
 
+  /// Configure handlers pour l'endpoint /gn_commons/modules avec une version monitoring
+  static void setupGnCommonsModules(MockApiInterceptor interceptor,
+      {String version = '1.2.0'}) {
+    interceptor.onGet('/gn_commons/modules', (options) async {
+      return Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: [
+          {'module_code': 'GEONATURE', 'version': '2.14.0'},
+          {'module_code': 'MONITORINGS', 'version': version},
+        ],
+      );
+    });
+  }
+
+  /// Configure handlers pour simuler un vieux serveur sans /gn_commons/modules
+  static void setupGnCommonsModulesNotFound(MockApiInterceptor interceptor) {
+    interceptor.onGet('/gn_commons/modules', (options) async {
+      throw DioException(
+        requestOptions: options,
+        response: Response(
+          requestOptions: options,
+          statusCode: 404,
+        ),
+        type: DioExceptionType.badResponse,
+      );
+    });
+  }
+
   /// Setup all handlers for a complete user journey
   static Future<void> setupFullJourney(MockApiInterceptor interceptor) async {
     await setupAuthSuccess(interceptor);
@@ -176,5 +205,6 @@ class MockApiHandlers {
     await setupVisits(interceptor);
     await setupObservations(interceptor);
     await setupTaxons(interceptor);
+    setupGnCommonsModules(interceptor);
   }
 }

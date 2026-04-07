@@ -1,9 +1,13 @@
 import 'dart:convert';
 
 import 'package:gn_mobile_monitoring/core/helpers/ts_to_dart_converter.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/domain/utils/version_utils.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
@@ -32,6 +36,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final TaxonDatabase? taxonDatabase;
   final TaxonRepository taxonRepository;
   final SitesRepository sitesRepository;
+  final VersionApi versionApi;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -43,6 +48,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.taxonDatabase,
     this.taxonRepository,
     this.sitesRepository,
+    this.versionApi,
   );
 
   @override
@@ -214,6 +220,21 @@ class ModulesRepositoryImpl implements ModulesRepository {
     Function(String)? onStepUpdate,
   }) async {
     try {
+      // 0. Vérification de la version du module monitoring sur le serveur
+      onStepUpdate?.call('Vérification de la version du serveur');
+      onProgressUpdate?.call(0.05);
+      final versionString = await versionApi.fetchMonitoringVersion(token);
+      final serverVersion = MonitoringVersion.tryParse(versionString);
+      final requiredVersion = VersionRequirements.minimumMonitoring;
+
+      if (serverVersion == null || serverVersion < requiredVersion) {
+        throw VersionIncompatibleException(
+          detectedVersion: versionString,
+          requiredVersion: requiredVersion,
+          serverUrl: Config.baseUrl,
+        );
+      }
+
       final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
 

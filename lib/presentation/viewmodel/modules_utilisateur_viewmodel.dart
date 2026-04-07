@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -149,6 +150,31 @@ class UserModulesViewModel
           );
       state = custom_async_state.State.success(
           state.data!.updateModuleInfo(newModuleInfo));
+    } on VersionIncompatibleException catch (e) {
+      // Remettre le module à l'état "non téléchargé"
+      newModuleInfo = newModuleInfo.copyWith(
+          downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+          downloadProgress: 0.0,
+          currentStep: '');
+      state = custom_async_state.State.success(
+          state.data!.updateModuleInfo(newModuleInfo));
+
+      // Afficher le dialogue d'erreur de version
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Version du serveur incompatible'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } on Exception catch (e) {
       state = custom_async_state.State.error(e);
     } catch (e) {

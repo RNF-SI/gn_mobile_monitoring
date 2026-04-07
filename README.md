@@ -14,6 +14,14 @@ Version mobile du module monitoring de Geonature.
 - [.cursorrules](./CURSORRULES.md)
 - [Fichiers de Prompts](./PROMPTS.md)
 
+## Compatibilité des versions
+
+| Version app mobile | Version minimale monitoring |
+|---|---|
+| 1.0.0+ | 1.2.0 |
+
+L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
+
 ## Tests
 
 ### Tests unitaires

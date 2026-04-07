@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
+import 'package:gn_mobile_monitoring/domain/utils/version_utils.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
@@ -27,6 +29,7 @@ void main() {
     mockDownloadCompleteModuleUseCase = MockDownloadCompleteModuleUseCase();
     mockGetTokenFromLocalStorageUseCase = MockGetTokenFromLocalStorageUseCase();
     mockContext = MockBuildContext();
+    when(() => mockContext.mounted).thenReturn(false);
 
     container = ProviderContainer(
       overrides: [
@@ -257,6 +260,66 @@ void main() {
     expect(state, isA<custom_async_state.State<ModuleInfoList>>());
     expect(state.data, isNull);
     expect(state.toString(), contains('Download failed'));
+  });
+
+  test(
+      'startDownloadModule should reset module state on VersionIncompatibleException',
+      () async {
+    // Arrange
+    final mockModule = const Module(
+      id: 1,
+      moduleCode: 'code1',
+      moduleLabel: 'Module 1',
+      moduleDesc: 'Description 1',
+      modulePath: 'path/to/module1',
+      activeFrontend: true,
+      moduleTarget: 'target1',
+      modulePicto: 'picto1',
+      moduleDocUrl: 'doc/url1',
+      moduleGroup: 'group1',
+      downloaded: false,
+    );
+
+    final moduleInfo = ModuleInfo(
+      module: mockModule,
+      downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+    );
+
+    // Set initial state
+    final userModulesViewModel =
+        container.read(userModuleListeViewModelStateNotifierProvider.notifier);
+
+    when(() => mockGetModulesUseCase.execute())
+        .thenAnswer((_) async => [mockModule]);
+    await userModulesViewModel.loadModules();
+
+    // Mock token retrieval
+    when(() => mockGetTokenFromLocalStorageUseCase.execute())
+        .thenAnswer((_) async => 'test-token');
+
+    // Mock download usecase to throw VersionIncompatibleException
+    when(() =>
+            mockDownloadCompleteModuleUseCase.execute(any(), any(), any(), any()))
+        .thenThrow(VersionIncompatibleException(
+      detectedVersion: '1.1.0',
+      requiredVersion: const MonitoringVersion(1, 2, 0),
+      serverUrl: 'https://test.geonature.fr',
+    ));
+
+    // Act
+    await userModulesViewModel.startDownloadModule(moduleInfo, mockContext);
+
+    // Assert - le module doit revenir à l'état "non téléchargé" (pas d'erreur globale)
+    final state = container.read(userModuleListeViewModelStateNotifierProvider);
+    expect(state.data, isNotNull,
+        reason:
+            'Le state ne doit pas être en erreur, le module doit juste être reset');
+
+    final updatedModuleInfo = state.data!.values[0];
+    expect(updatedModuleInfo.downloadStatus,
+        equals(ModuleDownloadStatus.moduleNotDownloaded));
+    expect(updatedModuleInfo.downloadProgress, equals(0.0));
+    expect(updatedModuleInfo.currentStep, equals(''));
   });
 
   test('stopDownloadModule should update module state correctly', () async {
