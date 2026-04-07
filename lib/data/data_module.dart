@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observat
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/mobile_app_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/version_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/dataset_database_impl.dart';
@@ -24,6 +25,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_d
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/mobile_app_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
@@ -37,6 +39,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_
 import 'package:gn_mobile_monitoring/data/repository/authentication_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/global_database_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
+import 'package:gn_mobile_monitoring/data/repository/app_update_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/modules_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/observation_details_repository_impl.dart';
 import 'package:gn_mobile_monitoring/data/repository/observations_repository_impl.dart';
@@ -46,6 +49,7 @@ import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart'
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/app_update_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
@@ -131,6 +135,12 @@ final taxonRepositoryProvider =
         ));
 
 final versionApiProvider = Provider<VersionApi>((_) => VersionApiImpl());
+
+final mobileAppApiProvider =
+    Provider<MobileAppApi>((_) => MobileAppApiImpl());
+
+final appUpdateRepositoryProvider = Provider<AppUpdateRepository>(
+    (ref) => AppUpdateRepositoryImpl(ref.watch(mobileAppApiProvider)));
 
 final visitsApiProvider = Provider<VisitsApi>((_) => VisitsApiImpl());
 

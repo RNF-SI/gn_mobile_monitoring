@@ -4,8 +4,10 @@ import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/menu_actions.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_list_widget.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/app_update_dialog.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -26,8 +28,35 @@ class HomePageState extends ConsumerState<HomePage> {
       if (!_syncServiceInitialized) {
         ref.read(syncServiceProvider.notifier).initialize(ref);
         _syncServiceInitialized = true;
+
+        // Vérifier les mises à jour de l'app au lancement
+        ref.read(appUpdateServiceProvider.notifier).checkForUpdate();
       }
+
+      // Écouter les changements de mise à jour pour afficher le dialog
+      ref.listenManual(appUpdateServiceProvider, (previous, next) {
+        if (next.state == AppUpdateState.updateAvailable &&
+            previous?.state != AppUpdateState.updateAvailable) {
+          _showUpdateDialog();
+        }
+      });
+
+      // Vérifier les mises à jour après une synchronisation réussie
+      ref.listenManual(syncServiceProvider, (previous, next) {
+        if (next.state == SyncState.success &&
+            previous?.state != SyncState.success) {
+          ref.read(appUpdateServiceProvider.notifier).checkForUpdate();
+        }
+      });
     });
+  }
+
+  void _showUpdateDialog() {
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (_) => const AppUpdateDialog(),
+    );
   }
 
   @override

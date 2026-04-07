@@ -6,6 +6,8 @@ import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_im
 import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_storage_use_case_impl.dart';
@@ -25,6 +27,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
@@ -217,6 +221,13 @@ final clearApiUrlFromLocalStorageUseCaseProvider =
     Provider<ClearApiUrlFromLocalStorageUseCase>((ref) =>
         ClearApiUrlFromLocalStorageUseCaseImpl(
             ref.watch(localStorageProvider)));
+
+final checkAppUpdateUseCaseProvider = Provider<CheckAppUpdateUseCase>(
+    (ref) => CheckAppUpdateUseCaseImpl(ref.watch(appUpdateRepositoryProvider)));
+
+final downloadAppUpdateUseCaseProvider = Provider<DownloadAppUpdateUseCase>(
+    (ref) =>
+        DownloadAppUpdateUseCaseImpl(ref.watch(appUpdateRepositoryProvider)));
 
 final downloadCompleteModuleUseCaseProvider =
     Provider<DownloadCompleteModuleUseCase>(
