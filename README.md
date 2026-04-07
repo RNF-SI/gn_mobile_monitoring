@@ -22,6 +22,43 @@ Version mobile du module monitoring de Geonature.
 
 L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
 
+## Déploiement et mise à jour
+
+### Publier une nouvelle version
+
+1. Compiler l'APK : `flutter build apk --release`
+2. Créer une release sur GitHub avec l'APK en pièce jointe
+
+### Configurer le serveur GeoNature
+
+Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur du serveur GeoNature doit :
+
+1. **Créer le dossier et le fichier de configuration** :
+   ```bash
+   mkdir -p <GEONATURE>/backend/media/mobile/monitoring/
+   echo '{}' > <GEONATURE>/backend/media/mobile/monitoring/settings.json
+   ```
+
+2. **Déposer l'APK** (téléchargé depuis les releases GitHub) :
+   ```bash
+   cp monitoring-x.y.z.apk <GEONATURE>/backend/media/mobile/monitoring/monitoring.apk
+   ```
+
+3. **Enregistrer l'application** dans l'admin GeoNature :
+   - Aller dans **Administration > Autres > Applications mobiles**
+   - Créer une entrée avec :
+
+   | Champ | Valeur |
+   |-------|--------|
+   | Code application | `MONITORING` |
+   | Chemin relatif de l'APK | `monitoring/monitoring.apk` |
+   | Nom du paquet | `fr.geonature.monitoring` |
+   | Code de version | Le buildNumber de la version (ex: `2`) |
+
+4. **Mettre à jour** : lors d'une nouvelle version, remplacer l'APK et incrémenter le **Code de version** dans l'admin.
+
+L'application vérifie automatiquement au lancement et après chaque synchronisation si une mise à jour est disponible.
+
 ## Tests
 
 ### Tests unitaires
