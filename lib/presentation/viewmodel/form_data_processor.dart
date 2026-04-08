@@ -90,9 +90,15 @@ class FormDataProcessor {
         // Version 1: Si l'ID est directement disponible dans l'objet (version la plus fiable)
         if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
           final id = fieldValue['id'];
-          final parsedId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-          processedData[fieldName] = parsedId;
-          debugPrint('  $fieldName: Extrait id=$parsedId depuis Map');
+          final parsedId = id is int ? id : int.tryParse(id.toString());
+          if (parsedId != null && parsedId != 0) {
+            processedData[fieldName] = parsedId;
+            debugPrint('  $fieldName: Extrait id=$parsedId depuis Map');
+          } else {
+            processedData.remove(fieldName);
+            debugPrint(
+                '  $fieldName: ID invalide ($id), champ supprimé');
+          }
           continue;
         }
 
@@ -132,20 +138,21 @@ class FormDataProcessor {
             // Ne pas modifier processedData[fieldName], garder la valeur originale
           }
         } else {
-          // Si nous n'avons pas les informations nécessaires, utiliser 0 comme valeur par défaut
-          processedData[fieldName] = 0;
+          // Si nous n'avons pas les informations nécessaires, supprimer le champ
+          // pour laisser le serveur utiliser sa valeur par défaut
+          processedData.remove(fieldName);
           debugPrint(
-              '  $fieldName: Informations insuffisantes pour la nomenclature, utilisation de 0');
+              '  $fieldName: Informations insuffisantes pour la nomenclature, champ supprimé');
         }
       }
 
       // Cas 4: Valeur nulle ou d'un autre type
       if (fieldValue == null ||
           (fieldValue is! int && fieldValue is! Map && fieldValue is! String)) {
-        // Utiliser 0 comme valeur par défaut ou null selon votre convention
-        processedData[fieldName] = 0;
+        // Supprimer le champ pour laisser le serveur utiliser sa valeur par défaut
+        processedData.remove(fieldName);
         debugPrint(
-            '  $fieldName: Valeur de nomenclature non reconnue, utilisation de 0');
+            '  $fieldName: Valeur de nomenclature non reconnue, champ supprimé');
       }
     }
 

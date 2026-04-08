@@ -23,6 +23,8 @@ extension TBaseSiteMapper on TBaseSite {
       uuidBaseSite: uuidBaseSite,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      idInventor: idInventor,
+      idDigitiser: idDigitiser,
       metaCreateDate: parseDate(metaCreateDate?.toIso8601String()),
       metaUpdateDate: parseDate(metaUpdateDate?.toIso8601String()),
       isLocal: isLocal,
@@ -44,6 +46,8 @@ extension BaseSiteMapper on BaseSite {
       uuidBaseSite: Value(uuidBaseSite),
       altitudeMin: Value(altitudeMin),
       altitudeMax: Value(altitudeMax),
+      idInventor: Value(idInventor),
+      idDigitiser: Value(idDigitiser),
       isLocal: Value(isLocal),
       serverSiteId: Value(serverSiteId),
     );

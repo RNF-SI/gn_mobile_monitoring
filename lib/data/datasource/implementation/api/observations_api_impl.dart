@@ -125,15 +125,26 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
             } else {
               properties[key] = value;
             }
-          } else if (key == 'cd_nom' && value is String) {
+          } else if (key == 'cd_nom') {
             // Cas spécial pour cd_nom qui doit être un entier
-            int? intValue = int.tryParse(value);
-            if (intValue != null) {
-              properties[key] = intValue;
-              debugPrint(
-                  'Conversion de cd_nom: $value (String) -> $intValue (int)');
-            } else {
+            if (value is int) {
               properties[key] = value;
+            } else if (value is String) {
+              int? intValue = int.tryParse(value);
+              if (intValue != null) {
+                properties[key] = intValue;
+                debugPrint(
+                    'Conversion de cd_nom: $value (String) -> $intValue (int)');
+              }
+            } else if (value is Map<String, dynamic> &&
+                value.containsKey('cd_nom')) {
+              // Extraire cd_nom depuis un objet taxon complet
+              final cdNom = value['cd_nom'];
+              properties[key] = cdNom is int
+                  ? cdNom
+                  : int.tryParse(cdNom.toString());
+              debugPrint(
+                  'Extraction de cd_nom depuis Map: ${properties[key]}');
             }
           } else {
             // Conserver la valeur telle quelle pour les autres cas
@@ -357,12 +368,21 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
             } else {
               properties[key] = value;
             }
-          } else if (key == 'cd_nom' && value is String) {
-            int? intValue = int.tryParse(value);
-            if (intValue != null) {
-              properties[key] = intValue;
-            } else {
+          } else if (key == 'cd_nom') {
+            // Cas spécial pour cd_nom qui doit être un entier
+            if (value is int) {
               properties[key] = value;
+            } else if (value is String) {
+              int? intValue = int.tryParse(value);
+              if (intValue != null) {
+                properties[key] = intValue;
+              }
+            } else if (value is Map<String, dynamic> &&
+                value.containsKey('cd_nom')) {
+              final cdNom = value['cd_nom'];
+              properties[key] = cdNom is int
+                  ? cdNom
+                  : int.tryParse(cdNom.toString());
             }
           } else {
             properties[key] = value;

@@ -492,6 +492,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           'altitude_min': site.altitudeMin,
           'altitude_max': site.altitudeMax,
           'first_use_date': site.firstUseDate?.toIso8601String(),
+          if (site.idInventor != null) 'id_inventor': site.idInventor,
+          if (site.idDigitiser != null) 'id_digitiser': site.idDigitiser,
         },
       };
 
@@ -679,6 +681,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           'altitude_min': site.altitudeMin,
           'altitude_max': site.altitudeMax,
           'first_use_date': site.firstUseDate?.toIso8601String(),
+          if (site.idInventor != null) 'id_inventor': site.idInventor,
+          if (site.idDigitiser != null) 'id_digitiser': site.idDigitiser,
         },
       };
 

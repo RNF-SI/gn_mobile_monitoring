@@ -326,6 +326,8 @@ class SiteFormViewModel extends StateNotifier<void> {
       geom: geom,
       altitudeMin: formData['altitude_min'] as int?,
       altitudeMax: formData['altitude_max'] as int?,
+      idInventor: userId,
+      idDigitiser: userId,
       metaCreateDate: now,
       metaUpdateDate: now,
       isLocal: true, // Site créé localement

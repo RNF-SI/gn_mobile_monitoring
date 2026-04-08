@@ -144,7 +144,7 @@ class ObservationsViewModel
         idObservation: 0, // Nouvel ID généré par la BDD
         idBaseVisit: _visitId,
         idDigitiser: idDigitiser, // ID de l'utilisateur courant
-        cdNom: formData['cd_nom'] is int ? formData['cd_nom'] : null,
+        cdNom: _extractCdNom(formData['cd_nom']),
         comments: formData['comments']?.toString(),
         uuidObservation: uuid, // Inclure l'UUID généré
         data: processedData,
@@ -207,9 +207,7 @@ class ObservationsViewModel
         idObservation: observationId,
         idBaseVisit: _visitId,
         idDigitiser: idDigitiser, // Conserver ou définir l'ID digitiser
-        cdNom: formData['cd_nom'] is int
-            ? formData['cd_nom']
-            : existingObservation.cdNom,
+        cdNom: _extractCdNom(formData['cd_nom']) ?? existingObservation.cdNom,
         comments:
             formData['comments']?.toString() ?? existingObservation.comments,
         uuidObservation: uuid,
@@ -248,6 +246,17 @@ class ObservationsViewModel
       debugPrint('Erreur lors de la suppression de l\'observation: $e');
       rethrow;
     }
+  }
+
+  /// Extrait le cd_nom depuis une valeur qui peut être un int, un Map taxon, ou null
+  int? _extractCdNom(dynamic value) {
+    if (value is int) return value;
+    if (value is Map<String, dynamic> && value.containsKey('cd_nom')) {
+      final cdNom = value['cd_nom'];
+      return cdNom is int ? cdNom : int.tryParse(cdNom.toString());
+    }
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
   /// Extrait les données spécifiques à l'observation en excluant les champs standard

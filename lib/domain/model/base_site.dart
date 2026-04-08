@@ -14,6 +14,8 @@ class BaseSite with _$BaseSite {
     String? uuidBaseSite,
     int? altitudeMin,
     int? altitudeMax,
+    int? idInventor,
+    int? idDigitiser,
     DateTime? metaCreateDate,
     DateTime? metaUpdateDate,
     Map<String, dynamic>? data,

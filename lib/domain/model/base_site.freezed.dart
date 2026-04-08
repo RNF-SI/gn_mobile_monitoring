@@ -26,6 +26,8 @@ mixin _$BaseSite {
   String? get uuidBaseSite => throw _privateConstructorUsedError;
   int? get altitudeMin => throw _privateConstructorUsedError;
   int? get altitudeMax => throw _privateConstructorUsedError;
+  int? get idInventor => throw _privateConstructorUsedError;
+  int? get idDigitiser => throw _privateConstructorUsedError;
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
   Map<String, dynamic>? get data => throw _privateConstructorUsedError;
@@ -53,6 +55,8 @@ abstract class $BaseSiteCopyWith<$Res> {
       String? uuidBaseSite,
       int? altitudeMin,
       int? altitudeMax,
+      int? idInventor,
+      int? idDigitiser,
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       Map<String, dynamic>? data,
@@ -82,6 +86,8 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? uuidBaseSite = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? idInventor = freezed,
+    Object? idDigitiser = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
@@ -125,6 +131,14 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -167,6 +181,8 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       String? uuidBaseSite,
       int? altitudeMin,
       int? altitudeMax,
+      int? idInventor,
+      int? idDigitiser,
       DateTime? metaCreateDate,
       DateTime? metaUpdateDate,
       Map<String, dynamic>? data,
@@ -194,6 +210,8 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? uuidBaseSite = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? idInventor = freezed,
+    Object? idDigitiser = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
     Object? data = freezed,
@@ -237,6 +255,14 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -274,6 +300,8 @@ class _$BaseSiteImpl implements _BaseSite {
       this.uuidBaseSite,
       this.altitudeMin,
       this.altitudeMax,
+      this.idInventor,
+      this.idDigitiser,
       this.metaCreateDate,
       this.metaUpdateDate,
       final Map<String, dynamic>? data,
@@ -301,6 +329,10 @@ class _$BaseSiteImpl implements _BaseSite {
   @override
   final int? altitudeMax;
   @override
+  final int? idInventor;
+  @override
+  final int? idDigitiser;
+  @override
   final DateTime? metaCreateDate;
   @override
   final DateTime? metaUpdateDate;
@@ -322,7 +354,7 @@ class _$BaseSiteImpl implements _BaseSite {
 
   @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal, serverSiteId: $serverSiteId)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, idInventor: $idInventor, idDigitiser: $idDigitiser, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal, serverSiteId: $serverSiteId)';
   }
 
   @override
@@ -347,6 +379,10 @@ class _$BaseSiteImpl implements _BaseSite {
                 other.altitudeMin == altitudeMin) &&
             (identical(other.altitudeMax, altitudeMax) ||
                 other.altitudeMax == altitudeMax) &&
+            (identical(other.idInventor, idInventor) ||
+                other.idInventor == idInventor) &&
+            (identical(other.idDigitiser, idDigitiser) ||
+                other.idDigitiser == idDigitiser) &&
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
@@ -369,6 +405,8 @@ class _$BaseSiteImpl implements _BaseSite {
       uuidBaseSite,
       altitudeMin,
       altitudeMax,
+      idInventor,
+      idDigitiser,
       metaCreateDate,
       metaUpdateDate,
       const DeepCollectionEquality().hash(_data),
@@ -393,6 +431,8 @@ abstract class _BaseSite implements BaseSite {
       final String? uuidBaseSite,
       final int? altitudeMin,
       final int? altitudeMax,
+      final int? idInventor,
+      final int? idDigitiser,
       final DateTime? metaCreateDate,
       final DateTime? metaUpdateDate,
       final Map<String, dynamic>? data,
@@ -417,6 +457,10 @@ abstract class _BaseSite implements BaseSite {
   int? get altitudeMin;
   @override
   int? get altitudeMax;
+  @override
+  int? get idInventor;
+  @override
+  int? get idDigitiser;
   @override
   DateTime? get metaCreateDate;
   @override
