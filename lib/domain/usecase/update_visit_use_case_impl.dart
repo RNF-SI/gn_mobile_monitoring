@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
 import 'package:gn_mobile_monitoring/data/mapper/visite_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
@@ -23,7 +25,7 @@ class UpdateVisitUseCaseImpl implements UpdateVisitUseCase {
       if (visit.data != null && visit.data!.isNotEmpty) {
         await _visitRepository.saveVisitComplementData(
           visit.idBaseVisit,
-          visit.data.toString(),
+          jsonEncode(visit.data),
         );
       }
       
