@@ -451,15 +451,13 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
             value is String) {
           // Normaliser les valeurs d'heure pour éviter les problèmes de format
           moduleData[key] = normalizeTimeFormat(value);
-        } else if (value is Map<String, dynamic> &&
-            value.containsKey('cd_nomenclature')) {
-          // Convertir les nomenclatures (Map avec cd_nomenclature) en entier (id)
+        } else if (value is Map) {
+          // Convertir les nomenclatures (Map avec id ou cd_nomenclature) en entier
           if (value.containsKey('id') && value['id'] != null) {
             final id = value['id'];
-            moduleData[key] = id is int ? id : int.tryParse(id.toString()) ?? value;
-          } else {
-            moduleData[key] = value;
+            moduleData[key] = id is int ? id : int.tryParse(id.toString());
           }
+          // Si pas d'id résolu, ne pas stocker le Map brut pour éviter la corruption JSON
         } else {
           moduleData[key] = value;
         }
