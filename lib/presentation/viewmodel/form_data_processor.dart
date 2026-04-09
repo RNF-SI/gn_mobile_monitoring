@@ -156,6 +156,59 @@ class FormDataProcessor {
       }
     }
 
+    // TRAITEMENT DES NOMENCLATURES AVEC NOMS NON-STANDARD
+    // Certains modules utilisent des noms de champs qui ne commencent pas par id_nomenclature_
+    // mais dont la valeur est un Map contenant cd_nomenclature (ex: champ "enceinte" dans petite_chouette)
+    final nonStandardNomenclatureFields = processedData.keys
+        .where((key) =>
+            !key.startsWith('id_nomenclature_') &&
+            processedData[key] is Map<String, dynamic> &&
+            (processedData[key] as Map<String, dynamic>)
+                .containsKey('cd_nomenclature'))
+        .toList();
+
+    for (final fieldName in nonStandardNomenclatureFields) {
+      final fieldValue = processedData[fieldName] as Map<String, dynamic>;
+
+      // Priorité 1 : utiliser l'ID directement s'il est présent
+      if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
+        final id = fieldValue['id'];
+        final parsedId = id is int ? id : int.tryParse(id.toString());
+        if (parsedId != null && parsedId != 0) {
+          processedData[fieldName] = parsedId;
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard - extrait id=$parsedId depuis Map');
+          continue;
+        }
+      }
+
+      // Priorité 2 : rechercher par cd_nomenclature + code_nomenclature_type
+      final codeType = fieldValue['code_nomenclature_type'] as String?;
+      final cdNomenclature = fieldValue['cd_nomenclature'] as String?;
+
+      if (codeType != null && cdNomenclature != null) {
+        debugPrint(
+            '  $fieldName: Nomenclature non-standard - recherche par codeType=$codeType, cdNomenclature=$cdNomenclature');
+        final nomenclatureService =
+            ref.read(nomenclatureServiceProvider.notifier);
+        final nomenclatures =
+            await nomenclatureService.getNomenclaturesByTypeCode(codeType);
+
+        try {
+          final nomenclature = nomenclatures.firstWhere(
+            (n) =>
+                n.cdNomenclature == cdNomenclature && n.codeType == codeType,
+          );
+          processedData[fieldName] = nomenclature.id;
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard trouvée avec id=${nomenclature.id}');
+        } catch (e) {
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard non trouvée, conservation de la valeur originale');
+        }
+      }
+    }
+
     // TRAITEMENT DES TAXONS
     // Pour le champ cd_nom, s'assurer qu'il contient juste la valeur numérique
     if (processedData.containsKey('cd_nom')) {
