@@ -1924,6 +1924,19 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       if (value is int) {
         _formValues[fieldName] = {'id': value};
       }
+    } else {
+      // Si aucune valeur n'est définie, initialiser avec la valeur par défaut de la config
+      // pour que la valeur affichée par défaut soit aussi sauvegardée à la soumission
+      final defaultCode =
+          FormConfigParser.getSelectedNomenclatureCode(fieldConfig);
+      if (defaultCode != null) {
+        final typeCode =
+            FormConfigParser.getNomenclatureTypeCode(fieldConfig);
+        _formValues[fieldName] = {
+          'cd_nomenclature': defaultCode,
+          if (typeCode != null) 'code_nomenclature_type': typeCode,
+        };
+      }
     }
 
     // Construire un widget de sélection de nomenclature simple

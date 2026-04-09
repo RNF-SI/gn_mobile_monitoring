@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -84,14 +85,30 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
         
         // Si nous avons uniquement un ID et pas de cd_nomenclature, essayer de le trouver
         if (nomenclatureId != null && cdNomenclature == null) {
-          // Trouver la nomenclature par ID
           final matchingNomenclature = nomenclatures.where((n) => n.id == nomenclatureId).firstOrNull;
           if (matchingNomenclature != null) {
             cdNomenclature = matchingNomenclature.cdNomenclature;
-          } else {
           }
         }
-        
+
+        // Si la valeur par défaut est résolue mais que le parent n'a pas l'id,
+        // notifier le parent pour qu'il stocke la valeur complète avec l'id
+        if (cdNomenclature != null && nomenclatureId == null) {
+          final resolvedNomenclature = nomenclatureMap[cdNomenclature];
+          if (resolvedNomenclature != null) {
+            SchedulerBinding.instance.addPostFrameCallback((_) {
+              onChanged({
+                'id': resolvedNomenclature.id,
+                'code_nomenclature_type': typeCode,
+                'cd_nomenclature': cdNomenclature,
+                'label': resolvedNomenclature.labelFr ??
+                    resolvedNomenclature.labelDefault ??
+                    resolvedNomenclature.cdNomenclature,
+              });
+            });
+          }
+        }
+
         for (final nomenclature in nomenclatures) {
           final label = nomenclature.labelFr ??
               nomenclature.labelDefault ??
@@ -118,7 +135,7 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
             } else {
               // Récupérer la nomenclature complète pour obtenir son ID
               final selectedNomenclature = nomenclatureMap[value];
-              
+
               if (selectedNomenclature != null) {
                 onChanged({
                   'id': selectedNomenclature.id,
