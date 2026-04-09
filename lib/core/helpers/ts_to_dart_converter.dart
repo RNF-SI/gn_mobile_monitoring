@@ -26,6 +26,9 @@ class TsToDartConverter {
 
   /// Convertit une expression TS en Dart en appliquant des transformations
   static String _convertExpressionToDart(String expr) {
+    // Remplacer les patterns JavaScript sans équivalent Dart
+    expr = _convertJsSpecificPatterns(expr);
+
     // Transformer les accès aux propriétés d'objet (obj.prop -> obj['prop'])
     expr = _convertPropertyAccess(expr);
 
@@ -35,6 +38,17 @@ class TsToDartConverter {
     // Ajouter les conversions de type appropriées (as bool, as int, etc.)
     expr = _addTypeConversions(expr);
 
+    return expr;
+  }
+
+  /// Remplace les patterns spécifiques à JavaScript qui n'existent pas en Dart
+  static String _convertJsSpecificPatterns(String expr) {
+    // (null || undefined) -> null
+    expr = expr.replaceAll(RegExp(r'\(null\s*\|\|\s*undefined\)'), 'null');
+    // (undefined || null) -> null
+    expr = expr.replaceAll(RegExp(r'\(undefined\s*\|\|\s*null\)'), 'null');
+    // undefined seul -> null
+    expr = expr.replaceAll('undefined', 'null');
     return expr;
   }
 

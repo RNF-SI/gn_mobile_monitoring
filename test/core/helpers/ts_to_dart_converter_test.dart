@@ -29,8 +29,24 @@ void main() {
       
       expect(result, expected);
     });
+    test('should convert (null || undefined) to null', () {
+      final input =
+          '({value}) => (value.cd_nom != (null || undefined) ? value.cd_nom != 3507 : true)';
+      final result = TsToDartConverter.convertToDart(input);
+
+      expect(result, contains('!= null'));
+      expect(result, isNot(contains('undefined')));
+    });
+
+    test('should convert standalone undefined to null', () {
+      final input = '({value}) => value.field !== undefined';
+      final result = TsToDartConverter.convertToDart(input);
+
+      expect(result, isNot(contains('undefined')));
+      expect(result, contains('null'));
+    });
   });
-  
+
   group('extractHiddenFunctions', () {
     test('should extract hidden functions from configuration', () {
       final config = {

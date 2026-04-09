@@ -46,9 +46,22 @@ class HiddenExpressionEvaluator {
       final String paramsStr = match.group(1)!.trim();
       final List<String> params = paramsStr.split(',').map((p) => p.trim()).toList();
       
-      // Extraire le corps de l'expression
-      final String body = match.group(2)!.trim();
-      
+      // Extraire le corps de l'expression et normaliser les patterns JS
+      String body = match.group(2)!.trim();
+      body = body.replaceAll('(null || undefined)', 'null');
+      body = body.replaceAll('(undefined || null)', 'null');
+      body = body.replaceAll('undefined', 'null');
+      // Retirer le cast Dart "as bool" ajouté par TsToDartConverter
+      body = body.replaceAll(RegExp(r'\s+as\s+bool$'), '');
+      // Retirer les parenthèses englobantes : "(expr)" → "expr"
+      if (body.startsWith('(') && body.endsWith(')')) {
+        final inner = body.substring(1, body.length - 1);
+        // Vérifier que les parenthèses sont bien englobantes (pas un sous-groupe)
+        if (_isBalancedParentheses(inner)) {
+          body = inner.trim();
+        }
+      }
+
       // Évaluer l'expression en fonction de son type
       return _evaluateExpressionBody(body, params, context);
     } catch (e) {
@@ -685,5 +698,18 @@ class HiddenExpressionEvaluator {
     }
 
     return -1;
+  }
+
+  /// Vérifie que les parenthèses sont équilibrées dans l'expression
+  /// (pas de parenthèse ouvrante non fermée ou vice versa)
+  bool _isBalancedParentheses(String expr) {
+    int depth = 0;
+    for (int i = 0; i < expr.length; i++) {
+      final char = expr[i];
+      if (char == '(') depth++;
+      if (char == ')') depth--;
+      if (depth < 0) return false;
+    }
+    return depth == 0;
   }
 }

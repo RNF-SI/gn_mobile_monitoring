@@ -105,10 +105,9 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
       if (taxon != null) {
         final effectiveListId = _getEffectiveListId();
         if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+          // Vérification légère via requête SQL ciblée (pas de chargement complet)
+          final isInList =
+              await taxonService.isTaxonInList(taxon.cdNom, effectiveListId);
 
           if (!isInList) {
             if (mounted) {
@@ -128,14 +127,14 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           _selectedTaxon = taxon;
           _searchController.text = _formatDisplayName(taxon);
         });
-        
+
         // Si la valeur provenait de la configuration et n'était pas déjà définie, notifier le parent
         // Mais seulement si on l'a chargée depuis la config ET que l'utilisateur n'a pas encore interagi
         if (widget.value == null && isLoadingFromConfig && !_userHasInteracted) {
           widget.onChanged(taxon.cdNom);
         }
       }
-      
+
       // Marquer la fin de l'initialisation après le premier chargement
       if (_isInitializing) {
         _isInitializing = false;
@@ -202,10 +201,9 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
       if (taxon != null) {
         final effectiveListId = _getEffectiveListId();
         if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+          // Vérification légère via requête SQL ciblée (pas de chargement complet)
+          final isInList =
+              await taxonService.isTaxonInList(taxon.cdNom, effectiveListId);
 
           if (!isInList) {
             if (mounted) {
@@ -226,7 +224,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           _searchController.text = _formatDisplayName(taxon);
         });
       }
-      
+
       // Marquer la fin de l'initialisation après la mise à jour
       if (_isInitializing) {
         _isInitializing = false;
@@ -270,11 +268,8 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     try {
       final taxonService = ref.read(taxonServiceProvider.notifier);
 
-      // Récupérer l'id_list depuis la configuration si disponible
-      int? listId;
-      if (widget.fieldConfig != null) {
-        listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
-      }
+      // Utiliser la liste effective (champ > module) pour filtrer la recherche
+      final listId = _getEffectiveListId();
 
       // Effectuer la recherche avec l'id_list si disponible
       final results = await taxonService.searchTaxons(query, idListe: listId);
@@ -300,10 +295,10 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     // Utiliser la liste taxonomique appropriée
     final effectiveListId = _getEffectiveListId();
 
-    // Récupérer les taxons via le provider approprié
-    final taxonsAsync = effectiveListId != null
-        ? ref.watch(taxonsByListProvider(effectiveListId))
-        : ref.watch(taxonsByModuleProvider(widget.moduleId));
+    // Récupérer uniquement les suggestions (nombre limité) au lieu de la liste complète
+    final suggestionsAsync = effectiveListId != null
+        ? ref.watch(suggestionTaxonsProvider(effectiveListId))
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -404,16 +399,15 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
             ),
           ),
 
-        // Liste de suggestions basée sur module/liste
-        if (_searchController.text.isEmpty && _selectedTaxon == null)
-          taxonsAsync.when(
+        // Liste de suggestions basée sur la liste taxonomique (nombre limité)
+        if (_searchController.text.isEmpty &&
+            _selectedTaxon == null &&
+            suggestionsAsync != null)
+          suggestionsAsync.when(
             data: (taxons) {
               if (taxons.isEmpty) {
                 return const SizedBox.shrink();
               }
-
-              final displayTaxons =
-                  taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
 
               return Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -428,7 +422,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
-                      children: displayTaxons.map((taxon) {
+                      children: taxons.map((taxon) {
                         final displayName = _formatDisplayName(taxon);
                         return ChoiceChip(
                           label: Text(displayName,

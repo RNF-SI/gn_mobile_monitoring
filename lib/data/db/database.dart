@@ -138,6 +138,9 @@ class AppDatabase extends _$AppDatabase {
 
   AppDatabase._internal() : super(_openConnection());
 
+  /// Constructeur pour les tests avec un QueryExecutor injecté (ex: NativeDatabase.memory())
+  AppDatabase.forTesting(super.e);
+
   static AppDatabase? _instance;
   static bool _isTesting = false;
 

@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
+import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockDio extends Mock implements Dio {}
@@ -22,45 +23,58 @@ void main() {
 
   group('fetchTaxonPage', () {
     test('parses response correctly on success', () async {
-      final responseData = [
-        {
-          'cd_nom': 12345,
-          'cd_ref': 12345,
-          'lb_nom': 'Parus major',
-          'search_name': 'Mésange charbonnière',
-          'nom_vern': 'Mésange charbonnière',
-          'nom_valide': 'Parus major',
-          'regne': 'Animalia',
-          'group2_inpn': 'Oiseaux',
-          'group3_inpn': null,
-        },
-        {
-          'cd_nom': 67890,
-          'cd_ref': 67890,
-          'lb_nom': 'Parus caeruleus',
-          'search_name': 'Mésange bleue',
-          'nom_vern': 'Mésange bleue',
-          'nom_valide': 'Cyanistes caeruleus',
-          'regne': 'Animalia',
-          'group2_inpn': 'Oiseaux',
-          'group3_inpn': null,
-        },
-      ];
+      final responseData = {
+        'items': [
+          {
+            'cd_nom': 12345,
+            'cd_ref': 12345,
+            'lb_nom': 'Parus major',
+            'nom_complet': 'Parus major Linnaeus, 1758',
+            'nom_vern': 'Mésange charbonnière',
+            'nom_valide': 'Parus major',
+            'regne': 'Animalia',
+            'group2_inpn': 'Oiseaux',
+            'group3_inpn': null,
+            'listes': [1],
+          },
+          {
+            'cd_nom': 67890,
+            'cd_ref': 67890,
+            'lb_nom': 'Parus caeruleus',
+            'nom_complet': 'Cyanistes caeruleus (Linnaeus, 1758)',
+            'nom_vern': 'Mésange bleue',
+            'nom_valide': 'Cyanistes caeruleus',
+            'regne': 'Animalia',
+            'group2_inpn': 'Oiseaux',
+            'group3_inpn': null,
+            'listes': [1],
+          },
+        ],
+        'total': 2,
+        'limit': 5000,
+        'page': 1,
+      };
 
       when(() => mockDio.get(
-            '/taxhub/api/taxref/allnamebylist/1',
-            queryParameters: {'limit': 5000, 'page': 1},
+            '/taxhub/api/taxref',
+            queryParameters: {
+              'limit': 5000,
+              'page': 1,
+              'id_liste': '1',
+              'orderby': 'cd_nom',
+              'fields': 'listes',
+            },
           )).thenAnswer((_) async => Response(
             data: responseData,
             statusCode: 200,
-            requestOptions: RequestOptions(path: '/taxhub/api/taxref/allnamebylist/1'),
+            requestOptions: RequestOptions(path: '/taxhub/api/taxref'),
           ));
 
       final result = await taxonApi.fetchTaxonPage(1, page: 1);
 
       expect(result, hasLength(2));
       expect(result[0].cdNom, 12345);
-      expect(result[0].nomComplet, 'Mésange charbonnière');
+      expect(result[0].nomComplet, 'Parus major Linnaeus, 1758');
       expect(result[0].lbNom, 'Parus major');
       expect(result[1].cdNom, 67890);
     });
@@ -99,28 +113,35 @@ void main() {
 
   group('getTaxonsByList', () {
     test('fetches single page when results < limit', () async {
-      final taxonData = List.generate(
+      final taxonItems = List.generate(
         10,
         (i) => {
           'cd_nom': i + 1,
           'cd_ref': i + 1,
           'lb_nom': 'Taxon $i',
-          'search_name': 'Taxon $i',
+          'nom_complet': 'Taxon $i',
           'nom_vern': null,
           'nom_valide': 'Taxon $i',
           'regne': 'Animalia',
           'group2_inpn': null,
           'group3_inpn': null,
+          'listes': [1],
         },
       );
 
       when(() => mockDio.get(
-            '/taxhub/api/taxref/allnamebylist/1',
-            queryParameters: {'limit': 5000, 'page': 1},
+            '/taxhub/api/taxref',
+            queryParameters: {
+              'limit': 5000,
+              'page': 1,
+              'id_liste': '1',
+              'orderby': 'cd_nom',
+              'fields': 'listes',
+            },
           )).thenAnswer((_) async => Response(
-            data: taxonData,
+            data: {'items': taxonItems, 'total': 10, 'limit': 5000, 'page': 1},
             statusCode: 200,
-            requestOptions: RequestOptions(path: '/test'),
+            requestOptions: RequestOptions(path: '/taxhub/api/taxref'),
           ));
 
       final result = await taxonApi.getTaxonsByList(1);
@@ -128,8 +149,14 @@ void main() {
       expect(result, hasLength(10));
       // Only 1 page since 10 < 5000
       verify(() => mockDio.get(
-            '/taxhub/api/taxref/allnamebylist/1',
-            queryParameters: {'limit': 5000, 'page': 1},
+            '/taxhub/api/taxref',
+            queryParameters: {
+              'limit': 5000,
+              'page': 1,
+              'id_liste': '1',
+              'orderby': 'cd_nom',
+              'fields': 'listes',
+            },
           )).called(1);
     });
   });
@@ -281,6 +308,116 @@ void main() {
         () => taxonApi.searchTaxons('token', 'test'),
         throwsA(isA<ApiException>()),
       );
+    });
+  });
+
+  group('parseTaxonListFromJson', () {
+    test('parse correctement une liste de taxons JSON (format /api/taxref)', () {
+      final jsonList = [
+        {
+          'cd_nom': 1,
+          'cd_ref': 1,
+          'lb_nom': 'Parus major',
+          'nom_complet': 'Parus major Linnaeus, 1758',
+          'nom_vern': 'Mésange charbonnière',
+          'nom_valide': 'Parus major',
+          'regne': 'Animalia',
+          'group2_inpn': 'Oiseaux',
+          'group3_inpn': null,
+        },
+        {
+          'cd_nom': 2,
+          'cd_ref': 2,
+          'lb_nom': 'Cyanistes caeruleus',
+          'nom_complet': 'Cyanistes caeruleus (Linnaeus, 1758)',
+          'nom_vern': 'Mésange bleue',
+          'nom_valide': 'Cyanistes caeruleus',
+          'regne': 'Animalia',
+          'group2_inpn': 'Oiseaux',
+          'group3_inpn': null,
+        },
+      ];
+
+      final result = parseTaxonListFromJson(jsonList);
+
+      expect(result, hasLength(2));
+      expect(result[0].cdNom, 1);
+      expect(result[0].lbNom, 'Parus major');
+      expect(result[0].nomComplet, 'Parus major Linnaeus, 1758');
+      expect(result[0].nomVern, 'Mésange charbonnière');
+      expect(result[0].regne, 'Animalia');
+      expect(result[0].group2Inpn, 'Oiseaux');
+      expect(result[1].cdNom, 2);
+      expect(result[1].lbNom, 'Cyanistes caeruleus');
+    });
+
+    test('utilise lb_nom comme fallback pour nomComplet si nom_complet et search_name sont null', () {
+      final jsonList = [
+        {
+          'cd_nom': 1,
+          'cd_ref': 1,
+          'lb_nom': 'Parus major',
+          'nom_complet': null,
+          'nom_vern': null,
+          'nom_valide': null,
+          'regne': null,
+          'group2_inpn': null,
+          'group3_inpn': null,
+        },
+      ];
+
+      final result = parseTaxonListFromJson(jsonList);
+
+      expect(result.first.nomComplet, 'Parus major');
+    });
+
+    test('utilise "Sans nom" si nom_complet, search_name et lb_nom sont null', () {
+      final jsonList = [
+        {
+          'cd_nom': 1,
+          'cd_ref': null,
+          'lb_nom': null,
+          'nom_complet': null,
+          'nom_vern': null,
+          'nom_valide': null,
+          'regne': null,
+          'group2_inpn': null,
+          'group3_inpn': null,
+        },
+      ];
+
+      final result = parseTaxonListFromJson(jsonList);
+
+      expect(result.first.nomComplet, 'Sans nom');
+    });
+
+    test('retourne une liste vide pour un JSON vide', () {
+      final result = parseTaxonListFromJson([]);
+
+      expect(result, isEmpty);
+    });
+
+    test('gère correctement un grand nombre de taxons', () {
+      final jsonList = List.generate(
+        5000,
+        (i) => {
+          'cd_nom': i,
+          'cd_ref': i,
+          'lb_nom': 'Taxon $i',
+          'nom_complet': 'Taxon search $i',
+          'nom_vern': 'Nom vern $i',
+          'nom_valide': 'Taxon $i',
+          'regne': 'Animalia',
+          'group2_inpn': 'Groupe $i',
+          'group3_inpn': null,
+        },
+      );
+
+      final result = parseTaxonListFromJson(jsonList);
+
+      expect(result, hasLength(5000));
+      expect(result.first.cdNom, 0);
+      expect(result.last.cdNom, 4999);
     });
   });
 }

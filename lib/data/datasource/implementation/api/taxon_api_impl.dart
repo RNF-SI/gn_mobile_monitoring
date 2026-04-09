@@ -7,6 +7,26 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dar
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 
+/// Fonction top-level pour le parsing JSON des taxons (exécutable dans un isolate via compute)
+/// Compatible avec la réponse de /api/taxref (format occtax) et /allnamebylist (ancien format)
+@visibleForTesting
+List<Taxon> parseTaxonListFromJson(List<dynamic> jsonList) {
+  return jsonList
+      .map((json) => Taxon(
+            cdNom: json['cd_nom'],
+            cdRef: json['cd_ref'],
+            regne: json['regne'],
+            lbNom: json['lb_nom'],
+            nomComplet:
+                json['nom_complet'] ?? json['search_name'] ?? json['lb_nom'] ?? 'Sans nom',
+            nomVern: json['nom_vern'],
+            nomValide: json['nom_valide'],
+            group2Inpn: json['group2_inpn'],
+            group3Inpn: json['group3_inpn'],
+          ))
+      .toList();
+}
+
 class TaxonApiImpl extends BaseApi implements TaxonApi {
   TaxonApiImpl({Dio? dio}) : super(dio: dio);
 
@@ -19,34 +39,58 @@ class TaxonApiImpl extends BaseApi implements TaxonApi {
   @override
   Future<List<Taxon>> fetchTaxonPage(int idListe,
       {required int page, int limit = 5000}) async {
-    try {
-      final response = await dio.get(
-        '/taxhub/api/taxref/allnamebylist/$idListe',
-        queryParameters: {
-          'limit': limit,
-          'page': page,
-        },
-      );
+    // Retry avec backoff exponentiel (similaire à occtax mobile)
+    const maxRetries = 3;
+    for (var attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Utilise /api/taxref comme occtax mobile (mieux optimisé pour la pagination)
+        final response = await dio.get(
+          '/taxhub/api/taxref',
+          queryParameters: {
+            'limit': limit,
+            'page': page,
+            'id_liste': idListe.toString(),
+            'orderby': 'cd_nom',
+            'fields': 'listes',
+          },
+        );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> parsed = response.data;
-        return parsed.map((json) => _parseTaxonFromList(json)).toList();
+        if (response.statusCode == 200) {
+          // Format réponse /api/taxref : {items: [...], total, limit, page}
+          final Map<String, dynamic> data = response.data;
+          final List<dynamic> items = data['items'] ?? [];
+          // Parsing dans un isolate séparé pour ne pas bloquer l'UI
+          return await compute(parseTaxonListFromJson, items);
+        }
+
+        throw ApiException(
+          'Failed to load taxons for list $idListe on page $page',
+          statusCode: response.statusCode,
+        );
+      } on DioException catch (e) {
+        if (attempt < maxRetries &&
+            (e.type == DioExceptionType.receiveTimeout ||
+                e.type == DioExceptionType.connectionTimeout ||
+                e.type == DioExceptionType.sendTimeout)) {
+          final delay = Duration(seconds: 5 * attempt);
+          debugPrint(
+              'fetchTaxonPage - List $idListe page $page timeout (tentative $attempt/$maxRetries), retry dans ${delay.inSeconds}s');
+          await Future.delayed(delay);
+          continue;
+        }
+        throw NetworkException(
+            'Network error while fetching taxons for list $idListe page $page: ${e.message}',
+            originalDioException: e);
+      } on ApiException {
+        rethrow;
+      } catch (e) {
+        throw ApiException(
+            'Failed to fetch taxons for list $idListe page $page: $e');
       }
-
-      throw ApiException(
-        'Failed to load taxons for list $idListe on page $page',
-        statusCode: response.statusCode,
-      );
-    } on DioException catch (e) {
-      throw NetworkException(
-          'Network error while fetching taxons for list $idListe page $page: ${e.message}',
-          originalDioException: e);
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-          'Failed to fetch taxons for list $idListe page $page: $e');
     }
+    // Ne devrait pas arriver, mais par sécurité
+    throw ApiException(
+        'Failed to fetch taxons for list $idListe page $page after $maxRetries retries');
   }
 
   @override
@@ -151,38 +195,6 @@ class TaxonApiImpl extends BaseApi implements TaxonApi {
       group2Inpn: json['group2_inpn'],
       group3Inpn: json['group3_inpn'],
       url: json['url'],
-    );
-  }
-
-  // Méthode spécifique pour parser les taxons venant de l'endpoint allnamebylist
-  Taxon _parseTaxonFromList(Map<String, dynamic> json) {
-    return Taxon(
-      cdNom: json['cd_nom'],
-      cdRef: json['cd_ref'],
-      regne: json['regne'],
-      lbNom: json['lb_nom'],
-      nomComplet: json['search_name'] ?? json['lb_nom'] ?? 'Sans nom',
-      nomVern: json['nom_vern'],
-      nomValide: json['nom_valide'],
-      group2Inpn: json['group2_inpn'],
-      group3Inpn: json['group3_inpn'],
-      // Champs facultatifs
-      idStatut: null,
-      idHabitat: null,
-      idRang: null,
-      phylum: null,
-      classe: null,
-      ordre: null,
-      famille: null,
-      sousFamille: null,
-      tribu: null,
-      cdTaxsup: null,
-      cdSup: null,
-      lbAuteur: null,
-      nomCompletHtml: null,
-      nomVernEng: null,
-      group1Inpn: null,
-      url: null,
     );
   }
 

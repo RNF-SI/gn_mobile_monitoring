@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_suggestion_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/is_taxon_in_list_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
@@ -18,6 +20,8 @@ final taxonServiceProvider = StateNotifierProvider<TaxonService,
     ref.watch(getTaxonsByListIdUseCaseProvider),
     ref.watch(getTaxonByCdNomUseCaseProvider),
     ref.watch(searchTaxonsUseCaseProvider),
+    ref.watch(isTaxonInListUseCaseProvider),
+    ref.watch(getSuggestionTaxonsUseCaseProvider),
   ),
 );
 
@@ -43,6 +47,16 @@ final taxonsByModuleProvider = FutureProvider.family<List<Taxon>, int>(
   },
 );
 
+/// Provider pour récupérer des suggestions de taxons (nombre limité)
+final suggestionTaxonsProvider = FutureProvider.family<List<Taxon>, int>(
+  (ref, listId) async {
+    ref.watch(cacheVersionProvider);
+
+    final taxonService = ref.read(taxonServiceProvider.notifier);
+    return await taxonService.getSuggestionTaxons(listId);
+  },
+);
+
 /// Provider pour récupérer un taxon par cd_nom
 final taxonByCdNomProvider = FutureProvider.family<Taxon?, int>(
   (ref, cdNom) async {
@@ -62,6 +76,8 @@ class TaxonService
   final GetTaxonsByListIdUseCase _getTaxonsByListIdUseCase;
   final GetTaxonByCdNomUseCase _getTaxonByCdNomUseCase;
   final SearchTaxonsUseCase _searchTaxonsUseCase;
+  final IsTaxonInListUseCase _isTaxonInListUseCase;
+  final GetSuggestionTaxonsUseCase _getSuggestionTaxonsUseCase;
 
   TaxonService(
     this.ref,
@@ -69,6 +85,8 @@ class TaxonService
     this._getTaxonsByListIdUseCase,
     this._getTaxonByCdNomUseCase,
     this._searchTaxonsUseCase,
+    this._isTaxonInListUseCase,
+    this._getSuggestionTaxonsUseCase,
   ) : super(const custom_async_state.State.init());
 
   /// Récupère les taxons pour un module donné
@@ -102,6 +120,28 @@ class TaxonService
     } catch (e) {
       print('Erreur lors de la récupération du taxon $cdNom: $e');
       return null;
+    }
+  }
+
+  /// Vérifie si un taxon appartient à une liste (requête SQL légère)
+  Future<bool> isTaxonInList(int cdNom, int idListe) async {
+    try {
+      return await _isTaxonInListUseCase.execute(cdNom, idListe);
+    } catch (e) {
+      print(
+          'Erreur lors de la vérification d\'appartenance du taxon $cdNom à la liste $idListe: $e');
+      return false;
+    }
+  }
+
+  /// Récupère un nombre limité de taxons pour les suggestions
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10}) async {
+    try {
+      return await _getSuggestionTaxonsUseCase.execute(idListe, limit: limit);
+    } catch (e) {
+      print(
+          'Erreur lors de la récupération des suggestions pour la liste $idListe: $e');
+      return [];
     }
   }
 

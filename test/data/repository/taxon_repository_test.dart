@@ -280,19 +280,20 @@ void main() {
       verifyNever(() => mockTaxonDatabase.getTaxonsByListId(any()));
     });
 
-    test('downloadModuleTaxons should download and save taxons for a module', () async {
+    test('downloadModuleTaxons should download and save taxons page by page', () async {
       // Arrange
       when(() => mockModulesDatabase.getModuleComplementById(1))
           .thenAnswer((_) async => testModuleComplement);
       when(() => mockTaxonApi.getTaxonList(1))
           .thenAnswer((_) async => testTaxonList);
-      when(() => mockTaxonApi.getTaxonsByList(1))
+      // Page 1 retourne 2 taxons (< 5000), donc la pagination s'arrête
+      when(() => mockTaxonApi.fetchTaxonPage(1, page: 1, limit: 5000))
           .thenAnswer((_) async => testTaxons);
       when(() => mockTaxonDatabase.saveTaxonLists([testTaxonList]))
           .thenAnswer((_) async => {});
-      when(() => mockTaxonDatabase.saveTaxon(any()))
+      when(() => mockTaxonDatabase.saveTaxons(any()))
           .thenAnswer((_) async => {});
-      when(() => mockTaxonDatabase.saveTaxonsToList(1, [1, 2]))
+      when(() => mockTaxonDatabase.saveTaxonsToList(any(), any()))
           .thenAnswer((_) async => {});
 
       // Act
@@ -301,10 +302,9 @@ void main() {
       // Assert
       verify(() => mockModulesDatabase.getModuleComplementById(1)).called(1);
       verify(() => mockTaxonApi.getTaxonList(1)).called(1);
-      verify(() => mockTaxonApi.getTaxonsByList(1)).called(1);
+      verify(() => mockTaxonApi.fetchTaxonPage(1, page: 1, limit: 5000)).called(1);
       verify(() => mockTaxonDatabase.saveTaxonLists([testTaxonList])).called(1);
-      verify(() => mockTaxonDatabase.saveTaxon(testTaxon1)).called(1);
-      verify(() => mockTaxonDatabase.saveTaxon(testTaxon2)).called(1);
+      verify(() => mockTaxonDatabase.saveTaxons(testTaxons)).called(1);
       verify(() => mockTaxonDatabase.saveTaxonsToList(1, [1, 2])).called(1);
     });
 
@@ -319,36 +319,35 @@ void main() {
       // Assert
       verify(() => mockModulesDatabase.getModuleComplementById(2)).called(1);
       verifyNever(() => mockTaxonApi.getTaxonList(any()));
-      verifyNever(() => mockTaxonApi.getTaxonsByList(any()));
+      verifyNever(() => mockTaxonApi.fetchTaxonPage(any(), page: any(named: 'page'), limit: any(named: 'limit')));
       verifyNever(() => mockTaxonDatabase.saveTaxonLists(any()));
-      verifyNever(() => mockTaxonDatabase.saveTaxon(any()));
+      verifyNever(() => mockTaxonDatabase.saveTaxons(any()));
       verifyNever(() => mockTaxonDatabase.saveTaxonsToList(any(), any()));
     });
   });
 
   group('TaxonRepository - Configuration Operations', () {
-    test('downloadTaxonsFromConfig should extract and download taxonomy lists', () async {
+    test('downloadTaxonsFromConfig should extract and download taxonomy lists page by page', () async {
       // Arrange
       when(() => mockTaxonApi.getTaxonList(1))
           .thenAnswer((_) async => testTaxonList);
-      when(() => mockTaxonApi.getTaxonsByList(1))
+      // Page 1 retourne 2 taxons (< 5000), donc la pagination s'arrête
+      when(() => mockTaxonApi.fetchTaxonPage(1, page: 1, limit: 5000))
           .thenAnswer((_) async => testTaxons);
       when(() => mockTaxonDatabase.saveTaxonLists([testTaxonList]))
           .thenAnswer((_) async => {});
-      when(() => mockTaxonDatabase.saveTaxon(any()))
+      when(() => mockTaxonDatabase.saveTaxons(any()))
           .thenAnswer((_) async => {});
-      when(() => mockTaxonDatabase.saveTaxonsToList(1, [1, 2]))
+      when(() => mockTaxonDatabase.saveTaxonsToList(any(), any()))
           .thenAnswer((_) async => {});
-          
+
       // For the second taxonomy list with ID 2 (from string)
       final testTaxonList2 = TaxonList(idListe: 2, nomListe: "Liste de test 2");
       when(() => mockTaxonApi.getTaxonList(2))
           .thenAnswer((_) async => testTaxonList2);
-      when(() => mockTaxonApi.getTaxonsByList(2))
+      when(() => mockTaxonApi.fetchTaxonPage(2, page: 1, limit: 5000))
           .thenAnswer((_) async => testTaxons);
       when(() => mockTaxonDatabase.saveTaxonLists([testTaxonList2]))
-          .thenAnswer((_) async => {});
-      when(() => mockTaxonDatabase.saveTaxonsToList(2, [1, 2]))
           .thenAnswer((_) async => {});
 
       // Act
@@ -356,17 +355,14 @@ void main() {
 
       // Assert
       verify(() => mockTaxonApi.getTaxonList(1)).called(1);
-      verify(() => mockTaxonApi.getTaxonsByList(1)).called(1);
+      verify(() => mockTaxonApi.fetchTaxonPage(1, page: 1, limit: 5000)).called(1);
       verify(() => mockTaxonDatabase.saveTaxonLists([testTaxonList])).called(1);
-      verify(() => mockTaxonDatabase.saveTaxon(testTaxon1)).called(2); // Called for both lists
-      verify(() => mockTaxonDatabase.saveTaxon(testTaxon2)).called(2); // Called for both lists
-      verify(() => mockTaxonDatabase.saveTaxonsToList(1, [1, 2])).called(1);
-      
+      verify(() => mockTaxonDatabase.saveTaxons(testTaxons)).called(2); // Called for both lists
+
       // Verify second list (from string ID)
       verify(() => mockTaxonApi.getTaxonList(2)).called(1);
-      verify(() => mockTaxonApi.getTaxonsByList(2)).called(1);
+      verify(() => mockTaxonApi.fetchTaxonPage(2, page: 1, limit: 5000)).called(1);
       verify(() => mockTaxonDatabase.saveTaxonLists([testTaxonList2])).called(1);
-      verify(() => mockTaxonDatabase.saveTaxonsToList(2, [1, 2])).called(1);
     });
 
     test('downloadTaxonsFromConfig should handle empty or invalid configuration', () async {
@@ -378,9 +374,9 @@ void main() {
 
       // Assert
       verifyNever(() => mockTaxonApi.getTaxonList(any()));
-      verifyNever(() => mockTaxonApi.getTaxonsByList(any()));
+      verifyNever(() => mockTaxonApi.fetchTaxonPage(any(), page: any(named: 'page'), limit: any(named: 'limit')));
       verifyNever(() => mockTaxonDatabase.saveTaxonLists(any()));
-      verifyNever(() => mockTaxonDatabase.saveTaxon(any()));
+      verifyNever(() => mockTaxonDatabase.saveTaxons(any()));
       verifyNever(() => mockTaxonDatabase.saveTaxonsToList(any(), any()));
     });
 
@@ -398,6 +394,74 @@ void main() {
       
       // Should still try the second list even if the first fails
       verify(() => mockTaxonApi.getTaxonList(2)).called(1);
+    });
+  });
+
+  group('TaxonRepository - isTaxonInList', () {
+    test('should delegate to taxonDatabase.isTaxonInList', () async {
+      // Arrange
+      when(() => mockTaxonDatabase.isTaxonInList(100, 10))
+          .thenAnswer((_) async => true);
+
+      // Act
+      final result = await repository.isTaxonInList(100, 10);
+
+      // Assert
+      expect(result, isTrue);
+      verify(() => mockTaxonDatabase.isTaxonInList(100, 10)).called(1);
+    });
+
+    test('should return false when taxon is not in list', () async {
+      // Arrange
+      when(() => mockTaxonDatabase.isTaxonInList(999, 10))
+          .thenAnswer((_) async => false);
+
+      // Act
+      final result = await repository.isTaxonInList(999, 10);
+
+      // Assert
+      expect(result, isFalse);
+      verify(() => mockTaxonDatabase.isTaxonInList(999, 10)).called(1);
+    });
+  });
+
+  group('TaxonRepository - getSuggestionTaxons', () {
+    test('should delegate to taxonDatabase.getSuggestionTaxons with default limit', () async {
+      // Arrange
+      when(() => mockTaxonDatabase.getSuggestionTaxons(10))
+          .thenAnswer((_) async => testTaxons);
+
+      // Act
+      final result = await repository.getSuggestionTaxons(10);
+
+      // Assert
+      expect(result, hasLength(2));
+      verify(() => mockTaxonDatabase.getSuggestionTaxons(10, limit: 10)).called(1);
+    });
+
+    test('should pass custom limit to taxonDatabase', () async {
+      // Arrange
+      when(() => mockTaxonDatabase.getSuggestionTaxons(10, limit: 5))
+          .thenAnswer((_) async => [testTaxon1]);
+
+      // Act
+      final result = await repository.getSuggestionTaxons(10, limit: 5);
+
+      // Assert
+      expect(result, hasLength(1));
+      verify(() => mockTaxonDatabase.getSuggestionTaxons(10, limit: 5)).called(1);
+    });
+
+    test('should return empty list when no taxons in list', () async {
+      // Arrange
+      when(() => mockTaxonDatabase.getSuggestionTaxons(999))
+          .thenAnswer((_) async => []);
+
+      // Act
+      final result = await repository.getSuggestionTaxons(999);
+
+      // Assert
+      expect(result, isEmpty);
     });
   });
 

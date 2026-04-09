@@ -76,6 +76,28 @@ class TaxonDao extends DatabaseAccessor<AppDatabase> with _$TaxonDaoMixin {
     return results.map((row) => row.readTable(tTaxrefs).toDomain()).toList();
   }
 
+  /// Vérifie si un taxon appartient à une liste taxonomique (requête légère, pas de chargement complet)
+  Future<bool> isTaxonInList(int cdNom, int idListe) async {
+    final query = select(corTaxonListeTable)
+      ..where(
+          (t) => t.cdNom.equals(cdNom) & t.idListe.equals(idListe));
+    final result = await query.getSingleOrNull();
+    return result != null;
+  }
+
+  /// Retourne un nombre limité de taxons pour les suggestions (évite le chargement complet)
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10}) async {
+    final query = select(tTaxrefs).join([
+      innerJoin(corTaxonListeTable,
+          corTaxonListeTable.cdNom.equalsExp(tTaxrefs.cdNom)),
+    ])
+      ..where(corTaxonListeTable.idListe.equals(idListe))
+      ..limit(limit);
+
+    final results = await query.get();
+    return results.map((row) => row.readTable(tTaxrefs).toDomain()).toList();
+  }
+
   Future<List<Taxon>> getAllTaxons() async {
     final results = await select(tTaxrefs).get();
     return results.map((t) => t.toDomain()).toList();

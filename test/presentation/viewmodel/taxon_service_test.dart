@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_taxons_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_suggestion_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/is_taxon_in_list_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/search_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 import 'package:mocktail/mocktail.dart';
@@ -14,6 +16,8 @@ class MockGetModuleTaxonsUseCase extends Mock implements GetModuleTaxonsUseCase 
 class MockGetTaxonsByListIdUseCase extends Mock implements GetTaxonsByListIdUseCase {}
 class MockGetTaxonByCdNomUseCase extends Mock implements GetTaxonByCdNomUseCase {}
 class MockSearchTaxonsUseCase extends Mock implements SearchTaxonsUseCase {}
+class MockIsTaxonInListUseCase extends Mock implements IsTaxonInListUseCase {}
+class MockGetSuggestionTaxonsUseCase extends Mock implements GetSuggestionTaxonsUseCase {}
 
 void main() {
   late ProviderContainer container;
@@ -22,6 +26,8 @@ void main() {
   late MockGetTaxonsByListIdUseCase mockGetTaxonsByListIdUseCase;
   late MockGetTaxonByCdNomUseCase mockGetTaxonByCdNomUseCase;
   late MockSearchTaxonsUseCase mockSearchTaxonsUseCase;
+  late MockIsTaxonInListUseCase mockIsTaxonInListUseCase;
+  late MockGetSuggestionTaxonsUseCase mockGetSuggestionTaxonsUseCase;
 
   // Données de test
   final testTaxons = [
@@ -36,6 +42,8 @@ void main() {
     mockGetTaxonsByListIdUseCase = MockGetTaxonsByListIdUseCase();
     mockGetTaxonByCdNomUseCase = MockGetTaxonByCdNomUseCase();
     mockSearchTaxonsUseCase = MockSearchTaxonsUseCase();
+    mockIsTaxonInListUseCase = MockIsTaxonInListUseCase();
+    mockGetSuggestionTaxonsUseCase = MockGetSuggestionTaxonsUseCase();
 
     // Configuration par défaut des mocks
     when(() => mockGetModuleTaxonsUseCase.execute(any()))
@@ -46,6 +54,10 @@ void main() {
         .thenAnswer((_) async => null);
     when(() => mockSearchTaxonsUseCase.execute(any(), idListe: any(named: 'idListe')))
         .thenAnswer((_) async => []);
+    when(() => mockIsTaxonInListUseCase.execute(any(), any()))
+        .thenAnswer((_) async => false);
+    when(() => mockGetSuggestionTaxonsUseCase.execute(any(), limit: any(named: 'limit')))
+        .thenAnswer((_) async => []);
 
     container = ProviderContainer(
       overrides: [
@@ -54,6 +66,8 @@ void main() {
         getTaxonsByListIdUseCaseProvider.overrideWithValue(mockGetTaxonsByListIdUseCase),
         getTaxonByCdNomUseCaseProvider.overrideWithValue(mockGetTaxonByCdNomUseCase),
         searchTaxonsUseCaseProvider.overrideWithValue(mockSearchTaxonsUseCase),
+        isTaxonInListUseCaseProvider.overrideWithValue(mockIsTaxonInListUseCase),
+        getSuggestionTaxonsUseCaseProvider.overrideWithValue(mockGetSuggestionTaxonsUseCase),
       ],
     );
 
@@ -317,6 +331,86 @@ void main() {
 
       // Assert
       expect(result, 'Pinus sylvestris L., 1753');
+    });
+  });
+
+  group('TaxonService - isTaxonInList', () {
+    test('should return true when taxon is in list', () async {
+      // Arrange
+      when(() => mockIsTaxonInListUseCase.execute(1, 10))
+          .thenAnswer((_) async => true);
+
+      // Act
+      final result = await taxonService.isTaxonInList(1, 10);
+
+      // Assert
+      expect(result, isTrue);
+      verify(() => mockIsTaxonInListUseCase.execute(1, 10)).called(1);
+    });
+
+    test('should return false when taxon is not in list', () async {
+      // Arrange
+      when(() => mockIsTaxonInListUseCase.execute(999, 10))
+          .thenAnswer((_) async => false);
+
+      // Act
+      final result = await taxonService.isTaxonInList(999, 10);
+
+      // Assert
+      expect(result, isFalse);
+      verify(() => mockIsTaxonInListUseCase.execute(999, 10)).called(1);
+    });
+
+    test('should return false on exception', () async {
+      // Arrange
+      when(() => mockIsTaxonInListUseCase.execute(any(), any()))
+          .thenThrow(Exception('Database Error'));
+
+      // Act
+      final result = await taxonService.isTaxonInList(1, 10);
+
+      // Assert
+      expect(result, isFalse);
+    });
+  });
+
+  group('TaxonService - getSuggestionTaxons', () {
+    test('should return suggestions with default limit', () async {
+      // Arrange
+      when(() => mockGetSuggestionTaxonsUseCase.execute(10, limit: 10))
+          .thenAnswer((_) async => testTaxons);
+
+      // Act
+      final result = await taxonService.getSuggestionTaxons(10);
+
+      // Assert
+      expect(result, equals(testTaxons));
+      verify(() => mockGetSuggestionTaxonsUseCase.execute(10, limit: 10)).called(1);
+    });
+
+    test('should return suggestions with custom limit', () async {
+      // Arrange
+      when(() => mockGetSuggestionTaxonsUseCase.execute(10, limit: 5))
+          .thenAnswer((_) async => [testTaxon]);
+
+      // Act
+      final result = await taxonService.getSuggestionTaxons(10, limit: 5);
+
+      // Assert
+      expect(result, hasLength(1));
+      verify(() => mockGetSuggestionTaxonsUseCase.execute(10, limit: 5)).called(1);
+    });
+
+    test('should return empty list on exception', () async {
+      // Arrange
+      when(() => mockGetSuggestionTaxonsUseCase.execute(any(), limit: any(named: 'limit')))
+          .thenThrow(Exception('Database Error'));
+
+      // Act
+      final result = await taxonService.getSuggestionTaxons(10);
+
+      // Assert
+      expect(result, isEmpty);
     });
   });
 }

@@ -10,6 +10,8 @@ abstract class TaxonDatabase {
   Future<Taxon?> getTaxonByCdNom(int cdNom);
   Future<List<Taxon>> searchTaxons(String searchTerm);
   Future<List<Taxon>> searchTaxonsByListId(String searchTerm, int idListe);
+  Future<bool> isTaxonInList(int cdNom, int idListe);
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10});
   Future<void> saveTaxon(Taxon taxon);
   Future<void> saveTaxons(List<Taxon> taxons);
   Future<void> clearTaxons();

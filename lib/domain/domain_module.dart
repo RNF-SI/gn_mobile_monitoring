@@ -62,8 +62,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_suggestion_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/is_taxon_in_list_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
@@ -488,6 +490,19 @@ final getTaxonByCdNomUseCaseProvider = Provider<GetTaxonByCdNomUseCase>(
 
 final searchTaxonsUseCaseProvider = Provider<SearchTaxonsUseCase>(
   (ref) => SearchTaxonsUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final isTaxonInListUseCaseProvider = Provider<IsTaxonInListUseCase>(
+  (ref) => IsTaxonInListUseCaseImpl(
+    ref.watch(taxonRepositoryProvider),
+  ),
+);
+
+final getSuggestionTaxonsUseCaseProvider =
+    Provider<GetSuggestionTaxonsUseCase>(
+  (ref) => GetSuggestionTaxonsUseCaseImpl(
     ref.watch(taxonRepositoryProvider),
   ),
 );
