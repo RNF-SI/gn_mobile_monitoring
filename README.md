@@ -82,6 +82,17 @@ make test-integration-manual       # Validation rapide de la configuration
 
 Pour plus de détails, voir [la documentation des tests d'intégration](./test/integration/README.md).
 
+#### Tests E2E contre un vrai serveur GeoNature
+Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNature
+(login, navigation module, CRUD sites/visites/observations).
+
+```bash
+./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
+```
+
+Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
+configuration, la procédure après reboot et le troubleshooting.
+
 ## CI/CD
 
 Le projet utilise GitHub Actions pour l'intégration continue :

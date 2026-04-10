@@ -609,6 +609,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
         actions: [
           if (canEdit)
             IconButton(
+              key: const Key('edit-site-group-button'),
               icon: const Icon(Icons.edit),
               tooltip: 'Modifier le groupe de sites',
               onPressed: () {
@@ -713,6 +714,7 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
                   Widget? addButton;
                   if (isEditable) {
                     addButton = IconButton(
+                      key: const Key('create-site-button'),
                       onPressed: () {
                         if (siteConfig != null) {
                           Navigator.push(

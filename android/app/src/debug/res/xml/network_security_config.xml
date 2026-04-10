@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Autorise le trafic HTTP en clair pour les tests E2E contre un GeoNature local -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <!-- Emulateur Android : 10.0.2.2 redirige vers le host -->
+        <domain includeSubdomains="true">10.0.2.2</domain>
+        <!-- Localhost direct (appareil physique via adb reverse) -->
+        <domain includeSubdomains="true">127.0.0.1</domain>
+        <domain includeSubdomains="true">localhost</domain>
+        <!-- Reseau local (appareil physique via WiFi) -->
+        <domain includeSubdomains="true">192.168.1.0</domain>
+        <domain includeSubdomains="false">192.168.0.0</domain>
+    </domain-config>
+</network-security-config>
