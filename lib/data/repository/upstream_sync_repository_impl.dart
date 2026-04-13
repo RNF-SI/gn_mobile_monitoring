@@ -174,7 +174,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 .getVisitWithFullDetails(visitEntity.idBaseVisit);
 
             // Validation pré-sync : vérifier que id_dataset est valide
-            if (visit.idDataset == null || visit.idDataset! <= 0) {
+            if (visit.idDataset == null || visit.idDataset <= 0) {
               errors.add('Visite ${visitEntity.idBaseVisit}: id_dataset manquant. Veuillez sélectionner un jeu de données.');
               itemsSkipped++;
               itemsProcessed++;
@@ -346,7 +346,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             final visit = await _visitRepository.getVisitWithFullDetails(visitEntity.idBaseVisit);
 
             // Validation pré-sync : vérifier que id_dataset est valide
-            if (visit.idDataset == null || visit.idDataset! <= 0) {
+            if (visit.idDataset == null || visit.idDataset <= 0) {
               errors.add('Visite ${visitEntity.idBaseVisit}: id_dataset manquant. Veuillez sélectionner un jeu de données.');
               itemsSkipped++;
               itemsProcessed++;

@@ -617,6 +617,12 @@ class MockTaxonDatabase implements TaxonDatabase {
       String searchTerm, int idListe) async =>
       searchTaxons(searchTerm);
   @override
+  Future<bool> isTaxonInList(int cdNom, int idListe) async =>
+      _taxons.any((t) => t.cdNom == cdNom);
+  @override
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10}) async =>
+      _taxons.take(limit).toList();
+  @override
   Future<void> saveTaxon(Taxon taxon) async => _taxons.add(taxon);
   @override
   Future<void> saveTaxons(List<Taxon> taxons) async => _taxons.addAll(taxons);
