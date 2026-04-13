@@ -16,11 +16,13 @@ Version mobile du module monitoring de Geonature.
 
 ## Compatibilité des versions
 
-| Version app mobile | Version minimale monitoring |
-|---|---|
-| 1.0.0+ | 1.2.0 |
+| Version app mobile | GeoNature core | Version minimale monitoring (module serveur) |
+|---|---|---|
+| `v1.0.0-geonature-2.16` | 2.16.x | 1.2.0 |
 
 L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
+
+Une version compatible avec GeoNature 2.17.x sera publiée ultérieurement sous le tag `v1.x-geonature-2.17`. Les hotfixes pour la ligne 2.16 sont maintenus sur la branche `support/geonature-2.16`.
 
 ## Déploiement et mise à jour
 
