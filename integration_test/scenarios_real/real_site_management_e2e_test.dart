@@ -116,21 +116,13 @@ void main() {
       await RealTestHelpers.selectFirstNomenclature(
           tester, 'MILIEU_AQUATIQUE');
 
-      // Tapper le bouton Enregistrer
+      // Tapper le bouton Enregistrer.
+      // tapFormSave fait un polling actif jusqu'a la fermeture du form
+      // (45s max) en dismissant les dialogs qui apparaissent entre-temps
+      // ("Creer une visite ?" apres save, etc.).
       await RealTestHelpers.tapFormSave(tester);
 
       // ----- 4. Verifier le retour sur la page de detail -----
-      // Apres save, on revient sur SiteGroupDetailPage (via _navigateToSiteDetailPage
-      // qui pop le form). On verifie que le formulaire n'est plus la.
-      // Apres save : la sequence est snackbar → dialog "Creer une visite ?"
-      // → dismiss → navigation vers SiteGroupDetailPage → SiteDetailPage.
-      // En mode 'all' le timing peut decaler le dialog. On retry le dismiss
-      // plusieurs fois pour etre sur de le fermer.
-      await RealTestHelpers.pumpFor(tester, const Duration(seconds: 5));
-      await RealTestHelpers.dismissBlockingDialogs(tester);
-      await RealTestHelpers.pumpFor(tester, const Duration(seconds: 3));
-      await RealTestHelpers.dismissBlockingDialogs(tester);
-      await RealTestHelpers.pumpFor(tester, const Duration(seconds: 3));
       RealTestHelpers.expectFormClosed(tester);
 
       // ----- 5. Verification : on est deja sur SiteDetailPage -----
@@ -178,7 +170,7 @@ void main() {
           tester, 'base_site_name', siteNameUpdated,
           isRequired: true);
       await RealTestHelpers.tapFormSave(tester);
-      await RealTestHelpers.pumpFor(tester, const Duration(seconds: 5));
+      // tapFormSave fait deja le polling actif, pas besoin de pumpFor apres
 
       debugPrint('Site modifie');
 

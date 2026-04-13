@@ -203,55 +203,25 @@ done
   # Le watcher est tue par le trap EXIT a la fin du test.
   # On grant les permissions tant que l'app est installee. Si elle n'existe
   # pas (entre uninstall et reinstall), on attend.
-  echo "[grant-watcher] Demarrage en boucle infinie" >&2
+  #
+  # NOTE : pas de watcher uiautomator/input-tap qui etait une source de
+  # flakiness (le dump prend ~1-2s, l'UI peut changer entre-temps, le tap
+  # tombe sur le mauvais bouton). Le `pm grant` polling rapide est
+  # deterministe et safe.
+  echo "[grant-watcher] Demarrage en boucle infinie (poll 200ms)" >&2
   while true; do
     if adb $ADB_DEVICE_ARG shell pm list packages 2>/dev/null | grep -q "$APP_PACKAGE"; then
       for perm in "${PERMISSIONS[@]}"; do
         adb $ADB_DEVICE_ARG shell pm grant "$APP_PACKAGE" "$perm" 2>/dev/null
       done
     fi
-    sleep 0.5
+    sleep 0.2
   done
 ) &
 GRANT_WATCHER_PID=$!
 
-# Watcher complementaire : detecte le popup de permission Android et tape
-# automatiquement sur "Pendant l'utilisation de l'app" / "Allow" via uiautomator.
-# Indispensable si le grant pre-emptif rate la fenetre (premiere fois apres install).
-(
-  while true; do
-    # Dump l'UI courante via uiautomator et cherche le bouton "Pendant"/"Allow"/"While"
-    DUMP=$(adb $ADB_DEVICE_ARG shell uiautomator dump /sdcard/ui.xml 2>/dev/null && \
-           adb $ADB_DEVICE_ARG shell cat /sdcard/ui.xml 2>/dev/null)
-    if [ -n "$DUMP" ]; then
-      # Detecter le bouton "Pendant l'utilisation" (FR) ou "While using" (EN)
-      # ou "Lors de l'utilisation" (FR alternatif)
-      for label in "Pendant l'utilisation" "While using" "Lors de l'utilisation" "Allow only while" "Autoriser uniquement"; do
-        if echo "$DUMP" | grep -q "$label"; then
-          # Extraire les bounds du bouton et taper au centre
-          COORDS=$(echo "$DUMP" | grep -o "text=\"[^\"]*$label[^\"]*\"[^>]*bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" | grep -o "bounds=\"\[[0-9]*,[0-9]*\]\[[0-9]*,[0-9]*\]\"" | head -1)
-          if [ -n "$COORDS" ]; then
-            X1=$(echo "$COORDS" | sed -E 's|.*\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\].*|\1|')
-            Y1=$(echo "$COORDS" | sed -E 's|.*\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\].*|\2|')
-            X2=$(echo "$COORDS" | sed -E 's|.*\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\].*|\3|')
-            Y2=$(echo "$COORDS" | sed -E 's|.*\[([0-9]+),([0-9]+)\]\[([0-9]+),([0-9]+)\].*|\4|')
-            CX=$(( (X1 + X2) / 2 ))
-            CY=$(( (Y1 + Y2) / 2 ))
-            adb $ADB_DEVICE_ARG shell input tap $CX $CY 2>/dev/null
-            echo "[permission-popup-watcher] Tap sur '$label' a ($CX,$CY)" >&2
-            sleep 1
-            break
-          fi
-        fi
-      done
-    fi
-    sleep 1
-  done
-) &
-POPUP_WATCHER_PID=$!
-
-# Cleanup des watchers en cas d'arret du script
-trap 'kill $GRANT_WATCHER_PID $POPUP_WATCHER_PID 2>/dev/null || true' EXIT
+# Cleanup du watcher en cas d'arret du script
+trap 'kill $GRANT_WATCHER_PID 2>/dev/null || true' EXIT
 
 # --- Construire les arguments dart-define ---
 

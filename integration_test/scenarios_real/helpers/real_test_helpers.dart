@@ -60,75 +60,144 @@ class RealTestHelpers {
     fail('Synchronisation non terminee apres $timeout');
   }
 
-  /// Ferme tout dialog bloquant qui pourrait s'afficher apres login
-  /// ou apres la creation/edition d'une entite.
+  /// Tente de fermer UN dialog bloquant s'il est present dans le tree
+  /// au moment de l'appel. Retourne true si un dialog a ete ferme.
   ///
   /// Cas connus :
   ///   - AppUpdateDialog ("Mise a jour disponible") → bouton "Plus tard"
   ///   - AskForVisit ("Creer une visite ?") apres creation site → bouton "Non"
   ///   - AskForObservation ("Creer une observation ?") apres creation visite → bouton "Non"
   ///   - AlertDialog generique → bouton OK/Fermer/Annuler/Plus tard/Non
-  static Future<void> dismissBlockingDialogs(WidgetTester tester) async {
-    // Donner le temps aux dialogs differes de s'afficher
-    for (int i = 0; i < 10; i++) {
-      await tester.pump(const Duration(milliseconds: 200));
-    }
-
+  static Future<bool> _tryDismissOneDialog(WidgetTester tester) async {
     // 1. AppUpdateDialog
-    final updateDialogTitle = find.text('Mise à jour disponible');
-    if (updateDialogTitle.evaluate().isNotEmpty) {
-      debugPrint('AppUpdateDialog detecte → fermeture via "Plus tard"');
+    if (find.text('Mise à jour disponible').evaluate().isNotEmpty) {
       final laterButton = find.text('Plus tard');
       if (laterButton.evaluate().isNotEmpty) {
+        debugPrint('AppUpdateDialog detecte → fermeture via "Plus tard"');
         await tester.tap(laterButton);
-        for (int i = 0; i < 10; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
+        await pumpFor(tester, const Duration(seconds: 1));
+        return true;
       }
     }
 
-    // 2. Dialog "Creer une visite ?" apres creation site → repondre "Non"
-    final createVisitDialog = find.text('Créer une visite');
-    if (createVisitDialog.evaluate().isNotEmpty) {
-      debugPrint('Dialog "Creer une visite ?" detecte → fermeture via "Non"');
+    // 2. Dialog "Creer une visite ?" → "Non"
+    if (find.text('Créer une visite').evaluate().isNotEmpty) {
       final nonButton = find.text('Non');
       if (nonButton.evaluate().isNotEmpty) {
+        debugPrint(
+            'Dialog "Creer une visite ?" detecte → fermeture via "Non"');
         await tester.tap(nonButton.first);
-        for (int i = 0; i < 15; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
+        await pumpFor(tester, const Duration(seconds: 1));
+        return true;
       }
     }
 
-    // 3. Dialog "Creer une observation ?" apres creation visite → repondre "Non"
-    final createObsDialog = find.text('Créer une observation');
-    if (createObsDialog.evaluate().isNotEmpty) {
-      debugPrint(
-          'Dialog "Creer une observation ?" detecte → fermeture via "Non"');
+    // 3. Dialog "Creer une observation ?" → "Non"
+    if (find.text('Créer une observation').evaluate().isNotEmpty) {
       final nonButton = find.text('Non');
       if (nonButton.evaluate().isNotEmpty) {
+        debugPrint(
+            'Dialog "Creer une observation ?" detecte → fermeture via "Non"');
         await tester.tap(nonButton.first);
-        for (int i = 0; i < 15; i++) {
-          await tester.pump(const Duration(milliseconds: 200));
-        }
+        await pumpFor(tester, const Duration(seconds: 1));
+        return true;
       }
     }
 
     // 4. Tout autre AlertDialog avec un bouton OK/Fermer/Annuler
-    final alertDialogs = find.byType(AlertDialog);
-    if (alertDialogs.evaluate().isNotEmpty) {
-      debugPrint('Dialog generique detecte → tentative de fermeture');
+    if (find.byType(AlertDialog).evaluate().isNotEmpty) {
       for (final btnText in ['OK', 'Fermer', 'Annuler', 'Plus tard', 'Non']) {
         final btn = find.text(btnText);
         if (btn.evaluate().isNotEmpty) {
+          debugPrint('Dialog generique detecte → fermeture via "$btnText"');
           await tester.tap(btn.first);
-          for (int i = 0; i < 5; i++) {
-            await tester.pump(const Duration(milliseconds: 200));
-          }
-          break;
+          await pumpFor(tester, const Duration(seconds: 1));
+          return true;
         }
       }
     }
+
+    return false;
+  }
+
+  /// Ferme tout dialog bloquant (AppUpdateDialog, "Créer une visite ?",
+  /// "Créer une observation ?", AlertDialog generique).
+  ///
+  /// Mode **polling actif** : boucle pendant [timeout] en dismissant chaque
+  /// dialog trouve. Le dialog peut apparaitre tardivement (apres un appel API
+  /// lent) donc on retry activement au lieu d'une tentative unique.
+  ///
+  /// Retourne quand aucun dialog n'est plus visible pendant au moins 1 seconde
+  /// (stabilisation), ou quand le timeout est atteint.
+  static Future<void> dismissBlockingDialogs(
+    WidgetTester tester, {
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    int consecutiveCleanChecks = 0;
+
+    while (stopwatch.elapsed < timeout) {
+      final dismissed = await _tryDismissOneDialog(tester);
+      if (dismissed) {
+        consecutiveCleanChecks = 0;
+      } else {
+        consecutiveCleanChecks++;
+        // 3 checks consecutifs sans dialog = stable → on sort
+        if (consecutiveCleanChecks >= 3) {
+          return;
+        }
+      }
+      await pumpFor(tester, const Duration(milliseconds: 300));
+    }
+  }
+
+  /// Attend activement qu'un formulaire se ferme apres save, tout en
+  /// dismissant les dialogs qui peuvent apparaitre entre-temps.
+  ///
+  /// Boucle pendant [timeout] :
+  ///   - Si form-save-button n'est plus dans le tree → succes
+  ///   - Sinon si un dialog bloquant est present → on le ferme
+  ///   - Sinon on attend et retry
+  ///
+  /// Couvre le cas typique : apres save, l'app affiche un dialog
+  /// ("Creer une visite ?" par ex.) avec un timing variable. On ne sait pas
+  /// exactement quand il apparaitra, donc on retry activement.
+  static Future<void> _waitForFormClosedOrDismiss(
+    WidgetTester tester, {
+    Duration timeout = const Duration(seconds: 45),
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final saveButtonFinder = find.byKey(const Key('form-save-button'));
+
+    while (stopwatch.elapsed < timeout) {
+      // 1. Un dialog bloquant est-il present ? → le fermer en priorite
+      final dismissed = await _tryDismissOneDialog(tester);
+      if (dismissed) {
+        continue; // re-check du cote form apres dismiss
+      }
+
+      // 2. Le form a-t-il disparu ?
+      if (saveButtonFinder.evaluate().isEmpty) {
+        // Stabilisation plus longue : les transitions de navigation
+        // (pop form → pushReplacement group → push detail) peuvent
+        // encore etre en cours. On attend 5s et on re-check qu'il n'y
+        // a pas de dialog qui reapparait.
+        await pumpFor(tester, const Duration(seconds: 5));
+
+        // Dernier check dialog au cas ou
+        await _tryDismissOneDialog(tester);
+        await pumpFor(tester, const Duration(milliseconds: 500));
+
+        if (saveButtonFinder.evaluate().isEmpty) {
+          return;
+        }
+      }
+
+      await pumpFor(tester, const Duration(milliseconds: 500));
+    }
+
+    debugPrint(
+        '[tapFormSave] Timeout: form toujours ouvert apres ${timeout.inSeconds}s');
   }
 
   /// Login complet : ouvre l'app, saisit les credentials, attend la HomePage,
@@ -517,18 +586,24 @@ class RealTestHelpers {
     await tester.ensureVisible(field);
     await pumpFor(tester, const Duration(milliseconds: 500));
     await tester.tap(field);
-    await pumpFor(tester, const Duration(seconds: 2));
 
-    // Le DatePicker est ouvert → confirmer avec OK (date par defaut = aujourd'hui)
-    for (final txt in ['OK', 'Confirmer', 'Valider']) {
-      final btn = find.text(txt);
-      if (btn.evaluate().isNotEmpty) {
-        await tester.tap(btn.first);
-        await pumpFor(tester, const Duration(seconds: 1));
-        return;
+    // Attente active : le DatePicker peut mettre du temps a apparaitre
+    // (animation + rendu). On attend activement qu'un bouton OK/Confirmer/Valider
+    // apparaisse, au lieu d'un pumpFor fixe qui peut rater.
+    final stopwatch = Stopwatch()..start();
+    const timeout = Duration(seconds: 10);
+    while (stopwatch.elapsed < timeout) {
+      await pumpFor(tester, const Duration(milliseconds: 300));
+      for (final txt in ['OK', 'Confirmer', 'Valider']) {
+        final btn = find.text(txt);
+        if (btn.evaluate().isNotEmpty) {
+          await tester.tap(btn.first);
+          await pumpFor(tester, const Duration(seconds: 1));
+          return;
+        }
       }
     }
-    fail('Bouton OK/Confirmer du DatePicker introuvable');
+    fail('Bouton OK/Confirmer du DatePicker introuvable apres $timeout');
   }
 
   /// Selectionne le premier item disponible dans un select dropdown standard.
@@ -588,11 +663,14 @@ class RealTestHelpers {
     );
 
     if (items.evaluate().isEmpty) {
-      fail('Aucun DropdownMenuItem visible apres ouverture du dropdown $label');
+      fail(
+          'Aucun DropdownMenuItem visible apres ouverture du dropdown $label');
     }
 
     debugPrint(
         '${items.evaluate().length} DropdownMenuItem(s) trouve(s), tap sur le premier');
+    // Index 1 si plusieurs items (le 0 est souvent la valeur courante null),
+    // sinon 0.
     final itemsCount = items.evaluate().length;
     final indexToTap = itemsCount > 1 ? 1 : 0;
 
@@ -676,11 +754,13 @@ class RealTestHelpers {
     await tester.ensureVisible(saveButton);
     await pumpFor(tester, const Duration(milliseconds: 500));
     await tester.tap(saveButton);
-    // Pomper longtemps : appel API + DB
-    await pumpFor(tester, const Duration(seconds: 5));
 
-    // Fermer les dialogs eventuels
-    await dismissBlockingDialogs(tester);
+    // Polling actif : attendre que le form-save-button disparaisse
+    // (succes du save) tout en dismissant les dialogs qui apparaissent
+    // a timing variable ("Creer une visite ?", etc.).
+    // Plus robuste qu'un pumpFor fixe suivi d'un dismiss one-shot.
+    await _waitForFormClosedOrDismiss(tester,
+        timeout: const Duration(seconds: 45));
   }
 
   /// Verifie qu'on n'est PLUS sur un formulaire (le bouton form-save-button
