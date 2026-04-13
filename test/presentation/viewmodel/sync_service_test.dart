@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
@@ -7,9 +8,11 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.d
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/sync_complete_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -20,6 +23,7 @@ class MockGetTokenFromLocalStorageUseCase extends Mock implements GetTokenFromLo
 class MockIncrementalSyncAllUseCase extends Mock implements IncrementalSyncAllUseCase {}
 class MockGetLastSyncDateUseCase extends Mock implements GetLastSyncDateUseCase {}
 class MockUpdateLastSyncDateUseCase extends Mock implements UpdateLastSyncDateUseCase {}
+class MockSyncCompleteUseCase extends Mock implements SyncCompleteUseCase {}
 class MockSyncRepository extends Mock implements SyncRepository {}
 // Mock pour WidgetRef qui est complexe et ne peut pas être facilement implémenté
 // Nous allons plutôt implémenter une stratégie pour contourner ce problème
@@ -27,21 +31,35 @@ class MockRef extends Mock implements WidgetRef {}
 // Mocks pour NomenclatureService
 class MockNomenclatureService extends StateNotifier<State<Map<String, List<Nomenclature>>>> with Mock implements NomenclatureService {
   MockNomenclatureService() : super(const State.init());
-  
+
   @override
   void clearCache() {
     // Stub implementation
   }
 }
+class MockDatasetService extends Mock implements DatasetService {
+  @override
+  void clearAllCache() {
+    // Stub implementation
+  }
+}
 
 void main() {
+  late ProviderContainer container;
   late SyncService syncService;
   late MockGetTokenFromLocalStorageUseCase mockGetTokenUseCase;
   late MockIncrementalSyncAllUseCase mockSyncUseCase;
   late MockGetLastSyncDateUseCase mockGetLastSyncDateUseCase;
   late MockUpdateLastSyncDateUseCase mockUpdateLastSyncDateUseCase;
+  late MockSyncCompleteUseCase mockSyncCompleteUseCase;
   late MockSyncRepository mockSyncRepository;
+  late MockNomenclatureService mockNomenclatureService;
   late MockRef mockRef;
+
+  setUpAll(() {
+    // Enregistrer le fallback pour ProviderOrFamily utilisé dans mockRef.invalidate(any())
+    registerFallbackValue(nomenclatureServiceProvider);
+  });
 
   setUp(() async {
     // Initialiser l'environnement de test
@@ -52,7 +70,9 @@ void main() {
     mockSyncUseCase = MockIncrementalSyncAllUseCase();
     mockGetLastSyncDateUseCase = MockGetLastSyncDateUseCase();
     mockUpdateLastSyncDateUseCase = MockUpdateLastSyncDateUseCase();
+    mockSyncCompleteUseCase = MockSyncCompleteUseCase();
     mockSyncRepository = MockSyncRepository();
+    mockNomenclatureService = MockNomenclatureService();
     mockRef = MockRef();
 
     // Configurer les comportements par défaut
@@ -61,22 +81,44 @@ void main() {
     when(() => mockUpdateLastSyncDateUseCase.execute(any(), any())).thenAnswer((_) async => {});
 
     // Configurer le mock SyncRepository
+    when(() => mockSyncRepository.syncSiteGroupsToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
+      itemsProcessed: 0,
+      itemsAdded: 0,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
+      itemsSkipped: 0,
+    ));
+    when(() => mockSyncRepository.syncSitesToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
+      itemsProcessed: 0,
+      itemsAdded: 0,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
+      itemsSkipped: 0,
+    ));
     when(() => mockSyncRepository.syncVisitsToServer(any(), any())).thenAnswer((_) async => SyncResult.success(
       itemsProcessed: 1,
-      itemsAdded: 1, 
-      itemsUpdated: 0, 
-      itemsDeleted: 0, 
+      itemsAdded: 1,
+      itemsUpdated: 0,
+      itemsDeleted: 0,
       itemsSkipped: 0
     ));
 
-    // Créer l'instance à tester
-    syncService = SyncService(
-      mockGetTokenUseCase,
-      mockSyncUseCase,
-      mockGetLastSyncDateUseCase,
-      mockUpdateLastSyncDateUseCase,
-      mockSyncRepository,
+    // Créer le ProviderContainer avec tous les providers mockés
+    container = ProviderContainer(
+      overrides: [
+        getTokenFromLocalStorageUseCaseProvider.overrideWithValue(mockGetTokenUseCase),
+        incrementalSyncAllUseCaseProvider.overrideWithValue(mockSyncUseCase),
+        getLastSyncDateUseCaseProvider.overrideWithValue(mockGetLastSyncDateUseCase),
+        updateLastSyncDateUseCaseProvider.overrideWithValue(mockUpdateLastSyncDateUseCase),
+        syncCompleteUseCaseProvider.overrideWithValue(mockSyncCompleteUseCase),
+        syncRepositoryProvider.overrideWithValue(mockSyncRepository),
+        nomenclatureServiceProvider.overrideWith((ref) => mockNomenclatureService),
+        cacheVersionProvider.overrideWith((ref) => 0),
+      ],
     );
+    
+    // Obtenir le service via le provider
+    syncService = container.read(syncServiceProvider.notifier);
     
     // Attendre l'initialisation async
     await Future.delayed(Duration(milliseconds: 100));
@@ -84,6 +126,7 @@ void main() {
 
   tearDown(() async {
     // Nettoyer l'environnement de test
+    container.dispose();
     await MockSetup.tearDownTestEnvironment();
   });
 
@@ -117,6 +160,7 @@ void main() {
         mockGetLastSyncDateUseCase,
         mockUpdateLastSyncDateUseCase,
         mockSyncRepository,
+        mockSyncCompleteUseCase,
       );
       
       // On ne peut pas changer _isSyncing directement car c'est privé,
@@ -181,6 +225,15 @@ void main() {
 
   group('SyncService syncToServer tests', () {
     test('should not start sync if already syncing', () async {
+      // Configurer mockRef pour retourner les providers nécessaires
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       // Test le cas initial uniquement
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
       expect(result.state, equals(SyncState.success));
@@ -199,6 +252,15 @@ void main() {
     });
 
     test('should show success state after successful sync', () async {
+      // Configurer mockRef pour retourner les providers nécessaires
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       // Arrange
       when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.success(
@@ -208,10 +270,10 @@ void main() {
                 itemsDeleted: 1,
                 itemsSkipped: 0,
               ));
-      
+
       // Act
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
-      
+
       // Assert
       expect(result.state, equals(SyncState.success));
       // Note: Le SyncStatus retourné par syncToServer ne contient pas itemsAdded/Updated/Deleted
@@ -219,15 +281,24 @@ void main() {
     });
 
     test('should show failure state when sync fails', () async {
-      // Arrange
-      when(() => mockSyncRepository.syncVisitsToServer(any(), any()))
+      // Configurer mockRef pour retourner les providers nécessaires
+      when(() => mockRef.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(mockNomenclatureService);
+      when(() => mockRef.read(datasetServiceProvider))
+          .thenReturn(MockDatasetService());
+      when(() => mockRef.read(cacheVersionProvider.notifier))
+          .thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
+      // Arrange - faire échouer syncSiteGroupsToServer pour déclencher le failure
+      when(() => mockSyncRepository.syncSiteGroupsToServer(any(), any()))
           .thenAnswer((_) async => SyncResult.failure(
                 errorMessage: 'Test error message',
               ));
-      
+
       // Act
       final result = await syncService.syncToServer(mockRef, moduleCode: 'TEST');
-      
+
       // Assert
       expect(result.state, equals(SyncState.failure));
       expect(result.errorMessage, contains('Test error message'));
@@ -249,10 +320,14 @@ void main() {
       
       // Mock nomenclature service pour éviter l'erreur type 'Null' is not a subtype of type 'NomenclatureService'
       final mockNomenclatureService = MockNomenclatureService();
-      
+
       when(() => mockRef.read(nomenclatureServiceProvider.notifier)).thenReturn(mockNomenclatureService);
-      // clearCache() est déjà implémentée dans MockNomenclatureService, pas besoin de mocker
-      
+      when(() => mockRef.read(datasetServiceProvider)).thenReturn(MockDatasetService());
+
+      // Mock cacheVersionProvider.notifier pour éviter l'erreur type 'Null' is not a subtype of type 'StateController<int>'
+      when(() => mockRef.read(cacheVersionProvider.notifier)).thenReturn(StateController<int>(0));
+      when(() => mockRef.invalidate(any())).thenReturn(null);
+
       when(() => mockSyncUseCase.execute(
         any(),
         syncConfiguration: any(named: 'syncConfiguration'),
@@ -290,6 +365,7 @@ void main() {
         mockGetLastSyncDateUseCase,
         mockUpdateLastSyncDateUseCase,
         mockSyncRepository,
+        mockSyncCompleteUseCase,
       );
       
       // Attendre l'initialisation async

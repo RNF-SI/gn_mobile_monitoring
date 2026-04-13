@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail_page.dart';
@@ -14,6 +15,10 @@ import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dar
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 
 /// Page de détail de visite basée sur la classe DetailPage
 class VisitDetailPageBase extends DetailPage {
@@ -23,6 +28,7 @@ class VisitDetailPageBase extends DetailPage {
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
   final bool isNewVisit;
+  final SyncConflict? currentConflict;
 
   const VisitDetailPageBase({
     super.key,
@@ -32,6 +38,7 @@ class VisitDetailPageBase extends DetailPage {
     this.moduleInfo,
     this.fromSiteGroup,
     this.isNewVisit = false,
+    this.currentConflict,
   });
 
   @override
@@ -67,6 +74,27 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
   void dispose() {
     _tabController?.dispose();
     super.dispose();
+  }
+
+  /// Extrait le cd_nom depuis différents formats possibles
+  /// - Si c'est une Map avec 'cd_nom' → retourne la valeur
+  /// - Si c'est un int → retourne directement
+  /// - Si c'est une String → essaie de parser en int
+  /// - Sinon → retourne null
+  int? _extractCdNom(dynamic cdNomValue) {
+    if (cdNomValue == null) return null;
+
+    if (cdNomValue is Map) {
+      final innerCdNom = cdNomValue['cd_nom'];
+      if (innerCdNom is int) return innerCdNom;
+      if (innerCdNom is String) return int.tryParse(innerCdNom);
+      return null;
+    }
+
+    if (cdNomValue is int) return cdNomValue;
+    if (cdNomValue is String) return int.tryParse(cdNomValue);
+
+    return null;
   }
 
   // Charger les détails de la visite
@@ -176,9 +204,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
           label: 'Module',
           value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
           onTap: () {
-            // Naviguer vers le module (retour de plusieurs niveaux)
-            Navigator.of(context).popUntil((route) =>
-                route.isFirst || route.settings.name == '/module_detail');
+            // Naviguer vers le module
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: widget.moduleInfo!,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -192,11 +226,16 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                 widget.fromSiteGroup.sitesGroupCode ??
                 'Groupe',
             onTap: () {
-              // Retour vers le groupe (2 niveaux - passer par le site)
-              int count = 0;
-              Navigator.of(context).popUntil((route) {
-                return count++ >= 2;
-              });
+              // Naviguer vers le groupe de sites
+              Navigator.of(context).popUntil((route) => route.isFirst);
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => SiteGroupDetailPage(
+                    siteGroup: widget.fromSiteGroup,
+                    moduleInfo: widget.moduleInfo!,
+                  ),
+                ),
+              );
             },
           ),
         );
@@ -208,7 +247,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
           label: siteLabel,
           value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
           onTap: () {
-            // Naviguer vers le site (retour de 1 niveau)
+            // Naviguer vers le site (juste remonter d'un niveau)
             Navigator.of(context).pop();
           },
         ),
@@ -268,8 +307,115 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             }
           },
         ),
+        IconButton(
+          icon: const Icon(Icons.delete, color: Colors.red),
+          onPressed: () => _showDeleteConfirmationDialog(),
+        ),
       ],
     );
+  }
+
+  /// Affiche le dialogue de confirmation pour la suppression de la visite
+  void _showDeleteConfirmationDialog() async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.visit.idModule)).notifier);
+    
+    // Compter les observations de cette visite
+    final observationCount = await siteVisitsViewModel
+        .getObservationCountForVisit(widget.visit.idBaseVisit);
+    
+    if (!mounted) return;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la visite'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Voulez-vous vraiment supprimer cette visite ?'),
+            if (observationCount > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        observationCount == 1
+                            ? 'Cette action supprimera également 1 observation et tous ses détails associés.'
+                            : 'Cette action supprimera également $observationCount observations et tous leurs détails associés.',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteVisit();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Supprime la visite et navigue vers la page précédente
+  void _deleteVisit() async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.visit.idModule)).notifier);
+    
+    try {
+      final success = await siteVisitsViewModel.deleteVisit(widget.visit.idBaseVisit);
+      
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visite supprimée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        
+        // Retourner à la page précédente
+        Navigator.of(context).pop();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la suppression de la visite'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -288,6 +434,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Afficher le bandeau de conflit si présent
+          if (widget.currentConflict != null)
+            ConflictInfoBanner(conflict: widget.currentConflict!),
           // Carte d'informations générales
           Card(
             child: Padding(
@@ -426,6 +575,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
     // Bouton d'ajout d'observation
     Widget addObservationButton = ElevatedButton.icon(
+      key: const Key('add-observation-button'),
       onPressed: () {
         _showAddObservationDialog(fullVisit.idBaseVisit, observationConfig);
       },
@@ -479,6 +629,18 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
             // Ajouter les données spécifiques
             if (observation.data != null) {
               obsMap.addAll(observation.data!);
+              final cdNomData = observation.data!["cd_nom"];
+              if (cdNomData is Map) {
+                if (customConfig?.taxonomyDisplayFieldName == 'nom_vern,lb_nom'){
+                  if (cdNomData["nom_vern"] == null) {
+                    obsMap["cd_nom"] = cdNomData["lb_nom"];
+                  } else {
+                    obsMap["cd_nom"] = cdNomData["nom_vern"];
+                  }
+                } else {
+                  obsMap["cd_nom"] = cdNomData["lb_nom"];
+                }
+              }
             }
 
             observations.add(obsMap);
@@ -566,7 +728,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                           observation: Observation(
                             idObservation: observation['id_observation'] as int,
                             idBaseVisit: visitId,
-                            cdNom: observation['cd_nom'] as int?,
+                            cdNom: _extractCdNom(observation['cd_nom']),
                             comments: observation['comments'] as String?,
                             data: observation,
                             metaCreateDate:
@@ -652,11 +814,9 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
         // Générer le schéma si ce n'est pas déjà fait
         Map<String, dynamic> schema = {};
-        if (observationConfig != null) {
-          schema = FormConfigParser.generateUnifiedSchema(
-              observationConfig, customConfig);
-        }
-
+        schema = FormConfigParser.generateUnifiedSchema(
+            observationConfig, customConfig);
+      
         // Formater la valeur
         String displayValue = formatDataCellValue(
           rawValue: rawValue,
@@ -677,15 +837,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
   void _showAddObservationDialog(int visitId, ObjectConfig observationConfig) {
     // Préparer les informations pour le fil d'Ariane
     final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-    final String? siteLabel =
+    final String siteLabel =
         widget.moduleInfo?.module.complement?.configuration?.site?.label ??
             'Site';
     final String? siteName =
         widget.site.baseSiteName ?? widget.site.baseSiteCode;
-    final String? visitLabel =
+    final String visitLabel =
         widget.moduleInfo?.module.complement?.configuration?.visit?.label ??
             'Visite';
-    final String? visitDate = formatDateString(widget.visit.visitDateMin);
+    final String visitDate = formatDateString(widget.visit.visitDateMin);
 
     Navigator.push(
       context,
@@ -723,15 +883,15 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       Map<String, dynamic> observationData, ObjectConfig observationConfig) {
     // Préparer les informations pour le fil d'Ariane
     final String? moduleName = widget.moduleInfo?.module.moduleLabel;
-    final String? siteLabel =
+    final String siteLabel =
         widget.moduleInfo?.module.complement?.configuration?.site?.label ??
             'Site';
     final String? siteName =
         widget.site.baseSiteName ?? widget.site.baseSiteCode;
-    final String? visitLabel =
+    final String visitLabel =
         widget.moduleInfo?.module.complement?.configuration?.visit?.label ??
             'Visite';
-    final String? visitDate = formatDateString(widget.visit.visitDateMin);
+    final String visitDate = formatDateString(widget.visit.visitDateMin);
 
     // Récupérer l'observation complète
     widget.ref

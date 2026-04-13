@@ -47,4 +47,10 @@ abstract class VisitesDatabase {
   /// Replace all observers for a visit
   Future<void> replaceVisitObservers(
       int visitId, List<CorVisitObserverCompanion> observers);
+      
+  /// Get all visits for a specific site
+  Future<List<TBaseVisit>> getVisitsBySite(int siteId);
+
+  /// Met à jour l'ID serveur d'une visite pour le suivi de synchronisation
+  Future<bool> updateVisitServerId(int localVisitId, int serverId);
 }

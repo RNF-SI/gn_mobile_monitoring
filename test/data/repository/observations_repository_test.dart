@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
-import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/observation_entity.dart';
 import 'package:gn_mobile_monitoring/data/repository/observations_repository_impl.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
@@ -90,7 +89,7 @@ void main() {
 
     test('createObservation should return observation id', () async {
       // Arrange
-      when(mockObservationsDatabase.saveObservation(any))
+      when(mockObservationsDatabase.createObservation(argThat(isA<ObservationEntity>())))
           .thenAnswer((_) async => 1);
 
       // Act
@@ -98,33 +97,33 @@ void main() {
 
       // Assert
       expect(result, 1);
-      verify(mockObservationsDatabase.saveObservation(any)).called(1);
+      verify(mockObservationsDatabase.createObservation(argThat(isA<ObservationEntity>()))).called(1);
     });
 
     test('updateObservation should return true on success', () async {
       // Arrange
-      when(mockObservationsDatabase.saveObservation(any))
-          .thenAnswer((_) async => 1);
+      when(mockObservationsDatabase.updateObservation(argThat(isA<ObservationEntity>())))
+          .thenAnswer((_) async => true);
 
       // Act
       final result = await repository.updateObservation(expectedObservation);
 
       // Assert
       expect(result, true);
-      verify(mockObservationsDatabase.saveObservation(any)).called(1);
+      verify(mockObservationsDatabase.updateObservation(argThat(isA<ObservationEntity>()))).called(1);
     });
     
     test('updateObservation should return false on failure', () async {
       // Arrange
-      when(mockObservationsDatabase.saveObservation(any))
-          .thenAnswer((_) async => 0);
+      when(mockObservationsDatabase.updateObservation(argThat(isA<ObservationEntity>())))
+          .thenAnswer((_) async => false);
 
       // Act
       final result = await repository.updateObservation(expectedObservation);
 
       // Assert
       expect(result, false);
-      verify(mockObservationsDatabase.saveObservation(any)).called(1);
+      verify(mockObservationsDatabase.updateObservation(argThat(isA<ObservationEntity>()))).called(1);
     });
 
     test('deleteObservation should return success status', () async {
@@ -155,7 +154,7 @@ void main() {
     
     test('repository should correctly map domain model to entity', () async {
       // Arrange
-      when(mockObservationsDatabase.saveObservation(any))
+      when(mockObservationsDatabase.createObservation(argThat(isA<ObservationEntity>())))
           .thenAnswer((_) async => 1);
       
       final domainObservation = Observation(
@@ -170,7 +169,7 @@ void main() {
       await repository.createObservation(domainObservation);
 
       // Assert - Verify the entity mapping
-      final captured = verify(mockObservationsDatabase.saveObservation(captureAny)).captured;
+      final captured = verify(mockObservationsDatabase.createObservation(captureAny)).captured;
       final capturedEntity = captured.first as ObservationEntity;
       
       expect(capturedEntity.idObservation, 0);

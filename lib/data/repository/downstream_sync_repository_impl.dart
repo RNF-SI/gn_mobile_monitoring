@@ -1,17 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/mapper/dataset_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/data/mapper/nomenclature_entity_mapper.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
-import 'package:gn_mobile_monitoring/domain/model/taxon.dart';
 import 'package:gn_mobile_monitoring/domain/model/taxon_list.dart';
 import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
@@ -25,6 +27,8 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
   final NomenclaturesDatabase _nomenclaturesDatabase;
   final DatasetsDatabase _datasetsDatabase;
   final TaxonDatabase _taxonDatabase;
+  final VisitesDatabase _visitesDatabase;
+  final ObservationsDatabase _observationsDatabase;
 
   // Repositories pour la délégation des tâches de synchronisation
   final ModulesRepository _modulesRepository;
@@ -41,8 +45,12 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
     this._taxonDatabase, {
     required ModulesRepository modulesRepository,
     required SitesRepository sitesRepository,
+    required VisitesDatabase visitesDatabase,
+    required ObservationsDatabase observationsDatabase,
   })  : _modulesRepository = modulesRepository,
-        _sitesRepository = sitesRepository;
+        _sitesRepository = sitesRepository,
+        _visitesDatabase = visitesDatabase,
+        _observationsDatabase = observationsDatabase;
 
   /// Vérifie la connectivité
   @override
@@ -119,9 +127,13 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       return result;
     } catch (e) {
       debugPrint('Erreur lors de la synchronisation de la configuration: $e');
+      // Import du helper dans ce fichier si nécessaire
+      final errorMessage = e.toString().toLowerCase().contains('failed host lookup') 
+          ? 'Erreur réseau lors de la synchronisation de la configuration: Impossible de contacter le serveur. Vérifiez votre connexion Internet.'
+          : 'Erreur lors de la synchronisation de la configuration: $e';
+      
       return SyncResult.failure(
-        errorMessage:
-            'Erreur lors de la synchronisation de la configuration: $e',
+        errorMessage: errorMessage,
       );
     }
   }
@@ -178,20 +190,33 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
           existingNomenclatures.map((n) => n.id).toSet();
       final serverNomenclatureIds = <int>{};
 
+      // Obtenir les IDs des modules téléchargés
+      final downloadedModuleIds = downloadedModules
+          .where((module) => module.downloaded == true)
+          .map((module) => module.id)
+          .toList();
+
+      int modulesSucceeded = 0;
+      int modulesFailed = 0;
+
       // Synchroniser les nomenclatures et datasets pour chaque module
-      for (final moduleCode in downloadedModuleCodes) {
+      for (final moduleId in downloadedModuleIds) {
         try {
-          debugPrint('Synchronisation du module $moduleCode');
-          
+          final module = downloadedModules.firstWhere((m) => m.id == moduleId);
+          final moduleCode = module.moduleCode ?? 'unknown';
+          debugPrint('Synchronisation du module $moduleCode (ID: $moduleId)');
+
           // Récupérer les nomenclatures et datasets du module
-          final data = await _globalApi.getNomenclaturesAndDatasets(moduleCode);
+          // IMPORTANT: Passer le token pour l'authentification
+          final data = await _globalApi.getNomenclaturesAndDatasets(moduleId, token: token);
 
           // Convertir les nomenclatures entities en domain models
           final nomenclatures =
               data.nomenclatures.map((e) => e.toDomain()).toList();
-          
-          debugPrint('Module $moduleCode: ${nomenclatures.length} nomenclatures reçues');
-          
+
+          debugPrint(
+              'Module $moduleCode: ${nomenclatures.length} nomenclatures reçues');
+
           // Collecter tous les IDs de nomenclatures du serveur
           serverNomenclatureIds.addAll(nomenclatures.map((n) => n.id));
 
@@ -222,14 +247,28 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
           final datasets = data.datasets.map((e) => e.toDomain()).toList();
           await _datasetsDatabase.insertDatasets(datasets);
 
+          // Recréer les associations module-dataset
+          await _modulesRepository.clearDatasetAssociationsForModule(moduleId);
+          for (final dataset in datasets) {
+            await _modulesRepository.associateModuleWithDataset(moduleId, dataset.id);
+          }
+
+          // Rafraîchir la configuration du module (y compris types_site)
+          await _modulesRepository.refreshModuleConfiguration(moduleId, data.configuration);
+
           // Mettre à jour les compteurs
           itemsProcessed += nomenclatures.length +
               datasets.length +
               data.nomenclatureTypes.length;
           itemsAdded += insertedCount;
           itemsUpdated += updatedCount + data.datasets.length;
+          
+          modulesSucceeded++;
         } catch (e) {
           itemsSkipped++;
+          modulesFailed++;
+          final module = downloadedModules.firstWhere((m) => m.id == moduleId);
+          final moduleCode = module.moduleCode ?? 'unknown';
           errors.add('Module $moduleCode: ${e.toString()}');
           debugPrint(
               'Erreur lors de la synchronisation du module $moduleCode: $e');
@@ -312,10 +351,25 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       // Mettre à jour la date de synchronisation
       await updateLastSyncDate('nomenclatures', DateTime.now());
 
-      if (errors.isNotEmpty) {
+      // Si tous les modules ont échoué, retourner un échec
+      if (modulesSucceeded == 0 && modulesFailed > 0) {
         return SyncResult.failure(
           errorMessage:
-              'Erreurs lors de la synchronisation:\n${errors.join('\n')}',
+              'Tous les modules ont échoué lors de la synchronisation:\n${errors.join('\n')}',
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: itemsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
+      }
+
+      // Si certains modules ont réussi mais d'autres ont échoué, retourner un succès avec avertissement
+      if (errors.isNotEmpty && modulesSucceeded > 0) {
+        debugPrint(
+            'Synchronisation partielle: $modulesSucceeded modules réussis, $modulesFailed modules ignorés');
+        // Considérer comme un succès partiel - les modules en échec sont comptés dans itemsSkipped
+        return SyncResult.success(
           itemsProcessed: itemsProcessed,
           itemsAdded: itemsAdded,
           itemsUpdated: itemsUpdated,
@@ -379,25 +433,23 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
   @override
   Future<SyncResult> syncTaxons(String token, {DateTime? lastSync}) async {
     try {
-      debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Début de la synchronisation des taxons');
+      debugPrint(
+          'syncTaxons - Début de la synchronisation des taxons (page-par-page)');
+
       // Vérifier la connectivité
       final isConnected = await checkConnectivity();
       if (!isConnected) {
-        debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Pas de connexion Internet');
         return SyncResult.failure(
           errorMessage: 'Pas de connexion Internet',
         );
       }
 
       // Récupérer la liste des modules téléchargés
-      final downloadedModules = await _modulesRepository.getModulesFromLocal();
-      final downloadedModuleCodes = downloadedModules
-          .where((module) => module.downloaded == true)
-          .map((module) => module.moduleCode)
-          .whereType<String>()
-          .toList();
+      final allModules = await _modulesRepository.getModulesFromLocal();
+      final downloadedModules =
+          allModules.where((module) => module.downloaded == true).toList();
 
-      if (downloadedModuleCodes.isEmpty) {
+      if (downloadedModules.isEmpty) {
         return SyncResult.success(
           itemsProcessed: 0,
           itemsAdded: 0,
@@ -406,356 +458,236 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
         );
       }
 
-      // Récupérer la date de dernière synchronisation si non spécifiée
-      final effectiveLastSync = lastSync ?? await getLastSyncDate('taxons');
-      debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Date de dernière synchronisation: ${effectiveLastSync?.toIso8601String() ?? "jamais"}');
+      // Extraire les IDs de listes taxonomiques des modules téléchargés
+      final taxonomyListIdsSet = <int>{};
+      for (final module in downloadedModules) {
+        final moduleCode = module.moduleCode ?? 'unknown';
+        try {
+          final config = module.complement?.configuration;
+          if (config != null) {
+            final configListIds =
+                FormConfigParser.extractAllTaxonomyListIds(config);
+            if (configListIds.isNotEmpty) {
+              taxonomyListIdsSet.addAll(configListIds);
+              debugPrint(
+                  'syncTaxons - Module $moduleCode: ${configListIds.length} listes taxonomiques: $configListIds');
+            }
+          }
+          final complementListId = module.complement?.idListTaxonomy;
+          if (complementListId != null) {
+            taxonomyListIdsSet.add(complementListId);
+          }
+        } catch (e) {
+          debugPrint(
+              'syncTaxons - Erreur extraction listes pour module $moduleCode: $e');
+        }
+      }
+
+      if (taxonomyListIdsSet.isEmpty) {
+        debugPrint('syncTaxons - Aucune liste taxonomique à synchroniser');
+        return SyncResult.success(
+          itemsProcessed: 0,
+          itemsAdded: 0,
+          itemsUpdated: 0,
+          itemsSkipped: 0,
+        );
+      }
+
+      debugPrint(
+          'syncTaxons - ${taxonomyListIdsSet.length} listes à synchroniser: $taxonomyListIdsSet');
 
       try {
-        // Récupérer l'état avant la synchronisation pour les métriques
-        final taxonsBefore = await _taxonDatabase.getAllTaxons();
-        final taxonListsBefore = await _taxonDatabase.getAllTaxonLists();
-        debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - État avant synchronisation: ${taxonsBefore.length} taxons, ${taxonListsBefore.length} listes');
+        // ── PHASE 1 : Snapshot léger (IDs only) ──
+        final existingTaxonIds = await _taxonDatabase.getAllTaxonCdNoms();
+        final existingListIds = await _taxonDatabase.getAllListIds();
+        final Map<int, Set<int>> existingPerListTaxonIds = {};
+        for (final listId in taxonomyListIdsSet) {
+          existingPerListTaxonIds[listId] =
+              await _taxonDatabase.getCdNomsByListId(listId);
+        }
+        debugPrint(
+            'syncTaxons - Snapshot: ${existingTaxonIds.length} taxons, ${existingListIds.length} listes');
 
-        // Stocker les IDs existants pour comparer après synchronisation
-        final existingTaxonIds = taxonsBefore.map((t) => t.cdNom).toSet();
-        final existingListIds = taxonListsBefore.map((l) => l.idListe).toSet();
-
-        // Stocker les IDs server pour comparer et gérer les suppressions
+        // ── PHASE 2 : Fetch + save page-par-page ──
         final serverTaxonIds = <int>{};
         final serverListIds = <int>{};
+        final Map<int, Set<int>> serverPerListTaxonIds = {};
+        int listsProcessed = 0;
+        int listsSkipped = 0;
+        int totalTaxonsSaved = 0;
+        const int pageSize = 5000;
 
-        // Récupérer les IDs de listes taxonomiques pour les modules téléchargés
-        final taxonomyListIds = <int>[];
-        for (final moduleCode in downloadedModuleCodes) {
+        for (final listId in taxonomyListIdsSet) {
           try {
-            final module = await _modulesRepository.getModuleByCode(moduleCode);
-            if (module != null) {
-              final taxonomyListId = await _modulesRepository.getModuleTaxonomyListId(module.id);
-              if (taxonomyListId != null) {
-                taxonomyListIds.add(taxonomyListId);
-                debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: ID liste taxonomique $taxonomyListId trouvé');
-              } else {
-                debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Module $moduleCode: Aucun ID liste taxonomique trouvé');
-              }
-            }
-          } catch (e) {
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Erreur lors de la récupération de l\'ID liste taxonomique pour le module $moduleCode: $e');
-          }
-        }
-        
-        debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - ${taxonomyListIds.length} listes taxonomiques uniques à synchroniser: $taxonomyListIds');
-        
-        // Télécharger les taxons depuis l'API
-        debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Appel à l\'API pour synchroniser les taxons');
-        final result = await _taxonApi.syncTaxonsFromAPI(
-          token,
-          downloadedModuleCodes,
-          taxonomyListIds,
-          lastSync: effectiveLastSync,
-        );
+            // 2a) Fetch + save metadata liste
+            final taxonList = await _taxonApi.getTaxonList(listId);
+            await _taxonDatabase.saveTaxonLists([taxonList]);
+            serverListIds.add(listId);
 
-        if (result.success && result.data != null) {
-          debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Données reçues avec succès de l\'API');
-          // Traiter les données retournées par l'API
-          final data = result.data!;
+            // 2b) Boucle de pagination
+            final listCdNoms = <int>{};
+            int page = 1;
+            bool hasMore = true;
 
-          // Récupérer les listes taxonomiques
-          if (data.containsKey('taxon_lists')) {
-            final List<TaxonList> taxonLists = data['taxon_lists'];
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - ${taxonLists.length} listes taxonomiques reçues');
+            while (hasMore) {
+              final pageTaxons = await _taxonApi.fetchTaxonPage(
+                listId,
+                page: page,
+                limit: pageSize,
+              );
 
-            // Mettre à jour les IDs de serveur pour comparaison
-            serverListIds.addAll(taxonLists.map((l) => l.idListe));
+              if (pageTaxons.isNotEmpty) {
+                // Save taxons (insertOrReplace, batch 500)
+                await _taxonDatabase.saveTaxons(pageTaxons);
 
-            // Sauvegarder les listes taxonomiques
-            await _taxonDatabase.saveTaxonLists(taxonLists);
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Listes taxonomiques sauvegardées dans la base de données');
-          } else {
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Aucune liste taxonomique trouvée dans les données');
-          }
+                // Collect cdNoms for this page
+                final pageCdNoms = pageTaxons.map((t) => t.cdNom).toList();
 
-          // Récupérer les taxons
-          if (data.containsKey('taxons')) {
-            final List<Taxon> taxons = data['taxons'];
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - ${taxons.length} taxons reçus');
+                // Save associations (insertOrIgnore, batch 500)
+                await _taxonDatabase.saveTaxonsToList(listId, pageCdNoms);
 
-            // Éliminer les doublons potentiels par cd_nom
-            final Map<int, Taxon> uniqueTaxons = {};
-            for (final taxon in taxons) {
-              uniqueTaxons[taxon.cdNom] = taxon;
-              serverTaxonIds.add(taxon.cdNom);
-            }
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - ${uniqueTaxons.length} taxons uniques après déduplication');
+                // Track IDs
+                serverTaxonIds.addAll(pageCdNoms);
+                listCdNoms.addAll(pageCdNoms);
+                totalTaxonsSaved += pageTaxons.length;
 
-            // Sauvegarder les taxons unique
-            await _taxonDatabase.saveTaxons(uniqueTaxons.values.toList());
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Taxons sauvegardés dans la base de données');
-          } else {
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Aucun taxon trouvé dans les données');
-          }
-
-          // Traiter les associations liste-taxons
-          if (data.containsKey('list_to_taxon_map')) {
-            final Map<int, List<int>> listToTaxonMap =
-                data['list_to_taxon_map'];
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - ${listToTaxonMap.length} mappings liste-taxons reçus');
-
-            // Pour chaque liste, sauvegarder les associations
-            for (final entry in listToTaxonMap.entries) {
-              final listId = entry.key;
-              final taxonIds = entry.value;
-              debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Traitement de la liste $listId avec ${taxonIds.length} taxons');
-
-              // Sauvegarder les relations taxon-liste
-              await _taxonDatabase.saveTaxonsToList(listId, taxonIds);
-              debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Relations liste-taxons sauvegardées pour la liste $listId');
-            }
-          } else {
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Aucune association liste-taxons trouvée dans les données');
-          }
-
-          // Identifier les taxons qui ont été supprimés dans le cadre des listes taxonomiques
-          final Set<int> previousListTaxonIds = <int>{};
-          
-          // Map pour suivre quels taxons ont été complètement supprimés
-          final Set<int> deletedTaxonIds = <int>{};
-          
-          // Map pour suivre de quelles listes chaque taxon a été supprimé
-          final Map<int, Set<int>> taxonRemovedFromLists = <int, Set<int>>{};
-
-          // Pour chaque liste retournée par l'API, récupérer les taxons qui lui étaient associés avant
-          if (data.containsKey('taxon_lists') &&
-              data.containsKey('list_to_taxon_map')) {
-            final List<TaxonList> taxonLists = data['taxon_lists'];
-            final Map<int, List<int>> listToTaxonMap =
-                data['list_to_taxon_map'];
-
-            // 1. Pour chaque liste, identifier les taxons qui ont été supprimés de cette liste
-            for (final list in taxonLists) {
-              debugPrint('Analyse des taxons pour la liste taxonomique ${list.idListe}');
-              
-              // Récupérer les taxons qui étaient précédemment dans cette liste
-              final taxonsInListBefore =
-                  await _taxonDatabase.getTaxonsByListId(list.idListe);
-              final previousTaxonsInList =
-                  taxonsInListBefore.map((t) => t.cdNom).toSet();
-              
-              debugPrint('Liste ${list.idListe}: ${previousTaxonsInList.length} taxons avant synchronisation');
-
-              // Les taxons actuels dans cette liste selon le serveur
-              final currentTaxonsInList =
-                  Set<int>.from(listToTaxonMap[list.idListe] ?? []);
-              
-              debugPrint('Liste ${list.idListe}: ${currentTaxonsInList.length} taxons après synchronisation');
-              
-
-              // Les taxons qui étaient dans cette liste mais n'y sont plus
-              final taxonsRemovedFromList =
-                  previousTaxonsInList.difference(currentTaxonsInList);
-              
-              debugPrint('Liste ${list.idListe}: ${taxonsRemovedFromList.length} taxons supprimés de cette liste');
-              if (taxonsRemovedFromList.isNotEmpty) {
-                debugPrint('Liste ${list.idListe} - Taxons supprimés: ${taxonsRemovedFromList.join(', ')}');
-              }
-
-              // Ajouter ces taxons à la liste des candidats pour suppression
-              previousListTaxonIds.addAll(taxonsRemovedFromList);
-              
-              // Pour chaque taxon supprimé de cette liste, l'ajouter au map de suivi
-              for (final cdNom in taxonsRemovedFromList) {
-                if (!taxonRemovedFromLists.containsKey(cdNom)) {
-                  taxonRemovedFromLists[cdNom] = <int>{};
-                }
-                taxonRemovedFromLists[cdNom]!.add(list.idListe);
-                debugPrint('Taxon $cdNom a été supprimé de la liste ${list.idListe}');
-              }
-            }
-
-            // 2. Pour chaque taxon identifié comme supprimé de certaines listes,
-            // vérifier s'il est encore présent dans au moins une liste
-            for (final cdNom in previousListTaxonIds) {
-              // Vérifier si ce taxon existe encore dans d'autres listes
-              bool existsInAnyCurrentList = false;
-
-              for (final listEntry in listToTaxonMap.entries) {
-                if (listEntry.value.contains(cdNom)) {
-                  existsInAnyCurrentList = true;
-                  break;
-                }
-              }
-
-              // Si le taxon n'existe plus dans aucune liste, le marquer comme complètement supprimé
-              if (!existsInAnyCurrentList) {
-                deletedTaxonIds.add(cdNom);
-                debugPrint('Taxon $cdNom a été complètement supprimé (n\'existe plus dans aucune liste)');
-              }
-            }
-          } else {
-            debugPrint('Aucune liste taxonomique ou mapping liste-taxon trouvé dans les données');
-          }
-          
-          debugPrint('Taxons totalement supprimés à traiter: ${deletedTaxonIds.length}');
-          if (deletedTaxonIds.isNotEmpty) {
-            debugPrint('IDs des taxons totalement supprimés: ${deletedTaxonIds.join(', ')}');
-          }
-          
-          debugPrint('Taxons partiellement supprimés de listes: ${taxonRemovedFromLists.length}');
-          if (taxonRemovedFromLists.isNotEmpty) {
-            for (final entry in taxonRemovedFromLists.entries) {
-              debugPrint('Taxon ${entry.key} supprimé des listes: ${entry.value.join(', ')}');
-            }
-          }
-
-          int itemsDeleted = 0;
-          final allConflicts = <SyncConflict>[];
-
-
-          if (deletedTaxonIds.isNotEmpty) {
-            debugPrint(
-                'Vérification de ${deletedTaxonIds.length} taxons réellement supprimés sur le serveur');
-
-            // Pour chaque taxon supprimé sur le serveur
-            // Vérifier les références avant de supprimer
-            for (final cdNom in deletedTaxonIds) {
-              debugPrint('Traitement de la suppression du taxon $cdNom');
-              final conflicts = await _taxonDatabase
-                  .checkTaxonReferencesInDatabaseObservations(cdNom);
-
-              if (conflicts.isEmpty) {
-                // Pas de conflit - supprimer le taxon
-                await _taxonDatabase.deleteTaxon(cdNom);
-                itemsDeleted++;
-                debugPrint('Taxon $cdNom supprimé sans conflit');
-              } else {
-                // Des références existent - ajouter aux conflits
-                allConflicts.addAll(conflicts);
                 debugPrint(
-                    'Taxon $cdNom a ${conflicts.length} références - conflit détecté');
+                    'syncTaxons - List $listId page $page: ${pageTaxons.length} taxons saved');
               }
+
+              hasMore = pageTaxons.length >= pageSize;
+              page++;
+              // pageTaxons is now GC-eligible
             }
-          }
-          
-          // Traiter les taxons qui ont été supprimés de certaines listes mais existent encore dans d'autres
-          for (final entry in taxonRemovedFromLists.entries) {
-            final cdNom = entry.key;
-            final removedFromLists = entry.value;
-            
-            // Ne traiter que les taxons qui n'ont pas déjà été supprimés complètement
-            if (!deletedTaxonIds.contains(cdNom)) {
-              debugPrint('Vérification des références pour le taxon $cdNom supprimé de ${removedFromLists.length} liste(s)');
-              
-              // Vérifier les références en tenant compte des listes spécifiques
-              final conflicts = await _taxonDatabase
-                  .checkTaxonReferencesInDatabaseObservations(cdNom, removedFromListIds: removedFromLists);
-              
-              if (conflicts.isNotEmpty) {
-                allConflicts.addAll(conflicts);
-                debugPrint('Taxon $cdNom a ${conflicts.length} références dans les listes supprimées - conflits détectés');
-              }
-            }
-          }
 
-          // Mettre à jour la date de synchronisation
-          await updateLastSyncDate('taxons', DateTime.now());
-
-          // Récupérer l'état après la synchronisation pour des métriques plus précises
-          final taxonsAfter = await _taxonDatabase.getAllTaxons();
-          final taxonListsAfter = await _taxonDatabase.getAllTaxonLists();
-          
-          // Récupérer les ID des taxons avant la synchronisation
-          final beforeTaxonIds = taxonsBefore.map((t) => t.cdNom).toSet();
-          
-          // Récupérer les ID des taxons après la synchronisation
-          final afterTaxonIds = taxonsAfter.map((t) => t.cdNom).toSet();
-          
-          // Calculer le nombre réel de nouveaux taxons
-          final newTaxonIds = afterTaxonIds.difference(beforeTaxonIds);
-          final int realNewTaxons = newTaxonIds.length;
-          
-          debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - $realNewTaxons nouveaux taxons ajoutés à la base de données');
-          if (realNewTaxons > 0) {
-            debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Nouveaux taxons: ${newTaxonIds.join(', ')}');
+            serverPerListTaxonIds[listId] = listCdNoms;
+            listsProcessed++;
+            debugPrint(
+                'syncTaxons - List $listId complete: ${listCdNoms.length} taxons total');
+          } catch (e) {
+            debugPrint('syncTaxons - List $listId failed: $e');
+            listsSkipped++;
+            continue;
           }
-          
-          // Comptons également les associations entre taxons et listes qui ont été créées
-          int totalAssociationsCreated = 0;
-          
-          // Pour chaque liste taxonomique
-          if (data.containsKey('list_to_taxon_map')) {
-            final Map<int, List<int>> listToTaxonMap = data['list_to_taxon_map'];
-            
-            for (final entry in listToTaxonMap.entries) {
-              final listId = entry.key;
-              final newTaxonIds = entry.value;
-              
-              // Récupérer les taxons qui étaient déjà dans cette liste avant la synchronisation
-              final previousTaxonsInList = await _taxonDatabase.getTaxonsByListId(listId);
-              final previousTaxonIds = previousTaxonsInList.map((t) => t.cdNom).toSet();
-              
-              // Compter combien de nouvelles associations ont été créées
-              final newAssociations = newTaxonIds.where((id) => !previousTaxonIds.contains(id)).length;
-              totalAssociationsCreated += newAssociations;
-              
-              // Identifier spécifiquement les nouveaux ID de taxons pour cette liste
-              final newTaxonsInThisList = newTaxonIds.where((id) => !previousTaxonIds.contains(id)).toList();
-              
-              debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - $newAssociations nouvelles associations créées pour la liste $listId');
-              if (newTaxonsInThisList.isNotEmpty) {
-                debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Taxons ajoutés à la liste $listId: ${newTaxonsInThisList.join(', ')}');
-              }
-            }
-          }
-
-          // Calculer les métriques de synchronisation réelles
-          final int itemsProcessed = result.itemsProcessed;
-          
-          // Le nombre total d'éléments ajoutés inclut à la fois les nouveaux taxons et les nouvelles associations
-          final int itemsAdded = realNewTaxons + totalAssociationsCreated;
-          
-          // Calculer le nombre de taxons mis à jour (les taxons qui existaient déjà mais ont été modifiés)
-          // Dans ce cas, itemsUpdated est le nombre total de taxons traités moins les nouveaux taxons
-          final int itemsUpdated = data.containsKey('taxons') ? 
-              (data['taxons'] as List<Taxon>).length - realNewTaxons : 0;
-          
-          final int itemsSkipped = result.itemsSkipped;
-          
-          debugPrint('DownstreamSyncRepositoryImpl.syncTaxons - Statistiques finales: $realNewTaxons nouveaux taxons, $itemsUpdated taxons mis à jour, $totalAssociationsCreated nouvelles associations taxon-liste, $itemsDeleted taxons supprimés');
-
-          // Si des conflits ont été détectés, les inclure dans le résultat
-          if (allConflicts.isNotEmpty) {
-            debugPrint('Retour de ${allConflicts.length} conflits de taxons');
-            return SyncResult.withConflicts(
-              itemsProcessed: itemsProcessed,
-              itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
-              itemsUpdated: itemsUpdated,
-              itemsSkipped: itemsSkipped,
-              itemsDeleted: itemsDeleted,
-              itemsFailed: allConflicts.length,
-              conflicts: allConflicts,
-              errorMessage:
-                  'Des taxons supprimés sont référencés par des observations',
-            );
-          } else {
-            return SyncResult.success(
-              itemsProcessed: itemsProcessed,
-              itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
-              itemsUpdated: itemsUpdated,
-              itemsSkipped: itemsSkipped,
-              itemsDeleted: itemsDeleted,
-            );
-          }
-        } else {
-          // Si pas de données ou échec de la synchronisation
-          return result;
         }
+
+        debugPrint(
+            'syncTaxons - Phase 2 done: $listsProcessed lists OK, $listsSkipped skipped, $totalTaxonsSaved taxons saved, ${serverTaxonIds.length} unique');
+
+        // ── PHASE 3 : Analyse de suppression ──
+        final Set<int> previousListTaxonIds = <int>{};
+        final Set<int> deletedTaxonIds = <int>{};
+        final Map<int, Set<int>> taxonRemovedFromLists = <int, Set<int>>{};
+
+        for (final entry in existingPerListTaxonIds.entries) {
+          final listId = entry.key;
+          final previousTaxonsInList = entry.value;
+          final currentTaxonsInList = serverPerListTaxonIds[listId] ?? <int>{};
+
+          final taxonsRemovedFromList =
+              previousTaxonsInList.difference(currentTaxonsInList);
+
+          if (taxonsRemovedFromList.isNotEmpty) {
+            debugPrint(
+                'syncTaxons - Liste $listId: ${taxonsRemovedFromList.length} taxons supprimés');
+            previousListTaxonIds.addAll(taxonsRemovedFromList);
+            for (final cdNom in taxonsRemovedFromList) {
+              taxonRemovedFromLists
+                  .putIfAbsent(cdNom, () => <int>{})
+                  .add(listId);
+            }
+          }
+        }
+
+        // Check which taxons are completely removed (absent from all server lists)
+        for (final cdNom in previousListTaxonIds) {
+          if (!serverTaxonIds.contains(cdNom)) {
+            deletedTaxonIds.add(cdNom);
+          }
+        }
+
+        int itemsDeleted = 0;
+        final allConflicts = <SyncConflict>[];
+
+        // Process fully deleted taxons
+        for (final cdNom in deletedTaxonIds) {
+          final conflicts = await _taxonDatabase
+              .checkTaxonReferencesInDatabaseObservations(cdNom);
+          if (conflicts.isEmpty) {
+            await _taxonDatabase.deleteTaxon(cdNom);
+            itemsDeleted++;
+          } else {
+            allConflicts.addAll(conflicts);
+            debugPrint(
+                'syncTaxons - Taxon $cdNom: ${conflicts.length} conflicts');
+          }
+        }
+
+        // Process taxons removed from some lists but still in others
+        for (final entry in taxonRemovedFromLists.entries) {
+          final cdNom = entry.key;
+          final removedFromLists = entry.value;
+          if (!deletedTaxonIds.contains(cdNom)) {
+            final conflicts = await _taxonDatabase
+                .checkTaxonReferencesInDatabaseObservations(cdNom,
+                    removedFromListIds: removedFromLists);
+            if (conflicts.isNotEmpty) {
+              allConflicts.addAll(conflicts);
+            }
+          }
+        }
+
+        // ── PHASE 4 : Métriques ──
+        await updateLastSyncDate('taxons', DateTime.now());
+
+        final newTaxonIds = serverTaxonIds.difference(existingTaxonIds);
+        final int realNewTaxons = newTaxonIds.length;
+
+        int totalAssociationsCreated = 0;
+        for (final entry in serverPerListTaxonIds.entries) {
+          final listId = entry.key;
+          final serverCdNoms = entry.value;
+          final previousCdNoms = existingPerListTaxonIds[listId] ?? <int>{};
+          totalAssociationsCreated +=
+              serverCdNoms.difference(previousCdNoms).length;
+        }
+
+        final int itemsProcessed = totalTaxonsSaved;
+        final int itemsAdded = realNewTaxons + totalAssociationsCreated;
+        final int itemsUpdated = serverTaxonIds.length - realNewTaxons;
+
+        debugPrint(
+            'syncTaxons - Stats: $realNewTaxons new, $itemsUpdated updated, $totalAssociationsCreated new associations, $itemsDeleted deleted, $listsSkipped lists skipped');
+
+        if (allConflicts.isNotEmpty) {
+          return SyncResult.withConflicts(
+            itemsProcessed: itemsProcessed,
+            itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
+            itemsUpdated: itemsUpdated,
+            itemsSkipped: listsSkipped,
+            itemsDeleted: itemsDeleted,
+            itemsFailed: allConflicts.length,
+            conflicts: allConflicts,
+            errorMessage:
+                'Des taxons supprimés sont référencés par des observations',
+          );
+        }
+
+        return SyncResult.success(
+          itemsProcessed: itemsProcessed,
+          itemsAdded: itemsAdded > 0 ? itemsAdded : 0,
+          itemsUpdated: itemsUpdated,
+          itemsSkipped: listsSkipped,
+          itemsDeleted: itemsDeleted,
+        );
       } catch (e) {
-        debugPrint('Erreur lors de la synchronisation des taxons: $e');
+        debugPrint('syncTaxons - Erreur: $e');
         return SyncResult.failure(
           errorMessage: 'Erreur lors de la synchronisation des taxons: $e',
         );
       }
     } catch (e) {
-      debugPrint('Erreur générale lors de la synchronisation des taxons: $e');
+      debugPrint('syncTaxons - Erreur générale: $e');
       return SyncResult.failure(
         errorMessage: 'Erreur lors de la synchronisation des taxons: $e',
       );
@@ -827,35 +759,17 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       }
 
       try {
-        // Récupérer les sites avant la synchronisation pour les métriques
-        final sitesBefore = await _sitesRepository.getSites();
+        // Utiliser la nouvelle méthode qui gère les conflits
+        final result = await _sitesRepository
+            .incrementalSyncSitesWithConflictHandling(token);
 
-        // Déléguer la synchronisation au repository spécialisé
-        await _sitesRepository.incrementalSyncSitesAndSiteModules(token);
+        // Mettre à jour la date de synchronisation si succès ou conflits
+        if (result.success ||
+            (result.conflicts != null && result.conflicts!.isNotEmpty)) {
+          await updateLastSyncDate('sites', DateTime.now());
+        }
 
-        // Récupérer les sites après la synchronisation pour les métriques
-        final sitesAfter = await _sitesRepository.getSites();
-
-        // Calculer les métriques de synchronisation
-        final itemsTotal = sitesAfter.length;
-        final itemsAdded = sitesAfter.length > sitesBefore.length
-            ? sitesAfter.length - sitesBefore.length
-            : 0;
-        // Une estimation des mises à jour - difficile à être précis sans plus d'informations
-        final itemsUpdated = sitesBefore.length -
-            (sitesBefore.length > sitesAfter.length
-                ? sitesBefore.length - sitesAfter.length
-                : 0);
-
-        // Mettre à jour la date de synchronisation
-        await updateLastSyncDate('sites', DateTime.now());
-
-        return SyncResult.success(
-          itemsProcessed: itemsTotal,
-          itemsAdded: itemsAdded,
-          itemsUpdated: itemsUpdated,
-          itemsSkipped: 0, // Difficile à estimer sans plus d'informations
-        );
+        return result;
       } catch (e) {
         debugPrint('Erreur lors de la synchronisation des sites: $e');
         return SyncResult.failure(
@@ -882,35 +796,17 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       }
 
       try {
-        // Récupérer les groupes de sites avant la synchronisation pour les métriques
-        final siteGroupsBefore = await _sitesRepository.getSiteGroups();
+        // Utiliser la nouvelle méthode qui gère les conflits
+        final result = await _sitesRepository
+            .incrementalSyncSiteGroupsWithConflictHandling(token);
 
-        // Déléguer la synchronisation au repository spécialisé
-        await _sitesRepository
-            .incrementalSyncSiteGroupsAndSitesGroupModules(token);
+        // Mettre à jour la date de synchronisation si succès ou conflits
+        if (result.success ||
+            (result.conflicts != null && result.conflicts!.isNotEmpty)) {
+          await updateLastSyncDate('siteGroups', DateTime.now());
+        }
 
-        // Récupérer les groupes de sites après la synchronisation pour les métriques
-        final siteGroupsAfter = await _sitesRepository.getSiteGroups();
-
-        // Calculer les métriques de synchronisation
-        final itemsTotal = siteGroupsAfter.length;
-        final itemsAdded = siteGroupsAfter.length > siteGroupsBefore.length
-            ? siteGroupsAfter.length - siteGroupsBefore.length
-            : 0;
-        final itemsUpdated = siteGroupsBefore.length -
-            (siteGroupsBefore.length > siteGroupsAfter.length
-                ? siteGroupsBefore.length - siteGroupsAfter.length
-                : 0);
-
-        // Mettre à jour la date de synchronisation
-        await updateLastSyncDate('siteGroups', DateTime.now());
-
-        return SyncResult.success(
-          itemsProcessed: itemsTotal,
-          itemsAdded: itemsAdded,
-          itemsUpdated: itemsUpdated,
-          itemsSkipped: 0, // Difficile à estimer sans plus d'informations
-        );
+        return result;
       } catch (e) {
         debugPrint(
             'Erreur lors de la synchronisation des groupes de sites: $e');
@@ -928,4 +824,5 @@ class DownstreamSyncRepositoryImpl implements DownstreamSyncRepository {
       );
     }
   }
+
 }

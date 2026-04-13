@@ -131,16 +131,14 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             // Récupérer les données de contexte complètes
             final visit =
                 await db.visitesDao.getVisitById(observation.idBaseVisit!);
-            final site = visit != null
-                ? await db.sitesDao.getSiteById(visit.idBaseSite!)
-                : null;
-            final module = visit != null && visit.idModule != null
+            final site = await db.sitesDao.getSiteById(visit.idBaseSite!);
+            final module = visit.idModule != null
                 ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
             // Construire une route avec tous les éléments du contexte
             String navigationPath;
-            if (visit != null && site != null && module != null) {
+            if (site != null && module != null) {
               // Chemin complet avec toutes les informations de contexte
               navigationPath =
                   '/module/${module.id}/site/${site.idBaseSite}/visit/${visit.idBaseVisit}/observation/${observation.idObservation}';
@@ -201,7 +199,7 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             final site = visit != null
                 ? await db.sitesDao.getSiteById(visit.idBaseSite!)
                 : null;
-            final module = visit != null && visit.idModule != null
+            final module = visit != null
                 ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
@@ -266,16 +264,14 @@ class NomenclaturesDatabaseImpl implements NomenclaturesDatabase {
             // Récupérer les données de contexte complètes
             final visit =
                 await db.visitesDao.getVisitById(complement.idBaseVisit);
-            final site = visit != null
-                ? await db.sitesDao.getSiteById(visit.idBaseSite!)
-                : null;
-            final module = visit != null && visit.idModule != null
+            final site = await db.sitesDao.getSiteById(visit.idBaseSite!);
+            final module = visit.idModule != null
                 ? await db.modulesDao.getModuleById(visit.idModule)
                 : null;
 
             // Construire une route avec tous les éléments du contexte
             String navigationPath;
-            if (visit != null && site != null && module != null) {
+            if (site != null && module != null) {
               // Chemin complet avec toutes les informations de contexte
               navigationPath =
                   '/module/${module.id}/site/${site.idBaseSite}/visit/${visit.idBaseVisit}';

@@ -1,0 +1,16 @@
+[
+  {
+    "id_dataset": 1,
+    "dataset_name": "Jeu de données de test",
+    "dataset_shortname": "JDD_TEST",
+    "id_acquisition_framework": 1,
+    "active": true
+  },
+  {
+    "id_dataset": 2,
+    "dataset_name": "Jeu de données secondaire",
+    "dataset_shortname": "JDD_SEC",
+    "id_acquisition_framework": 1,
+    "active": true
+  }
+]

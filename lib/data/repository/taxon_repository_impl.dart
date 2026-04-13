@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
@@ -36,6 +37,16 @@ class TaxonRepositoryImpl implements TaxonRepository {
   @override
   Future<List<Taxon>> searchTaxonsByListId(String searchTerm, int idListe) {
     return _taxonDatabase.searchTaxonsByListId(searchTerm, idListe);
+  }
+
+  @override
+  Future<bool> isTaxonInList(int cdNom, int idListe) {
+    return _taxonDatabase.isTaxonInList(cdNom, idListe);
+  }
+
+  @override
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10}) {
+    return _taxonDatabase.getSuggestionTaxons(idListe, limit: limit);
   }
 
   @override
@@ -101,23 +112,9 @@ class TaxonRepositoryImpl implements TaxonRepository {
       final taxonList = await _taxonApi.getTaxonList(idListTaxonomy);
       await _taxonDatabase.saveTaxonLists([taxonList]);
 
-      // 3. Télécharger les taxons associés à cette liste
-      final taxons = await _taxonApi.getTaxonsByList(idListTaxonomy);
+      // 3. Télécharger et sauvegarder les taxons page par page
+      await _downloadAndSaveTaxonsByPage(idListTaxonomy);
 
-      // 4. Sauvegarder chaque taxon individuellement pour éviter les erreurs de contrainte
-      for (final taxon in taxons) {
-        try {
-          await _taxonDatabase.saveTaxon(taxon);
-        } catch (e) {
-          print('Erreur lors de la sauvegarde du taxon ${taxon.cdNom}: $e');
-          // Continuer avec le taxon suivant
-        }
-      }
-
-      // 5. Enregistrer les associations entre les taxons et la liste
-      final cdNoms = taxons.map((t) => t.cdNom).toList();
-      await _taxonDatabase.saveTaxonsToList(idListTaxonomy, cdNoms);
-      
       print('Taxons for module $moduleId downloaded and saved successfully.');
     } catch (e) {
       print('Error downloading taxons for module $moduleId: $e');
@@ -126,13 +123,19 @@ class TaxonRepositoryImpl implements TaxonRepository {
 
   /// Télécharge toutes les listes taxonomiques mentionnées dans la configuration
   ///
-  /// Analyse la configuration pour trouver les champs de type 'taxonomy' avec un 'id_list'
-  /// et télécharge les taxons correspondants
+  /// Utilise la méthode unifiée FormConfigParser.extractAllTaxonomyListIds
+  /// qui extrait à la fois les IDs des champs taxonomy (id_list) et
+  /// le id_list_taxonomy au niveau module.
   @override
   Future<void> downloadTaxonsFromConfig(Map<String, dynamic> config) async {
     try {
       // Extraire tous les IDs de listes taxonomiques de la configuration
-      final Set<int> taxonomyListIds = _extractTaxonomyListIds(config);
+      // (champs taxonomy avec id_list + id_list_taxonomy au niveau module)
+      final Set<int> taxonomyListIds =
+          FormConfigParser.extractAllTaxonomyListIds(config);
+
+      print(
+          'downloadTaxonsFromConfig - ${taxonomyListIds.length} listes taxonomiques trouvées: $taxonomyListIds');
 
       // Pour chaque liste taxonomique trouvée dans la configuration
       for (final listId in taxonomyListIds) {
@@ -141,22 +144,8 @@ class TaxonRepositoryImpl implements TaxonRepository {
           final taxonList = await _taxonApi.getTaxonList(listId);
           await _taxonDatabase.saveTaxonLists([taxonList]);
 
-          // Télécharger les taxons associés à cette liste
-          final taxons = await _taxonApi.getTaxonsByList(listId);
-          
-          // Sauvegarder chaque taxon individuellement pour éviter les erreurs de contrainte
-          for (final taxon in taxons) {
-            try {
-              await _taxonDatabase.saveTaxon(taxon);
-            } catch (e) {
-              print('Erreur lors de la sauvegarde du taxon ${taxon.cdNom}: $e');
-              // Continuer avec le taxon suivant
-            }
-          }
-
-          // Enregistrer les associations entre les taxons et la liste
-          final cdNoms = taxons.map((t) => t.cdNom).toList();
-          await _taxonDatabase.saveTaxonsToList(listId, cdNoms);
+          // Télécharger et sauvegarder les taxons page par page
+          await _downloadAndSaveTaxonsByPage(listId);
 
           print('Taxons for list $listId downloaded and saved successfully.');
         } catch (e) {
@@ -169,39 +158,45 @@ class TaxonRepositoryImpl implements TaxonRepository {
     }
   }
 
-  /// Extrait tous les IDs de listes taxonomiques de la configuration
-  Set<int> _extractTaxonomyListIds(Map<String, dynamic> config) {
-    final Set<int> listIds = {};
+  /// Télécharge et sauvegarde les taxons page par page (5000/page).
+  /// Chaque page est sauvegardée immédiatement après téléchargement,
+  /// évitant l'accumulation en mémoire et préservant les données
+  /// en cas d'erreur sur une page ultérieure.
+  Future<void> _downloadAndSaveTaxonsByPage(int listId) async {
+    const int pageSize = 5000;
+    int page = 1;
+    bool hasMore = true;
+    int totalSaved = 0;
 
-    void searchForTaxonomyFields(dynamic obj) {
-      if (obj is Map<String, dynamic>) {
-        // Si c'est un champ de taxonomie avec un id_list
-        if (obj['type_util'] == 'taxonomy' && obj.containsKey('id_list')) {
-          // La propriété id_list peut être un entier ou une chaîne
-          dynamic rawListId = obj['id_list'];
-          int? listId;
-          
-          if (rawListId is int) {
-            listId = rawListId;
-          } else if (rawListId is String) {
-            // Tenter de convertir en entier
-            listId = int.tryParse(rawListId);
-          }
-          
-          if (listId != null) {
-            listIds.add(listId);
-          }
+    while (hasMore) {
+      try {
+        final pageTaxons = await _taxonApi.fetchTaxonPage(
+          listId,
+          page: page,
+          limit: pageSize,
+        );
+
+        if (pageTaxons.isNotEmpty) {
+          // Sauvegarder les taxons immédiatement
+          await _taxonDatabase.saveTaxons(pageTaxons);
+
+          // Sauvegarder les associations taxon-liste
+          final pageCdNoms = pageTaxons.map((t) => t.cdNom).toList();
+          await _taxonDatabase.saveTaxonsToList(listId, pageCdNoms);
+
+          totalSaved += pageTaxons.length;
+          print(
+              'downloadTaxons - List $listId page $page: ${pageTaxons.length} taxons saved (total: $totalSaved)');
         }
 
-        // Recherche récursive dans tous les sous-objets
-        obj.values.forEach(searchForTaxonomyFields);
-      } else if (obj is List) {
-        // Recherche dans les tableaux
-        obj.forEach(searchForTaxonomyFields);
+        hasMore = pageTaxons.length >= pageSize;
+        page++;
+      } catch (e) {
+        print(
+            'downloadTaxons - List $listId page $page failed: $e (${totalSaved} taxons saved so far)');
+        // Arrêter la pagination pour cette liste mais conserver ce qui a été sauvegardé
+        break;
       }
     }
-
-    searchForTaxonomyFields(config);
-    return listIds;
   }
 }

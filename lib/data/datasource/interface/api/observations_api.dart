@@ -8,4 +8,13 @@ abstract class ObservationsApi {
     String moduleCode,
     Observation observation,
   );
+
+  /// Met à jour une observation existante sur le serveur (PATCH)
+  /// Returns the updated observation data if successful
+  Future<Map<String, dynamic>> updateObservation(
+    String token,
+    String moduleCode,
+    int observationId,
+    Observation observation,
+  );
 }

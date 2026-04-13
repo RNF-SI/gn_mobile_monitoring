@@ -5,22 +5,20 @@ import 'package:dio/dio.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 
-class ObservationDetailsApiImpl implements ObservationDetailsApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi {
   final Connectivity _connectivity;
+  final Dio? _dio;
 
-  ObservationDetailsApiImpl({Dio? dio, Connectivity? connectivity})
-      : _dio = dio ?? Dio(BaseOptions(
-          baseUrl: Config.apiBase,
-          connectTimeout: const Duration(seconds: 60),
-          receiveTimeout: const Duration(seconds: 180), // 3 minutes
-          sendTimeout: const Duration(seconds: 60),
-        )),
-        _connectivity = connectivity ?? Connectivity();
+  ObservationDetailsApiImpl({Connectivity? connectivity, Dio? dio})
+        : _connectivity = connectivity ?? Connectivity(),
+          _dio = dio;
+
+  @override
+  Dio get dio => _dio ?? super.dio;
 
   @override
   Future<Map<String, dynamic>> sendObservationDetail(
@@ -301,16 +299,10 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      // Ajouter skip_synthese=true comme paramètre global pour tous les modules
-      // Cette approche permet d'éviter les erreurs de synchronisation avec la synthèse
-      String endpoint =
-          '$apiBase/monitorings/object/$moduleCode/observation_detail?skip_synthese=true';
-      logger.i(
-          '[API] Utilisation du paramètre skip_synthese=true pour éviter les erreurs de synchronisation',
-          tag: 'sync');
+      String endpoint = '/monitorings/object/$moduleCode/observation_detail';
 
       // Envoyer la requête
-      final response = await _dio.post(
+      final response = await dio.post(
         endpoint,
         data: requestBody,
         options: Options(
@@ -369,11 +361,11 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
         // Vérifier tous les champs pour trouver où pourraient être les données
         logger.i('Liste de tous les champs de premier niveau dans la réponse:',
             tag: 'sync');
-        serverResponse.keys.forEach((key) {
+        for (var key in serverResponse.keys) {
           logger.i(
               '- Champ "$key": ${serverResponse[key]} (${serverResponse[key]?.runtimeType})',
               tag: 'sync');
-        });
+        }
 
         return serverResponse;
       } else {
@@ -421,7 +413,8 @@ class ObservationDetailsApiImpl implements ObservationDetailsApi {
       logger.e(logBuffer.toString(), tag: 'sync', error: e);
 
       throw NetworkException(
-          'Erreur réseau lors de l\'envoi du détail d\'observation: ${e.message}');
+          'Erreur réseau lors de l\'envoi du détail d\'observation: ${e.message}',
+          originalDioException: e);
     } catch (e, stackTrace) {
       // Importer AppLogger et créer l'instance
       final logger = AppLogger();

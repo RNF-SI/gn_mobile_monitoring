@@ -1,0 +1,19 @@
+{
+  "user": {
+    "id_role": 1,
+    "identifiant": "testuser",
+    "nom_role": "Test",
+    "prenom_role": "User",
+    "nom_complet": "Test User",
+    "id_organisme": 1,
+    "email": "test@geonature.test",
+    "active": true,
+    "groupe": false,
+    "date_insert": "2024-01-01T00:00:00.000Z",
+    "date_update": "2024-01-01T00:00:00.000Z",
+    "max_level_profil": 6,
+    "desc_role": null
+  },
+  "token": "mock-jwt-token-for-e2e-testing",
+  "expires": "2099-12-31T23:59:59.000Z"
+}

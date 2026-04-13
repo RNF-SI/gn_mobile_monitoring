@@ -1,18 +1,29 @@
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
 abstract class GlobalApi {
-  /// Récupère les nomenclatures et datasets d'un module
+  /// Récupère les nomenclatures, datasets et la configuration d'un module
+  /// Cette méthode optimise les appels en récupérant tout en une fois
+  /// [moduleId] L'identifiant numérique du module
+  /// [token] Token d'authentification (optionnel pour certaines requêtes publiques)
+  /// Retourne un tuple contenant :
+  /// - nomenclatures : Liste des nomenclatures du module
+  /// - datasets : Liste des datasets du module
+  /// - nomenclatureTypes : Liste des types de nomenclatures uniques
+  /// - configuration : Configuration complète du module (réutilisable pour éviter les appels redondants)
   Future<
       ({
         List<NomenclatureEntity> nomenclatures,
         List<DatasetEntity> datasets,
-        List<Map<String, dynamic>> nomenclatureTypes
-      })> getNomenclaturesAndDatasets(String moduleName);
+        List<Map<String, dynamic>> nomenclatureTypes,
+        Map<String, dynamic> configuration,
+      })> getNomenclaturesAndDatasets(int moduleId, {String? token});
 
   /// Renvoie la configuration complète d'un module
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode);
@@ -51,9 +62,10 @@ abstract class GlobalApi {
   Future<SyncResult> syncDatasets(String token, List<String> moduleCodes);
 
   /// Récupère et synchronise à la fois les nomenclatures et les datasets des modules
+  /// [moduleIds] Liste des identifiants numériques des modules à synchroniser
   Future<SyncResult> syncNomenclaturesAndDatasets(
     String token,
-    List<String> moduleCodes, {
+    List<int> moduleIds, {
     DateTime? lastSync,
   });
   
@@ -63,12 +75,32 @@ abstract class GlobalApi {
   /// Returns the created visit's server ID if successful
   Future<Map<String, dynamic>> sendVisit(String token, String moduleCode, BaseVisit visit);
   
+  /// Met à jour une visite existante sur le serveur (PATCH)
+  /// Returns the updated visit data if successful
+  Future<Map<String, dynamic>> updateVisit(String token, String moduleCode, int visitId, BaseVisit visit);
+  
   /// Envoie une observation au serveur
   /// Returns the created observation's server ID if successful
   Future<Map<String, dynamic>> sendObservation(String token, String moduleCode, Observation observation);
+  
+  /// Met à jour une observation existante sur le serveur (PATCH)
+  /// Returns the updated observation data if successful
+  Future<Map<String, dynamic>> updateObservation(String token, String moduleCode, int observationId, Observation observation);
   
   /// Envoie un détail d'observation au serveur
   /// Returns the created observation detail's server ID if successful
   Future<Map<String, dynamic>> sendObservationDetail(
       String token, String moduleCode, ObservationDetail detail);
+
+  /// Envoie un site au serveur (POST)
+  /// Returns the created site's server ID if successful
+  Future<Map<String, dynamic>> sendSite(String token, String moduleCode, BaseSite site, {int? moduleId});
+
+  /// Met à jour un site existant sur le serveur (PATCH)
+  /// Returns the updated site data if successful
+  Future<Map<String, dynamic>> updateSite(String token, String moduleCode, int siteId, BaseSite site);
+
+  /// Envoie un groupe de sites au serveur (POST)
+  /// Returns the created site group's server response if successful
+  Future<Map<String, dynamic>> sendSiteGroup(String token, String moduleCode, SiteGroup siteGroup, {int? moduleId});
 }

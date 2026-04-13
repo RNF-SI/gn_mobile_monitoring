@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
@@ -10,7 +12,7 @@ import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
 
 final userModuleListeProvider =
-    Provider.autoDispose<custom_async_state.State<ModuleInfoList>>((ref) {
+    Provider<custom_async_state.State<ModuleInfoList>>((ref) {
   final userModuleListeState =
       ref.watch(userModuleListeViewModelStateNotifierProvider);
 
@@ -25,11 +27,12 @@ final userModuleListeProvider =
 });
 
 final userModuleListeViewModelStateNotifierProvider =
-    StateNotifierProvider.autoDispose<UserModulesViewModel,
+    StateNotifierProvider<UserModulesViewModel,
         custom_async_state.State<ModuleInfoList>>((ref) {
   return UserModulesViewModel(
     ref.watch(getModulesUseCaseProvider),
-    ref.watch(downloadModuleDataUseCaseProvider),
+    ref.watch(downloadCompleteModuleUseCaseProvider),
+    ref.watch(getTokenFromLocalStorageUseCaseProvider),
     const AsyncValue<ModuleInfoList>.data(ModuleInfoList(values: [])),
   );
 });
@@ -37,11 +40,13 @@ final userModuleListeViewModelStateNotifierProvider =
 class UserModulesViewModel
     extends StateNotifier<custom_async_state.State<ModuleInfoList>> {
   final GetModulesUseCase _getModulesUseCase;
-  final DownloadModuleDataUseCase _downloadModuleDataUseCase;
+  final DownloadCompleteModuleUseCase _downloadCompleteModuleUseCase;
+  final GetTokenFromLocalStorageUseCase _getTokenFromLocalStorageUseCase;
 
   UserModulesViewModel(
     this._getModulesUseCase,
-    this._downloadModuleDataUseCase,
+    this._downloadCompleteModuleUseCase,
+    this._getTokenFromLocalStorageUseCase,
     AsyncValue<ModuleInfoList> userDispListe,
   ) : super(custom_async_state.State.loading()) {
     loadModules();
@@ -73,11 +78,20 @@ class UserModulesViewModel
         );
       }).toList();
 
+      // Trier les modules : téléchargés en premier, puis à télécharger
+      moduleInfos.sort((a, b) {
+        final aDownloaded =
+            a.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
+        final bDownloaded =
+            b.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
+        return aDownloaded.compareTo(bDownloaded);
+      });
+
       state =
           custom_async_state.State.success(ModuleInfoList(values: moduleInfos));
     } catch (e) {
       state =
-          custom_async_state.State.error(Exception("Failed to load modules"));
+          custom_async_state.State.error(Exception("Failed to load modules: ${e.toString()}"));
     }
   }
 
@@ -91,30 +105,76 @@ class UserModulesViewModel
       return;
     }
 
+    // Get the token
+    final token = await _getTokenFromLocalStorageUseCase.execute();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text("Download failed: No authentication token."),
+      ));
+      return;
+    }
+
     // Initially set the state to downloading
     var newModuleInfo = moduleInfo.copyWith(
         downloadStatus: ModuleDownloadStatus.moduleDownloading,
-        downloadProgress: 0.0 // Explicitly set progress to 0 on start
+        downloadProgress: 0.0, // Explicitly set progress to 0 on start
+        currentStep: "Préparation du téléchargement..."
         );
     state = custom_async_state.State.success(
         state.data!.updateModuleInfo(newModuleInfo));
 
     try {
-      await _downloadModuleDataUseCase.execute(moduleId, (double progress) {
-        // Directly update state inside the callback to reflect real-time progress
-        newModuleInfo = newModuleInfo.copyWith(downloadProgress: progress);
-        state = custom_async_state.State.success(
-            state.data!.updateModuleInfo(newModuleInfo));
-      });
+      // Téléchargement complet du module (configuration, datasets, nomenclatures, sites et groupes de sites)
+      await _downloadCompleteModuleUseCase.execute(
+        moduleId, 
+        token, 
+        (double progress) {
+          // Directly update state inside the callback to reflect real-time progress
+          newModuleInfo = newModuleInfo.copyWith(downloadProgress: progress);
+          state = custom_async_state.State.success(
+              state.data!.updateModuleInfo(newModuleInfo));
+        },
+        (String step) {
+          // Update current step information
+          newModuleInfo = newModuleInfo.copyWith(currentStep: step);
+          state = custom_async_state.State.success(
+              state.data!.updateModuleInfo(newModuleInfo));
+        }
+      );
 
       // Once download is complete, update the state to reflect this
       newModuleInfo = newModuleInfo.copyWith(
           downloadStatus: ModuleDownloadStatus.moduleDownloaded,
-          downloadProgress:
-              1.0 // Ensure progress is set to 100% when downloaded
+          downloadProgress: 1.0, // Ensure progress is set to 100% when downloaded
+          currentStep: "Téléchargement terminé!"
           );
       state = custom_async_state.State.success(
           state.data!.updateModuleInfo(newModuleInfo));
+    } on VersionIncompatibleException catch (e) {
+      // Remettre le module à l'état "non téléchargé"
+      newModuleInfo = newModuleInfo.copyWith(
+          downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+          downloadProgress: 0.0,
+          currentStep: '');
+      state = custom_async_state.State.success(
+          state.data!.updateModuleInfo(newModuleInfo));
+
+      // Afficher le dialogue d'erreur de version
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Version du serveur incompatible'),
+            content: Text(e.toString()),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      }
     } on Exception catch (e) {
       state = custom_async_state.State.error(e);
     } catch (e) {

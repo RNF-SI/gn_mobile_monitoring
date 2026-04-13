@@ -1,7 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/global_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
@@ -35,9 +34,9 @@ void main() {
     mockVisitsApi = MockVisitsApi();
     mockObservationsApi = MockObservationsApi();
     mockObservationDetailsApi = MockObservationDetailsApi();
-    
+
     globalApi = GlobalApiImpl(
-      dio: mockDio, 
+      dio: mockDio,
       connectivity: mockConnectivity,
       visitsApi: mockVisitsApi,
       observationsApi: mockObservationsApi,
@@ -55,24 +54,18 @@ void main() {
 
   group('GlobalApiImpl', () {
     const String token = 'test_token';
-    final String apiBase = Config.apiBase;
 
     group('getNomenclaturesAndDatasets', () {
       test('should return nomenclatures and datasets successfully', () async {
-        const moduleName = 'TEST_MODULE';
-        final mockResponse = MockResponse<Map<String, dynamic>>();
-        final responseData = {
-          'nomenclature': [
-            {
-              'id_nomenclature': 1,
-              'cd_nomenclature': 'CODE1',
-              'id_type': 117,
-              'code_type': 'TYPE_MEDIA',
-              'active': true,
-              'meta_create_date': '2023-01-01T00:00:00.000Z',
-            },
-          ],
-          'dataset': [
+        const moduleId = 1;
+        const moduleCode = 'TEST_MODULE';
+
+        // Mock module response
+        final mockModuleResponse = MockResponse<Map<String, dynamic>>();
+        final moduleData = {
+          'id_module': moduleId,
+          'module_code': moduleCode,
+          'datasets': [
             {
               'id_dataset': 1,
               'unique_dataset_id': 'UUID-TEST-001',
@@ -93,31 +86,76 @@ void main() {
             },
           ],
         };
-        
-        when(() => mockResponse.data).thenReturn(responseData);
-        when(() => mockResponse.statusCode).thenReturn(200);
-        
-        when(() => mockDio.get('$apiBase/monitorings/util/init_data/$moduleName'))
-            .thenAnswer((_) async => mockResponse);
 
-        final result = await globalApi.getNomenclaturesAndDatasets(moduleName);
+        when(() => mockModuleResponse.data).thenReturn(moduleData);
+        when(() => mockModuleResponse.statusCode).thenReturn(200);
+
+        when(() => mockDio.get(
+          '/monitorings/module/$moduleId',
+          queryParameters: {'depth': 1},
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => mockModuleResponse);
+
+        // Mock config response with nomenclature types (as list of strings)
+        final mockConfigResponse = MockResponse<Map<String, dynamic>>();
+        final configData = {
+          'data': {
+            'nomenclature': ['TYPE_MEDIA'],  // List of type codes as strings
+          },
+        };
+
+        when(() => mockConfigResponse.data).thenReturn(configData);
+        when(() => mockConfigResponse.statusCode).thenReturn(200);
+
+        when(() => mockDio.get(
+          '/monitorings/config/$moduleCode',
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => mockConfigResponse);
+
+        // Mock nomenclatures by type code response
+        final mockNomenclatureResponse = MockResponse<Map<String, dynamic>>();
+        final nomenclatureData = {
+          'mnemonique': 'TYPE_MEDIA',
+          'values': [
+            {
+              'id_nomenclature': 1,
+              'cd_nomenclature': 'CODE1',
+              'id_type': 117,
+              'code_type': 'TYPE_MEDIA',
+              'label_default': 'Test Label',
+              'active': true,
+              'meta_create_date': '2023-01-01T00:00:00.000Z',
+            },
+          ],
+        };
+
+        when(() => mockNomenclatureResponse.data).thenReturn(nomenclatureData);
+        when(() => mockNomenclatureResponse.statusCode).thenReturn(200);
+
+        when(() => mockDio.get('/nomenclatures/nomenclature/TYPE_MEDIA'))
+            .thenAnswer((_) async => mockNomenclatureResponse);
+
+        final result = await globalApi.getNomenclaturesAndDatasets(moduleId);
 
         expect(result.nomenclatures.length, equals(1));
         expect(result.datasets.length, equals(1));
         expect(result.nomenclatureTypes.length, equals(1));
-        expect(result.nomenclatureTypes.first['mnemonique'], equals('TYPE_MEDIA'));
+        expect(result.configuration, equals(configData));
       });
 
       test('should throw exception on API error', () async {
-        const moduleName = 'TEST_MODULE';
-        
-        when(() => mockDio.get('$apiBase/monitorings/util/init_data/$moduleName'))
-            .thenThrow(DioException(
-              requestOptions: RequestOptions(path: ''),
-            ));
+        const moduleId = 1;
+
+        when(() => mockDio.get(
+          '/monitorings/module/$moduleId',
+          queryParameters: {'depth': 1},
+          options: any(named: 'options'),
+        )).thenThrow(DioException(
+          requestOptions: RequestOptions(path: ''),
+        ));
 
         expect(
-          () async => await globalApi.getNomenclaturesAndDatasets(moduleName),
+          () async => await globalApi.getNomenclaturesAndDatasets(moduleId),
           throwsException,
         );
       });
@@ -139,9 +177,9 @@ void main() {
 
         final mockResponse = MockResponse<dynamic>();
         when(() => mockResponse.statusCode).thenReturn(200);
-        
+
         when(() => mockDio.get(
-              '$apiBase/monitorings/sites/types',
+              '/monitorings/sites/types',
               options: any(named: 'options'),
             )).thenAnswer((_) async => mockResponse);
 
@@ -155,10 +193,10 @@ void main() {
             .thenAnswer((_) async => [ConnectivityResult.wifi]);
 
         when(() => mockDio.get(
-              '$apiBase/monitorings/sites/types',
+              '/monitorings/sites/types',
               options: any(named: 'options'),
             )).thenThrow(DioException(
-              requestOptions: RequestOptions(path: '$apiBase/monitorings/sites/types'),
+              requestOptions: RequestOptions(path: '/monitorings/sites/types'),
               error: 'Network error',
               type: DioExceptionType.connectionError,
             ));
@@ -241,11 +279,11 @@ void main() {
             }
           }
         };
-        
+
         when(() => mockResponse.data).thenReturn(configData);
         when(() => mockResponse.statusCode).thenReturn(200);
-        
-        when(() => mockDio.get('$apiBase/monitorings/config/$moduleCode'))
+
+        when(() => mockDio.get('/monitorings/config/$moduleCode'))
             .thenAnswer((_) async => mockResponse);
 
         final result = await globalApi.getModuleConfiguration(moduleCode);
@@ -263,11 +301,11 @@ void main() {
             {'id': 2, 'name': 'Type 2'},
           ]
         };
-        
+
         when(() => mockResponse.data).thenReturn(responseData);
         when(() => mockResponse.statusCode).thenReturn(200);
-        
-        when(() => mockDio.get('$apiBase/monitorings/sites/types'))
+
+        when(() => mockDio.get('/monitorings/sites/types'))
             .thenAnswer((_) async => mockResponse);
 
         final result = await globalApi.getSiteTypes();
@@ -279,59 +317,34 @@ void main() {
 
     group('syncNomenclaturesAndDatasets', () {
       test('should sync successfully with modules', () async {
-        final moduleCodes = ['MODULE_1', 'MODULE_2'];
-        
-        // Mock checkConnectivity
+        final moduleIds = [1, 2];
+
+        // Mock checkConnectivity - return true (wifi + successful API call)
         when(() => mockConnectivity.checkConnectivity())
             .thenAnswer((_) async => [ConnectivityResult.wifi]);
-        
+
         final mockConnResponse = MockResponse<dynamic>();
         when(() => mockConnResponse.statusCode).thenReturn(200);
-        
+
         when(() => mockDio.get(
-              '$apiBase/monitorings/sites/types',
+              '/monitorings/sites/types',
               options: any(named: 'options'),
             )).thenAnswer((_) async => mockConnResponse);
 
-        // Mock sync responses
-        for (final moduleCode in moduleCodes) {
-          final moduleResponse = MockResponse<Map<String, dynamic>>();
+        // Mock getNomenclaturesAndDatasets for each module
+        for (final moduleId in moduleIds) {
+          // Mock module response
+          final mockModuleResponse = MockResponse<Map<String, dynamic>>();
           final moduleData = {
-            'nomenclature': [
+            'id_module': moduleId,
+            'module_code': 'TEST_MODULE_$moduleId',
+            'datasets': [
               {
-                'id_nomenclature': 1,
-                'cd_nomenclature': 'CODE1',
-                'id_type': 117,
-                'code_type': 'TYPE_MEDIA',
-                'mnemonique': null,
-                'label_default': 'Test Label',
-                'label_fr': 'Test Label FR',
-                'definition_default': null,
-                'definition_fr': null,
-                'label_en': null,
-                'definition_en': null,
-                'label_es': null,
-                'definition_es': null,
-                'label_de': null,
-                'definition_de': null,
-                'label_it': null,
-                'definition_it': null,
-                'source': null,
-                'statut': null,
-                'id_broader': null,
-                'hierarchy': null,
-                'active': true,
-                'meta_create_date': '2023-01-01T00:00:00.000Z',
-                'meta_update_date': '2023-01-01T00:00:00.000Z',
-              },
-            ],
-            'dataset': [
-              {
-                'id_dataset': 1,
-                'unique_dataset_id': 'UUID-TEST-001',
+                'id_dataset': moduleId,
+                'unique_dataset_id': 'UUID-TEST-00$moduleId',
                 'id_acquisition_framework': 1,
-                'dataset_name': 'Test Dataset',
-                'dataset_shortname': 'TD',
+                'dataset_name': 'Test Dataset $moduleId',
+                'dataset_shortname': 'TD$moduleId',
                 'dataset_desc': 'Test Description',
                 'id_nomenclature_data_type': 1,
                 'marine_domain': false,
@@ -346,30 +359,41 @@ void main() {
               },
             ],
           };
-          
-          when(() => moduleResponse.data).thenReturn(moduleData);
-          when(() => moduleResponse.statusCode).thenReturn(200);
-          
+
+          when(() => mockModuleResponse.data).thenReturn(moduleData);
+          when(() => mockModuleResponse.statusCode).thenReturn(200);
+
           when(() => mockDio.get(
-                '$apiBase/monitorings/util/init_data/$moduleCode',
-                options: any(named: 'options'),
-              )).thenAnswer((_) async => moduleResponse);
+            '/monitorings/module/$moduleId',
+            queryParameters: {'depth': 1},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => mockModuleResponse);
+
+          // Mock config response
+          final mockConfigResponse = MockResponse<Map<String, dynamic>>();
+          when(() => mockConfigResponse.data).thenReturn({'data': {}});
+          when(() => mockConfigResponse.statusCode).thenReturn(200);
+
+          when(() => mockDio.get(
+            '/monitorings/config/TEST_MODULE_$moduleId',
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => mockConfigResponse);
         }
 
-        final result = await globalApi.syncNomenclaturesAndDatasets(token, moduleCodes);
+        final result = await globalApi.syncNomenclaturesAndDatasets(token, moduleIds);
 
         expect(result.success, true);
         expect(result.itemsProcessed, greaterThan(0));
       });
 
       test('should handle network exception', () async {
-        final moduleCodes = ['MODULE_1'];
-        
+        final moduleIds = [1];
+
         // Mock no connectivity
         when(() => mockConnectivity.checkConnectivity())
             .thenAnswer((_) async => [ConnectivityResult.none]);
 
-        final result = await globalApi.syncNomenclaturesAndDatasets(token, moduleCodes);
+        final result = await globalApi.syncNomenclaturesAndDatasets(token, moduleIds);
 
         expect(result.success, false);
         expect(result.errorMessage, contains('Aucune connexion réseau'));

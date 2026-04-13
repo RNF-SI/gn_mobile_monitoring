@@ -4,22 +4,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
-import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
   final BaseSite site;
   final ModuleInfo? moduleInfo;
   final dynamic fromSiteGroup;
+  final SyncConflict? currentConflict;
 
   const SiteDetailPageBase({
     super.key,
@@ -27,6 +33,7 @@ class SiteDetailPageBase extends DetailPage {
     required this.site,
     this.moduleInfo,
     this.fromSiteGroup,
+    this.currentConflict,
   });
 
   @override
@@ -53,29 +60,50 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties =>
-      objectConfig?.displayProperties ?? objectConfig?.displayList;
+  List<String>? get displayProperties => objectConfig?.displayProperties;
 
   // Site complement data pour le site courant
   SiteComplement? _siteComplement;
 
   @override
   Map<String, dynamic> get objectData {
-    // Obtenir les données du site depuis le complément
+    final Map<String, dynamic> data = {};
+
+    // Ajouter les champs de base du site
+    if (widget.site.baseSiteCode != null) {
+      data['base_site_code'] = widget.site.baseSiteCode;
+    }
+    if (widget.site.baseSiteName != null) {
+      data['base_site_name'] = widget.site.baseSiteName;
+    }
+    if (widget.site.baseSiteDescription != null) {
+      data['base_site_description'] = widget.site.baseSiteDescription;
+    }
+    if (widget.site.firstUseDate != null) {
+      data['first_use_date'] = widget.site.firstUseDate!.toString();
+    }
+
+    // Ajouter les données du complément si présentes
     if (_siteComplement?.data != null) {
       try {
+        Map<String, dynamic> complementData = {};
         // Tenter de parser le JSON si c'est au format chaîne
         if (_siteComplement!.data is String) {
-          return Map<String, dynamic>.from(
+          complementData = Map<String, dynamic>.from(
               jsonDecode(_siteComplement!.data as String));
+        } else {
+          // Sinon, essayer de le convertir directement
+          complementData =
+              Map<String, dynamic>.from(_siteComplement!.data as Map);
         }
-        // Sinon, essayer de le convertir directement
-        return Map<String, dynamic>.from(_siteComplement!.data as Map);
+        // Fusionner les données du complément (elles écrasent les champs de base si présents)
+        data.addAll(complementData);
       } catch (e) {
         debugPrint('Erreur lors du décodage des données du site: $e');
       }
     }
-    return {};
+
+    return data;
   }
 
   @override
@@ -88,6 +116,26 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   void initState() {
     super.initState();
     _initializeTabController();
+    _loadSiteComplement();
+  }
+
+  /// Charge le complément du site depuis la base de données
+  Future<void> _loadSiteComplement() async {
+    try {
+      final sitesDatabase = widget.ref.read(siteDatabaseProvider);
+      final allComplements = await sitesDatabase.getAllSiteComplements();
+      final complement = allComplements
+          .where((c) => c.idBaseSite == widget.site.idBaseSite)
+          .firstOrNull;
+
+      if (mounted) {
+        setState(() {
+          _siteComplement = complement;
+        });
+      }
+    } catch (e) {
+      debugPrint('Erreur lors du chargement du complément du site: $e');
+    }
   }
 
   // Cette méthode sera appelée une fois que les dépendances sont injectées
@@ -134,9 +182,15 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           label: 'Module',
           value: widget.moduleInfo!.module.moduleLabel ?? 'Module',
           onTap: () {
-            // Naviguer vers le module (retour de plusieurs niveaux)
-            Navigator.of(context).popUntil((route) =>
-                route.isFirst || route.settings.name == '/module_detail');
+            // Naviguer vers le module
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => ModuleDetailPage(
+                  moduleInfo: widget.moduleInfo!,
+                ),
+              ),
+            );
           },
         ),
       );
@@ -155,7 +209,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                 widget.fromSiteGroup.sitesGroupCode ??
                 'Groupe',
             onTap: () {
-              // Retour vers le groupe (1 niveau)
+              // Naviguer vers le groupe de sites (juste remonter d'un niveau)
               Navigator.of(context).pop();
             },
           ),
@@ -181,16 +235,62 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   PreferredSizeWidget buildAppBar() {
+    final isLocal = widget.site.isLocal == true;
+    final isSynced = widget.site.serverSiteId != null;
+    final canEdit = isLocal && !isSynced;
+
     return AppBar(
       title: Text(getTitle()),
-      // Actions pour éditer
+      // Actions pour éditer (uniquement si le site est local et non synchronisé)
       actions: [
-        IconButton(
-          icon: const Icon(Icons.edit),
-          onPressed: () {
-            // Logique pour éditer le site (à implémenter si nécessaire)
-          },
-        ),
+        if (canEdit)
+          IconButton(
+            key: const Key('edit-site-button'),
+            icon: const Icon(Icons.edit),
+            tooltip: 'Modifier le site',
+            onPressed: () {
+              final siteConfig = widget.moduleInfo?.module.complement?.configuration?.site;
+              if (siteConfig != null) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteFormPage(
+                      site: widget.site,
+                      siteConfig: siteConfig,
+                      customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
+                      moduleId: widget.moduleInfo?.module.id,
+                      moduleInfo: widget.moduleInfo,
+                      siteGroup: widget.fromSiteGroup,
+                    ),
+                  ),
+                ).then((_) {
+                  // Rafraîchir la page si nécessaire
+                  if (mounted) {
+                    setState(() {});
+                  }
+                });
+              }
+            },
+          )
+        else
+          IconButton(
+            icon: const Icon(Icons.lock_outline),
+            tooltip: isSynced
+                ? 'Ce site a été synchronisé et ne peut plus être modifié'
+                : 'Ce site ne peut pas être modifié (créé depuis le serveur)',
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isSynced
+                        ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié'
+                        : 'Seuls les sites créés localement peuvent être modifiés',
+                  ),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+          ),
       ],
     );
   }
@@ -235,63 +335,18 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Propriétés du site - non expandable et taille intrinsèque
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 0.0),
-            child: Card(
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Informations générales',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 12),
-                    _buildInfoRow(
-                        'Code', widget.site.baseSiteCode ?? 'Non spécifié'),
-                    _buildInfoRow(
-                        'Nom', widget.site.baseSiteName ?? 'Non spécifié'),
-                    _buildInfoRow('Description',
-                        widget.site.baseSiteDescription ?? 'Non spécifiée'),
-                    if (widget.site.firstUseDate != null)
-                      _buildInfoRow(
-                          'Date de création',
-                          formatDateString(
-                              widget.site.firstUseDate!.toString())),
-                  ],
-                ),
-              ),
-            ),
-          ),
-
-          // Propriétés spécifiques au module si présentes
-          if (_siteComplement?.data != null)
+          // Afficher le bandeau de conflit si présent
+          if (widget.currentConflict != null)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: buildPropertiesWidget(),
+              padding: const EdgeInsets.all(16.0),
+              child: ConflictInfoBanner(conflict: widget.currentConflict!),
             ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-          ),
-          Expanded(
-            child: Text(value),
+          // Propriétés du site (champs de base + données spécifiques au module)
+          // Affichées dynamiquement via buildPropertiesWidget()
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: buildPropertiesWidget(),
           ),
         ],
       ),
@@ -313,6 +368,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     // Bouton d'ajout de visite
     Widget? addVisitButton = visitConfig != null
         ? ElevatedButton.icon(
+            key: const Key('create-visit-button'),
             onPressed: () {
               _showAddVisitForm(visitConfig);
             },
@@ -504,6 +560,15 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                     minHeight: 40,
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 20, color: Colors.red),
+                  tooltip: 'Supprimer',
+                  onPressed: () => _showDeleteVisitConfirmationDialog(visit),
+                  constraints: const BoxConstraints(
+                    minWidth: 40,
+                    minHeight: 40,
+                  ),
+                ),
               ],
             ),
           );
@@ -632,5 +697,109 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
       widget.ref.invalidate(siteVisitsViewModelProvider(params));
     });
+  }
+
+  /// Affiche le dialogue de confirmation pour la suppression d'une visite depuis la liste
+  void _showDeleteVisitConfirmationDialog(BaseVisit visit) async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+
+    // Compter les observations de cette visite
+    final observationCount = await siteVisitsViewModel
+        .getObservationCountForVisit(visit.idBaseVisit);
+
+    if (!mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer la visite'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+                'Voulez-vous vraiment supprimer la visite du ${formatDateString(visit.visitDateMin)} ?'),
+            if (observationCount > 0) ...[
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.orange),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        observationCount == 1
+                            ? 'Cette action supprimera également 1 observation et tous ses détails associés.'
+                            : 'Cette action supprimera également $observationCount observations et tous leurs détails associés.',
+                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _deleteVisitFromList(visit);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Supprime une visite depuis la liste
+  void _deleteVisitFromList(BaseVisit visit) async {
+    final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
+        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+
+    try {
+      final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit);
+
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Visite supprimée avec succès'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Pas besoin de navigation car on reste sur la même page
+        // Le ViewModel va automatiquement rafraîchir la liste
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de la suppression de la visite'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }

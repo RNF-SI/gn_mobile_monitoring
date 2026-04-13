@@ -7,6 +7,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:uuid/uuid.dart';
@@ -22,6 +23,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
   final getObservationByIdUseCase =
       ref.watch(getObservationByIdUseCaseProvider);
   final formDataProcessor = ref.watch(formDataProcessorProvider);
+  final getUserIdFromLocalStorageUseCase = ref.watch(getUserIdFromLocalStorageUseCaseProvider);
 
   return ObservationsViewModel(
     getObservationsByVisitIdUseCase,
@@ -30,6 +32,7 @@ final observationsProvider = StateNotifierProvider.family<ObservationsViewModel,
     deleteObservationUseCase,
     getObservationByIdUseCase,
     formDataProcessor,
+    getUserIdFromLocalStorageUseCase,
     visitId,
   );
 });
@@ -48,6 +51,7 @@ class ObservationsViewModel
   final DeleteObservationUseCase _deleteObservationUseCase;
   final GetObservationByIdUseCase _getObservationByIdUseCase;
   final FormDataProcessor _formDataProcessor;
+  final GetUserIdFromLocalStorageUseCase _getUserIdFromLocalStorageUseCase;
 
   final int _visitId;
   bool _mounted = true;
@@ -59,6 +63,7 @@ class ObservationsViewModel
     this._deleteObservationUseCase,
     this._getObservationByIdUseCase,
     this._formDataProcessor,
+    this._getUserIdFromLocalStorageUseCase,
     this._visitId,
   ) : super(const AsyncValue.loading()) {
     if (_visitId > 0) {
@@ -119,17 +124,27 @@ class ObservationsViewModel
     try {
       // Extraire les données spécifiques et traiter les nomenclatures
       final specificData = _extractObservationSpecificData(formData);
+      final standardData = _extractObservationStandardData(formData);
       final processedData =
           await _formDataProcessor.processFormData(specificData);
 
+      processedData.addAll(standardData);
       // Générer un UUID pour l'observation
       final uuid = _generateUuid();
+      
+      // Récupérer l'ID de l'utilisateur courant depuis le stockage local
+      final idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
+      
+      if (idDigitiser <= 0) {
+        throw Exception('Impossible de créer une observation : utilisateur non connecté');
+      }
       
       // Préparer l'objet Observation à partir des données du formulaire
       final observation = Observation(
         idObservation: 0, // Nouvel ID généré par la BDD
         idBaseVisit: _visitId,
-        cdNom: formData['cd_nom'] is int ? formData['cd_nom'] : null,
+        idDigitiser: idDigitiser, // ID de l'utilisateur courant
+        cdNom: _extractCdNom(formData['cd_nom']),
         comments: formData['comments']?.toString(),
         uuidObservation: uuid, // Inclure l'UUID généré
         data: processedData,
@@ -168,19 +183,31 @@ class ObservationsViewModel
 
       // Extraire les données spécifiques et traiter les nomenclatures
       final specificData = _extractObservationSpecificData(formData);
+      final standardData = _extractObservationStandardData(formData);
       final processedData =
           await _formDataProcessor.processFormData(specificData);
+
+      processedData.addAll(standardData);
 
       // Créer une nouvelle observation avec les données mises à jour
       // S'assurer que l'UUID est défini
       String uuid = existingObservation.uuidObservation ?? _generateUuid();
       
+      // Conserver l'idDigitiser existant, ou utiliser l'utilisateur courant si null
+      int? idDigitiser = existingObservation.idDigitiser;
+      if (idDigitiser == null) {
+        idDigitiser = await _getUserIdFromLocalStorageUseCase.execute();
+        
+        if (idDigitiser <= 0) {
+          throw Exception('Impossible de mettre à jour une observation : utilisateur non connecté');
+        }
+      }
+      
       final updatedObservation = Observation(
         idObservation: observationId,
         idBaseVisit: _visitId,
-        cdNom: formData['cd_nom'] is int
-            ? formData['cd_nom']
-            : existingObservation.cdNom,
+        idDigitiser: idDigitiser, // Conserver ou définir l'ID digitiser
+        cdNom: _extractCdNom(formData['cd_nom']) ?? existingObservation.cdNom,
         comments:
             formData['comments']?.toString() ?? existingObservation.comments,
         uuidObservation: uuid,
@@ -221,6 +248,17 @@ class ObservationsViewModel
     }
   }
 
+  /// Extrait le cd_nom depuis une valeur qui peut être un int, un Map taxon, ou null
+  int? _extractCdNom(dynamic value) {
+    if (value is int) return value;
+    if (value is Map<String, dynamic> && value.containsKey('cd_nom')) {
+      final cdNom = value['cd_nom'];
+      return cdNom is int ? cdNom : int.tryParse(cdNom.toString());
+    }
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
   /// Extrait les données spécifiques à l'observation en excluant les champs standard
   Map<String, dynamic> _extractObservationSpecificData(
       Map<String, dynamic> formData) {
@@ -258,6 +296,45 @@ class ObservationsViewModel
     });
 
     return specificData;
+  }
+
+    /// Extrait les données spécifiques à l'observation en excluant les champs standard
+  Map<String, dynamic> _extractObservationStandardData(
+      Map<String, dynamic> formData) {
+    // Liste des champs standard à exclure
+    const standardFields = {
+      'id_observation',
+      'id_base_visit',
+      'cd_nom',
+      'comments',
+      'uuid_observation',
+    };
+
+    // Créer un nouveau Map avec uniquement les données spécifiques
+    final Map<String, dynamic> standardData = {};
+
+    formData.forEach((key, value) {
+      if (standardFields.contains(key) && value != null) {
+        // Conversion des types si nécessaire
+        if (value is String && double.tryParse(value) != null) {
+          if (double.parse(value) % 1 == 0) {
+            standardData[key] = int.parse(value);
+          } else {
+            standardData[key] = double.parse(value);
+          }
+        } else if (value is DateTime) {
+          standardData[key] = value.toIso8601String();
+        } else if (key.toLowerCase().contains('time') &&
+            !key.toLowerCase().contains('date') &&
+            value is String) {
+          standardData[key] = normalizeTimeFormat(value);
+        } else {
+          standardData[key] = value;
+        }
+      }
+    });
+
+    return standardData;
   }
 
   /// Récupère une observation par son ID

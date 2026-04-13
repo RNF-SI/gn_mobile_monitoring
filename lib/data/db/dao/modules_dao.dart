@@ -71,7 +71,10 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     }
   }
 
-  Future<Module> getModuleById(int moduleId) async {
+  /// Récupère un module complet avec tous ses sites et groupes de sites associés
+  /// Cette méthode est plus lourde car elle charge toutes les relations
+  /// Use case: pages de détail, affichage des sites, navigation
+  Future<Module> getModuleWithRelationsById(int moduleId) async {
     final dbModule = await (select(tModules)
           ..where((tbl) => tbl.idModule.equals(moduleId)))
         .getSingle();
@@ -81,6 +84,16 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final complement = await getModuleComplementById(moduleId);
     return dbModule.toDomainWithComplementSitesAndSiteGroups(
         complement, sites, siteGroups);
+  }
+
+  /// Récupère uniquement les informations de base d'un module sans charger ses relations
+  /// Cette méthode est plus légère et rapide que getModuleWithRelationsById
+  /// Use case: récupération d'un attribut spécifique, vérification d'existence
+  Future<Module?> getModuleById(int moduleId) async {
+    final query = select(tModules)
+      ..where((tbl) => tbl.idModule.equals(moduleId));
+    final result = await query.getSingleOrNull();
+    return result?.toDomain();
   }
 
   Future<void> markModuleAsDownloaded(int moduleId) async {
@@ -227,16 +240,21 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     final query = select(tModules)
       ..where((tbl) => tbl.moduleCode.equals(moduleCode));
     final result = await query.getSingleOrNull();
-    return result?.toDomain();
+    if (result == null) return null;
+
+    // Charger le complement pour avoir accès à la configuration et idListTaxonomy
+    final complement = await getModuleComplementById(result.idModule);
+    return result.toDomainWithComplementSitesAndSiteGroups(
+        complement, const [], const []);
   }
 
   // Méthode d'aide pour convertir différents types de valeurs en int
   int? _parseIdListTaxonomy(dynamic value) {
     if (value == null) return null;
-    
+
     // Si c'est déjà un int, le retourner directement
     if (value is int) return value;
-    
+
     // Si c'est une String, essayer de la convertir en int
     if (value is String) {
       try {
@@ -246,18 +264,23 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
         return null;
       }
     }
-    
+
     // Si c'est un double, le convertir en int
     if (value is double) return value.toInt();
-    
+
     // Si c'est un Map, vérifier s'il a une propriété 'id' ou 'idListe' ou 'id_liste'
     if (value is Map) {
       if (value.containsKey('id')) return _parseIdListTaxonomy(value['id']);
-      if (value.containsKey('idListe')) return _parseIdListTaxonomy(value['idListe']);
-      if (value.containsKey('id_liste')) return _parseIdListTaxonomy(value['id_liste']);
+      if (value.containsKey('idListe')) {
+        return _parseIdListTaxonomy(value['idListe']);
+      }
+      if (value.containsKey('id_liste')) {
+        return _parseIdListTaxonomy(value['id_liste']);
+      }
     }
-    
-    print('Type de valeur non supporté pour id_list_taxonomy: ${value.runtimeType}');
+
+    print(
+        'Type de valeur non supporté pour id_list_taxonomy: ${value.runtimeType}');
     return null;
   }
 
@@ -269,19 +292,23 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
         try {
           // La configuration peut être soit une Map<String, dynamic>, soit une chaîne JSON, soit un ModuleConfiguration
           Map<String, dynamic> configJson;
-          
+
           if (moduleComplement!.configuration is String) {
             // Si c'est déjà une chaîne JSON, la parser
-            configJson = jsonDecode(moduleComplement.configuration as String) as Map<String, dynamic>;
+            configJson = jsonDecode(moduleComplement.configuration as String)
+                as Map<String, dynamic>;
           } else if (moduleComplement.configuration is Map<String, dynamic>) {
             // Si c'est déjà une Map, l'utiliser directement
             configJson = moduleComplement.configuration as Map<String, dynamic>;
           } else {
             // Si c'est un autre type (comme ModuleConfiguration), on va chercher directement dans la base de données
-            final result = await (select(tModuleComplements)..where((t) => t.idModule.equals(moduleId))).getSingleOrNull();
+            final result = await (select(tModuleComplements)
+                  ..where((t) => t.idModule.equals(moduleId)))
+                .getSingleOrNull();
             if (result?.configuration == null) return null;
-            
-            configJson = jsonDecode(result!.configuration!) as Map<String, dynamic>;
+
+            configJson =
+                jsonDecode(result!.configuration!) as Map<String, dynamic>;
           }
 
           // Chercher d'abord dans custom.__MODULE.ID_LIST_TAXONOMY
@@ -301,7 +328,7 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
               return _parseIdListTaxonomy(idListTaxonomy);
             }
           }
-          
+
           // Chercher directement dans la racine du JSON (pour les configurations plus simples)
           if (configJson.containsKey('id_list_taxonomy')) {
             final idListTaxonomy = configJson['id_list_taxonomy'];
@@ -312,6 +339,15 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
               'Erreur de parsing de la configuration du module $moduleId: $e');
         }
       }
+
+      // Fallback: utiliser la colonne directe idListTaxonomy du complement
+      // (remplie depuis le champ de premier niveau de la réponse API)
+      if (moduleComplement?.idListTaxonomy != null) {
+        print(
+            'getModuleTaxonomyListId - Utilisation du fallback idListTaxonomy=${moduleComplement!.idListTaxonomy} pour le module $moduleId');
+        return moduleComplement.idListTaxonomy;
+      }
+
       return null;
     } catch (e) {
       print('Erreur lors de la récupération de l\'ID de liste taxonomique: $e');
@@ -333,6 +369,12 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
     } catch (e) {
       throw Exception('Failed to associate module with dataset: $e');
     }
+  }
+
+  Future<void> clearDatasetAssociationsForModule(int moduleId) async {
+    await (delete(corModuleDatasetTable)
+          ..where((tbl) => tbl.idModule.equals(moduleId)))
+        .go();
   }
 
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {

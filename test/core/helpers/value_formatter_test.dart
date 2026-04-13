@@ -16,8 +16,8 @@ void main() {
       });
 
       test('should format list values', () {
-        expect(ValueFormatter.format([1, 2, 3]), equals('Liste (3 éléments)'));
-        expect(ValueFormatter.format([]), equals('Liste (0 éléments)'));
+        expect(ValueFormatter.format([1, 2, 3]), equals('3 nomenclatures sélectionnées (IDs: 1, 2, 3)'));
+        expect(ValueFormatter.format([]), equals('Non renseigné'));
       });
 
       test('should call formatNomenclature for Map values', () {

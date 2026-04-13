@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
@@ -11,13 +12,9 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_modules_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/login_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_api_url_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/set_is_logged_in_from_local_storage_use_case.dart';
@@ -28,6 +25,12 @@ import 'package:gn_mobile_monitoring/presentation/state/login_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as loadingState;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:go_router/go_router.dart';
 
 // Pour le Checker
@@ -55,8 +58,6 @@ final authenticationViewModelProvider =
     ref.watch(getApiUrlFromLocalStorageUseCaseProvider),
     ref.watch(clearApiUrlFromLocalStorageUseCaseProvider),
     ref.watch(fetchModulesUseCaseProvider),
-    ref.watch(fetchSitesUseCaseProvider),
-    ref.watch(fetchSiteGroupsUseCaseProvider),
     ref,
   );
 });
@@ -84,8 +85,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
   final GetApiUrlFromLocalStorageUseCase _getApiUrlFromLocalStorageUseCase;
   final ClearApiUrlFromLocalStorageUseCase _clearApiUrlFromLocalStorageUseCase;
   final FetchModulesUseCase _fetchModulesUseCase;
-  final FetchSitesUseCase _fetchSitesUseCase;
-  final FetchSiteGroupsUseCase _fetchSiteGroupsUseCase;
   final Ref _ref;
 
   AuthenticationViewModel(
@@ -101,8 +100,6 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     this._getApiUrlFromLocalStorageUseCase,
     this._clearApiUrlFromLocalStorageUseCase,
     this._fetchModulesUseCase,
-    this._fetchSitesUseCase,
-    this._fetchSiteGroupsUseCase,
     this._ref,
   ) : super(const loadingState.State.init()) {
     controller.add(_user);
@@ -118,19 +115,13 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         Config.setStoredApiUrl(apiUrl);
       }
     } catch (e) {
-      print('Error loading API URL: $e');
+      AppLogger().e('Échec du chargement de l\'URL API stockée', tag: 'AUTH', error: e);
     }
   }
 
   // For convenience, access to incremental sync use cases through ref
   IncrementalSyncModulesUseCase get _incrementalSyncModulesUseCase =>
       _ref.read(incrementalSyncModulesUseCaseProvider);
-
-  IncrementalSyncSitesUseCase get _incrementalSyncSitesUseCase =>
-      _ref.read(incrementalSyncSitesUseCaseProvider);
-
-  IncrementalSyncSiteGroupsUseCase get _incrementalSyncSiteGroupsUseCase =>
-      _ref.read(incrementalSyncSiteGroupsUseCaseProvider);
 
   GetModulesUseCase get _getModulesUseCase =>
       _ref.read(getModulesUseCaseProvider);
@@ -146,8 +137,10 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     try {
       await _setApiUrlFromLocalStorageUseCase.execute(apiUrl);
       Config.setStoredApiUrl(apiUrl);
+      
+      AppLogger().d('URL API sauvegardée avec succès', tag: 'AUTH');
     } catch (e) {
-      print('Error saving API URL: $e');
+      AppLogger().e('Échec de la sauvegarde de l\'URL API', tag: 'AUTH', error: e);
     }
   }
   
@@ -156,7 +149,7 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     try {
       return await _getApiUrlFromLocalStorageUseCase.execute();
     } catch (e) {
-      print('Error getting API URL: $e');
+      AppLogger().e('Échec de la récupération de l\'URL API', tag: 'AUTH', error: e);
       return null;
     }
   }
@@ -189,49 +182,46 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
           try {
             if (hasDatabaseData) {
-              print(
-                  "Database already contains data. Performing incremental sync...");
+              AppLogger().i('Base de données contient des données existantes, synchronisation incrémentale en cours', tag: 'AUTH');
 
               // Perform incremental sync of modules
               _updateLoginStatus(LoginStatusInfo.incrementalSyncModules);
               await _incrementalSyncModulesUseCase.execute(user.token);
 
-              // Then incremental sync sites
-              _updateLoginStatus(LoginStatusInfo.incrementalSyncSites);
-              await _incrementalSyncSitesUseCase.execute(user.token);
-
-              // Then incremental sync site groups
-              _updateLoginStatus(LoginStatusInfo.incrementalSyncSiteGroups);
-              await _incrementalSyncSiteGroupsUseCase.execute(user.token);
+              // Sites are now synchronized with individual modules, not here anymore
             } else {
-              print("Empty database. Performing full initial sync...");
+              AppLogger().i('Base de données vide détectée, synchronisation initiale complète en cours', tag: 'AUTH');
 
               // First fetch and sync modules
               _updateLoginStatus(LoginStatusInfo.fetchingModules);
               await _fetchModulesUseCase.execute(user.token);
 
-              // Then fetch sites
-              _updateLoginStatus(LoginStatusInfo.fetchingSites);
-              await _fetchSitesUseCase.execute(user.token);
-
-              // Then fetch site groups
-              _updateLoginStatus(LoginStatusInfo.fetchingSiteGroups);
-              await _fetchSiteGroupsUseCase.execute(user.token);
+              // Sites are now downloaded with individual modules, not here anymore
             }
           } catch (e) {
-            print('Error during data sync: $e');
+            AppLogger().e('Échec de la synchronisation des données après connexion', tag: 'AUTH', error: e);
             // We still continue to the home page even if some data fetching failed
           }
 
           // Set status to complete
           _updateLoginStatus(LoginStatusInfo.complete);
 
-          // Refresh state
+          await Future.delayed(const Duration(milliseconds: 200));
+
+          // Refresh state ET refresh modules provider pour forcer le rechargement
           ref.refresh(isLoggedInProvider);
+          
+          // Rafraîchir explicitement le provider des modules
+          try {
+            ref.refresh(userModuleListeViewModelStateNotifierProvider);
+          } catch (e) {
+            AppLogger().d('Impossible de rafraîchir le provider des modules: $e', tag: 'AUTH');
+          }
+          
           GoRouter.of(context).go('/');
           state = loadingState.State.success(user);
         } catch (e) {
-          print('Error during post-login actions: $e');
+          AppLogger().e('Échec des actions post-connexion', tag: 'AUTH', error: e);
           _updateLoginStatus(LoginStatusInfo.error(e.toString()));
         }
       });
@@ -320,9 +310,65 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       await _clearTokenFromLocalStorageUseCase.execute();
       
       // We don't clear API URL when logging out so it persists between sessions
-      // If you want to clear it, uncomment the line below
+      // This is convenient for users who always use the same server
+      // If you want to clear it, uncomment the lines below
       // await _clearApiUrlFromLocalStorageUseCase.execute();
       // Config.clearStoredApiUrl();
+
+      // Clear any cached user information
+      ref.refresh(authStateProvider);
+      
+      // IMPORTANT: Aussi rafraîchir le provider des modules pour éviter 
+      // les problèmes de cache lors de la reconnexion
+      try {
+        ref.refresh(userModuleListeViewModelStateNotifierProvider);
+      } catch (e) {
+        AppLogger().d('Impossible de rafraîchir le provider des modules lors de déconnexion: $e', tag: 'AUTH');
+      }
+
+      // Navigate to the login page
+      GoRouter.of(context).go('/login');
+
+      // Reset the state
+      state = const loadingState.State.init();
+    } catch (e) {
+      AppLogger().e('Échec du processus de déconnexion', tag: 'AUTH', error: e);
+    }
+  }
+
+  /// Nouvelle méthode de déconnexion avec suppression complète des données
+  Future<void> signOutAndClearAllData(WidgetRef ref, BuildContext context) async {
+    try {
+      // Clear user data
+      _user = null;
+      controller.add(_user);
+
+      // Update login state  
+      await _setIsLoggedInFromLocalStorageUseCase.execute(false);
+      await _clearUserNameFromLocalStorageUseCase.execute();
+      await _clearUserIdFromLocalStorageUseCase.execute();
+      await _clearTokenFromLocalStorageUseCase.execute();
+      
+      // We don't clear API URL when logging out so it persists between sessions
+      // This is convenient for users who always use the same server
+      // If you want to clear it, uncomment the lines below
+      // await _clearApiUrlFromLocalStorageUseCase.execute();
+      // Config.clearStoredApiUrl();
+
+      // Supprimer la base de données locale et tous les caches
+      try {
+        // Supprimer et réinitialiser la base de données
+        final databaseService = ref.read(databaseServiceProvider.notifier);
+        await databaseService.deleteAndReinitializeDatabase();
+        
+        // Vider tous les caches des services
+        _clearAllServiceCaches(ref);
+        
+        AppLogger().i('Base de données et caches supprimés avec succès lors de la déconnexion', tag: 'AUTH');
+      } catch (e) {
+        AppLogger().e('Échec de la suppression de la base de données lors de la déconnexion', tag: 'AUTH', error: e);
+        // Continuer avec la déconnexion même si la suppression de la DB échoue
+      }
 
       // Clear any cached user information
       ref.refresh(authStateProvider);
@@ -333,7 +379,25 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
       // Reset the state
       state = const loadingState.State.init();
     } catch (e) {
-      print('Error during logout: $e');
+      AppLogger().e('Échec du processus de déconnexion amélioré', tag: 'AUTH', error: e);
+    }
+  }
+
+  /// Vide tous les caches des services
+  void _clearAllServiceCaches(WidgetRef ref) {
+    try {
+      // Vider les conflits de synchronisation
+      ref.refresh(syncServiceProvider);
+      
+      // Refresh tous les providers de données pour vider leurs caches
+      ref.refresh(nomenclatureServiceProvider);
+      ref.refresh(datasetServiceProvider); 
+      ref.refresh(taxonServiceProvider);
+      ref.refresh(authStateProvider);
+      
+      AppLogger().i('Tous les caches des services ont été vidés avec succès', tag: 'AUTH');
+    } catch (e) {
+      AppLogger().e('Échec du vidage des caches de services', tag: 'AUTH', error: e);
     }
   }
 }

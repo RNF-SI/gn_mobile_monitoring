@@ -18,5 +18,7 @@ class SiteGroup with _$SiteGroup {
     String? geom,
     int? altitudeMin,
     int? altitudeMax,
+    bool? isLocal,
+    int? serverSiteGroupId,
   }) = _SiteGroup;
 }

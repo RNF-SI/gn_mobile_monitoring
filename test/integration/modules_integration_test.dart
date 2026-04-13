@@ -43,7 +43,9 @@ void main() {
 
     // Mock for TaxonRepository
     final mockTaxonRepository = MockTaxonRepository();
-    
+    final mockSitesRepository = MockSitesRepository();
+    final mockVersionApi = MockVersionApi();
+
     repository = ModulesRepositoryImpl(
       mockGlobalApi,
       mockModulesApi,
@@ -53,6 +55,8 @@ void main() {
       mockDatasetsDatabase,
       mockTaxonDatabase,
       mockTaxonRepository,
+      mockSitesRepository,
+      mockVersionApi,
     );
 
     useCase = GetModulesUseCaseImpl(repository);

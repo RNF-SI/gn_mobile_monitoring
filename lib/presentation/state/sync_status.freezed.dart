@@ -27,7 +27,13 @@ mixin _$SyncStatus {
   DateTime? get lastSync => throw _privateConstructorUsedError;
   List<SyncConflict>? get conflicts => throw _privateConstructorUsedError;
   DateTime get lastUpdated =>
-      throw _privateConstructorUsedError; // Détails supplémentaires pour la progression
+      throw _privateConstructorUsedError; // Type de synchronisation en cours
+  SyncType? get currentSyncType =>
+      throw _privateConstructorUsedError; // Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
+// Détails supplémentaires pour la progression
   String? get currentEntityName =>
       throw _privateConstructorUsedError; // Nom du module, site, etc. en cours de traitement
   int? get currentEntityTotal =>
@@ -46,9 +52,7 @@ mixin _$SyncStatus {
       throw _privateConstructorUsedError; // Informations supplémentaires sur la progression
   String? get nextFullSyncInfo => throw _privateConstructorUsedError;
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SyncStatusCopyWith<SyncStatus> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -71,6 +75,7 @@ abstract class $SyncStatusCopyWith<$Res> {
       DateTime? lastSync,
       List<SyncConflict>? conflicts,
       DateTime lastUpdated,
+      SyncType? currentSyncType,
       String? currentEntityName,
       int? currentEntityTotal,
       int? currentEntityProcessed,
@@ -92,8 +97,6 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -108,6 +111,7 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
     Object? lastSync = freezed,
     Object? conflicts = freezed,
     Object? lastUpdated = null,
+    Object? currentSyncType = freezed,
     Object? currentEntityName = freezed,
     Object? currentEntityTotal = freezed,
     Object? currentEntityProcessed = freezed,
@@ -163,6 +167,10 @@ class _$SyncStatusCopyWithImpl<$Res, $Val extends SyncStatus>
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      currentSyncType: freezed == currentSyncType
+          ? _value.currentSyncType
+          : currentSyncType // ignore: cast_nullable_to_non_nullable
+              as SyncType?,
       currentEntityName: freezed == currentEntityName
           ? _value.currentEntityName
           : currentEntityName // ignore: cast_nullable_to_non_nullable
@@ -223,6 +231,7 @@ abstract class _$$SyncStatusImplCopyWith<$Res>
       DateTime? lastSync,
       List<SyncConflict>? conflicts,
       DateTime lastUpdated,
+      SyncType? currentSyncType,
       String? currentEntityName,
       int? currentEntityTotal,
       int? currentEntityProcessed,
@@ -242,8 +251,6 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
       _$SyncStatusImpl _value, $Res Function(_$SyncStatusImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -258,6 +265,7 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
     Object? lastSync = freezed,
     Object? conflicts = freezed,
     Object? lastUpdated = null,
+    Object? currentSyncType = freezed,
     Object? currentEntityName = freezed,
     Object? currentEntityTotal = freezed,
     Object? currentEntityProcessed = freezed,
@@ -313,6 +321,10 @@ class __$$SyncStatusImplCopyWithImpl<$Res>
           ? _value.lastUpdated
           : lastUpdated // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      currentSyncType: freezed == currentSyncType
+          ? _value.currentSyncType
+          : currentSyncType // ignore: cast_nullable_to_non_nullable
+              as SyncType?,
       currentEntityName: freezed == currentEntityName
           ? _value.currentEntityName
           : currentEntityName // ignore: cast_nullable_to_non_nullable
@@ -368,6 +380,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
       this.lastSync,
       final List<SyncConflict>? conflicts,
       required this.lastUpdated,
+      this.currentSyncType,
       this.currentEntityName,
       this.currentEntityTotal,
       this.currentEntityProcessed,
@@ -424,6 +437,13 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
 
   @override
   final DateTime lastUpdated;
+// Type de synchronisation en cours
+  @override
+  final SyncType? currentSyncType;
+// Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
 // Détails supplémentaires pour la progression
   @override
   final String? currentEntityName;
@@ -454,7 +474,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
 
   @override
   String toString({DiagnosticLevel minLevel = DiagnosticLevel.info}) {
-    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsDeleted: $itemsDeleted, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
+    return 'SyncStatus(state: $state, currentStep: $currentStep, completedSteps: $completedSteps, failedSteps: $failedSteps, itemsProcessed: $itemsProcessed, itemsTotal: $itemsTotal, progress: $progress, errorMessage: $errorMessage, lastSync: $lastSync, conflicts: $conflicts, lastUpdated: $lastUpdated, currentSyncType: $currentSyncType, currentEntityName: $currentEntityName, currentEntityTotal: $currentEntityTotal, currentEntityProcessed: $currentEntityProcessed, itemsAdded: $itemsAdded, itemsUpdated: $itemsUpdated, itemsSkipped: $itemsSkipped, itemsDeleted: $itemsDeleted, additionalInfo: $additionalInfo, nextFullSyncInfo: $nextFullSyncInfo)';
   }
 
   @override
@@ -473,6 +493,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
       ..add(DiagnosticsProperty('lastSync', lastSync))
       ..add(DiagnosticsProperty('conflicts', conflicts))
       ..add(DiagnosticsProperty('lastUpdated', lastUpdated))
+      ..add(DiagnosticsProperty('currentSyncType', currentSyncType))
       ..add(DiagnosticsProperty('currentEntityName', currentEntityName))
       ..add(DiagnosticsProperty('currentEntityTotal', currentEntityTotal))
       ..add(
@@ -511,6 +532,8 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
                 .equals(other._conflicts, _conflicts) &&
             (identical(other.lastUpdated, lastUpdated) ||
                 other.lastUpdated == lastUpdated) &&
+            (identical(other.currentSyncType, currentSyncType) ||
+                other.currentSyncType == currentSyncType) &&
             (identical(other.currentEntityName, currentEntityName) ||
                 other.currentEntityName == currentEntityName) &&
             (identical(other.currentEntityTotal, currentEntityTotal) ||
@@ -545,6 +568,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
         lastSync,
         const DeepCollectionEquality().hash(_conflicts),
         lastUpdated,
+        currentSyncType,
         currentEntityName,
         currentEntityTotal,
         currentEntityProcessed,
@@ -556,9 +580,7 @@ class _$SyncStatusImpl extends _SyncStatus with DiagnosticableTreeMixin {
         nextFullSyncInfo
       ]);
 
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SyncStatusImplCopyWith<_$SyncStatusImpl> get copyWith =>
@@ -578,6 +600,7 @@ abstract class _SyncStatus extends SyncStatus {
       final DateTime? lastSync,
       final List<SyncConflict>? conflicts,
       required final DateTime lastUpdated,
+      final SyncType? currentSyncType,
       final String? currentEntityName,
       final int? currentEntityTotal,
       final int? currentEntityProcessed,
@@ -610,33 +633,33 @@ abstract class _SyncStatus extends SyncStatus {
   @override
   List<SyncConflict>? get conflicts;
   @override
-  DateTime get lastUpdated; // Détails supplémentaires pour la progression
-  @override
-  String?
-      get currentEntityName; // Nom du module, site, etc. en cours de traitement
-  @override
-  int?
-      get currentEntityTotal; // Nombre total d'éléments à traiter pour l'entité courante
-  @override
-  int?
-      get currentEntityProcessed; // Nombre d'éléments traités pour l'entité courante
-  @override
-  int? get itemsAdded; // Nombre d'éléments ajoutés dans l'étape actuelle
-  @override
-  int? get itemsUpdated; // Nombre d'éléments mis à jour dans l'étape actuelle
-  @override
-  int? get itemsSkipped; // Nombre d'éléments ignorés dans l'étape actuelle
-  @override
-  int? get itemsDeleted; // Nombre d'éléments supprimés dans l'étape actuelle
-  @override
-  String? get additionalInfo; // Informations supplémentaires sur la progression
-  @override
+  DateTime get lastUpdated;
+  @override // Type de synchronisation en cours
+  SyncType? get currentSyncType;
+  @override // Résultats des dernières synchronisations
+// (utilisation de domain.SyncResult temporairement désactivée)
+// SyncResult? lastDownstreamSync,
+// SyncResult? lastUpstreamSync,
+// Détails supplémentaires pour la progression
+  String? get currentEntityName;
+  @override // Nom du module, site, etc. en cours de traitement
+  int? get currentEntityTotal;
+  @override // Nombre total d'éléments à traiter pour l'entité courante
+  int? get currentEntityProcessed;
+  @override // Nombre d'éléments traités pour l'entité courante
+  int? get itemsAdded;
+  @override // Nombre d'éléments ajoutés dans l'étape actuelle
+  int? get itemsUpdated;
+  @override // Nombre d'éléments mis à jour dans l'étape actuelle
+  int? get itemsSkipped;
+  @override // Nombre d'éléments ignorés dans l'étape actuelle
+  int? get itemsDeleted;
+  @override // Nombre d'éléments supprimés dans l'étape actuelle
+  String? get additionalInfo;
+  @override // Informations supplémentaires sur la progression
   String? get nextFullSyncInfo;
-
-  /// Create a copy of SyncStatus
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SyncStatusImplCopyWith<_$SyncStatusImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

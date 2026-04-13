@@ -14,6 +14,7 @@ class SyncResult with _$SyncResult {
     required int itemsFailed,
     required DateTime syncTime,
     @Default(0) int itemsDeleted,
+    @Default(0) int itemsLocalPending,
     String? errorMessage,
     List<SyncConflict>? conflicts,
     Map<String, dynamic>? data,
@@ -26,6 +27,7 @@ class SyncResult with _$SyncResult {
     required int itemsSkipped,
     int itemsFailed = 0,
     int itemsDeleted = 0,
+    int itemsLocalPending = 0,
     Map<String, dynamic>? data,
   }) => SyncResult(
     success: true,
@@ -35,6 +37,7 @@ class SyncResult with _$SyncResult {
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
     itemsDeleted: itemsDeleted,
+    itemsLocalPending: itemsLocalPending,
     syncTime: DateTime.now(),
     data: data,
   );
@@ -47,6 +50,7 @@ class SyncResult with _$SyncResult {
     int itemsSkipped = 0,
     int itemsFailed = 0,
     int itemsDeleted = 0,
+    int itemsLocalPending = 0,
   }) => SyncResult(
     success: false,
     itemsProcessed: itemsProcessed,
@@ -55,6 +59,7 @@ class SyncResult with _$SyncResult {
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
     itemsDeleted: itemsDeleted,
+    itemsLocalPending: itemsLocalPending,
     syncTime: DateTime.now(),
     errorMessage: errorMessage,
   );
@@ -66,6 +71,7 @@ class SyncResult with _$SyncResult {
     required int itemsSkipped,
     required int itemsFailed,
     int itemsDeleted = 0,
+    int itemsLocalPending = 0,
     required List<SyncConflict> conflicts,
     String? errorMessage,
     Map<String, dynamic>? data,
@@ -77,6 +83,7 @@ class SyncResult with _$SyncResult {
     itemsSkipped: itemsSkipped,
     itemsFailed: itemsFailed,
     itemsDeleted: itemsDeleted,
+    itemsLocalPending: itemsLocalPending,
     syncTime: DateTime.now(),
     conflicts: conflicts,
     errorMessage: errorMessage,

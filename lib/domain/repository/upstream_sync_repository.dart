@@ -33,15 +33,32 @@ abstract class UpstreamSyncRepository {
 
   /// Envoie les détails d'observation locaux vers le serveur
   /// Puis les supprime localement après confirmation de réception par le serveur
-  /// 
+  ///
   /// @param token Jeton d'authentification
   /// @param moduleCode Code du module
   /// @param observationId ID local de l'observation pour récupérer les détails
   /// @param serverObservationId ID de l'observation sur le serveur (différent de l'ID local)
   Future<SyncResult> syncObservationDetailsToServer(
-    String token, 
-    String moduleCode, 
-    int observationId, 
+    String token,
+    String moduleCode,
+    int observationId,
     {int? serverObservationId}
   );
+
+  /// Envoie les sites locaux vers le serveur
+  /// Envoie les sites créés localement (isLocal = true)
+  /// Met à jour serverSiteId après création sur le serveur
+  ///
+  /// @param token Jeton d'authentification
+  /// @param moduleCode Code du module
+  Future<SyncResult> syncSitesToServer(String token, String moduleCode);
+
+  /// Envoie les groupes de sites locaux vers le serveur
+  /// Envoie les groupes créés localement (isLocal = true)
+  /// Met à jour serverSiteGroupId après création sur le serveur
+  /// Doit être appelé AVANT syncSitesToServer car les sites référencent les groupes
+  ///
+  /// @param token Jeton d'authentification
+  /// @param moduleCode Code du module
+  Future<SyncResult> syncSiteGroupsToServer(String token, String moduleCode);
 }

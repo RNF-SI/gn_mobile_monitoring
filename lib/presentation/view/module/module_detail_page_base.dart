@@ -2,26 +2,290 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_module_with_config_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
-import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
+import 'package:point_in_polygon/point_in_polygon.dart' as pip;
+
+/// Widget personnalisé pour le breadcrumb avec description du module dans les détails
+class _ModuleBreadcrumbWithDescription extends StatefulWidget {
+  final List<BreadcrumbItem> items;
+  final String? description;
+
+  const _ModuleBreadcrumbWithDescription({
+    required this.items,
+    this.description,
+  });
+
+  @override
+  State<_ModuleBreadcrumbWithDescription> createState() =>
+      _ModuleBreadcrumbWithDescriptionState();
+}
+
+class _ModuleBreadcrumbWithDescriptionState
+    extends State<_ModuleBreadcrumbWithDescription> {
+  bool _showDetails = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Titre du fil d'Ariane
+        Row(
+          children: [
+            Icon(
+              Icons.navigation,
+              size: 16,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              'Navigation',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+
+        // Fil d'Ariane générique (toujours visible)
+        _buildGenericBreadcrumb(context),
+
+        // Bouton pour afficher/masquer les détails
+        const SizedBox(height: 8),
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _showDetails = !_showDetails;
+            });
+          },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                _showDetails ? Icons.expand_less : Icons.expand_more,
+                size: 16,
+                color: Theme.of(context).colorScheme.secondary,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                _showDetails ? 'Masquer les détails' : 'Afficher les détails',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(context).colorScheme.secondary,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Détails (affichés conditionnellement)
+        if (_showDetails) ...[
+          const SizedBox(height: 8),
+          _buildDetailedBreadcrumb(context),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildGenericBreadcrumb(BuildContext context) {
+    final breadcrumbItems = <Widget>[];
+
+    for (int i = 0; i < widget.items.length; i++) {
+      final item = widget.items[i];
+      final isLast = i == widget.items.length - 1;
+
+      breadcrumbItems.add(
+        _buildGenericBreadcrumbItem(item, context, isLast),
+      );
+
+      if (!isLast) {
+        breadcrumbItems.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6.0),
+            child: Icon(
+              Icons.chevron_right,
+              size: 14,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+        );
+      }
+    }
+
+    return Wrap(
+      alignment: WrapAlignment.start,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: breadcrumbItems,
+    );
+  }
+
+  Widget _buildGenericBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context, bool isLast) {
+    final style = TextStyle(
+      fontSize: 14,
+      fontWeight: isLast ? FontWeight.bold : FontWeight.w500,
+      color: isLast
+          ? Theme.of(context).colorScheme.primary
+          : Theme.of(context).colorScheme.onSurface.withOpacity(0.8),
+    );
+
+    if (item.onTap != null && !isLast) {
+      return InkWell(
+        onTap: item.onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+          child: Text(item.label, style: style),
+        ),
+      );
+    } else {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 6.0),
+        child: Text(item.label, style: style),
+      );
+    }
+  }
+
+  Widget _buildDetailedBreadcrumb(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8.0),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Éléments du breadcrumb
+          ...widget.items
+              .map((item) => _buildDetailedBreadcrumbItem(item, context)),
+          // Description du module
+          if (widget.description != null && widget.description!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(
+                    width: 80,
+                    child: Text(
+                      'Description:',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withOpacity(0.7),
+                      ),
+                    ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      widget.description!,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailedBreadcrumbItem(
+      BreadcrumbItem item, BuildContext context) {
+    final isLast = widget.items.indexOf(item) == widget.items.length - 1;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              '${item.label}:',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+              ),
+            ),
+          ),
+          Expanded(
+            child: item.onTap != null && !isLast
+                ? InkWell(
+                    onTap: item.onTap,
+                    child: Text(
+                      item.value,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Theme.of(context).colorScheme.primary,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  )
+                : Text(
+                    item.value,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: isLast ? FontWeight.bold : FontWeight.normal,
+                      color: isLast
+                          ? Theme.of(context).colorScheme.primary
+                          : Theme.of(context).colorScheme.onSurface,
+                    ),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class ModuleDetailPageBase extends DetailPage {
   final ModuleInfo moduleInfo;
+  final WidgetRef? ref; // Optionnel pour accéder aux providers si nécessaire
   // Note: This class uses a different pattern than the others for accessing Riverpod providers
   // It relies on the GlobalKey<ModuleDetailPageBaseState> and injected use cases rather than WidgetRef
+  // Mais on peut aussi passer ref pour accéder à la base de données
 
   const ModuleDetailPageBase({
     super.key,
     required this.moduleInfo,
+    this.ref,
   });
 
   @override
@@ -43,14 +307,25 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   List<dynamic> _allSites = [];
   List<dynamic> _filteredSiteGroups = [];
   String _searchQuery = '';
+  bool _showGroupSearch = false;
+  String _groupSearchQuery = '';
+  final TextEditingController _groupSearchController = TextEditingController();
   bool _configurationLoaded = false;
   bool _isInitialLoading = true;
+  Future<List<SiteGroup>>? _groupsGeometryFuture;
+  List<SiteGroup>? _cachedGroups;
+
+  // Variables pour les groupes de sites avec ExpansionTile
+  int? _expandedGroupPanelIndex;
+  Position? _userPosition;
+  bool _sortGroupsByDistance =
+      true; // true = par distance, false = alphabétique
 
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
 
   // Injection du use case pour respecter la Clean Architecture
-  late GetModuleWithConfigUseCase getModuleWithConfigUseCase;
+  late GetCompleteModuleUseCase getCompleteModuleUseCase;
 
   @override
   ObjectConfig? get objectConfig {
@@ -98,23 +373,40 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Données de base du module
     final module = _updatedModule ?? widget.moduleInfo.module;
     final Map<String, dynamic> data = {
-      'moduleLabel': module.moduleLabel,
-      'moduleDesc': module.moduleDesc,
-      // Ajout d'autres propriétés de base si disponibles
+      // Propriétés de base du module
+      'id_module': module.id,
+      'module_code': module.moduleCode,
+      'module_label': module.moduleLabel,
+      'module_desc': module.moduleDesc,
+      'module_picto': module.modulePicto,
+      'module_group': module.moduleGroup,
+      'module_path': module.modulePath,
+      'module_external_url': module.moduleExternalUrl,
+      'module_target': module.moduleTarget,
+      'module_comment': module.moduleComment,
+      'active_frontend': module.activeFrontend,
+      'active_backend': module.activeBackend,
+      'module_doc_url': module.moduleDocUrl,
+      'module_order': module.moduleOrder,
+      'ng_module': module.ngModule,
+      if (module.metaCreateDate != null)
+        'meta_create_date': module.metaCreateDate!.toIso8601String(),
+      if (module.metaUpdateDate != null)
+        'meta_update_date': module.metaUpdateDate!.toIso8601String(),
+      'downloaded': module.downloaded,
     };
 
     // Ajouter les données complémentaires si disponibles
     if (module.complement?.data != null) {
       // Le champ data est de type String?, nous devons donc le parser en JSON
       try {
-        final Map<String, dynamic> parsedData = 
-            module.complement!.data != null ? 
-            Map<String, dynamic>.from(json.decode(module.complement!.data!)) : 
-            {};
+        final Map<String, dynamic> parsedData = module.complement!.data != null
+            ? Map<String, dynamic>.from(json.decode(module.complement!.data!))
+            : {};
         data.addAll(parsedData);
       } catch (e) {
         // En cas d'erreur de parsing, on ignore silencieusement
-        print('Erreur de parsing des données complémentaires: $e');
+        debugPrint('Erreur de parsing des données complémentaires: $e');
       }
     }
 
@@ -125,7 +417,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   List<String> get childrenTypes => _childrenTypes;
 
   @override
-  String get propertiesTitle => 'Propriétés';
+  String get propertiesTitle {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final moduleLabel = module.moduleLabel ?? 'Module';
+    return 'Module $moduleLabel';
+  }
+
+  @override
+  Widget buildPropertiesWidget() {
+    // On ne veut plus afficher la card des propriétés
+    return const SizedBox.shrink();
+  }
+
+  @override
+  Widget buildBaseContent() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildPropertiesWidget(),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -134,31 +449,37 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Ajouter un écouteur pour le défilement
     _sitesScrollController.addListener(_handleScroll);
 
+    // Charger la position GPS
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadUserLocation();
+    });
+
     // Toujours charger la configuration complète du module quand la propriété est injectée
   }
 
-  // Méthode pour charger le module avec sa configuration complète
-  Future<void> loadModuleWithConfig() async {
+  // Méthode pour charger le module complet avec toutes ses données associées
+  Future<void> loadCompleteModule() async {
     try {
-      // Utiliser le use case injecté par le widget parent
-      final moduleWithConfig =
-          await getModuleWithConfigUseCase.execute(widget.moduleInfo.module.id);
+      // Utiliser le use case injecté par le widget parent pour récupérer le module complet
+      // Cela inclut : configuration, sites, groupes de sites et données complémentaires
+      final completeModule =
+          await getCompleteModuleUseCase.execute(widget.moduleInfo.module.id);
 
       // Vérifier si la configuration est bien présente
       final bool hasConfiguration =
-          moduleWithConfig.complement?.configuration != null;
+          completeModule.complement?.configuration != null;
 
       // Mettre à jour le ModuleInfo
       if (mounted) {
         setState(() {
-          // Stocker le module mis à jour avec sa configuration dans la variable de classe
-          _updatedModule = moduleWithConfig;
+          // Stocker le module complet dans la variable de classe
+          _updatedModule = completeModule;
 
           // Marquer la configuration comme chargée
           _configurationLoaded = hasConfiguration;
           _isInitialLoading = false;
 
-          // Mettre à jour l'interface
+          // Mettre à jour l'interface avec les nouvelles données
           _updateChildrenTypesFromConfig();
           _initializeTabController();
           _loadSitesIfAvailable();
@@ -259,6 +580,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
     _sitesScrollController.dispose();
     _searchController.dispose();
+    _groupSearchController.dispose();
     super.dispose();
   }
 
@@ -382,6 +704,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   @override
+  Widget buildBreadcrumb() {
+    final items = getBreadcrumbItems();
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final moduleDesc = module.moduleDesc;
+
+    return Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 12.0),
+          child: _ModuleBreadcrumbWithDescription(
+            items: items,
+            description: moduleDesc,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   PreferredSizeWidget buildAppBar() {
     // Vérifier si la configuration est en cours de chargement
     final bool isConfiguringModule = _isInitialLoading ||
@@ -393,12 +739,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       title: Text(getTitle()),
       // Afficher un indicateur de chargement dans l'AppBar si configuration en cours
       actions: [
-        // Bouton de synchronisation ascendante
-        IconButton(
-          icon: const Icon(Icons.upload),
-          tooltip: 'Envoyer les données vers le serveur',
-          onPressed: _synchronizeDataToServer,
-        ),
         if (isConfiguringModule)
           Padding(
             padding: const EdgeInsets.all(8.0),
@@ -414,228 +754,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       ],
     );
   }
-  
-  // Méthode pour lancer la synchronisation ascendante
-  void _synchronizeDataToServer() {
-    final moduleCode = widget.moduleInfo.module.moduleCode;
-    if (moduleCode == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Code du module non disponible')),
-      );
-      return;
-    }
-    
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Synchronisation vers le serveur'),
-          content: const Text(
-            'Voulez-vous envoyer les données de ce module vers le serveur?\n\n'
-            'Cette action enverra toutes les nouvelles visites et observations '
-            'de ce module qui n\'ont pas encore été synchronisées.'
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                _startUploadSync(moduleCode);
-              },
-              child: const Text('Synchroniser'),
-            ),
-          ],
-        );
-      }
-    );
-  }
-  
-  // Démarrer la synchronisation vers le serveur
-  Future<void> _startUploadSync(String moduleCode) async {
-    // Ce code est exécuté dans le widget consumer parent
-    final rootContext = context.findRootAncestorStateOfType<ConsumerState>()?.context;
-    
-    if (rootContext == null) {
-      return;
-    }
-    
-    // Récupérer le WidgetRef du consumer parent
-    final ref = context.findAncestorStateOfType<ConsumerState>()?.ref;
-    
-    if (ref == null) {
-      return;
-    }
-
-    // Afficher un message de chargement
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Envoi des données en cours...'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-    }
-    
-    // Ajouter des logs console très visibles pour faciliter la copie
-    print('\n==================================================================');
-    print('DEBUT SYNCHRONISATION ASCENDANTE - MODULE: $moduleCode');
-    print('==================================================================');
-    print('TIMESTAMP: ${DateTime.now().toIso8601String()}');
-    
-    try {
-      final syncService = ref.read(syncServiceProvider.notifier);
-      
-      // Capturer l'heure de début
-      final startTime = DateTime.now();
-      
-      // Lancer la synchronisation ascendante
-      final result = await syncService.syncToServer(
-        ref,
-        moduleCode: moduleCode,
-        isManualSync: true,
-      );
-      
-      // Calculer la durée
-      final duration = DateTime.now().difference(startTime);
-      
-      // Log très détaillé du résultat
-      print('\n==================================================================');
-      print('RESULTAT SYNCHRONISATION: ${result.state}');
-      print('==================================================================');
-      print('État: ${result.state}');
-      print('Messages: ${result.errorMessage ?? "Aucun message d\'erreur"}');
-      print('Informations additionnelles: ${result.additionalInfo ?? "Aucune info additionnelle"}');
-      print('Éléments traités: ${result.itemsProcessed}');
-      print('Éléments ajoutés: ${result.itemsAdded}');
-      print('Éléments mis à jour: ${result.itemsUpdated}');
-      print('Éléments ignorés: ${result.itemsSkipped}');
-      print('Éléments supprimés: ${result.itemsDeleted}');
-      print('Durée de l\'opération: ${duration.inSeconds} secondes');
-      print('==================================================================');
-    
-      // Vérifier si le widget est toujours monté avant d'utiliser le contexte
-      if (!mounted) return;
-
-      // Afficher un dialogue détaillé en cas d'échec
-      if (result.state == SyncState.failure) {
-        // Afficher un dialogue avec les détails complets
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Erreur de synchronisation'),
-            content: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Message: ${result.errorMessage ?? "Aucun message d\'erreur"}'),
-                  const SizedBox(height: 12),
-                  if (result.additionalInfo != null) ...[
-                    const Text('Informations supplémentaires:', 
-                      style: TextStyle(fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 8),
-                    Text(result.additionalInfo!),
-                  ],
-                  const SizedBox(height: 16),
-                  const Text('Veuillez copier ces informations pour les transmettre aux développeurs.'),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Fermer'),
-              ),
-            ],
-          ),
-        );
-      }
-      
-      // Afficher le résultat
-      if (result.state == SyncState.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Synchronisation réussie'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      } else if (result.state == SyncState.failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Erreur: ${result.errorMessage ?? "Échec de la synchronisation"}'),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 5),
-          ),
-        );
-      } else if (result.state == SyncState.conflictDetected) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Des conflits ont été détectés'),
-            backgroundColor: Colors.orange,
-          ),
-        );
-      }
-    } catch (e, stackTrace) {
-      // Capturer et afficher toute exception non gérée
-      print('\n==================================================================');
-      print('ERREUR SYNCHRONISATION ASCENDANTE');
-      print('==================================================================');
-      print('Type d\'erreur: ${e.runtimeType}');
-      print('Message: $e');
-      print('\nSTACK TRACE:');
-      print(stackTrace);
-      print('==================================================================');
-      
-      // Vérifier si le widget est toujours monté avant d'utiliser le contexte
-      if (!mounted) return;
-      
-      // Afficher un dialogue avec les détails de l'erreur
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Exception lors de la synchronisation'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Type d\'erreur: ${e.runtimeType}'),
-                const SizedBox(height: 8),
-                Text('Message: $e'),
-                const SizedBox(height: 16),
-                const Text('Stack trace:', style: TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text(stackTrace.toString(), style: const TextStyle(fontSize: 12)),
-                const SizedBox(height: 16),
-                const SelectableText(
-                  'Ces informations ont été enregistrées dans les logs de la console. '
-                  'Veuillez les copier pour les transmettre aux développeurs.',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Fermer'),
-            ),
-          ],
-        ),
-      );
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Exception: $e'),
-          backgroundColor: Colors.red,
-          duration: const Duration(seconds: 5),
-        ),
-      );
-    }
-  }
 
   @override
   String getTitle() {
@@ -643,13 +761,63 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   }
 
   @override
-  Widget buildBaseContent() {
-    return super.buildBaseContent(); // Utilise la mise en page par défaut
+  Widget build(BuildContext context) {
+    final childContent = buildChildrenContent();
+
+    // Détecter si le clavier est visible
+    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
+
+    // Ajuster les valeurs de flex selon l'état du clavier
+    // Sans clavier: 40% propriétés / 60% tableaux
+    // Avec clavier: 20% propriétés / 80% tableaux
+    final int propertiesFlex = isKeyboardVisible ? 1 : 2;
+    final int childrenFlex = isKeyboardVisible ? 4 : 3;
+
+    // Si on a des groupes de sites, les afficher directement sous la navigation
+    final hasSiteGroups = _childrenTypes.contains('sites_group');
+
+    return Scaffold(
+      appBar: buildAppBar(),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          buildBreadcrumb(),
+          if (hasSiteGroups)
+            Expanded(
+              child: _buildGroupsTab(),
+            )
+          else if (childContent == null)
+            Expanded(child: buildBaseContent())
+          else
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    flex: propertiesFlex,
+                    child: buildBaseContent(),
+                  ),
+                  Expanded(
+                    flex: childrenFlex,
+                    child: childContent,
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+      floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
+    );
   }
 
   @override
   Widget? buildChildrenContent() {
     if (_childrenTypes.isEmpty || _tabController == null) {
+      return null;
+    }
+
+    // Si on a des groupes de sites, on ne passe pas par buildChildrenContent
+    // car ils sont affichés directement dans build()
+    if (_childrenTypes.contains('sites_group')) {
       return null;
     }
 
@@ -662,17 +830,17 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: Card(
-              color: Colors.blue[50],
+              color: AppColors.primary.withOpacity(0.1),
               child: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: Row(
-                  children: [
-                    Icon(Icons.info_outline, color: Colors.blue[700]),
-                    const SizedBox(width: 8),
+                  children: const [
+                    Icon(Icons.info_outline, color: AppColors.dark),
+                    SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         'Chargement de la configuration du module...',
-                        style: TextStyle(color: Colors.blue[700]),
+                        style: TextStyle(color: AppColors.dark),
                       ),
                     ),
                     SizedBox(
@@ -681,7 +849,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                       child: CircularProgressIndicator(
                         strokeWidth: 2.0,
                         valueColor:
-                            AlwaysStoppedAnimation<Color>(Colors.blue[700]!),
+                            AlwaysStoppedAnimation<Color>(AppColors.dark),
                       ),
                     ),
                   ],
@@ -694,8 +862,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         buildTabBar(
           tabController: _tabController!,
           tabs: [
-            if (_childrenTypes.contains('sites_group'))
-              _buildTabLabel('sites_group'),
             if (_childrenTypes.contains('site')) _buildTabLabel('site'),
           ],
         ),
@@ -705,7 +871,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           child: TabBarView(
             controller: _tabController!,
             children: [
-              if (_childrenTypes.contains('sites_group')) _buildGroupsTab(),
               if (_childrenTypes.contains('site')) _buildSitesTab(),
             ],
           ),
@@ -741,141 +906,1480 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Récupérer la configuration pour les groupes
     final ObjectConfig? sitesGroupConfig =
         module.complement?.configuration?.sitesGroup;
-
-    Map<String, dynamic> parsedGroupConfig = {};
-
-    if (sitesGroupConfig != null) {
-      final customConfig = module.complement?.configuration?.custom;
-      parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
-          sitesGroupConfig, customConfig);
-    }
-
-    // Libellés personnalisés en fonction de la configuration
-    final String groupNameLabel = (parsedGroupConfig.isNotEmpty &&
-            parsedGroupConfig.containsKey('sites_group_name'))
-        ? parsedGroupConfig['sites_group_name']['attribut_label'] ??
-            'Nom du groupe'
-        : sitesGroupConfig?.label ?? 'Nom du groupe';
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
 
     // Appliquer le filtre aux groupes de sites si ce n'est pas déjà fait
     if (_filteredSiteGroups.isEmpty) {
       _filterSiteGroups();
     }
 
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          // Champ de recherche
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                labelText: 'Rechercher un groupe',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _handleSearch('');
-                        },
-                      )
-                    : null,
-                border: const OutlineInputBorder(),
-              ),
-              onChanged: _handleSearch,
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              child: _filteredSiteGroups.isEmpty
-                  ? Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Text(
-                          'Aucun groupe de sites associé à ce module',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Colors.grey[600],
-                          ),
+    // Générer le schéma unifié pour le formatage
+    Map<String, dynamic> parsedGroupConfig = {};
+    if (sitesGroupConfig != null) {
+      parsedGroupConfig = FormConfigParser.generateUnifiedSchema(
+          sitesGroupConfig, customConfig);
+    }
+
+    // Convertir en List<SiteGroup> (sans géométrie depuis le module)
+    final List<SiteGroup> groupsFromModule =
+        _filteredSiteGroups.whereType<SiteGroup>().toList();
+
+    // Utiliser les données en cache si disponibles, sinon créer/mémoriser le Future
+    if (_cachedGroups != null) {
+      // Utiliser les données en cache directement pour éviter le rechargement
+      return _buildGroupsContent(_cachedGroups!, sitesGroupConfig, customConfig,
+          parsedGroupConfig, groupsFromModule);
+    }
+
+    // Mémoriser le Future pour éviter de le recréer à chaque rebuild
+    if (_groupsGeometryFuture == null) {
+      _groupsGeometryFuture = _loadGroupsWithGeometry(groupsFromModule);
+      _groupsGeometryFuture!.then((groups) {
+        if (mounted) {
+          setState(() {
+            _cachedGroups = groups;
+          });
+        }
+      });
+    }
+
+    // Charger les groupes depuis la base de données pour avoir la géométrie
+    return FutureBuilder<List<SiteGroup>>(
+      future: _groupsGeometryFuture,
+      builder: (context, snapshot) {
+        // Utiliser les groupes de la base de données si disponibles, sinon ceux du module
+        final List<SiteGroup> groups =
+            snapshot.hasData && snapshot.data!.isNotEmpty
+                ? snapshot.data!
+                : groupsFromModule;
+
+        // Mettre en cache les données une fois chargées
+        if (snapshot.hasData && _cachedGroups == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              setState(() {
+                _cachedGroups = snapshot.data;
+              });
+            }
+          });
+        }
+
+        return _buildGroupsContent(groups, sitesGroupConfig, customConfig,
+            parsedGroupConfig, groupsFromModule);
+      },
+    );
+  }
+
+  /// Construit le contenu des groupes (sans FutureBuilder)
+  Widget _buildGroupsContent(
+    List<SiteGroup> groups,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+    List<SiteGroup> groupsFromModule,
+  ) {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+
+    return Column(
+      children: [
+        // Barre d'outils avec label, recherche, ajout et tri
+        Builder(
+          builder: (context) {
+            final isEditable = _isSiteGroupEditableOnField(sitesGroupConfig);
+            Widget? addButton;
+            if (isEditable) {
+              addButton = IconButton(
+                key: const Key('create-site-group-button'),
+                onPressed: () {
+                  if (sitesGroupConfig != null) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteGroupFormPage(
+                          siteGroupConfig: sitesGroupConfig,
+                          customConfig: customConfig,
+                          moduleId: module.id,
+                          moduleInfo: widget.moduleInfo,
                         ),
                       ),
-                    )
-                  : Table(
-                      columnWidths: const {
-                        0: FixedColumnWidth(
-                            80), // Reduced width for single icon
-                        1: FlexColumnWidth(2), // Name column
-                      },
-                      children: [
-                        TableRow(
-                          children: [
-                            const Padding(
-                              padding: EdgeInsets.symmetric(
-                                  vertical: 8.0, horizontal: 16.0),
-                              child: Text('Action',
-                                  style:
-                                      TextStyle(fontWeight: FontWeight.bold)),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8.0),
-                              child: Text(groupNameLabel,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
-                            ),
-                          ],
-                        ),
-                        ..._filteredSiteGroups.map((group) => TableRow(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  height: 48,
-                                  alignment: Alignment.center,
-                                  child: IconButton(
-                                    icon:
-                                        const Icon(Icons.visibility, size: 20),
-                                    onPressed: () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              SiteGroupDetailPage(
-                                            siteGroup: group,
-                                            moduleInfo: _updatedModule != null
-                                                ? widget.moduleInfo.copyWith(
-                                                    module: _updatedModule!)
-                                                : widget.moduleInfo,
-                                          ),
-                                        ),
-                                      );
-                                    },
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(
-                                      minWidth: 36,
-                                      minHeight: 36,
-                                    ),
-                                  ),
-                                ),
-                                Container(
-                                  height: 48,
-                                  alignment: Alignment.centerLeft,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 8.0),
-                                  child: Text(group.sitesGroupName ?? ''),
-                                ),
-                              ],
-                            )),
-                      ],
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Configuration de groupe de sites non disponible'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.add_circle),
+                tooltip:
+                    'Ajouter un ${sitesGroupConfig?.label ?? 'groupe de sites'}',
+              );
+            }
+            return ListToolbarWidget(
+              label: sitesGroupConfig?.labelList ??
+                  sitesGroupConfig?.label ??
+                  'Groupes de sites',
+              showSearch: _showGroupSearch,
+              searchQuery: _groupSearchQuery,
+              searchController: _groupSearchController,
+              onSearchChanged: (value) {
+                setState(() {
+                  _groupSearchQuery = value;
+                });
+              },
+              onToggleSearch: () {
+                setState(() {
+                  _showGroupSearch = !_showGroupSearch;
+                  if (!_showGroupSearch) {
+                    _groupSearchQuery = '';
+                    _groupSearchController.clear();
+                  }
+                });
+              },
+              onCloseSearch: () {
+                setState(() {
+                  _showGroupSearch = false;
+                  _groupSearchQuery = '';
+                  _groupSearchController.clear();
+                });
+              },
+              userPosition: _userPosition,
+              sortByDistance: _sortGroupsByDistance,
+              onToggleSort: () {
+                setState(() {
+                  _sortGroupsByDistance = !_sortGroupsByDistance;
+                });
+              },
+              searchHintText: 'Rechercher par nom de groupe...',
+              addButton: addButton,
+            );
+          },
+        ),
+        // Liste des groupes avec ExpansionTile
+        Expanded(
+          child: _buildGroupsExpansionPanelList(
+            _groupSearchQuery.isEmpty
+                ? groups
+                : groups.where((group) {
+                    final groupName = group.sitesGroupName?.toLowerCase() ?? '';
+                    final groupCode = group.sitesGroupCode?.toLowerCase() ?? '';
+                    return groupName.contains(_groupSearchQuery) ||
+                        groupCode.contains(_groupSearchQuery);
+                  }).toList(),
+            sitesGroupConfig,
+            customConfig,
+            parsedGroupConfig,
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Charge les groupes de sites depuis la base de données avec leur géométrie
+  /// Enrichit les groupes du module avec les géométries de la base de données
+  /// Utilise la même logique que site_group_detail_page.dart pour charger depuis la base de données
+  Future<List<SiteGroup>> _loadGroupsWithGeometry(
+      List<SiteGroup> groupsFromModule) async {
+    debugPrint('=== DÉBUT CHARGEMENT GROUPES AVEC GÉOMÉTRIE ===');
+    debugPrint(
+        'Nombre de groupes depuis le module: ${groupsFromModule.length}');
+
+    if (widget.ref == null) {
+      debugPrint(
+          '⚠️ Pas de ref disponible, retour des groupes du module sans géométrie');
+      return groupsFromModule;
+    }
+
+    try {
+      // Charger tous les groupes depuis la base de données (comme dans site_group_detail_page)
+      debugPrint('Chargement des groupes depuis la base de données...');
+      final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+      final allDbGroups = await sitesDatabase.getAllSiteGroups();
+      debugPrint(
+          '✓ ${allDbGroups.length} groupes chargés depuis la base de données');
+
+      // Log pour vérifier les géométries dans les groupes de la base de données
+      debugPrint('=== VÉRIFICATION GÉOMÉTRIES DANS LA BASE DE DONNÉES ===');
+      for (var dbGroup in allDbGroups) {
+        debugPrint(
+            'Groupe DB ${dbGroup.idSitesGroup} (${dbGroup.sitesGroupName ?? dbGroup.sitesGroupCode ?? "sans nom"}):');
+        if (dbGroup.geom != null && dbGroup.geom!.isNotEmpty) {
+          debugPrint(
+              '  ✓ geom non null et non vide (longueur: ${dbGroup.geom!.length})');
+          try {
+            final geomData = jsonDecode(dbGroup.geom!);
+            debugPrint('  Type: ${geomData['type'] ?? "non défini"}');
+          } catch (e) {
+            debugPrint('  ⚠️ Erreur parsing: $e');
+          }
+        } else {
+          debugPrint('  ✗ geom est null ou vide');
+        }
+      }
+      debugPrint('=== FIN VÉRIFICATION GÉOMÉTRIES ===');
+
+      // Créer un map pour un accès rapide par ID
+      final Map<int, SiteGroup> dbGroupsMap = {
+        for (var group in allDbGroups) group.idSitesGroup: group
+      };
+
+      // Enrichir les groupes filtrés avec leur géométrie depuis la base de données
+      // ou calculer la géométrie à partir des sites enfants
+      final enrichedGroups = await Future.wait(
+        groupsFromModule.map((group) async {
+          final dbGroup = dbGroupsMap[group.idSitesGroup];
+          if (dbGroup != null) {
+            debugPrint(
+                'Groupe ${group.idSitesGroup} (${group.sitesGroupName ?? group.sitesGroupCode ?? "sans nom"}):');
+            if (dbGroup.geom != null && dbGroup.geom!.isNotEmpty) {
+              debugPrint('  ✓ Géométrie présente dans la base de données');
+              try {
+                final geomData = jsonDecode(dbGroup.geom!);
+                debugPrint('  Type: ${geomData['type'] ?? "non défini"}');
+                if (geomData['coordinates'] != null) {
+                  final coordsStr = geomData['coordinates'].toString();
+                  debugPrint(
+                      '  Coordonnées: ${coordsStr.length > 100 ? "${coordsStr.substring(0, 100)}..." : coordsStr}');
+                }
+              } catch (e) {
+                debugPrint('  ⚠️ Erreur parsing géométrie: $e');
+              }
+              // Utiliser le groupe de la base de données qui a la géométrie
+              return dbGroup;
+            } else {
+              debugPrint(
+                  '  ✗ Aucune géométrie dans la base de données, calcul depuis les sites enfants...');
+              // Calculer la géométrie à partir des sites enfants
+              final calculatedGeom = await _calculateGroupGeometryFromSites(
+                  group.idSitesGroup, sitesDatabase);
+              if (calculatedGeom != null) {
+                debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
+                // Retourner le groupe avec la géométrie calculée
+                return group.copyWith(geom: calculatedGeom);
+              } else {
+                debugPrint(
+                    '  ✗ Impossible de calculer la géométrie (pas de sites avec géométrie)');
+              }
+            }
+          } else {
+            debugPrint(
+                'Groupe ${group.idSitesGroup} (${group.sitesGroupName ?? group.sitesGroupCode ?? "sans nom"}):');
+            debugPrint(
+                '  ✗ Groupe non trouvé dans la base de données, calcul depuis les sites enfants...');
+            // Calculer la géométrie à partir des sites enfants
+            final calculatedGeom = await _calculateGroupGeometryFromSites(
+                group.idSitesGroup, sitesDatabase);
+            if (calculatedGeom != null) {
+              debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
+              // Retourner le groupe avec la géométrie calculée
+              return group.copyWith(geom: calculatedGeom);
+            } else {
+              debugPrint(
+                  '  ✗ Impossible de calculer la géométrie (pas de sites avec géométrie)');
+            }
+          }
+          // Si pas de géométrie, retourner le groupe du module
+          return group;
+        }),
+      );
+
+      debugPrint('=== FIN CHARGEMENT GROUPES AVEC GÉOMÉTRIE ===');
+      return enrichedGroups;
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erreur lors du chargement des groupes avec géométrie: $e');
+      debugPrint('Stack trace: $stackTrace');
+      // En cas d'erreur, retourner les groupes du module
+      return groupsFromModule;
+    }
+  }
+
+  /// Calcule la géométrie d'un groupe à partir de ses sites enfants
+  /// Retourne un Polygon GeoJSON représentant l'enveloppe convexe (convex hull) des sites
+  Future<String?> _calculateGroupGeometryFromSites(
+      int siteGroupId, SitesDatabase sitesDatabase) async {
+    try {
+      // Récupérer tous les sites du groupe
+      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      debugPrint('  Nombre de sites dans le groupe: ${sites.length}');
+
+      // Extraire les coordonnées de tous les sites qui ont une géométrie
+      final List<List<double>> coordinates = [];
+      for (var site in sites) {
+        if (site.geom != null && site.geom!.isNotEmpty) {
+          try {
+            final geomData = jsonDecode(site.geom!);
+            if (geomData is Map<String, dynamic>) {
+              final type = geomData['type'];
+              final coords = geomData['coordinates'];
+
+              if (type == 'Point' && coords is List && coords.length >= 2) {
+                // Format GeoJSON: [longitude, latitude]
+                coordinates.add([
+                  coords[0].toDouble(),
+                  coords[1].toDouble(),
+                ]);
+              } else if (type == 'Polygon' && coords is List) {
+                // Pour un polygon, extraire tous les points du premier ring
+                if (coords.isNotEmpty && coords[0] is List) {
+                  final firstRing = coords[0] as List;
+                  for (var point in firstRing) {
+                    if (point is List && point.length >= 2) {
+                      coordinates.add([
+                        point[0].toDouble(),
+                        point[1].toDouble(),
+                      ]);
+                    }
+                  }
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint(
+                '  ⚠️ Erreur parsing géométrie du site ${site.idBaseSite}: $e');
+          }
+        }
+      }
+
+      if (coordinates.isEmpty) {
+        debugPrint('  ✗ Aucun site avec géométrie valide trouvé');
+        return null;
+      }
+
+      // Si on a un seul point, retourner un Point GeoJSON
+      if (coordinates.length == 1) {
+        final lon = coordinates[0][0];
+        final lat = coordinates[0][1];
+        final pointGeom = {
+          'type': 'Point',
+          'coordinates': [lon, lat],
+        };
+        debugPrint('  Point unique: lon=$lon, lat=$lat');
+        return jsonEncode(pointGeom);
+      }
+
+      // Calculer l'enveloppe convexe (convex hull) des points
+      final hull = _calculateConvexHull(coordinates);
+
+      if (hull.isEmpty) {
+        debugPrint('  ✗ Impossible de calculer l\'enveloppe convexe');
+        return null;
+      }
+
+      // Fermer le polygone en ajoutant le premier point à la fin
+      if (hull.first[0] != hull.last[0] || hull.first[1] != hull.last[1]) {
+        hull.add([hull.first[0], hull.first[1]]);
+      }
+
+      debugPrint('  Enveloppe convexe calculée avec ${hull.length} points');
+
+      // Créer un Polygon GeoJSON
+      final polygonGeom = {
+        'type': 'Polygon',
+        'coordinates': [hull],
+      };
+
+      return jsonEncode(polygonGeom);
+    } catch (e) {
+      debugPrint('  ❌ Erreur lors du calcul de la géométrie: $e');
+      return null;
+    }
+  }
+
+  /// Calcule l'enveloppe convexe (convex hull) d'un ensemble de points
+  /// Utilise l'algorithme de Graham scan
+  List<List<double>> _calculateConvexHull(List<List<double>> points) {
+    if (points.length < 3) {
+      // Si moins de 3 points, retourner tous les points
+      return List.from(points);
+    }
+
+    // Trier les points par x, puis par y
+    final sortedPoints = List<List<double>>.from(points);
+    sortedPoints.sort((a, b) {
+      if (a[0] != b[0]) {
+        return a[0].compareTo(b[0]);
+      }
+      return a[1].compareTo(b[1]);
+    });
+
+    // Fonction pour calculer l'orientation (cross product)
+    int orientation(List<double> p, List<double> q, List<double> r) {
+      final val = (q[1] - p[1]) * (r[0] - q[0]) - (q[0] - p[0]) * (r[1] - q[1]);
+      if (val == 0) return 0; // Collinear
+      return (val > 0) ? 1 : 2; // Clockwise or Counterclockwise
+    }
+
+    // Construire la partie inférieure de l'enveloppe convexe
+    final lower = <List<double>>[];
+    for (var point in sortedPoints) {
+      while (lower.length >= 2 &&
+          orientation(
+                  lower[lower.length - 2], lower[lower.length - 1], point) !=
+              2) {
+        lower.removeLast();
+      }
+      lower.add(point);
+    }
+
+    // Construire la partie supérieure de l'enveloppe convexe
+    final upper = <List<double>>[];
+    for (var i = sortedPoints.length - 1; i >= 0; i--) {
+      final point = sortedPoints[i];
+      while (upper.length >= 2 &&
+          orientation(
+                  upper[upper.length - 2], upper[upper.length - 1], point) !=
+              2) {
+        upper.removeLast();
+      }
+      upper.add(point);
+    }
+
+    // Combiner les deux parties (enlever le dernier point de chaque pour éviter la duplication)
+    lower.removeLast();
+    upper.removeLast();
+    lower.addAll(upper);
+
+    return lower;
+  }
+
+  Widget _buildGroupsExpansionPanelList(
+    List<SiteGroup> groups,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    if (groups.isEmpty) {
+      return const Center(
+        child: Text('Aucun groupe de sites associé à ce module'),
+      );
+    }
+
+    // Trier les groupes selon le mode sélectionné
+    List<SiteGroup> sortedGroups = List.from(groups);
+
+    if (_sortGroupsByDistance && _userPosition != null) {
+      // Tri par distance
+      sortedGroups.sort((a, b) {
+        final distanceA = _calculateGroupDistance(a);
+        final distanceB = _calculateGroupDistance(b);
+
+        // Si les deux distances sont disponibles, trier par distance
+        if (distanceA != null && distanceB != null) {
+          return distanceA.compareTo(distanceB);
+        }
+        // Si seule la distance A est disponible, A vient en premier
+        if (distanceA != null && distanceB == null) {
+          return -1;
+        }
+        // Si seule la distance B est disponible, B vient en premier
+        if (distanceA == null && distanceB != null) {
+          return 1;
+        }
+        // Si aucune distance n'est disponible, conserver l'ordre original
+        return 0;
+      });
+    } else {
+      // Tri alphabétique par le premier champ de display_list
+      final List<String>? displayProperties =
+          sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+      if (displayProperties != null && displayProperties.isNotEmpty) {
+        final firstProperty = displayProperties.first;
+
+        sortedGroups.sort((a, b) {
+          // Récupérer les valeurs pour le tri
+          String valueA = _getGroupPropertyValue(a, firstProperty,
+              sitesGroupConfig, customConfig, parsedGroupConfig);
+          String valueB = _getGroupPropertyValue(b, firstProperty,
+              sitesGroupConfig, customConfig, parsedGroupConfig);
+
+          return valueA.compareTo(valueB);
+        });
+      }
+    }
+
+    return ListView.builder(
+      itemCount: sortedGroups.length,
+      itemBuilder: (context, index) {
+        final group = sortedGroups[index];
+        // Trouver l'index original pour gérer l'expansion
+        final originalIndex = groups.indexOf(group);
+        final isExpanded = _expandedGroupPanelIndex == originalIndex;
+
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: ExpansionTile(
+            key: ValueKey(
+                'group_expansion_${originalIndex}_$_expandedGroupPanelIndex'),
+            shape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            collapsedShape: const RoundedRectangleBorder(
+              side: BorderSide.none,
+            ),
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            childrenPadding: EdgeInsets.zero,
+            leading: IconButton(
+              icon: const Icon(Icons.visibility, size: 20),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteGroupDetailPage(
+                      siteGroup: group,
+                      moduleInfo: _updatedModule != null
+                          ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                          : widget.moduleInfo,
                     ),
+                  ),
+                );
+              },
+              tooltip: 'Voir les détails',
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: _buildGroupTitle(
+                    group,
+                    sitesGroupConfig,
+                    parsedGroupConfig,
+                  ),
+                ),
+                // Afficher la distance à droite
+                if (_userPosition != null && group.geom != null)
+                  _buildGroupDistanceBadge(group),
+              ],
+            ),
+            initiallyExpanded: isExpanded,
+            onExpansionChanged: (bool expanded) {
+              setState(() {
+                if (expanded) {
+                  _expandedGroupPanelIndex = originalIndex;
+                } else if (_expandedGroupPanelIndex == originalIndex) {
+                  _expandedGroupPanelIndex = null;
+                }
+              });
+            },
+            children: [
+              _buildGroupProperties(
+                  group, sitesGroupConfig, customConfig, parsedGroupConfig),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildGroupTitle(
+    SiteGroup group,
+    ObjectConfig? sitesGroupConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (group.data is String) {
+          dataMap = Map<String, dynamic>.from(jsonDecode(group.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(group.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    // Récupérer le nom du groupe (sites_group_name) depuis display_list ou utiliser le nom par défaut
+    final List<String>? displayProperties =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+    String displayText = group.sitesGroupName ?? 'Groupe sans nom';
+
+    // Chercher sites_group_name dans display_list, peu importe sa position
+    if (displayProperties != null && displayProperties.isNotEmpty) {
+      if (displayProperties.contains('sites_group_name') &&
+          groupData.containsKey('sites_group_name')) {
+        final rawValue = groupData['sites_group_name'];
+        displayText = ValueFormatter.format(rawValue);
+      } else if (displayProperties.isNotEmpty) {
+        // Si sites_group_name n'est pas dans display_list, utiliser le premier élément
+        final firstProperty = displayProperties.first;
+        if (groupData.containsKey(firstProperty)) {
+          final rawValue = groupData[firstProperty];
+          displayText = ValueFormatter.format(rawValue);
+        }
+      }
+    }
+
+    return Text(
+      displayText,
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildGroupProperties(
+    SiteGroup group,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Ajouter les données du champ data si disponible
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        Map<String, dynamic> dataMap = {};
+        if (group.data is String) {
+          dataMap = Map<String, dynamic>.from(jsonDecode(group.data as String));
+        } else {
+          dataMap = Map<String, dynamic>.from(group.data as Map);
+        }
+        groupData.addAll(dataMap);
+      } catch (e) {
+        debugPrint('Erreur lors du décodage des données du groupe: $e');
+      }
+    }
+
+    // Déterminer les colonnes à afficher (uniquement display_list)
+    List<String>? displayProperties =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+
+    // Si pas de displayProperties, ne rien afficher
+    if (displayProperties == null || displayProperties.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information à afficher',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    // Vérifier si on a besoin de calculer nb_sites de manière asynchrone
+    // On calcule toujours nb_sites s'il est dans display_list, même s'il est déjà dans groupData
+    // pour s'assurer qu'il est à jour
+    final needsNbSites = displayProperties.contains('nb_sites');
+
+    debugPrint(
+        '🔍 _buildGroupProperties - needsNbSites: $needsNbSites, displayProperties: $displayProperties, groupData keys: ${groupData.keys.toList()}');
+
+    // Si nb_sites est dans display_list, utiliser un FutureBuilder pour le calculer
+    if (needsNbSites && widget.ref != null) {
+      return FutureBuilder<int>(
+        future: _calculateNbSites(group.idSitesGroup),
+        builder: (context, snapshot) {
+          // Ajouter nb_sites aux données si calculé
+          final enrichedGroupData = Map<String, dynamic>.from(groupData);
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            // Pendant le chargement, on peut afficher les autres propriétés
+            // mais on ajoute quand même nb_sites avec une valeur par défaut pour éviter le filtre
+            enrichedGroupData['nb_sites'] =
+                0; // Utiliser 0 au lieu de null pour que le filtre le trouve
+            debugPrint('⏳ Calcul de nb_sites en cours...');
+          } else if (snapshot.hasData) {
+            enrichedGroupData['nb_sites'] = snapshot.data;
+            debugPrint('✅ nb_sites calculé: ${snapshot.data}');
+          } else if (snapshot.hasError) {
+            // En cas d'erreur, on met 0 pour éviter que le filtre ne trouve rien
+            enrichedGroupData['nb_sites'] = 0;
+            debugPrint(
+                '❌ Erreur lors du calcul de nb_sites: ${snapshot.error}');
+          }
+
+          // Ajouter les autres propriétés calculées si nécessaire
+          final List<String>? displayPropsForEnrichment =
+              sitesGroupConfig?.displayList ??
+                  sitesGroupConfig?.displayProperties;
+          if (displayPropsForEnrichment != null) {
+            for (final property in displayPropsForEnrichment) {
+              if (property != 'nb_sites' &&
+                  !enrichedGroupData.containsKey(property)) {
+                final value = _getSiteGroupValue(group, property);
+                if (value != null) {
+                  enrichedGroupData[property] = value;
+                }
+              }
+            }
+          }
+
+          debugPrint(
+              '📊 enrichedGroupData keys: ${enrichedGroupData.keys.toList()}, nb_sites: ${enrichedGroupData['nb_sites']}');
+
+          return _buildGroupPropertiesContent(
+              enrichedGroupData, displayProperties, parsedGroupConfig);
+        },
+      );
+    }
+
+    // Sinon, enrichir les données de manière synchrone
+    // Mais si nb_sites est nécessaire et qu'on n'a pas de ref, on essaie quand même de le calculer
+    final List<String>? displayPropsForEnrichment =
+        sitesGroupConfig?.displayList ?? sitesGroupConfig?.displayProperties;
+    if (displayPropsForEnrichment != null) {
+      for (final property in displayPropsForEnrichment) {
+        if (!groupData.containsKey(property)) {
+          if (property == 'nb_sites' && widget.ref != null) {
+            // Si nb_sites est nécessaire mais qu'on n'est pas passé par le FutureBuilder,
+            // on doit quand même le calculer de manière asynchrone
+            return FutureBuilder<int>(
+              future: _calculateNbSites(group.idSitesGroup),
+              builder: (context, snapshot) {
+                final enrichedGroupData = Map<String, dynamic>.from(groupData);
+                if (snapshot.hasData) {
+                  enrichedGroupData['nb_sites'] = snapshot.data;
+                } else {
+                  enrichedGroupData['nb_sites'] = 0;
+                }
+                // Ajouter les autres propriétés
+                for (final prop in displayPropsForEnrichment) {
+                  if (prop != 'nb_sites' &&
+                      !enrichedGroupData.containsKey(prop)) {
+                    final value = _getSiteGroupValue(group, prop);
+                    if (value != null) {
+                      enrichedGroupData[prop] = value;
+                    }
+                  }
+                }
+                return _buildGroupPropertiesContent(
+                    enrichedGroupData, displayProperties, parsedGroupConfig);
+              },
+            );
+          } else {
+            final value = _getSiteGroupValue(group, property);
+            if (value != null) {
+              groupData[property] = value;
+            }
+          }
+        }
+      }
+    }
+
+    return _buildGroupPropertiesContent(
+        groupData, displayProperties, parsedGroupConfig);
+  }
+
+  Widget _buildPropertyRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(label,
+                style: const TextStyle(fontWeight: FontWeight.w500)),
+          ),
+          Expanded(child: Text(value)),
+        ],
+      ),
+    );
+  }
+
+  /// Construit le contenu des propriétés du groupe
+  Widget _buildGroupPropertiesContent(
+    Map<String, dynamic> groupData,
+    List<String> displayProperties,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Si pas de données, afficher un message
+    if (groupData.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information disponible',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    // Exclure sites_group_name (déjà affiché dans le title), peu importe sa position
+    final propertiesToShow = displayProperties.where((key) {
+      return key != 'sites_group_name';
+    }).toList();
+
+    // Filtrer les propriétés meta et ne garder que celles présentes dans les données
+    final filteredProperties = propertiesToShow.where((key) {
+      final hasKey = groupData.containsKey(key);
+      final isMeta = key.startsWith('meta_');
+      final value = groupData[key];
+      debugPrint(
+          '🔍 Filtrage propriété $key: hasKey=$hasKey, isMeta=$isMeta, value=$value');
+      return !isMeta && hasKey;
+    }).toList();
+
+    debugPrint('📋 propertiesToShow: $propertiesToShow');
+    debugPrint('✅ filteredProperties: $filteredProperties');
+
+    // Si aucune propriété ne correspond après filtrage
+    if (filteredProperties.isEmpty) {
+      debugPrint(
+          '⚠️ Aucune propriété après filtrage - groupData: ${groupData.keys.toList()}');
+      return const Padding(
+        padding: EdgeInsets.all(16.0),
+        child: Text(
+          'Aucune information à afficher',
+          style: TextStyle(
+            fontSize: 14,
+            fontStyle: FontStyle.italic,
+            color: Colors.grey,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: filteredProperties.map((propertyKey) {
+          final rawValue = groupData[propertyKey];
+
+          // Obtenir le label depuis la configuration
+          String label = propertyKey;
+          if (parsedGroupConfig.containsKey(propertyKey)) {
+            label =
+                parsedGroupConfig[propertyKey]['attribut_label'] ?? propertyKey;
+          }
+
+          // Formater la valeur
+          String displayValue = ValueFormatter.format(rawValue);
+
+          return _buildPropertyRow(label, displayValue);
+        }).toList(),
+      ),
+    );
+  }
+
+  /// Calcule le nombre de sites pour un groupe de sites
+  Future<int> _calculateNbSites(int siteGroupId) async {
+    if (widget.ref == null) {
+      return 0;
+    }
+    try {
+      final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      return sites.length;
+    } catch (e) {
+      debugPrint(
+          'Erreur lors du calcul de nb_sites pour le groupe $siteGroupId: $e');
+      return 0;
+    }
+  }
+
+  /// Construit le bouton flottant pour afficher la carte des groupes de sites
+  Widget _buildGroupsMapButton() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final ObjectConfig? sitesGroupConfig =
+        module.complement?.configuration?.sitesGroup;
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
+
+    // Utiliser les groupes en cache s'ils sont disponibles, sinon ceux du module
+    final List<SiteGroup> groupsToDisplay =
+        _cachedGroups ?? _filteredSiteGroups.whereType<SiteGroup>().toList();
+
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Carte des ${sitesGroupConfig?.label ?? 'groupes de sites'}',
+                ),
+              ),
+              body: GeometriesMapWidget(
+                geojsonData: _convertSiteGroupsToGeoJSON(groupsToDisplay),
+                displayList: sitesGroupConfig?.displayList ??
+                    sitesGroupConfig?.displayProperties,
+                siteConfig: null, // Pas de siteConfig pour les groupes
+                customConfig: customConfig,
+                moduleInfo: widget.moduleInfo,
+                siteGroup: null, // Pas de siteGroup spécifique
+              ),
+            ),
+          ),
+        );
+      },
+      tooltip: 'Afficher la carte des groupes de sites',
+      child: const Icon(Icons.map, color: Colors.white),
+    );
+  }
+
+  /// Convertit une liste de SiteGroup en format GeoJSON pour GeometriesMapWidget
+  String? _convertSiteGroupsToGeoJSON(List<SiteGroup> groups) {
+    if (groups.isEmpty) return null;
+
+    final List<Map<String, dynamic>> geoJsonFeatures = [];
+
+    for (final group in groups) {
+      if (group.geom == null || group.geom!.isEmpty) continue;
+
+      try {
+        // Parser la géométrie JSON string
+        final Map<String, dynamic> geometry = jsonDecode(group.geom!);
+
+        // Créer une feature avec les informations du groupe
+        final feature = <String, dynamic>{
+          'id': group.idSitesGroup,
+          'name': group.sitesGroupName ?? 'Groupe ${group.idSitesGroup}',
+          'description': group.sitesGroupDescription ?? '',
+          'geom': geometry,
+        };
+
+        // Ajouter les champs de base pour le display_list
+        if (group.sitesGroupCode != null) {
+          feature['sites_group_code'] = group.sitesGroupCode;
+        }
+        if (group.sitesGroupName != null) {
+          feature['sites_group_name'] = group.sitesGroupName;
+        }
+        if (group.sitesGroupDescription != null) {
+          feature['sites_group_description'] = group.sitesGroupDescription;
+        }
+        if (group.altitudeMin != null) {
+          feature['altitude_min'] = group.altitudeMin;
+        }
+        if (group.altitudeMax != null) {
+          feature['altitude_max'] = group.altitudeMax;
+        }
+        if (group.comments != null) {
+          feature['comments'] = group.comments;
+        }
+
+        // Ajouter les données du champ data si disponible
+        if (group.data != null && group.data!.isNotEmpty) {
+          try {
+            Map<String, dynamic> dataMap = {};
+            if (group.data is String) {
+              dataMap =
+                  Map<String, dynamic>.from(jsonDecode(group.data as String));
+            } else {
+              dataMap = Map<String, dynamic>.from(group.data as Map);
+            }
+            feature.addAll(dataMap);
+          } catch (e) {
+            debugPrint(
+                'Erreur lors du décodage des données du groupe ${group.idSitesGroup}: $e');
+          }
+        }
+
+        geoJsonFeatures.add(feature);
+      } catch (e) {
+        debugPrint(
+            'Erreur parsing geometry pour groupe ${group.idSitesGroup}: $e');
+        // Skip this group if geometry parsing fails
+      }
+    }
+
+    if (geoJsonFeatures.isEmpty) return null;
+
+    return jsonEncode(geoJsonFeatures);
+  }
+
+  /// Récupère la valeur d'une propriété d'un groupe pour le tri
+  String _getGroupPropertyValue(
+    SiteGroup group,
+    String propertyKey,
+    ObjectConfig? sitesGroupConfig,
+    CustomConfig? customConfig,
+    Map<String, dynamic> parsedGroupConfig,
+  ) {
+    // Construire les données du groupe (uniquement les champs de base pour le tri synchrone)
+    final Map<String, dynamic> groupData = {};
+
+    // Ajouter les champs de base
+    if (group.sitesGroupCode != null) {
+      groupData['sites_group_code'] = group.sitesGroupCode;
+    }
+    if (group.sitesGroupName != null) {
+      groupData['sites_group_name'] = group.sitesGroupName;
+    }
+    if (group.sitesGroupDescription != null) {
+      groupData['sites_group_description'] = group.sitesGroupDescription;
+    }
+
+    // Récupérer la valeur
+    if (groupData.containsKey(propertyKey)) {
+      final rawValue = groupData[propertyKey];
+      return ValueFormatter.format(rawValue);
+    }
+
+    // Valeur par défaut si la propriété n'existe pas dans les données de base
+    return '';
+  }
+
+  /// Vérifie si les groupes de sites sont éditables sur le terrain
+  /// Retourne true si is_editable_on_field est true ou absent (par défaut)
+  /// Retourne false si is_editable_on_field est explicitement false
+  bool _isSiteGroupEditableOnField(ObjectConfig? sitesGroupConfig) {
+    debugPrint(
+        '🔍 _isSiteGroupEditableOnField - sitesGroupConfig: ${sitesGroupConfig != null ? "non null" : "null"}');
+
+    if (sitesGroupConfig == null) {
+      debugPrint('❌ sitesGroupConfig est null, retourne false');
+      return false;
+    }
+
+    // Vérifier d'abord la propriété directe isEditableOnField
+    if (sitesGroupConfig.isEditableOnField != null) {
+      debugPrint(
+          '✅ Trouvé isEditableOnField (propriété directe): ${sitesGroupConfig.isEditableOnField}');
+      return sitesGroupConfig.isEditableOnField!;
+    }
+
+    // Vérifier dans le champ specific (fallback)
+    final specific = sitesGroupConfig.specific;
+    debugPrint(
+        '🔍 specific: ${specific != null ? "non null (${specific.keys.length} clés)" : "null"}');
+
+    if (specific != null) {
+      debugPrint('🔍 Clés dans specific: ${specific.keys.toList()}');
+
+      if (specific.containsKey('is_editable_on_field')) {
+        final value = specific['is_editable_on_field'];
+        debugPrint(
+            '✅ Trouvé is_editable_on_field dans specific: $value (type: ${value.runtimeType})');
+
+        // Convertir en booléen de manière sécurisée
+        bool result;
+        if (value is bool) {
+          result = value;
+        } else if (value is String) {
+          result = value.toLowerCase() == 'true';
+        } else if (value is num) {
+          result = value != 0;
+        } else {
+          result = false;
+        }
+        debugPrint('📊 Résultat: $result');
+        return result;
+      } else {
+        debugPrint('⚠️ is_editable_on_field non trouvé dans specific');
+      }
+    }
+
+    debugPrint('⚠️ is_editable_on_field non trouvé, retourne true par défaut');
+    // Par défaut, si le paramètre n'est pas présent, on considère que c'est éditable
+    return true;
+  }
+
+  /// Vérifie si les sites sont éditables sur le terrain
+  bool _isSiteEditableOnField(ObjectConfig? siteConfig) {
+    if (siteConfig == null) return false;
+
+    if (siteConfig.isEditableOnField != null) {
+      return siteConfig.isEditableOnField!;
+    }
+
+    final specific = siteConfig.specific;
+    if (specific != null && specific.containsKey('is_editable_on_field')) {
+      final value = specific['is_editable_on_field'];
+      if (value is bool) return value;
+      if (value is String) return value.toLowerCase() == 'true';
+      if (value is num) return value != 0;
+      return false;
+    }
+
+    // Par défaut, éditable
+    return true;
+  }
+
+  /// Charge la position GPS de l'utilisateur
+  Future<void> _loadUserLocation() async {
+    try {
+      debugPrint('Début du chargement de la position GPS');
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        debugPrint('⚠️ Service de localisation désactivé');
+        return;
+      }
+      debugPrint('✓ Service de localisation activé');
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('Permission actuelle: $permission');
+
+      if (permission == LocationPermission.denied) {
+        debugPrint('Demande de permission...');
+        permission = await Geolocator.requestPermission();
+        debugPrint('Permission après demande: $permission');
+        if (permission == LocationPermission.denied) {
+          debugPrint('⚠️ Permission de localisation refusée');
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        debugPrint('⚠️ Permission de localisation refusée définitivement');
+        return;
+      }
+
+      debugPrint('Récupération de la position...');
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+        ),
+      );
+      debugPrint(
+          '✓ Position récupérée: lat=${position.latitude}, lon=${position.longitude}');
+
+      if (mounted) {
+        setState(() {
+          _userPosition = position;
+        });
+        debugPrint('✓ Position enregistrée dans l\'état');
+      }
+    } catch (e, stackTrace) {
+      debugPrint('❌ Erreur lors de la récupération de la position: $e');
+      debugPrint('Stack trace: $stackTrace');
+    }
+  }
+
+  /// Calcule la distance minimale entre la position de l'utilisateur et un groupe de sites
+  /// Pour un polygone, calcule la distance minimale au polygone (0 si le point est à l'intérieur)
+  double? _calculateGroupDistance(SiteGroup group) {
+    if (_userPosition == null || group.geom == null) {
+      return null;
+    }
+
+    try {
+      // Parser la géométrie GeoJSON
+      final geomData = jsonDecode(group.geom!);
+      final userLat = _userPosition!.latitude;
+      final userLon = _userPosition!.longitude;
+
+      if (geomData is Map<String, dynamic>) {
+        final type = geomData['type'];
+        final coordinates = geomData['coordinates'];
+
+        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
+          // Format GeoJSON: [longitude, latitude]
+          final groupLon = coordinates[0].toDouble();
+          final groupLat = coordinates[1].toDouble();
+
+          // Calculer la distance en mètres
+          return Geolocator.distanceBetween(
+            userLat,
+            userLon,
+            groupLat,
+            groupLon,
+          );
+        } else if (type == 'Polygon' && coordinates is List) {
+          // Pour un polygone, calculer la distance minimale au polygone
+          return _calculateDistanceToPolygon(userLat, userLon, coordinates);
+        } else if (type == 'MultiPolygon' && coordinates is List) {
+          // Pour un MultiPolygon, calculer la distance minimale à tous les polygones
+          double? minDistance;
+          for (var polygon in coordinates) {
+            if (polygon is List && polygon.isNotEmpty) {
+              final distance =
+                  _calculateDistanceToPolygon(userLat, userLon, polygon);
+              if (distance != null) {
+                if (minDistance == null || distance < minDistance) {
+                  minDistance = distance;
+                }
+                // Si le point est à l'intérieur d'un polygone, distance = 0
+                if (distance == 0) {
+                  return 0;
+                }
+              }
+            }
+          }
+          return minDistance;
+        }
+      }
+
+      return null;
+    } catch (e) {
+      debugPrint(
+          'Erreur lors du calcul de la distance pour le groupe ${group.idSitesGroup}: $e');
+      return null;
+    }
+  }
+
+  /// Calcule la distance minimale d'un point à un polygone GeoJSON
+  /// Retourne 0 si le point est à l'intérieur du polygone
+  double? _calculateDistanceToPolygon(
+      double lat, double lon, List coordinates) {
+    if (coordinates.isEmpty || coordinates[0] is! List) {
+      return null;
+    }
+
+    // Le premier ring est le contour extérieur du polygone
+    final outerRing = coordinates[0] as List;
+    if (outerRing.isEmpty) {
+      return null;
+    }
+
+    // Convertir les coordonnées du polygone en format pour point_in_polygon
+    // Le package attend des points [x, y] où x=longitude, y=latitude
+    // IMPORTANT: Le polygone GeoJSON peut être fermé (dernier point = premier point)
+    // Le package point_in_polygon peut nécessiter un polygone non fermé
+    final List<pip.Point> polygonPoints = [];
+    for (int i = 0; i < outerRing.length; i++) {
+      var coord = outerRing[i];
+      if (coord is List && coord.length >= 2) {
+        // Format GeoJSON: [longitude, latitude]
+        final point = pip.Point(x: coord[0].toDouble(), y: coord[1].toDouble());
+
+        // Ignorer le dernier point s'il est identique au premier (polygone fermé)
+        if (i == outerRing.length - 1 && polygonPoints.isNotEmpty) {
+          final firstPoint = polygonPoints.first;
+          if ((point.x - firstPoint.x).abs() < 1e-10 &&
+              (point.y - firstPoint.y).abs() < 1e-10) {
+            break;
+          }
+        }
+
+        polygonPoints.add(point);
+      }
+    }
+
+    if (polygonPoints.isEmpty) {
+      return null;
+    }
+
+    // Vérifier si le point est à l'intérieur du polygone
+    // Utilisation d'un algorithme ray casting robuste
+    final isInside = _isPointInPolygonRobust(lat, lon, polygonPoints);
+
+    if (isInside) {
+      return 0.0;
+    }
+
+    // Calculer la distance minimale à chaque segment du polygone
+    double minDistance = double.infinity;
+    for (int i = 0; i < polygonPoints.length; i++) {
+      final p1 = polygonPoints[i];
+      final p2 = polygonPoints[(i + 1) % polygonPoints.length];
+
+      // Convertir de [lon, lat] à [lat, lon] pour _distanceToSegment
+      final distance = _distanceToSegment(lat, lon, p1.y, p1.x, p2.y, p2.x);
+      if (distance < minDistance) {
+        minDistance = distance;
+      }
+    }
+
+    return minDistance.isFinite ? minDistance : null;
+  }
+
+  /// Vérifie si un point est à l'intérieur d'un polygone (algorithme ray casting robuste)
+  /// Les points du polygone sont en format pip.Point (x=longitude, y=latitude)
+  bool _isPointInPolygonRobust(
+      double lat, double lon, List<pip.Point> polygon) {
+    if (polygon.length < 3) {
+      return false;
+    }
+
+    // Algorithme ray casting : compter les intersections avec un rayon horizontal
+    // Le rayon va de (lat, lon) vers (lat, +infini) en longitude
+    bool inside = false;
+    int j = polygon.length - 1;
+
+    for (int i = 0; i < polygon.length; i++) {
+      final xi = polygon[i].x; // longitude du point i
+      final yi = polygon[i].y; // latitude du point i
+      final xj = polygon[j].x; // longitude du point j
+      final yj = polygon[j].y; // latitude du point j
+
+      // Vérifier si le segment (i, j) intersecte le rayon horizontal
+      // Le segment intersecte si :
+      // 1. Les latitudes du segment encadrent la latitude du point
+      // 2. La longitude d'intersection est à droite du point
+      final latStraddles = ((yi > lat) != (yj > lat));
+
+      if (latStraddles) {
+        // Éviter la division par zéro
+        final latDiff = yj - yi;
+        if (latDiff.abs() > 1e-10) {
+          // Calculer la longitude d'intersection du segment avec le rayon horizontal
+          // Équation de la droite : x = xi + (xj - xi) * (lat - yi) / (yj - yi)
+          final lonIntersection = xi + (xj - xi) * (lat - yi) / latDiff;
+
+          // L'intersection est à droite du point si lon < lonIntersection
+          if (lon < lonIntersection) {
+            inside = !inside;
+          }
+        }
+      }
+      j = i;
+    }
+
+    return inside;
+  }
+
+  /// Calcule la distance d'un point à un segment de ligne
+  double _distanceToSegment(double lat, double lon, double lat1, double lon1,
+      double lat2, double lon2) {
+    // Calculer la distance du point au segment en utilisant la formule de distance point-segment
+    // On utilise la projection du point sur le segment
+
+    // Vecteur du segment
+    final dx = lon2 - lon1;
+    final dy = lat2 - lat1;
+
+    // Si le segment est un point, retourner la distance au point
+    if (dx == 0 && dy == 0) {
+      return Geolocator.distanceBetween(lat, lon, lat1, lon1);
+    }
+
+    // Vecteur du point au début du segment
+    final px = lon - lon1;
+    final py = lat - lat1;
+
+    // Produit scalaire pour trouver la projection
+    final t = (px * dx + py * dy) / (dx * dx + dy * dy);
+
+    // Clamper t entre 0 et 1 pour rester sur le segment
+    final clampedT = t.clamp(0.0, 1.0);
+
+    // Point le plus proche sur le segment
+    final closestLon = lon1 + clampedT * dx;
+    final closestLat = lat1 + clampedT * dy;
+
+    // Distance au point le plus proche
+    return Geolocator.distanceBetween(lat, lon, closestLat, closestLon);
+  }
+
+  /// Formate la distance pour l'affichage
+  String _formatDistance(double distanceInMeters) {
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} m';
+    } else {
+      return '${(distanceInMeters / 1000).toStringAsFixed(2)} km';
+    }
+  }
+
+  /// Construit le badge de distance pour le header
+  Widget _buildGroupDistanceBadge(SiteGroup group) {
+    final distance = _calculateGroupDistance(group);
+
+    if (distance == null) {
+      return const SizedBox.shrink();
+    }
+
+    // Couleur verte si la distance est 0m (utilisateur à l'intérieur), bleue sinon
+    final isInside = distance == 0.0;
+    final badgeColor = isInside ? Colors.green : Colors.blue;
+
+    return Container(
+      margin: const EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: badgeColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: badgeColor.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.location_on,
+            color: badgeColor,
+            size: 16,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            _formatDistance(distance),
+            style: TextStyle(
+              fontSize: 12,
+              color: badgeColor,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
       ),
     );
+  }
+
+  /// Récupère dynamiquement la valeur d'une colonne depuis un SiteGroup
+  /// Cette fonction mappe automatiquement les noms de colonnes aux propriétés du modèle
+  dynamic _getSiteGroupValue(dynamic group, String column) {
+    // Mapping des noms de colonnes vers les propriétés du modèle SiteGroup
+    final Map<String, dynamic Function(dynamic)> propertyMap = {
+      'sites_group_name': (g) => g.sitesGroupName,
+      'sites_group_code': (g) => g.sitesGroupCode,
+      'sites_group_description': (g) => g.sitesGroupDescription,
+      'altitude_min': (g) => g.altitudeMin,
+      'altitude_max': (g) => g.altitudeMax,
+      'comments': (g) => g.comments,
+      'uuid_sites_group': (g) => g.uuidSitesGroup,
+      'id_sites_group': (g) => g.idSitesGroup,
+      'id_digitiser': (g) => g.idDigitiser,
+      'meta_create_date': (g) => g.metaCreateDate?.toIso8601String(),
+      'meta_update_date': (g) => g.metaUpdateDate?.toIso8601String(),
+    };
+
+    // Essayer d'abord le mapping direct des propriétés
+    if (propertyMap.containsKey(column)) {
+      try {
+        return propertyMap[column]!(group);
+      } catch (e) {
+        // Si l'accès échoue, continuer avec les autres méthodes
+      }
+    }
+
+    // Pour nb_sites et nb_visits, ou autres colonnes calculées,
+    // essayer de les récupérer depuis le champ data (JSON)
+    if (group.data != null && group.data!.isNotEmpty) {
+      try {
+        final dataMap = jsonDecode(group.data!) as Map<String, dynamic>;
+        if (dataMap.containsKey(column)) {
+          return dataMap[column];
+        }
+      } catch (e) {
+        // Si le parsing échoue, continuer
+      }
+    }
+
+    // Si aucune valeur n'est trouvée, retourner null
+    return null;
   }
 
   Widget _buildSitesTab() {
@@ -898,7 +2402,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     ];
 
     // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
-    Map<String, dynamic>? firstItemData = null;
+    Map<String, dynamic>? firstItemData;
 
     List<String> displayColumns = determineDataColumns(
       standardColumns: standardColumns,
@@ -995,10 +2499,42 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         'Aucun site associé à ce module',
         style: TextStyle(
           fontSize: 16,
-          color: Colors.grey[600],
+          color: AppColors.hint,
         ),
       ),
     );
+
+    // Bouton d'ajout de site si éditable
+    Widget? addButton;
+    final isEditable = _isSiteEditableOnField(siteConfig);
+    if (isEditable && siteConfig != null) {
+      final customConfig = module.complement?.configuration?.custom;
+      final currentModuleInfo = _updatedModule != null
+          ? widget.moduleInfo.copyWith(module: _updatedModule!)
+          : widget.moduleInfo;
+      addButton = IconButton(
+        key: const Key('create-site-button'),
+        onPressed: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SiteFormPage(
+                siteConfig: siteConfig,
+                customConfig: customConfig,
+                moduleId: module.id,
+                moduleInfo: currentModuleInfo,
+              ),
+            ),
+          );
+          // Recharger les sites après retour du formulaire
+          if (mounted) {
+            loadCompleteModule();
+          }
+        },
+        icon: const Icon(Icons.add_circle),
+        tooltip: 'Ajouter un ${siteConfig.label ?? 'site'}',
+      );
+    }
 
     // Utiliser notre méthode factorisée buildDataTable
     return buildDataTable(
@@ -1008,6 +2544,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       searchHint: "Rechercher un site",
       searchController: _searchController,
       onSearchChanged: _handleSearch,
+      headerActions: addButton,
       emptyMessage: emptyMessage,
       isLoading: _isLoadingSites,
     );

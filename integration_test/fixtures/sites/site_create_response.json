@@ -1,0 +1,13 @@
+{
+  "id_base_site": 99,
+  "id_module": 101,
+  "base_site_name": "Nouveau site",
+  "base_site_code": "NEW_SITE",
+  "base_site_description": "Site créé par test E2E",
+  "first_use_date": null,
+  "last_visit": null,
+  "nb_visits": 0,
+  "altitude_min": null,
+  "altitude_max": null,
+  "geom": "{\"type\": \"Point\", \"coordinates\": [5.2, 45.2]}"
+}

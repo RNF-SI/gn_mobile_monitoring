@@ -1,0 +1,7 @@
+{
+  "id_observation": 1001,
+  "id_base_visit": 501,
+  "cd_nom": 67111,
+  "comments": "Observation créée par test E2E",
+  "uuid_observation": "uuid-obs-1001"
+}

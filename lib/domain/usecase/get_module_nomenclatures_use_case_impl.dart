@@ -1,4 +1,3 @@
-import 'dart:convert';
 
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -13,8 +12,9 @@ class GetModuleNomenclaturesUseCaseImpl implements GetModuleNomenclaturesUseCase
   @override
   Future<List<Nomenclature>> execute(int moduleId) async {
     try {
-      // 1. Récupérer le module avec sa configuration
-      final module = await _repository.getModuleWithConfig(moduleId);
+      // 1. Récupérer le module avec uniquement ses informations de base (optimisé)
+      // Pour ce cas d'utilisation, nous n'avons besoin que du code du module, pas de toutes les relations
+      final module = await _repository.getModuleById(moduleId);
       
       // Vérifier si le moduleCode est disponible
       if (module.moduleCode == null) {

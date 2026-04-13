@@ -18,11 +18,11 @@ final _privateConstructorUsedError = UnsupportedError(
 mixin _$ModuleInfo {
   Module get module => throw _privateConstructorUsedError;
   ModuleDownloadStatus get downloadStatus => throw _privateConstructorUsedError;
-  double get downloadProgress => throw _privateConstructorUsedError;
+  double get downloadProgress =>
+      throw _privateConstructorUsedError; // Default to 0.0, indicating no progress
+  String get currentStep => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleInfoCopyWith<ModuleInfo> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -36,7 +36,8 @@ abstract class $ModuleInfoCopyWith<$Res> {
   $Res call(
       {Module module,
       ModuleDownloadStatus downloadStatus,
-      double downloadProgress});
+      double downloadProgress,
+      String currentStep});
 
   $ModuleCopyWith<$Res> get module;
 }
@@ -51,14 +52,13 @@ class _$ModuleInfoCopyWithImpl<$Res, $Val extends ModuleInfo>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? module = null,
     Object? downloadStatus = null,
     Object? downloadProgress = null,
+    Object? currentStep = null,
   }) {
     return _then(_value.copyWith(
       module: null == module
@@ -73,11 +73,13 @@ class _$ModuleInfoCopyWithImpl<$Res, $Val extends ModuleInfo>
           ? _value.downloadProgress
           : downloadProgress // ignore: cast_nullable_to_non_nullable
               as double,
+      currentStep: null == currentStep
+          ? _value.currentStep
+          : currentStep // ignore: cast_nullable_to_non_nullable
+              as String,
     ) as $Val);
   }
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleCopyWith<$Res> get module {
@@ -98,7 +100,8 @@ abstract class _$$ModuleInfoImplCopyWith<$Res>
   $Res call(
       {Module module,
       ModuleDownloadStatus downloadStatus,
-      double downloadProgress});
+      double downloadProgress,
+      String currentStep});
 
   @override
   $ModuleCopyWith<$Res> get module;
@@ -112,14 +115,13 @@ class __$$ModuleInfoImplCopyWithImpl<$Res>
       _$ModuleInfoImpl _value, $Res Function(_$ModuleInfoImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? module = null,
     Object? downloadStatus = null,
     Object? downloadProgress = null,
+    Object? currentStep = null,
   }) {
     return _then(_$ModuleInfoImpl(
       module: null == module
@@ -134,6 +136,10 @@ class __$$ModuleInfoImplCopyWithImpl<$Res>
           ? _value.downloadProgress
           : downloadProgress // ignore: cast_nullable_to_non_nullable
               as double,
+      currentStep: null == currentStep
+          ? _value.currentStep
+          : currentStep // ignore: cast_nullable_to_non_nullable
+              as String,
     ));
   }
 }
@@ -144,7 +150,8 @@ class _$ModuleInfoImpl extends _ModuleInfo {
   const _$ModuleInfoImpl(
       {required this.module,
       required this.downloadStatus,
-      this.downloadProgress = 0.0})
+      this.downloadProgress = 0.0,
+      this.currentStep = ""})
       : super._();
 
   @override
@@ -154,10 +161,14 @@ class _$ModuleInfoImpl extends _ModuleInfo {
   @override
   @JsonKey()
   final double downloadProgress;
+// Default to 0.0, indicating no progress
+  @override
+  @JsonKey()
+  final String currentStep;
 
   @override
   String toString() {
-    return 'ModuleInfo(module: $module, downloadStatus: $downloadStatus, downloadProgress: $downloadProgress)';
+    return 'ModuleInfo(module: $module, downloadStatus: $downloadStatus, downloadProgress: $downloadProgress, currentStep: $currentStep)';
   }
 
   @override
@@ -169,16 +180,16 @@ class _$ModuleInfoImpl extends _ModuleInfo {
             (identical(other.downloadStatus, downloadStatus) ||
                 other.downloadStatus == downloadStatus) &&
             (identical(other.downloadProgress, downloadProgress) ||
-                other.downloadProgress == downloadProgress));
+                other.downloadProgress == downloadProgress) &&
+            (identical(other.currentStep, currentStep) ||
+                other.currentStep == currentStep));
   }
 
   @override
-  int get hashCode =>
-      Object.hash(runtimeType, module, downloadStatus, downloadProgress);
+  int get hashCode => Object.hash(
+      runtimeType, module, downloadStatus, downloadProgress, currentStep);
 
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleInfoImplCopyWith<_$ModuleInfoImpl> get copyWith =>
@@ -189,7 +200,8 @@ abstract class _ModuleInfo extends ModuleInfo {
   const factory _ModuleInfo(
       {required final Module module,
       required final ModuleDownloadStatus downloadStatus,
-      final double downloadProgress}) = _$ModuleInfoImpl;
+      final double downloadProgress,
+      final String currentStep}) = _$ModuleInfoImpl;
   const _ModuleInfo._() : super._();
 
   @override
@@ -198,11 +210,10 @@ abstract class _ModuleInfo extends ModuleInfo {
   ModuleDownloadStatus get downloadStatus;
   @override
   double get downloadProgress;
-
-  /// Create a copy of ModuleInfo
-  /// with the given fields replaced by the non-null parameter values.
+  @override // Default to 0.0, indicating no progress
+  String get currentStep;
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleInfoImplCopyWith<_$ModuleInfoImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

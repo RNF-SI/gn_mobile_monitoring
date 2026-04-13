@@ -56,10 +56,10 @@ class MockObservationsDatabase extends _i1.Mock
       ) as _i3.Future<_i4.ObservationEntity?>);
 
   @override
-  _i3.Future<int> saveObservation(_i4.ObservationEntity? observation) =>
+  _i3.Future<int> createObservation(_i4.ObservationEntity? observation) =>
       (super.noSuchMethod(
         Invocation.method(
-          #saveObservation,
+          #createObservation,
           [observation],
         ),
         returnValue: _i3.Future<int>.value(0),
@@ -67,10 +67,38 @@ class MockObservationsDatabase extends _i1.Mock
       ) as _i3.Future<int>);
 
   @override
+  _i3.Future<bool> updateObservation(_i4.ObservationEntity? observation) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateObservation,
+          [observation],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
   _i3.Future<bool> deleteObservation(int? observationId) => (super.noSuchMethod(
         Invocation.method(
           #deleteObservation,
           [observationId],
+        ),
+        returnValue: _i3.Future<bool>.value(false),
+        returnValueForMissingStub: _i3.Future<bool>.value(false),
+      ) as _i3.Future<bool>);
+
+  @override
+  _i3.Future<bool> updateObservationServerId(
+    int? localObservationId,
+    int? serverObservationId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateObservationServerId,
+          [
+            localObservationId,
+            serverObservationId,
+          ],
         ),
         returnValue: _i3.Future<bool>.value(false),
         returnValueForMissingStub: _i3.Future<bool>.value(false),

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
+import 'package:gn_mobile_monitoring/presentation/view/error/sync_error_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_dialog_widget.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_navigation_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/sync_error_banner.dart';
 import 'package:intl/intl.dart';
 
 /// Widget pour afficher le statut de synchronisation
@@ -43,6 +45,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
       debugPrint(
           'SyncStatusWidget - Nombre de conflits: ${syncStatus.conflicts!.length}');
     }
+
 
     // Couleur du texte en fonction du contexte
     final Color textColor = widget.isInAppBar
@@ -133,16 +136,10 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                // Toujours inverser l'état d'expansion des détails au clic
+                // Seulement inverser l'état d'expansion des détails au clic
                 setState(() {
                   _detailsExpanded = !_detailsExpanded;
                 });
-
-                // Si on a également une erreur, l'afficher
-                if (syncStatus.state == SyncState.failure &&
-                    syncStatus.errorMessage != null) {
-                  _showErrorDialog(context, syncStatus.errorMessage!);
-                }
               },
               borderRadius: BorderRadius.circular(8),
               child: Container(
@@ -174,10 +171,10 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                           ),
                           if (syncStatus.lastSync != null)
                             Text(
-                              'Dernière synchronisation complète: ${_formatDate(syncStatus.lastSync!)}',
+                              '${_getLastSyncLabel(syncStatus.currentSyncType)}: ${_formatDate(syncStatus.lastSync!)}',
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
-                          // Ajouter l'info sur la prochaine synchronisation complète
+                          // Ajouter l'info sur la prochaine mise à jour des données
                           if (syncStatus.nextFullSyncInfo != null)
                             Row(
                               children: [
@@ -190,66 +187,110 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                                       .withOpacity(0.7),
                                 ),
                                 const SizedBox(width: 4),
-                                Text(
-                                  syncStatus.nextFullSyncInfo!,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .primary
-                                            .withOpacity(0.9),
-                                        fontStyle: FontStyle.italic,
-                                      ),
+                                Expanded(
+                                  child: Text(
+                                    syncStatus.nextFullSyncInfo!,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .bodySmall
+                                        ?.copyWith(
+                                          color: Theme.of(context)
+                                              .colorScheme
+                                              .primary
+                                              .withOpacity(0.9),
+                                          fontStyle: FontStyle.italic,
+                                        ),
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2,
+                                  ),
                                 ),
                               ],
                             ),
 
                           // Afficher les conflits s'il y en a - avec un bouton dédié
-                          if (syncStatus.state == SyncState.conflictDetected &&
-                              syncStatus.conflicts != null)
-                            syncStatus.conflicts!.isNotEmpty
-                                ? ElevatedButton.icon(
-                                    onPressed: () => _showConflictsDialog(
-                                        context, syncStatus.conflicts ?? []),
-                                    icon: Icon(
-                                      Icons.warning_amber_outlined,
-                                      size: 14,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onErrorContainer,
-                                    ),
-                                    label: Text(
-                                      'Résoudre ${syncStatus.conflicts!.length} référence(s) manquante(s)',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 13,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onErrorContainer,
-                                      ),
-                                    ),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context)
-                                          .colorScheme
-                                          .errorContainer,
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 6),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                    ),
-                                  )
-                                : Text(
-                                    'Aucune référence manquante détectée',
-                                    style: TextStyle(
-                                      fontStyle: FontStyle.italic,
-                                      fontSize: 13,
-                                      color:
-                                          Theme.of(context).colorScheme.primary,
-                                    ),
+                          // Afficher les conflits même en cas d'erreur (failure)
+                          if (syncStatus.conflicts != null && syncStatus.conflicts!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: ElevatedButton.icon(
+                                onPressed: () => _showConflictsDialog(
+                                    context, syncStatus.conflicts ?? []),
+                                icon: Icon(
+                                  Icons.warning_amber_outlined,
+                                  size: 14,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                ),
+                                label: Text(
+                                  'Résoudre ${syncStatus.conflicts!.length} conflits ${_getSyncTypeLabel(syncStatus.currentSyncType)}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onErrorContainer,
                                   ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .errorContainer,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          // Afficher les erreurs de synchronisation (toutes les erreurs)
+                          if (syncStatus.state == SyncState.failure &&
+                              syncStatus.errorMessage != null &&
+                              syncStatus.errorMessage!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: ElevatedButton.icon(
+                                onPressed: () {
+                                  // Debug: afficher le message d'erreur dans les logs
+                                  debugPrint('=== ERROR BUTTON CLICKED ===');
+                                  debugPrint('Error message: ${syncStatus.errorMessage}');
+                                  debugPrint('Is upstream error: ${_isUpstreamSyncError(syncStatus.errorMessage!)}');
+                                  debugPrint('============================');
+                                  
+                                  _navigateToErrorPage(context, syncStatus.errorMessage!);
+                                },
+                                icon: Icon(
+                                  Icons.error_outline,
+                                  size: 14,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                ),
+                                label: Text(
+                                  _getErrorButtonText(syncStatus.errorMessage!, syncStatus.currentSyncType),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w500,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .errorContainer,
+                                  foregroundColor: Theme.of(context)
+                                      .colorScheme
+                                      .onErrorContainer,
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 12, vertical: 6),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                ),
+                              ),
+                            ),
 
                           // Instruction discrète pour indiquer que c'est cliquable
                           Text(
@@ -383,8 +424,12 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
               ),
             ),
 
+
           // Affichage des détails de synchronisation (quand _detailsExpanded = true)
-          if (_detailsExpanded && syncStatus.additionalInfo != null)
+          // Inclure même en cas d'échec car le bilan peut contenir des informations utiles
+          if (_detailsExpanded && 
+              syncStatus.additionalInfo != null && 
+              syncStatus.additionalInfo!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.all(12.0),
               child: Column(
@@ -413,7 +458,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Détails de la synchronisation',
+                            _getSyncDetailsTitle(syncStatus.currentSyncType),
                             style: Theme.of(context)
                                 .textTheme
                                 .bodySmall
@@ -480,18 +525,86 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
   // Obtient le texte à afficher selon l'état
   String _getStatusText(SyncStatus syncStatus) {
+    String baseText;
     switch (syncStatus.state) {
       case SyncState.idle:
-        return 'En attente de synchronisation';
+        baseText = 'En attente de synchronisation';
+        break;
       case SyncState.inProgress:
-        return 'Synchronisation en cours...';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Mise à jour des données en cours...' 
+              : 'Téléversement en cours...';
+        } else {
+          baseText = 'Synchronisation en cours...';
+        }
+        break;
       case SyncState.success:
-        return 'Synchronisation réussie';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Mise à jour des données réussie' 
+              : 'Téléversement réussi';
+        } else {
+          baseText = 'Synchronisation réussie';
+        }
+        break;
       case SyncState.failure:
-        return 'Échec de la synchronisation';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Échec de la mise à jour des données' 
+              : 'Échec du téléversement';
+        } else {
+          baseText = 'Échec de la synchronisation';
+        }
+        break;
       case SyncState.conflictDetected:
-        return 'Conflits détectés';
+        if (syncStatus.currentSyncType != null) {
+          baseText = syncStatus.currentSyncType == SyncType.downstream 
+              ? 'Conflits détectés (mise à jour des données)' 
+              : 'Conflits détectés (téléversement)';
+        } else {
+          baseText = 'Conflits détectés';
+        }
+        break;
     }
+
+    return baseText;
+  }
+
+  // Obtient le label du type de synchronisation
+  String _getSyncTypeLabel(SyncType? syncType) {
+    if (syncType == null) return '';
+    return syncType == SyncType.downstream ? 'downstream' : 'upload';
+  }
+
+  // Obtient le titre des détails selon le type de synchronisation
+  String _getSyncDetailsTitle(SyncType? syncType) {
+    if (syncType == null) return 'Détails de la synchronisation';
+    return syncType == SyncType.downstream 
+        ? 'Détails de la mise à jour des données'
+        : 'Détails du téléversement';
+  }
+
+  // Obtient le label pour la dernière synchronisation selon le type
+  String _getLastSyncLabel(SyncType? syncType) {
+    if (syncType == null) return 'Dernière synchronisation';
+    return syncType == SyncType.downstream 
+        ? 'Dernière mise à jour des données'
+        : 'Dernier téléversement';
+  }
+
+  // Obtient le texte du bouton d'erreur selon le type de synchronisation
+  String _getErrorButtonText(String errorMessage, SyncType? syncType) {
+    if (syncType != null) {
+      return syncType == SyncType.downstream 
+          ? 'Voir les erreurs de téléchargement'
+          : 'Voir les erreurs d\'envoi';
+    }
+    
+    // Fallback sur la détection automatique si le type n'est pas disponible
+    return _isUpstreamSyncError(errorMessage) 
+        ? 'Voir les erreurs d\'envoi'
+        : 'Voir les erreurs de téléchargement';
   }
 
   // Formate une date pour l'affichage
@@ -528,8 +641,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   /// Affiche une boîte de dialogue avec les conflits filtrés par type
-  void _showConflictsByType(
-      BuildContext context, String conflictType, List<SyncConflict> conflicts) {
+  void _showConflictsByType(BuildContext context, String conflictType,
+      List<domain.SyncConflict> conflicts) {
     // Filtrer uniquement les conflits par type référencé
     final typeConflicts =
         conflicts.where((c) => c.referencedEntityType == conflictType).toList();
@@ -544,7 +657,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
   }
 
   /// Affiche une boîte de dialogue avec les détails des conflits
-  void _showConflictsDialog(BuildContext context, List<SyncConflict> conflicts,
+  void _showConflictsDialog(
+      BuildContext context, List<domain.SyncConflict> conflicts,
       {String? typeTitle}) {
     showDialog(
       context: context,
@@ -557,7 +671,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
 
   /// Navigation directe vers l'élément en conflit
   Future<void> _navigateDirectlyToConflictItem(
-      BuildContext context, SyncConflict conflict) async {
+      BuildContext context, domain.SyncConflict conflict) async {
     ConflictNavigationService.navigateDirectlyToConflictItem(
         context, conflict, ref);
   }
@@ -618,7 +732,9 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     bool isIncrementalSummary =
         lines.isNotEmpty && lines[0].contains('Éléments déjà synchronisés');
     bool isFinalSummary =
-        lines.isNotEmpty && lines[0].contains('Résumé de la synchronisation');
+        lines.isNotEmpty && (lines[0].contains('Résumé de la synchronisation') || lines[0].contains('Résumé du téléversement'));
+    bool isUploadSummary = 
+        lines.isNotEmpty && lines[0].contains('Résumé du téléversement');
 
     // Récupérer les informations sur les conflits pour les associer aux bonnes sections
     final syncStatus = ref.watch(syncServiceProvider);
@@ -627,7 +743,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
     final conflicts = syncStatus.conflicts ?? [];
 
     // Organiser les conflits par type d'entité
-    final conflictsByEntityType = <String, List<SyncConflict>>{};
+    final conflictsByEntityType = <String, List<domain.SyncConflict>>{};
 
     if (hasConflicts) {
       for (final conflict in conflicts) {
@@ -667,6 +783,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 'updated': 0,
                 'skipped': 0,
                 'deleted': 0,
+                'localPending': 0,
                 'hasConflicts': false,
               };
             }
@@ -675,7 +792,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             final statsStr = parts[1].trim();
             if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
               final regex = RegExp(
-                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
               final match = regex.firstMatch(statsStr);
 
               if (match != null) {
@@ -689,6 +806,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                     int.parse(match.group(4) ?? '0');
                 statsByCategory[currentCategory]!['deleted'] =
                     int.parse(match.group(5) ?? '0');
+                statsByCategory[currentCategory]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
               }
             }
 
@@ -697,6 +816,58 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             statsByCategory[currentCategory]!['hasConflicts'] =
                 conflictsByEntityType.containsKey(categoryType) &&
                     conflictsByEntityType[categoryType]!.isNotEmpty;
+          }
+        }
+      }
+    } else if (isUploadSummary) {
+      // Traiter le résumé de téléversement (format similaire au résumé final)
+      for (int i = 1; i < lines.length; i++) {
+        final line = lines[i].trim();
+
+        if (line.startsWith('•') && !line.startsWith('• TOTAL')) {
+          // Ligne de catégorie pour le téléversement
+          final parts = line.substring(1).trim().split(':');
+          if (parts.length >= 2) {
+            final category = parts[0].trim();
+
+            // Initialiser les statistiques pour cette catégorie
+            if (!statsByCategory.containsKey(category)) {
+              statsByCategory[category] = {
+                'total': 0,
+                'added': 0,
+                'updated': 0,
+                'skipped': 0,
+                'deleted': 0,
+                'localPending': 0,
+                'hasConflicts': false,
+              };
+            }
+
+            // Extraire les statistiques
+            final statsStr = parts[1].trim();
+            if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
+              final regex = RegExp(
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
+              final match = regex.firstMatch(statsStr);
+
+              if (match != null) {
+                statsByCategory[category]!['total'] =
+                    int.parse(match.group(1) ?? '0');
+                statsByCategory[category]!['added'] =
+                    int.parse(match.group(2) ?? '0');
+                statsByCategory[category]!['updated'] =
+                    int.parse(match.group(3) ?? '0');
+                statsByCategory[category]!['skipped'] =
+                    int.parse(match.group(4) ?? '0');
+                statsByCategory[category]!['deleted'] =
+                    int.parse(match.group(5) ?? '0');
+                statsByCategory[category]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
+              }
+            }
+
+            // Pour le téléversement, pas de conflits car les données sont envoyées vers le serveur
+            statsByCategory[category]!['hasConflicts'] = false;
           }
         }
       }
@@ -719,6 +890,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 'updated': 0,
                 'skipped': 0,
                 'deleted': 0,
+                'localPending': 0,
                 'hasConflicts': false,
               };
             }
@@ -727,7 +899,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
             final statsStr = parts[1].trim();
             if (statsStr != 'Aucune donnée' && statsStr != 'Échec') {
               final regex = RegExp(
-                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?\)');
+                  r'(\d+) éléments \((\d+) ajoutés, (\d+) mis à jour, (\d+) ignorés(?:, (\d+) supprimés)?(?:, (\d+) locaux en attente de téléversement)?\)');
               final match = regex.firstMatch(statsStr);
 
               if (match != null) {
@@ -741,6 +913,8 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                     int.parse(match.group(4) ?? '0');
                 statsByCategory[category]!['deleted'] =
                     int.parse(match.group(5) ?? '0');
+                statsByCategory[category]!['localPending'] =
+                    int.parse(match.group(6) ?? '0');
               }
             }
 
@@ -858,34 +1032,76 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                       const SizedBox(height: 8),
 
                       // Statistiques visuelles
-                      Row(
-                        children: [
-                          // Ajoutés
-                          _buildStatIndicator(
-                            context,
-                            'Ajoutés',
-                            stats['added'] as int,
-                            Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8.0),
+                      SizedBox(
+                        width: double.infinity,
+                        child: Row(
+                          children: [
+                            // Ajoutés
+                            _buildStatIndicator(
+                              context,
+                              'Ajoutés',
+                              stats['added'] as int,
+                              Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 4.0),
 
-                          // Mis à jour
-                          _buildStatIndicator(
-                            context,
-                            'Mis à jour',
-                            stats['updated'] as int,
-                            Theme.of(context).colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 8.0),
+                            // Mis à jour
+                            _buildStatIndicator(
+                              context,
+                              'Mis à jour',
+                              stats['updated'] as int,
+                              Theme.of(context).colorScheme.secondary,
+                            ),
+                            const SizedBox(width: 4.0),
 
-                          _buildStatIndicator(
-                            context,
-                            'Supprimés',
-                            stats['deleted'] as int,
-                            Theme.of(context).colorScheme.error,
-                          ),
-                        ],
+                            _buildStatIndicator(
+                              context,
+                              'Supprimés',
+                              stats['deleted'] as int,
+                              Theme.of(context).colorScheme.error,
+                            ),
+                            if ((stats['localPending'] as int?) != null &&
+                                (stats['localPending'] as int) > 0) ...[
+                              const SizedBox(width: 4.0),
+                              _buildStatIndicator(
+                                context,
+                                'En attente',
+                                stats['localPending'] as int,
+                                Colors.orange,
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
+
+                      if ((stats['localPending'] as int?) != null &&
+                          (stats['localPending'] as int) > 0) ...[
+                        const SizedBox(height: 6),
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Icon(
+                              Icons.info_outline,
+                              size: 12,
+                              color: Colors.orange.withOpacity(0.8),
+                            ),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                'Éléments créés sur le terrain, en attente de téléversement vers le serveur.',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontStyle: FontStyle.italic,
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .onSurface
+                                      .withOpacity(0.6),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
 
                       if (hasConflicts) ...[
                         const SizedBox(height: 8),
@@ -919,7 +1135,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                 ),
               ),
             );
-          }).toList(),
+          }),
 
           // Informations supplémentaires si disponibles
           if (lines
@@ -979,9 +1195,11 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
           ),
           const SizedBox(height: 2),
           Container(
@@ -1007,7 +1225,7 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
                   child: Text(
                     '$value',
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
@@ -1019,5 +1237,111 @@ class SyncStatusWidgetState extends ConsumerState<SyncStatusWidget> {
         ],
       ),
     );
+  }
+
+  /// Détermine si une erreur provient de la synchronisation ascendante (envoi de données)
+  bool _isUpstreamSyncError(String errorMessage) {
+    // Identifier les erreurs liées à l'envoi de données vers le serveur
+    final upstreamKeywords = [
+      'échec de l\'envoi',
+      'erreur lors de l\'envoi',
+      'téléversement',
+      'envoi des données',
+      'upload failed',
+      'post failed',
+      'patch failed',
+      'failed to send',
+      'erreur de sérialisation',
+      'validation failed on server',
+      'server rejected',
+      'échec du post',
+      'échec du patch',
+      // Ajouter les patterns d'erreurs de synchronisation des visites/observations
+      'erreurs lors de la synchronisation des visites',
+      'erreurs lors de la synchronisation des observations',
+      'erreurs lors de la synchronisation des détails',
+      'erreurs lors de la synchronisation des sites',
+      'visite',
+      'observation',
+      'site',
+      'detail',
+      'erreur de validation des données',
+      'erreur de synthèse',
+      'contrainte de base de données',
+      'check_synthese_count_max',
+      'synthese',
+      'erreur de dénombrement',
+      // Patterns génériques pour les erreurs d'entités
+      'erreur fatale lors de la mise à jour des données',
+      'échec de la mise à jour des données',
+    ];
+
+    final lowerError = errorMessage.toLowerCase();
+    return upstreamKeywords.any((keyword) => lowerError.contains(keyword));
+  }
+
+  /// Navigue vers la page de détail des erreurs de synchronisation
+  void _navigateToErrorPage(BuildContext context, String errorMessage) {
+    try {
+      debugPrint('=== NAVIGATION TO ERROR PAGE ===');
+      debugPrint('Context: $context');
+      debugPrint('Error message length: ${errorMessage.length}');
+      debugPrint('Widget.onSyncRequested: ${widget.onSyncRequested}');
+      
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) {
+            debugPrint('Building SyncErrorDetailPage...');
+            return SyncErrorDetailPage(
+              errorMessage: errorMessage,
+              errorTitle: 'Erreurs de synchronisation',
+              onRetry: widget.onSyncRequested,
+            );
+          },
+        ),
+      ).then((result) {
+        debugPrint('Navigation completed with result: $result');
+      }).catchError((error) {
+        debugPrint('Navigation failed with error: $error');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erreur lors de l\'ouverture de la page: $error'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      });
+      
+      debugPrint('Navigation initiated successfully');
+    } catch (e, stackTrace) {
+      debugPrint('=== NAVIGATION ERROR ===');
+      debugPrint('Error: $e');
+      debugPrint('Stack trace: $stackTrace');
+      debugPrint('========================');
+      
+      // Fallback: afficher un dialog simple
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Erreur de synchronisation'),
+          content: SingleChildScrollView(
+            child: Text(errorMessage),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Fermer'),
+            ),
+            if (widget.onSyncRequested != null)
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  widget.onSyncRequested!();
+                },
+                child: const Text('Réessayer'),
+              ),
+          ],
+        ),
+      );
+    }
   }
 }

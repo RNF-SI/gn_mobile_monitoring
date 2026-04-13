@@ -1,10 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
-import 'package:gn_mobile_monitoring/domain/repository/sync_repository.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_last_sync_date_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/incremental_sync_all_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/update_last_sync_date_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
@@ -15,6 +10,7 @@ final testableSyncServiceProvider =
   final syncUseCase = ref.read(incrementalSyncAllUseCaseProvider);
   final getLastSyncDateUseCase = ref.read(getLastSyncDateUseCaseProvider);
   final updateLastSyncDateUseCase = ref.read(updateLastSyncDateUseCaseProvider);
+  final syncCompleteUseCase = ref.read(syncCompleteUseCaseProvider);
 
   return TestableSyncService(
     getTokenUseCase,
@@ -22,6 +18,7 @@ final testableSyncServiceProvider =
     getLastSyncDateUseCase,
     updateLastSyncDateUseCase,
     ref.read(syncRepositoryProvider),
+    syncCompleteUseCase,
   );
 });
 
@@ -33,8 +30,9 @@ class TestableSyncService extends SyncService {
     super.getLastSyncDateUseCase,
     super.updateLastSyncDateUseCase,
     super.syncRepository,
+    super.syncCompleteUseCase,
   );
-        
+
   // Override pour les tests - toujours retourne true
   @override
   bool isFullSyncNeeded() {
@@ -55,7 +53,7 @@ class TestableSyncService extends SyncService {
     // Créer un mock pour la partie qui nécessite un WidgetRef
     // Dans ce cas, nous allons simplement simuler le comportement de syncFromServer
     // sans utiliser la méthode read sur le WidgetRef
-    
+
     // Simuler le début d'une synchronisation
     state = SyncStatus.inProgress(
       currentStep: SyncStep.configuration,
@@ -63,7 +61,7 @@ class TestableSyncService extends SyncService {
       itemsProcessed: 0,
       itemsTotal: 1,
     );
-    
+
     // Retourner simplement un résultat de réussite
     return SyncStatus.success(
       completedSteps: [SyncStep.configuration],
@@ -84,7 +82,7 @@ class TestableSyncService extends SyncService {
       itemsProcessed: 0,
       itemsTotal: 1,
     );
-    
+
     // Retourner simplement un résultat de réussite
     return SyncStatus.success(
       completedSteps: [SyncStep.visitsToServer],

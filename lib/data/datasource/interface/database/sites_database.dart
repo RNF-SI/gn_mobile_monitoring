@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
+import 'package:gn_mobile_monitoring/data/entity/base_site_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_module.dart';
@@ -15,7 +16,13 @@ abstract class SitesDatabase {
   /// Methods for handling `TSiteComplements`.
   Future<void> clearSiteComplements();
   Future<void> insertSiteComplements(List<SiteComplement> complements);
+  Future<void> deleteSiteComplement(int siteId);
   Future<List<SiteComplement>> getAllSiteComplements();
+  Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId);
+  
+  Future<bool> siteHasOtherModuleReferences(int siteId, int excludeModuleId);
+  Future<bool> siteGroupHasOtherModuleReferences(int siteGroupId, int excludeModuleId);
+  Future<void> deleteSiteCompletely(int siteId);
 
   /// Methods for handling `TSitesGroups`.
   Future<void> clearSiteGroups();
@@ -29,10 +36,12 @@ abstract class SitesDatabase {
 
   /// Methods for handling CorSitesGroupModules
   Future<void> clearAllSiteGroupModules();
+  Future<void> insertSiteGroupModule(SitesGroupModule siteGroupModule);
   Future<void> insertSiteGroupModules(List<SitesGroupModule> modules);
   Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId);
   Future<List<SitesGroupModule>> getAllSiteGroupModules();
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId);
+  Future<List<SitesGroupModule>> getSiteGroupModulesBySiteGroupId(int siteGroupId);
 
   /// Methods for handling CorSitesModules
   Future<void> clearAllSiteModules();
@@ -40,4 +49,41 @@ abstract class SitesDatabase {
   Future<void> deleteSiteModule(int siteId, int moduleId);
   Future<List<SiteModule>> getAllSiteModules();
   Future<List<BaseSite>> getSitesByModuleId(int moduleId);
+  Future<List<SiteModule>> getSiteModulesBySiteId(int siteId);
+  
+  /// Get sites by site group
+  Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
+  
+  /// Insert a single site and return its ID
+  Future<int> insertSite(BaseSite site);
+  
+  /// Insert a single site group
+  Future<int> insertSiteGroup(SiteGroup siteGroup);
+  
+  /// Get site modules by module ID
+  Future<List<SiteModule>> getSiteModulesByModuleId(int moduleId);
+  
+  /// Insert a single site-module relationship
+  Future<void> insertSiteModule(SiteModule siteModule);
+  
+  /// Get a site by its ID
+  Future<BaseSiteEntity?> getSiteEntityById(int siteId);
+
+  /// Get a site by its ID
+  Future<BaseSite?> getSiteById(int siteId);
+
+  /// Get a site group by its ID
+  Future<SiteGroup?> getSiteGroupById(int siteGroupId);
+
+  /// Update server site ID after successful sync
+  Future<void> updateSiteServerId(int localSiteId, int serverSiteId);
+
+  /// Update server site group ID after successful sync
+  Future<void> updateSiteGroupServerId(int localSiteGroupId, int serverSiteGroupId);
+
+  /// Update idSitesGroup references in site complements when a local group gets a server ID
+  Future<void> updateSiteComplementsGroupId(int oldGroupId, int newGroupId);
+
+  /// Get site complement by site ID
+  Future<SiteComplement?> getSiteComplementBySiteId(int siteId);
 }

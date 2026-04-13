@@ -46,28 +46,25 @@ void main() {
     Map<String, dynamic>? fieldConfig,
     bool isRequired = false,
   }) async {
-    when(() => mockTaxonService.getTaxonsByModuleId(123))
-        .thenAnswer((_) async => testTaxons);
-    
     when(() => mockTaxonService.formatTaxonDisplay(any(), any()))
         .thenAnswer((invocation) {
           final taxon = invocation.positionalArguments[0] as Taxon;
           final format = invocation.positionalArguments[1] as String;
-          
+
           if (format == 'nom_vern,lb_nom' && taxon.nomVern != null) {
             return '${taxon.nomVern} (${taxon.lbNom})';
           } else {
             return taxon.lbNom ?? taxon.nomComplet;
           }
         });
-        
+
     if (value != null) {
       when(() => mockTaxonService.getTaxonByCdNom(value))
           .thenAnswer((_) async => testTaxons.firstWhere((t) => t.cdNom == value));
     }
-    
+
     if (idListTaxonomy != null) {
-      when(() => mockTaxonService.getTaxonsByListId(idListTaxonomy))
+      when(() => mockTaxonService.getSuggestionTaxons(idListTaxonomy))
           .thenAnswer((_) async => testTaxons);
     }
     
@@ -123,12 +120,12 @@ void main() {
     
     testWidgets('should show suggestions when focused and no text entered',
         (WidgetTester tester) async {
-      // Arrange
-      await pumpTaxonSelectorWidget(tester);
-      
+      // Arrange - les suggestions nécessitent un idListTaxonomy
+      await pumpTaxonSelectorWidget(tester, idListTaxonomy: 100);
+
       // Act - Attendre que les suggestions s'affichent
       await tester.pumpAndSettle();
-      
+
       // Assert
       expect(find.text('Suggestions:'), findsOneWidget);
       expect(find.byType(ChoiceChip), findsNWidgets(2));
@@ -164,22 +161,22 @@ void main() {
         'id_list': 456,
         'type_util': 'taxonomy',
       };
-      
-      // Mock pour getTaxonsByListId avec l'ID spécifique de la configuration
-      when(() => mockTaxonService.getTaxonsByListId(456))
+
+      // Mock pour getSuggestionTaxons avec l'ID spécifique de la configuration
+      when(() => mockTaxonService.getSuggestionTaxons(456))
           .thenAnswer((_) async => testTaxons);
-          
+
       // Act
       await pumpTaxonSelectorWidget(
-        tester, 
+        tester,
         fieldConfig: fieldConfig,
         idListTaxonomy: 123, // Ce paramètre devrait être ignoré en faveur de fieldConfig['id_list']
       );
-      
+
       // Assert
       await tester.pumpAndSettle();
-      verify(() => mockTaxonService.getTaxonsByListId(456)).called(1);
-      verifyNever(() => mockTaxonService.getTaxonsByListId(123));
+      verify(() => mockTaxonService.getSuggestionTaxons(456)).called(1);
+      verifyNever(() => mockTaxonService.getSuggestionTaxons(123));
     });
     
     testWidgets('should mark field as required if isRequired is true',

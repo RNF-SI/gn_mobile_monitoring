@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 
 /// Évaluateur d'expressions de masquage (hidden)
 /// 
@@ -47,50 +46,96 @@ class HiddenExpressionEvaluator {
       final String paramsStr = match.group(1)!.trim();
       final List<String> params = paramsStr.split(',').map((p) => p.trim()).toList();
       
-      // Extraire le corps de l'expression
-      final String body = match.group(2)!.trim();
-      
+      // Extraire le corps de l'expression et normaliser les patterns JS
+      String body = match.group(2)!.trim();
+      body = body.replaceAll('(null || undefined)', 'null');
+      body = body.replaceAll('(undefined || null)', 'null');
+      body = body.replaceAll('undefined', 'null');
+      // Retirer le cast Dart "as bool" ajouté par TsToDartConverter
+      body = body.replaceAll(RegExp(r'\s+as\s+bool$'), '');
+      // Retirer les parenthèses englobantes : "(expr)" → "expr"
+      if (body.startsWith('(') && body.endsWith(')')) {
+        final inner = body.substring(1, body.length - 1);
+        // Vérifier que les parenthèses sont bien englobantes (pas un sous-groupe)
+        if (_isBalancedParentheses(inner)) {
+          body = inner.trim();
+        }
+      }
+
       // Évaluer l'expression en fonction de son type
       return _evaluateExpressionBody(body, params, context);
     } catch (e) {
-      // Log l'erreur pour faciliter le débogage
-      debugPrint('Erreur lors de l\'évaluation de l\'expression: $e');
       return null;
     }
   }
   
   /// Évalue le corps de l'expression en fonction de son type
   bool? _evaluateExpressionBody(String body, List<String> params, Map<String, dynamic> context) {
+    // Cas: controls.xxx.dirty
+    final dirtyMatch = RegExp(r'^controls\.(\w+)\.dirty$').firstMatch(body);
+    if (dirtyMatch != null) {
+      final fieldName = dirtyMatch.group(1)!;
+      final dirtyFields = context['dirtyFields'];
+      if (dirtyFields is Set<String>) {
+        return dirtyFields.contains(fieldName);
+      }
+      return false;
+    }
+
     // Cas simple: accès à une propriété (value.prop)
     if (_isSimplePropertyAccess(body)) {
       return _evaluatePropertyAccess(body, params, context);
     }
-    
+
     // Cas d'accès à une propriété avec crochets
     if (_isBracketAccess(body)) {
       return _evaluateBracketAccess(body, params, context);
     }
-    
-    // Cas avec opérateur logique && 
+
+    // Cas avec opérateur logique &&
     if (body.contains('&&')) {
       return _evaluateLogicalAnd(body, params, context);
     }
-    
+
     // Cas avec opérateur logique ||
     if (body.contains('||')) {
       return _evaluateLogicalOr(body, params, context);
     }
-    
+
     // Cas avec négation !
     if (body.startsWith('!')) {
       return _evaluateNegation(body, params, context);
     }
-    
+
+    // Cas: littéral booléen
+    if (body == 'true') return true;
+    if (body == 'false') return false;
+
+    // Cas avec ternaire (condition ? trueExpr : falseExpr)
+    // Must check before comparison since ternary may contain comparisons
+    final ternaryIdx = _findTernaryOperator(body);
+    if (ternaryIdx != -1) {
+      final condition = body.substring(0, ternaryIdx).trim();
+      final rest = body.substring(ternaryIdx + 1);
+      final colonIdx = _findTernaryColon(rest);
+      if (colonIdx != -1) {
+        final trueExpr = rest.substring(0, colonIdx).trim();
+        final falseExpr = rest.substring(colonIdx + 1).trim();
+
+        final condResult = _evaluateExpressionBody(condition, params, context);
+        if (condResult == true) {
+          return _evaluateExpressionBody(trueExpr, params, context);
+        } else {
+          return _evaluateExpressionBody(falseExpr, params, context);
+        }
+      }
+    }
+
     // Cas avec comparaison (==, !=, >, <, >=, <=)
     if (_containsComparisonOperator(body)) {
       return _evaluateComparison(body, params, context);
     }
-    
+
     // Si on ne reconnaît pas l'expression, par défaut ne pas masquer
     return null;
   }
@@ -271,7 +316,9 @@ class HiddenExpressionEvaluator {
   
   /// Vérifie si l'expression contient un opérateur de comparaison
   bool _containsComparisonOperator(String expr) {
-    return expr.contains('==') || 
+    return expr.contains('===') || 
+           expr.contains('!==') ||
+           expr.contains('==') || 
            expr.contains('!=') ||
            expr.contains('>=') ||
            expr.contains('<=') ||
@@ -286,10 +333,14 @@ class HiddenExpressionEvaluator {
       expr = expr.substring(0, expr.length - 8).trim();
     }
     
-    // Détecter quel opérateur est utilisé
+    // Détecter quel opérateur est utilisé (ordre important pour éviter les conflits)
     String operator;
     
-    if (expr.contains('==')) {
+    if (expr.contains('===')) {
+      operator = '===';
+    } else if (expr.contains('!==')) {
+      operator = '!==';
+    } else if (expr.contains('==')) {
       operator = '==';
     } else if (expr.contains('!=')) {
       operator = '!=';
@@ -323,34 +374,46 @@ class HiddenExpressionEvaluator {
     
     final rightValue = _evaluateValue(cleanRightExpr, params, context);
     
-    // Si une des valeurs n'a pas pu être évaluée, le résultat est incertain
-    if (leftValue == null || rightValue == null) {
-      return null;
-    }
+    // Note: Nous permettons maintenant les comparaisons avec null
+    // car c'est un cas courant dans les formulaires (champs non encore remplis)
     
     // Effectuer la comparaison en fonction de l'opérateur
     bool? result;
-    switch (operator) {
-      case '==': 
-        result = leftValue == rightValue;
-        break;
-      case '!=': 
-        result = leftValue != rightValue;
-        break;
-      case '>=': 
-        result = _compareValues(leftValue, rightValue) >= 0;
-        break;
-      case '<=': 
-        result = _compareValues(leftValue, rightValue) <= 0;
-        break;
-      case '>': 
-        result = _compareValues(leftValue, rightValue) > 0;
-        break;
-      case '<': 
-        result = _compareValues(leftValue, rightValue) < 0;
-        break;
-      default: 
-        return null;
+    try {
+      switch (operator) {
+        case '===': 
+          // Triple égal JavaScript : égalité stricte (même valeur ET même type)
+          result = leftValue == rightValue && leftValue.runtimeType == rightValue.runtimeType;
+          break;
+        case '!==': 
+          // Inégalité stricte JavaScript
+          result = !(leftValue == rightValue && leftValue.runtimeType == rightValue.runtimeType);
+          break;
+        case '==': 
+          result = leftValue == rightValue;
+          break;
+        case '!=': 
+          result = leftValue != rightValue;
+          break;
+        case '>=': 
+          result = _compareValues(leftValue, rightValue) >= 0;
+          break;
+        case '<=': 
+          result = _compareValues(leftValue, rightValue) <= 0;
+          break;
+        case '>': 
+          result = _compareValues(leftValue, rightValue) > 0;
+          break;
+        case '<': 
+          result = _compareValues(leftValue, rightValue) < 0;
+          break;
+        default: 
+          return null;
+      }
+    } catch (e) {
+      // En cas d'erreur de comparaison (par exemple, types incompatibles)
+      // retourner null pour signaler une évaluation impossible
+      return null;
     }
     
     return result;
@@ -400,10 +463,15 @@ class HiddenExpressionEvaluator {
           if (paramValue.containsKey(propName)) {
             final value = paramValue[propName];
             return value;
+          } else {
+            // La propriété n'existe pas, retourner null comme valeur réelle
+            // (pas comme signal d'erreur)
+            return null;
           }
         }
       }
       
+      // Le paramètre n'existe pas, retourner null comme valeur réelle
       return null;
     }
     
@@ -429,7 +497,54 @@ class HiddenExpressionEvaluator {
       }
     }
     
-    // Cas 3: Valeur littérale (nombre, booléen, chaîne)
+    // Cas 3a: Ternary expression (condition ? trueVal : falseVal)
+    final ternaryIdx = _findTernaryOperator(cleanExpr);
+    if (ternaryIdx != -1) {
+      final condition = cleanExpr.substring(0, ternaryIdx).trim();
+      final rest = cleanExpr.substring(ternaryIdx + 1);
+      final colonIdx = _findTernaryColon(rest);
+      if (colonIdx != -1) {
+        final trueExpr = rest.substring(0, colonIdx).trim();
+        final falseExpr = rest.substring(colonIdx + 1).trim();
+
+        // Evaluate condition as boolean
+        final condResult = _evaluateExpressionBody(condition, params, context);
+        if (condResult == true) {
+          return _evaluateValue(trueExpr, params, context);
+        } else {
+          return _evaluateValue(falseExpr, params, context);
+        }
+      }
+    }
+
+    // Cas 3b: Arithmetic + at depth 0
+    final plusIdx = _findArithmeticPlus(cleanExpr);
+    if (plusIdx != -1) {
+      final left = cleanExpr.substring(0, plusIdx).trim();
+      final right = cleanExpr.substring(plusIdx + 1).trim();
+
+      final leftVal = _evaluateValue(left, params, context);
+      final rightVal = _evaluateValue(right, params, context);
+
+      if (leftVal is num && rightVal is num) {
+        return leftVal + rightVal;
+      }
+      // String concatenation fallback
+      return '${leftVal ?? ''}${rightVal ?? ''}';
+    }
+
+    // Cas 3c: objForm.controls.xxx.dirty
+    final dirtyMatch = RegExp(r'^(?:objForm\.)?controls\.(\w+)\.dirty$').firstMatch(cleanExpr);
+    if (dirtyMatch != null) {
+      final fieldName = dirtyMatch.group(1)!;
+      final dirtyFields = context['dirtyFields'];
+      if (dirtyFields is Set<String>) {
+        return dirtyFields.contains(fieldName);
+      }
+      return false;
+    }
+
+    // Cas 4: Valeur littérale (nombre, booléen, chaîne)
     // Nombre - différents formats possibles
     final numberRegexes = [
       RegExp(r'^\d+$'),            // Entier: 123
@@ -473,16 +588,128 @@ class HiddenExpressionEvaluator {
     if (a is num && b is num) {
       return a.compareTo(b);
     }
-    
-    if (a is String && b is String) {
-      return a.compareTo(b);
+
+    // Essayer de convertir les strings en nombres pour une comparaison numérique
+    if (a is String || b is String) {
+      final numA = a is num ? a : num.tryParse(a.toString());
+      final numB = b is num ? b : num.tryParse(b.toString());
+
+      // Si les deux peuvent être convertis en nombres, comparer numériquement
+      if (numA != null && numB != null) {
+        return numA.compareTo(numB);
+      }
+
+      // Sinon, comparer comme strings
+      return a.toString().compareTo(b.toString());
     }
-    
+
     if (a is bool && b is bool) {
       return a == b ? 0 : (a ? 1 : -1);
     }
-    
+
     // Si les types sont différents, convertir en chaîne pour comparer
     return a.toString().compareTo(b.toString());
+  }
+
+  /// Finds the index of '?' ternary operator at depth 0
+  int _findTernaryOperator(String expr) {
+    bool inString = false;
+    String? stringChar;
+    int depth = 0;
+
+    for (int i = 0; i < expr.length; i++) {
+      final char = expr[i];
+
+      if (!inString && (char == "'" || char == '"')) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char == stringChar) {
+        inString = false;
+        stringChar = null;
+      } else if (!inString) {
+        if (char == '(' || char == '{' || char == '[') {
+          depth++;
+        } else if (char == ')' || char == '}' || char == ']') {
+          depth--;
+        } else if (char == '?' && depth == 0) {
+          // Not optional chaining ?.
+          if (i + 1 < expr.length && expr[i + 1] == '.') continue;
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /// Finds the index of ':' for the ternary false branch at depth 0
+  int _findTernaryColon(String expr) {
+    bool inString = false;
+    String? stringChar;
+    int depth = 0;
+
+    for (int i = 0; i < expr.length; i++) {
+      final char = expr[i];
+
+      if (!inString && (char == "'" || char == '"')) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char == stringChar) {
+        inString = false;
+        stringChar = null;
+      } else if (!inString) {
+        if (char == '(' || char == '{' || char == '[') {
+          depth++;
+        } else if (char == ')' || char == '}' || char == ']') {
+          depth--;
+        } else if (char == ':' && depth == 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /// Finds the index of '+' arithmetic operator at depth 0
+  int _findArithmeticPlus(String expr) {
+    bool inString = false;
+    String? stringChar;
+    int depth = 0;
+
+    for (int i = 0; i < expr.length; i++) {
+      final char = expr[i];
+
+      if (!inString && (char == "'" || char == '"')) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char == stringChar) {
+        inString = false;
+        stringChar = null;
+      } else if (!inString) {
+        if (char == '(' || char == '{' || char == '[') {
+          depth++;
+        } else if (char == ')' || char == '}' || char == ']') {
+          depth--;
+        } else if (char == '+' && depth == 0) {
+          return i;
+        }
+      }
+    }
+
+    return -1;
+  }
+
+  /// Vérifie que les parenthèses sont équilibrées dans l'expression
+  /// (pas de parenthèse ouvrante non fermée ou vice versa)
+  bool _isBalancedParentheses(String expr) {
+    int depth = 0;
+    for (int i = 0; i < expr.length; i++) {
+      final char = expr[i];
+      if (char == '(') depth++;
+      if (char == ')') depth--;
+      if (depth < 0) return false;
+    }
+    return depth == 0;
   }
 }

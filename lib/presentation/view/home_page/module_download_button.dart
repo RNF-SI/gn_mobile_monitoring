@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
@@ -7,14 +8,6 @@ import 'package:gn_mobile_monitoring/presentation/view/module/module_loading_pag
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
-// Custom Colors
-const Color colorBlue1 = Color(0xFF598979); // Bleu
-const Color colorGreen = Color(0xFF8AAC3E); // Vert
-const Color colorBlue2 = Color(0xFF7DAB9C); // Bleu
-const Color colorBlack = Color(0xFF1a1a18); // Noir
-const Color colorBeige = Color(0xFFF4F1E4); // Beige
-const Color colorBrown = Color(0xFF8B5500); // Marron
 
 @immutable
 class ModuleDownloadButton extends HookConsumerWidget {
@@ -86,51 +79,72 @@ class ModuleDownloadButton extends HookConsumerWidget {
     final syncStatus = ref.watch(syncServiceProvider);
     final isSyncing = syncStatus.state == SyncState.inProgress;
 
+    // Déterminer si on doit afficher l'indication de temps
+    final showTimeIndication = _isDownloading && 
+        (moduleInfo.currentStep == 'Sites' || moduleInfo.currentStep == 'Taxons');
+
     return AnimatedBuilder(
         animation: controller,
         builder: (context, child) {
-          return GestureDetector(
-            onTap: isSyncing
-                ? null // Désactiver le tap pendant la synchronisation
-                : () {
-                    _onPressed(context, ref);
-                  },
-            child: Opacity(
-              opacity: isSyncing
-                  ? 0.5
-                  : 1.0, // Réduire l'opacité pendant la synchronisation
-              child: Stack(
-                children: [
-                  ButtonShapeWidget(
-                    transitionDuration: transitionDuration,
-                    isDownloaded: _isDownloaded,
-                    isDownloading: _isDownloading,
-                    isFetching: _isFetching,
-                    isRemoving: _isRemoving,
-                    downloadProgress: moduleInfo.downloadProgress,
-                    isDisabled: isSyncing, // Passer l'état de désactivation
-                  ),
-                  if (_isDownloading || _isFetching)
-                    Positioned.fill(
-                      child: AnimatedOpacity(
-                        duration: transitionDuration,
-                        opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
-                        curve: Curves.ease,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            ProgressIndicatorWidget(
-                              isDownloading: _isDownloading,
-                              isFetching: _isFetching,
-                              progress: moduleInfo.downloadProgress,
-                            ),
-                          ],
-                        ),
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              GestureDetector(
+                onTap: isSyncing
+                    ? null // Désactiver le tap pendant la synchronisation
+                    : () {
+                        _onPressed(context, ref);
+                      },
+                child: Opacity(
+                  opacity: isSyncing
+                      ? 0.5
+                      : 1.0, // Réduire l'opacité pendant la synchronisation
+                  child: Stack(
+                    children: [
+                      ButtonShapeWidget(
+                        transitionDuration: transitionDuration,
+                        isDownloaded: _isDownloaded,
+                        isDownloading: _isDownloading,
+                        isFetching: _isFetching,
+                        isRemoving: _isRemoving,
+                        downloadProgress: moduleInfo.downloadProgress,
+                        isDisabled: isSyncing, // Passer l'état de désactivation
+                        moduleInfo: moduleInfo,
                       ),
-                    ),
-                ],
+                      if (_isDownloading || _isFetching)
+                        Positioned.fill(
+                          child: AnimatedOpacity(
+                            duration: transitionDuration,
+                            opacity: _isDownloading || _isFetching ? 1.0 : 0.0,
+                            curve: Curves.ease,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                ProgressIndicatorWidget(
+                                  isDownloading: _isDownloading,
+                                  isFetching: _isFetching,
+                                  progress: moduleInfo.downloadProgress,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
               ),
-            ),
+              if (showTimeIndication)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4.0),
+                  child: Text(
+                    'Peut prendre du temps...',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.dark,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+            ],
           );
         });
   }
@@ -147,6 +161,7 @@ class ButtonShapeWidget extends StatelessWidget {
     required this.transitionDuration,
     this.downloadProgress = 0.0,
     this.isDisabled = false,
+    required this.moduleInfo,
   });
 
   final bool isDownloading;
@@ -156,12 +171,13 @@ class ButtonShapeWidget extends StatelessWidget {
   final Duration transitionDuration;
   final bool isRemoving;
   final bool isDisabled;
+  final ModuleInfo moduleInfo;
 
   @override
   Widget build(BuildContext context) {
     var shape = ShapeDecoration(
       shape: StadiumBorder(),
-      color: isDownloaded ? colorBlue1 : colorBeige,
+      color: isDownloaded ? AppColors.dark : AppColors.background,
     );
 
     if (isDownloading || isFetching) {
@@ -176,8 +192,13 @@ class ButtonShapeWidget extends StatelessWidget {
     if (isDownloading) {
       if (downloadProgress == 1.0) {
         buttonText = '${(downloadProgress * 99).toInt()}%';
-      } else
+      } else {
         buttonText = '${(downloadProgress * 100).toInt()}%';
+      }
+      // Add current step information if available
+      if (moduleInfo.currentStep.isNotEmpty) {
+        buttonText += '\n${moduleInfo.currentStep}';
+      }
     } else if (isRemoving) {
       buttonText = 'Supression...'; // New text for the removing state
     }
@@ -200,7 +221,7 @@ class ButtonShapeWidget extends StatelessWidget {
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: isDownloading ? colorGreen : colorBlack,
+                  color: isDownloading ? AppColors.primary : Colors.black,
                 ),
           ),
         ),
@@ -227,9 +248,9 @@ class ProgressIndicatorWidget extends StatelessWidget {
     return AspectRatio(
         aspectRatio: 1,
         child: CircularProgressIndicator(
-          backgroundColor: colorBeige,
+          backgroundColor: AppColors.background,
           valueColor: AlwaysStoppedAnimation(
-            isFetching ? colorBlue1 : colorGreen,
+            isFetching ? AppColors.dark : AppColors.primary,
           ),
           value: isDownloading ? (progress == 1.0 ? 0.99 : progress) : null,
           strokeWidth: 2,

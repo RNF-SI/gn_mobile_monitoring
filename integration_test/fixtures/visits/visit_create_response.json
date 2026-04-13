@@ -1,0 +1,10 @@
+{
+  "id_base_visit": 501,
+  "id_base_site": 1,
+  "id_module": 101,
+  "id_dataset": 1,
+  "visit_date_min": "2024-06-20",
+  "visit_date_max": null,
+  "comments": "Visite créée par test E2E",
+  "id_digitiser": 1
+}

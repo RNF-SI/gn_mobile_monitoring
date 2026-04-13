@@ -11,9 +11,11 @@ extension ObservationEntityMapper on ObservationEntity {
     return Observation(
       idObservation: idObservation,
       idBaseVisit: idBaseVisit,
+      idDigitiser: idDigitiser,
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       data: data,
@@ -27,9 +29,11 @@ extension ObservationMapper on Observation {
     return ObservationEntity(
       idObservation: idObservation,
       idBaseVisit: idBaseVisit,
+      idDigitiser: idDigitiser,
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       metaCreateDate: metaCreateDate,
       metaUpdateDate: metaUpdateDate,
       data: data,
@@ -54,9 +58,11 @@ extension TObservationMapper on TObservation {
     return ObservationEntity(
       idObservation: idObservation,
       idBaseVisit: idBaseVisit,
+      idDigitiser: idDigitiser,
       cdNom: cdNom,
       comments: comments,
       uuidObservation: uuidObservation,
+      serverObservationId: serverObservationId,
       // Les champs metaCreateDate et metaUpdateDate ne sont pas dans la table
       data: complementData,
     );
@@ -71,11 +77,16 @@ extension ObservationToCompanion on ObservationEntity {
           idObservation == 0 ? const Value.absent() : Value(idObservation),
       idBaseVisit:
           idBaseVisit == null ? const Value.absent() : Value(idBaseVisit),
+      idDigitiser:
+          idDigitiser == null ? const Value.absent() : Value(idDigitiser),
       cdNom: cdNom == null ? const Value.absent() : Value(cdNom),
       comments: comments == null ? const Value.absent() : Value(comments),
       uuidObservation: uuidObservation == null
           ? const Value.absent()
           : Value(uuidObservation),
+      serverObservationId: serverObservationId == null
+          ? const Value.absent()
+          : Value(serverObservationId),
     );
   }
 

@@ -42,9 +42,11 @@ analyzer:
     undefined_function: info
     invalid_constant: info
     unused_field: info
+    unused_element: info
     unused_result: info
     curly_braces_in_flow_control_structures: info
     library_prefixes: info
+    unreachable_switch_default: info
     # Completely ignore these warnings
     invalid_annotation_target: ignore
 # Additional information about this file can be found at

@@ -35,13 +35,24 @@ abstract class ModulesDatabase {
 
   // Module-Dataset relationship operations
   Future<void> associateModuleWithDataset(int moduleId, int datasetId);
+  Future<void> clearDatasetAssociationsForModule(int moduleId);
   Future<List<int>> getDatasetIdsForModule(int moduleId);
 
   // Configuration operations
   Future<int?> getModuleTaxonomyListId(int moduleId);
 
   Future<List<Module>> getModules();
+  
+  /// Récupère uniquement les informations de base d'un module sans ses relations
   Future<Module?> getModuleById(int moduleId);
+  
+  /// Récupère un module complet avec tous ses sites et groupes de sites associés
+  Future<Module> getModuleWithRelationsById(int moduleId);
+  
+  /// Récupère uniquement les modules marqués comme téléchargés
+  /// Ces modules ont leur configuration et données associées téléchargées localement
+  Future<List<Module>> getDownloadedModules();
+  
   Future<Module?> getModuleIdByLabel(String moduleLabel);
   Future<Module?> getModuleByCode(String moduleCode);
 }

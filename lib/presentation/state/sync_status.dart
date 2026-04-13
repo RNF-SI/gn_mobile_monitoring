@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
-import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart' as domain;
 
 part 'sync_status.freezed.dart';
 
+// Type alias for freezed generation
+typedef SyncConflict = domain.SyncConflict;
+
 /// Représente les différentes étapes du processus de synchronisation
 enum SyncStep {
-  // === Étapes de synchronisation DESCENDANTE (serveur -> appareil) ===
+  // === Étapes de MISE À JOUR DES DONNÉES (serveur -> appareil) ===
   // Ces étapes sont pour le téléchargement des données depuis le serveur
   configuration,
   nomenclatures,
@@ -16,9 +19,11 @@ enum SyncStep {
   sites,
   siteGroups,
   
-  // === Étapes de synchronisation ASCENDANTE (appareil -> serveur) ===
+  // === Étapes de TÉLÉVERSEMENT (appareil -> serveur) ===
   // Ces étapes sont pour l'envoi des données vers le serveur
   // Une fois envoyées et confirmées par le serveur, les données sont supprimées localement
+  siteGroupsToServer,
+  sitesToServer,
   visitsToServer,
   observationsToServer,
   observationDetailsToServer,
@@ -32,6 +37,13 @@ enum SyncState {
   failure,
   conflictDetected,
 }
+
+/// Type de synchronisation en cours
+enum SyncType {
+  downstream, // Serveur → Appareil
+  upload,     // Appareil → Serveur (téléversement)
+}
+
 
 /// Représente le statut d'une opération de synchronisation
 @freezed
@@ -50,6 +62,14 @@ class SyncStatus with _$SyncStatus {
     DateTime? lastSync,
     List<SyncConflict>? conflicts,
     required DateTime lastUpdated,
+    
+    // Type de synchronisation en cours
+    SyncType? currentSyncType,
+    
+    // Résultats des dernières synchronisations  
+    // (utilisation de domain.SyncResult temporairement désactivée)
+    // SyncResult? lastDownstreamSync,
+    // SyncResult? lastUpstreamSync,
     
     // Détails supplémentaires pour la progression
     String? currentEntityName,   // Nom du module, site, etc. en cours de traitement

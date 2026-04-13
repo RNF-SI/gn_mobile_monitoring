@@ -1,0 +1,40 @@
+[
+  {
+    "id_type": 1,
+    "mnemonique": "TYP_GRP",
+    "label_default": "Type de groupement",
+    "nomenclatures": [
+      {
+        "id_nomenclature": 101,
+        "cd_nomenclature": "GRP1",
+        "label_default": "Groupe 1",
+        "mnemonique": "GRP1"
+      },
+      {
+        "id_nomenclature": 102,
+        "cd_nomenclature": "GRP2",
+        "label_default": "Groupe 2",
+        "mnemonique": "GRP2"
+      }
+    ]
+  },
+  {
+    "id_type": 2,
+    "mnemonique": "STATUT_BIO",
+    "label_default": "Statut biologique",
+    "nomenclatures": [
+      {
+        "id_nomenclature": 201,
+        "cd_nomenclature": "1",
+        "label_default": "Non renseigné",
+        "mnemonique": "NSP"
+      },
+      {
+        "id_nomenclature": 202,
+        "cd_nomenclature": "2",
+        "label_default": "Observé",
+        "mnemonique": "OBS"
+      }
+    ]
+  }
+]

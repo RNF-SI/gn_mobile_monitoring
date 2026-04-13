@@ -1,0 +1,4 @@
+{
+  "type": "login_error",
+  "msg": "Identifiant ou mot de passe incorrect"
+}

@@ -32,9 +32,7 @@ mixin _$ModuleConfiguration {
   TreeConfig? get tree => throw _privateConstructorUsedError;
   ObjectConfig? get visit => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleConfigurationCopyWith<ModuleConfiguration> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -80,8 +78,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -150,8 +146,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $CustomConfigCopyWith<$Res>? get custom {
@@ -164,8 +158,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $DataConfigCopyWith<$Res>? get data {
@@ -178,8 +170,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ModuleConfigCopyWith<$Res>? get module {
@@ -192,8 +182,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get observation {
@@ -206,8 +194,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get observationDetail {
@@ -220,8 +206,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get site {
@@ -234,8 +218,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get sitesGroup {
@@ -248,8 +230,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $TreeConfigCopyWith<$Res>? get tree {
@@ -262,8 +242,6 @@ class _$ModuleConfigurationCopyWithImpl<$Res, $Val extends ModuleConfiguration>
     });
   }
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $ObjectConfigCopyWith<$Res>? get visit {
@@ -327,8 +305,6 @@ class __$$ModuleConfigurationImplCopyWithImpl<$Res>
       $Res Function(_$ModuleConfigurationImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -506,9 +482,7 @@ class _$ModuleConfigurationImpl implements _ModuleConfiguration {
       tree,
       visit);
 
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleConfigurationImplCopyWith<_$ModuleConfigurationImpl> get copyWith =>
@@ -544,9 +518,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   @override
   ObjectConfig? get observation;
   @override
-  ObjectConfig?
-      get observationDetail; // Nouvelle propriété pour les détails d'observation
-  @override
+  ObjectConfig? get observationDetail;
+  @override // Nouvelle propriété pour les détails d'observation
   ObjectConfig? get site;
   @override
   ObjectConfig? get sitesGroup;
@@ -556,11 +529,8 @@ abstract class _ModuleConfiguration implements ModuleConfiguration {
   TreeConfig? get tree;
   @override
   ObjectConfig? get visit;
-
-  /// Create a copy of ModuleConfiguration
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleConfigurationImplCopyWith<_$ModuleConfigurationImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -588,9 +558,7 @@ mixin _$CustomConfig {
   @JsonKey(name: '__MONITORINGS_PATH')
   String? get monitoringsPath => throw _privateConstructorUsedError;
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CustomConfigCopyWith<CustomConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -625,8 +593,6 @@ class _$CustomConfigCopyWithImpl<$Res, $Val extends CustomConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -716,8 +682,6 @@ class __$$CustomConfigImplCopyWithImpl<$Res>
       _$CustomConfigImpl _value, $Res Function(_$CustomConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -889,9 +853,7 @@ class _$CustomConfigImpl implements _CustomConfig {
       const DeepCollectionEquality().hash(_typesSite),
       monitoringsPath);
 
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CustomConfigImplCopyWith<_$CustomConfigImpl> get copyWith =>
@@ -943,11 +905,8 @@ abstract class _CustomConfig implements CustomConfig {
   @override
   @JsonKey(name: '__MONITORINGS_PATH')
   String? get monitoringsPath;
-
-  /// Create a copy of CustomConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CustomConfigImplCopyWith<_$CustomConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -957,9 +916,7 @@ mixin _$TypeSite {
   int? get idNomenclatureTypeSite => throw _privateConstructorUsedError;
   dynamic get config => throw _privateConstructorUsedError;
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TypeSiteCopyWith<TypeSite> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -982,8 +939,6 @@ class _$TypeSiteCopyWithImpl<$Res, $Val extends TypeSite>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1022,8 +977,6 @@ class __$$TypeSiteImplCopyWithImpl<$Res>
       _$TypeSiteImpl _value, $Res Function(_$TypeSiteImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1072,9 +1025,7 @@ class _$TypeSiteImpl implements _TypeSite {
   int get hashCode => Object.hash(runtimeType, idNomenclatureTypeSite,
       const DeepCollectionEquality().hash(config));
 
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TypeSiteImplCopyWith<_$TypeSiteImpl> get copyWith =>
@@ -1090,11 +1041,8 @@ abstract class _TypeSite implements TypeSite {
   int? get idNomenclatureTypeSite;
   @override
   dynamic get config;
-
-  /// Create a copy of TypeSite
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TypeSiteImplCopyWith<_$TypeSiteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1104,9 +1052,7 @@ mixin _$DataConfig {
   List<String>? get nomenclature => throw _privateConstructorUsedError;
   int? get user => throw _privateConstructorUsedError;
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $DataConfigCopyWith<DataConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1130,8 +1076,6 @@ class _$DataConfigCopyWithImpl<$Res, $Val extends DataConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1170,8 +1114,6 @@ class __$$DataConfigImplCopyWithImpl<$Res>
       _$DataConfigImpl _value, $Res Function(_$DataConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1229,9 +1171,7 @@ class _$DataConfigImpl implements _DataConfig {
   int get hashCode => Object.hash(
       runtimeType, const DeepCollectionEquality().hash(_nomenclature), user);
 
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$DataConfigImplCopyWith<_$DataConfigImpl> get copyWith =>
@@ -1246,11 +1186,8 @@ abstract class _DataConfig implements DataConfig {
   List<String>? get nomenclature;
   @override
   int? get user;
-
-  /// Create a copy of DataConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$DataConfigImplCopyWith<_$DataConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1292,9 +1229,7 @@ mixin _$ModuleConfig {
       throw _privateConstructorUsedError;
   String? get uuidFieldName => throw _privateConstructorUsedError;
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ModuleConfigCopyWith<ModuleConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -1350,8 +1285,6 @@ class _$ModuleConfigCopyWithImpl<$Res, $Val extends ModuleConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -1510,8 +1443,6 @@ class _$ModuleConfigCopyWithImpl<$Res, $Val extends ModuleConfig>
     ) as $Val);
   }
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
   @pragma('vm:prefer-inline')
   $CruvedConfigCopyWith<$Res>? get cruved {
@@ -1577,8 +1508,6 @@ class __$$ModuleConfigImplCopyWithImpl<$Res>
       _$ModuleConfigImpl _value, $Res Function(_$ModuleConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2046,9 +1975,7 @@ class _$ModuleConfigImpl implements _ModuleConfig {
         uuidFieldName
       ]);
 
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ModuleConfigImplCopyWith<_$ModuleConfigImpl> get copyWith =>
@@ -2150,11 +2077,8 @@ abstract class _ModuleConfig implements ModuleConfig {
   Map<String, TypeSiteConfig>? get typesSite;
   @override
   String? get uuidFieldName;
-
-  /// Create a copy of ModuleConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ModuleConfigImplCopyWith<_$ModuleConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2168,9 +2092,7 @@ mixin _$CruvedConfig {
   int? get E => throw _privateConstructorUsedError;
   int? get D => throw _privateConstructorUsedError;
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $CruvedConfigCopyWith<CruvedConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2194,8 +2116,6 @@ class _$CruvedConfigCopyWithImpl<$Res, $Val extends CruvedConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2254,8 +2174,6 @@ class __$$CruvedConfigImplCopyWithImpl<$Res>
       _$CruvedConfigImpl _value, $Res Function(_$CruvedConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2334,9 +2252,7 @@ class _$CruvedConfigImpl implements _CruvedConfig {
   @override
   int get hashCode => Object.hash(runtimeType, C, R, U, V, E, D);
 
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$CruvedConfigImplCopyWith<_$CruvedConfigImpl> get copyWith =>
@@ -2364,11 +2280,8 @@ abstract class _CruvedConfig implements CruvedConfig {
   int? get E;
   @override
   int? get D;
-
-  /// Create a copy of CruvedConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$CruvedConfigImplCopyWith<_$CruvedConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2380,9 +2293,7 @@ mixin _$ExportConfig {
   String? get type => throw _privateConstructorUsedError;
   String? get template => throw _privateConstructorUsedError;
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ExportConfigCopyWith<ExportConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2406,8 +2317,6 @@ class _$ExportConfigCopyWithImpl<$Res, $Val extends ExportConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2456,8 +2365,6 @@ class __$$ExportConfigImplCopyWithImpl<$Res>
       _$ExportConfigImpl _value, $Res Function(_$ExportConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2521,9 +2428,7 @@ class _$ExportConfigImpl implements _ExportConfig {
   @override
   int get hashCode => Object.hash(runtimeType, label, method, type, template);
 
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ExportConfigImplCopyWith<_$ExportConfigImpl> get copyWith =>
@@ -2545,11 +2450,8 @@ abstract class _ExportConfig implements ExportConfig {
   String? get type;
   @override
   String? get template;
-
-  /// Create a copy of ExportConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ExportConfigImplCopyWith<_$ExportConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2559,7 +2461,7 @@ mixin _$GenericFieldConfig {
   @JsonKey(name: 'attribut_label')
   String? get attributLabel => throw _privateConstructorUsedError;
   String? get definition => throw _privateConstructorUsedError;
-  bool? get hidden => throw _privateConstructorUsedError;
+  dynamic get hidden => throw _privateConstructorUsedError;
   bool? get required => throw _privateConstructorUsedError;
   String? get typeWidget => throw _privateConstructorUsedError;
   String? get typeUtil => throw _privateConstructorUsedError;
@@ -2569,17 +2471,19 @@ mixin _$GenericFieldConfig {
   String? get keyLabel => throw _privateConstructorUsedError;
   String? get keyValue => throw _privateConstructorUsedError;
   bool? get multiple => throw _privateConstructorUsedError;
-  List<Map<String, dynamic>>? get values => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get value => throw _privateConstructorUsedError;
-  Map<String, dynamic>? get default_ => throw _privateConstructorUsedError;
+  dynamic get values => throw _privateConstructorUsedError;
+  dynamic get value => throw _privateConstructorUsedError;
+  dynamic get default_ => throw _privateConstructorUsedError;
   String? get designStyle => throw _privateConstructorUsedError;
   String? get dataPath => throw _privateConstructorUsedError;
   @JsonKey(name: 'id_list')
   dynamic get idList => throw _privateConstructorUsedError;
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  dynamic get change => throw _privateConstructorUsedError;
+
+  @JsonKey(ignore: true)
   $GenericFieldConfigCopyWith<GenericFieldConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -2593,7 +2497,7 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
   $Res call(
       {@JsonKey(name: 'attribut_label') String? attributLabel,
       String? definition,
-      bool? hidden,
+      dynamic hidden,
       bool? required,
       String? typeWidget,
       String? typeUtil,
@@ -2603,12 +2507,13 @@ abstract class $GenericFieldConfigCopyWith<$Res> {
       String? keyLabel,
       String? keyValue,
       bool? multiple,
-      List<Map<String, dynamic>>? values,
-      Map<String, dynamic>? value,
-      Map<String, dynamic>? default_,
+      dynamic values,
+      dynamic value,
+      dynamic default_,
       String? designStyle,
       String? dataPath,
-      @JsonKey(name: 'id_list') dynamic idList});
+      @JsonKey(name: 'id_list') dynamic idList,
+      dynamic change});
 }
 
 /// @nodoc
@@ -2621,8 +2526,6 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2644,6 +2547,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
     Object? designStyle = freezed,
     Object? dataPath = freezed,
     Object? idList = freezed,
+    Object? change = freezed,
   }) {
     return _then(_value.copyWith(
       attributLabel: freezed == attributLabel
@@ -2657,7 +2561,7 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as dynamic,
       required: freezed == required
           ? _value.required
           : required // ignore: cast_nullable_to_non_nullable
@@ -2697,15 +2601,15 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
       values: freezed == values
           ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>?,
+              as dynamic,
       value: freezed == value
           ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       default_: freezed == default_
           ? _value.default_
           : default_ // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       designStyle: freezed == designStyle
           ? _value.designStyle
           : designStyle // ignore: cast_nullable_to_non_nullable
@@ -2717,6 +2621,10 @@ class _$GenericFieldConfigCopyWithImpl<$Res, $Val extends GenericFieldConfig>
       idList: freezed == idList
           ? _value.idList
           : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
               as dynamic,
     ) as $Val);
   }
@@ -2733,7 +2641,7 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
   $Res call(
       {@JsonKey(name: 'attribut_label') String? attributLabel,
       String? definition,
-      bool? hidden,
+      dynamic hidden,
       bool? required,
       String? typeWidget,
       String? typeUtil,
@@ -2743,12 +2651,13 @@ abstract class _$$GenericFieldConfigImplCopyWith<$Res>
       String? keyLabel,
       String? keyValue,
       bool? multiple,
-      List<Map<String, dynamic>>? values,
-      Map<String, dynamic>? value,
-      Map<String, dynamic>? default_,
+      dynamic values,
+      dynamic value,
+      dynamic default_,
       String? designStyle,
       String? dataPath,
-      @JsonKey(name: 'id_list') dynamic idList});
+      @JsonKey(name: 'id_list') dynamic idList,
+      dynamic change});
 }
 
 /// @nodoc
@@ -2759,8 +2668,6 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
       $Res Function(_$GenericFieldConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -2782,6 +2689,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
     Object? designStyle = freezed,
     Object? dataPath = freezed,
     Object? idList = freezed,
+    Object? change = freezed,
   }) {
     return _then(_$GenericFieldConfigImpl(
       attributLabel: freezed == attributLabel
@@ -2795,7 +2703,7 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
       hidden: freezed == hidden
           ? _value.hidden
           : hidden // ignore: cast_nullable_to_non_nullable
-              as bool?,
+              as dynamic,
       required: freezed == required
           ? _value.required
           : required // ignore: cast_nullable_to_non_nullable
@@ -2833,17 +2741,17 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
           : multiple // ignore: cast_nullable_to_non_nullable
               as bool?,
       values: freezed == values
-          ? _value._values
+          ? _value.values
           : values // ignore: cast_nullable_to_non_nullable
-              as List<Map<String, dynamic>>?,
+              as dynamic,
       value: freezed == value
-          ? _value._value
+          ? _value.value
           : value // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       default_: freezed == default_
-          ? _value._default_
+          ? _value.default_
           : default_ // ignore: cast_nullable_to_non_nullable
-              as Map<String, dynamic>?,
+              as dynamic,
       designStyle: freezed == designStyle
           ? _value.designStyle
           : designStyle // ignore: cast_nullable_to_non_nullable
@@ -2855,6 +2763,10 @@ class __$$GenericFieldConfigImplCopyWithImpl<$Res>
       idList: freezed == idList
           ? _value.idList
           : idList // ignore: cast_nullable_to_non_nullable
+              as dynamic,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
               as dynamic,
     ));
   }
@@ -2876,15 +2788,13 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
       this.keyLabel,
       this.keyValue,
       this.multiple,
-      final List<Map<String, dynamic>>? values,
-      final Map<String, dynamic>? value,
-      final Map<String, dynamic>? default_,
+      this.values,
+      this.value,
+      this.default_,
       this.designStyle,
       this.dataPath,
-      @JsonKey(name: 'id_list') this.idList})
-      : _values = values,
-        _value = value,
-        _default_ = default_;
+      @JsonKey(name: 'id_list') this.idList,
+      this.change});
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -2892,7 +2802,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   @override
   final String? definition;
   @override
-  final bool? hidden;
+  final dynamic hidden;
   @override
   final bool? required;
   @override
@@ -2911,36 +2821,12 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   final String? keyValue;
   @override
   final bool? multiple;
-  final List<Map<String, dynamic>>? _values;
   @override
-  List<Map<String, dynamic>>? get values {
-    final value = _values;
-    if (value == null) return null;
-    if (_values is EqualUnmodifiableListView) return _values;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
-  final Map<String, dynamic>? _value;
+  final dynamic values;
   @override
-  Map<String, dynamic>? get value {
-    final value = _value;
-    if (value == null) return null;
-    if (_value is EqualUnmodifiableMapView) return _value;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
-  final Map<String, dynamic>? _default_;
+  final dynamic value;
   @override
-  Map<String, dynamic>? get default_ {
-    final value = _default_;
-    if (value == null) return null;
-    if (_default_ is EqualUnmodifiableMapView) return _default_;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableMapView(value);
-  }
-
+  final dynamic default_;
   @override
   final String? designStyle;
   @override
@@ -2949,9 +2835,14 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
   @JsonKey(name: 'id_list')
   final dynamic idList;
 
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  @override
+  final dynamic change;
+
   @override
   String toString() {
-    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, value: $value, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList)';
+    return 'GenericFieldConfig(attributLabel: $attributLabel, definition: $definition, hidden: $hidden, required: $required, typeWidget: $typeWidget, typeUtil: $typeUtil, multiSelect: $multiSelect, api: $api, application: $application, keyLabel: $keyLabel, keyValue: $keyValue, multiple: $multiple, values: $values, value: $value, default_: $default_, designStyle: $designStyle, dataPath: $dataPath, idList: $idList, change: $change)';
   }
 
   @override
@@ -2963,7 +2854,7 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
                 other.attributLabel == attributLabel) &&
             (identical(other.definition, definition) ||
                 other.definition == definition) &&
-            (identical(other.hidden, hidden) || other.hidden == hidden) &&
+            const DeepCollectionEquality().equals(other.hidden, hidden) &&
             (identical(other.required, required) ||
                 other.required == required) &&
             (identical(other.typeWidget, typeWidget) ||
@@ -2981,41 +2872,42 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
                 other.keyValue == keyValue) &&
             (identical(other.multiple, multiple) ||
                 other.multiple == multiple) &&
-            const DeepCollectionEquality().equals(other._values, _values) &&
-            const DeepCollectionEquality().equals(other._value, _value) &&
-            const DeepCollectionEquality().equals(other._default_, _default_) &&
+            const DeepCollectionEquality().equals(other.values, values) &&
+            const DeepCollectionEquality().equals(other.value, value) &&
+            const DeepCollectionEquality().equals(other.default_, default_) &&
             (identical(other.designStyle, designStyle) ||
                 other.designStyle == designStyle) &&
             (identical(other.dataPath, dataPath) ||
                 other.dataPath == dataPath) &&
-            const DeepCollectionEquality().equals(other.idList, idList));
+            const DeepCollectionEquality().equals(other.idList, idList) &&
+            const DeepCollectionEquality().equals(other.change, change));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      attributLabel,
-      definition,
-      hidden,
-      required,
-      typeWidget,
-      typeUtil,
-      multiSelect,
-      api,
-      application,
-      keyLabel,
-      keyValue,
-      multiple,
-      const DeepCollectionEquality().hash(_values),
-      const DeepCollectionEquality().hash(_value),
-      const DeepCollectionEquality().hash(_default_),
-      designStyle,
-      dataPath,
-      const DeepCollectionEquality().hash(idList));
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        attributLabel,
+        definition,
+        const DeepCollectionEquality().hash(hidden),
+        required,
+        typeWidget,
+        typeUtil,
+        multiSelect,
+        api,
+        application,
+        keyLabel,
+        keyValue,
+        multiple,
+        const DeepCollectionEquality().hash(values),
+        const DeepCollectionEquality().hash(value),
+        const DeepCollectionEquality().hash(default_),
+        designStyle,
+        dataPath,
+        const DeepCollectionEquality().hash(idList),
+        const DeepCollectionEquality().hash(change)
+      ]);
 
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$GenericFieldConfigImplCopyWith<_$GenericFieldConfigImpl> get copyWith =>
@@ -3025,25 +2917,25 @@ class _$GenericFieldConfigImpl implements _GenericFieldConfig {
 
 abstract class _GenericFieldConfig implements GenericFieldConfig {
   const factory _GenericFieldConfig(
-          {@JsonKey(name: 'attribut_label') final String? attributLabel,
-          final String? definition,
-          final bool? hidden,
-          final bool? required,
-          final String? typeWidget,
-          final String? typeUtil,
-          final bool? multiSelect,
-          final String? api,
-          final String? application,
-          final String? keyLabel,
-          final String? keyValue,
-          final bool? multiple,
-          final List<Map<String, dynamic>>? values,
-          final Map<String, dynamic>? value,
-          final Map<String, dynamic>? default_,
-          final String? designStyle,
-          final String? dataPath,
-          @JsonKey(name: 'id_list') final dynamic idList}) =
-      _$GenericFieldConfigImpl;
+      {@JsonKey(name: 'attribut_label') final String? attributLabel,
+      final String? definition,
+      final dynamic hidden,
+      final bool? required,
+      final String? typeWidget,
+      final String? typeUtil,
+      final bool? multiSelect,
+      final String? api,
+      final String? application,
+      final String? keyLabel,
+      final String? keyValue,
+      final bool? multiple,
+      final dynamic values,
+      final dynamic value,
+      final dynamic default_,
+      final String? designStyle,
+      final String? dataPath,
+      @JsonKey(name: 'id_list') final dynamic idList,
+      final dynamic change}) = _$GenericFieldConfigImpl;
 
   @override
   @JsonKey(name: 'attribut_label')
@@ -3051,7 +2943,7 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   String? get definition;
   @override
-  bool? get hidden;
+  dynamic get hidden;
   @override
   bool? get required;
   @override
@@ -3071,11 +2963,11 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   bool? get multiple;
   @override
-  List<Map<String, dynamic>>? get values;
+  dynamic get values;
   @override
-  Map<String, dynamic>? get value;
+  dynamic get value;
   @override
-  Map<String, dynamic>? get default_;
+  dynamic get default_;
   @override
   String? get designStyle;
   @override
@@ -3083,11 +2975,13 @@ abstract class _GenericFieldConfig implements GenericFieldConfig {
   @override
   @JsonKey(name: 'id_list')
   dynamic get idList;
-
-  /// Create a copy of GenericFieldConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+
+  /// Configuration des règles de changement automatique
+  /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+  dynamic get change;
+  @override
+  @JsonKey(ignore: true)
   _$$GenericFieldConfigImplCopyWith<_$GenericFieldConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3097,9 +2991,7 @@ mixin _$TypeSiteConfig {
   List<dynamic>? get displayProperties => throw _privateConstructorUsedError;
   String? get name => throw _privateConstructorUsedError;
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TypeSiteConfigCopyWith<TypeSiteConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3123,8 +3015,6 @@ class _$TypeSiteConfigCopyWithImpl<$Res, $Val extends TypeSiteConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3163,8 +3053,6 @@ class __$$TypeSiteConfigImplCopyWithImpl<$Res>
       _$TypeSiteConfigImpl _value, $Res Function(_$TypeSiteConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -3224,9 +3112,7 @@ class _$TypeSiteConfigImpl implements _TypeSiteConfig {
   int get hashCode => Object.hash(runtimeType,
       const DeepCollectionEquality().hash(_displayProperties), name);
 
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TypeSiteConfigImplCopyWith<_$TypeSiteConfigImpl> get copyWith =>
@@ -3243,11 +3129,8 @@ abstract class _TypeSiteConfig implements TypeSiteConfig {
   List<dynamic>? get displayProperties;
   @override
   String? get name;
-
-  /// Create a copy of TypeSiteConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TypeSiteConfigImplCopyWith<_$TypeSiteConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3255,6 +3138,10 @@ abstract class _TypeSiteConfig implements TypeSiteConfig {
 /// @nodoc
 mixin _$ObjectConfig {
   bool? get chained => throw _privateConstructorUsedError;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  List<dynamic>? get change => throw _privateConstructorUsedError;
   List<String>? get childrenTypes => throw _privateConstructorUsedError;
   String? get descriptionFieldName => throw _privateConstructorUsedError;
   List<String>? get displayForm => throw _privateConstructorUsedError;
@@ -3269,6 +3156,8 @@ mixin _$ObjectConfig {
   String? get geometryType => throw _privateConstructorUsedError;
   String? get idFieldName => throw _privateConstructorUsedError;
   int? get idTableLocation => throw _privateConstructorUsedError;
+  @JsonKey(name: 'is_editable_on_field')
+  bool? get isEditableOnField => throw _privateConstructorUsedError;
   String? get label => throw _privateConstructorUsedError;
   String? get labelList => throw _privateConstructorUsedError;
   String? get mapLabelFieldName => throw _privateConstructorUsedError;
@@ -3280,9 +3169,7 @@ mixin _$ObjectConfig {
       throw _privateConstructorUsedError;
   String? get uuidFieldName => throw _privateConstructorUsedError;
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $ObjectConfigCopyWith<ObjectConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3295,6 +3182,7 @@ abstract class $ObjectConfigCopyWith<$Res> {
   @useResult
   $Res call(
       {bool? chained,
+      List<dynamic>? change,
       List<String>? childrenTypes,
       String? descriptionFieldName,
       List<String>? displayForm,
@@ -3308,6 +3196,7 @@ abstract class $ObjectConfigCopyWith<$Res> {
       String? geometryType,
       String? idFieldName,
       int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
       String? label,
       String? labelList,
       String? mapLabelFieldName,
@@ -3329,12 +3218,11 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? chained = freezed,
+    Object? change = freezed,
     Object? childrenTypes = freezed,
     Object? descriptionFieldName = freezed,
     Object? displayForm = freezed,
@@ -3348,6 +3236,7 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
     Object? geometryType = freezed,
     Object? idFieldName = freezed,
     Object? idTableLocation = freezed,
+    Object? isEditableOnField = freezed,
     Object? label = freezed,
     Object? labelList = freezed,
     Object? mapLabelFieldName = freezed,
@@ -3363,6 +3252,10 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
           ? _value.chained
           : chained // ignore: cast_nullable_to_non_nullable
               as bool?,
+      change: freezed == change
+          ? _value.change
+          : change // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>?,
       childrenTypes: freezed == childrenTypes
           ? _value.childrenTypes
           : childrenTypes // ignore: cast_nullable_to_non_nullable
@@ -3415,6 +3308,10 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
           ? _value.idTableLocation
           : idTableLocation // ignore: cast_nullable_to_non_nullable
               as int?,
+      isEditableOnField: freezed == isEditableOnField
+          ? _value.isEditableOnField
+          : isEditableOnField // ignore: cast_nullable_to_non_nullable
+              as bool?,
       label: freezed == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -3465,6 +3362,7 @@ abstract class _$$ObjectConfigImplCopyWith<$Res>
   @useResult
   $Res call(
       {bool? chained,
+      List<dynamic>? change,
       List<String>? childrenTypes,
       String? descriptionFieldName,
       List<String>? displayForm,
@@ -3478,6 +3376,7 @@ abstract class _$$ObjectConfigImplCopyWith<$Res>
       String? geometryType,
       String? idFieldName,
       int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
       String? label,
       String? labelList,
       String? mapLabelFieldName,
@@ -3497,12 +3396,11 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
       _$ObjectConfigImpl _value, $Res Function(_$ObjectConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
     Object? chained = freezed,
+    Object? change = freezed,
     Object? childrenTypes = freezed,
     Object? descriptionFieldName = freezed,
     Object? displayForm = freezed,
@@ -3516,6 +3414,7 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
     Object? geometryType = freezed,
     Object? idFieldName = freezed,
     Object? idTableLocation = freezed,
+    Object? isEditableOnField = freezed,
     Object? label = freezed,
     Object? labelList = freezed,
     Object? mapLabelFieldName = freezed,
@@ -3531,6 +3430,10 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
           ? _value.chained
           : chained // ignore: cast_nullable_to_non_nullable
               as bool?,
+      change: freezed == change
+          ? _value._change
+          : change // ignore: cast_nullable_to_non_nullable
+              as List<dynamic>?,
       childrenTypes: freezed == childrenTypes
           ? _value._childrenTypes
           : childrenTypes // ignore: cast_nullable_to_non_nullable
@@ -3583,6 +3486,10 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
           ? _value.idTableLocation
           : idTableLocation // ignore: cast_nullable_to_non_nullable
               as int?,
+      isEditableOnField: freezed == isEditableOnField
+          ? _value.isEditableOnField
+          : isEditableOnField // ignore: cast_nullable_to_non_nullable
+              as bool?,
       label: freezed == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -3628,6 +3535,7 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
 class _$ObjectConfigImpl implements _ObjectConfig {
   const _$ObjectConfigImpl(
       {this.chained,
+      final List<dynamic>? change,
       final List<String>? childrenTypes,
       this.descriptionFieldName,
       final List<String>? displayForm,
@@ -3641,6 +3549,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
       this.geometryType,
       this.idFieldName,
       this.idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') this.isEditableOnField,
       this.label,
       this.labelList,
       this.mapLabelFieldName,
@@ -3650,7 +3559,8 @@ class _$ObjectConfigImpl implements _ObjectConfig {
       final Map<String, dynamic>? specific,
       final Map<String, TypeSiteConfig>? typesSite,
       this.uuidFieldName})
-      : _childrenTypes = childrenTypes,
+      : _change = change,
+        _childrenTypes = childrenTypes,
         _displayForm = displayForm,
         _displayList = displayList,
         _displayProperties = displayProperties,
@@ -3665,6 +3575,22 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 
   @override
   final bool? chained;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  final List<dynamic>? _change;
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  @override
+  List<dynamic>? get change {
+    final value = _change;
+    if (value == null) return null;
+    if (_change is EqualUnmodifiableListView) return _change;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   final List<String>? _childrenTypes;
   @override
   List<String>? get childrenTypes {
@@ -3749,6 +3675,9 @@ class _$ObjectConfigImpl implements _ObjectConfig {
   @override
   final int? idTableLocation;
   @override
+  @JsonKey(name: 'is_editable_on_field')
+  final bool? isEditableOnField;
+  @override
   final String? label;
   @override
   final String? labelList;
@@ -3809,7 +3738,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 
   @override
   String toString() {
-    return 'ObjectConfig(chained: $chained, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
+    return 'ObjectConfig(chained: $chained, change: $change, childrenTypes: $childrenTypes, descriptionFieldName: $descriptionFieldName, displayForm: $displayForm, displayList: $displayList, displayProperties: $displayProperties, exportPdf: $exportPdf, filters: $filters, generic: $generic, genre: $genre, geomFieldName: $geomFieldName, geometryType: $geometryType, idFieldName: $idFieldName, idTableLocation: $idTableLocation, isEditableOnField: $isEditableOnField, label: $label, labelList: $labelList, mapLabelFieldName: $mapLabelFieldName, parentTypes: $parentTypes, propertiesKeys: $propertiesKeys, sorts: $sorts, specific: $specific, typesSite: $typesSite, uuidFieldName: $uuidFieldName)';
   }
 
   @override
@@ -3818,6 +3747,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         (other.runtimeType == runtimeType &&
             other is _$ObjectConfigImpl &&
             (identical(other.chained, chained) || other.chained == chained) &&
+            const DeepCollectionEquality().equals(other._change, _change) &&
             const DeepCollectionEquality()
                 .equals(other._childrenTypes, _childrenTypes) &&
             (identical(other.descriptionFieldName, descriptionFieldName) ||
@@ -3841,6 +3771,8 @@ class _$ObjectConfigImpl implements _ObjectConfig {
                 other.idFieldName == idFieldName) &&
             (identical(other.idTableLocation, idTableLocation) ||
                 other.idTableLocation == idTableLocation) &&
+            (identical(other.isEditableOnField, isEditableOnField) ||
+                other.isEditableOnField == isEditableOnField) &&
             (identical(other.label, label) || other.label == label) &&
             (identical(other.labelList, labelList) ||
                 other.labelList == labelList) &&
@@ -3862,6 +3794,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
   int get hashCode => Object.hashAll([
         runtimeType,
         chained,
+        const DeepCollectionEquality().hash(_change),
         const DeepCollectionEquality().hash(_childrenTypes),
         descriptionFieldName,
         const DeepCollectionEquality().hash(_displayForm),
@@ -3875,6 +3808,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         geometryType,
         idFieldName,
         idTableLocation,
+        isEditableOnField,
         label,
         labelList,
         mapLabelFieldName,
@@ -3886,9 +3820,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         uuidFieldName
       ]);
 
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$ObjectConfigImplCopyWith<_$ObjectConfigImpl> get copyWith =>
@@ -3898,6 +3830,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
 abstract class _ObjectConfig implements ObjectConfig {
   const factory _ObjectConfig(
       {final bool? chained,
+      final List<dynamic>? change,
       final List<String>? childrenTypes,
       final String? descriptionFieldName,
       final List<String>? displayForm,
@@ -3911,6 +3844,7 @@ abstract class _ObjectConfig implements ObjectConfig {
       final String? geometryType,
       final String? idFieldName,
       final int? idTableLocation,
+      @JsonKey(name: 'is_editable_on_field') final bool? isEditableOnField,
       final String? label,
       final String? labelList,
       final String? mapLabelFieldName,
@@ -3923,6 +3857,11 @@ abstract class _ObjectConfig implements ObjectConfig {
 
   @override
   bool? get chained;
+  @override
+
+  /// Configuration des règles de changement automatique (format JS)
+  /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+  List<dynamic>? get change;
   @override
   List<String>? get childrenTypes;
   @override
@@ -3950,6 +3889,9 @@ abstract class _ObjectConfig implements ObjectConfig {
   @override
   int? get idTableLocation;
   @override
+  @JsonKey(name: 'is_editable_on_field')
+  bool? get isEditableOnField;
+  @override
   String? get label;
   @override
   String? get labelList;
@@ -3967,11 +3909,8 @@ abstract class _ObjectConfig implements ObjectConfig {
   Map<String, TypeSiteConfig>? get typesSite;
   @override
   String? get uuidFieldName;
-
-  /// Create a copy of ObjectConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$ObjectConfigImplCopyWith<_$ObjectConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -3981,9 +3920,7 @@ mixin _$SortConfig {
   String? get dir => throw _privateConstructorUsedError;
   String? get prop => throw _privateConstructorUsedError;
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SortConfigCopyWith<SortConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -4007,8 +3944,6 @@ class _$SortConfigCopyWithImpl<$Res, $Val extends SortConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4047,8 +3982,6 @@ class __$$SortConfigImplCopyWithImpl<$Res>
       _$SortConfigImpl _value, $Res Function(_$SortConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4095,9 +4028,7 @@ class _$SortConfigImpl implements _SortConfig {
   @override
   int get hashCode => Object.hash(runtimeType, dir, prop);
 
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SortConfigImplCopyWith<_$SortConfigImpl> get copyWith =>
@@ -4112,11 +4043,8 @@ abstract class _SortConfig implements SortConfig {
   String? get dir;
   @override
   String? get prop;
-
-  /// Create a copy of SortConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SortConfigImplCopyWith<_$SortConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -4125,9 +4053,7 @@ abstract class _SortConfig implements SortConfig {
 mixin _$TreeConfig {
   Map<String, dynamic>? get module => throw _privateConstructorUsedError;
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $TreeConfigCopyWith<TreeConfig> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -4151,8 +4077,6 @@ class _$TreeConfigCopyWithImpl<$Res, $Val extends TreeConfig>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4186,8 +4110,6 @@ class __$$TreeConfigImplCopyWithImpl<$Res>
       _$TreeConfigImpl _value, $Res Function(_$TreeConfigImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -4235,9 +4157,7 @@ class _$TreeConfigImpl implements _TreeConfig {
   int get hashCode =>
       Object.hash(runtimeType, const DeepCollectionEquality().hash(_module));
 
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$TreeConfigImplCopyWith<_$TreeConfigImpl> get copyWith =>
@@ -4250,11 +4170,8 @@ abstract class _TreeConfig implements TreeConfig {
 
   @override
   Map<String, dynamic>? get module;
-
-  /// Create a copy of TreeConfig
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$TreeConfigImplCopyWith<_$TreeConfigImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

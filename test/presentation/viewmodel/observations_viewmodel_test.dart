@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/create_observation_use_case.
 import 'package:gn_mobile_monitoring/domain/usecase/delete_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observation_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_observation_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
@@ -27,6 +28,9 @@ class MockDeleteObservationUseCase extends Mock
 
 class MockFormDataProcessor extends Mock implements FormDataProcessor {}
 
+class MockGetUserIdFromLocalStorageUseCase extends Mock
+    implements GetUserIdFromLocalStorageUseCase {}
+
 void main() {
   // Test pour les fonctionnalités de base
   group('ObservationsViewModel - Basic operations', () {
@@ -37,6 +41,7 @@ void main() {
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
     late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
     late MockFormDataProcessor mockFormDataProcessor;
+    late MockGetUserIdFromLocalStorageUseCase mockGetUserIdFromLocalStorageUseCase;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
@@ -48,6 +53,7 @@ void main() {
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
       mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
       mockFormDataProcessor = MockFormDataProcessor();
+      mockGetUserIdFromLocalStorageUseCase = MockGetUserIdFromLocalStorageUseCase();
 
       // Mock both FormDataProcessor methods to prevent null pointer issues
       when(() => mockFormDataProcessor.processFormData(any()))
@@ -55,6 +61,10 @@ void main() {
           
       when(() => mockFormDataProcessor.processFormDataForDisplay(any()))
           .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
+
+      // Mock getUserIdFromLocalStorage to return a default user ID
+      when(() => mockGetUserIdFromLocalStorageUseCase.execute())
+          .thenAnswer((_) async => 123);
 
       registerFallbackValue(const Observation(idObservation: 1));
       registerFallbackValue(<String, dynamic>{});
@@ -75,6 +85,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 
@@ -120,6 +131,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 
@@ -154,6 +166,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 
@@ -189,6 +202,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 
@@ -227,6 +241,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 
@@ -259,6 +274,7 @@ void main() {
     late MockDeleteObservationUseCase mockDeleteObservationUseCase;
     late MockGetObservationByIdUseCase mockGetObservationByIdUseCase;
     late MockFormDataProcessor mockFormDataProcessor;
+    late MockGetUserIdFromLocalStorageUseCase mockGetUserIdFromLocalStorageUseCase;
     late ObservationsViewModel viewModel;
     const int testVisitId = 1;
 
@@ -270,6 +286,7 @@ void main() {
       mockDeleteObservationUseCase = MockDeleteObservationUseCase();
       mockGetObservationByIdUseCase = MockGetObservationByIdUseCase();
       mockFormDataProcessor = MockFormDataProcessor();
+      mockGetUserIdFromLocalStorageUseCase = MockGetUserIdFromLocalStorageUseCase();
 
       // Configurer pour les opérations CRUD
       when(() => mockGetObservationsByVisitIdUseCase.execute(testVisitId))
@@ -282,6 +299,10 @@ void main() {
       when(() => mockFormDataProcessor.processFormDataForDisplay(any()))
           .thenAnswer((invocation) async => invocation.positionalArguments[0] as Map<String, dynamic>);
 
+      // Mock getUserIdFromLocalStorage to return a default user ID
+      when(() => mockGetUserIdFromLocalStorageUseCase.execute())
+          .thenAnswer((_) async => 123);
+
       registerFallbackValue(const Observation(idObservation: 1));
       registerFallbackValue(<String, dynamic>{});
 
@@ -293,6 +314,7 @@ void main() {
         mockDeleteObservationUseCase,
         mockGetObservationByIdUseCase,
         mockFormDataProcessor,
+        mockGetUserIdFromLocalStorageUseCase,
         testVisitId,
       );
 

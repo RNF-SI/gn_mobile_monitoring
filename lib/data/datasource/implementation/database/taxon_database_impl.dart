@@ -45,6 +45,18 @@ class TaxonDatabaseImpl implements TaxonDatabase {
   }
 
   @override
+  Future<bool> isTaxonInList(int cdNom, int idListe) async {
+    final db = await _database;
+    return db.taxonDao.isTaxonInList(cdNom, idListe);
+  }
+
+  @override
+  Future<List<Taxon>> getSuggestionTaxons(int idListe, {int limit = 10}) async {
+    final db = await _database;
+    return db.taxonDao.getSuggestionTaxons(idListe, limit: limit);
+  }
+
+  @override
   Future<void> saveTaxon(Taxon taxon) async {
     final db = await _database;
     return db.taxonDao.insertTaxon(taxon);
@@ -96,6 +108,24 @@ class TaxonDatabaseImpl implements TaxonDatabase {
   Future<void> clearCorTaxonListe() async {
     final db = await _database;
     return db.taxonDao.clearCorTaxonListe();
+  }
+
+  @override
+  Future<Set<int>> getAllTaxonCdNoms() async {
+    final db = await _database;
+    return db.taxonDao.getAllTaxonCdNoms();
+  }
+
+  @override
+  Future<Set<int>> getCdNomsByListId(int idListe) async {
+    final db = await _database;
+    return db.taxonDao.getCdNomsByListId(idListe);
+  }
+
+  @override
+  Future<Set<int>> getAllListIds() async {
+    final db = await _database;
+    return db.taxonDao.getAllListIds();
   }
 
   @override
@@ -224,7 +254,7 @@ class TaxonDatabaseImpl implements TaxonDatabase {
           final site = visit != null && visit.idBaseSite != null
               ? await db.sitesDao.getSiteById(visit.idBaseSite!)
               : null;
-          final module = visit != null && visit.idModule != null
+          final module = visit != null
               ? await db.modulesDao.getModuleById(visit.idModule)
               : null;
 
@@ -368,7 +398,7 @@ class TaxonDatabaseImpl implements TaxonDatabase {
               final site = visit?.idBaseSite != null
                   ? await db.sitesDao.getSiteById(visit!.idBaseSite!)
                   : null;
-              final module = visit != null && visit.idModule != null
+              final module = visit != null
                   ? await db.modulesDao.getModuleById(visit.idModule)
                   : null;
 

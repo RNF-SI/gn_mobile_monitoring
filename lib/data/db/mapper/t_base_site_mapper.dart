@@ -23,8 +23,12 @@ extension TBaseSiteMapper on TBaseSite {
       uuidBaseSite: uuidBaseSite,
       altitudeMin: altitudeMin,
       altitudeMax: altitudeMax,
+      idInventor: idInventor,
+      idDigitiser: idDigitiser,
       metaCreateDate: parseDate(metaCreateDate?.toIso8601String()),
       metaUpdateDate: parseDate(metaUpdateDate?.toIso8601String()),
+      isLocal: isLocal,
+      serverSiteId: serverSiteId,
     );
   }
 }
@@ -32,7 +36,8 @@ extension TBaseSiteMapper on TBaseSite {
 extension BaseSiteMapper on BaseSite {
   TBaseSitesCompanion toDatabaseEntity() {
     return TBaseSitesCompanion(
-      idBaseSite: Value(idBaseSite),
+      // Si idBaseSite est 0, utiliser Value.absent() pour laisser la base générer l'ID
+      idBaseSite: idBaseSite == 0 ? const Value.absent() : Value(idBaseSite),
       baseSiteName: Value(baseSiteName),
       baseSiteDescription: Value(baseSiteDescription),
       baseSiteCode: Value(baseSiteCode),
@@ -41,6 +46,10 @@ extension BaseSiteMapper on BaseSite {
       uuidBaseSite: Value(uuidBaseSite),
       altitudeMin: Value(altitudeMin),
       altitudeMax: Value(altitudeMax),
+      idInventor: Value(idInventor),
+      idDigitiser: Value(idDigitiser),
+      isLocal: Value(isLocal),
+      serverSiteId: Value(serverSiteId),
     );
   }
 }

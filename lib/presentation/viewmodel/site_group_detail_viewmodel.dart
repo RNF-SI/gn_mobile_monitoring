@@ -32,4 +32,10 @@ class SiteGroupDetailViewModel extends StateNotifier<AsyncValue<List<BaseSite>>>
       state = AsyncValue.error(e, stack);
     }
   }
+
+  /// Refreshes the sites list
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    await loadSites();
+  }
 }

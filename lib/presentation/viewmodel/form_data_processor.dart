@@ -90,9 +90,15 @@ class FormDataProcessor {
         // Version 1: Si l'ID est directement disponible dans l'objet (version la plus fiable)
         if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
           final id = fieldValue['id'];
-          final parsedId = id is int ? id : int.tryParse(id.toString()) ?? 0;
-          processedData[fieldName] = parsedId;
-          debugPrint('  $fieldName: Extrait id=$parsedId depuis Map');
+          final parsedId = id is int ? id : int.tryParse(id.toString());
+          if (parsedId != null && parsedId != 0) {
+            processedData[fieldName] = parsedId;
+            debugPrint('  $fieldName: Extrait id=$parsedId depuis Map');
+          } else {
+            processedData.remove(fieldName);
+            debugPrint(
+                '  $fieldName: ID invalide ($id), champ supprimé');
+          }
           continue;
         }
 
@@ -132,20 +138,74 @@ class FormDataProcessor {
             // Ne pas modifier processedData[fieldName], garder la valeur originale
           }
         } else {
-          // Si nous n'avons pas les informations nécessaires, utiliser 0 comme valeur par défaut
-          processedData[fieldName] = 0;
+          // Si nous n'avons pas les informations nécessaires, supprimer le champ
+          // pour laisser le serveur utiliser sa valeur par défaut
+          processedData.remove(fieldName);
           debugPrint(
-              '  $fieldName: Informations insuffisantes pour la nomenclature, utilisation de 0');
+              '  $fieldName: Informations insuffisantes pour la nomenclature, champ supprimé');
         }
       }
 
       // Cas 4: Valeur nulle ou d'un autre type
       if (fieldValue == null ||
           (fieldValue is! int && fieldValue is! Map && fieldValue is! String)) {
-        // Utiliser 0 comme valeur par défaut ou null selon votre convention
-        processedData[fieldName] = 0;
+        // Supprimer le champ pour laisser le serveur utiliser sa valeur par défaut
+        processedData.remove(fieldName);
         debugPrint(
-            '  $fieldName: Valeur de nomenclature non reconnue, utilisation de 0');
+            '  $fieldName: Valeur de nomenclature non reconnue, champ supprimé');
+      }
+    }
+
+    // TRAITEMENT DES NOMENCLATURES AVEC NOMS NON-STANDARD
+    // Certains modules utilisent des noms de champs qui ne commencent pas par id_nomenclature_
+    // mais dont la valeur est un Map contenant cd_nomenclature (ex: champ "enceinte" dans petite_chouette)
+    final nonStandardNomenclatureFields = processedData.keys
+        .where((key) =>
+            !key.startsWith('id_nomenclature_') &&
+            processedData[key] is Map<String, dynamic> &&
+            (processedData[key] as Map<String, dynamic>)
+                .containsKey('cd_nomenclature'))
+        .toList();
+
+    for (final fieldName in nonStandardNomenclatureFields) {
+      final fieldValue = processedData[fieldName] as Map<String, dynamic>;
+
+      // Priorité 1 : utiliser l'ID directement s'il est présent
+      if (fieldValue.containsKey('id') && fieldValue['id'] != null) {
+        final id = fieldValue['id'];
+        final parsedId = id is int ? id : int.tryParse(id.toString());
+        if (parsedId != null && parsedId != 0) {
+          processedData[fieldName] = parsedId;
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard - extrait id=$parsedId depuis Map');
+          continue;
+        }
+      }
+
+      // Priorité 2 : rechercher par cd_nomenclature + code_nomenclature_type
+      final codeType = fieldValue['code_nomenclature_type'] as String?;
+      final cdNomenclature = fieldValue['cd_nomenclature'] as String?;
+
+      if (codeType != null && cdNomenclature != null) {
+        debugPrint(
+            '  $fieldName: Nomenclature non-standard - recherche par codeType=$codeType, cdNomenclature=$cdNomenclature');
+        final nomenclatureService =
+            ref.read(nomenclatureServiceProvider.notifier);
+        final nomenclatures =
+            await nomenclatureService.getNomenclaturesByTypeCode(codeType);
+
+        try {
+          final nomenclature = nomenclatures.firstWhere(
+            (n) =>
+                n.cdNomenclature == cdNomenclature && n.codeType == codeType,
+          );
+          processedData[fieldName] = nomenclature.id;
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard trouvée avec id=${nomenclature.id}');
+        } catch (e) {
+          debugPrint(
+              '  $fieldName: Nomenclature non-standard non trouvée, conservation de la valeur originale');
+        }
       }
     }
 
@@ -170,6 +230,25 @@ class FormDataProcessor {
         }
       }
       // Si c'est déjà un entier, le laisser tel quel
+    }
+
+    // TRAITEMENT DES CHAMPS NUMÉRIQUES GÉNÉRAUX
+    // Convertir les champs numériques connus (altitude, etc.) de String en int si nécessaire
+    final numericFields = ['altitude_min', 'altitude_max', 'id_inventor', 'id_digitiser', 'id_sites_group', 'id_module'];
+    for (final fieldName in numericFields) {
+      if (processedData.containsKey(fieldName)) {
+        final value = processedData[fieldName];
+        if (value is String && value.isNotEmpty) {
+          final parsedInt = int.tryParse(value);
+          if (parsedInt != null) {
+            processedData[fieldName] = parsedInt;
+            debugPrint('  $fieldName: Converti de String à int ($parsedInt)');
+          }
+        } else if (value is num && value is! int) {
+          processedData[fieldName] = value.toInt();
+          debugPrint('  $fieldName: Converti de num à int (${value.toInt()})');
+        }
+      }
     }
 
     // Vérifier une dernière fois que toutes les valeurs sont sérialisables en JSON
@@ -207,7 +286,12 @@ class FormDataProcessor {
           }
 
           // Transformer les objets complexes en chaînes si nécessaire
-          if (entry.value is! num &&
+          if (entry.value is DateTime) {
+            // Convertir DateTime en format ISO string
+            data[entry.key] = (entry.value as DateTime).toIso8601String();
+            debugPrint(
+                'Correction: ${entry.key} DateTime converti en ISO String: ${data[entry.key]}');
+          } else if (entry.value is! num &&
               entry.value is! bool &&
               entry.value is! String &&
               entry.value is! List &&
@@ -324,7 +408,7 @@ class FormDataProcessor {
 
         // Ne pas traiter les champs qui ne sont pas des cd_nom (par exemple, id_nomenclature_*)
         if (key != 'cd_nom' && !key.contains('cd_nom')) {
-          // Vérifier si c'est un taxonomie avec boutons radio en recherchant un champ de config
+          // Vérifier si c'est un taxon avec boutons radio en recherchant un champ de config
           // Pour simplifier, nous préservons la valeur entière pour ces champs
           continue;
         }
@@ -353,17 +437,18 @@ class FormDataProcessor {
     return processedData;
   }
 
-  /// Évalue si un champ doit être masqué en fonction des règles définies
+  /// Évalue si un champ doit être masqué en fonction des règles définies avec support des cascades
   ///
   /// Parameters:
   /// - fieldId: L'identifiant du champ à évaluer
   /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
   /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'hidden'
+  /// - allFieldsConfig: Configuration de tous les champs pour évaluer les cascades (optionnel)
   ///
   /// Returns:
   /// - true si le champ doit être masqué, false sinon
   bool isFieldHidden(String fieldId, Map<String, dynamic> context,
-      {Map<String, dynamic>? fieldConfig}) {
+      {Map<String, dynamic>? fieldConfig, Map<String, dynamic>? allFieldsConfig}) {
     // Si aucune configuration n'est fournie, le champ n'est pas masqué
     if (fieldConfig == null) {
       return false;
@@ -383,31 +468,152 @@ class FormDataProcessor {
         (hiddenValue.trim().startsWith('({') ||
             hiddenValue.trim().startsWith('('))) {
       try {
+        // ÉTAPE 1: Évaluer d'abord avec le contexte original pour gérer les auto-références
+        final originalResult = _expressionEvaluator.evaluateExpression(hiddenValue, context);
+        
+        // Si c'est une auto-référence (le champ se référence lui-même), utiliser le résultat original
+        if (_isSelfreferencingExpression(hiddenValue, fieldId)) {
+          return originalResult ?? false;
+        }
+
+        // ÉTAPE 2: Pour les autres cas, utiliser le contexte cascade-aware
+        final cascadeContext = _buildCascadeAwareContext(context, allFieldsConfig);
+
         // Détecter les expressions complexes qui pourraient causer des problèmes
         // plutôt que d'avoir des cas spéciaux codés en dur
         final String normalizedExpression =
-            _normalizeHiddenExpression(hiddenValue, context);
+            _normalizeHiddenExpression(hiddenValue, cascadeContext);
 
         // Si l'expression a été normalisée, l'évaluer directement
         if (normalizedExpression != hiddenValue) {
-          return _evaluateNormalizedExpression(normalizedExpression, context);
+          final result = _evaluateNormalizedExpression(normalizedExpression, cascadeContext);
+          return result;
         }
 
-        // Évaluation normale de l'expression
+        // Évaluation normale de l'expression avec le contexte en cascade
         final result =
-            _expressionEvaluator.evaluateExpression(hiddenValue, context);
+            _expressionEvaluator.evaluateExpression(hiddenValue, cascadeContext);
 
         // Si l'évaluation échoue, ne pas masquer le champ par défaut
         return result ?? false;
       } catch (e) {
-        debugPrint(
-            'Erreur lors de l\'évaluation de l\'expression pour $fieldId: $e');
         return false;
       }
     }
 
     // Par défaut, ne pas masquer le champ
     return false;
+  }
+
+  /// Détermine si une expression fait référence au champ lui-même
+  /// 
+  /// Parameters:
+  /// - expression: L'expression à analyser
+  /// - fieldId: L'ID du champ en cours d'évaluation
+  /// 
+  /// Returns:
+  /// - true si l'expression fait référence au champ lui-même
+  bool _isSelfreferencingExpression(String expression, String fieldId) {
+    // Rechercher les références au champ dans l'expression
+    final patterns = [
+      RegExp("value\\['$fieldId'\\]"), // value['fieldName']
+      RegExp("value\\.$fieldId"), // value.fieldName
+    ];
+    
+    for (final pattern in patterns) {
+      if (pattern.hasMatch(expression)) {
+        return true;
+      }
+    }
+    
+    return false;
+  }
+
+  /// Construit un contexte d'évaluation conscient des cascades
+  /// 
+  /// Cette méthode filtre les valeurs des champs qui sont eux-mêmes cachés
+  /// pour permettre la propagation en cascade des conditions de masquage.
+  /// 
+  /// Parameters:
+  /// - context: Le contexte d'évaluation original
+  /// - allFieldsConfig: Configuration de tous les champs (pour détecter les champs cachés)
+  /// 
+  /// Returns:
+  /// - Un contexte modifié où les champs cachés ont leurs valeurs supprimées
+  Map<String, dynamic> _buildCascadeAwareContext(
+      Map<String, dynamic> context, Map<String, dynamic>? allFieldsConfig) {
+    // Si aucune configuration n'est fournie, retourner le contexte original
+    if (allFieldsConfig == null) {
+      return context;
+    }
+
+    // Copier le contexte pour ne pas modifier l'original
+    final cascadeContext = Map<String, dynamic>.from(context);
+    final originalValues = context['value'] as Map<String, dynamic>? ?? {};
+    final filteredValues = Map<String, dynamic>.from(originalValues);
+
+    // Détecter récursivement les champs qui doivent être cachés
+    final hiddenFields = <String>{};
+    bool foundNewHiddenField = true;
+    int maxIterations = 10; // Sécurité pour éviter les boucles infinies
+    int iteration = 0;
+
+    while (foundNewHiddenField && iteration < maxIterations) {
+      foundNewHiddenField = false;
+      iteration++;
+
+      for (final entry in allFieldsConfig.entries) {
+        final fieldName = entry.key;
+        final fieldConfig = entry.value;
+
+        // Si ce champ est déjà marqué comme caché, continuer
+        if (hiddenFields.contains(fieldName)) {
+          continue;
+        }
+
+        // S'assurer que fieldConfig est bien un Map<String, dynamic>
+        if (fieldConfig is! Map<String, dynamic>) {
+          continue;
+        }
+
+        // Évaluer si ce champ doit être caché avec le contexte filtré actuel
+        final hiddenValue = fieldConfig['hidden'];
+        if (hiddenValue != null && hiddenValue != false) {
+          // Créer un contexte temporaire avec les valeurs filtrées actuelles
+          final tempContext = {
+            ...cascadeContext,
+            'value': filteredValues,
+          };
+
+          bool shouldHide = false;
+          try {
+            if (hiddenValue is bool) {
+              shouldHide = hiddenValue;
+            } else if (hiddenValue is String &&
+                (hiddenValue.trim().startsWith('({') ||
+                    hiddenValue.trim().startsWith('('))) {
+              final result = _expressionEvaluator.evaluateExpression(hiddenValue, tempContext);
+              shouldHide = result ?? false;
+            }
+          } catch (e) {
+            shouldHide = false;
+          }
+
+          if (shouldHide) {
+            hiddenFields.add(fieldName);
+            // IMPORTANT: Ne pas supprimer la valeur du champ caché
+            // Les champs cachés conservent leurs valeurs pour la sauvegarde
+            // filteredValues.remove(fieldName); // ❌ SUPPRIMÉ
+            foundNewHiddenField = true;
+          }
+        }
+      }
+    }
+
+    // Retourner le contexte avec les valeurs filtrées
+    cascadeContext['value'] = filteredValues;
+    
+    return cascadeContext;
   }
 
   /// Analyse et prétraite les expressions de masquage pour éviter les boucles infinies et
@@ -429,11 +635,20 @@ class FormDataProcessor {
 
     // Cas 1: Expression simple en fonction d'un seul champ
     // Format: (value) => value['champ']
+    // IMPORTANT: Ne pas normaliser si l'expression contient des opérateurs de comparaison
     if (cleanExpr.startsWith('(value)') &&
         cleanExpr.contains("value['") &&
         !cleanExpr.contains('&&') &&
         !cleanExpr.contains('||') &&
-        !cleanExpr.contains('!')) {
+        !cleanExpr.contains('!') &&
+        !cleanExpr.contains('===') &&
+        !cleanExpr.contains('!==') &&
+        !cleanExpr.contains('==') &&
+        !cleanExpr.contains('!=') &&
+        !cleanExpr.contains('>=') &&
+        !cleanExpr.contains('<=') &&
+        !cleanExpr.contains('>') &&
+        !cleanExpr.contains('<')) {
       // Extraire le nom du champ entre guillemets simples
       final startIndex = cleanExpr.indexOf("['") + 2;
       final endIndex = cleanExpr.indexOf("']", startIndex);
@@ -464,7 +679,7 @@ class FormDataProcessor {
     // Format: (value) => value['champ1'] && value['champ2']
     if (cleanExpr.startsWith('(value)') &&
         cleanExpr.contains('&&') &&
-        cleanExpr.indexOf("value['") >= 0 &&
+        cleanExpr.contains("value['") &&
         cleanExpr.indexOf("value['", cleanExpr.indexOf('&&')) > 0) {
       // Extraire le nom du premier champ
       final startIndex1 = cleanExpr.indexOf("['") + 2;
@@ -482,13 +697,11 @@ class FormDataProcessor {
         final field2 = cleanExpr.substring(startIndex2, endIndex2);
 
         // Vérifier s'il y a une négation sur l'un des champs
-        if (cleanExpr.contains('!' +
-            cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2))) {
+        if (cleanExpr.contains('!${cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2)}')) {
           // Premier champ nié
           return "NORMALIZED:NOTAND:$field1:$field2";
-        } else if (cleanExpr.contains('!' +
-            cleanExpr.substring(
-                cleanExpr.indexOf("value", endIndex1), startIndex2 - 2))) {
+        } else if (cleanExpr.contains('!${cleanExpr.substring(
+                cleanExpr.indexOf("value", endIndex1), startIndex2 - 2)}')) {
           // Deuxième champ nié
           return "NORMALIZED:ANDNOT:$field1:$field2";
         } else {
@@ -594,6 +807,75 @@ class FormDataProcessor {
     }
 
     // Par défaut, ne pas masquer le champ
+    return false;
+  }
+
+  /// Évalue si un champ est requis en fonction des règles définies
+  ///
+  /// Parameters:
+  /// - fieldId: L'identifiant du champ à évaluer
+  /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
+  /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'required'
+  ///
+  /// Returns:
+  /// - true si le champ est requis, false sinon
+  bool isFieldRequired(String fieldId, Map<String, dynamic> context,
+      {Map<String, dynamic>? fieldConfig}) {
+    // Si aucune configuration n'est fournie, le champ n'est pas requis
+    if (fieldConfig == null) {
+      return false;
+    }
+
+    // Vérifier si le champ a une règle 'required'
+    final requiredValue = fieldConfig['required'];
+
+    // Si la valeur est un booléen, l'utiliser directement
+    if (requiredValue is bool) {
+      return requiredValue;
+    }
+
+    // Si la valeur est une chaîne commençant par (, c'est une expression à évaluer
+    // Note: La syntaxe peut être soit JS `({value}) => ...` ou Dart `(value) => ...`
+    if (requiredValue is String &&
+        (requiredValue.trim().startsWith('({') ||
+            requiredValue.trim().startsWith('('))) {
+      try {
+        // Évaluer l'expression avec le contexte fourni
+        final result = _expressionEvaluator.evaluateExpression(requiredValue, context);
+
+        // Si l'évaluation échoue, le champ n'est pas requis par défaut
+        return result ?? false;
+      } catch (e) {
+        // En cas d'erreur, ne pas rendre le champ requis par défaut
+        debugPrint('Erreur lors de l\'évaluation de required pour $fieldId: $e');
+        return false;
+      }
+    }
+
+    // Vérifier également dans validations (format alternatif)
+    final validations = fieldConfig['validations'] as Map<String, dynamic>?;
+    if (validations != null && validations.containsKey('required')) {
+      final validationRequired = validations['required'];
+
+      if (validationRequired is bool) {
+        return validationRequired;
+      }
+
+      // Si c'est une expression dans validations
+      if (validationRequired is String &&
+          (validationRequired.trim().startsWith('({') ||
+              validationRequired.trim().startsWith('('))) {
+        try {
+          final result = _expressionEvaluator.evaluateExpression(validationRequired, context);
+          return result ?? false;
+        } catch (e) {
+          debugPrint('Erreur lors de l\'évaluation de validations.required pour $fieldId: $e');
+          return false;
+        }
+      }
+    }
+
+    // Par défaut, le champ n'est pas requis
     return false;
   }
 

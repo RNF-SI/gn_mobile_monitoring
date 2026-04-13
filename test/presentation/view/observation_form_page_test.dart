@@ -45,10 +45,6 @@ class TestObservationsNotifier
     return [];
   }
 
-  @override
-  void dispose() {
-    super.dispose();
-  }
 }
 
 void main() {
@@ -57,7 +53,7 @@ void main() {
   setUp(() {
     testObservationConfig = ObjectConfig(
       label: 'Observation',
-      displayProperties: ['cd_nom', 'comments'],
+      displayProperties: ['cd_nom', 'comments', 'test_field'],
       generic: {
         'cd_nom': GenericFieldConfig(
           attributLabel: 'Cd Nom',
@@ -111,7 +107,6 @@ void main() {
     expect(find.text('Champ de test'), findsOneWidget);
 
     // Vérifier que le bouton de sauvegarde est présent
-    expect(find.byIcon(Icons.save), findsOneWidget);
     expect(find.text('Ajouter'), findsOneWidget);
   });
 

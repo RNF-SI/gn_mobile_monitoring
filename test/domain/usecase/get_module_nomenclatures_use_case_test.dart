@@ -3,7 +3,6 @@ import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
-import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case_impl.dart';
 import 'package:mocktail/mocktail.dart';
@@ -78,7 +77,7 @@ void main() {
 
     test('should extract nomenclature types from module configuration', () async {
       // Arrange
-      when(() => mockModulesRepository.getModuleWithConfig(any()))
+      when(() => mockModulesRepository.getModuleById(any()))
           .thenAnswer((_) async => module.copyWith(complement: moduleComplement));
           
       when(() => mockModulesRepository.getModuleConfiguration(any()))
@@ -98,7 +97,7 @@ void main() {
       expect(result.length, equals(3));
       
       // Vérification que les appels sont faits correctement
-      verify(() => mockModulesRepository.getModuleWithConfig(module.id)).called(1);
+      verify(() => mockModulesRepository.getModuleById(module.id)).called(1);
       verify(() => mockModulesRepository.getModuleConfiguration(any())).called(1);
       verify(() => mockModulesRepository.getNomenclatureTypeMapping()).called(1);
       verify(() => mockModulesRepository.getNomenclatures()).called(1);
@@ -111,7 +110,7 @@ void main() {
         module: ModuleConfig(generic: {})
       );
       
-      when(() => mockModulesRepository.getModuleWithConfig(any()))
+      when(() => mockModulesRepository.getModuleById(any()))
           .thenAnswer((_) async => module);
           
       when(() => mockModulesRepository.getModuleConfiguration(any()))
@@ -140,7 +139,7 @@ void main() {
         module: null
       );
       
-      when(() => mockModulesRepository.getModuleWithConfig(any()))
+      when(() => mockModulesRepository.getModuleById(any()))
           .thenAnswer((_) async => module);
           
       when(() => mockModulesRepository.getModuleConfiguration(any()))
@@ -164,7 +163,7 @@ void main() {
     test('should rethrow exception when repository throws an error', () async {
       // Arrange
       final exception = Exception('Failed to get module configuration');
-      when(() => mockModulesRepository.getModuleWithConfig(any()))
+      when(() => mockModulesRepository.getModuleById(any()))
           .thenThrow(exception);
 
       // Act & Assert

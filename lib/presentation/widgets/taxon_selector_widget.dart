@@ -18,6 +18,10 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
   /// Cette liste est utilisée comme fallback si aucune liste n'est spécifiée au niveau du champ
   final int? idListTaxonomy;
 
+  /// Indique si l'utilisateur a explicitement supprimé la valeur
+  /// Cela empêche la restauration automatique des valeurs par défaut
+  final bool userCleared;
+
   const TaxonSelectorWidget({
     super.key,
     required this.moduleId,
@@ -28,6 +32,7 @@ class TaxonSelectorWidget extends ConsumerStatefulWidget {
     this.isRequired = false,
     this.displayMode = 'nom_vern,lb_nom',
     this.idListTaxonomy,
+    this.userCleared = false,
   });
 
   @override
@@ -40,6 +45,8 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   Taxon? _selectedTaxon;
   List<Taxon> _searchResults = [];
   bool _isSearching = false;
+  bool _isInitializing = true;
+  bool _userHasInteracted = false;
 
   /// Obtient l'ID de la liste taxonomique à utiliser
   /// Priorise la liste du champ (fieldConfig) sur celle du module
@@ -61,18 +68,46 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   }
 
   Future<void> _initializeSelectedTaxon() async {
-    if (widget.value != null) {
+    // Si l'utilisateur a explicitement supprimé la valeur, ne pas la restaurer
+    if (widget.userCleared) {
+      if (mounted) {
+        setState(() {
+          _selectedTaxon = null;
+          _searchController.clear();
+        });
+        _isInitializing = false;
+      }
+      return;
+    }
+
+    // Déterminer la valeur à utiliser - priorité au widget.value, puis aux defaults du fieldConfig
+    int? cdNomToLoad = widget.value;
+    bool isLoadingFromConfig = false;
+    
+    // Si aucune valeur n'est fournie, essayer d'extraire depuis la configuration
+    // MAIS seulement lors de la première initialisation
+    if (cdNomToLoad == null && _isInitializing && widget.fieldConfig != null) {
+      final defaultValue = widget.fieldConfig!['default'] ?? widget.fieldConfig!['value'];
+      if (defaultValue is int) {
+        cdNomToLoad = defaultValue;
+        isLoadingFromConfig = true;
+      } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
+        cdNomToLoad = defaultValue['cd_nom'] as int?;
+        isLoadingFromConfig = true;
+      }
+    }
+    
+    if (cdNomToLoad != null) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+      final taxon = await taxonService.getTaxonByCdNom(cdNomToLoad);
 
       // Vérifier si le taxon appartient à la liste taxonomique appropriée
       if (taxon != null) {
         final effectiveListId = _getEffectiveListId();
         if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+          // Vérification légère via requête SQL ciblée (pas de chargement complet)
+          final isInList =
+              await taxonService.isTaxonInList(taxon.cdNom, effectiveListId);
 
           if (!isInList) {
             if (mounted) {
@@ -92,6 +127,17 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           _selectedTaxon = taxon;
           _searchController.text = _formatDisplayName(taxon);
         });
+
+        // Si la valeur provenait de la configuration et n'était pas déjà définie, notifier le parent
+        // Mais seulement si on l'a chargée depuis la config ET que l'utilisateur n'a pas encore interagi
+        if (widget.value == null && isLoadingFromConfig && !_userHasInteracted) {
+          widget.onChanged(taxon.cdNom);
+        }
+      }
+
+      // Marquer la fin de l'initialisation après le premier chargement
+      if (_isInitializing) {
+        _isInitializing = false;
       }
     }
   }
@@ -106,28 +152,58 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
   }
 
   Future<void> _updateSelectedTaxon() async {
-    if (widget.value == null) {
+    // Si l'utilisateur a explicitement supprimé la valeur, ne pas la restaurer
+    if (widget.userCleared) {
+      if (mounted) {
+        setState(() {
+          _selectedTaxon = null;
+          _searchController.clear();
+        });
+        _isInitializing = false;
+      }
+      return;
+    }
+
+    // Déterminer la valeur effective - widget.value en priorité
+    int? effectiveValue = widget.value;
+    
+    // Seulement restaurer les valeurs par défaut pendant l'initialisation,
+    // pas quand l'utilisateur efface explicitement le champ
+    if (effectiveValue == null && _isInitializing && widget.fieldConfig != null) {
+      final defaultValue = widget.fieldConfig!['default'] ?? widget.fieldConfig!['value'];
+      if (defaultValue is int) {
+        effectiveValue = defaultValue;
+      } else if (defaultValue is Map && defaultValue['cd_nom'] != null) {
+        effectiveValue = defaultValue['cd_nom'] as int?;
+      }
+    }
+    
+    if (effectiveValue == null) {
       if (mounted) {
         setState(() {
           _selectedTaxon = null;
           _searchController.clear();
         });
       }
+      
+      // Marquer la fin de l'initialisation même si aucune valeur n'est trouvée
+      if (_isInitializing) {
+        _isInitializing = false;
+      }
       return;
     }
 
-    if (_selectedTaxon?.cdNom != widget.value) {
+    if (_selectedTaxon?.cdNom != effectiveValue) {
       final taxonService = ref.read(taxonServiceProvider.notifier);
-      final taxon = await taxonService.getTaxonByCdNom(widget.value!);
+      final taxon = await taxonService.getTaxonByCdNom(effectiveValue);
 
       // Vérifier si le taxon appartient à la liste taxonomique appropriée
       if (taxon != null) {
         final effectiveListId = _getEffectiveListId();
         if (effectiveListId != null) {
-          // Vérifier si le taxon est dans la liste
-          final taxonsInList =
-              await taxonService.getTaxonsByListId(effectiveListId);
-          final isInList = taxonsInList.any((t) => t.cdNom == taxon.cdNom);
+          // Vérification légère via requête SQL ciblée (pas de chargement complet)
+          final isInList =
+              await taxonService.isTaxonInList(taxon.cdNom, effectiveListId);
 
           if (!isInList) {
             if (mounted) {
@@ -147,6 +223,11 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           _selectedTaxon = taxon;
           _searchController.text = _formatDisplayName(taxon);
         });
+      }
+
+      // Marquer la fin de l'initialisation après la mise à jour
+      if (_isInitializing) {
+        _isInitializing = false;
       }
     }
   }
@@ -187,11 +268,8 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     try {
       final taxonService = ref.read(taxonServiceProvider.notifier);
 
-      // Récupérer l'id_list depuis la configuration si disponible
-      int? listId;
-      if (widget.fieldConfig != null) {
-        listId = FormConfigParser.getTaxonListId(widget.fieldConfig!);
-      }
+      // Utiliser la liste effective (champ > module) pour filtrer la recherche
+      final listId = _getEffectiveListId();
 
       // Effectuer la recherche avec l'id_list si disponible
       final results = await taxonService.searchTaxons(query, idListe: listId);
@@ -217,10 +295,10 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
     // Utiliser la liste taxonomique appropriée
     final effectiveListId = _getEffectiveListId();
 
-    // Récupérer les taxons via le provider approprié
-    final taxonsAsync = effectiveListId != null
-        ? ref.watch(taxonsByListProvider(effectiveListId))
-        : ref.watch(taxonsByModuleProvider(widget.moduleId));
+    // Récupérer uniquement les suggestions (nombre limité) au lieu de la liste complète
+    final suggestionsAsync = effectiveListId != null
+        ? ref.watch(suggestionTaxonsProvider(effectiveListId))
+        : null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -240,6 +318,10 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                         _selectedTaxon = null;
                         _searchController.clear();
                         _searchResults = [];
+                        // Marquer explicitement que ce n'est plus l'initialisation
+                        _isInitializing = false;
+                        // Marquer que l'utilisateur a interagi (suppression)
+                        _userHasInteracted = true;
                         widget.onChanged(null);
                       });
                     },
@@ -308,6 +390,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                       _selectedTaxon = taxon;
                       _searchController.text = displayName;
                       _searchResults = [];
+                      _userHasInteracted = true;
                     });
                     widget.onChanged(taxon.cdNom);
                   },
@@ -316,16 +399,15 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
             ),
           ),
 
-        // Liste de suggestions basée sur module/liste
-        if (_searchController.text.isEmpty && _selectedTaxon == null)
-          taxonsAsync.when(
+        // Liste de suggestions basée sur la liste taxonomique (nombre limité)
+        if (_searchController.text.isEmpty &&
+            _selectedTaxon == null &&
+            suggestionsAsync != null)
+          suggestionsAsync.when(
             data: (taxons) {
               if (taxons.isEmpty) {
                 return const SizedBox.shrink();
               }
-
-              final displayTaxons =
-                  taxons.length > 10 ? taxons.sublist(0, 10) : taxons;
 
               return Padding(
                 padding: const EdgeInsets.only(top: 8.0),
@@ -340,7 +422,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                     const SizedBox(height: 4),
                     Wrap(
                       spacing: 8,
-                      children: displayTaxons.map((taxon) {
+                      children: taxons.map((taxon) {
                         final displayName = _formatDisplayName(taxon);
                         return ChoiceChip(
                           label: Text(displayName,
@@ -350,6 +432,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
                             setState(() {
                               _selectedTaxon = taxon;
                               _searchController.text = displayName;
+                              _userHasInteracted = true;
                             });
                             widget.onChanged(taxon.cdNom);
                           },

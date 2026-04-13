@@ -457,7 +457,7 @@ class GenericFieldConfig with _$GenericFieldConfig {
   const factory GenericFieldConfig({
     @JsonKey(name: 'attribut_label') String? attributLabel,
     String? definition,
-    bool? hidden,
+    dynamic hidden,
     bool? required,
     String? typeWidget,
     String? typeUtil,
@@ -467,19 +467,22 @@ class GenericFieldConfig with _$GenericFieldConfig {
     String? keyLabel,
     String? keyValue,
     bool? multiple,
-    List<Map<String, dynamic>>? values,
-    Map<String, dynamic>? value,
-    Map<String, dynamic>? default_,
+    dynamic values,
+    dynamic value,
+    dynamic default_,
     String? designStyle,
     String? dataPath,
     @JsonKey(name: 'id_list') dynamic idList,
+    /// Configuration des règles de changement automatique
+    /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
+    dynamic change,
   }) = _GenericFieldConfig;
 
   factory GenericFieldConfig.fromJson(Map<String, dynamic> json) {
     return GenericFieldConfig(
       attributLabel: json['attribut_label'] as String?,
       definition: json['definition'] as String?,
-      hidden: _toBool(json['hidden']),
+      hidden: json['hidden'],
       required: _toBool(json['required']),
       typeWidget: json['type_widget'] as String?,
       typeUtil: json['type_util'] as String?,
@@ -489,14 +492,13 @@ class GenericFieldConfig with _$GenericFieldConfig {
       keyLabel: json['keyLabel'] as String?,
       keyValue: json['keyValue'] as String?,
       multiple: _toBool(json['multiple']),
-      values: (json['values'] as List<dynamic>?)
-          ?.map((e) => e as Map<String, dynamic>)
-          .toList(),
-      value: json['value'] as Map<String, dynamic>?,
-      default_: json['default'] as Map<String, dynamic>?,
+      values: json['values'],
+      value: json['value'],
+      default_: json['default'],
       designStyle: json['designStyle'] as String?,
       dataPath: json['data_path'] as String?,
       idList: json['id_list'],
+      change: json['change'],
     );
   }
 }
@@ -506,7 +508,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
         if (attributLabel != null) 'attribut_label': attributLabel,
         if (definition != null) 'definition': definition,
         if (hidden != null) 'hidden': hidden,
-        if (required != null) 'required': required,
+        'required': required,
         if (typeWidget != null) 'type_widget': typeWidget,
         if (typeUtil != null) 'type_util': typeUtil,
         if (multiSelect != null) 'multi_select': multiSelect,
@@ -520,6 +522,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
         if (designStyle != null) 'designStyle': designStyle,
         if (dataPath != null) 'data_path': dataPath,
         if (idList != null) 'id_list': idList,
+        if (change != null) 'change': change,
       };
 }
 
@@ -549,6 +552,9 @@ extension TypeSiteConfigX on TypeSiteConfig {
 class ObjectConfig with _$ObjectConfig {
   const factory ObjectConfig({
     bool? chained,
+    /// Configuration des règles de changement automatique (format JS)
+    /// Format: ["({objForm, meta}) => {", "if (...) { patchValue({...}) }", ...]
+    List<dynamic>? change,
     List<String>? childrenTypes,
     String? descriptionFieldName,
     List<String>? displayForm,
@@ -562,6 +568,7 @@ class ObjectConfig with _$ObjectConfig {
     String? geometryType,
     String? idFieldName,
     int? idTableLocation,
+    @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
     String? label,
     String? labelList,
     String? mapLabelFieldName,
@@ -686,8 +693,16 @@ class ObjectConfig with _$ObjectConfig {
       }
     }
 
+    // Safe conversion for change array (List<dynamic> of strings)
+    List<dynamic>? toChangeList(dynamic value) {
+      if (value == null) return null;
+      if (value is List) return value;
+      return null;
+    }
+
     return ObjectConfig(
       chained: toBool(json['chained']),
+      change: toChangeList(json['change']),
       childrenTypes: toStringList(json['children_types']),
       descriptionFieldName: toString(json['description_field_name']),
       displayForm: toStringList(json['display_form']),
@@ -698,6 +713,7 @@ class ObjectConfig with _$ObjectConfig {
       generic: toGenericFieldConfigMap(json['generic']),
       genre: toString(json['genre']),
       geomFieldName: toString(json['geom_field_name']),
+      isEditableOnField: toBool(json['is_editable_on_field']),
       geometryType: toString(json['geometry_type']),
       idFieldName: toString(json['id_field_name']),
       idTableLocation: toInt(json['id_table_location']),
@@ -717,6 +733,7 @@ class ObjectConfig with _$ObjectConfig {
 extension ObjectConfigX on ObjectConfig {
   Map<String, dynamic> toJson() => {
         if (chained != null) 'chained': chained,
+        if (change != null) 'change': change,
         if (childrenTypes != null) 'children_types': childrenTypes,
         if (descriptionFieldName != null)
           'description_field_name': descriptionFieldName,

@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_complement_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
@@ -29,6 +30,8 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
       ref.watch(getVisitsBySiteAndModuleUseCaseProvider);
   final getVisitWithDetailsUseCase =
       ref.watch(getVisitWithDetailsUseCaseProvider);
+  final getObservationsByVisitIdUseCase =
+      ref.watch(getObservationsByVisitIdUseCaseProvider);
   final getVisitComplementUseCase =
       ref.watch(getVisitComplementUseCaseProvider);
   final saveVisitComplementUseCase =
@@ -44,6 +47,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
   return SiteVisitsViewModel(
     getVisitsBySiteAndModuleUseCase,
     getVisitWithDetailsUseCase,
+    getObservationsByVisitIdUseCase,
     getVisitComplementUseCase,
     saveVisitComplementUseCase,
     createVisitUseCase,
@@ -60,6 +64,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
 class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final GetVisitsBySiteAndModuleUseCase _getVisitsBySiteAndModuleUseCase;
   final GetVisitWithDetailsUseCase _getVisitWithDetailsUseCase;
+  final GetObservationsByVisitIdUseCase _getObservationsByVisitIdUseCase;
   final GetVisitComplementUseCase _getVisitComplementUseCase;
   final SaveVisitComplementUseCase _saveVisitComplementUseCase;
   final CreateVisitUseCase _createVisitUseCase;
@@ -78,6 +83,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   SiteVisitsViewModel(
     this._getVisitsBySiteAndModuleUseCase,
     this._getVisitWithDetailsUseCase,
+    this._getObservationsByVisitIdUseCase,
     this._getVisitComplementUseCase,
     this._saveVisitComplementUseCase,
     this._createVisitUseCase,
@@ -144,7 +150,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
       // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
       final observers = List<int>.from(formData['observers'] ?? []);
-      if (userId != null && !observers.contains(userId)) {
+      if (!observers.contains(userId)) {
         observers.add(userId);
       }
 
@@ -182,7 +188,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
       // Ajouter l'utilisateur courant aux observateurs s'il n'est pas déjà présent
       final observers = List<int>.from(formData['observers'] ?? []);
-      if (userId != null && !observers.contains(userId)) {
+      if (!observers.contains(userId)) {
         observers.add(userId);
       }
 
@@ -212,6 +218,17 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     } catch (e) {
       debugPrint('Erreur lors de la mise à jour de la visite: $e');
       throw Exception(e.toString());
+    }
+  }
+
+  /// Compte le nombre d'observations d'une visite
+  Future<int> getObservationCountForVisit(int visitId) async {
+    try {
+      final observations = await _getObservationsByVisitIdUseCase.execute(visitId);
+      return observations.length;
+    } catch (e) {
+      debugPrint('Erreur lors du comptage des observations: $e');
+      return 0;
     }
   }
 
@@ -334,7 +351,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       // Champs obligatoires avec valeurs par défaut
       'idBaseVisit': visitId ?? 0,
       'idBaseSite': site.idBaseSite,
-      'idDataset': datasetId > 0 ? datasetId : 1, // Utiliser l'ID du dataset sélectionné ou par défaut
+      'idDataset': datasetId > 0 ? datasetId : 0, // Utiliser l'ID du dataset sélectionné (0 = invalide)
       'idModule': moduleId ?? _moduleId, // Utiliser l'ID du module fourni ou celui courant
       'visitDateMin': _formatDateValue(processedFormData['visit_date_min']) ??
           DateTime.now().toIso8601String(),
@@ -372,7 +389,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     }
 
     // Ajouter l'utilisateur connecté s'il n'est pas déjà inclus
-    if (userId != null && userId > 0 && !observers.contains(userId)) {
+    if (userId > 0 && !observers.contains(userId)) {
       observers.add(userId);
     }
 
@@ -434,6 +451,13 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
             value is String) {
           // Normaliser les valeurs d'heure pour éviter les problèmes de format
           moduleData[key] = normalizeTimeFormat(value);
+        } else if (value is Map) {
+          // Convertir les nomenclatures (Map avec id ou cd_nomenclature) en entier
+          if (value.containsKey('id') && value['id'] != null) {
+            final id = value['id'];
+            moduleData[key] = id is int ? id : int.tryParse(id.toString());
+          }
+          // Si pas d'id résolu, ne pas stocker le Map brut pour éviter la corruption JSON
         } else {
           moduleData[key] = value;
         }

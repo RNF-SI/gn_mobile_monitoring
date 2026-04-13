@@ -1,5 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/entity/base_visit_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/cor_visit_observer_entity.dart';
@@ -7,16 +9,20 @@ import 'package:gn_mobile_monitoring/data/repository/visit_repository_impl.dart'
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
-@GenerateNiceMocks([MockSpec<VisitesDatabase>()])
+@GenerateNiceMocks([MockSpec<VisitesDatabase>(), MockSpec<SitesDatabase>(), MockSpec<ModulesDatabase>()])
 import 'visit_repository_observer_test.mocks.dart';
 
 void main() {
   late MockVisitesDatabase mockVisitesDatabase;
+  late MockSitesDatabase mockSitesDatabase;
+  late MockModulesDatabase mockModulesDatabase;
   late VisitRepositoryImpl repository;
 
   setUp(() {
     mockVisitesDatabase = MockVisitesDatabase();
-    repository = VisitRepositoryImpl(mockVisitesDatabase);
+    mockSitesDatabase = MockSitesDatabase();
+    mockModulesDatabase = MockModulesDatabase();
+    repository = VisitRepositoryImpl(mockVisitesDatabase, mockSitesDatabase, mockModulesDatabase);
   });
 
   group('VisitRepository Observer Tests', () {

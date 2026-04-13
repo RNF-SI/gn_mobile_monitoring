@@ -29,9 +29,13 @@ class DatasetService {
     try {
       // Récupérer les datasets depuis le repository
       final datasets = await _getDatasetsForModuleUseCase.execute(moduleId);
-      
+
+      // Dédupliquer par ID pour éviter les erreurs de DropdownButton
+      final seenIds = <int>{};
+      final uniqueDatasets = datasets.where((d) => seenIds.add(d.id)).toList();
+
       // Stocker en cache pour les prochains appels
-      _datasetsByModule[moduleId] = datasets;
+      _datasetsByModule[moduleId] = uniqueDatasets;
       
       return datasets;
     } catch (e) {

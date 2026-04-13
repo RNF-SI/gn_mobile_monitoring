@@ -15,4 +15,6 @@ class TBaseSites extends Table {
   DateTimeColumn get metaUpdateDate => dateTime().nullable()();
   IntColumn get altitudeMin => integer().nullable()();
   IntColumn get altitudeMax => integer().nullable()();
+  BoolColumn get isLocal => boolean().nullable().withDefault(const Constant(false))();
+  IntColumn get serverSiteId => integer().nullable()(); // ID du site sur le serveur (pour la synchronisation)
 }

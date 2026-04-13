@@ -4,13 +4,24 @@ import 'package:flutter/material.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/mobile_app_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/global_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/observations_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/taxon_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
 import 'package:gn_mobile_monitoring/domain/repository/authentication_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/downstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/upstream_sync_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/visit_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observations_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/observation_details_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/global_database_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/local_storage_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
@@ -20,10 +31,9 @@ import 'package:gn_mobile_monitoring/domain/usecase/clear_token_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/clear_user_name_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_local_monitoring_database_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/download_module_data_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/fetch_sites_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_is_logged_in_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_module_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -31,7 +41,6 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_code_use
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
@@ -44,8 +53,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_user_name_from_local_sto
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/site_groups_utilisateur_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/sites_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -58,6 +66,10 @@ class MockModulesApi extends Mock implements ModulesApi {}
 
 class MockSitesApi extends Mock implements SitesApi {}
 
+class MockVersionApi extends Mock implements VersionApi {}
+
+class MockMobileAppApi extends Mock implements MobileAppApi {}
+
 // Data layer mocks - Database
 class MockGlobalDatabase extends Mock implements GlobalDatabase {}
 
@@ -69,7 +81,28 @@ class MockDatasetsDatabase extends Mock implements DatasetsDatabase {}
 
 class MockSitesDatabase extends Mock implements SitesDatabase {}
 
+class MockVisitesDatabase extends Mock implements VisitesDatabase {}
+
+class MockObservationsDatabase extends Mock implements ObservationsDatabase {}
+
+class MockTaxonDatabase extends Mock implements TaxonDatabase {}
+
+class MockTaxonApi extends Mock implements TaxonApi {}
+
 // Domain layer mocks - Repositories
+class MockDownstreamSyncRepository extends Mock
+    implements DownstreamSyncRepository {}
+
+class MockUpstreamSyncRepository extends Mock
+    implements UpstreamSyncRepository {}
+
+class MockVisitRepository extends Mock implements VisitRepository {}
+
+class MockObservationsRepository extends Mock
+    implements ObservationsRepository {}
+
+class MockObservationDetailsRepository extends Mock
+    implements ObservationDetailsRepository {}
 class MockAuthenticationRepository extends Mock
     implements AuthenticationRepository {}
 
@@ -146,8 +179,8 @@ class MockGetModulesUseCase extends Mock implements GetModulesUseCase {}
 
 class MockFetchModulesUseCase extends Mock implements FetchModulesUseCase {}
 
-class MockDownloadModuleDataUseCase extends Mock
-    implements DownloadModuleDataUseCase {}
+class MockDownloadCompleteModuleUseCase extends Mock
+    implements DownloadCompleteModuleUseCase {}
 
 // Nomenclatures
 class MockGetNomenclaturesUseCase extends Mock implements GetNomenclaturesUseCase {}
@@ -159,9 +192,6 @@ class MockGetNomenclatureByCodeUseCase extends Mock implements GetNomenclatureBy
 class MockGetModuleNomenclaturesUseCase extends Mock implements GetModuleNomenclaturesUseCase {}
 
 // Sites
-class MockGetSitesUseCase extends Mock implements GetSitesUseCase {}
-
-class MockFetchSitesUseCase extends Mock implements FetchSitesUseCase {}
 
 class MockGetSiteGroupsUseCase extends Mock implements GetSiteGroupsUseCase {}
 
@@ -176,7 +206,6 @@ class MockDatabaseService extends Mock implements DatabaseService {}
 
 class MockUserModulesViewModel extends Mock implements UserModulesViewModel {}
 
-class MockUserSitesViewModel extends Mock implements UserSitesViewModel {}
 
 class MockSiteGroupsViewModel extends Mock implements SiteGroupsViewModel {}
 

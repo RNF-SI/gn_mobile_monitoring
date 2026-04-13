@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/view/observation/observation_detail/observation_detail_detail_page_base.dart';
 
 class ObservationDetailDetailPage extends ConsumerStatefulWidget {
@@ -9,6 +10,7 @@ class ObservationDetailDetailPage extends ConsumerStatefulWidget {
   final ObjectConfig config;
   final CustomConfig? customConfig;
   final int index;
+  final SyncConflict? currentConflict;
 
   const ObservationDetailDetailPage({
     super.key,
@@ -16,6 +18,7 @@ class ObservationDetailDetailPage extends ConsumerStatefulWidget {
     required this.config,
     this.customConfig,
     required this.index,
+    this.currentConflict,
   });
 
   @override
@@ -33,6 +36,7 @@ class _ObservationDetailDetailPageState
       config: widget.config,
       customConfig: widget.customConfig,
       index: widget.index,
+      currentConflict: widget.currentConflict,
     );
   }
 }

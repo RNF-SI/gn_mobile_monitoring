@@ -13,6 +13,7 @@ class TBaseVisits extends Table {
   IntColumn get idNomenclatureGrpTyp => integer().nullable()();
   TextColumn get comments => text().nullable()();
   TextColumn get uuidBaseVisit => text().nullable()();
+  IntColumn get serverVisitId => integer().nullable()();
   TextColumn get metaCreateDate =>
       text().withDefault(const Constant('CURRENT_TIMESTAMP'))();
   TextColumn get metaUpdateDate =>

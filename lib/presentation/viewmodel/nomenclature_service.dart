@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclature_by_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_nomenclatures_by_type_code_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
@@ -11,6 +12,7 @@ final nomenclatureServiceProvider = StateNotifierProvider<NomenclatureService,
   (ref) => NomenclatureService(
     ref,
     ref.watch(getNomenclaturesByTypeCodeUseCaseProvider),
+    ref.watch(getNomenclatureByIdUseCaseProvider),
   ),
 );
 
@@ -19,10 +21,18 @@ class NomenclatureService extends StateNotifier<
     custom_async_state.State<Map<String, List<Nomenclature>>>> {
   final Ref ref;
   final GetNomenclaturesByTypeCodeUseCase _getNomenclaturesByTypeCodeUseCase;
+  final GetNomenclatureByIdUseCase _getNomenclatureByIdUseCase;
+
+  /// Cache des nomenclatures indexé par ID pour un accès rapide
+  Map<int, Nomenclature> _nomenclatureByIdCache = {};
+
+  /// Getter pour le cache des nomenclatures par ID
+  Map<int, Nomenclature> get nomenclatureByIdCache => _nomenclatureByIdCache;
 
   NomenclatureService(
     this.ref,
     this._getNomenclaturesByTypeCodeUseCase,
+    this._getNomenclatureByIdUseCase,
   ) : super(const custom_async_state.State.init());
 
   /// Récupère les nomenclatures pour un type donné
@@ -82,6 +92,9 @@ class NomenclatureService extends StateNotifier<
         state = custom_async_state.State.success({typeCode: nomenclatures});
       }
 
+      // Reconstruire le cache indexé par ID
+      _rebuildIdCache();
+
       return nomenclatures;
     } catch (e) {
       print(
@@ -94,6 +107,26 @@ class NomenclatureService extends StateNotifier<
   /// Effacer le cache pour forcer un rechargement
   void clearCache() {
     state = const custom_async_state.State.init();
+    _nomenclatureByIdCache.clear();
+  }
+
+  /// Reconstruit le cache indexé par ID à partir du cache principal
+  void _rebuildIdCache() {
+    _nomenclatureByIdCache.clear();
+    if (state.isSuccess) {
+      final cachedData = state.data as Map<String, List<Nomenclature>>;
+      for (final nomenclatures in cachedData.values) {
+        for (final n in nomenclatures) {
+          _nomenclatureByIdCache[n.id] = n;
+        }
+      }
+    }
+  }
+
+  /// Récupère une nomenclature par son ID depuis le cache
+  /// Retourne null si la nomenclature n'est pas dans le cache
+  Nomenclature? getNomenclatureByIdFromCache(int id) {
+    return _nomenclatureByIdCache[id];
   }
 
   /// Précharger les nomenclatures pour plusieurs types à la fois
@@ -111,9 +144,45 @@ class NomenclatureService extends StateNotifier<
       }
 
       state = custom_async_state.State.success(cache);
+
+      // Reconstruire le cache indexé par ID
+      _rebuildIdCache();
     } catch (e) {
       print('Erreur lors du préchargement des nomenclatures: $e');
       state = custom_async_state.State.error(Exception(e));
     }
+  }
+
+  /// Récupère le nom d'une nomenclature par son ID
+  /// Recherche dans toutes les nomenclatures en cache
+  Future<String> getNomenclatureNameById(int id) async {
+    // Si on a un cache valide
+    if (state.isSuccess) {
+      final cachedData = state.data as Map<String, List<Nomenclature>>;
+      
+      // Parcourir toutes les listes de nomenclatures en cache
+      for (final nomenclatures in cachedData.values) {
+        final found = nomenclatures.firstWhere(
+          (n) => n.id == id,
+          orElse: () => const Nomenclature(id: -1, idType: -1, cdNomenclature: ''),
+        );
+        
+        if (found.id != -1) {
+          return found.labelFr ?? found.labelDefault ?? found.cdNomenclature ?? 'Nomenclature $id';
+        }
+      }
+    }
+    
+    // Si on ne trouve pas dans le cache, rechercher dans la base
+    try {
+      final nomenclature = await _getNomenclatureByIdUseCase.execute(id);
+      if (nomenclature != null) {
+        return nomenclature.labelFr ?? nomenclature.labelDefault ?? nomenclature.cdNomenclature ?? 'Nomenclature $id';
+      }
+    } catch (e) {
+      // Ignorer l'erreur et retourner le fallback
+    }
+    
+    return 'Nomenclature $id (non trouvée)';
   }
 }

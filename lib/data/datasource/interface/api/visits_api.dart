@@ -8,4 +8,13 @@ abstract class VisitsApi {
     String moduleCode,
     BaseVisit visit,
   );
+
+  /// Met à jour une visite existante sur le serveur (PATCH)
+  /// Returns the updated visit data if successful
+  Future<Map<String, dynamic>> updateVisit(
+    String token,
+    String moduleCode,
+    int visitId,
+    BaseVisit visit,
+  );
 }

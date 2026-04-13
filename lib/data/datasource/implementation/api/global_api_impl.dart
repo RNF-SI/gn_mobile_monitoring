@@ -1,107 +1,268 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
+import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/dataset_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/nomenclature_entity.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_result.dart';
 
-class GlobalApiImpl implements GlobalApi {
-  final Dio _dio;
-  final String apiBase = Config.apiBase;
+class GlobalApiImpl extends BaseApi implements GlobalApi {
   final Connectivity _connectivity;
   final VisitsApi _visitsApi;
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
+  final SitesApi _sitesApi;
 
   GlobalApiImpl({
-    Dio? dio,
+    super.dio,
     Connectivity? connectivity,
     VisitsApi? visitsApi,
     ObservationsApi? observationsApi,
     ObservationDetailsApi? observationDetailsApi,
-  })  : _dio = dio ??
-            Dio(BaseOptions(
-              baseUrl: Config.apiBase,
-              connectTimeout: const Duration(seconds: 60),
-              receiveTimeout: const Duration(seconds: 180), // 3 minutes
-              sendTimeout: const Duration(seconds: 60),
-            )),
-        _connectivity = connectivity ?? Connectivity(),
+    SitesApi? sitesApi,
+  })  : _connectivity = connectivity ?? Connectivity(),
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
-            observationDetailsApi ?? ObservationDetailsApiImpl();
+            observationDetailsApi ?? ObservationDetailsApiImpl(),
+        _sitesApi = sitesApi ?? SitesApiImpl();
 
   @override
   Future<
       ({
         List<NomenclatureEntity> nomenclatures,
         List<DatasetEntity> datasets,
-        List<Map<String, dynamic>> nomenclatureTypes
-      })> getNomenclaturesAndDatasets(String moduleName) async {
+        List<Map<String, dynamic>> nomenclatureTypes,
+        Map<String, dynamic> configuration,
+      })> getNomenclaturesAndDatasets(int moduleId, {String? token}) async {
     try {
-      // Use the moduleName parameter in the API URL
-      final response =
-          await _dio.get('$apiBase/monitorings/util/init_data/$moduleName');
-
-      if (response.statusCode == 200) {
-        // Log the response for debugging
-        print('Response from $apiBase/monitorings/util/init_data/$moduleName:');
-        print(
-            'Nomenclature count: ${(response.data['nomenclature'] as List<dynamic>).length}');
-
-        final nomenclatures = (response.data['nomenclature'] as List<dynamic>)
-            .map((json) => NomenclatureEntity.fromJson(json))
-            .toList();
-
-        // Extract unique nomenclature types from nomenclatures
-        final Map<int, Map<String, dynamic>> uniqueTypeData = {};
-
-        for (var nomenclature in nomenclatures) {
-          final idType = nomenclature.idType;
-          // Only process types that haven't been seen yet
-          if (!uniqueTypeData.containsKey(idType)) {
-            // Utiliser le codeType de la nomenclature s'il est disponible
-            final mnemonique =
-                nomenclature.codeType ?? _getMnemoniqueFallback(idType);
-            uniqueTypeData[idType] = {
-              'idType': idType,
-              'mnemonique': mnemonique,
-            };
+      final logger = AppLogger();
+      
+      // Préparer les headers si un token est fourni
+      final headers = token != null ? {'Authorization': 'Bearer $token'} : null;
+      
+      // Créer une instance Dio avec timeout approprié
+      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 180));
+      
+      // Étape 1 : Récupérer le module avec depth=1 pour obtenir les datasets ET le module_code
+      // Le token doit être fourni pour éviter une redirection 302 vers la page de login
+      final moduleResponse = await dioInstance.get(
+        '/monitorings/module/$moduleId',
+        queryParameters: {'depth': 1},
+        options: headers != null 
+          ? Options(headers: headers)
+          : null,
+      );
+      
+      // 204 (No Content) signifie qu'il n'y a pas de données disponibles, 
+      // mais c'est un cas valide (pas une erreur)
+      if (moduleResponse.statusCode == 204) {
+        logger.i(
+          'Module $moduleId: réponse 204 (No Content) - aucune nomenclature ou dataset disponible. '
+          'Le module peut être téléchargé normalement.',
+          tag: 'sync',
+        );
+        // Même avec 204, on peut récupérer la configuration
+        final moduleData = moduleResponse.data as Map<String, dynamic>?;
+        final moduleCode = moduleData?['module_code'] as String?;
+        
+        // Essayer de récupérer quand même la configuration
+        Map<String, dynamic> config = {};
+        if (moduleCode != null) {
+          try {
+            final configResponse = await dio.get(
+              '/monitorings/config/$moduleCode',
+              options: headers != null ? Options(headers: headers) : null,
+            );
+            if (configResponse.statusCode == 200) {
+              config = configResponse.data as Map<String, dynamic>;
+            }
+          } catch (e) {
+            logger.w('Impossible de récupérer la configuration pour $moduleCode: $e', tag: 'sync');
           }
         }
-
-        final datasets = (response.data['dataset'] as List<dynamic>)
-            .map((json) => DatasetEntity.fromJson(json))
-            .toList();
-
+        
         return (
-          nomenclatures: nomenclatures,
-          datasets: datasets,
-          nomenclatureTypes: uniqueTypeData.values.toList(),
+          nomenclatures: <NomenclatureEntity>[],
+          datasets: <DatasetEntity>[],
+          nomenclatureTypes: <Map<String, dynamic>>[],
+          configuration: config,
         );
-      } else {
-        throw Exception(
-            'Failed to fetch data for module $moduleName. Status code: ${response.statusCode}');
       }
+
+      if (moduleResponse.statusCode != 200) {
+        throw Exception(
+            'Failed to fetch module $moduleId. Status code: ${moduleResponse.statusCode}');
+      }
+
+      final moduleData = moduleResponse.data as Map<String, dynamic>;
+      
+      // Extraire le module_code pour récupérer la configuration
+      final moduleCode = moduleData['module_code'] as String?;
+      if (moduleCode == null) {
+        throw Exception('Module code not found in module data for module $moduleId');
+      }
+
+      // Parser les datasets depuis le nouveau format
+      final List<DatasetEntity> datasets = [];
+      if (moduleData.containsKey('datasets') && moduleData['datasets'] is List) {
+        final datasetsList = moduleData['datasets'] as List<dynamic>;
+        for (var datasetJson in datasetsList) {
+          try {
+            final dataset = DatasetEntity.fromJson(datasetJson as Map<String, dynamic>);
+            datasets.add(dataset);
+          } catch (e) {
+            logger.w(
+              'Erreur lors du parsing d\'un dataset: $e\nDonnées: $datasetJson',
+              tag: 'sync',
+            );
+            // Continuer avec les autres datasets
+          }
+        }
+      }
+
+      // Étape 2 : Récupérer la configuration du module pour obtenir les types de nomenclatures
+      // Cette configuration sera également retournée pour éviter un appel redondant
+      final configResponse = await dio.get(
+        '/monitorings/config/$moduleCode',
+        options: headers != null ? Options(headers: headers) : null,
+      );
+      
+      final Map<String, dynamic> config;
+      if (configResponse.statusCode == 200) {
+        config = configResponse.data as Map<String, dynamic>;
+      } else {
+        logger.w(
+          'Module $moduleCode: Impossible de récupérer la configuration (status: ${configResponse.statusCode}). '
+          'Les nomenclatures ne pourront pas être récupérées.',
+          tag: 'sync',
+        );
+        // Retourner les datasets sans nomenclatures mais avec une config vide
+        return (
+          nomenclatures: <NomenclatureEntity>[],
+          datasets: datasets,
+          nomenclatureTypes: <Map<String, dynamic>>[],
+          configuration: <String, dynamic>{},
+        );
+      }
+      
+      // Extraire les types de nomenclatures depuis config.data.nomenclature
+      final List<String> nomenclatureTypeCodes = [];
+      if (config.containsKey('data') && 
+          config['data'] is Map &&
+          (config['data'] as Map).containsKey('nomenclature') &&
+          (config['data'] as Map)['nomenclature'] is List) {
+        final data = config['data'] as Map<String, dynamic>;
+        final nomenclatureList = data['nomenclature'] as List<dynamic>;
+        nomenclatureTypeCodes.addAll(
+          nomenclatureList.whereType<String>(),
+        );
+      }
+
+      // Étape 3 : Récupérer les nomenclatures pour chaque type
+      final List<NomenclatureEntity> allNomenclatures = [];
+      final Map<int, Map<String, dynamic>> uniqueTypeData = {};
+
+      // Récupérer les nomenclatures en parallèle pour optimiser les performances
+      // Note: Les nomenclatures GeoNature sont généralement publiques et n'ont pas besoin du token
+      await Future.wait(
+        nomenclatureTypeCodes.map((typeCode) async {
+          try {
+            final nomenclatureResponse = await dio.get(
+              '/nomenclatures/nomenclature/$typeCode',
+              // Optionnel: ajouter le token si nécessaire pour certaines instances
+              // options: headers != null ? Options(headers: headers) : null,
+            );
+
+            if (nomenclatureResponse.statusCode == 200) {
+              final nomenclatureData = nomenclatureResponse.data as Map<String, dynamic>;
+              
+              // Extraire les valeurs (values) de la réponse
+              if (nomenclatureData.containsKey('values') && 
+                  nomenclatureData['values'] is List) {
+                final values = nomenclatureData['values'] as List<dynamic>;
+                
+                for (var valueJson in values) {
+                  try {
+                    final nomenclature = NomenclatureEntity.fromJson(
+                      valueJson as Map<String, dynamic>,
+                    );
+                    allNomenclatures.add(nomenclature);
+
+                    // Ajouter le type de nomenclature si pas déjà vu
+                    if (!uniqueTypeData.containsKey(nomenclature.idType)) {
+                      uniqueTypeData[nomenclature.idType] = {
+                        'idType': nomenclature.idType,
+                        'mnemonique': nomenclature.codeType ?? 
+                                     nomenclatureData['mnemonique'] ?? 
+                                     typeCode,
+                      };
+                    }
+                  } catch (e) {
+                    logger.w(
+                      'Erreur lors du parsing d\'une nomenclature pour le type $typeCode: $e',
+                      tag: 'sync',
+                    );
+                  }
+                }
+              }
+            } else {
+              logger.w(
+                'Module $moduleCode: Impossible de récupérer les nomenclatures pour le type $typeCode '
+                '(status: ${nomenclatureResponse.statusCode})',
+                tag: 'sync',
+              );
+            }
+          } catch (e) {
+            logger.w(
+              'Erreur lors de la récupération des nomenclatures pour le type $typeCode: $e',
+              tag: 'sync',
+            );
+            // Continuer avec les autres types
+          }
+        }),
+      );
+
+      logger.i(
+        'Module $moduleCode (ID: $moduleId): ${datasets.length} datasets et '
+        '${allNomenclatures.length} nomenclatures récupérés depuis ${nomenclatureTypeCodes.length} types. '
+        'Configuration également récupérée.',
+        tag: 'sync',
+      );
+
+      return (
+        nomenclatures: allNomenclatures,
+        datasets: datasets,
+        nomenclatureTypes: uniqueTypeData.values.toList(),
+        configuration: config,
+      );
     } catch (e) {
       throw Exception(
-          'Error fetching data for module $moduleName: ${e.toString()}');
+          'Error fetching data for module $moduleId: ${e.toString()}');
     }
   }
 
   // Helper method to provide a default mnemonique for known type IDs
+  // Conservée pour une utilisation future lors de la récupération des nomenclatures
+  // ignore: unused_element
   String _getMnemoniqueFallback(int idType) {
     // Map of known type IDs to their mnemoniques
     final knownTypes = {
@@ -119,10 +280,36 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode) async {
     try {
       final response =
-          await _dio.get('$apiBase/monitorings/config/$moduleCode');
+          await dio.get('/monitorings/config/$moduleCode');
+
+      // 204 (No Content) signifie qu'il n'y a pas de configuration disponible,
+      // mais c'est un cas valide - retourner une configuration minimale valide
+      if (response.statusCode == 204) {
+        final logger = AppLogger();
+        logger.i(
+          'Module $moduleCode: réponse 204 (No Content) pour la configuration. '
+          'Retour d\'une configuration minimale valide.',
+          tag: 'sync',
+        );
+        // Retourner une configuration minimale mais valide pour éviter les erreurs de parsing
+        return {
+          'module': {'children_types': [], 'label': 'Module'},
+          'site': {'label': 'Site', 'label_list': 'Sites'},
+          'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+        };
+      }
 
       if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        final data = response.data;
+        if (data == null || (data is Map && data.isEmpty)) {
+          // Si les données sont null ou vides, retourner une config minimale
+          return {
+            'module': {'children_types': [], 'label': 'Module'},
+            'site': {'label': 'Site', 'label_list': 'Sites'},
+            'sites_group': {'label': 'Groupe de sites', 'label_list': 'Groupes de sites'},
+          };
+        }
+        return data as Map<String, dynamic>;
       } else {
         throw Exception(
             'Failed to fetch configuration for module $moduleCode. Status code: ${response.statusCode}');
@@ -136,7 +323,7 @@ class GlobalApiImpl implements GlobalApi {
   @override
   Future<List<Map<String, dynamic>>> getSiteTypes() async {
     try {
-      final response = await _dio.get('$apiBase/monitorings/sites/types');
+      final response = await dio.get('/monitorings/sites/types');
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -155,8 +342,8 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getSiteTypeById(
       int idNomenclatureTypeSite) async {
     try {
-      final response = await _dio
-          .get('$apiBase/monitorings/sites/types/$idNomenclatureTypeSite');
+      final response = await dio
+          .get('/monitorings/sites/types/$idNomenclatureTypeSite');
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -173,7 +360,7 @@ class GlobalApiImpl implements GlobalApi {
   @override
   Future<Map<String, dynamic>> getSiteTypeByLabel(String label) async {
     try {
-      final response = await _dio.get('$apiBase/monitorings/sites/types/label',
+      final response = await dio.get('/monitorings/sites/types/label',
           queryParameters: {'label_fr': label});
 
       if (response.statusCode == 200) {
@@ -191,7 +378,7 @@ class GlobalApiImpl implements GlobalApi {
   Future<List<Map<String, dynamic>>> getNomenclatureTypes() async {
     try {
       final response =
-          await _dio.get('$apiBase/nomenclatures/nomenclature_types');
+          await dio.get('/nomenclatures/nomenclature_types');
 
       if (response.statusCode == 200) {
         final items = response.data as List<dynamic>;
@@ -209,8 +396,8 @@ class GlobalApiImpl implements GlobalApi {
   Future<Map<String, dynamic>> getNomenclatureTypeByMnemonique(
       String mnemonique) async {
     try {
-      final response = await _dio
-          .get('$apiBase/nomenclatures/nomenclature_types/$mnemonique');
+      final response = await dio
+          .get('/nomenclatures/nomenclature_types/$mnemonique');
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -235,8 +422,8 @@ class GlobalApiImpl implements GlobalApi {
       }
 
       // Utiliser l'endpoint des types de sites pour vérifier si le serveur est accessible
-      final response = await _dio.get(
-        '$apiBase/monitorings/sites/types',
+      final response = await dio.get(
+        '/monitorings/sites/types',
         options: Options(
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 5),
@@ -254,7 +441,7 @@ class GlobalApiImpl implements GlobalApi {
   @override
   Future<SyncResult> syncNomenclaturesAndDatasets(
     String token,
-    List<String> moduleCodes, {
+    List<int> moduleIds, {
     DateTime? lastSync,
   }) async {
     try {
@@ -271,61 +458,38 @@ class GlobalApiImpl implements GlobalApi {
       final Map<int, Map<String, dynamic>> allUniqueTypeData = {};
 
       // Synchroniser les nomenclatures et datasets pour chaque module
-      for (final moduleCode in moduleCodes) {
+      // On réutilise la méthode getNomenclaturesAndDatasets qui implémente correctement
+      // le nouveau flux avec récupération de la configuration et des nomenclatures
+      for (final moduleId in moduleIds) {
         try {
-          final response = await _dio.get(
-            '$apiBase/monitorings/util/init_data/$moduleCode',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-            ),
-          );
+          // Utiliser getNomenclaturesAndDatasets qui gère tout le flux
+          // Passer le token pour les requêtes authentifiées
+          final data = await getNomenclaturesAndDatasets(moduleId, token: token);
 
-          if (response.statusCode == 200) {
-            // Traiter les nomenclatures
-            final nomenclatures =
-                (response.data['nomenclature'] as List<dynamic>)
-                    .map((json) => NomenclatureEntity.fromJson(json))
-                    .toList();
-
-            // Extraire les types de nomenclature uniques
-            for (var nomenclature in nomenclatures) {
-              final idType = nomenclature.idType;
-              if (!allUniqueTypeData.containsKey(idType)) {
-                final mnemonique =
-                    nomenclature.codeType ?? _getMnemoniqueFallback(idType);
-                allUniqueTypeData[idType] = {
-                  'idType': idType,
-                  'mnemonique': mnemonique,
-                };
-              }
-            }
-
-            // Compter les nomenclatures
-            itemsProcessed += nomenclatures.length;
-            if (lastSync == null) {
-              itemsAdded += nomenclatures.length;
-            } else {
-              itemsUpdated += nomenclatures.length;
-            }
-
-            // Traiter les datasets
-            final datasets = (response.data['dataset'] as List<dynamic>)
-                .map((json) => DatasetEntity.fromJson(json))
-                .toList();
-
-            // Compter les datasets
-            itemsProcessed += datasets.length;
-            // Les datasets sont considérés comme des mises à jour
-            // car ils sont liés aux modules déjà téléchargés
-            itemsUpdated += datasets.length;
+          // Compter les nomenclatures
+          itemsProcessed += data.nomenclatures.length;
+          if (lastSync == null) {
+            itemsAdded += data.nomenclatures.length;
           } else {
-            itemsSkipped++;
-            errors
-                .add('Module $moduleCode: Status code ${response.statusCode}');
+            itemsUpdated += data.nomenclatures.length;
           }
+
+          // Ajouter les types de nomenclatures uniques
+          for (var typeData in data.nomenclatureTypes) {
+            final idType = typeData['idType'] as int;
+            if (!allUniqueTypeData.containsKey(idType)) {
+              allUniqueTypeData[idType] = typeData;
+            }
+          }
+
+          // Compter les datasets
+          itemsProcessed += data.datasets.length;
+          // Les datasets sont considérés comme des mises à jour
+          // car ils sont liés aux modules déjà téléchargés
+          itemsUpdated += data.datasets.length;
         } catch (e) {
           itemsSkipped++;
-          errors.add('Module $moduleCode: ${e.toString()}');
+          errors.add('Module $moduleId: ${e.toString()}');
         }
       }
 
@@ -373,14 +537,22 @@ class GlobalApiImpl implements GlobalApi {
     List<String> moduleCodes, {
     DateTime? lastSync,
   }) async {
-    return syncNomenclaturesAndDatasets(token, moduleCodes, lastSync: lastSync);
+    // Cette méthode est dépréciée, elle ne peut plus fonctionner avec le nouvel endpoint
+    // qui nécessite des moduleIds. Retourner une erreur explicite.
+    return SyncResult.failure(
+      errorMessage: 'syncNomenclatures est dépréciée. Utilisez syncNomenclaturesAndDatasets avec des moduleIds.',
+    );
   }
 
   @override
   @Deprecated('Use syncNomenclaturesAndDatasets instead')
   Future<SyncResult> syncDatasets(
       String token, List<String> moduleCodes) async {
-    return syncNomenclaturesAndDatasets(token, moduleCodes);
+    // Cette méthode est dépréciée, elle ne peut plus fonctionner avec le nouvel endpoint
+    // qui nécessite des moduleIds. Retourner une erreur explicite.
+    return SyncResult.failure(
+      errorMessage: 'syncDatasets est dépréciée. Utilisez syncNomenclaturesAndDatasets avec des moduleIds.',
+    );
   }
 
   @override
@@ -398,11 +570,15 @@ class GlobalApiImpl implements GlobalApi {
       int itemsSkipped = 0;
       List<String> errors = [];
 
+      // Log des modules à synchroniser
+      debugPrint('Synchronisation de la configuration pour ${moduleCodes.length} modules: ${moduleCodes.join(', ')}');
+      
       // Synchroniser la configuration pour chaque module
       for (final moduleCode in moduleCodes) {
+        debugPrint('Synchronisation configuration du module: $moduleCode');
         try {
-          final response = await _dio.get(
-            '$apiBase/monitorings/config/$moduleCode',
+          final response = await dio.get(
+            '/monitorings/config/$moduleCode',
             options: Options(
               headers: {'Authorization': 'Bearer $token'},
             ),
@@ -412,14 +588,23 @@ class GlobalApiImpl implements GlobalApi {
             itemsProcessed++;
             // On considère que c'est une mise à jour puisque le module était déjà téléchargé
             itemsUpdated++;
+            debugPrint('Configuration synchronisée avec succès pour le module: $moduleCode');
           } else {
             itemsSkipped++;
-            errors
-                .add('Module $moduleCode: Status code ${response.statusCode}');
+            final errorMsg = 'Module $moduleCode: Erreur serveur lors de la synchronisation de la configuration (code ${response.statusCode})';
+            errors.add(errorMsg);
+            debugPrint('Erreur de synchronisation configuration: $errorMsg');
           }
         } catch (e) {
           itemsSkipped++;
-          errors.add('Module $moduleCode: ${e.toString()}');
+          final errorMessage = ErrorMessageHelper.formatError(
+            'la synchronisation de la configuration', 
+            e, 
+            moduleCode: moduleCode
+          );
+          errors.add(errorMessage);
+          // Log détaillé pour le debugging
+          debugPrint('Erreur de synchronisation configuration pour module $moduleCode: $e');
         }
       }
 
@@ -458,9 +643,21 @@ class GlobalApiImpl implements GlobalApi {
   }
 
   @override
+  Future<Map<String, dynamic>> updateVisit(
+      String token, String moduleCode, int visitId, BaseVisit visit) async {
+    return _visitsApi.updateVisit(token, moduleCode, visitId, visit);
+  }
+
+  @override
   Future<Map<String, dynamic>> sendObservation(
       String token, String moduleCode, Observation observation) async {
     return _observationsApi.sendObservation(token, moduleCode, observation);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateObservation(
+      String token, String moduleCode, int observationId, Observation observation) async {
+    return _observationsApi.updateObservation(token, moduleCode, observationId, observation);
   }
 
   @override
@@ -468,5 +665,23 @@ class GlobalApiImpl implements GlobalApi {
       String token, String moduleCode, ObservationDetail detail) async {
     return _observationDetailsApi.sendObservationDetail(
         token, moduleCode, detail);
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSite(
+      String token, String moduleCode, BaseSite site, {int? moduleId}) async {
+    return _sitesApi.sendSite(token, moduleCode, site, moduleId: moduleId);
+  }
+
+  @override
+  Future<Map<String, dynamic>> updateSite(
+      String token, String moduleCode, int siteId, BaseSite site) async {
+    return _sitesApi.updateSite(token, moduleCode, siteId, site);
+  }
+
+  @override
+  Future<Map<String, dynamic>> sendSiteGroup(
+      String token, String moduleCode, SiteGroup siteGroup, {int? moduleId}) async {
+    return _sitesApi.sendSiteGroup(token, moduleCode, siteGroup, moduleId: moduleId);
   }
 }

@@ -26,12 +26,16 @@ mixin _$BaseSite {
   String? get uuidBaseSite => throw _privateConstructorUsedError;
   int? get altitudeMin => throw _privateConstructorUsedError;
   int? get altitudeMax => throw _privateConstructorUsedError;
+  int? get idInventor => throw _privateConstructorUsedError;
+  int? get idDigitiser => throw _privateConstructorUsedError;
   DateTime? get metaCreateDate => throw _privateConstructorUsedError;
   DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
+  Map<String, dynamic>? get data => throw _privateConstructorUsedError;
+  bool? get isLocal =>
+      throw _privateConstructorUsedError; // true si créé localement, false si récupéré depuis l'API
+  int? get serverSiteId => throw _privateConstructorUsedError;
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $BaseSiteCopyWith<BaseSite> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -51,8 +55,13 @@ abstract class $BaseSiteCopyWith<$Res> {
       String? uuidBaseSite,
       int? altitudeMin,
       int? altitudeMax,
+      int? idInventor,
+      int? idDigitiser,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      Map<String, dynamic>? data,
+      bool? isLocal,
+      int? serverSiteId});
 }
 
 /// @nodoc
@@ -65,8 +74,6 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -79,8 +86,13 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
     Object? uuidBaseSite = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? idInventor = freezed,
+    Object? idDigitiser = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? data = freezed,
+    Object? isLocal = freezed,
+    Object? serverSiteId = freezed,
   }) {
     return _then(_value.copyWith(
       idBaseSite: null == idBaseSite
@@ -119,6 +131,14 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -127,6 +147,18 @@ class _$BaseSiteCopyWithImpl<$Res, $Val extends BaseSite>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      data: freezed == data
+          ? _value.data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      serverSiteId: freezed == serverSiteId
+          ? _value.serverSiteId
+          : serverSiteId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -149,8 +181,13 @@ abstract class _$$BaseSiteImplCopyWith<$Res>
       String? uuidBaseSite,
       int? altitudeMin,
       int? altitudeMax,
+      int? idInventor,
+      int? idDigitiser,
       DateTime? metaCreateDate,
-      DateTime? metaUpdateDate});
+      DateTime? metaUpdateDate,
+      Map<String, dynamic>? data,
+      bool? isLocal,
+      int? serverSiteId});
 }
 
 /// @nodoc
@@ -161,8 +198,6 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
       _$BaseSiteImpl _value, $Res Function(_$BaseSiteImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -175,8 +210,13 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
     Object? uuidBaseSite = freezed,
     Object? altitudeMin = freezed,
     Object? altitudeMax = freezed,
+    Object? idInventor = freezed,
+    Object? idDigitiser = freezed,
     Object? metaCreateDate = freezed,
     Object? metaUpdateDate = freezed,
+    Object? data = freezed,
+    Object? isLocal = freezed,
+    Object? serverSiteId = freezed,
   }) {
     return _then(_$BaseSiteImpl(
       idBaseSite: null == idBaseSite
@@ -215,6 +255,14 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.altitudeMax
           : altitudeMax // ignore: cast_nullable_to_non_nullable
               as int?,
+      idInventor: freezed == idInventor
+          ? _value.idInventor
+          : idInventor // ignore: cast_nullable_to_non_nullable
+              as int?,
+      idDigitiser: freezed == idDigitiser
+          ? _value.idDigitiser
+          : idDigitiser // ignore: cast_nullable_to_non_nullable
+              as int?,
       metaCreateDate: freezed == metaCreateDate
           ? _value.metaCreateDate
           : metaCreateDate // ignore: cast_nullable_to_non_nullable
@@ -223,6 +271,18 @@ class __$$BaseSiteImplCopyWithImpl<$Res>
           ? _value.metaUpdateDate
           : metaUpdateDate // ignore: cast_nullable_to_non_nullable
               as DateTime?,
+      data: freezed == data
+          ? _value._data
+          : data // ignore: cast_nullable_to_non_nullable
+              as Map<String, dynamic>?,
+      isLocal: freezed == isLocal
+          ? _value.isLocal
+          : isLocal // ignore: cast_nullable_to_non_nullable
+              as bool?,
+      serverSiteId: freezed == serverSiteId
+          ? _value.serverSiteId
+          : serverSiteId // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -240,8 +300,14 @@ class _$BaseSiteImpl implements _BaseSite {
       this.uuidBaseSite,
       this.altitudeMin,
       this.altitudeMax,
+      this.idInventor,
+      this.idDigitiser,
       this.metaCreateDate,
-      this.metaUpdateDate});
+      this.metaUpdateDate,
+      final Map<String, dynamic>? data,
+      this.isLocal,
+      this.serverSiteId})
+      : _data = data;
 
   @override
   final int idBaseSite;
@@ -263,13 +329,32 @@ class _$BaseSiteImpl implements _BaseSite {
   @override
   final int? altitudeMax;
   @override
+  final int? idInventor;
+  @override
+  final int? idDigitiser;
+  @override
   final DateTime? metaCreateDate;
   @override
   final DateTime? metaUpdateDate;
+  final Map<String, dynamic>? _data;
+  @override
+  Map<String, dynamic>? get data {
+    final value = _data;
+    if (value == null) return null;
+    if (_data is EqualUnmodifiableMapView) return _data;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableMapView(value);
+  }
+
+  @override
+  final bool? isLocal;
+// true si créé localement, false si récupéré depuis l'API
+  @override
+  final int? serverSiteId;
 
   @override
   String toString() {
-    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate)';
+    return 'BaseSite(idBaseSite: $idBaseSite, baseSiteName: $baseSiteName, baseSiteDescription: $baseSiteDescription, baseSiteCode: $baseSiteCode, firstUseDate: $firstUseDate, geom: $geom, uuidBaseSite: $uuidBaseSite, altitudeMin: $altitudeMin, altitudeMax: $altitudeMax, idInventor: $idInventor, idDigitiser: $idDigitiser, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, data: $data, isLocal: $isLocal, serverSiteId: $serverSiteId)';
   }
 
   @override
@@ -294,10 +379,18 @@ class _$BaseSiteImpl implements _BaseSite {
                 other.altitudeMin == altitudeMin) &&
             (identical(other.altitudeMax, altitudeMax) ||
                 other.altitudeMax == altitudeMax) &&
+            (identical(other.idInventor, idInventor) ||
+                other.idInventor == idInventor) &&
+            (identical(other.idDigitiser, idDigitiser) ||
+                other.idDigitiser == idDigitiser) &&
             (identical(other.metaCreateDate, metaCreateDate) ||
                 other.metaCreateDate == metaCreateDate) &&
             (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate));
+                other.metaUpdateDate == metaUpdateDate) &&
+            const DeepCollectionEquality().equals(other._data, _data) &&
+            (identical(other.isLocal, isLocal) || other.isLocal == isLocal) &&
+            (identical(other.serverSiteId, serverSiteId) ||
+                other.serverSiteId == serverSiteId));
   }
 
   @override
@@ -312,12 +405,15 @@ class _$BaseSiteImpl implements _BaseSite {
       uuidBaseSite,
       altitudeMin,
       altitudeMax,
+      idInventor,
+      idDigitiser,
       metaCreateDate,
-      metaUpdateDate);
+      metaUpdateDate,
+      const DeepCollectionEquality().hash(_data),
+      isLocal,
+      serverSiteId);
 
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>
@@ -335,8 +431,13 @@ abstract class _BaseSite implements BaseSite {
       final String? uuidBaseSite,
       final int? altitudeMin,
       final int? altitudeMax,
+      final int? idInventor,
+      final int? idDigitiser,
       final DateTime? metaCreateDate,
-      final DateTime? metaUpdateDate}) = _$BaseSiteImpl;
+      final DateTime? metaUpdateDate,
+      final Map<String, dynamic>? data,
+      final bool? isLocal,
+      final int? serverSiteId}) = _$BaseSiteImpl;
 
   @override
   int get idBaseSite;
@@ -349,22 +450,29 @@ abstract class _BaseSite implements BaseSite {
   @override
   DateTime? get firstUseDate;
   @override
-  String? get geom; // GeoJSON representation
-  @override
+  String? get geom;
+  @override // GeoJSON representation
   String? get uuidBaseSite;
   @override
   int? get altitudeMin;
   @override
   int? get altitudeMax;
   @override
+  int? get idInventor;
+  @override
+  int? get idDigitiser;
+  @override
   DateTime? get metaCreateDate;
   @override
   DateTime? get metaUpdateDate;
-
-  /// Create a copy of BaseSite
-  /// with the given fields replaced by the non-null parameter values.
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  Map<String, dynamic>? get data;
+  @override
+  bool? get isLocal;
+  @override // true si créé localement, false si récupéré depuis l'API
+  int? get serverSiteId;
+  @override
+  @JsonKey(ignore: true)
   _$$BaseSiteImplCopyWith<_$BaseSiteImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

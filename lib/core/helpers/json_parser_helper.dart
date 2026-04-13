@@ -26,7 +26,10 @@ class JsonParserHelper {
     
     // Tenter le parsing JSON standard
     try {
-      return jsonDecode(trimmed) as Map<String, dynamic>;
+      final result = jsonDecode(trimmed) as Map<String, dynamic>;
+      // Vérifier et convertir les valeurs qui sont des strings mais qui devraient être des arrays
+      _deepConvertArrayStrings(result);
+      return result;
     } catch (e) {
       
       try {
@@ -105,21 +108,37 @@ class JsonParserHelper {
   /// Parse manuellement des paires clé-valeur au format "cle: valeur, cle2: valeur2"
   static Map<String, dynamic> _parseKeyValuePairs(String content) {
     final result = <String, dynamic>{};
-    
-    // Diviser par les virgules, en tenant compte des virgules dans les chaînes
+
+    // Diviser par les virgules, en tenant compte des virgules dans les chaînes, tableaux et parenthèses
     List<String> parts = [];
     bool inString = false;
+    int bracketDepth = 0;  // Profondeur des crochets []
+    int parenDepth = 0;    // Profondeur des parenthèses ()
     int lastIndex = 0;
-    
+
     for (int i = 0; i < content.length; i++) {
-      if (content[i] == '"' || content[i] == "'") {
+      final char = content[i];
+
+      // Gérer les guillemets doubles uniquement (ignorer les apostrophes françaises)
+      if (char == '"') {
         inString = !inString;
-      } else if (content[i] == ',' && !inString) {
-        parts.add(content.substring(lastIndex, i).trim());
-        lastIndex = i + 1;
+      } else if (!inString) {
+        if (char == '[') {
+          bracketDepth++;
+        } else if (char == ']') {
+          bracketDepth--;
+        } else if (char == '(') {
+          parenDepth++;
+        } else if (char == ')') {
+          parenDepth--;
+        } else if (char == ',' && bracketDepth == 0 && parenDepth == 0) {
+          // Virgule en dehors des strings, crochets ET parenthèses
+          parts.add(content.substring(lastIndex, i).trim());
+          lastIndex = i + 1;
+        }
       }
     }
-    
+
     // Ajouter la dernière partie
     if (lastIndex < content.length) {
       parts.add(content.substring(lastIndex).trim());
@@ -148,22 +167,79 @@ class JsonParserHelper {
     return result;
   }
   
+  /// Convertit récursivement les strings qui ressemblent à des arrays JSON en vraies listes
+  static void _deepConvertArrayStrings(Map<String, dynamic> map) {
+    // Utiliser une liste de clés pour éviter les modifications pendant l'itération
+    final keys = map.keys.toList();
+
+    for (final key in keys) {
+      final value = map[key];
+
+      if (value is String && value.startsWith('[') && value.endsWith(']')) {
+        // C'est une string qui ressemble à un array, essayer de la convertir
+        try {
+          map[key] = jsonDecode(value);
+        } catch (e) {
+          // Si le parsing JSON échoue, utiliser notre conversion manuelle
+          map[key] = _convertStringToValue(value);
+        }
+      } else if (value is Map<String, dynamic>) {
+        // Récursivement convertir les maps imbriquées
+        _deepConvertArrayStrings(value);
+      }
+    }
+  }
+
   /// Convertit une chaîne en sa valeur typée (int, bool, etc.)
   static dynamic _convertStringToValue(String rawValue) {
     final trimmed = rawValue.trim();
-    
+
     // Retirer les guillemets si présents
     String clean = trimmed;
     if ((clean.startsWith('"') && clean.endsWith('"')) ||
         (clean.startsWith("'") && clean.endsWith("'"))) {
       clean = clean.substring(1, clean.length - 1);
     }
-    
+
+    // Arrays JSON (ex: [1034, 1035, 1036] ou ["a", "b", "c"])
+    if (clean.startsWith('[') && clean.endsWith(']')) {
+      try {
+        // Essayer de parser comme JSON array
+        return jsonDecode(clean);
+      } catch (e) {
+        // Si le parsing JSON échoue, essayer un parsing manuel
+        final content = clean.substring(1, clean.length - 1).trim();
+        if (content.isEmpty) {
+          return []; // Array vide
+        }
+
+        // Séparer par virgule et convertir chaque élément
+        final elements = content.split(',').map((e) {
+          final element = e.trim();
+          // Retirer les guillemets si présents
+          if ((element.startsWith('"') && element.endsWith('"')) ||
+              (element.startsWith("'") && element.endsWith("'"))) {
+            return element.substring(1, element.length - 1);
+          }
+          // Essayer de parser comme nombre
+          if (RegExp(r'^-?\d+$').hasMatch(element)) {
+            return int.parse(element);
+          }
+          if (RegExp(r'^-?\d+\.\d+$').hasMatch(element)) {
+            return double.parse(element);
+          }
+          return element;
+        }).toList();
+
+        return elements;
+      }
+    }
+
     // Booléens
     if (clean.toLowerCase() == 'true') return true;
     if (clean.toLowerCase() == 'false') return false;
     if (clean.toLowerCase() == 'null') return null;
-    
+
     // Nombres
     if (RegExp(r'^-?\d+$').hasMatch(clean)) {
       return int.parse(clean);
@@ -171,7 +247,7 @@ class JsonParserHelper {
     if (RegExp(r'^-?\d+\.\d+$').hasMatch(clean)) {
       return double.parse(clean);
     }
-    
+
     // Par défaut, retourner la chaîne
     return clean;
   }

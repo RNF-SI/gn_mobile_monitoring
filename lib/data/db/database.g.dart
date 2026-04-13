@@ -507,6 +507,22 @@ class $TBaseSitesTable extends TBaseSites
   late final GeneratedColumn<int> altitudeMax = GeneratedColumn<int>(
       'altitude_max', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isLocalMeta =
+      const VerificationMeta('isLocal');
+  @override
+  late final GeneratedColumn<bool> isLocal = GeneratedColumn<bool>(
+      'is_local', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_local" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _serverSiteIdMeta =
+      const VerificationMeta('serverSiteId');
+  @override
+  late final GeneratedColumn<int> serverSiteId = GeneratedColumn<int>(
+      'server_site_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idBaseSite,
@@ -521,7 +537,9 @@ class $TBaseSitesTable extends TBaseSites
         metaCreateDate,
         metaUpdateDate,
         altitudeMin,
-        altitudeMax
+        altitudeMax,
+        isLocal,
+        serverSiteId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -609,6 +627,16 @@ class $TBaseSitesTable extends TBaseSites
           altitudeMax.isAcceptableOrUnknown(
               data['altitude_max']!, _altitudeMaxMeta));
     }
+    if (data.containsKey('is_local')) {
+      context.handle(_isLocalMeta,
+          isLocal.isAcceptableOrUnknown(data['is_local']!, _isLocalMeta));
+    }
+    if (data.containsKey('server_site_id')) {
+      context.handle(
+          _serverSiteIdMeta,
+          serverSiteId.isAcceptableOrUnknown(
+              data['server_site_id']!, _serverSiteIdMeta));
+    }
     return context;
   }
 
@@ -644,6 +672,10 @@ class $TBaseSitesTable extends TBaseSites
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_min']),
       altitudeMax: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_max']),
+      isLocal: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_local']),
+      serverSiteId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_site_id']),
     );
   }
 
@@ -667,6 +699,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
   final DateTime? metaUpdateDate;
   final int? altitudeMin;
   final int? altitudeMax;
+  final bool? isLocal;
+  final int? serverSiteId;
   const TBaseSite(
       {required this.idBaseSite,
       this.idInventor,
@@ -680,7 +714,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       this.metaCreateDate,
       this.metaUpdateDate,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.isLocal,
+      this.serverSiteId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -720,6 +756,12 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
     }
     if (!nullToAbsent || altitudeMax != null) {
       map['altitude_max'] = Variable<int>(altitudeMax);
+    }
+    if (!nullToAbsent || isLocal != null) {
+      map['is_local'] = Variable<bool>(isLocal);
+    }
+    if (!nullToAbsent || serverSiteId != null) {
+      map['server_site_id'] = Variable<int>(serverSiteId);
     }
     return map;
   }
@@ -761,6 +803,12 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       altitudeMax: altitudeMax == null && nullToAbsent
           ? const Value.absent()
           : Value(altitudeMax),
+      isLocal: isLocal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isLocal),
+      serverSiteId: serverSiteId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverSiteId),
     );
   }
 
@@ -782,6 +830,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       metaUpdateDate: serializer.fromJson<DateTime?>(json['metaUpdateDate']),
       altitudeMin: serializer.fromJson<int?>(json['altitudeMin']),
       altitudeMax: serializer.fromJson<int?>(json['altitudeMax']),
+      isLocal: serializer.fromJson<bool?>(json['isLocal']),
+      serverSiteId: serializer.fromJson<int?>(json['serverSiteId']),
     );
   }
   @override
@@ -801,6 +851,8 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       'metaUpdateDate': serializer.toJson<DateTime?>(metaUpdateDate),
       'altitudeMin': serializer.toJson<int?>(altitudeMin),
       'altitudeMax': serializer.toJson<int?>(altitudeMax),
+      'isLocal': serializer.toJson<bool?>(isLocal),
+      'serverSiteId': serializer.toJson<int?>(serverSiteId),
     };
   }
 
@@ -817,7 +869,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           Value<DateTime?> metaCreateDate = const Value.absent(),
           Value<DateTime?> metaUpdateDate = const Value.absent(),
           Value<int?> altitudeMin = const Value.absent(),
-          Value<int?> altitudeMax = const Value.absent()}) =>
+          Value<int?> altitudeMax = const Value.absent(),
+          Value<bool?> isLocal = const Value.absent(),
+          Value<int?> serverSiteId = const Value.absent()}) =>
       TBaseSite(
         idBaseSite: idBaseSite ?? this.idBaseSite,
         idInventor: idInventor.present ? idInventor.value : this.idInventor,
@@ -840,6 +894,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
             metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
         altitudeMin: altitudeMin.present ? altitudeMin.value : this.altitudeMin,
         altitudeMax: altitudeMax.present ? altitudeMax.value : this.altitudeMax,
+        isLocal: isLocal.present ? isLocal.value : this.isLocal,
+        serverSiteId:
+            serverSiteId.present ? serverSiteId.value : this.serverSiteId,
       );
   TBaseSite copyWithCompanion(TBaseSitesCompanion data) {
     return TBaseSite(
@@ -875,6 +932,10 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           data.altitudeMin.present ? data.altitudeMin.value : this.altitudeMin,
       altitudeMax:
           data.altitudeMax.present ? data.altitudeMax.value : this.altitudeMax,
+      isLocal: data.isLocal.present ? data.isLocal.value : this.isLocal,
+      serverSiteId: data.serverSiteId.present
+          ? data.serverSiteId.value
+          : this.serverSiteId,
     );
   }
 
@@ -893,7 +954,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteId: $serverSiteId')
           ..write(')'))
         .toString();
   }
@@ -912,7 +975,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
       metaCreateDate,
       metaUpdateDate,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      isLocal,
+      serverSiteId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -929,7 +994,9 @@ class TBaseSite extends DataClass implements Insertable<TBaseSite> {
           other.metaCreateDate == this.metaCreateDate &&
           other.metaUpdateDate == this.metaUpdateDate &&
           other.altitudeMin == this.altitudeMin &&
-          other.altitudeMax == this.altitudeMax);
+          other.altitudeMax == this.altitudeMax &&
+          other.isLocal == this.isLocal &&
+          other.serverSiteId == this.serverSiteId);
 }
 
 class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
@@ -946,6 +1013,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
   final Value<DateTime?> metaUpdateDate;
   final Value<int?> altitudeMin;
   final Value<int?> altitudeMax;
+  final Value<bool?> isLocal;
+  final Value<int?> serverSiteId;
   const TBaseSitesCompanion({
     this.idBaseSite = const Value.absent(),
     this.idInventor = const Value.absent(),
@@ -960,6 +1029,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     this.metaUpdateDate = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteId = const Value.absent(),
   });
   TBaseSitesCompanion.insert({
     this.idBaseSite = const Value.absent(),
@@ -975,6 +1046,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     this.metaUpdateDate = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteId = const Value.absent(),
   });
   static Insertable<TBaseSite> custom({
     Expression<int>? idBaseSite,
@@ -990,6 +1063,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     Expression<DateTime>? metaUpdateDate,
     Expression<int>? altitudeMin,
     Expression<int>? altitudeMax,
+    Expression<bool>? isLocal,
+    Expression<int>? serverSiteId,
   }) {
     return RawValuesInsertable({
       if (idBaseSite != null) 'id_base_site': idBaseSite,
@@ -1006,6 +1081,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
       if (altitudeMin != null) 'altitude_min': altitudeMin,
       if (altitudeMax != null) 'altitude_max': altitudeMax,
+      if (isLocal != null) 'is_local': isLocal,
+      if (serverSiteId != null) 'server_site_id': serverSiteId,
     });
   }
 
@@ -1022,7 +1099,9 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       Value<DateTime?>? metaCreateDate,
       Value<DateTime?>? metaUpdateDate,
       Value<int?>? altitudeMin,
-      Value<int?>? altitudeMax}) {
+      Value<int?>? altitudeMax,
+      Value<bool?>? isLocal,
+      Value<int?>? serverSiteId}) {
     return TBaseSitesCompanion(
       idBaseSite: idBaseSite ?? this.idBaseSite,
       idInventor: idInventor ?? this.idInventor,
@@ -1037,6 +1116,8 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       altitudeMin: altitudeMin ?? this.altitudeMin,
       altitudeMax: altitudeMax ?? this.altitudeMax,
+      isLocal: isLocal ?? this.isLocal,
+      serverSiteId: serverSiteId ?? this.serverSiteId,
     );
   }
 
@@ -1083,6 +1164,12 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
     if (altitudeMax.present) {
       map['altitude_max'] = Variable<int>(altitudeMax.value);
     }
+    if (isLocal.present) {
+      map['is_local'] = Variable<bool>(isLocal.value);
+    }
+    if (serverSiteId.present) {
+      map['server_site_id'] = Variable<int>(serverSiteId.value);
+    }
     return map;
   }
 
@@ -1101,7 +1188,9 @@ class TBaseSitesCompanion extends UpdateCompanion<TBaseSite> {
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteId: $serverSiteId')
           ..write(')'))
         .toString();
   }
@@ -4087,6 +4176,22 @@ class $TSitesGroupsTable extends TSitesGroups
   late final GeneratedColumn<int> altitudeMax = GeneratedColumn<int>(
       'altitude_max', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isLocalMeta =
+      const VerificationMeta('isLocal');
+  @override
+  late final GeneratedColumn<bool> isLocal = GeneratedColumn<bool>(
+      'is_local', aliasedName, true,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("is_local" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  static const VerificationMeta _serverSiteGroupIdMeta =
+      const VerificationMeta('serverSiteGroupId');
+  @override
+  late final GeneratedColumn<int> serverSiteGroupId = GeneratedColumn<int>(
+      'server_site_group_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idSitesGroup,
@@ -4101,7 +4206,9 @@ class $TSitesGroupsTable extends TSitesGroups
         idDigitiser,
         geom,
         altitudeMin,
-        altitudeMax
+        altitudeMax,
+        isLocal,
+        serverSiteGroupId
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4185,6 +4292,16 @@ class $TSitesGroupsTable extends TSitesGroups
           altitudeMax.isAcceptableOrUnknown(
               data['altitude_max']!, _altitudeMaxMeta));
     }
+    if (data.containsKey('is_local')) {
+      context.handle(_isLocalMeta,
+          isLocal.isAcceptableOrUnknown(data['is_local']!, _isLocalMeta));
+    }
+    if (data.containsKey('server_site_group_id')) {
+      context.handle(
+          _serverSiteGroupIdMeta,
+          serverSiteGroupId.isAcceptableOrUnknown(
+              data['server_site_group_id']!, _serverSiteGroupIdMeta));
+    }
     return context;
   }
 
@@ -4221,6 +4338,10 @@ class $TSitesGroupsTable extends TSitesGroups
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_min']),
       altitudeMax: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}altitude_max']),
+      isLocal: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}is_local']),
+      serverSiteGroupId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}server_site_group_id']),
     );
   }
 
@@ -4244,6 +4365,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
   final String? geom;
   final int? altitudeMin;
   final int? altitudeMax;
+  final bool? isLocal;
+  final int? serverSiteGroupId;
   const TSitesGroup(
       {required this.idSitesGroup,
       this.sitesGroupName,
@@ -4257,7 +4380,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       this.idDigitiser,
       this.geom,
       this.altitudeMin,
-      this.altitudeMax});
+      this.altitudeMax,
+      this.isLocal,
+      this.serverSiteGroupId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -4298,6 +4423,12 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
     if (!nullToAbsent || altitudeMax != null) {
       map['altitude_max'] = Variable<int>(altitudeMax);
     }
+    if (!nullToAbsent || isLocal != null) {
+      map['is_local'] = Variable<bool>(isLocal);
+    }
+    if (!nullToAbsent || serverSiteGroupId != null) {
+      map['server_site_group_id'] = Variable<int>(serverSiteGroupId);
+    }
     return map;
   }
 
@@ -4336,6 +4467,12 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       altitudeMax: altitudeMax == null && nullToAbsent
           ? const Value.absent()
           : Value(altitudeMax),
+      isLocal: isLocal == null && nullToAbsent
+          ? const Value.absent()
+          : Value(isLocal),
+      serverSiteGroupId: serverSiteGroupId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverSiteGroupId),
     );
   }
 
@@ -4357,6 +4494,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       geom: serializer.fromJson<String?>(json['geom']),
       altitudeMin: serializer.fromJson<int?>(json['altitudeMin']),
       altitudeMax: serializer.fromJson<int?>(json['altitudeMax']),
+      isLocal: serializer.fromJson<bool?>(json['isLocal']),
+      serverSiteGroupId: serializer.fromJson<int?>(json['serverSiteGroupId']),
     );
   }
   @override
@@ -4377,6 +4516,8 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       'geom': serializer.toJson<String?>(geom),
       'altitudeMin': serializer.toJson<int?>(altitudeMin),
       'altitudeMax': serializer.toJson<int?>(altitudeMax),
+      'isLocal': serializer.toJson<bool?>(isLocal),
+      'serverSiteGroupId': serializer.toJson<int?>(serverSiteGroupId),
     };
   }
 
@@ -4393,7 +4534,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           Value<int?> idDigitiser = const Value.absent(),
           Value<String?> geom = const Value.absent(),
           Value<int?> altitudeMin = const Value.absent(),
-          Value<int?> altitudeMax = const Value.absent()}) =>
+          Value<int?> altitudeMax = const Value.absent(),
+          Value<bool?> isLocal = const Value.absent(),
+          Value<int?> serverSiteGroupId = const Value.absent()}) =>
       TSitesGroup(
         idSitesGroup: idSitesGroup ?? this.idSitesGroup,
         sitesGroupName:
@@ -4415,6 +4558,10 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
         geom: geom.present ? geom.value : this.geom,
         altitudeMin: altitudeMin.present ? altitudeMin.value : this.altitudeMin,
         altitudeMax: altitudeMax.present ? altitudeMax.value : this.altitudeMax,
+        isLocal: isLocal.present ? isLocal.value : this.isLocal,
+        serverSiteGroupId: serverSiteGroupId.present
+            ? serverSiteGroupId.value
+            : this.serverSiteGroupId,
       );
   TSitesGroup copyWithCompanion(TSitesGroupsCompanion data) {
     return TSitesGroup(
@@ -4448,6 +4595,10 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           data.altitudeMin.present ? data.altitudeMin.value : this.altitudeMin,
       altitudeMax:
           data.altitudeMax.present ? data.altitudeMax.value : this.altitudeMax,
+      isLocal: data.isLocal.present ? data.isLocal.value : this.isLocal,
+      serverSiteGroupId: data.serverSiteGroupId.present
+          ? data.serverSiteGroupId.value
+          : this.serverSiteGroupId,
     );
   }
 
@@ -4466,7 +4617,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           ..write('idDigitiser: $idDigitiser, ')
           ..write('geom: $geom, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteGroupId: $serverSiteGroupId')
           ..write(')'))
         .toString();
   }
@@ -4485,7 +4638,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
       idDigitiser,
       geom,
       altitudeMin,
-      altitudeMax);
+      altitudeMax,
+      isLocal,
+      serverSiteGroupId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4502,7 +4657,9 @@ class TSitesGroup extends DataClass implements Insertable<TSitesGroup> {
           other.idDigitiser == this.idDigitiser &&
           other.geom == this.geom &&
           other.altitudeMin == this.altitudeMin &&
-          other.altitudeMax == this.altitudeMax);
+          other.altitudeMax == this.altitudeMax &&
+          other.isLocal == this.isLocal &&
+          other.serverSiteGroupId == this.serverSiteGroupId);
 }
 
 class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
@@ -4519,6 +4676,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
   final Value<String?> geom;
   final Value<int?> altitudeMin;
   final Value<int?> altitudeMax;
+  final Value<bool?> isLocal;
+  final Value<int?> serverSiteGroupId;
   const TSitesGroupsCompanion({
     this.idSitesGroup = const Value.absent(),
     this.sitesGroupName = const Value.absent(),
@@ -4533,6 +4692,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     this.geom = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteGroupId = const Value.absent(),
   });
   TSitesGroupsCompanion.insert({
     this.idSitesGroup = const Value.absent(),
@@ -4548,6 +4709,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     this.geom = const Value.absent(),
     this.altitudeMin = const Value.absent(),
     this.altitudeMax = const Value.absent(),
+    this.isLocal = const Value.absent(),
+    this.serverSiteGroupId = const Value.absent(),
   });
   static Insertable<TSitesGroup> custom({
     Expression<int>? idSitesGroup,
@@ -4563,6 +4726,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     Expression<String>? geom,
     Expression<int>? altitudeMin,
     Expression<int>? altitudeMax,
+    Expression<bool>? isLocal,
+    Expression<int>? serverSiteGroupId,
   }) {
     return RawValuesInsertable({
       if (idSitesGroup != null) 'id_sites_group': idSitesGroup,
@@ -4579,6 +4744,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       if (geom != null) 'geom': geom,
       if (altitudeMin != null) 'altitude_min': altitudeMin,
       if (altitudeMax != null) 'altitude_max': altitudeMax,
+      if (isLocal != null) 'is_local': isLocal,
+      if (serverSiteGroupId != null) 'server_site_group_id': serverSiteGroupId,
     });
   }
 
@@ -4595,7 +4762,9 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       Value<int?>? idDigitiser,
       Value<String?>? geom,
       Value<int?>? altitudeMin,
-      Value<int?>? altitudeMax}) {
+      Value<int?>? altitudeMax,
+      Value<bool?>? isLocal,
+      Value<int?>? serverSiteGroupId}) {
     return TSitesGroupsCompanion(
       idSitesGroup: idSitesGroup ?? this.idSitesGroup,
       sitesGroupName: sitesGroupName ?? this.sitesGroupName,
@@ -4611,6 +4780,8 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
       geom: geom ?? this.geom,
       altitudeMin: altitudeMin ?? this.altitudeMin,
       altitudeMax: altitudeMax ?? this.altitudeMax,
+      isLocal: isLocal ?? this.isLocal,
+      serverSiteGroupId: serverSiteGroupId ?? this.serverSiteGroupId,
     );
   }
 
@@ -4657,6 +4828,12 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
     if (altitudeMax.present) {
       map['altitude_max'] = Variable<int>(altitudeMax.value);
     }
+    if (isLocal.present) {
+      map['is_local'] = Variable<bool>(isLocal.value);
+    }
+    if (serverSiteGroupId.present) {
+      map['server_site_group_id'] = Variable<int>(serverSiteGroupId.value);
+    }
     return map;
   }
 
@@ -4675,7 +4852,9 @@ class TSitesGroupsCompanion extends UpdateCompanion<TSitesGroup> {
           ..write('idDigitiser: $idDigitiser, ')
           ..write('geom: $geom, ')
           ..write('altitudeMin: $altitudeMin, ')
-          ..write('altitudeMax: $altitudeMax')
+          ..write('altitudeMax: $altitudeMax, ')
+          ..write('isLocal: $isLocal, ')
+          ..write('serverSiteGroupId: $serverSiteGroupId')
           ..write(')'))
         .toString();
   }
@@ -4692,11 +4871,7 @@ class $TSiteComplementsTable extends TSiteComplements
   @override
   late final GeneratedColumn<int> idBaseSite = GeneratedColumn<int>(
       'id_base_site', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _idSitesGroupMeta =
       const VerificationMeta('idSitesGroup');
   @override
@@ -5123,6 +5298,12 @@ class $TObservationsTable extends TObservations
   late final GeneratedColumn<int> idBaseVisit = GeneratedColumn<int>(
       'id_base_visit', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _idDigitiserMeta =
+      const VerificationMeta('idDigitiser');
+  @override
+  late final GeneratedColumn<int> idDigitiser = GeneratedColumn<int>(
+      'id_digitiser', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _cdNomMeta = const VerificationMeta('cdNom');
   @override
   late final GeneratedColumn<int> cdNom = GeneratedColumn<int>(
@@ -5142,9 +5323,22 @@ class $TObservationsTable extends TObservations
       type: DriftSqlType.string,
       requiredDuringInsert: false,
       defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
+  static const VerificationMeta _serverObservationIdMeta =
+      const VerificationMeta('serverObservationId');
   @override
-  List<GeneratedColumn> get $columns =>
-      [idObservation, idBaseVisit, cdNom, comments, uuidObservation];
+  late final GeneratedColumn<int> serverObservationId = GeneratedColumn<int>(
+      'server_observation_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        idObservation,
+        idBaseVisit,
+        idDigitiser,
+        cdNom,
+        comments,
+        uuidObservation,
+        serverObservationId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5167,6 +5361,12 @@ class $TObservationsTable extends TObservations
           idBaseVisit.isAcceptableOrUnknown(
               data['id_base_visit']!, _idBaseVisitMeta));
     }
+    if (data.containsKey('id_digitiser')) {
+      context.handle(
+          _idDigitiserMeta,
+          idDigitiser.isAcceptableOrUnknown(
+              data['id_digitiser']!, _idDigitiserMeta));
+    }
     if (data.containsKey('cd_nom')) {
       context.handle(
           _cdNomMeta, cdNom.isAcceptableOrUnknown(data['cd_nom']!, _cdNomMeta));
@@ -5181,6 +5381,12 @@ class $TObservationsTable extends TObservations
           uuidObservation.isAcceptableOrUnknown(
               data['uuid_observation']!, _uuidObservationMeta));
     }
+    if (data.containsKey('server_observation_id')) {
+      context.handle(
+          _serverObservationIdMeta,
+          serverObservationId.isAcceptableOrUnknown(
+              data['server_observation_id']!, _serverObservationIdMeta));
+    }
     return context;
   }
 
@@ -5194,12 +5400,16 @@ class $TObservationsTable extends TObservations
           .read(DriftSqlType.int, data['${effectivePrefix}id_observation'])!,
       idBaseVisit: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id_base_visit']),
+      idDigitiser: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id_digitiser']),
       cdNom: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}cd_nom']),
       comments: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}comments']),
       uuidObservation: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}uuid_observation']),
+      serverObservationId: attachedDatabase.typeMapping.read(
+          DriftSqlType.int, data['${effectivePrefix}server_observation_id']),
     );
   }
 
@@ -5212,21 +5422,28 @@ class $TObservationsTable extends TObservations
 class TObservation extends DataClass implements Insertable<TObservation> {
   final int idObservation;
   final int? idBaseVisit;
+  final int? idDigitiser;
   final int? cdNom;
   final String? comments;
   final String? uuidObservation;
+  final int? serverObservationId;
   const TObservation(
       {required this.idObservation,
       this.idBaseVisit,
+      this.idDigitiser,
       this.cdNom,
       this.comments,
-      this.uuidObservation});
+      this.uuidObservation,
+      this.serverObservationId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id_observation'] = Variable<int>(idObservation);
     if (!nullToAbsent || idBaseVisit != null) {
       map['id_base_visit'] = Variable<int>(idBaseVisit);
+    }
+    if (!nullToAbsent || idDigitiser != null) {
+      map['id_digitiser'] = Variable<int>(idDigitiser);
     }
     if (!nullToAbsent || cdNom != null) {
       map['cd_nom'] = Variable<int>(cdNom);
@@ -5237,6 +5454,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     if (!nullToAbsent || uuidObservation != null) {
       map['uuid_observation'] = Variable<String>(uuidObservation);
     }
+    if (!nullToAbsent || serverObservationId != null) {
+      map['server_observation_id'] = Variable<int>(serverObservationId);
+    }
     return map;
   }
 
@@ -5246,6 +5466,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       idBaseVisit: idBaseVisit == null && nullToAbsent
           ? const Value.absent()
           : Value(idBaseVisit),
+      idDigitiser: idDigitiser == null && nullToAbsent
+          ? const Value.absent()
+          : Value(idDigitiser),
       cdNom:
           cdNom == null && nullToAbsent ? const Value.absent() : Value(cdNom),
       comments: comments == null && nullToAbsent
@@ -5254,6 +5477,9 @@ class TObservation extends DataClass implements Insertable<TObservation> {
       uuidObservation: uuidObservation == null && nullToAbsent
           ? const Value.absent()
           : Value(uuidObservation),
+      serverObservationId: serverObservationId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverObservationId),
     );
   }
 
@@ -5263,9 +5489,12 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return TObservation(
       idObservation: serializer.fromJson<int>(json['idObservation']),
       idBaseVisit: serializer.fromJson<int?>(json['idBaseVisit']),
+      idDigitiser: serializer.fromJson<int?>(json['idDigitiser']),
       cdNom: serializer.fromJson<int?>(json['cdNom']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidObservation: serializer.fromJson<String?>(json['uuidObservation']),
+      serverObservationId:
+          serializer.fromJson<int?>(json['serverObservationId']),
     );
   }
   @override
@@ -5274,26 +5503,34 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return <String, dynamic>{
       'idObservation': serializer.toJson<int>(idObservation),
       'idBaseVisit': serializer.toJson<int?>(idBaseVisit),
+      'idDigitiser': serializer.toJson<int?>(idDigitiser),
       'cdNom': serializer.toJson<int?>(cdNom),
       'comments': serializer.toJson<String?>(comments),
       'uuidObservation': serializer.toJson<String?>(uuidObservation),
+      'serverObservationId': serializer.toJson<int?>(serverObservationId),
     };
   }
 
   TObservation copyWith(
           {int? idObservation,
           Value<int?> idBaseVisit = const Value.absent(),
+          Value<int?> idDigitiser = const Value.absent(),
           Value<int?> cdNom = const Value.absent(),
           Value<String?> comments = const Value.absent(),
-          Value<String?> uuidObservation = const Value.absent()}) =>
+          Value<String?> uuidObservation = const Value.absent(),
+          Value<int?> serverObservationId = const Value.absent()}) =>
       TObservation(
         idObservation: idObservation ?? this.idObservation,
         idBaseVisit: idBaseVisit.present ? idBaseVisit.value : this.idBaseVisit,
+        idDigitiser: idDigitiser.present ? idDigitiser.value : this.idDigitiser,
         cdNom: cdNom.present ? cdNom.value : this.cdNom,
         comments: comments.present ? comments.value : this.comments,
         uuidObservation: uuidObservation.present
             ? uuidObservation.value
             : this.uuidObservation,
+        serverObservationId: serverObservationId.present
+            ? serverObservationId.value
+            : this.serverObservationId,
       );
   TObservation copyWithCompanion(TObservationsCompanion data) {
     return TObservation(
@@ -5302,11 +5539,16 @@ class TObservation extends DataClass implements Insertable<TObservation> {
           : this.idObservation,
       idBaseVisit:
           data.idBaseVisit.present ? data.idBaseVisit.value : this.idBaseVisit,
+      idDigitiser:
+          data.idDigitiser.present ? data.idDigitiser.value : this.idDigitiser,
       cdNom: data.cdNom.present ? data.cdNom.value : this.cdNom,
       comments: data.comments.present ? data.comments.value : this.comments,
       uuidObservation: data.uuidObservation.present
           ? data.uuidObservation.value
           : this.uuidObservation,
+      serverObservationId: data.serverObservationId.present
+          ? data.serverObservationId.value
+          : this.serverObservationId,
     );
   }
 
@@ -5315,75 +5557,94 @@ class TObservation extends DataClass implements Insertable<TObservation> {
     return (StringBuffer('TObservation(')
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idDigitiser: $idDigitiser, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
-          ..write('uuidObservation: $uuidObservation')
+          ..write('uuidObservation: $uuidObservation, ')
+          ..write('serverObservationId: $serverObservationId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(idObservation, idBaseVisit, cdNom, comments, uuidObservation);
+  int get hashCode => Object.hash(idObservation, idBaseVisit, idDigitiser,
+      cdNom, comments, uuidObservation, serverObservationId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is TObservation &&
           other.idObservation == this.idObservation &&
           other.idBaseVisit == this.idBaseVisit &&
+          other.idDigitiser == this.idDigitiser &&
           other.cdNom == this.cdNom &&
           other.comments == this.comments &&
-          other.uuidObservation == this.uuidObservation);
+          other.uuidObservation == this.uuidObservation &&
+          other.serverObservationId == this.serverObservationId);
 }
 
 class TObservationsCompanion extends UpdateCompanion<TObservation> {
   final Value<int> idObservation;
   final Value<int?> idBaseVisit;
+  final Value<int?> idDigitiser;
   final Value<int?> cdNom;
   final Value<String?> comments;
   final Value<String?> uuidObservation;
+  final Value<int?> serverObservationId;
   const TObservationsCompanion({
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
+    this.serverObservationId = const Value.absent(),
   });
   TObservationsCompanion.insert({
     this.idObservation = const Value.absent(),
     this.idBaseVisit = const Value.absent(),
+    this.idDigitiser = const Value.absent(),
     this.cdNom = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidObservation = const Value.absent(),
+    this.serverObservationId = const Value.absent(),
   });
   static Insertable<TObservation> custom({
     Expression<int>? idObservation,
     Expression<int>? idBaseVisit,
+    Expression<int>? idDigitiser,
     Expression<int>? cdNom,
     Expression<String>? comments,
     Expression<String>? uuidObservation,
+    Expression<int>? serverObservationId,
   }) {
     return RawValuesInsertable({
       if (idObservation != null) 'id_observation': idObservation,
       if (idBaseVisit != null) 'id_base_visit': idBaseVisit,
+      if (idDigitiser != null) 'id_digitiser': idDigitiser,
       if (cdNom != null) 'cd_nom': cdNom,
       if (comments != null) 'comments': comments,
       if (uuidObservation != null) 'uuid_observation': uuidObservation,
+      if (serverObservationId != null)
+        'server_observation_id': serverObservationId,
     });
   }
 
   TObservationsCompanion copyWith(
       {Value<int>? idObservation,
       Value<int?>? idBaseVisit,
+      Value<int?>? idDigitiser,
       Value<int?>? cdNom,
       Value<String?>? comments,
-      Value<String?>? uuidObservation}) {
+      Value<String?>? uuidObservation,
+      Value<int?>? serverObservationId}) {
     return TObservationsCompanion(
       idObservation: idObservation ?? this.idObservation,
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
+      idDigitiser: idDigitiser ?? this.idDigitiser,
       cdNom: cdNom ?? this.cdNom,
       comments: comments ?? this.comments,
       uuidObservation: uuidObservation ?? this.uuidObservation,
+      serverObservationId: serverObservationId ?? this.serverObservationId,
     );
   }
 
@@ -5396,6 +5657,9 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     if (idBaseVisit.present) {
       map['id_base_visit'] = Variable<int>(idBaseVisit.value);
     }
+    if (idDigitiser.present) {
+      map['id_digitiser'] = Variable<int>(idDigitiser.value);
+    }
     if (cdNom.present) {
       map['cd_nom'] = Variable<int>(cdNom.value);
     }
@@ -5405,6 +5669,9 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     if (uuidObservation.present) {
       map['uuid_observation'] = Variable<String>(uuidObservation.value);
     }
+    if (serverObservationId.present) {
+      map['server_observation_id'] = Variable<int>(serverObservationId.value);
+    }
     return map;
   }
 
@@ -5413,9 +5680,11 @@ class TObservationsCompanion extends UpdateCompanion<TObservation> {
     return (StringBuffer('TObservationsCompanion(')
           ..write('idObservation: $idObservation, ')
           ..write('idBaseVisit: $idBaseVisit, ')
+          ..write('idDigitiser: $idDigitiser, ')
           ..write('cdNom: $cdNom, ')
           ..write('comments: $comments, ')
-          ..write('uuidObservation: $uuidObservation')
+          ..write('uuidObservation: $uuidObservation, ')
+          ..write('serverObservationId: $serverObservationId')
           ..write(')'))
         .toString();
   }
@@ -5432,11 +5701,7 @@ class $TObservationComplementsTable extends TObservationComplements
   @override
   late final GeneratedColumn<int> idObservation = GeneratedColumn<int>(
       'id_observation', aliasedName, false,
-      hasAutoIncrement: true,
-      type: DriftSqlType.int,
-      requiredDuringInsert: false,
-      defaultConstraints:
-          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _dataMeta = const VerificationMeta('data');
   @override
   late final GeneratedColumn<String> data = GeneratedColumn<String>(
@@ -9279,6 +9544,12 @@ class $TBaseVisitsTable extends TBaseVisits
   late final GeneratedColumn<String> uuidBaseVisit = GeneratedColumn<String>(
       'uuid_base_visit', aliasedName, true,
       type: DriftSqlType.string, requiredDuringInsert: false);
+  static const VerificationMeta _serverVisitIdMeta =
+      const VerificationMeta('serverVisitId');
+  @override
+  late final GeneratedColumn<int> serverVisitId = GeneratedColumn<int>(
+      'server_visit_id', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _metaCreateDateMeta =
       const VerificationMeta('metaCreateDate');
   @override
@@ -9308,6 +9579,7 @@ class $TBaseVisitsTable extends TBaseVisits
         idNomenclatureGrpTyp,
         comments,
         uuidBaseVisit,
+        serverVisitId,
         metaCreateDate,
         metaUpdateDate
       ];
@@ -9388,6 +9660,12 @@ class $TBaseVisitsTable extends TBaseVisits
           uuidBaseVisit.isAcceptableOrUnknown(
               data['uuid_base_visit']!, _uuidBaseVisitMeta));
     }
+    if (data.containsKey('server_visit_id')) {
+      context.handle(
+          _serverVisitIdMeta,
+          serverVisitId.isAcceptableOrUnknown(
+              data['server_visit_id']!, _serverVisitIdMeta));
+    }
     if (data.containsKey('meta_create_date')) {
       context.handle(
           _metaCreateDateMeta,
@@ -9432,6 +9710,8 @@ class $TBaseVisitsTable extends TBaseVisits
           .read(DriftSqlType.string, data['${effectivePrefix}comments']),
       uuidBaseVisit: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}uuid_base_visit']),
+      serverVisitId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}server_visit_id']),
       metaCreateDate: attachedDatabase.typeMapping.read(
           DriftSqlType.string, data['${effectivePrefix}meta_create_date'])!,
       metaUpdateDate: attachedDatabase.typeMapping.read(
@@ -9457,6 +9737,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
   final int? idNomenclatureGrpTyp;
   final String? comments;
   final String? uuidBaseVisit;
+  final int? serverVisitId;
   final String metaCreateDate;
   final String metaUpdateDate;
   const TBaseVisit(
@@ -9471,6 +9752,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       this.idNomenclatureGrpTyp,
       this.comments,
       this.uuidBaseVisit,
+      this.serverVisitId,
       required this.metaCreateDate,
       required this.metaUpdateDate});
   @override
@@ -9501,6 +9783,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
     }
     if (!nullToAbsent || uuidBaseVisit != null) {
       map['uuid_base_visit'] = Variable<String>(uuidBaseVisit);
+    }
+    if (!nullToAbsent || serverVisitId != null) {
+      map['server_visit_id'] = Variable<int>(serverVisitId);
     }
     map['meta_create_date'] = Variable<String>(metaCreateDate);
     map['meta_update_date'] = Variable<String>(metaUpdateDate);
@@ -9535,6 +9820,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       uuidBaseVisit: uuidBaseVisit == null && nullToAbsent
           ? const Value.absent()
           : Value(uuidBaseVisit),
+      serverVisitId: serverVisitId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serverVisitId),
       metaCreateDate: Value(metaCreateDate),
       metaUpdateDate: Value(metaUpdateDate),
     );
@@ -9557,6 +9845,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           serializer.fromJson<int?>(json['idNomenclatureGrpTyp']),
       comments: serializer.fromJson<String?>(json['comments']),
       uuidBaseVisit: serializer.fromJson<String?>(json['uuidBaseVisit']),
+      serverVisitId: serializer.fromJson<int?>(json['serverVisitId']),
       metaCreateDate: serializer.fromJson<String>(json['metaCreateDate']),
       metaUpdateDate: serializer.fromJson<String>(json['metaUpdateDate']),
     );
@@ -9577,6 +9866,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       'idNomenclatureGrpTyp': serializer.toJson<int?>(idNomenclatureGrpTyp),
       'comments': serializer.toJson<String?>(comments),
       'uuidBaseVisit': serializer.toJson<String?>(uuidBaseVisit),
+      'serverVisitId': serializer.toJson<int?>(serverVisitId),
       'metaCreateDate': serializer.toJson<String>(metaCreateDate),
       'metaUpdateDate': serializer.toJson<String>(metaUpdateDate),
     };
@@ -9594,6 +9884,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           Value<int?> idNomenclatureGrpTyp = const Value.absent(),
           Value<String?> comments = const Value.absent(),
           Value<String?> uuidBaseVisit = const Value.absent(),
+          Value<int?> serverVisitId = const Value.absent(),
           String? metaCreateDate,
           String? metaUpdateDate}) =>
       TBaseVisit(
@@ -9615,6 +9906,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
         comments: comments.present ? comments.value : this.comments,
         uuidBaseVisit:
             uuidBaseVisit.present ? uuidBaseVisit.value : this.uuidBaseVisit,
+        serverVisitId:
+            serverVisitId.present ? serverVisitId.value : this.serverVisitId,
         metaCreateDate: metaCreateDate ?? this.metaCreateDate,
         metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
       );
@@ -9645,6 +9938,9 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       uuidBaseVisit: data.uuidBaseVisit.present
           ? data.uuidBaseVisit.value
           : this.uuidBaseVisit,
+      serverVisitId: data.serverVisitId.present
+          ? data.serverVisitId.value
+          : this.serverVisitId,
       metaCreateDate: data.metaCreateDate.present
           ? data.metaCreateDate.value
           : this.metaCreateDate,
@@ -9669,6 +9965,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
           ..write('comments: $comments, ')
           ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('serverVisitId: $serverVisitId, ')
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate')
           ..write(')'))
@@ -9688,6 +9985,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       idNomenclatureGrpTyp,
       comments,
       uuidBaseVisit,
+      serverVisitId,
       metaCreateDate,
       metaUpdateDate);
   @override
@@ -9706,6 +10004,7 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           other.idNomenclatureGrpTyp == this.idNomenclatureGrpTyp &&
           other.comments == this.comments &&
           other.uuidBaseVisit == this.uuidBaseVisit &&
+          other.serverVisitId == this.serverVisitId &&
           other.metaCreateDate == this.metaCreateDate &&
           other.metaUpdateDate == this.metaUpdateDate);
 }
@@ -9722,6 +10021,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
   final Value<int?> idNomenclatureGrpTyp;
   final Value<String?> comments;
   final Value<String?> uuidBaseVisit;
+  final Value<int?> serverVisitId;
   final Value<String> metaCreateDate;
   final Value<String> metaUpdateDate;
   const TBaseVisitsCompanion({
@@ -9736,6 +10036,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     this.idNomenclatureGrpTyp = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidBaseVisit = const Value.absent(),
+    this.serverVisitId = const Value.absent(),
     this.metaCreateDate = const Value.absent(),
     this.metaUpdateDate = const Value.absent(),
   });
@@ -9751,6 +10052,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     this.idNomenclatureGrpTyp = const Value.absent(),
     this.comments = const Value.absent(),
     this.uuidBaseVisit = const Value.absent(),
+    this.serverVisitId = const Value.absent(),
     this.metaCreateDate = const Value.absent(),
     this.metaUpdateDate = const Value.absent(),
   })  : idDataset = Value(idDataset),
@@ -9768,6 +10070,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     Expression<int>? idNomenclatureGrpTyp,
     Expression<String>? comments,
     Expression<String>? uuidBaseVisit,
+    Expression<int>? serverVisitId,
     Expression<String>? metaCreateDate,
     Expression<String>? metaUpdateDate,
   }) {
@@ -9786,6 +10089,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
         'id_nomenclature_grp_typ': idNomenclatureGrpTyp,
       if (comments != null) 'comments': comments,
       if (uuidBaseVisit != null) 'uuid_base_visit': uuidBaseVisit,
+      if (serverVisitId != null) 'server_visit_id': serverVisitId,
       if (metaCreateDate != null) 'meta_create_date': metaCreateDate,
       if (metaUpdateDate != null) 'meta_update_date': metaUpdateDate,
     });
@@ -9803,6 +10107,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
       Value<int?>? idNomenclatureGrpTyp,
       Value<String?>? comments,
       Value<String?>? uuidBaseVisit,
+      Value<int?>? serverVisitId,
       Value<String>? metaCreateDate,
       Value<String>? metaUpdateDate}) {
     return TBaseVisitsCompanion(
@@ -9818,6 +10123,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
       idNomenclatureGrpTyp: idNomenclatureGrpTyp ?? this.idNomenclatureGrpTyp,
       comments: comments ?? this.comments,
       uuidBaseVisit: uuidBaseVisit ?? this.uuidBaseVisit,
+      serverVisitId: serverVisitId ?? this.serverVisitId,
       metaCreateDate: metaCreateDate ?? this.metaCreateDate,
       metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
     );
@@ -9861,6 +10167,9 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
     if (uuidBaseVisit.present) {
       map['uuid_base_visit'] = Variable<String>(uuidBaseVisit.value);
     }
+    if (serverVisitId.present) {
+      map['server_visit_id'] = Variable<int>(serverVisitId.value);
+    }
     if (metaCreateDate.present) {
       map['meta_create_date'] = Variable<String>(metaCreateDate.value);
     }
@@ -9885,6 +10194,7 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
           ..write('idNomenclatureGrpTyp: $idNomenclatureGrpTyp, ')
           ..write('comments: $comments, ')
           ..write('uuidBaseVisit: $uuidBaseVisit, ')
+          ..write('serverVisitId: $serverVisitId, ')
           ..write('metaCreateDate: $metaCreateDate, ')
           ..write('metaUpdateDate: $metaUpdateDate')
           ..write(')'))
@@ -12700,6 +13010,8 @@ typedef $$TBaseSitesTableCreateCompanionBuilder = TBaseSitesCompanion Function({
   Value<DateTime?> metaUpdateDate,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteId,
 });
 typedef $$TBaseSitesTableUpdateCompanionBuilder = TBaseSitesCompanion Function({
   Value<int> idBaseSite,
@@ -12715,6 +13027,8 @@ typedef $$TBaseSitesTableUpdateCompanionBuilder = TBaseSitesCompanion Function({
   Value<DateTime?> metaUpdateDate,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteId,
 });
 
 class $$TBaseSitesTableFilterComposer
@@ -12767,6 +13081,12 @@ class $$TBaseSitesTableFilterComposer
 
   ColumnFilters<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverSiteId => $composableBuilder(
+      column: $table.serverSiteId, builder: (column) => ColumnFilters(column));
 }
 
 class $$TBaseSitesTableOrderingComposer
@@ -12823,6 +13143,13 @@ class $$TBaseSitesTableOrderingComposer
 
   ColumnOrderings<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverSiteId => $composableBuilder(
+      column: $table.serverSiteId,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TBaseSitesTableAnnotationComposer
@@ -12872,6 +13199,12 @@ class $$TBaseSitesTableAnnotationComposer
 
   GeneratedColumn<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLocal =>
+      $composableBuilder(column: $table.isLocal, builder: (column) => column);
+
+  GeneratedColumn<int> get serverSiteId => $composableBuilder(
+      column: $table.serverSiteId, builder: (column) => column);
 }
 
 class $$TBaseSitesTableTableManager extends RootTableManager<
@@ -12910,6 +13243,8 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             Value<DateTime?> metaUpdateDate = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteId = const Value.absent(),
           }) =>
               TBaseSitesCompanion(
             idBaseSite: idBaseSite,
@@ -12925,6 +13260,8 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             metaUpdateDate: metaUpdateDate,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteId: serverSiteId,
           ),
           createCompanionCallback: ({
             Value<int> idBaseSite = const Value.absent(),
@@ -12940,6 +13277,8 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             Value<DateTime?> metaUpdateDate = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteId = const Value.absent(),
           }) =>
               TBaseSitesCompanion.insert(
             idBaseSite: idBaseSite,
@@ -12955,6 +13294,8 @@ class $$TBaseSitesTableTableManager extends RootTableManager<
             metaUpdateDate: metaUpdateDate,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteId: serverSiteId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -14185,6 +14526,8 @@ typedef $$TSitesGroupsTableCreateCompanionBuilder = TSitesGroupsCompanion
   Value<String?> geom,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteGroupId,
 });
 typedef $$TSitesGroupsTableUpdateCompanionBuilder = TSitesGroupsCompanion
     Function({
@@ -14201,6 +14544,8 @@ typedef $$TSitesGroupsTableUpdateCompanionBuilder = TSitesGroupsCompanion
   Value<String?> geom,
   Value<int?> altitudeMin,
   Value<int?> altitudeMax,
+  Value<bool?> isLocal,
+  Value<int?> serverSiteGroupId,
 });
 
 class $$TSitesGroupsTableFilterComposer
@@ -14256,6 +14601,13 @@ class $$TSitesGroupsTableFilterComposer
 
   ColumnFilters<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId,
+      builder: (column) => ColumnFilters(column));
 }
 
 class $$TSitesGroupsTableOrderingComposer
@@ -14312,6 +14664,13 @@ class $$TSitesGroupsTableOrderingComposer
 
   ColumnOrderings<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<bool> get isLocal => $composableBuilder(
+      column: $table.isLocal, builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId,
+      builder: (column) => ColumnOrderings(column));
 }
 
 class $$TSitesGroupsTableAnnotationComposer
@@ -14361,6 +14720,12 @@ class $$TSitesGroupsTableAnnotationComposer
 
   GeneratedColumn<int> get altitudeMax => $composableBuilder(
       column: $table.altitudeMax, builder: (column) => column);
+
+  GeneratedColumn<bool> get isLocal =>
+      $composableBuilder(column: $table.isLocal, builder: (column) => column);
+
+  GeneratedColumn<int> get serverSiteGroupId => $composableBuilder(
+      column: $table.serverSiteGroupId, builder: (column) => column);
 }
 
 class $$TSitesGroupsTableTableManager extends RootTableManager<
@@ -14402,6 +14767,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             Value<String?> geom = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteGroupId = const Value.absent(),
           }) =>
               TSitesGroupsCompanion(
             idSitesGroup: idSitesGroup,
@@ -14417,6 +14784,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             geom: geom,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteGroupId: serverSiteGroupId,
           ),
           createCompanionCallback: ({
             Value<int> idSitesGroup = const Value.absent(),
@@ -14432,6 +14801,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             Value<String?> geom = const Value.absent(),
             Value<int?> altitudeMin = const Value.absent(),
             Value<int?> altitudeMax = const Value.absent(),
+            Value<bool?> isLocal = const Value.absent(),
+            Value<int?> serverSiteGroupId = const Value.absent(),
           }) =>
               TSitesGroupsCompanion.insert(
             idSitesGroup: idSitesGroup,
@@ -14447,6 +14818,8 @@ class $$TSitesGroupsTableTableManager extends RootTableManager<
             geom: geom,
             altitudeMin: altitudeMin,
             altitudeMax: altitudeMax,
+            isLocal: isLocal,
+            serverSiteGroupId: serverSiteGroupId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -14737,17 +15110,21 @@ typedef $$TObservationsTableCreateCompanionBuilder = TObservationsCompanion
     Function({
   Value<int> idObservation,
   Value<int?> idBaseVisit,
+  Value<int?> idDigitiser,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
+  Value<int?> serverObservationId,
 });
 typedef $$TObservationsTableUpdateCompanionBuilder = TObservationsCompanion
     Function({
   Value<int> idObservation,
   Value<int?> idBaseVisit,
+  Value<int?> idDigitiser,
   Value<int?> cdNom,
   Value<String?> comments,
   Value<String?> uuidObservation,
+  Value<int?> serverObservationId,
 });
 
 class $$TObservationsTableFilterComposer
@@ -14765,6 +15142,9 @@ class $$TObservationsTableFilterComposer
   ColumnFilters<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => ColumnFilters(column));
 
+  ColumnFilters<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnFilters(column));
+
   ColumnFilters<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnFilters(column));
 
@@ -14773,6 +15153,10 @@ class $$TObservationsTableFilterComposer
 
   ColumnFilters<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation,
+      builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId,
       builder: (column) => ColumnFilters(column));
 }
 
@@ -14792,6 +15176,9 @@ class $$TObservationsTableOrderingComposer
   ColumnOrderings<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<int> get cdNom => $composableBuilder(
       column: $table.cdNom, builder: (column) => ColumnOrderings(column));
 
@@ -14800,6 +15187,10 @@ class $$TObservationsTableOrderingComposer
 
   ColumnOrderings<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation,
+      builder: (column) => ColumnOrderings(column));
+
+  ColumnOrderings<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId,
       builder: (column) => ColumnOrderings(column));
 }
 
@@ -14818,6 +15209,9 @@ class $$TObservationsTableAnnotationComposer
   GeneratedColumn<int> get idBaseVisit => $composableBuilder(
       column: $table.idBaseVisit, builder: (column) => column);
 
+  GeneratedColumn<int> get idDigitiser => $composableBuilder(
+      column: $table.idDigitiser, builder: (column) => column);
+
   GeneratedColumn<int> get cdNom =>
       $composableBuilder(column: $table.cdNom, builder: (column) => column);
 
@@ -14826,6 +15220,9 @@ class $$TObservationsTableAnnotationComposer
 
   GeneratedColumn<String> get uuidObservation => $composableBuilder(
       column: $table.uuidObservation, builder: (column) => column);
+
+  GeneratedColumn<int> get serverObservationId => $composableBuilder(
+      column: $table.serverObservationId, builder: (column) => column);
 }
 
 class $$TObservationsTableTableManager extends RootTableManager<
@@ -14856,30 +15253,38 @@ class $$TObservationsTableTableManager extends RootTableManager<
           updateCompanionCallback: ({
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
+            Value<int?> serverObservationId = const Value.absent(),
           }) =>
               TObservationsCompanion(
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
+            idDigitiser: idDigitiser,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
+            serverObservationId: serverObservationId,
           ),
           createCompanionCallback: ({
             Value<int> idObservation = const Value.absent(),
             Value<int?> idBaseVisit = const Value.absent(),
+            Value<int?> idDigitiser = const Value.absent(),
             Value<int?> cdNom = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidObservation = const Value.absent(),
+            Value<int?> serverObservationId = const Value.absent(),
           }) =>
               TObservationsCompanion.insert(
             idObservation: idObservation,
             idBaseVisit: idBaseVisit,
+            idDigitiser: idDigitiser,
             cdNom: cdNom,
             comments: comments,
             uuidObservation: uuidObservation,
+            serverObservationId: serverObservationId,
           ),
           withReferenceMapper: (p0) => p0
               .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
@@ -16973,6 +17378,7 @@ typedef $$TBaseVisitsTableCreateCompanionBuilder = TBaseVisitsCompanion
   Value<int?> idNomenclatureGrpTyp,
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
+  Value<int?> serverVisitId,
   Value<String> metaCreateDate,
   Value<String> metaUpdateDate,
 });
@@ -16989,6 +17395,7 @@ typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
   Value<int?> idNomenclatureGrpTyp,
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
+  Value<int?> serverVisitId,
   Value<String> metaCreateDate,
   Value<String> metaUpdateDate,
 });
@@ -17059,6 +17466,9 @@ class $$TBaseVisitsTableFilterComposer
 
   ColumnFilters<String> get uuidBaseVisit => $composableBuilder(
       column: $table.uuidBaseVisit, builder: (column) => ColumnFilters(column));
+
+  ColumnFilters<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId, builder: (column) => ColumnFilters(column));
 
   ColumnFilters<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate,
@@ -17138,6 +17548,10 @@ class $$TBaseVisitsTableOrderingComposer
       column: $table.uuidBaseVisit,
       builder: (column) => ColumnOrderings(column));
 
+  ColumnOrderings<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId,
+      builder: (column) => ColumnOrderings(column));
+
   ColumnOrderings<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate,
       builder: (column) => ColumnOrderings(column));
@@ -17190,6 +17604,9 @@ class $$TBaseVisitsTableAnnotationComposer
 
   GeneratedColumn<String> get uuidBaseVisit => $composableBuilder(
       column: $table.uuidBaseVisit, builder: (column) => column);
+
+  GeneratedColumn<int> get serverVisitId => $composableBuilder(
+      column: $table.serverVisitId, builder: (column) => column);
 
   GeneratedColumn<String> get metaCreateDate => $composableBuilder(
       column: $table.metaCreateDate, builder: (column) => column);
@@ -17254,6 +17671,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<int?> idNomenclatureGrpTyp = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<int?> serverVisitId = const Value.absent(),
             Value<String> metaCreateDate = const Value.absent(),
             Value<String> metaUpdateDate = const Value.absent(),
           }) =>
@@ -17270,6 +17688,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             idNomenclatureGrpTyp: idNomenclatureGrpTyp,
             comments: comments,
             uuidBaseVisit: uuidBaseVisit,
+            serverVisitId: serverVisitId,
             metaCreateDate: metaCreateDate,
             metaUpdateDate: metaUpdateDate,
           ),
@@ -17286,6 +17705,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<int?> idNomenclatureGrpTyp = const Value.absent(),
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
+            Value<int?> serverVisitId = const Value.absent(),
             Value<String> metaCreateDate = const Value.absent(),
             Value<String> metaUpdateDate = const Value.absent(),
           }) =>
@@ -17302,6 +17722,7 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             idNomenclatureGrpTyp: idNomenclatureGrpTyp,
             comments: comments,
             uuidBaseVisit: uuidBaseVisit,
+            serverVisitId: serverVisitId,
             metaCreateDate: metaCreateDate,
             metaUpdateDate: metaUpdateDate,
           ),
@@ -17375,9 +17796,10 @@ final class $$CorVisitObserverTableReferences extends BaseReferences<
       db.tBaseVisits.createAlias($_aliasNameGenerator(
           db.corVisitObserver.idBaseVisit, db.tBaseVisits.idBaseVisit));
 
-  $$TBaseVisitsTableProcessedTableManager get idBaseVisit {
+  $$TBaseVisitsTableProcessedTableManager? get idBaseVisit {
+    if ($_item.idBaseVisit == null) return null;
     final manager = $$TBaseVisitsTableTableManager($_db, $_db.tBaseVisits)
-        .filter((f) => f.idBaseVisit($_item.idBaseVisit));
+        .filter((f) => f.idBaseVisit($_item.idBaseVisit!));
     final item = $_typedResult.readTableOrNull(_idBaseVisitTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18708,9 +19130,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.bibListesTable.createAlias($_aliasNameGenerator(
           db.corTaxonListeTable.idListe, db.bibListesTable.idListe));
 
-  $$BibListesTableTableProcessedTableManager get idListe {
+  $$BibListesTableTableProcessedTableManager? get idListe {
+    if ($_item.idListe == null) return null;
     final manager = $$BibListesTableTableTableManager($_db, $_db.bibListesTable)
-        .filter((f) => f.idListe($_item.idListe));
+        .filter((f) => f.idListe($_item.idListe!));
     final item = $_typedResult.readTableOrNull(_idListeTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(
@@ -18721,9 +19144,10 @@ final class $$CorTaxonListeTableTableReferences extends BaseReferences<
       db.tTaxrefs.createAlias(
           $_aliasNameGenerator(db.corTaxonListeTable.cdNom, db.tTaxrefs.cdNom));
 
-  $$TTaxrefsTableProcessedTableManager get cdNom {
+  $$TTaxrefsTableProcessedTableManager? get cdNom {
+    if ($_item.cdNom == null) return null;
     final manager = $$TTaxrefsTableTableManager($_db, $_db.tTaxrefs)
-        .filter((f) => f.cdNom($_item.cdNom));
+        .filter((f) => f.cdNom($_item.cdNom!));
     final item = $_typedResult.readTableOrNull(_cdNomTable($_db));
     if (item == null) return manager;
     return ProcessedTableManager(

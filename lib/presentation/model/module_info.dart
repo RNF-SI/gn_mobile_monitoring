@@ -11,6 +11,8 @@ class ModuleInfo with _$ModuleInfo {
     required ModuleDownloadStatus downloadStatus,
     @Default(0.0)
     double downloadProgress, // Default to 0.0, indicating no progress
+    @Default("")
+    String currentStep, // Description of the current download step
   }) = _ModuleInfo;
 
   const ModuleInfo._();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
@@ -113,23 +114,29 @@ void main() {
       ));
     });
 
-    testWidgets('buildPropertiesWidget should display property cards correctly', 
+    testWidgets('buildPropertiesWidget should display property cards correctly',
         (WidgetTester tester) async {
       await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) {
-              return Scaffold(
-                body: testState.buildPropertiesWidget(),
-              );
-            },
+        ProviderScope(
+          child: MaterialApp(
+            home: Builder(
+              builder: (context) {
+                return Scaffold(
+                  body: testState.buildPropertiesWidget(),
+                );
+              },
+            ),
           ),
         ),
       );
 
+      // Attendre le FutureBuilder dans PropertyDisplayWidget
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
       // Vérifier que le titre est affiché
       expect(find.text('Propriétés'), findsOneWidget);
-      
+
       // Vérifier que les propriétés sont affichées
       expect(find.text('Nom'), findsOneWidget);
       expect(find.text('Test Object'), findsOneWidget);
@@ -172,14 +179,18 @@ void main() {
 
       // Vérifier que le fil d'Ariane est affiché
       expect(find.byType(BreadcrumbNavigation), findsOneWidget);
-      
-      // Vérifier la présence des items, en utilisant des finders plus souples
-      expect(find.textContaining('Module'), findsOneWidget);
-      expect(find.textContaining('Test Module'), findsOneWidget);
-      expect(find.textContaining('Group'), findsOneWidget);
-      expect(find.textContaining('Test Group'), findsOneWidget);
-      expect(find.textContaining('Object'), findsOneWidget);
-      expect(find.textContaining('Test Object'), findsOneWidget);
+
+      // Cliquer sur "Afficher les détails" pour voir les éléments détaillés
+      await tester.tap(find.text('Afficher les détails'));
+      await tester.pumpAndSettle();
+
+      // Vérifier la présence des items (labels avec deux-points et valeurs séparément)
+      expect(find.text('Module:'), findsOneWidget);
+      expect(find.text('Test Module'), findsOneWidget);
+      expect(find.text('Group:'), findsOneWidget);
+      expect(find.text('Test Group'), findsOneWidget);
+      expect(find.text('Object:'), findsOneWidget);
+      expect(find.text('Test Object'), findsOneWidget);
     });
 
     testWidgets('buildBreadcrumb should not display breadcrumb when empty', 
@@ -446,13 +457,13 @@ void main() {
       ];
       
       List<DataRow> rows = [
-        DataRow(cells: [
-          const DataCell(Text('Row 1 Cell 1')),
-          const DataCell(Text('Row 1 Cell 2')),
+        DataRow(cells: const [
+          DataCell(Text('Row 1 Cell 1')),
+          DataCell(Text('Row 1 Cell 2')),
         ]),
-        DataRow(cells: [
-          const DataCell(Text('Row 2 Cell 1')),
-          const DataCell(Text('Row 2 Cell 2')),
+        DataRow(cells: const [
+          DataCell(Text('Row 2 Cell 1')),
+          DataCell(Text('Row 2 Cell 2')),
         ]),
       ];
       

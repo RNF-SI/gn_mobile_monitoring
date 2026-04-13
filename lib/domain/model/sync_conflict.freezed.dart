@@ -34,11 +34,26 @@ mixin _$SyncConflict {
       throw _privateConstructorUsedError; // ID de l'entité supprimée
   String? get affectedField =>
       throw _privateConstructorUsedError; // Champ affecté par la suppression
-  String? get navigationPath => throw _privateConstructorUsedError;
+  String? get navigationPath =>
+      throw _privateConstructorUsedError; // Chemin de navigation pour résoudre le conflit
+  bool get isResolved =>
+      throw _privateConstructorUsedError; // Indique si le conflit a été géré
+  String? get resolutionType =>
+      throw _privateConstructorUsedError; // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
+// Nouvelles propriétés pour la gestion améliorée des conflits
+  SyncOperation? get operation =>
+      throw _privateConstructorUsedError; // Opération qui a causé le conflit
+  String? get message =>
+      throw _privateConstructorUsedError; // Message détaillé du conflit
+  ConflictSeverity? get severity =>
+      throw _privateConstructorUsedError; // Sévérité du conflit
+  String? get localValue =>
+      throw _privateConstructorUsedError; // Valeur locale spécifique en conflit
+  String? get remoteValue =>
+      throw _privateConstructorUsedError; // Valeur distante spécifique en conflit
+  int? get referencesCount => throw _privateConstructorUsedError;
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   $SyncConflictCopyWith<SyncConflict> get copyWith =>
       throw _privateConstructorUsedError;
 }
@@ -63,7 +78,15 @@ abstract class $SyncConflictCopyWith<$Res> {
       String? referencedEntityType,
       String? referencedEntityId,
       String? affectedField,
-      String? navigationPath});
+      String? navigationPath,
+      bool isResolved,
+      String? resolutionType,
+      SyncOperation? operation,
+      String? message,
+      ConflictSeverity? severity,
+      String? localValue,
+      String? remoteValue,
+      int? referencesCount});
 }
 
 /// @nodoc
@@ -76,8 +99,6 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
   // ignore: unused_field
   final $Res Function($Val) _then;
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -95,6 +116,14 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
     Object? referencedEntityId = freezed,
     Object? affectedField = freezed,
     Object? navigationPath = freezed,
+    Object? isResolved = null,
+    Object? resolutionType = freezed,
+    Object? operation = freezed,
+    Object? message = freezed,
+    Object? severity = freezed,
+    Object? localValue = freezed,
+    Object? remoteValue = freezed,
+    Object? referencesCount = freezed,
   }) {
     return _then(_value.copyWith(
       entityId: null == entityId
@@ -153,6 +182,38 @@ class _$SyncConflictCopyWithImpl<$Res, $Val extends SyncConflict>
           ? _value.navigationPath
           : navigationPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      isResolved: null == isResolved
+          ? _value.isResolved
+          : isResolved // ignore: cast_nullable_to_non_nullable
+              as bool,
+      resolutionType: freezed == resolutionType
+          ? _value.resolutionType
+          : resolutionType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      operation: freezed == operation
+          ? _value.operation
+          : operation // ignore: cast_nullable_to_non_nullable
+              as SyncOperation?,
+      message: freezed == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String?,
+      severity: freezed == severity
+          ? _value.severity
+          : severity // ignore: cast_nullable_to_non_nullable
+              as ConflictSeverity?,
+      localValue: freezed == localValue
+          ? _value.localValue
+          : localValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      remoteValue: freezed == remoteValue
+          ? _value.remoteValue
+          : remoteValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referencesCount: freezed == referencesCount
+          ? _value.referencesCount
+          : referencesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ) as $Val);
   }
 }
@@ -179,7 +240,15 @@ abstract class _$$SyncConflictImplCopyWith<$Res>
       String? referencedEntityType,
       String? referencedEntityId,
       String? affectedField,
-      String? navigationPath});
+      String? navigationPath,
+      bool isResolved,
+      String? resolutionType,
+      SyncOperation? operation,
+      String? message,
+      ConflictSeverity? severity,
+      String? localValue,
+      String? remoteValue,
+      int? referencesCount});
 }
 
 /// @nodoc
@@ -190,8 +259,6 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
       _$SyncConflictImpl _value, $Res Function(_$SyncConflictImpl) _then)
       : super(_value, _then);
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
   @pragma('vm:prefer-inline')
   @override
   $Res call({
@@ -209,6 +276,14 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
     Object? referencedEntityId = freezed,
     Object? affectedField = freezed,
     Object? navigationPath = freezed,
+    Object? isResolved = null,
+    Object? resolutionType = freezed,
+    Object? operation = freezed,
+    Object? message = freezed,
+    Object? severity = freezed,
+    Object? localValue = freezed,
+    Object? remoteValue = freezed,
+    Object? referencesCount = freezed,
   }) {
     return _then(_$SyncConflictImpl(
       entityId: null == entityId
@@ -267,6 +342,38 @@ class __$$SyncConflictImplCopyWithImpl<$Res>
           ? _value.navigationPath
           : navigationPath // ignore: cast_nullable_to_non_nullable
               as String?,
+      isResolved: null == isResolved
+          ? _value.isResolved
+          : isResolved // ignore: cast_nullable_to_non_nullable
+              as bool,
+      resolutionType: freezed == resolutionType
+          ? _value.resolutionType
+          : resolutionType // ignore: cast_nullable_to_non_nullable
+              as String?,
+      operation: freezed == operation
+          ? _value.operation
+          : operation // ignore: cast_nullable_to_non_nullable
+              as SyncOperation?,
+      message: freezed == message
+          ? _value.message
+          : message // ignore: cast_nullable_to_non_nullable
+              as String?,
+      severity: freezed == severity
+          ? _value.severity
+          : severity // ignore: cast_nullable_to_non_nullable
+              as ConflictSeverity?,
+      localValue: freezed == localValue
+          ? _value.localValue
+          : localValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      remoteValue: freezed == remoteValue
+          ? _value.remoteValue
+          : remoteValue // ignore: cast_nullable_to_non_nullable
+              as String?,
+      referencesCount: freezed == referencesCount
+          ? _value.referencesCount
+          : referencesCount // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -288,7 +395,15 @@ class _$SyncConflictImpl extends _SyncConflict {
       this.referencedEntityType,
       this.referencedEntityId,
       this.affectedField,
-      this.navigationPath})
+      this.navigationPath,
+      this.isResolved = false,
+      this.resolutionType,
+      this.operation,
+      this.message,
+      this.severity,
+      this.localValue,
+      this.remoteValue,
+      this.referencesCount})
       : _localData = localData,
         _remoteData = remoteData,
         _resolvedData = resolvedData,
@@ -347,10 +462,36 @@ class _$SyncConflictImpl extends _SyncConflict {
 // Champ affecté par la suppression
   @override
   final String? navigationPath;
+// Chemin de navigation pour résoudre le conflit
+  @override
+  @JsonKey()
+  final bool isResolved;
+// Indique si le conflit a été géré
+  @override
+  final String? resolutionType;
+// Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
+// Nouvelles propriétés pour la gestion améliorée des conflits
+  @override
+  final SyncOperation? operation;
+// Opération qui a causé le conflit
+  @override
+  final String? message;
+// Message détaillé du conflit
+  @override
+  final ConflictSeverity? severity;
+// Sévérité du conflit
+  @override
+  final String? localValue;
+// Valeur locale spécifique en conflit
+  @override
+  final String? remoteValue;
+// Valeur distante spécifique en conflit
+  @override
+  final int? referencesCount;
 
   @override
   String toString() {
-    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment, conflictType: $conflictType, referencedEntityType: $referencedEntityType, referencedEntityId: $referencedEntityId, affectedField: $affectedField, navigationPath: $navigationPath)';
+    return 'SyncConflict(entityId: $entityId, entityType: $entityType, localData: $localData, remoteData: $remoteData, localModifiedAt: $localModifiedAt, remoteModifiedAt: $remoteModifiedAt, resolutionStrategy: $resolutionStrategy, resolvedData: $resolvedData, resolutionComment: $resolutionComment, conflictType: $conflictType, referencedEntityType: $referencedEntityType, referencedEntityId: $referencedEntityId, affectedField: $affectedField, navigationPath: $navigationPath, isResolved: $isResolved, resolutionType: $resolutionType, operation: $operation, message: $message, severity: $severity, localValue: $localValue, remoteValue: $remoteValue, referencesCount: $referencesCount)';
   }
 
   @override
@@ -385,30 +526,52 @@ class _$SyncConflictImpl extends _SyncConflict {
             (identical(other.affectedField, affectedField) ||
                 other.affectedField == affectedField) &&
             (identical(other.navigationPath, navigationPath) ||
-                other.navigationPath == navigationPath));
+                other.navigationPath == navigationPath) &&
+            (identical(other.isResolved, isResolved) ||
+                other.isResolved == isResolved) &&
+            (identical(other.resolutionType, resolutionType) ||
+                other.resolutionType == resolutionType) &&
+            (identical(other.operation, operation) ||
+                other.operation == operation) &&
+            (identical(other.message, message) || other.message == message) &&
+            (identical(other.severity, severity) ||
+                other.severity == severity) &&
+            (identical(other.localValue, localValue) ||
+                other.localValue == localValue) &&
+            (identical(other.remoteValue, remoteValue) ||
+                other.remoteValue == remoteValue) &&
+            (identical(other.referencesCount, referencesCount) ||
+                other.referencesCount == referencesCount));
   }
 
   @override
-  int get hashCode => Object.hash(
-      runtimeType,
-      entityId,
-      entityType,
-      const DeepCollectionEquality().hash(_localData),
-      const DeepCollectionEquality().hash(_remoteData),
-      localModifiedAt,
-      remoteModifiedAt,
-      resolutionStrategy,
-      const DeepCollectionEquality().hash(_resolvedData),
-      resolutionComment,
-      conflictType,
-      referencedEntityType,
-      referencedEntityId,
-      affectedField,
-      navigationPath);
+  int get hashCode => Object.hashAll([
+        runtimeType,
+        entityId,
+        entityType,
+        const DeepCollectionEquality().hash(_localData),
+        const DeepCollectionEquality().hash(_remoteData),
+        localModifiedAt,
+        remoteModifiedAt,
+        resolutionStrategy,
+        const DeepCollectionEquality().hash(_resolvedData),
+        resolutionComment,
+        conflictType,
+        referencedEntityType,
+        referencedEntityId,
+        affectedField,
+        navigationPath,
+        isResolved,
+        resolutionType,
+        operation,
+        message,
+        severity,
+        localValue,
+        remoteValue,
+        referencesCount
+      ]);
 
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   @override
   @pragma('vm:prefer-inline')
   _$$SyncConflictImplCopyWith<_$SyncConflictImpl> get copyWith =>
@@ -430,7 +593,15 @@ abstract class _SyncConflict extends SyncConflict {
       final String? referencedEntityType,
       final String? referencedEntityId,
       final String? affectedField,
-      final String? navigationPath}) = _$SyncConflictImpl;
+      final String? navigationPath,
+      final bool isResolved,
+      final String? resolutionType,
+      final SyncOperation? operation,
+      final String? message,
+      final ConflictSeverity? severity,
+      final String? localValue,
+      final String? remoteValue,
+      final int? referencesCount}) = _$SyncConflictImpl;
   const _SyncConflict._() : super._();
 
   @override
@@ -452,22 +623,34 @@ abstract class _SyncConflict extends SyncConflict {
   @override
   String? get resolutionComment;
   @override
-  ConflictType
-      get conflictType; // Pour les références supprimées, on stocke des informations sur l'entité référencée
-  @override
-  String?
-      get referencedEntityType; // Type de l'entité supprimée (nomenclature, taxon, etc.)
-  @override
-  String? get referencedEntityId; // ID de l'entité supprimée
-  @override
-  String? get affectedField; // Champ affecté par la suppression
-  @override
+  ConflictType get conflictType;
+  @override // Pour les références supprimées, on stocke des informations sur l'entité référencée
+  String? get referencedEntityType;
+  @override // Type de l'entité supprimée (nomenclature, taxon, etc.)
+  String? get referencedEntityId;
+  @override // ID de l'entité supprimée
+  String? get affectedField;
+  @override // Champ affecté par la suppression
   String? get navigationPath;
-
-  /// Create a copy of SyncConflict
-  /// with the given fields replaced by the non-null parameter values.
+  @override // Chemin de navigation pour résoudre le conflit
+  bool get isResolved;
+  @override // Indique si le conflit a été géré
+  String? get resolutionType;
+  @override // Comment le conflit a été résolu (ex: "modifié", "supprimé", etc.)
+// Nouvelles propriétés pour la gestion améliorée des conflits
+  SyncOperation? get operation;
+  @override // Opération qui a causé le conflit
+  String? get message;
+  @override // Message détaillé du conflit
+  ConflictSeverity? get severity;
+  @override // Sévérité du conflit
+  String? get localValue;
+  @override // Valeur locale spécifique en conflit
+  String? get remoteValue;
+  @override // Valeur distante spécifique en conflit
+  int? get referencesCount;
   @override
-  @JsonKey(includeFromJson: false, includeToJson: false)
+  @JsonKey(ignore: true)
   _$$SyncConflictImplCopyWith<_$SyncConflictImpl> get copyWith =>
       throw _privateConstructorUsedError;
 }

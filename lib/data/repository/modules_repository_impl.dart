@@ -1,9 +1,13 @@
 import 'dart:convert';
 
 import 'package:gn_mobile_monitoring/core/helpers/ts_to_dart_converter.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/taxon_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/interface/api/version_api.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
+import 'package:gn_mobile_monitoring/domain/utils/version_utils.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/datasets_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_database.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/nomenclatures_database.dart';
@@ -19,6 +23,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
+import 'package:gn_mobile_monitoring/domain/repository/sites_repository.dart';
 import 'package:gn_mobile_monitoring/domain/repository/taxon_repository.dart';
 
 class ModulesRepositoryImpl implements ModulesRepository {
@@ -30,6 +35,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
   final DatasetsDatabase datasetsDatabase;
   final TaxonDatabase? taxonDatabase;
   final TaxonRepository taxonRepository;
+  final SitesRepository sitesRepository;
+  final VersionApi versionApi;
 
   ModulesRepositoryImpl(
     this.globalApi,
@@ -40,6 +47,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
     this.datasetsDatabase,
     this.taxonDatabase,
     this.taxonRepository,
+    this.sitesRepository,
+    this.versionApi,
   );
 
   @override
@@ -140,9 +149,21 @@ class ModulesRepositoryImpl implements ModulesRepository {
         print('Added ${modulesToAdd.length} new modules to the database');
       }
 
-      // Update existing modules
+      // Update existing modules but preserve downloaded status
       for (final moduleToUpdate in modulesToUpdate) {
-        await database.updateModule(moduleToUpdate);
+        // Récupérer le module existant pour connaître son statut 'downloaded'
+        final existingModule = await database.getModuleById(moduleToUpdate.id);
+
+        if (existingModule != null && existingModule.downloaded == true) {
+          // Si le module était déjà marqué comme téléchargé, préserver ce statut
+          final updatedModule = moduleToUpdate.copyWith(downloaded: true);
+          await database.updateModule(updatedModule);
+          print(
+              'Preserved downloaded status for module ${moduleToUpdate.moduleCode ?? moduleToUpdate.id}');
+        } else {
+          // Sinon, mettre à jour normalement
+          await database.updateModule(moduleToUpdate);
+        }
       }
 
       // Add new module complements
@@ -166,14 +187,63 @@ class ModulesRepositoryImpl implements ModulesRepository {
     }
   }
 
+  /// Détermine si un module utilise les groupes de sites.
+  /// Utilise bDrawSitesGroup du complément et la configuration du module.
+  /// Retourne true par défaut (conservateur) si aucun signal n'est disponible.
+  Future<bool> _moduleUsesSiteGroups(int moduleId, Map<String, dynamic>? config) async {
+    // Signal 1 : bDrawSitesGroup du complément
+    final complement = await database.getModuleComplementById(moduleId);
+    if (complement?.bDrawSitesGroup != null) {
+      return complement!.bDrawSitesGroup!;
+    }
+
+    // Signal 2 : configuration du module
+    if (config != null) {
+      final moduleConfig = ModuleConfiguration.fromJson(config);
+      final childrenTypes = moduleConfig.module?.childrenTypes;
+      if (childrenTypes != null && childrenTypes.isNotEmpty && !childrenTypes.contains('sites_group')) {
+        return false;
+      }
+      if (moduleConfig.sitesGroup == null) {
+        return false;
+      }
+    }
+
+    return true; // conservateur par défaut
+  }
+
   @override
-  Future<void> downloadModuleData(int moduleId) async {
+  Future<void> downloadCompleteModule(
+    int moduleId,
+    String token, {
+    Function(double)? onProgressUpdate,
+    Function(String)? onStepUpdate,
+  }) async {
     try {
+      // 0. Vérification de la version du module monitoring sur le serveur
+      onStepUpdate?.call('Vérification de la version du serveur');
+      onProgressUpdate?.call(0.05);
+      final versionString = await versionApi.fetchMonitoringVersion(token);
+      final serverVersion = MonitoringVersion.tryParse(versionString);
+      final requiredVersion = VersionRequirements.minimumMonitoring;
+
+      if (serverVersion == null || serverVersion < requiredVersion) {
+        throw VersionIncompatibleException(
+          detectedVersion: versionString,
+          requiredVersion: requiredVersion,
+          serverUrl: Config.baseUrl,
+        );
+      }
+
       final moduleCode = await database
           .getModuleCodeFromIdModule(moduleId); // Fetch module name
 
-      // 1. Fetch nomenclatures and datasets
-      final data = await globalApi.getNomenclaturesAndDatasets(moduleCode);
+      // 1. Fetch nomenclatures, datasets ET configuration en une seule fois
+      // Cette méthode optimisée récupère tout et évite les appels redondants
+      onStepUpdate?.call('Nomenclatures, datasets et configuration');
+      onProgressUpdate?.call(0.15);
+      // Passer le token pour les requêtes authentifiées
+      final data = await globalApi.getNomenclaturesAndDatasets(moduleId, token: token);
 
       // Convert nomenclature entities to domain models
       final nomenclatures =
@@ -201,111 +271,27 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // Ne pas effacer les datasets existants, juste insérer/mettre à jour
       await datasetsDatabase.insertDatasets(datasets);
 
+      // Clear old module-dataset associations before inserting new ones
+      await database.clearDatasetAssociationsForModule(moduleId);
+
       // Associate each dataset with this module
       for (final dataset in datasets) {
         await database.associateModuleWithDataset(moduleId, dataset.id);
       }
 
-      // 2. Fetch and store module configuration
-      final config = await globalApi.getModuleConfiguration(moduleCode);
-      
-      // Prétraiter les expressions hidden en JavaScript et les convertir en Dart directement dans la configuration
-      try {
-        // Variable pour compter le nombre total de fonctions converties
-        int totalConverted = 0;
-        
-        // Fonction pour remplacer les fonctions hidden de JavaScript par du Dart
-        void replaceHiddenFunctions(Map<String, dynamic> configSection) {
-          // Pour les champs génériques
-          if (configSection.containsKey('generic') && configSection['generic'] is Map) {
-            final generic = configSection['generic'] as Map<String, dynamic>;
-            
-            for (final entry in generic.entries) {
-              final fieldId = entry.key;
-              final fieldConfig = entry.value;
-              
-              if (fieldConfig is Map<String, dynamic> && 
-                  fieldConfig.containsKey('hidden') && 
-                  fieldConfig['hidden'] is String && 
-                  fieldConfig['hidden'].toString().startsWith('({')) {
-                try {
-                  final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
-                  
-                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
-                  fieldConfig['hidden'] = dartFunction;
-                  totalConverted++;
-                  print('Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
-                } catch (e) {
-                  print('Error converting hidden function for field $fieldId: $e');
-                }
-              }
-            }
-          }
-          
-          // Pour les champs spécifiques
-          if (configSection.containsKey('specific') && configSection['specific'] is Map) {
-            final specific = configSection['specific'] as Map<String, dynamic>;
-            
-            for (final entry in specific.entries) {
-              final fieldId = entry.key;
-              final fieldConfig = entry.value;
-              
-              if (fieldConfig is Map<String, dynamic> && 
-                  fieldConfig.containsKey('hidden') && 
-                  fieldConfig['hidden'] is String && 
-                  fieldConfig['hidden'].toString().startsWith('({')) {
-                try {
-                  final jsFunction = fieldConfig['hidden'].toString();
-                  final dartFunction = TsToDartConverter.convertToDart(jsFunction);
-                  
-                  // Remplacer la fonction JS par la fonction Dart directement dans la configuration
-                  fieldConfig['hidden'] = dartFunction;
-                  totalConverted++;
-                  print('Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
-                } catch (e) {
-                  print('Error converting hidden function for specific field $fieldId: $e');
-                }
-              }
-            }
-          }
-        }
-        
-        // Parcourir les sections principales du module pour remplacer les fonctions hidden
-        final objectTypes = [
-          'module',
-          'site',
-          'sites_group',
-          'visit',
-          'observation',
-          'observation_detail'
-        ];
-        
-        for (final objectType in objectTypes) {
-          if (config.containsKey(objectType) && config[objectType] is Map<String, dynamic>) {
-            final prevCount = totalConverted;
-            replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
-            final convertedInSection = totalConverted - prevCount;
-            
-            if (convertedInSection > 0) {
-              print('Converted $convertedInSection hidden functions in $objectType section');
-            }
-          }
-        }
-        
-        print('Total hidden functions converted in module configuration: $totalConverted');
-      } catch (e) {
-        print('Erreur lors de la conversion des fonctions hidden: $e');
-        // Continuer malgré les erreurs de conversion
-      }
+      // 2. Utiliser la configuration déjà récupérée (pas besoin de refaire l'appel API)
+      onStepUpdate?.call('Configuration du module');
+      onProgressUpdate?.call(0.30);
+      final config = data.configuration;
 
-      // Convert the Map to a properly formatted JSON string
+      // Prétraiter et stocker la configuration
+      _preprocessConfiguration(config);
       final jsonConfig = json.encode(config);
-
-      // Store the JSON string in the database
       await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
 
       // 3. Fetch Site Types
+      onStepUpdate?.call('Types de sites');
+      onProgressUpdate?.call(0.45);
       final siteTypesData = await globalApi.getSiteTypes();
 
       // Extract the site types that are related to this module from the configuration
@@ -339,11 +325,19 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
             relevantSiteTypes.add(bibTypeSite);
 
-            // Store the nomenclature info if it's not already in the nomenclatures list
-            final nomenclatureInfo = siteTypeData;
-            if (!nomenclatures.any((n) => n.id == int.parse(siteTypeId))) {
+            // Find if this nomenclature already exists in the database
+            final existingNomenclatures =
+                await nomenclaturesDatabase.getAllNomenclatures();
+            bool nomenclatureExists = existingNomenclatures.any((n) =>
+                n.id == siteTypeData['id_nomenclature'] ||
+                (n.idType == 116 &&
+                    n.cdNomenclature == siteTypeData['cd_nomenclature']));
+
+            if (!nomenclatureExists) {
+              // Create and add the nomenclature if it doesn't exist
+              final nomenclatureInfo = siteTypeData['nomenclature'];
               final nomenclature = Nomenclature(
-                id: int.parse(siteTypeId),
+                id: siteTypeData['id_nomenclature'],
                 idType: 116, // TYPE_SITE
                 cdNomenclature:
                     nomenclatureInfo['cd_nomenclature'] as String? ?? '',
@@ -374,14 +368,19 @@ class ModulesRepositoryImpl implements ModulesRepository {
           }
         }
 
-        // Save the site types to the database
-        // if (relevantSiteTypes.isNotEmpty) {
-        //   await nomenclaturesDatabase.clearBibTypeSites();
-        //   await nomenclaturesDatabase.insertBibTypeSites(relevantSiteTypes);
-        // }
+        // Si vous avez besoin de sauvegarder les types de sites dans la base de données,
+        // décommentez le code ci-dessous :
+        /*
+        if (relevantSiteTypes.isNotEmpty) {
+          await nomenclaturesDatabase.clearBibTypeSites();
+          await nomenclaturesDatabase.insertBibTypeSites(relevantSiteTypes);
+        }
+        */
       }
 
       // 4. Download module taxons from configuration
+      onStepUpdate?.call('Taxons');
+      onProgressUpdate?.call(0.60);
       try {
         if (taxonDatabase != null) {
           await taxonRepository.downloadTaxonsFromConfig(config);
@@ -396,23 +395,45 @@ class ModulesRepositoryImpl implements ModulesRepository {
 
       // Mark module as downloaded
       await database.markModuleAsDownloaded(moduleId);
+
+      // 5. Download sites for the module
+      onStepUpdate?.call('Sites');
+      onProgressUpdate?.call(0.80);
+      await sitesRepository.fetchSitesForModule(moduleCode, token);
+
+      // 6. Download site groups for the module (seulement si le module les utilise)
+      final usesSiteGroups = await _moduleUsesSiteGroups(moduleId, config);
+      if (usesSiteGroups) {
+        onStepUpdate?.call('Groupes de sites');
+        onProgressUpdate?.call(0.95);
+        try {
+          await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
+        } catch (e) {
+          // Fallback gracieux : si les groupes de sites échouent, continuer sans
+          print('Warning: Could not fetch site groups for module $moduleCode: $e');
+        }
+      } else {
+        print('Module $moduleCode does not use site groups, skipping.');
+        onProgressUpdate?.call(0.95);
+      }
     } catch (e) {
       throw Exception('Failed to download module data: $e');
     }
   }
 
   @override
-  Future<Module> getModuleWithConfig(int moduleId) async {
-    // Fetch module and complement from database
-    final module = await database.getModuleById(moduleId);
+  Future<Module> getCompleteModule(int moduleId) async {
+    // Récupère le module complet avec ses relations depuis la base de données
+    // La méthode getModuleWithRelationsById récupère automatiquement :
+    // - Le module de base
+    // - Les sites associés
+    // - Les groupes de sites
+    // - Les compléments de module (configuration de base)
+    final module = await database.getModuleWithRelationsById(moduleId);
     final complement = await database.getModuleComplementById(moduleId);
 
-    // If module is null, throw an exception
-    if (module == null) {
-      throw Exception('Module not found with ID: $moduleId');
-    }
-
-    // Return module with complement if it exists
+    // Retourner le module avec ses compléments mis à jour si disponibles
+    // Le module a déjà un complément, mais on veut s'assurer qu'il a la dernière version
     return module.copyWith(complement: complement);
   }
 
@@ -478,6 +499,16 @@ class ModulesRepositoryImpl implements ModulesRepository {
   }
 
   @override
+  Future<void> clearDatasetAssociationsForModule(int moduleId) async {
+    await database.clearDatasetAssociationsForModule(moduleId);
+  }
+
+  @override
+  Future<void> associateModuleWithDataset(int moduleId, int datasetId) async {
+    await database.associateModuleWithDataset(moduleId, datasetId);
+  }
+
+  @override
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {
     try {
       return await database.getDatasetIdsForModule(moduleId);
@@ -492,6 +523,21 @@ class ModulesRepositoryImpl implements ModulesRepository {
       return await datasetsDatabase.getDatasetsByIds(datasetIds);
     } catch (e) {
       throw Exception('Failed to get datasets by ids: $e');
+    }
+  }
+
+  @override
+  Future<Module> getModuleById(int moduleId) async {
+    try {
+      final module = await database.getModuleById(moduleId);
+
+      if (module == null) {
+        throw Exception('Module not found with ID: $moduleId');
+      }
+
+      return module;
+    } catch (e) {
+      throw Exception('Failed to get module by id: $e');
     }
   }
 
@@ -547,5 +593,315 @@ class ModulesRepositoryImpl implements ModulesRepository {
     } catch (e) {
       throw Exception('Failed to get module configuration: $e');
     }
+  }
+
+  /// Prétraite la configuration du module : conversion des fonctions hidden JS→Dart
+  /// et des règles "change" en format structuré.
+  void _preprocessConfiguration(Map<String, dynamic> config) {
+    // Prétraiter les expressions hidden en JavaScript et les convertir en Dart
+    try {
+      int totalConverted = 0;
+
+      void replaceHiddenFunctions(Map<String, dynamic> configSection) {
+        // Pour les champs génériques
+        if (configSection.containsKey('generic') &&
+            configSection['generic'] is Map) {
+          final generic = configSection['generic'] as Map<String, dynamic>;
+
+          for (final entry in generic.entries) {
+            final fieldId = entry.key;
+            final fieldConfig = entry.value;
+
+            if (fieldConfig is Map<String, dynamic> &&
+                fieldConfig.containsKey('hidden') &&
+                fieldConfig['hidden'] is String &&
+                fieldConfig['hidden'].toString().startsWith('({')) {
+              try {
+                final jsFunction = fieldConfig['hidden'].toString();
+                final dartFunction =
+                    TsToDartConverter.convertToDart(jsFunction);
+                fieldConfig['hidden'] = dartFunction;
+                totalConverted++;
+                print(
+                    'Converted hidden function for field $fieldId: $jsFunction -> $dartFunction');
+              } catch (e) {
+                print(
+                    'Error converting hidden function for field $fieldId: $e');
+              }
+            }
+          }
+        }
+
+        // Pour les champs spécifiques
+        if (configSection.containsKey('specific') &&
+            configSection['specific'] is Map) {
+          final specific = configSection['specific'] as Map<String, dynamic>;
+
+          for (final entry in specific.entries) {
+            final fieldId = entry.key;
+            final fieldConfig = entry.value;
+
+            if (fieldConfig is Map<String, dynamic> &&
+                fieldConfig.containsKey('hidden') &&
+                fieldConfig['hidden'] is String &&
+                fieldConfig['hidden'].toString().startsWith('({')) {
+              try {
+                final jsFunction = fieldConfig['hidden'].toString();
+                final dartFunction =
+                    TsToDartConverter.convertToDart(jsFunction);
+                fieldConfig['hidden'] = dartFunction;
+                totalConverted++;
+                print(
+                    'Converted hidden function for specific field $fieldId: $jsFunction -> $dartFunction');
+              } catch (e) {
+                print(
+                    'Error converting hidden function for specific field $fieldId: $e');
+              }
+            }
+          }
+        }
+      }
+
+      final objectTypes = [
+        'module',
+        'site',
+        'sites_group',
+        'visit',
+        'observation',
+        'observation_detail'
+      ];
+
+      for (final objectType in objectTypes) {
+        if (config.containsKey(objectType) &&
+            config[objectType] is Map<String, dynamic>) {
+          final prevCount = totalConverted;
+          replaceHiddenFunctions(config[objectType] as Map<String, dynamic>);
+          final convertedInSection = totalConverted - prevCount;
+
+          if (convertedInSection > 0) {
+            print(
+                'Converted $convertedInSection hidden functions in $objectType section');
+          }
+        }
+      }
+
+      print(
+          'Total hidden functions converted in module configuration: $totalConverted');
+    } catch (e) {
+      print('Erreur lors de la conversion des fonctions hidden: $e');
+    }
+
+    // Prétraiter les expressions "change" en JavaScript
+    try {
+      int changeRulesConverted = 0;
+
+      final changeObjectTypes = [
+        'module',
+        'site',
+        'sites_group',
+        'visit',
+        'observation',
+        'observation_detail'
+      ];
+
+      for (final objectType in changeObjectTypes) {
+        if (config.containsKey(objectType) &&
+            config[objectType] is Map<String, dynamic>) {
+          final objectConfig = config[objectType] as Map<String, dynamic>;
+
+          if (objectConfig.containsKey('change') &&
+              objectConfig['change'] is List) {
+            final changeArray = objectConfig['change'] as List;
+            final convertedRules =
+                _convertChangeRulesToStructured(changeArray);
+
+            if (convertedRules.isNotEmpty) {
+              objectConfig['change'] = convertedRules;
+              changeRulesConverted += convertedRules.length;
+              print(
+                  'Converted ${convertedRules.length} change rules in $objectType section');
+            }
+          }
+        }
+      }
+
+      if (changeRulesConverted > 0) {
+        print(
+            'Total change rules converted in module configuration: $changeRulesConverted');
+      }
+    } catch (e) {
+      print('Erreur lors de la conversion des règles change: $e');
+    }
+  }
+
+  @override
+  Future<void> refreshModuleConfiguration(int moduleId, Map<String, dynamic> configuration) async {
+    _preprocessConfiguration(configuration);
+    final jsonConfig = json.encode(configuration);
+    await database.updateModuleComplementConfiguration(moduleId, jsonConfig);
+  }
+
+  /// Convertit un tableau de strings JavaScript "change" en format structuré
+  ///
+  /// Format d'entrée (JS):
+  /// ["({objForm, meta}) => {", "if (condition) {", "objForm.patchValue({...})", "}", ...]
+  ///
+  /// Format de sortie (structuré):
+  /// [{"condition": "...", "patchValues": {...}}, ...]
+  List<Map<String, dynamic>> _convertChangeRulesToStructured(List<dynamic> changeArray) {
+    final List<Map<String, dynamic>> rules = [];
+
+    // Reconstituer le code complet
+    final fullCode = changeArray.map((e) => e.toString()).join('\n');
+
+    // Extraire tous les blocs if/patchValue
+    final ifBlockPattern = RegExp(
+      r'if\s*\((.+?)\)\s*\{[^}]*?(?:objForm\.)?patchValue\s*\((\{.+?\})(?:\s*,\s*\{[^}]*\})?\s*\)',
+      multiLine: true,
+      dotAll: true,
+    );
+
+    final matches = ifBlockPattern.allMatches(fullCode);
+
+    for (final match in matches) {
+      final condition = match.group(1)?.trim() ?? '';
+      final patchValueStr = match.group(2)?.trim() ?? '{}';
+
+      if (condition.isNotEmpty) {
+        // Parser l'objet patchValue
+        final patchValues = _parseJavaScriptObject(patchValueStr);
+
+        rules.add({
+          'condition': condition,
+          'patchValues': patchValues,
+        });
+      }
+    }
+
+    return rules;
+  }
+
+  /// Parse un objet JavaScript en Map Dart
+  Map<String, dynamic> _parseJavaScriptObject(String jsObject) {
+    final Map<String, dynamic> result = {};
+
+    // Retirer les accolades externes
+    String content = jsObject.trim();
+    if (content.startsWith('{')) {
+      content = content.substring(1);
+    }
+    if (content.endsWith('}')) {
+      content = content.substring(0, content.length - 1);
+    }
+
+    // Parser les propriétés en gérant les objets imbriqués
+    int depth = 0;
+    int start = 0;
+    bool inString = false;
+    String? stringChar;
+    final List<String> properties = [];
+
+    for (int i = 0; i < content.length; i++) {
+      final char = content[i];
+
+      if (!inString && (char == "'" || char == '"')) {
+        inString = true;
+        stringChar = char;
+      } else if (inString && char == stringChar) {
+        inString = false;
+        stringChar = null;
+      } else if (!inString) {
+        if (char == '{') {
+          depth++;
+        } else if (char == '}') {
+          depth--;
+        } else if (char == ',' && depth == 0) {
+          properties.add(content.substring(start, i).trim());
+          start = i + 1;
+        }
+      }
+    }
+
+    // Ajouter la dernière propriété
+    if (start < content.length) {
+      properties.add(content.substring(start).trim());
+    }
+
+    // Parser chaque propriété
+    for (final prop in properties) {
+      if (prop.isEmpty) continue;
+
+      // Trouver le premier ':' qui n'est pas dans un objet imbriqué ou une string
+      int colonIndex = -1;
+      int depth2 = 0;
+      bool inStr = false;
+      String? strChar;
+
+      for (int i = 0; i < prop.length; i++) {
+        final char = prop[i];
+
+        if (!inStr && (char == "'" || char == '"')) {
+          inStr = true;
+          strChar = char;
+        } else if (inStr && char == strChar) {
+          inStr = false;
+          strChar = null;
+        } else if (!inStr) {
+          if (char == '{') {
+            depth2++;
+          } else if (char == '}') {
+            depth2--;
+          } else if (char == ':' && depth2 == 0) {
+            colonIndex = i;
+            break;
+          }
+        }
+      }
+
+      if (colonIndex == -1) continue;
+
+      String key = prop.substring(0, colonIndex).trim();
+
+      // Retirer les guillemets de la clé si présents
+      if ((key.startsWith("'") && key.endsWith("'")) ||
+          (key.startsWith('"') && key.endsWith('"'))) {
+        key = key.substring(1, key.length - 1);
+      }
+
+      final valueStr = prop.substring(colonIndex + 1).trim();
+      result[key] = _parseJavaScriptValue(valueStr);
+    }
+
+    return result;
+  }
+
+  /// Parse une valeur JavaScript individuelle
+  dynamic _parseJavaScriptValue(String valueStr) {
+    final trimmed = valueStr.trim();
+
+    if (trimmed == 'null') return null;
+    if (trimmed == 'true') return true;
+    if (trimmed == 'false') return false;
+
+    final numValue = num.tryParse(trimmed);
+    if (numValue != null) return numValue;
+
+    // String (simple ou double quotes)
+    if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+      return trimmed.substring(1, trimmed.length - 1);
+    }
+
+    // Objet imbriqué
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      return _parseJavaScriptObject(trimmed);
+    }
+
+    // Référence dynamique (objForm.value.xxx)
+    if (trimmed.startsWith('objForm.value.')) {
+      return '@value.${trimmed.substring('objForm.value.'.length)}';
+    }
+
+    return trimmed;
   }
 }

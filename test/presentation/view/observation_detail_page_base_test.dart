@@ -262,16 +262,12 @@ void main() {
 
       // Vérifier la présence des éléments du fil d'Ariane
       expect(find.byType(BreadcrumbNavigation), findsOneWidget);
-      
-      // Utiliser des testeurs plus flexibles pour s'adapter au format exact du texte
-      expect(find.textContaining('Test Module'), findsOneWidget);
-      
-      // Pour les éléments qui apparaissent plusieurs fois, utiliser findsAtLeastNWidgets
-      expect(find.textContaining('Test Site Group'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('Test Site'), findsAtLeastNWidgets(1));
-      
-      // La date peut être formatée différemment, on vérifie juste qu'elle contient les éléments principaux
-      expect(find.textContaining('2024'), findsAtLeastNWidgets(1));
+
+      // Le breadcrumb affiche maintenant les labels (pas les valeurs), donc on vérifie les labels par défaut
+      expect(find.textContaining('Module'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Groupe'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Site'), findsAtLeastNWidgets(1));
+      expect(find.textContaining('Visite'), findsAtLeastNWidgets(1));
     });
 
     testWidgets('should show basic observation info when no details are present',
@@ -326,6 +322,11 @@ void main() {
 
     testWidgets('displays observation details when available',
         (WidgetTester tester) async {
+      // Set a larger viewport to prevent overflow in tests
+      tester.view.physicalSize = const Size(800, 1400);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.reset());
+
       final observationDetailPageKey =
           GlobalKey<ObservationDetailPageBaseState>();
 
