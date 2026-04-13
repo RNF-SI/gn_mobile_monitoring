@@ -75,7 +75,35 @@ jobs:
           sudo apt-get install -y curl
           curl --version
 
+      - name: 🔐 Check integration test secrets
+        id: secrets
+        env:
+          TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
+        run: |
+          if [ -z "$TEST_SERVER_URL" ]; then
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "::warning::Secrets TEST_SERVER_URL/USERNAME/PASSWORD/MODULES non configurés — tests d'intégration ignorés. Configurez-les dans Settings → Secrets and variables → Actions pour activer cette étape."
+          else
+            echo "available=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📝 Générer .env.test depuis les secrets
+        if: steps.secrets.outputs.available == 'true'
+        env:
+          TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
+          TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD }}
+          TEST_MODULES: ${{ secrets.TEST_MODULES }}
+        run: |
+          cat > .env.test <<EOF
+          TEST_SERVER_URL=$TEST_SERVER_URL
+          TEST_USERNAME=$TEST_USERNAME
+          TEST_PASSWORD=$TEST_PASSWORD
+          TEST_MODULES=$TEST_MODULES
+          EOF
+
       - name: 🧪 Run integration tests (Real HTTP)
+        if: steps.secrets.outputs.available == 'true'
         env:
           TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
@@ -85,8 +113,9 @@ jobs:
           echo "🌐 Exécution des tests d'intégration avec vraies requêtes HTTP..."
           chmod +x run_integration_tests.sh
           ./run_integration_tests.sh
-          
+
       - name: 🧪 Run Flutter integration tests (Limited HTTP)
+        if: steps.secrets.outputs.available == 'true'
         env:
           TEST_SERVER_URL: ${{ secrets.TEST_SERVER_URL }}
           TEST_USERNAME: ${{ secrets.TEST_USERNAME }}
