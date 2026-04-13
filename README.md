@@ -1,18 +1,18 @@
-# gn_mobile_monitoring
+# GN Mobile Monitoring
 
-Version mobile du module monitoring de Geonature.
+Portage mobile du module monitoring de GeoNature pour la saisie de données protocolées sur smartphone.
 
-## Documentation
+## 📱 Description
 
-### Fonctionnalités
-- [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) - Types de widgets, compatibilité des modules et limitations
-- [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) - Documentation technique détaillée des expressions JS
+GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il permet la saisie de données protocolées directement depuis un smartphone et leur envoi vers votre instance GeoNature.
 
-### Développement
-- [Tâches](./TASKS.md)
-- [Snippets](./SNIPPETS.md)
-- [.cursorrules](./CURSORRULES.md)
-- [Fichiers de Prompts](./PROMPTS.md)
+## ✨ Fonctionnalités
+
+- **Saisie terrain** : interface optimisée pour smartphone
+- **Synchronisation** : envoi automatique des données vers GeoNature
+- **Mode hors ligne** : saisie sans connexion, synchronisation ultérieure
+- **Protocoles multiples** : support des protocoles configurés dans GeoNature
+- **Formulaires dynamiques** : adaptation automatique selon le protocole
 
 ## Compatibilité des versions
 
@@ -24,7 +24,96 @@ L'application vérifie automatiquement la version du module monitoring sur le se
 
 Une version compatible avec GeoNature 2.17.x sera publiée ultérieurement sous le tag `v1.x-geonature-2.17`. Les hotfixes pour la ligne 2.16 sont maintenus sur la branche `support/geonature-2.16`.
 
-## Déploiement et mise à jour
+## 📋 Prérequis
+
+- Android 5.0 minimum
+- GeoNature 2.16.x avec module monitoring 1.2.0 au minimum
+- Compte utilisateur avec droits sur les modules
+
+## 🚀 Installation
+
+### Application Android (bêta)
+Téléchargez la dernière version APK depuis les [Releases](../../releases).
+
+### Depuis les sources
+```bash
+# Cloner le repository
+git clone https://github.com/RNF-SI/gn_mobile_monitoring/
+cd gn_mobile_monitoring
+
+# Installer les dépendances
+flutter pub get
+
+# Générer le code
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Lancer l'application
+flutter run
+```
+
+## ⚙️ Configuration
+
+1. Lancer l'application
+2. Saisir l'URL de votre instance GeoNature
+3. Se connecter avec ses identifiants GeoNature
+4. Télécharger les modules de monitoring souhaités
+
+## 🛠️ Développement
+
+L'application utilise Flutter et suit une architecture Clean Architecture. Voir [CLAUDE.md](./CLAUDE.md) pour les conventions de code.
+
+### Documentation
+- [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
+- [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) — documentation technique des expressions JS
+- [Tâches](./TASKS.md)
+- [Snippets](./SNIPPETS.md)
+- [.cursorrules](./CURSORRULES.md)
+- [Fichiers de Prompts](./PROMPTS.md)
+
+## 🧪 Tests
+
+### Tests unitaires
+```bash
+make test              # Exécute les tests unitaires
+make test-unit         # Alias pour les tests unitaires
+```
+
+### Tests d'intégration
+Les tests d'intégration vérifient l'interaction avec les API réelles de GeoNature.
+
+#### Configuration
+1. Copier le fichier de configuration : `cp .env.test.example .env.test`
+2. Configurer avec des identifiants réels (déjà configuré pour POPAmphibien/POPReptile)
+
+#### Exécution
+```bash
+make test-integration              # Tests d'intégration avec vraies requêtes HTTP
+make test-integration-manual       # Validation rapide de la configuration
+```
+
+Pour plus de détails, voir [la documentation des tests d'intégration](./test/integration/README.md).
+
+#### Tests E2E contre un vrai serveur GeoNature
+Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNature
+(login, navigation module, CRUD sites/visites/observations).
+
+```bash
+./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
+```
+
+Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
+configuration, la procédure après reboot et le troubleshooting.
+
+## 🔄 CI/CD
+
+Le projet utilise GitHub Actions pour l'intégration continue :
+- Tests unitaires sur chaque push
+- Tests d'intégration sur les pull requests vers `develop` et `main`
+- Analyse statique du code avec `flutter analyze`
+
+Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+
+## 📦 Déploiement et mise à jour
 
 ### Publier une nouvelle version
 
@@ -61,45 +150,10 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
 
 L'application vérifie automatiquement au lancement et après chaque synchronisation si une mise à jour est disponible.
 
-## Tests
+## 🤝 Contribution
 
-### Tests unitaires
-```bash
-make test              # Exécute les tests unitaires
-make test-unit         # Alias pour les tests unitaires
-```
+Les contributions sont bienvenues ! N'hésitez pas à ouvrir une issue ou proposer une PR.
 
-### Tests d'intégration
-Les tests d'intégration vérifient l'interaction avec les API réelles de GeoNature.
+## 🐛 Support
 
-#### Configuration
-1. Copier le fichier de configuration : `cp .env.test.example .env.test`
-2. Configurer avec des identifiants réels (déjà configuré pour POPAmphibien/POPReptile)
-
-#### Exécution
-```bash
-make test-integration              # Tests d'intégration avec vraies requêtes HTTP
-make test-integration-manual       # Validation rapide de la configuration
-```
-
-Pour plus de détails, voir [la documentation des tests d'intégration](./test/integration/README.md).
-
-#### Tests E2E contre un vrai serveur GeoNature
-Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNature
-(login, navigation module, CRUD sites/visites/observations).
-
-```bash
-./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
-```
-
-Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
-configuration, la procédure après reboot et le troubleshooting.
-
-## CI/CD
-
-Le projet utilise GitHub Actions pour l'intégration continue :
-- Tests unitaires sur chaque push
-- Tests d'intégration sur les pull requests vers `develop` et `main`
-- Analyse statique du code avec `flutter analyze`
-
-Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+Pour tout problème ou question, ouvrir une issue sur ce repository.
