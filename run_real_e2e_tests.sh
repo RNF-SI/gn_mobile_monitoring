@@ -63,12 +63,18 @@ for arg in "$@"; do
     obs|observation|observations)
       SCENARIO="observations"
       ;;
+    sync-download|download)
+      SCENARIO="sync-download"
+      ;;
+    sync-upload|upload)
+      SCENARIO="sync-upload"
+      ;;
     all)
       SCENARIO="all"
       ;;
     *)
       echo -e "${RED}Argument inconnu: $arg${NC}"
-      echo "Usage: $0 [auth|module|sites|groups|visits|observations|all] [--device=<id>] [--url=<url>] [--timeout=<duration>]"
+      echo "Usage: $0 [auth|module|sites|groups|visits|observations|sync-download|sync-upload|all] [--device=<id>] [--url=<url>] [--timeout=<duration>]"
       exit 1
       ;;
   esac
@@ -252,6 +258,12 @@ case $SCENARIO in
     ;;
   obs|observation|observations)
     TEST_FILES="integration_test/scenarios_real/real_observation_workflow_e2e_test.dart"
+    ;;
+  sync-download)
+    TEST_FILES="integration_test/scenarios_real/real_sync_download_e2e_test.dart"
+    ;;
+  sync-upload)
+    TEST_FILES="integration_test/scenarios_real/real_sync_upload_e2e_test.dart"
     ;;
   all)
     TEST_FILES="integration_test/scenarios_real/"
