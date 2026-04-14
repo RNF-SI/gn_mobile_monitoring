@@ -43,13 +43,29 @@ class SiteFormWrapper extends ConsumerStatefulWidget {
 }
 
 class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
-  LatLng? _selectedPosition;
+  /// Type de géométrie courant (`Point`, `LineString`, `Polygon`).
+  /// Reste `null` tant que l'utilisateur n'a pas choisi (cas multi-types au
+  /// premier affichage) ou que la géométrie n'a pas encore été chargée.
+  String? _geometryType;
+
+  /// Sommets de la géométrie courante. Pour un `Point`, contient un seul
+  /// élément. Pour un polygone, ne contient PAS le point de fermeture —
+  /// la duplication est gérée à la sérialisation.
+  List<LatLng> _geometryVertices = [];
+
+  /// Centre de carte à utiliser quand on ouvre le picker — toujours défini
+  /// une fois le GPS chargé, même si aucune géométrie n'a encore été tracée.
+  LatLng? _mapCenter;
+
   bool _isLoadingLocation = true;
   bool _isPositionAdjusted = false;
   Map<String, dynamic>? _initialValues;
   bool _isLoadingInitialValues = true;
 
   bool get _isEditMode => widget.site != null;
+
+  List<String> get _allowedGeometryTypes =>
+      widget.siteConfig.allowedGeometryTypes;
 
   @override
   void initState() {
@@ -75,32 +91,40 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
 
   Future<void> _initLocation() async {
     if (_isEditMode && widget.site?.geom != null) {
-      // Mode édition : parser le GeoJSON existant
-      try {
-        final geojson = jsonDecode(widget.site!.geom!) as Map<String, dynamic>;
-        final coords = geojson['coordinates'] as List<dynamic>;
-        if (coords.length >= 2) {
-          setState(() {
-            _selectedPosition = LatLng(
-              (coords[1] as num).toDouble(),
-              (coords[0] as num).toDouble(),
-            );
-            _isLoadingLocation = false;
-          });
-          return;
-        }
-      } catch (_) {
-        // Erreur de parsing, on continue avec le GPS
+      // Mode édition : parser le GeoJSON existant (Point / LineString / Polygon).
+      final parsed = _parseGeoJson(widget.site!.geom!);
+      if (parsed != null) {
+        setState(() {
+          _geometryType = parsed.geometryType;
+          _geometryVertices = parsed.coordinates;
+          _mapCenter = parsed.coordinates.first;
+          _isLoadingLocation = false;
+        });
+        return;
       }
     }
 
-    // Mode création ou geom absent : récupérer la position GPS
+    // Mode création ou geom absent : récupérer la position GPS.
     try {
       final useCase = ref.read(getUserLocationUseCaseProvider);
       final result = await useCase.execute();
       if (mounted) {
+        final allowed = _allowedGeometryTypes;
         setState(() {
-          _selectedPosition = result?.position;
+          _mapCenter = result?.position;
+          // Auto-sélection si un seul type est autorisé.
+          // Si plusieurs types sont autorisés et qu'on a une position GPS,
+          // on pré-remplit un Point (le plus commun) — l'utilisateur pourra
+          // changer de type au moment du dessin.
+          if (allowed.length == 1) {
+            _geometryType = allowed.first;
+            if (allowed.first == 'Point' && result?.position != null) {
+              _geometryVertices = [result!.position];
+            }
+          } else if (allowed.contains('Point') && result?.position != null) {
+            _geometryType = 'Point';
+            _geometryVertices = [result!.position];
+          }
           _isLoadingLocation = false;
         });
       }
@@ -113,24 +137,141 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     }
   }
 
+  /// Parse un GeoJSON Point/LineString/Polygon. Retourne `null` en cas d'échec.
+  /// Pour un Polygon, on ne conserve que l'anneau extérieur et on retire le
+  /// point de fermeture (dupliqué du premier).
+  GeometryDrawResult? _parseGeoJson(String raw) {
+    try {
+      final geojson = jsonDecode(raw) as Map<String, dynamic>;
+      final type = geojson['type'] as String?;
+      final coords = geojson['coordinates'] as List<dynamic>;
+      LatLng pair(List<dynamic> p) => LatLng(
+            (p[1] as num).toDouble(),
+            (p[0] as num).toDouble(),
+          );
+
+      switch (type) {
+        case 'Point':
+          if (coords.length < 2) return null;
+          return GeometryDrawResult(
+            geometryType: 'Point',
+            coordinates: [pair(coords)],
+          );
+        case 'LineString':
+          final verts = coords.cast<List<dynamic>>().map(pair).toList();
+          if (verts.length < 2) return null;
+          return GeometryDrawResult(
+            geometryType: 'LineString',
+            coordinates: verts,
+          );
+        case 'Polygon':
+          if (coords.isEmpty) return null;
+          final ring = (coords.first as List<dynamic>).cast<List<dynamic>>();
+          final verts = ring.map(pair).toList();
+          if (verts.length >= 4 && verts.first == verts.last) {
+            verts.removeLast();
+          }
+          if (verts.length < 3) return null;
+          return GeometryDrawResult(
+            geometryType: 'Polygon',
+            coordinates: verts,
+          );
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
   Future<void> _openLocationPicker(BuildContext context) async {
-    if (_selectedPosition == null) return;
+    if (_mapCenter == null) return;
+
+    final allowed = _allowedGeometryTypes;
+
+    // Choix du type : dialogue si plusieurs options, sinon on prend celui
+    // déjà décidé (édition) ou l'unique autorisé.
+    final String type;
+    if (allowed.length > 1) {
+      final chosen = await _askGeometryType(context, allowed, current: _geometryType);
+      if (chosen == null) return; // utilisateur a annulé
+      type = chosen;
+    } else {
+      type = allowed.first;
+    }
+
+    if (!context.mounted) return;
+
+    // Ne pré-remplir les sommets que si on garde le même type qu'avant ;
+    // changer de type repart d'une géométrie vide.
+    final initialVertices = (type == _geometryType && _geometryVertices.isNotEmpty)
+        ? _geometryVertices
+        : null;
 
     final result = await Navigator.push<GeometryDrawResult>(
       context,
       MaterialPageRoute(
         builder: (context) => LocationPickerPage(
-          initialCenter: _selectedPosition!,
+          initialCenter: _mapCenter!,
+          geometryType: type,
+          initialVertices: initialVertices,
         ),
       ),
     );
 
     if (result != null && result.coordinates.isNotEmpty && mounted) {
       setState(() {
-        _selectedPosition = result.coordinates.first;
+        _geometryType = result.geometryType;
+        _geometryVertices = result.coordinates;
+        _mapCenter = result.coordinates.first;
         _isPositionAdjusted = true;
       });
     }
+  }
+
+  /// Bottom sheet permettant de choisir un type de géométrie quand plusieurs
+  /// sont autorisés. Retourne `null` si l'utilisateur ferme sans choisir.
+  Future<String?> _askGeometryType(
+    BuildContext context,
+    List<String> allowed, {
+    String? current,
+  }) async {
+    const labels = <String, String>{
+      'Point': 'Point',
+      'LineString': 'Ligne (transect)',
+      'Polygon': 'Polygone (zone)',
+    };
+    const icons = <String, IconData>{
+      'Point': Icons.location_on,
+      'LineString': Icons.timeline,
+      'Polygon': Icons.pentagon_outlined,
+    };
+    return showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Text(
+                'Type de géométrie',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            for (final type in allowed)
+              ListTile(
+                leading: Icon(icons[type] ?? Icons.place),
+                title: Text(labels[type] ?? type),
+                trailing: type == current
+                    ? const Icon(Icons.check, color: Colors.green)
+                    : null,
+                onTap: () => Navigator.pop(context, type),
+              ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
   }
 
   /// Enrichit la configuration du site avec les options types_site depuis le module
@@ -289,10 +430,12 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     );
   }
 
-  /// Construit le widget d'en-tête avec l'aperçu de la position GPS
+  /// Construit le widget d'en-tête avec l'aperçu de la géométrie courante.
   Widget? _buildHeaderWidget(BuildContext context) {
     return LocationPreviewHeader(
-      position: _selectedPosition,
+      geometryType: _geometryType,
+      vertices: _geometryVertices,
+      previewCenter: _mapCenter,
       isLoading: _isLoadingLocation,
       isAdjusted: _isPositionAdjusted,
       onAdjustPressed: () => _openLocationPicker(context),
@@ -466,13 +609,32 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
     );
   }
 
-  /// Construit le GeoJSON depuis la position sélectionnée
+  /// Construit le GeoJSON depuis la géométrie courante. Pour un polygone,
+  /// ferme explicitement l'anneau en répétant le premier sommet comme
+  /// l'exige la spec GeoJSON.
   String? _buildGeomOverride() {
-    if (_selectedPosition == null) return null;
-    return jsonEncode({
-      'type': 'Point',
-      'coordinates': [_selectedPosition!.longitude, _selectedPosition!.latitude],
-    });
+    if (_geometryType == null || _geometryVertices.isEmpty) return null;
+    List<double> coord(LatLng p) => [p.longitude, p.latitude];
+
+    switch (_geometryType) {
+      case 'Point':
+        return jsonEncode({
+          'type': 'Point',
+          'coordinates': coord(_geometryVertices.first),
+        });
+      case 'LineString':
+        return jsonEncode({
+          'type': 'LineString',
+          'coordinates': _geometryVertices.map(coord).toList(),
+        });
+      case 'Polygon':
+        final ring = [..._geometryVertices, _geometryVertices.first];
+        return jsonEncode({
+          'type': 'Polygon',
+          'coordinates': [ring.map(coord).toList()],
+        });
+    }
+    return null;
   }
 
   /// Gère la sauvegarde du site
