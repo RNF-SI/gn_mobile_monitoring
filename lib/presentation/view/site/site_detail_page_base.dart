@@ -12,6 +12,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/location_picker_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
@@ -19,6 +20,7 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart'
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/map/location_preview_header.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
@@ -342,6 +344,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
               child: ConflictInfoBanner(conflict: widget.currentConflict!),
             ),
 
+          // Aperçu de la géométrie du site (carte en lecture seule).
+          // `onAdjustPressed` null ⇒ pas de bouton, juste la mini-carte
+          // avec le Point / LineString / Polygon du site.
+          if (widget.site.geom != null) _buildGeomPreview(),
+
           // Propriétés du site (champs de base + données spécifiques au module)
           // Affichées dynamiquement via buildPropertiesWidget()
           Padding(
@@ -349,6 +356,24 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
             child: buildPropertiesWidget(),
           ),
         ],
+      ),
+    );
+  }
+
+  /// Construit l'aperçu géographique du site à partir de son GeoJSON.
+  /// Retourne un SizedBox.shrink() si le geom est illisible.
+  Widget _buildGeomPreview() {
+    final parsed = GeometryDrawResult.parseGeoJson(widget.site.geom!);
+    if (parsed == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: LocationPreviewHeader(
+        geometryType: parsed.geometryType,
+        vertices: parsed.coordinates,
+        previewCenter: parsed.coordinates.first,
+        isLoading: false,
+        isAdjusted: false,
       ),
     );
   }

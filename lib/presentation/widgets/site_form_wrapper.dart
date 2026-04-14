@@ -92,7 +92,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   Future<void> _initLocation() async {
     if (_isEditMode && widget.site?.geom != null) {
       // Mode édition : parser le GeoJSON existant (Point / LineString / Polygon).
-      final parsed = _parseGeoJson(widget.site!.geom!);
+      final parsed = GeometryDrawResult.parseGeoJson(widget.site!.geom!);
       if (parsed != null) {
         setState(() {
           _geometryType = parsed.geometryType;
@@ -135,52 +135,6 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
         });
       }
     }
-  }
-
-  /// Parse un GeoJSON Point/LineString/Polygon. Retourne `null` en cas d'échec.
-  /// Pour un Polygon, on ne conserve que l'anneau extérieur et on retire le
-  /// point de fermeture (dupliqué du premier).
-  GeometryDrawResult? _parseGeoJson(String raw) {
-    try {
-      final geojson = jsonDecode(raw) as Map<String, dynamic>;
-      final type = geojson['type'] as String?;
-      final coords = geojson['coordinates'] as List<dynamic>;
-      LatLng pair(List<dynamic> p) => LatLng(
-            (p[1] as num).toDouble(),
-            (p[0] as num).toDouble(),
-          );
-
-      switch (type) {
-        case 'Point':
-          if (coords.length < 2) return null;
-          return GeometryDrawResult(
-            geometryType: 'Point',
-            coordinates: [pair(coords)],
-          );
-        case 'LineString':
-          final verts = coords.cast<List<dynamic>>().map(pair).toList();
-          if (verts.length < 2) return null;
-          return GeometryDrawResult(
-            geometryType: 'LineString',
-            coordinates: verts,
-          );
-        case 'Polygon':
-          if (coords.isEmpty) return null;
-          final ring = (coords.first as List<dynamic>).cast<List<dynamic>>();
-          final verts = ring.map(pair).toList();
-          if (verts.length >= 4 && verts.first == verts.last) {
-            verts.removeLast();
-          }
-          if (verts.length < 3) return null;
-          return GeometryDrawResult(
-            geometryType: 'Polygon',
-            coordinates: verts,
-          );
-      }
-    } catch (_) {
-      return null;
-    }
-    return null;
   }
 
   Future<void> _openLocationPicker(BuildContext context) async {

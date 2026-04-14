@@ -278,6 +278,40 @@ void main() {
         expect(result, lessThan(50000));
       });
 
+      test('MultiPoint: returns distance to closest point', () {
+        // 3 points ; le plus proche est ~10 km au sud de Paris.
+        const geom =
+            '{"type":"MultiPoint","coordinates":[[0,0],[4.8357,45.7640],[2.35,48.76]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, greaterThan(8000));
+        expect(result, lessThan(15000));
+      });
+
+      test('MultiPoint: returns null for empty coordinates', () {
+        const geom = '{"type":"MultiPoint","coordinates":[]}';
+        expect(service.distanceToGeoJson(geom, userInParis), isNull);
+      });
+
+      test('MultiLineString: returns 0 when user is on one of the lines', () {
+        // 2 lignes : une très loin, une passant par Paris.
+        const geom =
+            '{"type":"MultiLineString","coordinates":[[[0,0],[1,0]],[[2.30,48.8566],[2.40,48.8566]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, lessThan(50));
+      });
+
+      test('MultiLineString: returns min distance across segments', () {
+        // 2 lignes à ~11 km et ~50 km au sud ; on attend ~11 km.
+        const geom =
+            '{"type":"MultiLineString","coordinates":[[[2.30,48.75],[2.40,48.75]],[[2.30,48.40],[2.40,48.40]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, greaterThan(10000));
+        expect(result, lessThan(15000));
+      });
+
       test('Polygon: accepts non-closed ring', () {
         // Même polygone que précédemment mais sans la répétition du premier
         // point à la fin.

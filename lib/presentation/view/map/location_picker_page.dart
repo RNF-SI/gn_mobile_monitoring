@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -19,6 +20,52 @@ class GeometryDrawResult {
     required this.geometryType,
     required this.coordinates,
   });
+
+  /// Parse un GeoJSON Point / LineString / Polygon et retourne le résultat.
+  /// Pour un polygone, le point de fermeture (dupliqué du premier) est retiré.
+  /// Retourne `null` si la chaîne est invalide ou si le type n'est pas supporté.
+  static GeometryDrawResult? parseGeoJson(String raw) {
+    try {
+      final geojson = jsonDecode(raw) as Map<String, dynamic>;
+      final type = geojson['type'] as String?;
+      final coords = geojson['coordinates'] as List<dynamic>;
+      LatLng pair(List<dynamic> p) => LatLng(
+            (p[1] as num).toDouble(),
+            (p[0] as num).toDouble(),
+          );
+
+      switch (type) {
+        case 'Point':
+          if (coords.length < 2) return null;
+          return GeometryDrawResult(
+            geometryType: 'Point',
+            coordinates: [pair(coords)],
+          );
+        case 'LineString':
+          final verts = coords.cast<List<dynamic>>().map(pair).toList();
+          if (verts.length < 2) return null;
+          return GeometryDrawResult(
+            geometryType: 'LineString',
+            coordinates: verts,
+          );
+        case 'Polygon':
+          if (coords.isEmpty) return null;
+          final ring = (coords.first as List<dynamic>).cast<List<dynamic>>();
+          final verts = ring.map(pair).toList();
+          if (verts.length >= 4 && verts.first == verts.last) {
+            verts.removeLast();
+          }
+          if (verts.length < 3) return null;
+          return GeometryDrawResult(
+            geometryType: 'Polygon',
+            coordinates: verts,
+          );
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
 }
 
 /// Page plein écran pour saisir la géométrie d'un site (point, ligne, polygone).

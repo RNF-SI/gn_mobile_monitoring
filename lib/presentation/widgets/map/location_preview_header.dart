@@ -17,7 +17,11 @@ class LocationPreviewHeader extends StatelessWidget {
   final LatLng? previewCenter;
   final bool isLoading;
   final bool isAdjusted;
-  final VoidCallback onAdjustPressed;
+
+  /// Callback déclenché par le bouton "Ajuster sur la carte". Si `null`, le
+  /// bouton n'est pas rendu (mode lecture seule — p. ex. page de détail d'un
+  /// site).
+  final VoidCallback? onAdjustPressed;
 
   const LocationPreviewHeader({
     super.key,
@@ -26,7 +30,7 @@ class LocationPreviewHeader extends StatelessWidget {
     required this.previewCenter,
     required this.isLoading,
     required this.isAdjusted,
-    required this.onAdjustPressed,
+    this.onAdjustPressed,
   });
 
   bool get _isLine => geometryType == 'LineString';
@@ -52,12 +56,14 @@ class LocationPreviewHeader extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         _buildLocationInfo(context),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: _canAdjust ? onAdjustPressed : null,
-          icon: const Icon(Icons.map),
-          label: Text(_adjustButtonLabel()),
-        ),
+        if (onAdjustPressed != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            onPressed: _canAdjust ? onAdjustPressed : null,
+            icon: const Icon(Icons.map),
+            label: Text(_adjustButtonLabel()),
+          ),
+        ],
       ],
     );
   }

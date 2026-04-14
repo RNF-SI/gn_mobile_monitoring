@@ -182,18 +182,29 @@ class MapGeometryServiceImpl implements MapGeometryService {
           return _distanceToLineCoords(coordinates, point);
         case 'Polygon':
           return _distanceToPolygonCoords(coordinates, point);
+        case 'MultiPoint':
+          // Coordinates = [[lon,lat], …]. Distance min aux points individuels.
+          if (coordinates is! List) return null;
+          return _minDistanceAcross(
+            coordinates,
+            point,
+            (c) => _distanceToPointCoord(c, point),
+          );
+        case 'MultiLineString':
+          // Coordinates = [[[lon,lat], …], …]. Distance min aux lignes.
+          if (coordinates is! List) return null;
+          return _minDistanceAcross(
+            coordinates,
+            point,
+            (c) => _distanceToLineCoords(c, point),
+          );
         case 'MultiPolygon':
           if (coordinates is! List) return null;
-          double? minDistance;
-          for (final polygon in coordinates) {
-            final d = _distanceToPolygonCoords(polygon, point);
-            if (d == null) continue;
-            if (d == 0) return 0;
-            if (minDistance == null || d < minDistance) {
-              minDistance = d;
-            }
-          }
-          return minDistance;
+          return _minDistanceAcross(
+            coordinates,
+            point,
+            (c) => _distanceToPolygonCoords(c, point),
+          );
         default:
           return null;
       }
@@ -230,6 +241,25 @@ class MapGeometryServiceImpl implements MapGeometryService {
     // l'anneau n'est pas explicitement fermé, pour couvrir le dernier segment.
     final closed = ring.first == ring.last ? ring : [...ring, ring.first];
     return distanceToLine(point, closed);
+  }
+
+  /// Calcule le min d'un mapping distance sur une liste de sous-géométries.
+  /// Retourne 0 dès qu'une sous-géométrie renvoie 0 (court-circuit).
+  double? _minDistanceAcross(
+    List<dynamic> items,
+    LatLng point,
+    double? Function(dynamic item) compute,
+  ) {
+    double? minDistance;
+    for (final item in items) {
+      final d = compute(item);
+      if (d == null) continue;
+      if (d == 0) return 0;
+      if (minDistance == null || d < minDistance) {
+        minDistance = d;
+      }
+    }
+    return minDistance;
   }
 
   List<LatLng>? _toLatLngList(dynamic coords) {

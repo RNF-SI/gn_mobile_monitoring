@@ -1339,8 +1339,17 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
 
   /// Construit le badge de distance pour le header
   Widget _buildDistanceBadge(BaseSite site) {
-    final distance = _calculateDistance(site);
+    // Cas 1 : pas de geom côté site — impossible de calculer, on masque.
+    if (site.geom == null) {
+      return const SizedBox.shrink();
+    }
+    // Cas 2 : GPS pas encore récupéré — afficher un placeholder discret
+    // pour indiquer que le calcul est en cours.
+    if (_userPosition == null) {
+      return _buildPendingDistanceBadge();
+    }
 
+    final distance = _calculateDistance(site);
     if (distance == null) {
       return const SizedBox.shrink();
     }
@@ -1375,6 +1384,45 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               fontSize: 12,
               color: badgeColor,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Badge affiché pendant l'attente du GPS — indique à l'utilisateur que
+  /// la distance n'est pas "absente" mais en cours de calcul.
+  Widget _buildPendingDistanceBadge() {
+    return Container(
+      margin: const EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: Colors.grey,
+            ),
+          ),
+          SizedBox(width: 6),
+          Text(
+            'Calcul…',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],

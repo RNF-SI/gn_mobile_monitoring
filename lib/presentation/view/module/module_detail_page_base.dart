@@ -2114,8 +2114,14 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   /// Construit le badge de distance pour le header
   Widget _buildGroupDistanceBadge(SiteGroup group) {
-    final distance = _calculateGroupDistance(group);
+    if (group.geom == null) {
+      return const SizedBox.shrink();
+    }
+    if (_userPosition == null) {
+      return _buildPendingDistanceBadge();
+    }
 
+    final distance = _calculateGroupDistance(group);
     if (distance == null) {
       return const SizedBox.shrink();
     }
@@ -2150,6 +2156,46 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               fontSize: 12,
               color: badgeColor,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Badge affiché pendant l'attente du GPS : CircularProgressIndicator
+  /// + texte "Calcul…" pour signaler que la distance est en cours et non
+  /// définitivement absente.
+  Widget _buildPendingDistanceBadge() {
+    return Container(
+      margin: const EdgeInsets.only(left: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.withValues(alpha: 0.3),
+          width: 1,
+        ),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 12,
+            height: 12,
+            child: CircularProgressIndicator(
+              strokeWidth: 1.5,
+              color: Colors.grey,
+            ),
+          ),
+          SizedBox(width: 6),
+          Text(
+            'Calcul…',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+              fontStyle: FontStyle.italic,
             ),
           ),
         ],
