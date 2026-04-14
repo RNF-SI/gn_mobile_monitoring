@@ -23,6 +23,11 @@ class LocationPreviewHeader extends StatelessWidget {
   /// site).
   final VoidCallback? onAdjustPressed;
 
+  /// Position GPS courante de l'utilisateur. Si fournie, un marker
+  /// `Icons.my_location` bleu est affiché sur la mini-carte pour indiquer
+  /// où se trouve l'observateur par rapport à la géométrie du site.
+  final LatLng? userPosition;
+
   const LocationPreviewHeader({
     super.key,
     required this.geometryType,
@@ -31,6 +36,7 @@ class LocationPreviewHeader extends StatelessWidget {
     required this.isLoading,
     required this.isAdjusted,
     this.onAdjustPressed,
+    this.userPosition,
   });
 
   bool get _isLine => geometryType == 'LineString';
@@ -150,6 +156,23 @@ class LocationPreviewHeader extends StatelessWidget {
                     Icons.location_on,
                     color: Colors.red,
                     size: 40,
+                  ),
+                ),
+              ],
+            ),
+          // Marker "vous êtes ici" par-dessus le reste, pour contextualiser
+          // la position du site par rapport à celle de l'observateur.
+          if (userPosition != null)
+            MarkerLayer(
+              markers: [
+                Marker(
+                  point: userPosition!,
+                  width: 30,
+                  height: 30,
+                  child: const Icon(
+                    Icons.my_location,
+                    color: Colors.blue,
+                    size: 25,
                   ),
                 ),
               ],

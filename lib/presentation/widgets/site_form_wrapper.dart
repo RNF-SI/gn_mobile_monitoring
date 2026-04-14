@@ -57,6 +57,12 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   /// une fois le GPS chargé, même si aucune géométrie n'a encore été tracée.
   LatLng? _mapCenter;
 
+  /// Position GPS courante de l'utilisateur, indépendante du centre de la
+  /// carte. Sert à afficher un marker "vous êtes ici" séparé de la
+  /// géométrie du site (utile en mode édition quand le site est loin de la
+  /// position actuelle).
+  LatLng? _userPosition;
+
   bool _isLoadingLocation = true;
   bool _isPositionAdjusted = false;
   Map<String, dynamic>? _initialValues;
@@ -90,6 +96,10 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   }
 
   Future<void> _initLocation() async {
+    // On charge la position GPS en tâche de fond quel que soit le mode,
+    // pour afficher un marker "vous êtes ici" sur la mini-carte.
+    _loadUserPositionAsync();
+
     if (_isEditMode && widget.site?.geom != null) {
       // Mode édition : parser le GeoJSON existant (Point / LineString / Polygon).
       final parsed = GeometryDrawResult.parseGeoJson(widget.site!.geom!);
@@ -112,6 +122,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
         final allowed = _allowedGeometryTypes;
         setState(() {
           _mapCenter = result?.position;
+          _userPosition = result?.position;
           // Auto-sélection si un seul type est autorisé.
           // Si plusieurs types sont autorisés et qu'on a une position GPS,
           // on pré-remplit un Point (le plus commun) — l'utilisateur pourra
@@ -134,6 +145,24 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
           _isLoadingLocation = false;
         });
       }
+    }
+  }
+
+  /// Charge la position GPS en arrière-plan sans bloquer l'init. Nécessaire
+  /// en mode édition où `_initLocation` retourne tôt après avoir parsé le
+  /// `geom` existant du site, donc ne passe pas par la branche GPS du code
+  /// de création. On garantit ainsi qu'un marker "vous êtes ici" peut
+  /// quand même apparaître sur la mini-carte du formulaire d'édition.
+  Future<void> _loadUserPositionAsync() async {
+    if (_userPosition != null) return; // déjà chargée
+    try {
+      final result =
+          await ref.read(getUserLocationUseCaseProvider).execute();
+      if (mounted && result != null) {
+        setState(() => _userPosition = result.position);
+      }
+    } catch (_) {
+      // GPS indisponible — silencieux, le marker sera juste absent.
     }
   }
 
@@ -393,6 +422,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       isLoading: _isLoadingLocation,
       isAdjusted: _isPositionAdjusted,
       onAdjustPressed: () => _openLocationPicker(context),
+      userPosition: _userPosition,
     );
   }
 

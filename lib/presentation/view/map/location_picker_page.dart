@@ -100,6 +100,11 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
   TileLayerConfig? _selectedLayer;
   StreamSubscription<MapEvent>? _mapEventSubscription;
 
+  /// Position GPS actuelle de l'utilisateur, utilisée pour afficher un
+  /// marker de repère ("vous êtes ici") séparé du centre de la carte /
+  /// de la géométrie en cours de dessin. Chargée une fois à l'init.
+  LatLng? _userPosition;
+
   bool get _isPoint => widget.geometryType == 'Point';
   bool get _isLine => widget.geometryType == 'LineString';
   bool get _isPolygon => widget.geometryType == 'Polygon';
@@ -129,6 +134,7 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
     _currentCenter = widget.initialCenter;
     _vertices = List<LatLng>.from(widget.initialVertices ?? const []);
     _loadTileLayers();
+    _loadUserPosition();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _mapEventSubscription = _mapController.mapEventStream.listen((event) {
         if (_isPoint && (event is MapEventMove || event is MapEventMoveEnd)) {
@@ -148,6 +154,19 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
         _tileLayers = layers;
         _selectedLayer = layers.first;
       });
+    }
+  }
+
+  Future<void> _loadUserPosition() async {
+    try {
+      final result =
+          await ref.read(getUserLocationUseCaseProvider).execute();
+      if (mounted && result != null) {
+        setState(() => _userPosition = result.position);
+      }
+    } catch (_) {
+      // Position GPS indisponible — on laisse _userPosition null, le marker
+      // ne sera simplement pas affiché.
     }
   }
 
@@ -266,6 +285,23 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
                       points: _vertices,
                       color: Colors.red,
                       strokeWidth: 3,
+                    ),
+                  ],
+                ),
+              // Marker "vous êtes ici" (GPS actuel). Rendu en bleu pour
+              // le distinguer des vertices numérotés de la géométrie.
+              if (_userPosition != null)
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: _userPosition!,
+                      width: 30,
+                      height: 30,
+                      child: const Icon(
+                        Icons.my_location,
+                        color: Colors.blue,
+                        size: 25,
+                      ),
                     ),
                   ],
                 ),
