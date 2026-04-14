@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/domain/service/map_geometry_service.dart';
 import 'package:latlong2/latlong.dart';
@@ -162,5 +164,84 @@ class MapGeometryServiceImpl implements MapGeometryService {
     final distance = (point.latitude - target.latitude).abs() +
         (point.longitude - target.longitude).abs();
     return distance < thresholdDegrees;
+  }
+
+  @override
+  double? distanceToGeoJson(String geoJson, LatLng point) {
+    try {
+      final decoded = jsonDecode(geoJson);
+      if (decoded is! Map<String, dynamic>) return null;
+      final type = decoded['type'] as String?;
+      final coordinates = decoded['coordinates'];
+      if (type == null || coordinates == null) return null;
+
+      switch (type) {
+        case 'Point':
+          return _distanceToPointCoord(coordinates, point);
+        case 'LineString':
+          return _distanceToLineCoords(coordinates, point);
+        case 'Polygon':
+          return _distanceToPolygonCoords(coordinates, point);
+        case 'MultiPolygon':
+          if (coordinates is! List) return null;
+          double? minDistance;
+          for (final polygon in coordinates) {
+            final d = _distanceToPolygonCoords(polygon, point);
+            if (d == null) continue;
+            if (d == 0) return 0;
+            if (minDistance == null || d < minDistance) {
+              minDistance = d;
+            }
+          }
+          return minDistance;
+        default:
+          return null;
+      }
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Coordonnées GeoJSON d'un Point (`[lon, lat]`) → distance en mètres.
+  double? _distanceToPointCoord(dynamic coords, LatLng point) {
+    if (coords is! List || coords.length < 2) return null;
+    final target = LatLng(
+      (coords[1] as num).toDouble(),
+      (coords[0] as num).toDouble(),
+    );
+    return distanceBetween(point, target);
+  }
+
+  /// Coordonnées GeoJSON d'une LineString (`[[lon, lat], ...]`).
+  double? _distanceToLineCoords(dynamic coords, LatLng point) {
+    final pts = _toLatLngList(coords);
+    if (pts == null || pts.isEmpty) return null;
+    return distanceToLine(point, pts);
+  }
+
+  /// Coordonnées GeoJSON d'un Polygon (`[[[lon, lat], ...], ...]`).
+  /// On ne considère que l'anneau extérieur.
+  double? _distanceToPolygonCoords(dynamic coords, LatLng point) {
+    if (coords is! List || coords.isEmpty) return null;
+    final ring = _toLatLngList(coords.first);
+    if (ring == null || ring.length < 3) return null;
+    if (isPointInPolygon(point, ring)) return 0;
+    // Distance au contour fermé : on ajoute le premier point à la fin si
+    // l'anneau n'est pas explicitement fermé, pour couvrir le dernier segment.
+    final closed = ring.first == ring.last ? ring : [...ring, ring.first];
+    return distanceToLine(point, closed);
+  }
+
+  List<LatLng>? _toLatLngList(dynamic coords) {
+    if (coords is! List) return null;
+    final pts = <LatLng>[];
+    for (final c in coords) {
+      if (c is! List || c.length < 2) return null;
+      pts.add(LatLng(
+        (c[1] as num).toDouble(),
+        (c[0] as num).toDouble(),
+      ));
+    }
+    return pts;
   }
 }

@@ -8,6 +8,8 @@ import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
+import 'package:gn_mobile_monitoring/data/service/map_geometry_service_impl.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
@@ -21,7 +23,7 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart'
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/list_toolbar_widget.dart';
-import 'package:point_in_polygon/point_in_polygon.dart' as pip;
+import 'package:latlong2/latlong.dart';
 
 /// Widget personnalisé pour le breadcrumb avec description du module dans les détails
 class _ModuleBreadcrumbWithDescription extends StatefulWidget {
@@ -2078,210 +2080,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
   }
 
-  /// Calcule la distance minimale entre la position de l'utilisateur et un groupe de sites
-  /// Pour un polygone, calcule la distance minimale au polygone (0 si le point est à l'intérieur)
+  /// Calcule la distance minimale entre la position de l'utilisateur et un
+  /// groupe de sites, tous types GeoJSON confondus (Point, LineString,
+  /// Polygon, MultiPolygon). Retourne 0 quand l'utilisateur est à
+  /// l'intérieur d'un polygone.
   double? _calculateGroupDistance(SiteGroup group) {
     if (_userPosition == null || group.geom == null) {
       return null;
     }
 
     try {
-      // Parser la géométrie GeoJSON
-      final geomData = jsonDecode(group.geom!);
-      final userLat = _userPosition!.latitude;
-      final userLon = _userPosition!.longitude;
-
-      if (geomData is Map<String, dynamic>) {
-        final type = geomData['type'];
-        final coordinates = geomData['coordinates'];
-
-        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
-          // Format GeoJSON: [longitude, latitude]
-          final groupLon = coordinates[0].toDouble();
-          final groupLat = coordinates[1].toDouble();
-
-          // Calculer la distance en mètres
-          return Geolocator.distanceBetween(
-            userLat,
-            userLon,
-            groupLat,
-            groupLon,
-          );
-        } else if (type == 'Polygon' && coordinates is List) {
-          // Pour un polygone, calculer la distance minimale au polygone
-          return _calculateDistanceToPolygon(userLat, userLon, coordinates);
-        } else if (type == 'MultiPolygon' && coordinates is List) {
-          // Pour un MultiPolygon, calculer la distance minimale à tous les polygones
-          double? minDistance;
-          for (var polygon in coordinates) {
-            if (polygon is List && polygon.isNotEmpty) {
-              final distance =
-                  _calculateDistanceToPolygon(userLat, userLon, polygon);
-              if (distance != null) {
-                if (minDistance == null || distance < minDistance) {
-                  minDistance = distance;
-                }
-                // Si le point est à l'intérieur d'un polygone, distance = 0
-                if (distance == 0) {
-                  return 0;
-                }
-              }
-            }
-          }
-          return minDistance;
-        }
-      }
-
-      return null;
+      final service = widget.ref?.read(mapGeometryServiceProvider) ??
+          const MapGeometryServiceImpl();
+      return service.distanceToGeoJson(
+        group.geom!,
+        LatLng(_userPosition!.latitude, _userPosition!.longitude),
+      );
     } catch (e) {
       debugPrint(
           'Erreur lors du calcul de la distance pour le groupe ${group.idSitesGroup}: $e');
       return null;
     }
-  }
-
-  /// Calcule la distance minimale d'un point à un polygone GeoJSON
-  /// Retourne 0 si le point est à l'intérieur du polygone
-  double? _calculateDistanceToPolygon(
-      double lat, double lon, List coordinates) {
-    if (coordinates.isEmpty || coordinates[0] is! List) {
-      return null;
-    }
-
-    // Le premier ring est le contour extérieur du polygone
-    final outerRing = coordinates[0] as List;
-    if (outerRing.isEmpty) {
-      return null;
-    }
-
-    // Convertir les coordonnées du polygone en format pour point_in_polygon
-    // Le package attend des points [x, y] où x=longitude, y=latitude
-    // IMPORTANT: Le polygone GeoJSON peut être fermé (dernier point = premier point)
-    // Le package point_in_polygon peut nécessiter un polygone non fermé
-    final List<pip.Point> polygonPoints = [];
-    for (int i = 0; i < outerRing.length; i++) {
-      var coord = outerRing[i];
-      if (coord is List && coord.length >= 2) {
-        // Format GeoJSON: [longitude, latitude]
-        final point = pip.Point(x: coord[0].toDouble(), y: coord[1].toDouble());
-
-        // Ignorer le dernier point s'il est identique au premier (polygone fermé)
-        if (i == outerRing.length - 1 && polygonPoints.isNotEmpty) {
-          final firstPoint = polygonPoints.first;
-          if ((point.x - firstPoint.x).abs() < 1e-10 &&
-              (point.y - firstPoint.y).abs() < 1e-10) {
-            break;
-          }
-        }
-
-        polygonPoints.add(point);
-      }
-    }
-
-    if (polygonPoints.isEmpty) {
-      return null;
-    }
-
-    // Vérifier si le point est à l'intérieur du polygone
-    // Utilisation d'un algorithme ray casting robuste
-    final isInside = _isPointInPolygonRobust(lat, lon, polygonPoints);
-
-    if (isInside) {
-      return 0.0;
-    }
-
-    // Calculer la distance minimale à chaque segment du polygone
-    double minDistance = double.infinity;
-    for (int i = 0; i < polygonPoints.length; i++) {
-      final p1 = polygonPoints[i];
-      final p2 = polygonPoints[(i + 1) % polygonPoints.length];
-
-      // Convertir de [lon, lat] à [lat, lon] pour _distanceToSegment
-      final distance = _distanceToSegment(lat, lon, p1.y, p1.x, p2.y, p2.x);
-      if (distance < minDistance) {
-        minDistance = distance;
-      }
-    }
-
-    return minDistance.isFinite ? minDistance : null;
-  }
-
-  /// Vérifie si un point est à l'intérieur d'un polygone (algorithme ray casting robuste)
-  /// Les points du polygone sont en format pip.Point (x=longitude, y=latitude)
-  bool _isPointInPolygonRobust(
-      double lat, double lon, List<pip.Point> polygon) {
-    if (polygon.length < 3) {
-      return false;
-    }
-
-    // Algorithme ray casting : compter les intersections avec un rayon horizontal
-    // Le rayon va de (lat, lon) vers (lat, +infini) en longitude
-    bool inside = false;
-    int j = polygon.length - 1;
-
-    for (int i = 0; i < polygon.length; i++) {
-      final xi = polygon[i].x; // longitude du point i
-      final yi = polygon[i].y; // latitude du point i
-      final xj = polygon[j].x; // longitude du point j
-      final yj = polygon[j].y; // latitude du point j
-
-      // Vérifier si le segment (i, j) intersecte le rayon horizontal
-      // Le segment intersecte si :
-      // 1. Les latitudes du segment encadrent la latitude du point
-      // 2. La longitude d'intersection est à droite du point
-      final latStraddles = ((yi > lat) != (yj > lat));
-
-      if (latStraddles) {
-        // Éviter la division par zéro
-        final latDiff = yj - yi;
-        if (latDiff.abs() > 1e-10) {
-          // Calculer la longitude d'intersection du segment avec le rayon horizontal
-          // Équation de la droite : x = xi + (xj - xi) * (lat - yi) / (yj - yi)
-          final lonIntersection = xi + (xj - xi) * (lat - yi) / latDiff;
-
-          // L'intersection est à droite du point si lon < lonIntersection
-          if (lon < lonIntersection) {
-            inside = !inside;
-          }
-        }
-      }
-      j = i;
-    }
-
-    return inside;
-  }
-
-  /// Calcule la distance d'un point à un segment de ligne
-  double _distanceToSegment(double lat, double lon, double lat1, double lon1,
-      double lat2, double lon2) {
-    // Calculer la distance du point au segment en utilisant la formule de distance point-segment
-    // On utilise la projection du point sur le segment
-
-    // Vecteur du segment
-    final dx = lon2 - lon1;
-    final dy = lat2 - lat1;
-
-    // Si le segment est un point, retourner la distance au point
-    if (dx == 0 && dy == 0) {
-      return Geolocator.distanceBetween(lat, lon, lat1, lon1);
-    }
-
-    // Vecteur du point au début du segment
-    final px = lon - lon1;
-    final py = lat - lat1;
-
-    // Produit scalaire pour trouver la projection
-    final t = (px * dx + py * dy) / (dx * dx + dy * dy);
-
-    // Clamper t entre 0 et 1 pour rester sur le segment
-    final clampedT = t.clamp(0.0, 1.0);
-
-    // Point le plus proche sur le segment
-    final closestLon = lon1 + clampedT * dx;
-    final closestLat = lat1 + clampedT * dy;
-
-    // Distance au point le plus proche
-    return Geolocator.distanceBetween(lat, lon, closestLat, closestLon);
   }
 
   /// Formate la distance pour l'affichage

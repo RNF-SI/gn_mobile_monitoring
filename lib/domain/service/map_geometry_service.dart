@@ -15,6 +15,13 @@ abstract class MapGeometryService {
   /// Calcule la distance minimale d'un point à une ligne
   double distanceToLine(LatLng point, List<LatLng> linePoints);
 
+  /// Calcule la distance (en mètres) entre [point] et la géométrie GeoJSON
+  /// sérialisée dans [geoJson]. Supporte les types Point, LineString, Polygon
+  /// et MultiPolygon. Retourne `0` quand [point] est à l'intérieur d'un
+  /// polygone. Retourne `null` si la chaîne est invalide, si le type n'est
+  /// pas supporté, ou si la géométrie est vide.
+  double? distanceToGeoJson(String geoJson, LatLng point);
+
   /// Calcule la distance d'un point à un segment de ligne
   double distanceToSegment(
     double lat,

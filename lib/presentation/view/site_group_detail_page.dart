@@ -6,10 +6,12 @@ import 'package:geolocator/geolocator.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
 import 'package:gn_mobile_monitoring/core/helpers/value_formatter.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
@@ -491,40 +493,18 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     }
   }
 
-  /// Calcule la distance entre la position de l'utilisateur et un site
+  /// Calcule la distance entre la position de l'utilisateur et un site,
+  /// tous types de géométrie confondus (Point / LineString / Polygon).
   double? _calculateDistance(BaseSite site) {
     if (_userPosition == null || site.geom == null) {
       return null;
     }
 
     try {
-      // Parser la géométrie GeoJSON
-      final geomData = jsonDecode(site.geom!);
-      double? siteLat;
-      double? siteLon;
-
-      // Extraire les coordonnées selon le type de géométrie
-      if (geomData is Map<String, dynamic>) {
-        final type = geomData['type'];
-        final coordinates = geomData['coordinates'];
-
-        if (type == 'Point' && coordinates is List && coordinates.length >= 2) {
-          // Format GeoJSON: [longitude, latitude]
-          siteLon = coordinates[0].toDouble();
-          siteLat = coordinates[1].toDouble();
-        }
-      }
-
-      if (siteLat == null || siteLon == null) {
-        return null;
-      }
-
-      // Calculer la distance en mètres
-      return Geolocator.distanceBetween(
-        _userPosition!.latitude,
-        _userPosition!.longitude,
-        siteLat,
-        siteLon,
+      final service = ref.read(mapGeometryServiceProvider);
+      return service.distanceToGeoJson(
+        site.geom!,
+        LatLng(_userPosition!.latitude, _userPosition!.longitude),
       );
     } catch (e) {
       debugPrint(

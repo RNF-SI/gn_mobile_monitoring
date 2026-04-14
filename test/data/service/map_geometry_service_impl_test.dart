@@ -197,6 +197,97 @@ void main() {
       });
     });
 
+    group('distanceToGeoJson', () {
+      // Référence Paris (~48.8566, 2.3522).
+      final userInParis = const LatLng(48.8566, 2.3522);
+
+      test('returns null for invalid JSON', () {
+        expect(service.distanceToGeoJson('not json', userInParis), isNull);
+      });
+
+      test('returns null for unsupported geometry type', () {
+        const geom = '{"type":"GeometryCollection","coordinates":[]}';
+        expect(service.distanceToGeoJson(geom, userInParis), isNull);
+      });
+
+      test('Point: returns distance between user and the site point', () {
+        // Lyon ~45.7640, 4.8357 → ~392 km depuis Paris.
+        const geom = '{"type":"Point","coordinates":[4.8357,45.7640]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, greaterThan(380000));
+        expect(result, lessThan(420000));
+      });
+
+      test('LineString: returns 0 when user is on the line', () {
+        // Ligne horizontale passant par Paris.
+        const geom =
+            '{"type":"LineString","coordinates":[[2.30,48.8566],[2.40,48.8566]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, lessThan(50)); // ~sur la ligne, <50 m
+      });
+
+      test('LineString: returns positive distance when user is off the line',
+          () {
+        // Ligne à ~0.1° au sud de Paris (~11 km).
+        const geom =
+            '{"type":"LineString","coordinates":[[2.30,48.75],[2.40,48.75]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, greaterThan(10000));
+        expect(result, lessThan(15000));
+      });
+
+      test('Polygon: returns 0 when user is inside', () {
+        // Polygone carré autour de Paris.
+        const geom =
+            '{"type":"Polygon","coordinates":[[[2.30,48.80],[2.40,48.80],[2.40,48.90],[2.30,48.90],[2.30,48.80]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, 0);
+      });
+
+      test('Polygon: returns distance to border when user is outside', () {
+        // Polygone bien au sud de Paris.
+        const geom =
+            '{"type":"Polygon","coordinates":[[[2.30,48.50],[2.40,48.50],[2.40,48.60],[2.30,48.60],[2.30,48.50]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        expect(result!, greaterThan(20000));
+      });
+
+      test('MultiPolygon: returns 0 when user is inside one of the polygons',
+          () {
+        // Premier polygone loin, second autour de Paris.
+        const geom =
+            '{"type":"MultiPolygon","coordinates":[[[[0,0],[1,0],[1,1],[0,1],[0,0]]],[[[2.30,48.80],[2.40,48.80],[2.40,48.90],[2.30,48.90],[2.30,48.80]]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, 0);
+      });
+
+      test('MultiPolygon: returns min distance when user is outside all', () {
+        // Deux polygones au sud et très loin. On attend la distance au plus
+        // proche (celui au sud).
+        const geom =
+            '{"type":"MultiPolygon","coordinates":[[[[0,0],[1,0],[1,1],[0,1],[0,0]]],[[[2.30,48.50],[2.40,48.50],[2.40,48.60],[2.30,48.60],[2.30,48.50]]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, isNotNull);
+        // La distance au polygone au sud est ~28 km, au polygone équatorial
+        // ~5500+ km.
+        expect(result!, greaterThan(20000));
+        expect(result, lessThan(50000));
+      });
+
+      test('Polygon: accepts non-closed ring', () {
+        // Même polygone que précédemment mais sans la répétition du premier
+        // point à la fin.
+        const geom =
+            '{"type":"Polygon","coordinates":[[[2.30,48.80],[2.40,48.80],[2.40,48.90],[2.30,48.90]]]}';
+        final result = service.distanceToGeoJson(geom, userInParis);
+        expect(result, 0);
+      });
+    });
+
     group('isPointNearTarget', () {
       test('should return true for same point', () {
         final point = const LatLng(48.85, 2.35);
