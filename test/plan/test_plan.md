@@ -1,6 +1,13 @@
 # Plan de Tests pour GN Mobile Monitoring
 
-Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'application selon l'approche TDD.
+> ⚠️ **Document historique (figé au 15/04/2025).** Ce plan listait les tests
+> unitaires/intégration visés à l'époque. Depuis, la suite a largement
+> évolué : 1318 tests unitaires, 33 scénarios E2E mock
+> (`integration_test/scenarios/`) et 12 scénarios E2E réels
+> (`integration_test/scenarios_real/`) — voir
+> [docs/E2E_REAL_API_TESTS.md](../../docs/E2E_REAL_API_TESTS.md) et
+> [integration_test/README.md](../../integration_test/README.md) pour l'état
+> actuel. La liste ci-dessous est conservée à titre historique.
 
 ## 1. Couche Data (Repository)
 
@@ -152,7 +159,7 @@ Ce document détaille les tests à implémenter pour couvrir l'ensemble de l'app
 
 ## Plan d'implémentation
 
-### Progression actuelle (état au 15/04/2025)
+### Progression (gel au 15/04/2025)
 
 ✅ Tous les tests existants ont été réparés et passent avec succès
 ✅ Tous les composants prioritaires initiaux (Priorité 1) ont été testés
