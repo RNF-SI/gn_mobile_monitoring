@@ -1192,13 +1192,24 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 'ID serveur du groupe enregistré: local=${group.idSitesGroup}, serveur=$serverId',
                 tag: 'sync');
 
-            // Mettre à jour les références id_sites_group dans les site complements
-            // Les sites locaux qui référencent l'ancien ID local doivent maintenant référencer l'ID serveur
-            await _sitesRepository.updateSiteComplementsGroupId(
-                group.idSitesGroup, serverId);
+            // VOLONTAIREMENT, on NE met PAS à jour `complement.idSitesGroup`
+            // ici (même si la méthode `updateSiteComplementsGroupId` existe
+            // toujours). Raison : quand plusieurs groupes sont synchronisés
+            // en rafale et que les IDs serveur chevauchent les IDs locaux
+            // encore présents (p. ex. 15→16, 16→17, 17→18), le remapping
+            // cascade et corrompt les complements : un complément pointant
+            // initialement sur le groupe 15 finit à 18 au lieu de 16.
+            //
+            // À la place, on laisse le complément pointer sur l'ID local et
+            // on convertit vers l'ID serveur au moment du push du site via
+            // `_resolveServerGroupId(localId)`, qui lit la colonne
+            // `serverSiteGroupId` du groupe correspondant. Comportement
+            // symétrique pour les sites créés avant ou après le push du
+            // groupe.
             _logger.i(
-                '[SYNC_GROUP] Groupe ${group.idSitesGroup} → $serverId, '
-                'complements enfants remappés',
+                '[SYNC_GROUP] Groupe ${group.idSitesGroup} → $serverId '
+                '(serverSiteGroupId enregistré, remapping des sites déféré '
+                'au moment du push)',
                 tag: 'sync');
 
             itemsProcessed++;
