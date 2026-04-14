@@ -1,6 +1,8 @@
 # Tests d'Intégration - GN Mobile Monitoring
 
-Ce répertoire contient les tests d'intégration pour valider l'application avec un serveur GeoNature 16 réel.
+Ce répertoire contient les tests d'intégration pour valider l'application avec un serveur GeoNature réel (2.16.x ou 2.17.x).
+
+> 💡 **Pour les tests E2E sur appareil Android** (pilotage de l'app, sync complète, CRUD sites/visites/observations), voir plutôt [`integration_test/`](../../integration_test/) et sa [documentation dédiée](../../docs/E2E_REAL_API_TESTS.md). Les tests documentés ici (couche Dart uniquement, sans UI) se concentrent sur la validation des repositories/viewmodels contre l'API serveur.
 
 ## 📋 Table des matières
 
@@ -16,7 +18,7 @@ Ce répertoire contient les tests d'intégration pour valider l'application avec
 
 ## 🎯 Vue d'ensemble
 
-Les tests d'intégration valident les flux critiques de l'application avec un serveur GeoNature 16 réel :
+Les tests d'intégration valident les flux critiques de l'application avec un serveur GeoNature réel :
 
 - **Authentification** : Connexion, gestion du token JWT, déconnexion
 - **Synchronisation upload** : Envoi de visites/observations vers le serveur (POST/PATCH)
@@ -46,10 +48,10 @@ cp .env.test.example .env.test
 Modifier `.env.test` avec vos credentials :
 
 ```bash
-# Configuration du serveur GeoNature de test
-TEST_SERVER_URL=https://geonature-test.reservenaturelle.fr
-TEST_USERNAME=antoine.schlegel
-TEST_PASSWORD=antoine
+# Configuration du serveur GeoNature de test (valeurs à adapter)
+TEST_SERVER_URL=https://geonature-test.example.fr
+TEST_USERNAME=<votre_identifiant>
+TEST_PASSWORD=<votre_mot_de_passe>
 TEST_MODULES=POPAmphibien,POPReptile
 ```
 
@@ -70,12 +72,12 @@ export TEST_MODULES="POPAmphibien,POPReptile"
 
 Configurer les secrets dans **Settings → Secrets and variables → Actions** :
 
-| Secret           | Valeur                                          | Description                   |
-|------------------|-------------------------------------------------|-------------------------------|
-| `TEST_SERVER_URL` | `https://geonature-test.reservenaturelle.fr`   | URL du serveur de test        |
-| `TEST_USERNAME`   | `test`                                           | Utilisateur de test           |
-| `TEST_PASSWORD`   | `testRNF366`                                     | Mot de passe de test          |
-| `TEST_MODULES`    | `POPAmphibien,POPReptile`                         | Modules disponibles (CSV)     |
+| Secret           | Description                   |
+|------------------|-------------------------------|
+| `TEST_SERVER_URL` | URL du serveur de test (ex: `https://geonature-test.reservenaturelle.fr`) |
+| `TEST_USERNAME`   | Utilisateur de test           |
+| `TEST_PASSWORD`   | Mot de passe de test (⚠️ ne jamais commiter en clair) |
+| `TEST_MODULES`    | Modules disponibles, au format CSV (ex: `POPAmphibien,POPReptile`) |
 
 ---
 
@@ -221,14 +223,14 @@ psql -U geonatadmin -d geonaturedb
 -- Vérifier que l'utilisateur existe
 SELECT id_role, nom_role, prenom_role, email, active
 FROM utilisateurs.t_roles
-WHERE identifiant = 'antoine.schlegel';
+WHERE identifiant = '<votre_identifiant>';
 
--- Si l'utilisateur n'existe pas, le créer
+-- Si l'utilisateur n'existe pas, le créer (adapter les valeurs)
 INSERT INTO utilisateurs.t_roles (
   nom_role, prenom_role, identifiant, email, pass, active, id_organisme
 ) VALUES (
-  'SCHLEGEL', 'Antoine', 'antoine.schlegel', 'antoine@example.com',
-  'hash_du_mot_de_passe', true, 1
+  '<NOM>', '<Prenom>', '<identifiant>', '<email@example.com>',
+  '<hash_du_mot_de_passe>', true, 1
 );
 ```
 
@@ -244,7 +246,7 @@ CROSS JOIN utilisateurs.t_roles r
 LEFT JOIN gn_permissions.t_permissions pc
   ON pc.id_role = r.id_role
   AND pc.id_module = m.id_module
-WHERE r.identifiant = 'antoine.schlegel'
+WHERE r.identifiant = '<votre_identifiant>'
   AND m.module_code IN ('POPAmphibien', 'POPReptile', 'MONITORING');
 
 -- Accorder les droits si nécessaire (C=Create, R=Read, U=Update, V=Validate, E=Export, D=Delete)
