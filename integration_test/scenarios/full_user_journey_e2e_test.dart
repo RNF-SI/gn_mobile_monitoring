@@ -125,29 +125,21 @@ void main() {
     });
 
     testWidgets(
-        'Pre-seeded journey: login → module → site detail navigation',
+        'Pre-seeded journey: module → site detail navigation',
         (tester) async {
-      // Seed a downloaded module so we can navigate deeper
-      await seeder.seedDownloadedModule();
-      await seeder.seedNomenclatures();
-      await seeder.seedDatasets();
+      // Pré-seed : user connecté + module téléchargé + nomenclatures + datasets.
+      // On skip la phase login pour éviter que le sync post-login n'efface
+      // le module seedé (le mock /monitorings/modules retourne un set de
+      // fixtures différentes et le sync purge les modules absents du payload).
+      // Le parcours testé reste : home (pré-connecté) → module → site detail.
+      await seeder.seedAll();
 
       await MockApiHandlers.setupFullJourney(testApp.interceptor);
       testApp.interceptor.onGetJson('/nomenclatures/nomenclatures', []);
       testApp.interceptor.onGetJson('/monitorings/modules', []);
 
-      // Launch the app
+      // Launch the app (user is already logged in → lands on HomePage directly)
       await tester.pumpWidget(testApp.buildProviderScope());
-      await tester.pumpAndSettle();
-
-      // Login
-      final loginRobot = LoginRobot(tester);
-      await loginRobot.login(
-        identifiant: 'testuser',
-        password: 'testpass',
-      );
-
-      await tester.pump(const Duration(seconds: 1));
       await tester.pumpAndSettle(
         const Duration(milliseconds: 100),
         EnginePhase.sendSemanticsUpdate,

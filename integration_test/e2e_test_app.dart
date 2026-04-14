@@ -48,6 +48,11 @@ class E2ETestApp {
   final InMemoryLocalStorage localStorage;
   final Dio _mockDio;
 
+  /// Exposé pour les tests qui veulent déclencher manuellement une requête
+  /// (p. ex. valider l'enregistrement par l'interceptor). Les vrais appels
+  /// de l'app passent par les providers Dio injectés dans [buildProviderScope].
+  Dio get dio => _mockDio;
+
   /// Stub de localisation utilisé par tous les tests : retourne une
   /// position connue pour que les boutons dépendants du GPS (header
   /// de création / édition de site) soient actifs. Les tests peuvent

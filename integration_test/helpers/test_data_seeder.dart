@@ -59,8 +59,16 @@ class TestDataSeeder {
   /// `site`. `null` laisse la config sans contrainte (donc défaut `Point`
   /// côté app). Une liste multi-valeurs permet de tester le bottom sheet
   /// de sélection de type, une liste à 1 élément teste l'auto-sélection.
+  ///
+  /// [includeSitesGroup] contrôle la présence de `sites_group` dans
+  /// `children_types`. Défaut `false` : la page module affiche directement
+  /// la liste des sites (configuration adaptée à la majorité des scénarios
+  /// mock qui naviguent site → visite → observation). Passer `true` pour
+  /// tester explicitement le flux par groupes (la page module masque alors
+  /// les sites et n'affiche que la liste des groupes, comme côté prod).
   static ModuleConfiguration createModuleConfig({
     List<String>? siteGeometryTypes,
+    bool includeSitesGroup = false,
   }) {
     final siteConfig = <String, dynamic>{
       'label': 'Site',
@@ -85,13 +93,15 @@ class TestDataSeeder {
           siteGeometryTypes.length == 1 ? siteGeometryTypes.first : siteGeometryTypes;
     }
 
+    final childrenTypes = <String>['site', if (includeSitesGroup) 'sites_group'];
+
     return ModuleConfiguration.fromJson({
       'custom': {
         'id_module': testModuleId,
         'module_code': testModuleCode,
       },
       'module': {
-        'children_types': ['site', 'sites_group'],
+        'children_types': childrenTypes,
         'label': 'Module',
         'module_label': testModuleLabel,
         'id_field_name': 'id_module',
@@ -106,19 +116,20 @@ class TestDataSeeder {
         },
       },
       'site': siteConfig,
-      'sites_group': {
-        'label': 'Groupe de sites',
-        'id_field_name': 'id_sites_group',
-        'display_list': ['sites_group_name'],
-        'display_properties': ['sites_group_name', 'sites_group_code'],
-        'generic': {
-          'sites_group_name': {
-            'type_widget': 'text',
-            'attribut_label': 'Nom du groupe',
-            'required': true,
+      if (includeSitesGroup)
+        'sites_group': {
+          'label': 'Groupe de sites',
+          'id_field_name': 'id_sites_group',
+          'display_list': ['sites_group_name'],
+          'display_properties': ['sites_group_name', 'sites_group_code'],
+          'generic': {
+            'sites_group_name': {
+              'type_widget': 'text',
+              'attribut_label': 'Nom du groupe',
+              'required': true,
+            },
           },
         },
-      },
       'visit': {
         'label': 'Visite',
         'id_field_name': 'id_base_visit',
@@ -170,19 +181,20 @@ class TestDataSeeder {
                 },
               },
             },
-            'sites_group': {
-              'children': {
-                'site': {
-                  'children': {
-                    'visit': {
-                      'children': {
-                        'observation': {},
+            if (includeSitesGroup)
+              'sites_group': {
+                'children': {
+                  'site': {
+                    'children': {
+                      'visit': {
+                        'children': {
+                          'observation': {},
+                        },
                       },
                     },
                   },
                 },
               },
-            },
           },
         },
       },
@@ -202,24 +214,38 @@ class TestDataSeeder {
   ///   de la config `site`. Utile pour les tests de sélecteur de type.
   /// - [extraSites] ajoute des sites supplémentaires à ceux par défaut
   ///   (p. ex. un site avec une `LineString` ou un `Polygon` en geom).
+  /// - [includeSitesGroup] active le flux par groupes (les sites sont
+  ///   alors masqués sur la page module, seuls les groupes sont listés).
+  ///   Par défaut `false` : la page module liste directement les sites.
   Future<void> seedDownloadedModule({
     List<String>? siteGeometryTypes,
     List<BaseSite>? extraSites,
+    bool includeSitesGroup = false,
   }) async {
-    final config = createModuleConfig(siteGeometryTypes: siteGeometryTypes);
+    final config = createModuleConfig(
+      siteGeometryTypes: siteGeometryTypes,
+      includeSitesGroup: includeSitesGroup,
+    );
 
+    // Les sites seedés sont marqués `isLocal: true` et `serverSiteId: null`
+    // pour que l'AppBar expose `edit-site-button` (condition
+    // `canEdit = isLocal && !isSynced` dans SiteDetailPage). Sans ça, le
+    // site apparaît comme "synchronisé côté serveur" et le bouton d'édition
+    // est remplacé par une icône cadenas.
     final sites = <BaseSite>[
       const BaseSite(
         idBaseSite: testSiteId1,
         baseSiteName: 'Site de test Alpha',
         baseSiteCode: 'SITE_ALPHA',
         baseSiteDescription: 'Premier site de test pour les E2E',
+        isLocal: true,
       ),
       const BaseSite(
         idBaseSite: testSiteId2,
         baseSiteName: 'Site de test Beta',
         baseSiteCode: 'SITE_BETA',
         baseSiteDescription: 'Deuxième site de test pour les E2E',
+        isLocal: true,
       ),
       ...?extraSites,
     ];
@@ -341,11 +367,13 @@ class TestDataSeeder {
   Future<void> seedAll({
     List<String>? siteGeometryTypes,
     List<BaseSite>? extraSites,
+    bool includeSitesGroup = false,
   }) async {
     await seedLoggedInUser();
     await seedDownloadedModule(
       siteGeometryTypes: siteGeometryTypes,
       extraSites: extraSites,
+      includeSitesGroup: includeSitesGroup,
     );
     await seedNomenclatures();
     await seedDatasets();
