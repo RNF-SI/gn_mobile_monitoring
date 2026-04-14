@@ -7,15 +7,38 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/load_map_tile_layers_use_case.dart';
 import 'package:latlong2/latlong.dart';
 
-/// Page plein écran pour ajuster la position du site sur une carte interactive.
-/// L'utilisateur déplace la carte sous une épingle fixe au centre de l'écran,
-/// puis confirme la position.
+/// Résultat du dessin d'une géométrie sur [LocationPickerPage].
+/// Les coordonnées sont dans l'ordre de saisie (sans fermeture explicite
+/// pour les polygones — c'est au caller de répéter le premier point s'il
+/// sérialise en GeoJSON).
+class GeometryDrawResult {
+  final String geometryType;
+  final List<LatLng> coordinates;
+
+  const GeometryDrawResult({
+    required this.geometryType,
+    required this.coordinates,
+  });
+}
+
+/// Page plein écran pour saisir la géométrie d'un site (point, ligne, polygone).
+///
+/// - `Point` : la carte se déplace sous une épingle centrale, la confirmation
+///   retourne le centre courant.
+/// - `LineString` / `Polygon` : tap pour ajouter un sommet, appui long sur la
+///   carte pour retirer le dernier sommet. La confirmation est bloquée tant
+///   que le nombre minimal de sommets n'est pas atteint (2 pour une ligne,
+///   3 pour un polygone).
 class LocationPickerPage extends ConsumerStatefulWidget {
-  final LatLng initialPosition;
+  final LatLng initialCenter;
+  final String geometryType;
+  final List<LatLng>? initialVertices;
 
   const LocationPickerPage({
     super.key,
-    required this.initialPosition,
+    required this.initialCenter,
+    this.geometryType = 'Point',
+    this.initialVertices,
   });
 
   @override
@@ -25,19 +48,30 @@ class LocationPickerPage extends ConsumerStatefulWidget {
 class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
   late final MapController _mapController;
   late LatLng _currentCenter;
+  late List<LatLng> _vertices;
   List<TileLayerConfig> _tileLayers = [];
   TileLayerConfig? _selectedLayer;
   StreamSubscription<MapEvent>? _mapEventSubscription;
+
+  bool get _isPoint => widget.geometryType == 'Point';
+  bool get _isLine => widget.geometryType == 'LineString';
+  bool get _isPolygon => widget.geometryType == 'Polygon';
+
+  int get _minVertices => _isPolygon ? 3 : (_isLine ? 2 : 1);
+
+  bool get _canConfirm =>
+      _isPoint ? true : _vertices.length >= _minVertices;
 
   @override
   void initState() {
     super.initState();
     _mapController = MapController();
-    _currentCenter = widget.initialPosition;
+    _currentCenter = widget.initialCenter;
+    _vertices = List<LatLng>.from(widget.initialVertices ?? const []);
     _loadTileLayers();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _mapEventSubscription = _mapController.mapEventStream.listen((event) {
-        if (event is MapEventMove || event is MapEventMoveEnd) {
+        if (_isPoint && (event is MapEventMove || event is MapEventMoveEnd)) {
           setState(() {
             _currentCenter = _mapController.camera.center;
           });
@@ -64,20 +98,80 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
     super.dispose();
   }
 
+  void _handleMapTap(TapPosition _, LatLng point) {
+    if (_isPoint) return;
+    setState(() {
+      _vertices = [..._vertices, point];
+    });
+  }
+
+  void _handleMapLongPress(TapPosition _, LatLng __) {
+    if (_isPoint || _vertices.isEmpty) return;
+    setState(() {
+      _vertices = _vertices.sublist(0, _vertices.length - 1);
+    });
+  }
+
+  void _confirm() {
+    if (!_canConfirm) return;
+    final result = _isPoint
+        ? GeometryDrawResult(
+            geometryType: 'Point',
+            coordinates: [_currentCenter],
+          )
+        : GeometryDrawResult(
+            geometryType: widget.geometryType,
+            coordinates: List.unmodifiable(_vertices),
+          );
+    Navigator.pop(context, result);
+  }
+
+  String _appBarTitle() {
+    if (_isLine) return 'Tracer une ligne';
+    if (_isPolygon) return 'Tracer un polygone';
+    return 'Ajuster la position';
+  }
+
+  String _instructions() {
+    final remaining = _minVertices - _vertices.length;
+    if (_isLine) {
+      if (remaining > 0) {
+        return 'Touchez la carte pour ajouter des sommets (encore $remaining minimum). Appui long pour retirer le dernier.';
+      }
+      return 'Sommets : ${_vertices.length}. Appui long pour retirer le dernier.';
+    }
+    if (_isPolygon) {
+      if (remaining > 0) {
+        return 'Touchez la carte pour ajouter des sommets (encore $remaining minimum). Appui long pour retirer le dernier.';
+      }
+      return 'Sommets : ${_vertices.length}. Appui long pour retirer le dernier.';
+    }
+    return 'Lat: ${_currentCenter.latitude.toStringAsFixed(6)}, Lon: ${_currentCenter.longitude.toStringAsFixed(6)}';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Ajuster la position'),
+        title: Text(_appBarTitle()),
+        actions: [
+          if (!_isPoint && _vertices.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.delete_sweep),
+              tooltip: 'Tout effacer',
+              onPressed: () => setState(() => _vertices = []),
+            ),
+        ],
       ),
       body: Stack(
         children: [
-          // Carte interactive
           FlutterMap(
             mapController: _mapController,
             options: MapOptions(
-              initialCenter: widget.initialPosition,
+              initialCenter: widget.initialCenter,
               initialZoom: 17,
+              onTap: _handleMapTap,
+              onLongPress: _handleMapLongPress,
             ),
             children: [
               TileLayer(
@@ -85,22 +179,69 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                 userAgentPackageName: 'com.example.gn_mobile_monitoring',
               ),
+              if (_isPolygon && _vertices.length >= 3)
+                PolygonLayer(
+                  polygons: [
+                    Polygon(
+                      points: _vertices,
+                      color: Colors.red.withValues(alpha: 0.25),
+                      borderColor: Colors.red,
+                      borderStrokeWidth: 3,
+                    ),
+                  ],
+                ),
+              if (_isLine && _vertices.length >= 2)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: _vertices,
+                      color: Colors.red,
+                      strokeWidth: 3,
+                    ),
+                  ],
+                ),
+              if (!_isPoint && _vertices.isNotEmpty)
+                MarkerLayer(
+                  markers: [
+                    for (int i = 0; i < _vertices.length; i++)
+                      Marker(
+                        point: _vertices[i],
+                        width: 24,
+                        height: 24,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.red, width: 2),
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            '${i + 1}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
             ],
           ),
 
-          // Épingle fixe au centre de l'écran
-          const Center(
-            child: Padding(
-              padding: EdgeInsets.only(bottom: 40.0),
-              child: Icon(
-                Icons.location_on,
-                color: Colors.red,
-                size: 50,
+          if (_isPoint)
+            const Center(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 40.0),
+                child: Icon(
+                  Icons.location_on,
+                  color: Colors.red,
+                  size: 50,
+                ),
               ),
             ),
-          ),
 
-          // Affichage des coordonnées en temps réel
           Positioned(
             top: 16,
             left: 16,
@@ -119,17 +260,16 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
                 ],
               ),
               child: Text(
-                'Lat: ${_currentCenter.latitude.toStringAsFixed(6)}, Lon: ${_currentCenter.longitude.toStringAsFixed(6)}',
-                style: const TextStyle(
+                _instructions(),
+                style: TextStyle(
                   fontSize: 13,
-                  fontFamily: 'monospace',
+                  fontFamily: _isPoint ? 'monospace' : null,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ),
           ),
 
-          // Bouton de changement de couche
           if (_tileLayers.length > 1)
             Positioned(
               top: 16,
@@ -149,17 +289,14 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
               ),
             ),
 
-          // Bouton "Confirmer la position"
           Positioned(
             bottom: 32,
             left: 16,
             right: 16,
             child: FilledButton.icon(
-              onPressed: () {
-                Navigator.pop(context, _currentCenter);
-              },
+              onPressed: _canConfirm ? _confirm : null,
               icon: const Icon(Icons.check),
-              label: const Text('Confirmer la position'),
+              label: Text(_isPoint ? 'Confirmer la position' : 'Valider la géométrie'),
               style: FilledButton.styleFrom(
                 minimumSize: const Size(double.infinity, 48),
               ),

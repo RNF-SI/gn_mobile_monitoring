@@ -116,18 +116,18 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
   Future<void> _openLocationPicker(BuildContext context) async {
     if (_selectedPosition == null) return;
 
-    final result = await Navigator.push<LatLng>(
+    final result = await Navigator.push<GeometryDrawResult>(
       context,
       MaterialPageRoute(
         builder: (context) => LocationPickerPage(
-          initialPosition: _selectedPosition!,
+          initialCenter: _selectedPosition!,
         ),
       ),
     );
 
-    if (result != null && mounted) {
+    if (result != null && result.coordinates.isNotEmpty && mounted) {
       setState(() {
-        _selectedPosition = result;
+        _selectedPosition = result.coordinates.first;
         _isPositionAdjusted = true;
       });
     }
