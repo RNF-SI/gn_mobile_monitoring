@@ -134,6 +134,71 @@ void main() {
       });
     });
 
+    group('isPolygonSimple', () {
+      test('returns true for triangle (3 vertices)', () {
+        final triangle = [
+          const LatLng(0, 0),
+          const LatLng(0, 10),
+          const LatLng(10, 0),
+        ];
+        expect(service.isPolygonSimple(triangle), isTrue);
+      });
+
+      test('returns true for convex square', () {
+        final square = [
+          const LatLng(0, 0),
+          const LatLng(0, 10),
+          const LatLng(10, 10),
+          const LatLng(10, 0),
+        ];
+        expect(service.isPolygonSimple(square), isTrue);
+      });
+
+      test('returns true for concave L-shape', () {
+        final lShape = [
+          const LatLng(0, 0),
+          const LatLng(0, 10),
+          const LatLng(5, 10),
+          const LatLng(5, 5),
+          const LatLng(10, 5),
+          const LatLng(10, 0),
+        ];
+        expect(service.isPolygonSimple(lShape), isTrue);
+      });
+
+      test('returns false for bowtie / butterfly polygon', () {
+        // Polygone en nœud : segments (A,B) et (C,D) se croisent.
+        final bowtie = [
+          const LatLng(0, 0),
+          const LatLng(10, 10),
+          const LatLng(10, 0),
+          const LatLng(0, 10),
+        ];
+        expect(service.isPolygonSimple(bowtie), isFalse);
+      });
+
+      test('returns false for the real-world case reported (issue #154)', () {
+        // Coordonnées exactes du polygone rejeté par PostGIS avec
+        // "TopologyException: side location conflict".
+        final realCase = [
+          const LatLng(47.3335752910809, 5.047738959381976),
+          const LatLng(47.33414313741844, 5.04715858044083),
+          const LatLng(47.33380797031858, 5.046753950052315),
+          const LatLng(47.33469435802259, 5.049606798650231),
+        ];
+        expect(service.isPolygonSimple(realCase), isFalse);
+      });
+
+      test('returns true for trivially short vertex lists', () {
+        expect(service.isPolygonSimple([]), isTrue);
+        expect(service.isPolygonSimple([const LatLng(0, 0)]), isTrue);
+        expect(
+          service.isPolygonSimple([const LatLng(0, 0), const LatLng(1, 1)]),
+          isTrue,
+        );
+      });
+    });
+
     group('distanceBetween', () {
       test('should return 0 for same point', () {
         final point = const LatLng(48.85, 2.35);

@@ -12,6 +12,16 @@ abstract class MapGeometryService {
   /// Vérifie si un point est à l'intérieur d'un polygone (ray casting)
   bool isPointInPolygon(LatLng point, List<LatLng> polygonPoints);
 
+  /// Retourne `true` si le polygone défini par [vertices] est simple (pas
+  /// d'auto-intersection). Les sommets doivent être dans l'ordre de dessin,
+  /// sans répéter le point de fermeture : le segment de retour du dernier
+  /// vers le premier sommet est testé implicitement.
+  ///
+  /// Un polygone auto-intersecté fait échouer les triggers PostGIS côté
+  /// serveur (erreur `TopologyException: side location conflict`), d'où
+  /// la nécessité de valider avant l'envoi.
+  bool isPolygonSimple(List<LatLng> vertices);
+
   /// Calcule la distance minimale d'un point à une ligne
   double distanceToLine(LatLng point, List<LatLng> linePoints);
 

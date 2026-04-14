@@ -106,8 +106,21 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
 
   int get _minVertices => _isPolygon ? 3 : (_isLine ? 2 : 1);
 
-  bool get _canConfirm =>
-      _isPoint ? true : _vertices.length >= _minVertices;
+  /// `true` si le polygone courant a au moins le nombre minimum de sommets
+  /// mais est auto-intersecté (segments qui se croisent). On ne teste pas
+  /// les lignes — le serveur accepte les LineString auto-sécantes.
+  bool get _isPolygonInvalid {
+    if (!_isPolygon || _vertices.length < 4) return false;
+    return !ref
+        .read(mapGeometryServiceProvider)
+        .isPolygonSimple(_vertices);
+  }
+
+  bool get _canConfirm {
+    if (_isPoint) return true;
+    if (_vertices.length < _minVertices) return false;
+    return !_isPolygonInvalid;
+  }
 
   @override
   void initState() {
@@ -191,6 +204,9 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
       if (remaining > 0) {
         return 'Touchez la carte pour ajouter des sommets (encore $remaining minimum). Appui long pour retirer le dernier.';
       }
+      if (_isPolygonInvalid) {
+        return '⚠️ Polygone invalide : les segments se croisent. Retirez des sommets (appui long) ou recommencez.';
+      }
       return 'Sommets : ${_vertices.length}. Appui long pour retirer le dernier.';
     }
     return 'Lat: ${_currentCenter.latitude.toStringAsFixed(6)}, Lon: ${_currentCenter.longitude.toStringAsFixed(6)}';
@@ -231,9 +247,15 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
                   polygons: [
                     Polygon(
                       points: _vertices,
-                      color: Colors.red.withValues(alpha: 0.25),
-                      borderColor: Colors.red,
-                      borderStrokeWidth: 3,
+                      // Couleur orange/warning quand le polygone s'auto-
+                      // intersecte, rouge sinon (comportement par défaut).
+                      // Rend visible à l'utilisateur qu'il faut corriger
+                      // avant de pouvoir valider.
+                      color: (_isPolygonInvalid ? Colors.orange : Colors.red)
+                          .withValues(alpha: 0.25),
+                      borderColor:
+                          _isPolygonInvalid ? Colors.orange : Colors.red,
+                      borderStrokeWidth: _isPolygonInvalid ? 4 : 3,
                     ),
                   ],
                 ),

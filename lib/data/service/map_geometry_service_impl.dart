@@ -167,6 +167,55 @@ class MapGeometryServiceImpl implements MapGeometryService {
   }
 
   @override
+  bool isPolygonSimple(List<LatLng> vertices) {
+    final n = vertices.length;
+    // Un polygone à ≤3 sommets distincts est toujours simple (triangle ou moins).
+    if (n < 4) return true;
+
+    // Construire n arêtes cycliques (i → (i+1) mod n) et tester chaque paire
+    // de segments non-adjacents. Deux arêtes sont adjacentes si elles partagent
+    // un sommet : (i, i+1) partage i+1 avec (i+1, i+2) et, pour le cycle, la
+    // première arête (0, 1) partage le sommet 0 avec la dernière (n-1, 0).
+    for (int i = 0; i < n; i++) {
+      for (int j = i + 2; j < n; j++) {
+        if (i == 0 && j == n - 1) continue; // arêtes qui partagent le sommet 0
+
+        final a = vertices[i];
+        final b = vertices[(i + 1) % n];
+        final c = vertices[j];
+        final d = vertices[(j + 1) % n];
+
+        if (_segmentsIntersect(a, b, c, d)) return false;
+      }
+    }
+    return true;
+  }
+
+  /// Test d'intersection entre les segments [p1,p2] et [p3,p4].
+  /// Algo classique par signes des orientations. Les cas colinéaires (points
+  /// exactement sur la ligne) sont traités comme non-intersectants, ce qui
+  /// évite les faux positifs pour les polygones dessinés au tap (toucher
+  /// exactement le même point deux fois est rare et généralement intentionnel).
+  bool _segmentsIntersect(LatLng p1, LatLng p2, LatLng p3, LatLng p4) {
+    final o1 = _orientation(p1, p2, p3);
+    final o2 = _orientation(p1, p2, p4);
+    final o3 = _orientation(p3, p4, p1);
+    final o4 = _orientation(p3, p4, p2);
+    return o1 != o2 && o3 != o4 && o1 != 0 && o2 != 0 && o3 != 0 && o4 != 0;
+  }
+
+  /// Retourne +1 si (a,b,c) est dans le sens trigonométrique (CCW), -1 dans
+  /// le sens horaire (CW), 0 si les trois points sont colinéaires.
+  int _orientation(LatLng a, LatLng b, LatLng c) {
+    final ax = a.longitude, ay = a.latitude;
+    final bx = b.longitude, by = b.latitude;
+    final cx = c.longitude, cy = c.latitude;
+    final val = (bx - ax) * (cy - by) - (by - ay) * (cx - bx);
+    if (val.abs() < 1e-12) return 0;
+    return val > 0 ? 1 : -1;
+  }
+
+  @override
   double? distanceToGeoJson(String geoJson, LatLng point) {
     try {
       final decoded = jsonDecode(geoJson);
