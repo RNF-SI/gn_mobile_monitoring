@@ -1197,8 +1197,8 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             await _sitesRepository.updateSiteComplementsGroupId(
                 group.idSitesGroup, serverId);
             _logger.i(
-                '[SYNC_GROUP_DEBUG] Remapping site complements : '
-                'id_sites_group ${group.idSitesGroup} -> $serverId',
+                '[SYNC_GROUP] Groupe ${group.idSitesGroup} → $serverId, '
+                'complements enfants remappés',
                 tag: 'sync');
 
             itemsProcessed++;
@@ -1348,25 +1348,12 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // Récupérer le complément du site pour obtenir types_site et autres données
             final siteComplement = await _sitesRepository.getSiteComplementBySiteId(site.idBaseSite);
 
-            // INSTRUMENTATION — bug sync site/groupe en batch : log la valeur
-            // de complement.idSitesGroup (colonne DB, devrait être l'ID
-            // serveur après updateSiteComplementsGroupId) ET la valeur
-            // présente dans complement.data JSON (qui, elle, contient
-            // l'ancien ID local qu'on avait au moment de la création).
-            _logger.i(
-                '[SYNC_GROUP_DEBUG] Site ${site.idBaseSite} : '
-                'complement.idSitesGroup(col)=${siteComplement?.idSitesGroup}, '
-                'complement==null=${siteComplement == null}',
-                tag: 'sync');
-
             // Fusionner les données du site avec celles du complément
             Map<String, dynamic> mergedData = Map<String, dynamic>.from(site.data ?? {});
 
             if (siteComplement != null && siteComplement.data != null) {
               try {
                 final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
-                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
-
                 // Fusionner les données du complément avec celles du site
                 // Le complément a priorité sur les données du site
                 mergedData.addAll(complementData);
@@ -1390,24 +1377,17 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               mergedData['id_sites_group'] = serverGroupId ?? localGroupId;
               if (serverGroupId != null && serverGroupId != localGroupId) {
                 _logger.i(
-                    '[SYNC_GROUP_DEBUG] Site ${site.idBaseSite} : remapping '
-                    'à la volée id_sites_group $localGroupId -> $serverGroupId',
+                    '[SYNC_GROUP] Site ${site.idBaseSite} : remapping '
+                    'id_sites_group $localGroupId → $serverGroupId',
                     tag: 'sync');
               }
             } else if (mergedData.containsKey('id_sites_group')) {
               _logger.w(
-                  '[SYNC_GROUP_DEBUG] Site ${site.idBaseSite} : '
-                  'complement.idSitesGroup(col) est NULL mais le JSON '
-                  'contient id_sites_group=${mergedData['id_sites_group']} — '
-                  'valeur retirée du payload pour éviter un FK invalide.',
+                  '[SYNC_GROUP] Site ${site.idBaseSite} : FK id_sites_group '
+                  'orphelin (${mergedData['id_sites_group']}) retiré du payload',
                   tag: 'sync');
               mergedData.remove('id_sites_group');
             }
-
-            _logger.i(
-                '[SYNC_GROUP_DEBUG] Site ${site.idBaseSite} payload '
-                'id_sites_group final = ${mergedData['id_sites_group']}',
-                tag: 'sync');
 
             // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
             // Le serveur attend types_site comme une liste d'entiers
@@ -1495,20 +1475,12 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             // Récupérer le complément du site pour obtenir types_site et autres données
             final siteComplement = await _sitesRepository.getSiteComplementBySiteId(site.idBaseSite);
 
-            _logger.i(
-                '[SYNC_GROUP_DEBUG] PATCH site ${site.idBaseSite} : '
-                'complement.idSitesGroup(col)=${siteComplement?.idSitesGroup}',
-                tag: 'sync');
-
             // Fusionner les données du site avec celles du complément
             Map<String, dynamic> mergedData = Map<String, dynamic>.from(site.data ?? {});
 
             if (siteComplement != null && siteComplement.data != null) {
               try {
                 final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
-                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
-
-                // Fusionner les données du complément avec celles du site
                 mergedData.addAll(complementData);
               } catch (e) {
                 _logger.w('Erreur lors du parsing des données du complément pour site ${site.idBaseSite}: $e', tag: 'sync');
@@ -1525,17 +1497,15 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               mergedData['id_sites_group'] = serverGroupId ?? localGroupId;
               if (serverGroupId != null && serverGroupId != localGroupId) {
                 _logger.i(
-                    '[SYNC_GROUP_DEBUG] PATCH site ${site.idBaseSite} : '
-                    'remapping à la volée id_sites_group '
-                    '$localGroupId -> $serverGroupId',
+                    '[SYNC_GROUP] PATCH site ${site.idBaseSite} : remapping '
+                    'id_sites_group $localGroupId → $serverGroupId',
                     tag: 'sync');
               }
             } else if (mergedData.containsKey('id_sites_group')) {
               _logger.w(
-                  '[SYNC_GROUP_DEBUG] PATCH site ${site.idBaseSite} : '
-                  'complement.idSitesGroup(col) NULL mais JSON contient '
-                  'id_sites_group=${mergedData['id_sites_group']} — valeur '
-                  'retirée du payload.',
+                  '[SYNC_GROUP] PATCH site ${site.idBaseSite} : FK '
+                  'id_sites_group orphelin (${mergedData['id_sites_group']}) '
+                  'retiré du payload',
                   tag: 'sync');
               mergedData.remove('id_sites_group');
             }
