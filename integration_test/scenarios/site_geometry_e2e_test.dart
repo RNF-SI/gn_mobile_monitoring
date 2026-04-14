@@ -1,3 +1,6 @@
+@Tags(['map'])
+library;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
@@ -15,6 +18,13 @@ import '../helpers/test_data_seeder.dart';
 /// `SiteFormWrapper` → `LocationPreviewHeader` → `LocationPickerPage` sans
 /// dépendre de la navigation Home → Module → Site qui est déjà testée par
 /// ailleurs. La stabilité prime sur la répétition de la chaîne complète.
+///
+/// **Tagué `map`** : ces tests rendent `flutter_map` avec un `TileLayer` qui
+/// fetch les tuiles OSM en réseau. En CI (GitHub Actions emulator), le
+/// réseau vers `tile.openstreetmap.org` est inaccessible et les `fetch` en
+/// cours après la fin du test émettent des `SocketException` qui font
+/// remonter un échec post-completion. Sur un device physique avec réseau
+/// ces tests passent ; la CI les exclut via `--exclude-tags=map`.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 

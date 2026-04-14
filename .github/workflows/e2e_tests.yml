@@ -41,4 +41,9 @@ jobs:
           profile: pixel_6
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
-          script: flutter test integration_test/ --timeout 300s
+          # Scope volontairement restreint :
+          # - `scenarios/` : tests E2E mock, tournent sur l'emulator CI sans dep externe
+          # - exclure `scenarios_real/` : nécessitent un vrai serveur GeoNature inaccessible en CI
+          # - exclure tag `map` : tests qui rendent flutter_map → requêtes tile.openstreetmap.org
+          #   qui échouent sur l'emulator GH Actions (Network is unreachable post-test)
+          script: flutter test integration_test/scenarios/ --exclude-tags=map --timeout 300s
