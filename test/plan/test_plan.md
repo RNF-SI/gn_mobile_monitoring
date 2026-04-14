@@ -1,6 +1,6 @@
 # Plan de Tests pour GN Mobile Monitoring
 
-> ⚠️ **Document historique (figé au 15/04/2025).** Ce plan listait les tests
+> ⚠️ **Document historique, plus à jour depuis le 15/04/2025.** Ce plan listait les tests
 > unitaires/intégration visés à l'époque. Depuis, la suite a largement
 > évolué : 1318 tests unitaires, 33 scénarios E2E mock
 > (`integration_test/scenarios/`) et 12 scénarios E2E réels
@@ -159,7 +159,7 @@
 
 ## Plan d'implémentation
 
-### Progression (gel au 15/04/2025)
+### Progression au 15/04/2025 (plus mis à jour depuis)
 
 ✅ Tous les tests existants ont été réparés et passent avec succès
 ✅ Tous les composants prioritaires initiaux (Priorité 1) ont été testés
