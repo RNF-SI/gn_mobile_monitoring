@@ -895,6 +895,12 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           final properties = requestBody['properties'] as Map<String, dynamic>;
           dataMap.forEach((key, value) {
             if (value == null) return;
+            // `modules` est géré explicitement plus haut (properties.modules =
+            // [moduleId]) et on a vu en prod que la valeur stockée en DB
+            // locale peut être corrompue ("{id_module: 58}" string). On ignore
+            // donc toute valeur issue du data JSON pour cette clé — notre
+            // assignation via moduleId fait foi.
+            if (key == 'modules') return;
             if (value is Map<String, dynamic> && value.containsKey('id')) {
               properties[key] = value['id'];
             } else {
@@ -905,6 +911,40 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           logger.w('[API] Données complémentaires invalides ignorées: ${siteGroup.data}',
               tag: 'sync');
         }
+      }
+
+      // Sanitization finale de properties.modules : garantir que c'est bien
+      // une liste d'entiers, peu importe l'état de la DB locale. Gère les
+      // cas historiques où la valeur est stringifiée ("{id_module: 58}") ou
+      // encapsulée dans une Map.
+      final rawModules = (requestBody['properties']
+          as Map<String, dynamic>)['modules'];
+      if (rawModules is List) {
+        final sanitized = <int>[];
+        for (final item in rawModules) {
+          if (item is int) {
+            sanitized.add(item);
+          } else if (item is String) {
+            final parsed = int.tryParse(item);
+            if (parsed != null) {
+              sanitized.add(parsed);
+            } else {
+              // Essayer d'extraire l'entier d'une string "{id_module: 58}".
+              final match = RegExp(r'(\d+)').firstMatch(item);
+              if (match != null) sanitized.add(int.parse(match.group(1)!));
+            }
+          } else if (item is Map) {
+            final id = item['id_module'] ?? item['id'];
+            if (id is int) {
+              sanitized.add(id);
+            } else if (id is String) {
+              final parsed = int.tryParse(id);
+              if (parsed != null) sanitized.add(parsed);
+            }
+          }
+        }
+        (requestBody['properties'] as Map<String, dynamic>)['modules'] =
+            sanitized;
       }
 
       // Log détaillé pour le débogage

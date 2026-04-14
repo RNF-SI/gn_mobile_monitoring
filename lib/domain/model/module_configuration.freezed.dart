@@ -3153,7 +3153,7 @@ mixin _$ObjectConfig {
       throw _privateConstructorUsedError;
   String? get genre => throw _privateConstructorUsedError;
   String? get geomFieldName => throw _privateConstructorUsedError;
-  String? get geometryType => throw _privateConstructorUsedError;
+  List<String>? get geometryType => throw _privateConstructorUsedError;
   String? get idFieldName => throw _privateConstructorUsedError;
   int? get idTableLocation => throw _privateConstructorUsedError;
   @JsonKey(name: 'is_editable_on_field')
@@ -3193,7 +3193,7 @@ abstract class $ObjectConfigCopyWith<$Res> {
       Map<String, GenericFieldConfig>? generic,
       String? genre,
       String? geomFieldName,
-      String? geometryType,
+      List<String>? geometryType,
       String? idFieldName,
       int? idTableLocation,
       @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
@@ -3299,7 +3299,7 @@ class _$ObjectConfigCopyWithImpl<$Res, $Val extends ObjectConfig>
       geometryType: freezed == geometryType
           ? _value.geometryType
           : geometryType // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as List<String>?,
       idFieldName: freezed == idFieldName
           ? _value.idFieldName
           : idFieldName // ignore: cast_nullable_to_non_nullable
@@ -3373,7 +3373,7 @@ abstract class _$$ObjectConfigImplCopyWith<$Res>
       Map<String, GenericFieldConfig>? generic,
       String? genre,
       String? geomFieldName,
-      String? geometryType,
+      List<String>? geometryType,
       String? idFieldName,
       int? idTableLocation,
       @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
@@ -3475,9 +3475,9 @@ class __$$ObjectConfigImplCopyWithImpl<$Res>
           : geomFieldName // ignore: cast_nullable_to_non_nullable
               as String?,
       geometryType: freezed == geometryType
-          ? _value.geometryType
+          ? _value._geometryType
           : geometryType // ignore: cast_nullable_to_non_nullable
-              as String?,
+              as List<String>?,
       idFieldName: freezed == idFieldName
           ? _value.idFieldName
           : idFieldName // ignore: cast_nullable_to_non_nullable
@@ -3546,7 +3546,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
       final Map<String, GenericFieldConfig>? generic,
       this.genre,
       this.geomFieldName,
-      this.geometryType,
+      final List<String>? geometryType,
       this.idFieldName,
       this.idTableLocation,
       @JsonKey(name: 'is_editable_on_field') this.isEditableOnField,
@@ -3567,6 +3567,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         _exportPdf = exportPdf,
         _filters = filters,
         _generic = generic,
+        _geometryType = geometryType,
         _parentTypes = parentTypes,
         _propertiesKeys = propertiesKeys,
         _sorts = sorts,
@@ -3668,8 +3669,16 @@ class _$ObjectConfigImpl implements _ObjectConfig {
   final String? genre;
   @override
   final String? geomFieldName;
+  final List<String>? _geometryType;
   @override
-  final String? geometryType;
+  List<String>? get geometryType {
+    final value = _geometryType;
+    if (value == null) return null;
+    if (_geometryType is EqualUnmodifiableListView) return _geometryType;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(value);
+  }
+
   @override
   final String? idFieldName;
   @override
@@ -3765,8 +3774,8 @@ class _$ObjectConfigImpl implements _ObjectConfig {
             (identical(other.genre, genre) || other.genre == genre) &&
             (identical(other.geomFieldName, geomFieldName) ||
                 other.geomFieldName == geomFieldName) &&
-            (identical(other.geometryType, geometryType) ||
-                other.geometryType == geometryType) &&
+            const DeepCollectionEquality()
+                .equals(other._geometryType, _geometryType) &&
             (identical(other.idFieldName, idFieldName) ||
                 other.idFieldName == idFieldName) &&
             (identical(other.idTableLocation, idTableLocation) ||
@@ -3805,7 +3814,7 @@ class _$ObjectConfigImpl implements _ObjectConfig {
         const DeepCollectionEquality().hash(_generic),
         genre,
         geomFieldName,
-        geometryType,
+        const DeepCollectionEquality().hash(_geometryType),
         idFieldName,
         idTableLocation,
         isEditableOnField,
@@ -3841,7 +3850,7 @@ abstract class _ObjectConfig implements ObjectConfig {
       final Map<String, GenericFieldConfig>? generic,
       final String? genre,
       final String? geomFieldName,
-      final String? geometryType,
+      final List<String>? geometryType,
       final String? idFieldName,
       final int? idTableLocation,
       @JsonKey(name: 'is_editable_on_field') final bool? isEditableOnField,
@@ -3883,7 +3892,7 @@ abstract class _ObjectConfig implements ObjectConfig {
   @override
   String? get geomFieldName;
   @override
-  String? get geometryType;
+  List<String>? get geometryType;
   @override
   String? get idFieldName;
   @override

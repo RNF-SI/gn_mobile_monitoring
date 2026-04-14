@@ -565,7 +565,7 @@ class ObjectConfig with _$ObjectConfig {
     Map<String, GenericFieldConfig>? generic,
     String? genre,
     String? geomFieldName,
-    String? geometryType,
+    List<String>? geometryType,
     String? idFieldName,
     int? idTableLocation,
     @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
@@ -700,6 +700,23 @@ class ObjectConfig with _$ObjectConfig {
       return null;
     }
 
+    // geometry_type peut être une String ("Point") ou une List (["Point","LineString","Polygon"]).
+    List<String>? toGeometryTypeList(dynamic value) {
+      if (value == null) return null;
+      if (value is String) {
+        final trimmed = value.trim();
+        return trimmed.isEmpty ? null : [trimmed];
+      }
+      if (value is List) {
+        final result = value
+            .map((e) => e?.toString().trim() ?? '')
+            .where((s) => s.isNotEmpty)
+            .toList();
+        return result.isEmpty ? null : result;
+      }
+      return null;
+    }
+
     return ObjectConfig(
       chained: toBool(json['chained']),
       change: toChangeList(json['change']),
@@ -714,7 +731,7 @@ class ObjectConfig with _$ObjectConfig {
       genre: toString(json['genre']),
       geomFieldName: toString(json['geom_field_name']),
       isEditableOnField: toBool(json['is_editable_on_field']),
-      geometryType: toString(json['geometry_type']),
+      geometryType: toGeometryTypeList(json['geometry_type']),
       idFieldName: toString(json['id_field_name']),
       idTableLocation: toInt(json['id_table_location']),
       label: toString(json['label']),
@@ -731,6 +748,15 @@ class ObjectConfig with _$ObjectConfig {
 }
 
 extension ObjectConfigX on ObjectConfig {
+  /// Types de géométrie autorisés par la configuration du type de site.
+  /// Retourne `['Point']` par défaut quand la config ne précise rien,
+  /// pour préserver le comportement historique (picker d'un seul point).
+  List<String> get allowedGeometryTypes {
+    final list = geometryType;
+    if (list == null || list.isEmpty) return const ['Point'];
+    return list;
+  }
+
   Map<String, dynamic> toJson() => {
         if (chained != null) 'chained': chained,
         if (change != null) 'change': change,

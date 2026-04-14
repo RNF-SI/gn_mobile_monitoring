@@ -99,11 +99,17 @@ void main() {
         (tester) async {
       await setupLoggedInWithModule(tester);
 
-      // Verify that the interceptor recorded requests made during app init
-      expect(testApp.interceptor.requests, isNotEmpty,
-          reason: 'Interceptor should have recorded requests during app init');
+      // Note : avec l'utilisateur pré-connecté et le module déjà téléchargé,
+      // l'app ne fait aucun appel HTTP au boot (tout vient de la DB locale).
+      // Pour valider que l'interceptor enregistre bien les requêtes quand
+      // elles existent, on en déclenche une via le Dio configuré par testApp.
+      testApp.interceptor.clearRecords();
+      await testApp.dio.get('/monitorings/modules');
 
-      // Verify request recording has correct fields
+      expect(testApp.interceptor.requests, isNotEmpty,
+          reason:
+              'Interceptor should record requests routed through testApp.dio');
+
       final firstRequest = testApp.interceptor.requests.first;
       expect(firstRequest.method, isNotEmpty);
       expect(firstRequest.path, isNotEmpty);

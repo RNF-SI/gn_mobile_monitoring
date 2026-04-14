@@ -12,6 +12,7 @@ import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observat
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/taxon_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/visits_api_impl.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/state.dart'
     as custom_async_state;
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
@@ -20,6 +21,7 @@ import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:go_router/go_router.dart';
 
+import 'helpers/fake_get_user_location.dart';
 import 'helpers/in_memory_local_storage.dart';
 import 'mocks/mock_api_interceptor.dart';
 import 'mocks/mock_databases.dart';
@@ -45,6 +47,17 @@ class E2ETestApp {
   final MockApiInterceptor interceptor;
   final InMemoryLocalStorage localStorage;
   final Dio _mockDio;
+
+  /// Exposé pour les tests qui veulent déclencher manuellement une requête
+  /// (p. ex. valider l'enregistrement par l'interceptor). Les vrais appels
+  /// de l'app passent par les providers Dio injectés dans [buildProviderScope].
+  Dio get dio => _mockDio;
+
+  /// Stub de localisation utilisé par tous les tests : retourne une
+  /// position connue pour que les boutons dépendants du GPS (header
+  /// de création / édition de site) soient actifs. Les tests peuvent
+  /// le remplacer avant `buildProviderScope` en réassignant ce champ.
+  FakeGetUserLocation userLocation = const FakeGetUserLocation();
 
   // Expose mock databases for seeding test data
   final MockModuleDatabaseImpl moduleDatabase;
@@ -135,6 +148,9 @@ class E2ETestApp {
         databaseServiceProvider.overrideWith((ref) {
           return _NoOpDatabaseService(ref);
         }),
+
+        // --- Localisation : stub pour éviter l'appel Geolocator réel ---
+        getUserLocationUseCaseProvider.overrideWithValue(userLocation),
       ];
 }
 

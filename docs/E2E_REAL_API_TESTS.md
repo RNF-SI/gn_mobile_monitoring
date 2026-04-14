@@ -43,11 +43,13 @@ Android (notamment la localisation) en boucle pendant toute la durée du test.
 | `groups` | 1 | CRUD groupe de sites |
 | `visits` | 1 | CRUD visite |
 | `observations` | 1 | CRUD observation avec recherche taxon |
-| `all` | 10 | Enchaîne tous les scénarios ci-dessus |
+| `sync-download` | 1 | Menu « Mettre à jour les données » → confirmation → sync OK |
+| `sync-upload` | 1 | Menu « Téléversement » → confirmation → upload OK |
+| `all` | 12 | Enchaîne tous les scénarios ci-dessus |
 
 ### Ce que couvre `all`
 
-L'exécution `all` lance les **10 tests** à la suite (~20-25 min au total) pour
+L'exécution `all` lance les **12 tests** à la suite (~18-22 min au total) pour
 valider l'intégration bout-en-bout :
 
 1. **auth** : login valide → HomePage, login invalide → reste sur LoginPage,
@@ -62,6 +64,11 @@ valider l'intégration bout-en-bout :
    `accessibility=Non` (stratégie qui masque les champs requis conditionnels)
 6. **observations** : création d'une visite puis d'une observation avec
    `presence=Non` (stratégie qui masque cd_nom, count, sexe, stade, etc.)
+7. **sync-download** : ouverture du menu burger → « Mettre à jour les
+   données » → dialog de confirmation → attente fin de sync sans erreur
+8. **sync-upload** : pré-requis download (pour passer la garde « < 7 jours »
+   du `SyncService`) → menu burger → « Téléversement » → confirmation →
+   attente fin sans erreur
 
 Chaque test crée ses propres données avec un timestamp pour éviter les
 collisions, et les laisse sur le serveur (préfixe `E2E_` pour identifier).
@@ -247,7 +254,9 @@ integration_test/
 │   ├── real_site_management_e2e_test.dart
 │   ├── real_site_group_e2e_test.dart
 │   ├── real_visit_workflow_e2e_test.dart
-│   └── real_observation_workflow_e2e_test.dart
+│   ├── real_observation_workflow_e2e_test.dart
+│   ├── real_sync_download_e2e_test.dart
+│   └── real_sync_upload_e2e_test.dart
 └── robots/                         # Robots réutilisés depuis les tests mock
     ├── login_robot.dart, home_robot.dart, etc.
 ```

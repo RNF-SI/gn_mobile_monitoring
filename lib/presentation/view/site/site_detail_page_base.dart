@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:gn_mobile_monitoring/core/helpers/format_datetime.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
@@ -12,6 +14,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/map/location_picker_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/module_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/visit/visit_form_page.dart';
@@ -19,6 +22,7 @@ import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart'
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/breadcrumb_navigation.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/conflict_info_banner.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/map/location_preview_header.dart';
 
 class SiteDetailPageBase extends DetailPage {
   final WidgetRef ref;
@@ -48,6 +52,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   String _searchQuery = '';
   List<dynamic> _visitsFiltered = [];
 
+  /// Copie mutable du site affiché. Initialisée depuis `widget.site` mais
+  /// rafraîchie depuis la base après une édition — nécessaire car la page
+  /// de détail reste dans le nav stack pendant l'édition et se rebuild
+  /// avec un widget.site potentiellement périmé lorsque l'utilisateur
+  /// revient dessus.
+  late BaseSite _site;
+
+  /// Position GPS actuelle, chargée en arrière-plan et passée au
+  /// LocationPreviewHeader pour afficher un marker "vous êtes ici".
+  LatLng? _userPosition;
+
   // Nous n'avons plus besoin de stocker le ViewModel dans une variable d'instance
   // ni d'avoir des fonctions d'encapsulation, car nous accéderons directement au provider
 
@@ -70,17 +85,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     final Map<String, dynamic> data = {};
 
     // Ajouter les champs de base du site
-    if (widget.site.baseSiteCode != null) {
-      data['base_site_code'] = widget.site.baseSiteCode;
+    if (_site.baseSiteCode != null) {
+      data['base_site_code'] = _site.baseSiteCode;
     }
-    if (widget.site.baseSiteName != null) {
-      data['base_site_name'] = widget.site.baseSiteName;
+    if (_site.baseSiteName != null) {
+      data['base_site_name'] = _site.baseSiteName;
     }
-    if (widget.site.baseSiteDescription != null) {
-      data['base_site_description'] = widget.site.baseSiteDescription;
+    if (_site.baseSiteDescription != null) {
+      data['base_site_description'] = _site.baseSiteDescription;
     }
-    if (widget.site.firstUseDate != null) {
-      data['first_use_date'] = widget.site.firstUseDate!.toString();
+    if (_site.firstUseDate != null) {
+      data['first_use_date'] = _site.firstUseDate!.toString();
     }
 
     // Ajouter les données du complément si présentes
@@ -115,8 +130,10 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   @override
   void initState() {
     super.initState();
+    _site = widget.site;
     _initializeTabController();
     _loadSiteComplement();
+    _loadUserPosition();
   }
 
   /// Charge le complément du site depuis la base de données
@@ -125,7 +142,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       final sitesDatabase = widget.ref.read(siteDatabaseProvider);
       final allComplements = await sitesDatabase.getAllSiteComplements();
       final complement = allComplements
-          .where((c) => c.idBaseSite == widget.site.idBaseSite)
+          .where((c) => c.idBaseSite == _site.idBaseSite)
           .firstOrNull;
 
       if (mounted) {
@@ -138,13 +155,41 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     }
   }
 
+  /// Recharge le site depuis la base. Appelé au retour de l'édition pour
+  /// éviter que la page — qui reste dans le nav stack pendant l'édition —
+  /// ne rende une version périmée de `widget.site`.
+  Future<void> _refreshSiteFromDb() async {
+    try {
+      final sitesDatabase = widget.ref.read(siteDatabaseProvider);
+      final updated = await sitesDatabase.getSiteById(_site.idBaseSite);
+      if (!mounted || updated == null) return;
+      setState(() => _site = updated);
+      await _loadSiteComplement();
+    } catch (e) {
+      debugPrint('Erreur lors du rafraîchissement du site: $e');
+    }
+  }
+
+  Future<void> _loadUserPosition() async {
+    try {
+      final result = await widget.ref
+          .read(getUserLocationUseCaseProvider)
+          .execute();
+      if (mounted && result != null) {
+        setState(() => _userPosition = result.position);
+      }
+    } catch (_) {
+      // GPS indisponible — le marker "vous êtes ici" ne s'affichera pas.
+    }
+  }
+
   // Cette méthode sera appelée une fois que les dépendances sont injectées
   void startLoadingData() {
     // Force le rechargement des visites en utilisant le provider directement
     try {
       if (widget.moduleInfo?.module.id != null) {
         // Paramètres pour le provider
-        final params = (widget.site.idBaseSite, widget.moduleInfo!.module.id);
+        final params = (_site.idBaseSite, widget.moduleInfo!.module.id);
 
         // Accéder au SiteVisitsViewModel directement via le provider et appeler loadVisits()
         widget.ref
@@ -225,7 +270,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       items.add(
         BreadcrumbItem(
           label: siteLabel,
-          value: widget.site.baseSiteName ?? widget.site.baseSiteCode ?? 'Site',
+          value: _site.baseSiteName ?? _site.baseSiteCode ?? 'Site',
         ),
       );
     }
@@ -235,8 +280,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   PreferredSizeWidget buildAppBar() {
-    final isLocal = widget.site.isLocal == true;
-    final isSynced = widget.site.serverSiteId != null;
+    final isLocal = _site.isLocal == true;
+    final isSynced = _site.serverSiteId != null;
     final canEdit = isLocal && !isSynced;
 
     return AppBar(
@@ -255,7 +300,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                   context,
                   MaterialPageRoute(
                     builder: (context) => SiteFormPage(
-                      site: widget.site,
+                      site: _site,
                       siteConfig: siteConfig,
                       customConfig: widget.moduleInfo?.module.complement?.configuration?.custom,
                       moduleId: widget.moduleInfo?.module.id,
@@ -264,10 +309,14 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                     ),
                   ),
                 ).then((_) {
-                  // Rafraîchir la page si nécessaire
-                  if (mounted) {
-                    setState(() {});
-                  }
+                  // Rafraîchir le site depuis la DB : pendant l'édition,
+                  // SiteFormWrapper a pu faire `pushReplacement` vers une
+                  // nouvelle page de détail, mais celle-ci (sous-jacente
+                  // dans le stack) a gardé l'ancien widget.site. On lit
+                  // la version fraîche pour que la mini-carte et les
+                  // propriétés reflètent l'édition quand l'utilisateur
+                  // revient ici via "retour".
+                  _refreshSiteFromDb();
                 });
               }
             },
@@ -297,8 +346,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
 
   @override
   String getTitle() {
-    return widget.site.baseSiteName ??
-        widget.site.baseSiteCode ??
+    return _site.baseSiteName ??
+        _site.baseSiteCode ??
         'Détails du site';
   }
 
@@ -342,6 +391,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
               child: ConflictInfoBanner(conflict: widget.currentConflict!),
             ),
 
+          // Aperçu de la géométrie du site (carte en lecture seule).
+          // `onAdjustPressed` null ⇒ pas de bouton, juste la mini-carte
+          // avec le Point / LineString / Polygon du site.
+          if (_site.geom != null) _buildGeomPreview(),
+
           // Propriétés du site (champs de base + données spécifiques au module)
           // Affichées dynamiquement via buildPropertiesWidget()
           Padding(
@@ -353,13 +407,32 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     );
   }
 
+  /// Construit l'aperçu géographique du site à partir de son GeoJSON.
+  /// Retourne un SizedBox.shrink() si le geom est illisible.
+  Widget _buildGeomPreview() {
+    final parsed = GeometryDrawResult.parseGeoJson(_site.geom!);
+    if (parsed == null) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: LocationPreviewHeader(
+        geometryType: parsed.geometryType,
+        vertices: parsed.coordinates,
+        previewCenter: parsed.coordinates.first,
+        isLoading: false,
+        isAdjusted: false,
+        userPosition: _userPosition,
+      ),
+    );
+  }
+
   Widget _buildVisitsTab() {
     // Configuration de la visite pour la création d'une nouvelle visite
     final visitConfig =
         widget.moduleInfo?.module.complement?.configuration?.visit;
 
     // Préparer les arguments pour la requête des visites
-    final params = (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
+    final params = (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
 
     // Récupérer toutes les visites de ce site via le provider
     final visitsAsyncValue =
@@ -514,7 +587,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                       MaterialPageRoute(
                         builder: (context) => VisitDetailPage(
                           visit: visit,
-                          site: widget.site,
+                          site: _site,
                           moduleInfo: widget.moduleInfo,
                           fromSiteGroup: widget.fromSiteGroup,
                         ),
@@ -535,7 +608,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                         context,
                         MaterialPageRoute(
                           builder: (context) => VisitFormPage(
-                            site: widget.site,
+                            site: _site,
                             visitConfig: visitConfig,
                             customConfig: customConfig,
                             moduleId: widget.moduleInfo?.module.id,
@@ -547,7 +620,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                       ).then((_) {
                         // Rafraîchir les visites
                         final params = (
-                          widget.site.idBaseSite,
+                          _site.idBaseSite,
                           widget.moduleInfo?.module.id ?? 0
                         );
                         widget.ref
@@ -683,7 +756,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       context,
       MaterialPageRoute(
         builder: (context) => VisitFormPage(
-          site: widget.site,
+          site: _site,
           visitConfig: visitConfig,
           customConfig: customConfig,
           moduleId: widget.moduleInfo?.module.id,
@@ -694,7 +767,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     ).then((_) {
       // Rafraîchir les visites en utilisant le provider
       final params =
-          (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
+          (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
       widget.ref.invalidate(siteVisitsViewModelProvider(params));
     });
   }
@@ -702,7 +775,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   /// Affiche le dialogue de confirmation pour la suppression d'une visite depuis la liste
   void _showDeleteVisitConfirmationDialog(BaseVisit visit) async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
-        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+        (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
 
     // Compter les observations de cette visite
     final observationCount = await siteVisitsViewModel
@@ -768,7 +841,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   /// Supprime une visite depuis la liste
   void _deleteVisitFromList(BaseVisit visit) async {
     final siteVisitsViewModel = widget.ref.read(siteVisitsViewModelProvider(
-        (widget.site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
+        (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0)).notifier);
 
     try {
       final success = await siteVisitsViewModel.deleteVisit(visit.idBaseVisit);

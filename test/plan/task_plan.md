@@ -1,6 +1,13 @@
 # Suivi des tâches GN Mobile Monitoring (Flutter)
 
-## Liste des tâches
+> ⚠️ **Document historique (Q1 2025).** Cette liste a été le tracker initial
+> de l'app. La plupart des tâches listées ci-dessous sont **déjà réalisées**
+> (nomenclatures, URL GeoNature configurable, resynchronisation manuelle et
+> automatique, sync des saisies, carte interactive des sites, APK
+> distribué). Cette page n'est plus mise à jour — voir `docs/FEATURES_OVERVIEW.md`
+> pour l'état actuel des fonctionnalités et le suivi des releases.
+
+## Liste des tâches (état du tracker initial, non à jour)
 
 ### 1. Insérer les nomenclatures dans l'application
 

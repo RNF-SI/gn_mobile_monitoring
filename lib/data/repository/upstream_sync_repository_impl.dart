@@ -1192,12 +1192,24 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                 'ID serveur du groupe enregistré: local=${group.idSitesGroup}, serveur=$serverId',
                 tag: 'sync');
 
-            // Mettre à jour les références id_sites_group dans les site complements
-            // Les sites locaux qui référencent l'ancien ID local doivent maintenant référencer l'ID serveur
-            await _sitesRepository.updateSiteComplementsGroupId(
-                group.idSitesGroup, serverId);
+            // VOLONTAIREMENT, on NE met PAS à jour `complement.idSitesGroup`
+            // ici (même si la méthode `updateSiteComplementsGroupId` existe
+            // toujours). Raison : quand plusieurs groupes sont synchronisés
+            // en rafale et que les IDs serveur chevauchent les IDs locaux
+            // encore présents (p. ex. 15→16, 16→17, 17→18), le remapping
+            // cascade et corrompt les complements : un complément pointant
+            // initialement sur le groupe 15 finit à 18 au lieu de 16.
+            //
+            // À la place, on laisse le complément pointer sur l'ID local et
+            // on convertit vers l'ID serveur au moment du push du site via
+            // `_resolveServerGroupId(localId)`, qui lit la colonne
+            // `serverSiteGroupId` du groupe correspondant. Comportement
+            // symétrique pour les sites créés avant ou après le push du
+            // groupe.
             _logger.i(
-                'Références id_sites_group mises à jour: ${group.idSitesGroup} -> $serverId',
+                '[SYNC_GROUP] Groupe ${group.idSitesGroup} → $serverId '
+                '(serverSiteGroupId enregistré, remapping des sites déféré '
+                'au moment du push)',
                 tag: 'sync');
 
             itemsProcessed++;
@@ -1353,8 +1365,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             if (siteComplement != null && siteComplement.data != null) {
               try {
                 final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
-                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
-
                 // Fusionner les données du complément avec celles du site
                 // Le complément a priorité sur les données du site
                 mergedData.addAll(complementData);
@@ -1363,9 +1373,31 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
               }
             }
 
-            // Ajouter id_sites_group si présent dans le complément
+            // Ajouter id_sites_group si présent dans le complément.
+            // On utilise la colonne DB (remappée post-upload du groupe),
+            // pas le JSON (qui contient l'ancien ID local).
+            // FIX #154-followup : si le groupe référencé est un groupe synchronisé
+            // dont l'ID serveur (serverSiteGroupId) diffère de son ID local, on
+            // remappe à la volée. Ce cas se produit quand le site est créé
+            // APRÈS une synchro du groupe : `updateSiteComplementsGroupId` ne
+            // tourne qu'au moment du push d'un groupe nouveau, pas pour les
+            // groupes déjà synchronisés.
             if (siteComplement != null && siteComplement.idSitesGroup != null) {
-              mergedData['id_sites_group'] = siteComplement.idSitesGroup;
+              final localGroupId = siteComplement.idSitesGroup!;
+              final serverGroupId = await _resolveServerGroupId(localGroupId);
+              mergedData['id_sites_group'] = serverGroupId ?? localGroupId;
+              if (serverGroupId != null && serverGroupId != localGroupId) {
+                _logger.i(
+                    '[SYNC_GROUP] Site ${site.idBaseSite} : remapping '
+                    'id_sites_group $localGroupId → $serverGroupId',
+                    tag: 'sync');
+              }
+            } else if (mergedData.containsKey('id_sites_group')) {
+              _logger.w(
+                  '[SYNC_GROUP] Site ${site.idBaseSite} : FK id_sites_group '
+                  'orphelin (${mergedData['id_sites_group']}) retiré du payload',
+                  tag: 'sync');
+              mergedData.remove('id_sites_group');
             }
 
             // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
@@ -1460,18 +1492,33 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             if (siteComplement != null && siteComplement.data != null) {
               try {
                 final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
-                _logger.i('Données du complément pour site ${site.idBaseSite}: $complementData', tag: 'sync');
-
-                // Fusionner les données du complément avec celles du site
                 mergedData.addAll(complementData);
               } catch (e) {
                 _logger.w('Erreur lors du parsing des données du complément pour site ${site.idBaseSite}: $e', tag: 'sync');
               }
             }
 
-            // Ajouter id_sites_group si présent dans le complément
+            // Même traitement id_sites_group que pour le POST (cf. commentaire
+            // au-dessus) : la colonne DB remappée prime sur le JSON périmé,
+            // et on remappe à la volée si le complément pointe encore sur un
+            // ID local alors que le groupe correspondant est synchronisé.
             if (siteComplement != null && siteComplement.idSitesGroup != null) {
-              mergedData['id_sites_group'] = siteComplement.idSitesGroup;
+              final localGroupId = siteComplement.idSitesGroup!;
+              final serverGroupId = await _resolveServerGroupId(localGroupId);
+              mergedData['id_sites_group'] = serverGroupId ?? localGroupId;
+              if (serverGroupId != null && serverGroupId != localGroupId) {
+                _logger.i(
+                    '[SYNC_GROUP] PATCH site ${site.idBaseSite} : remapping '
+                    'id_sites_group $localGroupId → $serverGroupId',
+                    tag: 'sync');
+              }
+            } else if (mergedData.containsKey('id_sites_group')) {
+              _logger.w(
+                  '[SYNC_GROUP] PATCH site ${site.idBaseSite} : FK '
+                  'id_sites_group orphelin (${mergedData['id_sites_group']}) '
+                  'retiré du payload',
+                  tag: 'sync');
+              mergedData.remove('id_sites_group');
             }
 
             // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
@@ -1633,6 +1680,31 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
       return null;
     } catch (e) {
       _logger.w('Erreur lors de la récupération types_site depuis config: $e', tag: 'sync');
+      return null;
+    }
+  }
+
+  /// Cherche un `SiteGroup` par son ID local et retourne son `serverSiteGroupId`
+  /// si le groupe est déjà synchronisé. Retourne `null` si le groupe n'existe
+  /// pas, n'est pas encore synchronisé, ou si l'ID passé est déjà un ID serveur
+  /// (auquel cas aucun remapping n'est nécessaire ; le caller gardera la
+  /// valeur originale).
+  ///
+  /// Sert de fallback pour les sites créés APRÈS la synchro de leur groupe :
+  /// leur complément contient l'ID local du groupe, alors que le groupe a
+  /// déjà un ID serveur. Sans ce remapping à la volée, le payload serait
+  /// envoyé avec un FK invalide côté serveur.
+  Future<int?> _resolveServerGroupId(int localGroupId) async {
+    try {
+      final group = await _sitesRepository.getSiteGroupById(localGroupId);
+      if (group == null) return null;
+      final serverId = group.serverSiteGroupId;
+      if (serverId == null || serverId == localGroupId) return null;
+      return serverId;
+    } catch (e) {
+      _logger.w(
+          'Erreur _resolveServerGroupId pour id=$localGroupId: $e',
+          tag: 'sync');
       return null;
     }
   }

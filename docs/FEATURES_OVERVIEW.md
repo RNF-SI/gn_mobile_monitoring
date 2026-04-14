@@ -4,22 +4,31 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 
 > 💡 Pour la documentation technique détaillée des expressions JavaScript, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
-## 🆕 Dernières Améliorations (Octobre 2025)
+## 🆕 Dernières Améliorations (Avril 2026 — `v1.0.0-geonature-2.17`)
 
-### Support Complet des Expressions `required`
-L'application supporte maintenant les **validations conditionnelles dynamiques** avec évaluation des expressions JavaScript pour le champ `required`.
+### Saisie et visualisation de géométrie de site
+L'app gère désormais la création et l'édition de géométries de site directement depuis le mobile — fini le besoin de passer par l'interface web pour tracer une aire.
 
-**Fonctionnalités ajoutées :**
-- ✅ Évaluation dynamique des expressions `required` sous forme de chaînes JavaScript
-- ✅ Support des formats `"required": "({value}) => expression"` et `"validations": {"required": "expression"}`
-- ✅ Mise à jour en temps réel de l'indicateur visuel (astérisque rouge) selon les conditions
-- ✅ Validation intelligente qui ignore automatiquement les champs cachés
-- ✅ Support des mêmes opérateurs que pour `hidden` (==, !=, ===, !==, &&, ||, !, etc.)
+- ✅ Support `Point`, `LineString`, `Polygon` (et les variantes `Multi*` en lecture)
+- ✅ Picker plein écran avec OSM en fond de carte, sommets numérotés, validation auto des polygones
+- ✅ Détection et refus des polygones auto-intersectés avant envoi serveur
+- ✅ Mini-carte en lecture seule sur la page de détail d'un site, avec bouton « Ajuster sur la carte »
+- ✅ Calcul de distance GPS → site avec support `Point`, `LineString`, `Polygon`, `MultiPoint`, `MultiLineString`, `MultiPolygon`
+- ✅ Marker bleu `Icons.my_location` superposé sur le picker et les mini-cartes pour situer l'utilisateur
+- ✅ Indicateur « Calcul… » avec spinner pendant l'acquisition GPS (au lieu d'un badge qui disparaît)
 
-**Impact sur la compatibilité :**
-- Les modules POPAmphibien, POPReptile et ecrevisses_pattes_blanches passent de **90% à 100% de compatibilité** 🎉
-- Toutes les expressions conditionnelles `required` sont maintenant évaluées correctement
-- L'expérience utilisateur est améliorée avec un retour visuel immédiat sur les champs requis
+### Synchronisation plus robuste
+- ✅ Remapping à la volée des `id_sites_group` lors du push d'un site pour éviter les conflits serveur
+- ✅ Normalisation du champ `modules` des groupes de sites (corrige un bug qui rendait les groupes invisibles côté web)
+- ✅ Menu burger `Mettre à jour les données` / `Téléversement` testés en E2E réel contre un GeoNature local
+
+### Infrastructure de tests E2E
+- ✅ **12 scénarios E2E réels** contre un GeoNature local (auth, module, sites, groupes, visites, observations, sync download, sync upload)
+- ✅ **33 scénarios E2E mock** avec bases in-memory et interceptor Dio, lancés sur Pixel 6a
+- ✅ Helpers communs pour dismiss de dialogs bloquants et attente de fin de sync post-login
+
+### Support des Expressions `required` (antérieur, rappel)
+L'application supporte les **validations conditionnelles dynamiques** avec évaluation des expressions JavaScript pour `required` et `hidden` (astérisque rouge mis à jour en temps réel, champs cachés ignorés par la validation).
 
 **Exemple d'utilisation :**
 ```json
@@ -32,8 +41,6 @@ L'application supporte maintenant les **validations conditionnelles dynamiques**
   }
 }
 ```
-
-**Commit de référence :** [`eb54732`](../../commit/eb54732) - "Champs required qui traite à présent les expressions string"
 
 ## 🚀 Types de Champs Supportés
 
@@ -324,57 +331,29 @@ ou avec API :
 
 > 📘 Pour la liste complète des expressions JavaScript supportées, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
-## 📊 Compatibilité des Modules
+## 📊 Statut de Test des Modules
 
-### Résumé par Complexité JavaScript
+Seuls les modules validés en conditions de terrain sont listés ici. Les autres modules de `gn_module_monitoring` peuvent fonctionner mais ne bénéficient pas d'une validation formelle sur cette version.
 
-#### 🟢 Modules Simples (23 modules - 72%)
-Compatible à 100%, utilise uniquement `"hidden": true/false` et `"required": true/false`
-- apollons, cheveches, chiro, chronocapture, chronoventaire
-- lichens_bio_indicateurs, micromam_analyse_pelotes_rejection_gmb
-- nidif_gypa, oedic, osmodermes, piegeages_passifs
-- prairies_fleuries, pt_ecoute_avifaune, pyrales
-- RHOMEOOdonate, RHOMEOOrthoptere, sterf, stom
-- Tous les modules **suivi_*** (sauf suivi_phytosocio)
+| Module | Testé | Fonctionne | Notes |
+|--------|-------|------------|-------|
+| **POPAmphibien** | ✅ | ✅ | Validations conditionnelles `required` et `hidden` évaluées dynamiquement |
+| **POPReptile** | ✅ | ✅ | Tests complets incluant expressions JavaScript et distance GPS sur transect (issue #154) |
 
-#### 🟡 Modules Moyens (3 modules - 9%)
-✅ **Compatible à 100%** (🆕 amélioration récente - support des expressions `required`)
-- ecrevisses_pattes_blanches, POPAmphibien, POPReptile
-- **Fonctionnalités supportées** : Expressions JavaScript pour `hidden` et `required`
+**Légende** : ✅ Testé et fonctionne | 🔄 Partiellement testé | ⚠️ Fonctionne partiellement | ❌ Incompatible
 
-#### 🟠 Modules Complexes (3 modules - 9%)
-Compatible à 60%, nécessite extensions majeures
-- ligne_lecture, RHOMEOAmphibien
-- **Extensions requises** : `Object.keys()`, `includes()`
-
-#### 🔴 Modules Très Complexes (3 modules - 9%)
-Compatible à 20%, refactoring nécessaire
-- petite_chouette_montagne, RHOMEOFlore, suivi_phytosocio
-- **Problèmes** : Blocs multi-lignes, manipulation formulaires
-
-### Statut de Test des Modules
-
-| Module | Testé | Fonctionne | Complexité JS | Notes |
-|--------|-------|------------|---------------|-------|
-| **apollons** | ✅ | ✅ | 🟢 Simple | Module ID 21, expressions basiques |
-| **cheveches** | ☐ | ☐ | 🟢 Simple | À tester |
-| **chiro** | 🔄 | ⚠️ | 🟢 Simple | Tests d'erreurs |
-| **POPAmphibien** | ✅ | ✅ | 🟡 Moyenne | 🆕 Validations conditionnelles `required` supportées |
-| **POPReptile** | ✅ | ✅ | 🟡 Moyenne | 🆕 Tests complets avec expressions `required` et `hidden` |
-| **RHOMEOAmphibien** | ☐ | ☐ | 🟠 Complexe | Méthode `includes()` |
-| **petite_chouette_montagne** | ☐ | ☐ | 🔴 Très complexe | Opérateurs ternaires imbriqués |
-| **RHOMEOFlore** | ☐ | ☐ | 🔴 Très complexe | Blocs multi-lignes |
-| **suivi_phytosocio** | ☐ | ☐ | 🔴 Très complexe | Manipulation formulaires |
-
-**Légende** :
-- ✅ Testé et fonctionne | 🔄 Partiellement testé | ⚠️ Fonctionne partiellement | ☐ Non testé | ❌ Incompatible
-- 🟢 Simple (100% compatible) | 🟡 Moyenne (90% compatible) | 🟠 Complexe (60% compatible) | 🔴 Très complexe (20% compatible)
+> ℹ️ Pour proposer la validation d'un autre module, voir la section [Processus de Test d'un Nouveau Module](#-processus-de-test-dun-nouveau-module) en fin de document.
 
 ## ⚠️ Limitations Connues
 
+### Fonctionnalités applicatives non couvertes
+- ❌ **Permissions CRUVED non appliquées côté UI** : le schéma est parsé mais n'est lu nulle part dans `lib/presentation/`. Tout utilisateur authentifié avec un module téléchargé peut créer/modifier/supprimer visites et observations, indépendamment de ses droits serveur.
+- ❌ **Formulaire « Individus »** : le formulaire complémentaire de suivi individuel (marquage/recapture) exposé par certains modules monitoring côté web n'est pas pris en charge — ni UI de saisie, ni sync.
+- ⚠️ **Modules mixtes sites + groupes de sites** : dès que `children_types` contient `sites_group`, la page module masque la liste des sites au profit des groupes. La saisie directe de sites au niveau module n'est accessible que si le module n'a aucun groupe de sites déclaré.
+- ⚠️ **Couverture de tests inégale sur les compléments d'observation** : les champs `observation_detail` sont moins couverts que les visites/sites, des cas limites peuvent encore être rencontrés en production.
+
 ### Types de Widgets Manquants
 - ❌ **Champs de fichiers/médias** : Upload d'images, documents
-- ❌ **Champs géographiques** : Coordonnées GPS, cartes interactives
 - ❌ **Champs avancés** : Couleurs, sliders, ranges
 - ❌ **Composants complexes** : Tables dynamiques, formulaires imbriqués
 
@@ -391,11 +370,14 @@ Compatible à 20%, refactoring nécessaire
 ## 🔧 Architecture Technique
 
 ### Stack Technologique
-- **Framework** : Flutter 3.22.3
+- **Framework** : Flutter 3.38.4 (Dart 3.10.3)
 - **Architecture** : Clean Architecture (Domain/Data/Presentation)
 - **State Management** : Riverpod
-- **Base de données locale** : Drift (SQLite)
-- **Navigation** : GoRouter
+- **Base de données locale** : Drift (SQLite, 28 migrations)
+- **Carte** : `flutter_map` + tuiles OpenStreetMap
+- **Localisation** : `geolocator` 14.x
+- **HTTP** : Dio 5.x
+- **Navigation** : GoRouter (routes d'auth) + Navigator.push (reste)
 - **Modèles** : Freezed (immutable)
 
 ### Pipeline de Traitement des Formulaires
@@ -449,23 +431,6 @@ Widgets Flutter dynamiques (mise à jour en temps réel)
   - Mise à jour en temps réel des validations
   - Affichage de l'astérisque (*) pour les champs requis
 
-## 📝 Plan de Développement Recommandé
-
-### Phase 1 - Tests Immédiats (23 modules 🟢)
-1. Tester tous les modules simples
-2. Valider la compatibilité 100%
-3. Documenter les modules fonctionnels
-
-### Phase 2 - Extensions Convertisseur (3 modules 🟠)
-1. Supporter `Object.keys()` → `map.keys`
-2. Supporter `includes()` → `contains()`
-3. Tester modules complexes
-
-### Phase 3 - Refactoring (3 modules 🔴)
-1. Simplifier opérateurs ternaires
-2. Convertir blocs multi-lignes en fonctions Dart
-3. Adapter manipulation formulaires à Flutter
-
 ## 🔄 Processus de Test d'un Nouveau Module
 
 1. **Analyse des fichiers de configuration**
@@ -505,19 +470,29 @@ Pour mettre à jour le tableau après avoir testé un module :
 
 ---
 
-**Dernière mise à jour** : 22 octobre 2025
-**Version de l'application** : Flutter 3.22.3
+**Dernière mise à jour** : avril 2026 (release `v1.0.0-geonature-2.17`)
+**Version de l'application** : Flutter 3.38.4 / Dart 3.10.3
 **Architecture** : Clean Architecture avec Riverpod
 
 ## 📋 Historique des Changements
 
-### Version du 22 octobre 2025
+### Release `v1.0.0-geonature-2.17` — avril 2026
+- ✅ Picker de géométrie site `LineString`/`Polygon` plein écran avec validation des polygones auto-intersectés
+- ✅ Aperçu carte en lecture seule sur la page de détail d'un site (`LocationPreviewHeader`)
+- ✅ Calcul de distance GPS → site pour tous les types `Multi*` (issue #154)
+- ✅ Marker GPS `Icons.my_location` visible dans le picker et les mini-cartes
+- ✅ Normalisation du champ `modules` dans les payloads de groupes de sites (bug terrain)
+- ✅ Remapping à la volée de `id_sites_group` lors du push pour éviter les conflits serveur
+- ✅ Infrastructure E2E réelle contre un GeoNature local (12 scénarios) + E2E mock (33 scénarios)
+
+### Release `v1.0.0-geonature-2.16` — avril 2026
+- ✅ Snapshot de l'état code supportant GeoNature 2.16.x (branche `support/geonature-2.16`)
+
+### Octobre 2025 — avant le bump de compat
 - ✅ Ajout du support complet des expressions `required` conditionnelles
-- ✅ Amélioration de la compatibilité des modules POPAmphibien, POPReptile et ecrevisses_pattes_blanches (100%)
+- ✅ Amélioration de la compatibilité des modules POPAmphibien et POPReptile
 - ✅ Ajout de l'évaluation dynamique des validations avec expressions JavaScript
 - ✅ Indicateurs visuels en temps réel pour les champs requis
-
-### Version du 17 octobre 2025
 - ✅ Documentation initiale des fonctionnalités supportées
 - ✅ Catalogue complet des types de widgets
 - ✅ Documentation des expressions JavaScript pour `hidden`

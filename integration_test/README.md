@@ -7,13 +7,18 @@ Tests d'intégration E2E pour gn_mobile_monitoring, utilisant `integration_test`
 ```
 integration_test/
 ├── e2e_test_app.dart                # Factory ProviderScope avec overrides
+├── e2e_test_app_real.dart           # Variante contre un vrai serveur GeoNature
 ├── helpers/
+│   ├── fake_get_user_location.dart  # Stub de localisation GPS pour les tests
+│   ├── fixture_data.dart            # Données de référence en mémoire
 │   ├── fixture_loader.dart          # Chargement JSON depuis fichiers
 │   ├── in_memory_local_storage.dart # LocalStorageRepository in-memory
-│   └── mock_connectivity.dart       # Connectivity mock (toujours wifi)
+│   ├── mock_connectivity.dart       # Connectivity mock (toujours wifi)
+│   └── test_data_seeder.dart        # Seeder des bases mock (user, modules, sites...)
 ├── mocks/
 │   ├── mock_api_interceptor.dart    # Dio Interceptor principal
-│   └── mock_api_handlers.dart       # Sets de handlers pré-configurés
+│   ├── mock_api_handlers.dart       # Sets de handlers pré-configurés
+│   └── mock_databases.dart          # Implémentations in-memory de tous les *Database
 ├── fixtures/                        # Données JSON de test
 │   ├── auth/
 │   ├── modules/
@@ -32,14 +37,26 @@ integration_test/
 │   ├── visit_form_robot.dart
 │   ├── observation_form_robot.dart
 │   └── sync_robot.dart
-└── scenarios/                       # Tests E2E
-    ├── auth_e2e_test.dart
-    ├── module_browsing_e2e_test.dart
-    ├── site_management_e2e_test.dart
-    ├── visit_workflow_e2e_test.dart
-    ├── observation_workflow_e2e_test.dart
-    ├── sync_e2e_test.dart
-    └── full_user_journey_e2e_test.dart
+├── scenarios/                       # Tests E2E mock (APIs simulées)
+│   ├── auth_e2e_test.dart
+│   ├── module_browsing_e2e_test.dart
+│   ├── site_management_e2e_test.dart
+│   ├── site_geometry_e2e_test.dart
+│   ├── site_lifecycle_e2e_test.dart
+│   ├── visit_workflow_e2e_test.dart
+│   ├── observation_workflow_e2e_test.dart
+│   ├── sync_e2e_test.dart
+│   └── full_user_journey_e2e_test.dart
+└── scenarios_real/                  # Tests E2E réels (voir docs/E2E_REAL_API_TESTS.md)
+    ├── helpers/real_test_helpers.dart
+    ├── real_auth_e2e_test.dart
+    ├── real_module_browsing_e2e_test.dart
+    ├── real_site_management_e2e_test.dart
+    ├── real_site_group_e2e_test.dart
+    ├── real_visit_workflow_e2e_test.dart
+    ├── real_observation_workflow_e2e_test.dart
+    ├── real_sync_download_e2e_test.dart
+    └── real_sync_upload_e2e_test.dart
 ```
 
 ## Approche

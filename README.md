@@ -18,16 +18,17 @@ GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il
 
 | Version app mobile | GeoNature core | Version minimale monitoring (module serveur) |
 |---|---|---|
+| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 |
 | `v1.0.0-geonature-2.16` | 2.16.x | 1.2.0 |
 
 L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
 
-Une version compatible avec GeoNature 2.17.x sera publiée ultérieurement sous le tag `v1.x-geonature-2.17`. Les hotfixes pour la ligne 2.16 sont maintenus sur la branche `support/geonature-2.16`.
+Chaque ligne majeure GeoNature a sa propre branche de support : `support/geonature-2.17` et `support/geonature-2.16` pour les hotfixes. Le développement courant sur `develop` cible la prochaine compat.
 
 ## 📋 Prérequis
 
 - Android 5.0 minimum
-- GeoNature 2.16.x avec module monitoring 1.2.0 au minimum
+- GeoNature 2.16.x ou 2.17.x avec le module monitoring correspondant (voir matrice ci-dessus)
 - Compte utilisateur avec droits sur les modules
 
 ## 🚀 Installation
@@ -60,7 +61,7 @@ flutter run
 
 ## 🛠️ Développement
 
-L'application utilise Flutter et suit une architecture Clean Architecture. Voir [CLAUDE.md](./CLAUDE.md) pour les conventions de code.
+L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
 
 ### Documentation
 - [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations

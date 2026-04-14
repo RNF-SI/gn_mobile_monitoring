@@ -1441,22 +1441,52 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  /// Extrait la valeur scalaire (string) d'un élément de datalist.
+  /// Les valeurs par défaut de la config peuvent être fournies en forme
+  /// d'objet — p. ex. le champ `modules` des sites_group a `default:
+  /// [{"id_module": "__MODULE.ID_MODULE"}]`. Sans extraction, un toString()
+  /// brut donnerait `"{id_module: 58}"` et le serveur recevrait un payload
+  /// `"modules": ["{id_module: 58}"]` (= string garbage) au lieu de
+  /// `"modules": [58]`. On lit le `keyValue` de la config pour prendre
+  /// la bonne clé ; à défaut, on tente `id` puis la première valeur
+  /// numérique de la Map.
+  String _extractDatalistScalar(dynamic element, String? keyValue) {
+    if (element is Map) {
+      if (keyValue != null && element.containsKey(keyValue)) {
+        return element[keyValue].toString();
+      }
+      if (element.containsKey('id')) return element['id'].toString();
+      for (final v in element.values) {
+        if (v is num) return v.toString();
+      }
+    }
+    return element.toString();
+  }
+
   /// Widget pour datalist à sélection multiple avec checkbox
   Widget _buildMultiSelectDatalist(String fieldName, List<Map<String, dynamic>> dataSource, bool required) {
+    final keyValue = _unifiedSchema[fieldName]?['keyValue'] as String?;
+
     // Initialiser la valeur comme une liste si ce n'est pas déjà fait
     if (_formValues[fieldName] == null) {
       _formValues[fieldName] = <String>[];
     } else if (_formValues[fieldName] is Map) {
-      _formValues[fieldName] = <String>[];
+      // Map unique → extraire le scalaire et en faire une liste.
+      _formValues[fieldName] = [
+        _extractDatalistScalar(_formValues[fieldName], keyValue),
+      ];
     } else if (_formValues[fieldName] is List) {
-      // Normaliser : convertir tous les éléments en strings pour la comparaison avec les valeurs du datalist
+      // Normaliser : extraire la valeur scalaire de chaque élément (gère
+      // les objets {keyValue: ...} issus des defaults de config).
       _formValues[fieldName] = (_formValues[fieldName] as List)
-          .map((e) => e.toString())
+          .map((e) => _extractDatalistScalar(e, keyValue))
           .toList();
     } else {
       // Convertir une valeur unique en liste
       final currentValue = _formValues[fieldName];
-      _formValues[fieldName] = currentValue != null ? [currentValue.toString()] : <String>[];
+      _formValues[fieldName] = currentValue != null
+          ? [_extractDatalistScalar(currentValue, keyValue)]
+          : <String>[];
     }
 
     //final selectedValues = List<String>.from(_formValues[fieldName] as List);

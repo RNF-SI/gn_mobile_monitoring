@@ -32,12 +32,12 @@ Le module POPamphibien de la SHF est le premier module à nécessiter la sélect
 ### Fichiers modifiés
 
 1. **Parser de configuration** : [`lib/core/helpers/form_config_parser.dart`](../lib/core/helpers/form_config_parser.dart)
-   - Ajout de la propriété `multiple` dans le schéma unifié (ligne 563)
+   - Propagation de la propriété `multiple` dans le schéma unifié
 
 2. **Générateur de formulaire** : [`lib/presentation/widgets/dynamic_form_builder.dart`](../lib/presentation/widgets/dynamic_form_builder.dart)
-   - Import du nouveau widget (ligne 11)
-   - Détection de `multiple: true` dans `_buildNomenclatureField()` (ligne 1768)
-   - Nouvelle méthode `_buildMultipleNomenclatureField()` (lignes 1839-1882)
+   - Import du widget `MultipleNomenclatureSelectorWidget`
+   - Détection de `multiple: true` dans `_buildNomenclatureField()`
+   - Méthode `_buildMultipleNomenclatureField()` qui délègue au widget multiple
 
 ## Utilisation
 
