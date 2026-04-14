@@ -39,8 +39,52 @@ class TestDataSeeder {
   // Module Configuration (minimal but functional)
   // ============================================================================
 
+  /// Identifiants de sites utilisés pour les tests de géométrie. Séparés des
+  /// IDs de [seedDownloadedModule] pour éviter toute collision quand les deux
+  /// seedings sont combinés.
+  static const int testSiteIdLine = 401;
+  static const int testSiteIdPolygon = 402;
+
+  /// GeoJSON d'une LineString à 3 sommets autour de Paris.
+  static const String lineStringGeom =
+      '{"type":"LineString","coordinates":[[2.3400,48.8566],[2.3410,48.8576],[2.3420,48.8586]]}';
+
+  /// GeoJSON d'un Polygon (carré) à 4 sommets + fermeture autour de Paris.
+  static const String polygonGeom =
+      '{"type":"Polygon","coordinates":[[[2.3400,48.8566],[2.3420,48.8566],[2.3420,48.8586],[2.3400,48.8586],[2.3400,48.8566]]]}';
+
   /// Creates a minimal but functional module configuration.
-  static ModuleConfiguration createModuleConfig() {
+  ///
+  /// [siteGeometryTypes] contrôle le champ `geometry_type` de la config
+  /// `site`. `null` laisse la config sans contrainte (donc défaut `Point`
+  /// côté app). Une liste multi-valeurs permet de tester le bottom sheet
+  /// de sélection de type, une liste à 1 élément teste l'auto-sélection.
+  static ModuleConfiguration createModuleConfig({
+    List<String>? siteGeometryTypes,
+  }) {
+    final siteConfig = <String, dynamic>{
+      'label': 'Site',
+      'id_field_name': 'id_base_site',
+      'display_list': ['base_site_name', 'base_site_code'],
+      'display_properties': ['base_site_name', 'base_site_code'],
+      'generic': {
+        'base_site_name': {
+          'type_widget': 'text',
+          'attribut_label': 'Nom du site',
+          'required': true,
+        },
+        'base_site_code': {
+          'type_widget': 'text',
+          'attribut_label': 'Code du site',
+          'required': true,
+        },
+      },
+    };
+    if (siteGeometryTypes != null) {
+      siteConfig['geometry_type'] =
+          siteGeometryTypes.length == 1 ? siteGeometryTypes.first : siteGeometryTypes;
+    }
+
     return ModuleConfiguration.fromJson({
       'custom': {
         'id_module': testModuleId,
@@ -61,24 +105,7 @@ class TestDataSeeder {
           },
         },
       },
-      'site': {
-        'label': 'Site',
-        'id_field_name': 'id_base_site',
-        'display_list': ['base_site_name', 'base_site_code'],
-        'display_properties': ['base_site_name', 'base_site_code'],
-        'generic': {
-          'base_site_name': {
-            'type_widget': 'text',
-            'attribut_label': 'Nom du site',
-            'required': true,
-          },
-          'base_site_code': {
-            'type_widget': 'text',
-            'attribut_label': 'Code du site',
-            'required': true,
-          },
-        },
-      },
+      'site': siteConfig,
       'sites_group': {
         'label': 'Groupe de sites',
         'id_field_name': 'id_sites_group',
@@ -170,10 +197,18 @@ class TestDataSeeder {
   ///
   /// This prepares the app state as if a module has been downloaded,
   /// allowing navigation from Home → Module Detail.
-  Future<void> seedDownloadedModule() async {
-    final config = createModuleConfig();
+  ///
+  /// - [siteGeometryTypes] permet de configurer le champ `geometry_type`
+  ///   de la config `site`. Utile pour les tests de sélecteur de type.
+  /// - [extraSites] ajoute des sites supplémentaires à ceux par défaut
+  ///   (p. ex. un site avec une `LineString` ou un `Polygon` en geom).
+  Future<void> seedDownloadedModule({
+    List<String>? siteGeometryTypes,
+    List<BaseSite>? extraSites,
+  }) async {
+    final config = createModuleConfig(siteGeometryTypes: siteGeometryTypes);
 
-    final sites = [
+    final sites = <BaseSite>[
       const BaseSite(
         idBaseSite: testSiteId1,
         baseSiteName: 'Site de test Alpha',
@@ -186,6 +221,7 @@ class TestDataSeeder {
         baseSiteCode: 'SITE_BETA',
         baseSiteDescription: 'Deuxième site de test pour les E2E',
       ),
+      ...?extraSites,
     ];
 
     final siteGroups = [
@@ -298,9 +334,19 @@ class TestDataSeeder {
   }
 
   /// Seed all common data: logged-in user + downloaded module + nomenclatures + datasets.
-  Future<void> seedAll() async {
+  ///
+  /// Accepte les mêmes paramètres que [seedDownloadedModule] pour permettre
+  /// aux tests de configurer la géométrie du module sans dédupliquer les
+  /// appels aux autres seeders.
+  Future<void> seedAll({
+    List<String>? siteGeometryTypes,
+    List<BaseSite>? extraSites,
+  }) async {
     await seedLoggedInUser();
-    await seedDownloadedModule();
+    await seedDownloadedModule(
+      siteGeometryTypes: siteGeometryTypes,
+      extraSites: extraSites,
+    );
     await seedNomenclatures();
     await seedDatasets();
   }

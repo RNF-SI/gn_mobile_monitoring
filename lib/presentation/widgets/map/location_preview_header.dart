@@ -201,9 +201,13 @@ class LocationPreviewHeader extends StatelessWidget {
   }
 
   String _statusLabel() {
-    if (_isLine) return isAdjusted ? 'Ligne tracée' : 'Aucune ligne tracée';
+    if (_isLine) {
+      if (vertices.length < 2) return 'Aucune ligne tracée';
+      return isAdjusted ? 'Ligne modifiée' : 'Ligne tracée';
+    }
     if (_isPolygon) {
-      return isAdjusted ? 'Polygone tracé' : 'Aucun polygone tracé';
+      if (vertices.length < 3) return 'Aucun polygone tracé';
+      return isAdjusted ? 'Polygone modifié' : 'Polygone tracé';
     }
     return isAdjusted ? 'Position ajustée' : 'Position GPS actuelle';
   }
