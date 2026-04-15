@@ -1,18 +1,33 @@
 #!/bin/bash
 # =============================================================================
-# Script de lancement des tests E2E reels contre un serveur GeoNature local
+# Script de lancement des tests E2E reels contre un serveur GeoNature
 #
 # Pre-requis :
-#   - Serveur GeoNature accessible (par defaut http://10.0.2.2:8000)
+#   - Serveur GeoNature accessible (local ou distant)
 #   - Emulateur Android lance OU appareil branche en USB
-#   - Fichier .env.test configure (copie depuis .env.test.example)
+#   - Fichier .env.test (ou fichier alternatif via --env-file) configure
+#
+# Fichiers d'environnement recommandes :
+#   .env.test            → config par defaut (p.ex. GeoNature local)
+#   .env.test.remote     → config de test distant (p.ex. geonature-test.*)
+#   Tous sont gitignored (voir .gitignore : .env.test*).
 #
 # Usage :
-#   ./run_real_e2e_tests.sh                    # Tous les tests, emulateur
-#   ./run_real_e2e_tests.sh auth               # Seulement les tests d'auth
-#   ./run_real_e2e_tests.sh module             # Seulement les tests de module
-#   ./run_real_e2e_tests.sh --device=<id>      # Appareil specifique
-#   ./run_real_e2e_tests.sh --url=http://192.168.1.10:8000  # URL custom
+#   ./run_real_e2e_tests.sh                       # Tous les tests, emulateur
+#   ./run_real_e2e_tests.sh auth                  # Seulement les tests d'auth
+#   ./run_real_e2e_tests.sh module                # Seulement les tests de module
+#   ./run_real_e2e_tests.sh --device=<id>         # Appareil specifique
+#   ./run_real_e2e_tests.sh --url=http://192.168.1.10:8000   # URL custom
+#   ./run_real_e2e_tests.sh --env-file=.env.test.remote all  # Run contre serveur distant
+#   ./run_real_e2e_tests.sh many-taxa --with-upload          # Stress taxons + upload
+#   ./run_real_e2e_tests.sh cross-module                     # Plusieurs modules en une session
+#
+# TEST_MODULE_CODES (CSV) :
+#   Le fichier .env.test peut definir TEST_MODULE_CODES=A,B,C (liste) ou
+#   TEST_MODULE_CODE=A (legacy, compat ascendante). Les scenarios mono-module
+#   (module, sites, groups, visits, observations, sync-*) sont iteres sur
+#   chaque module. Les scenarios auth/many-taxa/cross-module ignorent
+#   l'iteration (auth est global, cross-module itere lui-meme).
 # =============================================================================
 
 set -e
@@ -32,6 +47,8 @@ DEVICE=""
 SCENARIO="all"
 CUSTOM_URL=""
 TIMEOUT="600s"
+ENV_FILE=".env.test"
+WITH_UPLOAD="false"
 
 # Parser les arguments
 for arg in "$@"; do
@@ -44,6 +61,12 @@ for arg in "$@"; do
       ;;
     --timeout=*)
       TIMEOUT="${arg#*=}"
+      ;;
+    --env-file=*)
+      ENV_FILE="${arg#*=}"
+      ;;
+    --with-upload)
+      WITH_UPLOAD="true"
       ;;
     auth)
       SCENARIO="auth"
@@ -69,12 +92,18 @@ for arg in "$@"; do
     sync-upload|upload)
       SCENARIO="sync-upload"
       ;;
+    many-taxa|taxa|taxons)
+      SCENARIO="many-taxa"
+      ;;
+    cross-module|cross|multi-module)
+      SCENARIO="cross-module"
+      ;;
     all)
       SCENARIO="all"
       ;;
     *)
       echo -e "${RED}Argument inconnu: $arg${NC}"
-      echo "Usage: $0 [auth|module|sites|groups|visits|observations|sync-download|sync-upload|all] [--device=<id>] [--url=<url>] [--timeout=<duration>]"
+      echo "Usage: $0 [auth|module|sites|groups|visits|observations|sync-download|sync-upload|many-taxa|cross-module|all] [--device=<id>] [--url=<url>] [--env-file=<path>] [--with-upload] [--timeout=<duration>]"
       exit 1
       ;;
   esac
@@ -85,26 +114,44 @@ done
 echo -e "${BLUE}=== Tests E2E reels - GeoNature Mobile Monitoring ===${NC}"
 echo ""
 
-# Verifier .env.test
-if [ ! -f ".env.test" ]; then
-  echo -e "${RED}Erreur: .env.test non trouve${NC}"
-  echo "Copiez .env.test.example vers .env.test et configurez les valeurs"
+# Verifier le fichier d'environnement
+if [ ! -f "$ENV_FILE" ]; then
+  echo -e "${RED}Erreur: fichier $ENV_FILE non trouve${NC}"
+  echo "Copiez .env.test.example vers $ENV_FILE et configurez les valeurs"
   exit 1
 fi
 
-# Charger .env.test
-source <(grep -v '^#' .env.test | grep -v '^\s*$' | sed 's/^/export /')
+# Charger le fichier d'environnement
+source <(grep -v '^#' "$ENV_FILE" | grep -v '^\s*$' | sed 's/^/export /')
 
 # Override URL si passee en argument
 if [ -n "$CUSTOM_URL" ]; then
   TEST_SERVER_URL="$CUSTOM_URL"
 fi
 
-echo -e "Serveur:  ${GREEN}${TEST_SERVER_URL}${NC}"
-echo -e "User:     ${GREEN}${TEST_USERNAME}${NC}"
-echo -e "Module:   ${GREEN}${TEST_MODULE_CODE}${NC}"
-echo -e "Scenario: ${GREEN}${SCENARIO}${NC}"
-echo -e "Timeout:  ${GREEN}${TIMEOUT}${NC}"
+# Resoudre la liste de modules : TEST_MODULE_CODES (CSV) > TEST_MODULE_CODE (legacy)
+if [ -z "$TEST_MODULE_CODES" ] && [ -n "$TEST_MODULE_CODE" ]; then
+  TEST_MODULE_CODES="$TEST_MODULE_CODE"
+fi
+if [ -z "$TEST_MODULE_CODES" ]; then
+  echo -e "${RED}Erreur: TEST_MODULE_CODES (ou TEST_MODULE_CODE) non defini dans $ENV_FILE${NC}"
+  exit 1
+fi
+
+# Construire le tableau des modules (separes par ',')
+IFS=',' read -ra MODULE_ARRAY <<< "$TEST_MODULE_CODES"
+# Nettoyer les espaces autour des elements
+for i in "${!MODULE_ARRAY[@]}"; do
+  MODULE_ARRAY[$i]=$(echo "${MODULE_ARRAY[$i]}" | xargs)
+done
+
+echo -e "Env file:  ${GREEN}${ENV_FILE}${NC}"
+echo -e "Serveur:   ${GREEN}${TEST_SERVER_URL}${NC}"
+echo -e "User:      ${GREEN}${TEST_USERNAME}${NC}"
+echo -e "Modules:   ${GREEN}${MODULE_ARRAY[*]}${NC}"
+echo -e "Scenario:  ${GREEN}${SCENARIO}${NC}"
+echo -e "Upload:    ${GREEN}${WITH_UPLOAD}${NC}"
+echo -e "Timeout:   ${GREEN}${TIMEOUT}${NC}"
 echo ""
 
 # Verifier Flutter
@@ -229,20 +276,27 @@ GRANT_WATCHER_PID=$!
 # Cleanup du watcher en cas d'arret du script
 trap 'kill $GRANT_WATCHER_PID 2>/dev/null || true' EXIT
 
-# --- Construire les arguments dart-define ---
+# --- Construire les arguments dart-define communs ---
+# TEST_MODULE_CODE sera ajoute par iteration (module courant).
+# TEST_MODULE_CODES est passe tel quel (utile pour le test cross-module).
 
-DART_DEFINES=""
-DART_DEFINES="$DART_DEFINES --dart-define=TEST_SERVER_URL=$TEST_SERVER_URL"
-DART_DEFINES="$DART_DEFINES --dart-define=TEST_USERNAME=$TEST_USERNAME"
-DART_DEFINES="$DART_DEFINES --dart-define=TEST_PASSWORD=$TEST_PASSWORD"
-DART_DEFINES="$DART_DEFINES --dart-define=TEST_MODULE_CODE=$TEST_MODULE_CODE"
+COMMON_DART_DEFINES=""
+COMMON_DART_DEFINES="$COMMON_DART_DEFINES --dart-define=TEST_SERVER_URL=$TEST_SERVER_URL"
+COMMON_DART_DEFINES="$COMMON_DART_DEFINES --dart-define=TEST_USERNAME=$TEST_USERNAME"
+COMMON_DART_DEFINES="$COMMON_DART_DEFINES --dart-define=TEST_PASSWORD=$TEST_PASSWORD"
+COMMON_DART_DEFINES="$COMMON_DART_DEFINES --dart-define=TEST_MODULE_CODES=$TEST_MODULE_CODES"
+COMMON_DART_DEFINES="$COMMON_DART_DEFINES --dart-define=TEST_WITH_UPLOAD=$WITH_UPLOAD"
 
-# --- Selectionner les fichiers de test ---
+# --- Selectionner les fichiers de test et si le scenario itere sur les modules ---
+# MODULE_AWARE=true → le scenario teste un module unique, on itere sur chaque module de la liste
+# MODULE_AWARE=false → scenario global (auth) ou scenario qui itere lui-meme (cross-module)
 
 TEST_FILES=""
+MODULE_AWARE="true"
 case $SCENARIO in
   auth)
     TEST_FILES="integration_test/scenarios_real/real_auth_e2e_test.dart"
+    MODULE_AWARE="false"
     ;;
   module)
     TEST_FILES="integration_test/scenarios_real/real_module_browsing_e2e_test.dart"
@@ -265,6 +319,16 @@ case $SCENARIO in
   sync-upload)
     TEST_FILES="integration_test/scenarios_real/real_sync_upload_e2e_test.dart"
     ;;
+  many-taxa)
+    TEST_FILES="integration_test/scenarios_real/real_many_taxa_e2e_test.dart"
+    # Ce scenario cible un seul module (Petite Chouette Montagne), le premier de la liste.
+    MODULE_AWARE="false"
+    ;;
+  cross-module)
+    TEST_FILES="integration_test/scenarios_real/real_multi_module_stress_e2e_test.dart"
+    # Ce scenario itere lui-meme sur tous les modules via TEST_MODULE_CODES.
+    MODULE_AWARE="false"
+    ;;
   all)
     TEST_FILES="integration_test/scenarios_real/"
     ;;
@@ -272,17 +336,34 @@ esac
 
 # --- Lancement des tests ---
 
-echo ""
-echo -e "${BLUE}=== Lancement des tests ===${NC}"
-echo -e "Commande: $FLUTTER_BIN test $TEST_FILES $DEVICE_ARG --timeout $TIMEOUT $DART_DEFINES"
-echo ""
+run_flutter_test() {
+  local module="$1"
+  local defines="$COMMON_DART_DEFINES --dart-define=TEST_MODULE_CODE=$module"
 
-$FLUTTER_BIN test $TEST_FILES \
-  $DEVICE_ARG \
-  --timeout "$TIMEOUT" \
-  $DART_DEFINES
+  echo ""
+  echo -e "${BLUE}=== Lancement : module=${module} ===${NC}"
+  echo -e "Commande: $FLUTTER_BIN test $TEST_FILES $DEVICE_ARG --timeout $TIMEOUT $defines"
+  echo ""
 
-EXIT_CODE=$?
+  $FLUTTER_BIN test $TEST_FILES \
+    $DEVICE_ARG \
+    --timeout "$TIMEOUT" \
+    $defines
+}
+
+EXIT_CODE=0
+if [ "$MODULE_AWARE" = "true" ] && [ "${#MODULE_ARRAY[@]}" -gt 1 ]; then
+  # Iterer sur chaque module
+  for module in "${MODULE_ARRAY[@]}"; do
+    if ! run_flutter_test "$module"; then
+      EXIT_CODE=$?
+      echo -e "${RED}Echec du scenario sur le module $module (code: $EXIT_CODE)${NC}"
+    fi
+  done
+else
+  # Run unique avec le premier module (ou tous pour les scenarios qui iterent eux-memes)
+  run_flutter_test "${MODULE_ARRAY[0]}" || EXIT_CODE=$?
+fi
 
 echo ""
 if [ $EXIT_CODE -eq 0 ]; then

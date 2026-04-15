@@ -806,6 +806,191 @@ class RealTestHelpers {
   // NAVIGATION HELPERS
   // ==========================================================================
 
+  /// Revient a la HomePage depuis n'importe quelle page de navigation en
+  /// pop-ant jusqu'a voir "Mes Modules".
+  static Future<void> navigateBackToHome(
+    WidgetTester tester, {
+    int maxPops = 6,
+  }) async {
+    for (var i = 0; i < maxPops; i++) {
+      if (find.text('Mes Modules').evaluate().isNotEmpty) return;
+      final back = find.byTooltip('Back');
+      if (back.evaluate().isNotEmpty) {
+        await tester.tap(back.first);
+        await pumpFor(tester, const Duration(seconds: 2));
+        continue;
+      }
+      final backBtn = find.byType(BackButton);
+      if (backBtn.evaluate().isNotEmpty) {
+        await tester.tap(backBtn.first);
+        await pumpFor(tester, const Duration(seconds: 2));
+        continue;
+      }
+      break; // plus rien a pop
+    }
+    if (find.text('Mes Modules').evaluate().isEmpty) {
+      fail('navigateBackToHome: impossible de revenir a la HomePage');
+    }
+  }
+
+  /// Declenche un upload via le menu "Téléversement" depuis la HomePage.
+  /// Attend la fin du sync. Si le dialog "Synchronisation requise" apparait
+  /// et [requireDownloadFirst] est faux, l'upload est skip avec un warning.
+  static Future<void> triggerSyncUploadFromHome(
+    WidgetTester tester, {
+    bool skipIfDownloadRequired = true,
+  }) async {
+    final menuButton = find.byIcon(Icons.menu);
+    await waitForWidget(
+      tester,
+      menuButton,
+      timeout: const Duration(seconds: 10),
+      description: 'menu burger pour upload',
+    );
+    await tester.tap(menuButton);
+    await pumpFor(tester, const Duration(seconds: 2));
+
+    final uploadMenuItem = find.byKey(const Key('menu-sync_upload'));
+    await waitForWidget(
+      tester,
+      uploadMenuItem,
+      timeout: const Duration(seconds: 5),
+      description: 'item menu-sync_upload',
+    );
+    await tester.tap(uploadMenuItem);
+    await pumpFor(tester, const Duration(seconds: 3));
+
+    if (find.text('Synchronisation requise').evaluate().isNotEmpty) {
+      if (skipIfDownloadRequired) {
+        debugPrint(
+            'Dialog "Synchronisation requise" : upload skip (relancez apres sync-download)');
+        for (final btnText in ['Fermer', 'Annuler', 'OK']) {
+          final btn = find.text(btnText);
+          if (btn.evaluate().isNotEmpty) {
+            await tester.tap(btn.first);
+            break;
+          }
+        }
+        return;
+      } else {
+        fail(
+            'Upload bloque par "Synchronisation requise" (download requis au prealable)');
+      }
+    }
+
+    final sendButton = find.widgetWithText(ElevatedButton, 'Envoyer');
+    await waitForWidget(
+      tester,
+      sendButton,
+      timeout: const Duration(seconds: 10),
+      description: 'bouton "Envoyer"',
+    );
+    await tester.tap(sendButton);
+    await pumpFor(tester, const Duration(seconds: 2));
+
+    // Module selector multi-modules : tout cocher si la UI le permet,
+    // sinon choisir le premier item.
+    if (find.text('Sélectionner un module').evaluate().isNotEmpty) {
+      // Essayer de tout cocher via un bouton "Tout selectionner" s'il existe
+      final selectAll = find.text('Tout sélectionner');
+      if (selectAll.evaluate().isNotEmpty) {
+        await tester.tap(selectAll.first);
+        await pumpFor(tester, const Duration(seconds: 1));
+      } else {
+        // Fallback : cocher chaque checkbox visible
+        final checkboxes = find.byType(Checkbox);
+        for (var i = 0; i < checkboxes.evaluate().length; i++) {
+          await tester.tap(checkboxes.at(i));
+          await pumpFor(tester, const Duration(milliseconds: 300));
+        }
+        if (checkboxes.evaluate().isEmpty) {
+          // Pas de checkbox → fallback premier ListTile
+          final listTiles = find.byType(ListTile);
+          if (listTiles.evaluate().isNotEmpty) {
+            await tester.tap(listTiles.first);
+            await pumpFor(tester, const Duration(seconds: 1));
+          }
+        }
+      }
+      // Valider la selection
+      for (final btnText in ['Envoyer', 'Valider', 'OK']) {
+        final btn = find.widgetWithText(ElevatedButton, btnText);
+        if (btn.evaluate().isNotEmpty) {
+          await tester.tap(btn.first);
+          await pumpFor(tester, const Duration(seconds: 2));
+          break;
+        }
+      }
+    }
+
+    await waitForSyncToFinish(
+      tester,
+      timeout: const Duration(minutes: 5),
+    );
+    debugPrint('Upload termine');
+    await dismissBlockingDialogs(tester);
+  }
+
+  /// Selectionne un taxon via le TaxonSelectorWidget en tapant [searchQuery]
+  /// dans le champ de recherche, puis en tapant sur le [resultIndex]-ieme
+  /// resultat (index 0-based). Le champ declenche la recherche a partir de
+  /// 3 caracteres, donc [searchQuery] doit faire >= 3 caracteres.
+  ///
+  /// Keys utilisees (ajoutees dans taxon_selector_widget.dart) :
+  ///   - `taxon-search-field` : le TextFormField de recherche
+  ///   - `taxon-search-results` : le Container qui wrappe la ListView
+  ///
+  /// Throws via fail() si le champ ou les resultats n'apparaissent pas.
+  static Future<void> selectTaxonBySearch(
+    WidgetTester tester,
+    String searchQuery, {
+    int resultIndex = 0,
+    Duration debounce = const Duration(seconds: 2),
+  }) async {
+    assert(searchQuery.length >= 3,
+        'searchQuery doit faire >= 3 caracteres (trigger de recherche du widget)');
+
+    final searchField = find.byKey(const Key('taxon-search-field'));
+    await waitForWidget(
+      tester,
+      searchField,
+      timeout: const Duration(seconds: 10),
+      description: 'taxon-search-field',
+    );
+    await tester.ensureVisible(searchField);
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.enterText(searchField, searchQuery);
+    await pumpFor(tester, debounce);
+    await hideKeyboard(tester);
+
+    // Attendre l'apparition du Container de resultats (recherche > 0 hits).
+    final resultsContainer = find.byKey(const Key('taxon-search-results'));
+    await waitForWidget(
+      tester,
+      resultsContainer,
+      timeout: const Duration(seconds: 10),
+      description: 'taxon-search-results pour "$searchQuery"',
+    );
+
+    final resultTiles = find.descendant(
+      of: resultsContainer,
+      matching: find.byType(ListTile),
+    );
+    final count = resultTiles.evaluate().length;
+    if (count == 0) {
+      fail('Aucun ListTile dans les resultats de recherche "$searchQuery"');
+    }
+    if (resultIndex >= count) {
+      fail(
+          'resultIndex $resultIndex hors plage (il y a $count resultats pour "$searchQuery")');
+    }
+
+    debugPrint(
+        'Taxon search "$searchQuery" → $count resultat(s), tap sur index $resultIndex');
+    await tester.tap(resultTiles.at(resultIndex));
+    await pumpFor(tester, const Duration(seconds: 1));
+  }
+
   /// Tape sur un onglet par son texte (TabBar).
   static Future<void> tapTab(WidgetTester tester, String tabText) async {
     final tab = find.widgetWithText(Tab, tabText);
