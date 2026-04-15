@@ -16,10 +16,11 @@ GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il
 
 ## Compatibilité des versions
 
-| Version app mobile | GeoNature core | Version minimale monitoring (module serveur) |
-|---|---|---|
-| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 |
-| `v1.0.0-geonature-2.16` | 2.16.x | 1.2.0 |
+| Version app mobile | GeoNature core | Monitoring serveur (min) | Code de version |
+|---|---|---|---|
+| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 | `1` |
+
+Le **code de version** est la valeur à renseigner côté admin GeoNature (voir [Déploiement](#-déploiement-et-mise-à-jour)). Pour l'historique complet des releases, voir [`docs/VERSIONS.md`](./docs/VERSIONS.md).
 
 L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
 
