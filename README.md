@@ -16,10 +16,11 @@ GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il
 
 ## Compatibilité des versions
 
-| Version app mobile | GeoNature core | Version minimale monitoring (module serveur) |
-|---|---|---|
-| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 |
-| `v1.0.0-geonature-2.16` | 2.16.x | 1.2.0 |
+| Version app mobile | GeoNature core | Monitoring serveur (min) | Code de version |
+|---|---|---|---|
+| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 | `1` |
+
+Le **code de version** est la valeur à renseigner côté admin GeoNature (voir [Déploiement](#-déploiement-et-mise-à-jour)). Pour l'historique complet des releases, voir [`docs/VERSIONS.md`](./docs/VERSIONS.md).
 
 L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
 
@@ -145,7 +146,9 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
    | Code application | `MONITORING` |
    | Chemin relatif de l'APK | `monitoring/monitoring.apk` |
    | Nom du paquet | `fr.geonature.monitoring` |
-   | Code de version | Le buildNumber de la version (ex: `2`) |
+   | Code de version | Valeur publiée avec chaque release — voir le tableau [Compatibilité des versions](#compatibilité-des-versions) ou [`docs/VERSIONS.md`](./docs/VERSIONS.md). Pour `v1.0.0-geonature-2.17`, c'est `1`. |
+
+   > ⚠️ **Code de version** : ne pas confondre avec le nom de version (`1.0.0`). C'est un entier strictement croissant, fixé à la compilation (buildNumber de `pubspec.yaml`), que l'admin doit saisir tel quel. L'app ne propose une mise à jour que si la valeur admin est **strictement supérieure** à celle de l'APK installé.
 
 4. **Mettre à jour** : lors d'une nouvelle version, remplacer l'APK et incrémenter le **Code de version** dans l'admin.
 
