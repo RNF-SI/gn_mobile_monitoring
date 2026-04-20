@@ -4,7 +4,7 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 
 > 💡 Pour la documentation technique détaillée des expressions JavaScript, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
-## 🆕 Dernières Améliorations (Avril 2026 — `v1.0.0-geonature-2.17`)
+## 🆕 Dernières Améliorations (Avril 2026 — `v1.0.0`)
 
 ### Saisie et visualisation de géométrie de site
 L'app gère désormais la création et l'édition de géométries de site directement depuis le mobile — fini le besoin de passer par l'interface web pour tracer une aire.
@@ -470,13 +470,13 @@ Pour mettre à jour le tableau après avoir testé un module :
 
 ---
 
-**Dernière mise à jour** : avril 2026 (release `v1.0.0-geonature-2.17`)
+**Dernière mise à jour** : avril 2026 (release `v1.0.0`)
 **Version de l'application** : Flutter 3.38.4 / Dart 3.10.3
 **Architecture** : Clean Architecture avec Riverpod
 
 ## 📋 Historique des Changements
 
-### Release `v1.0.0-geonature-2.17` — avril 2026
+### Release `v1.0.0` — avril 2026
 - ✅ Picker de géométrie site `LineString`/`Polygon` plein écran avec validation des polygones auto-intersectés
 - ✅ Aperçu carte en lecture seule sur la page de détail d'un site (`LocationPreviewHeader`)
 - ✅ Calcul de distance GPS → site pour tous les types `Multi*` (issue #154)
