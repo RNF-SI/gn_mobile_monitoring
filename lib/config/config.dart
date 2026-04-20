@@ -14,23 +14,45 @@ class Config {
   // Set the base URL from localStorage
   static void setStoredApiUrl(String? baseUrl) {
     if (baseUrl != null) {
-      // Nettoyer l'URL pour s'assurer qu'elle ne contient pas /api
-      String cleanUrl = baseUrl.trim();
-      
-      // Supprimer le slash final s'il existe
-      if (cleanUrl.endsWith('/')) {
-        cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-      }
-      
-      // Supprimer /api s'il est présent
-      if (cleanUrl.endsWith('/api')) {
-        cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
-      }
-      
-      _storedBaseUrl = cleanUrl;
+      _storedBaseUrl = normalizeUserInputUrl(baseUrl);
     } else {
       _storedBaseUrl = null;
     }
+  }
+
+  /// Nettoie une URL saisie par l'utilisateur :
+  /// - trim + retrait du slash final
+  /// - retrait du suffixe /api si présent
+  /// - ajout du schéma https:// par défaut si aucun schéma n'est fourni
+  static String normalizeUserInputUrl(String rawUrl) {
+    String cleanUrl = rawUrl.trim();
+
+    if (cleanUrl.endsWith('/')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
+    }
+
+    if (cleanUrl.endsWith('/api')) {
+      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
+    }
+
+    if (cleanUrl.isNotEmpty &&
+        !cleanUrl.startsWith('http://') &&
+        !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
+    }
+
+    return cleanUrl;
+  }
+
+  /// Indique si l'URL utilise le schéma HTTP non sécurisé contre un host
+  /// qui n'est pas un environnement de développement local.
+  /// Utile pour afficher un avertissement dans l'écran de connexion.
+  static bool isInsecureHttpForProduction(String url) {
+    final trimmed = url.trim();
+    if (!trimmed.startsWith('http://')) {
+      return false;
+    }
+    return !_isDevEnvironment(trimmed);
   }
 
   // Clear the stored URL

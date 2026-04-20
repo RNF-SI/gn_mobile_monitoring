@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
@@ -32,41 +33,31 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  /// Normalise l'URL de base (nettoie seulement)
-  String _normalizeBaseUrl(String url) {
-    // Nettoyer l'URL
-    String cleanUrl = url.trim();
-
-    // Supprimer le slash final s'il existe
-    if (cleanUrl.endsWith('/')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-    }
-
-    // Supprimer /api s'il est présent
-    if (cleanUrl.endsWith('/api')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
-    }
-
-    return cleanUrl;
-  }
+  /// Normalise l'URL de base saisie par l'utilisateur.
+  /// Délègue à [Config.normalizeUserInputUrl] pour centraliser la logique.
+  String _normalizeBaseUrl(String url) => Config.normalizeUserInputUrl(url);
 
   @override
   void initState() {
     super.initState();
     // Initialize API URL field from storage or use default
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
       final ref = ProviderScope.containerOf(context);
       final auth = ref.read(authenticationViewModelProvider);
       final apiUrl = await auth.getStoredApiUrl();
-      setState(() {
-        if (apiUrl != null && apiUrl.isNotEmpty) {
-          // L'URL stockée est maintenant l'URL de base (sans /api)
-          _apiUrl.text = apiUrl;
-        } else {
-          // Utiliser l'URL par défaut si aucune n'est stockée
-          _apiUrl.text = Config.defaultApiUrl;
-        }
-      });
+      if (!mounted) return;
+      final initial = (apiUrl != null && apiUrl.isNotEmpty)
+          ? apiUrl
+          : Config.defaultApiUrl;
+      // Utiliser `value` plutôt que `text` pour positionner explicitement le
+      // curseur en fin de champ. Assigner `.text` directement laisse la
+      // sélection à l'état invalide (-1) et provoque un select-all au tap sur
+      // Android.
+      _apiUrl.value = TextEditingValue(
+        text: initial,
+        selection: TextSelection.collapsed(offset: initial.length),
+      );
     });
   }
 
@@ -209,16 +200,18 @@ class _LoginPageState extends State<LoginPage> {
                               decoration: const InputDecoration(
                                 labelText: 'URL du serveur GeoNature',
                                 hintText: 'https://geonature.mondomaine.org',
+                                helperText:
+                                    'https:// est ajouté automatiquement si aucun schéma n\'est saisi',
+                                helperMaxLines: 2,
                               ),
                               keyboardType: TextInputType.url,
                               validator: (value) {
-                                if (value == null || value.isEmpty) {
+                                if (value == null || value.trim().isEmpty) {
                                   return 'L\'URL du serveur est nécessaire';
                                 }
-                                // Simple URL validation
-                                if (!value.startsWith('http://') &&
-                                    !value.startsWith('https://')) {
-                                  return 'L\'URL doit commencer par http:// ou https://';
+                                if (Config.isInsecureHttpForProduction(value)) {
+                                  return 'HTTPS est requis pour un serveur en production. '
+                                      'Remplacez http:// par https://.';
                                 }
                                 return null;
                               },
@@ -265,13 +258,51 @@ class _LoginPageState extends State<LoginPage> {
                                       Padding(
                                         padding: const EdgeInsets.only(
                                             top: 8.0, left: 20, right: 20),
-                                        child: Text(
-                                          loginStatus.errorDetails!,
-                                          style: const TextStyle(
-                                            color: Colors.red,
-                                            fontSize: 14,
-                                          ),
-                                          textAlign: TextAlign.center,
+                                        child: Column(
+                                          children: [
+                                            SelectableText(
+                                              loginStatus.errorDetails!,
+                                              style: const TextStyle(
+                                                color: Colors.red,
+                                                fontSize: 14,
+                                              ),
+                                              textAlign: TextAlign.center,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            TextButton.icon(
+                                              icon: const Icon(
+                                                Icons.copy,
+                                                size: 16,
+                                                color: Colors.white,
+                                              ),
+                                              label: const Text(
+                                                'Copier l\'erreur',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                              onPressed: () async {
+                                                await Clipboard.setData(
+                                                  ClipboardData(
+                                                    text: loginStatus
+                                                        .errorDetails!,
+                                                  ),
+                                                );
+                                                if (context.mounted) {
+                                                  ScaffoldMessenger.of(context)
+                                                      .showSnackBar(
+                                                    const SnackBar(
+                                                      content: Text(
+                                                        'Erreur copiée dans le presse-papier',
+                                                      ),
+                                                      duration:
+                                                          Duration(seconds: 2),
+                                                    ),
+                                                  );
+                                                }
+                                              },
+                                            ),
+                                          ],
                                         ),
                                       ),
                                   ],

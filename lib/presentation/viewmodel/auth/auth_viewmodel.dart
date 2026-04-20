@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/core/widgets/copyable_error_dialog.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
@@ -226,9 +227,10 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         }
       });
     } on DioException catch (e) {
-      var errorObj = {};
+      final Map<String, Object?> errorObj = {};
       String errorText;
       if (e.response != null) {
+        errorObj['statusCode'] = e.response!.statusCode;
         errorObj['data'] = e.response!.data;
         errorObj['headers'] = e.response!.headers;
         errorObj['requestOptions'] = e.response!.requestOptions;
@@ -243,56 +245,22 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
 
       _updateLoginStatus(LoginStatusInfo.error(errorText));
 
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(errorText),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: errorObj.length,
-              itemBuilder: (BuildContext context, int index) {
-                String key = errorObj.keys.elementAt(index);
-                return Column(
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(key),
-                      subtitle: Text("${errorObj[key]}"),
-                    ),
-                    const Divider(
-                      height: 2.0,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: const Text("OK"))
-          ],
-        ),
+      if (!context.mounted) return;
+      await showCopyableErrorDialog(
+        context,
+        title: 'Erreur de connexion',
+        message: errorText,
+        details: errorObj,
       );
     } on Exception catch (e) {
       state = loadingState.State.error(e);
       _updateLoginStatus(LoginStatusInfo.error(e.toString()));
 
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Error Occured'),
-          content: Text(e.toString()),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: const Text("OK"))
-          ],
-        ),
+      if (!context.mounted) return;
+      await showCopyableErrorDialog(
+        context,
+        title: 'Erreur de connexion',
+        message: e.toString(),
       );
     }
   }
