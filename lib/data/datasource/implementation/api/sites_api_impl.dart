@@ -33,214 +33,97 @@ class SitesApiImpl extends BaseApi implements SitesApi {
   Future<Map<String, dynamic>> fetchEnrichedSitesForModule(
       String moduleCode, String token) async {
     try {
-      // @since monitoring 0.1.0
-      // Fetch sites for the module using the secure endpoint with depth=2
-      final moduleResponse = await dio.get(
-        '/monitorings/object/$moduleCode/module',
+      final logger = AppLogger();
+      // 2 salves de requêtes légères : timeout de 30 s largement suffisant
+      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 30));
+      final headers = {'Authorization': 'Bearer $token'};
+
+      // Étape 1 : liste légère des IDs de sites du module (route /list/ filtre
+      // sur le module et renvoie juste les colonnes demandées, pas de relations)
+      final listResponse = await dioInstance.get(
+        '/monitorings/list/$moduleCode/site',
         queryParameters: {
-          'depth': 2,
-          'field_name': 'module_code',
+          'fields': 'id_base_site,base_site_name',
+          'limit': 100000,
         },
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
+        options: Options(headers: headers),
       );
 
-      // 204 (No Content) signifie qu'il n'y a pas de sites disponibles,
-      // mais c'est un cas valide - continuer avec des données vides
-      if (moduleResponse.statusCode == 204) {
-        final logger = AppLogger();
+      if (listResponse.statusCode == 204) {
         logger.i(
           'Module $moduleCode: réponse 204 (No Content) pour les sites. '
           'Aucun site disponible pour ce module.',
           tag: 'sync',
         );
         return {
-          'sites': <Map<String, dynamic>>[],
-          'site_complements': <Map<String, dynamic>>[],
+          'enriched_sites': <Map<String, dynamic>>[],
+          'site_complements': <SiteComplement>[],
         };
       }
 
-      if (moduleResponse.statusCode != 200) {
+      if (listResponse.statusCode != 200) {
         throw ApiException(
           'Failed to fetch sites for module $moduleCode',
-          statusCode: moduleResponse.statusCode,
+          statusCode: listResponse.statusCode,
         );
       }
 
-      final moduleData = moduleResponse.data as Map<String, dynamic>;
-      final Set<int> moduleSiteIds = {};
+      final items = (listResponse.data as List<dynamic>?) ?? const [];
+      final siteIds = items
+          .whereType<Map<String, dynamic>>()
+          .map((e) => e['id_base_site'])
+          .whereType<int>()
+          .toList();
+
+      // Étape 2 : fetch unitaire en parallèle par chunks (évite de saturer
+      // le connection pool HTTP et le serveur)
       final List<Map<String, dynamic>> enrichedSites = [];
       final List<SiteComplement> siteComplements = [];
+      const int chunkSize = 10;
 
-      // 1. PRIORITY: Récupérer d'abord les sites dans les groupes de sites (avec depth=2)
-      List<dynamic>? siteGroupsList;
-
-      // Try to find site groups in different possible locations
-      if (moduleData['children'] != null &&
-          moduleData['children']['sites_group'] != null) {
-        // Original structure: data.children.sites_group
-        siteGroupsList = moduleData['children']['sites_group'] as List;
-      } else if (moduleData['sites_group'] != null) {
-        // Alternative structure: data.sites_group directly
-        siteGroupsList = moduleData['sites_group'] as List;
-      } else if (moduleData['properties'] != null &&
-          moduleData['properties']['sites_group'] != null) {
-        // Another possible structure: data.properties.sites_group
-        siteGroupsList = moduleData['properties']['sites_group'] as List;
-      }
-
-      if (siteGroupsList != null) {
-        for (var group in siteGroupsList) {
-          final groupData = group as Map<String, dynamic>;
-
-          // Extract group properties - handle different structures
-          Map<String, dynamic> groupProperties;
-          if (groupData['properties'] != null) {
-            groupProperties = groupData['properties'] as Map<String, dynamic>;
-          } else {
-            // If no properties field, use the group data itself
-            groupProperties = groupData;
-          }
-
-          final groupId = groupProperties['id_sites_group'] as int? ??
-              groupData['id_sites_group'] as int? ??
-              groupData['id'] as int? ??
-              0;
-
-          // Check if the group has sites - handle different structures
-          List<dynamic>? sitesList;
-
-          if (groupData['children'] != null &&
-              groupData['children']['site'] != null) {
-            sitesList = groupData['children']['site'] as List;
-          } else if (groupData['site'] != null) {
-            sitesList = groupData['site'] as List;
-          } else if (groupData['sites'] != null) {
-            sitesList = groupData['sites'] as List;
-          }
-
-          if (sitesList != null) {
-            for (var site in sitesList) {
-              final siteData = site as Map<String, dynamic>;
-
-              // Extract site properties - handle different structures
-              Map<String, dynamic> properties;
-              if (siteData['properties'] != null) {
-                properties = siteData['properties'] as Map<String, dynamic>;
-              } else {
-                // If no properties field, use the site data itself
-                properties = siteData;
-              }
-              final siteId = properties['id_base_site'] ?? siteData['id'];
-
-              if (siteId != null && !moduleSiteIds.contains(siteId)) {
-                moduleSiteIds.add(siteId);
-
-                // Create enriched site data directly from the secure endpoint
-                final Map<String, dynamic> enrichedSite = {
-                  'id_base_site': siteId,
-                  'base_site_name': properties['base_site_name'],
-                  'base_site_code':
-                      null, // Will be fetched with individual requests
-                  'base_site_description':
-                      null, // Will be fetched with individual requests
-                  'altitude_min':
-                      null, // Will be fetched with individual requests
-                  'altitude_max':
-                      null, // Will be fetched with individual requests
-                  'first_use_date':
-                      null, // Will be fetched with individual requests
-                  'uuid_base_site':
-                      null, // Will be fetched with individual requests
-                  'geometry': null,
-                };
-
-                enrichedSites.add(enrichedSite);
-
-                // Create site complement data for storage
-                // Use the group ID from the parent group, not from site properties
-
-                // Extract module-specific data from site properties (excluding base site fields)
-                final Map<String, dynamic> siteSpecificData =
-                    Map.from(properties);
-                // Remove base site fields that are stored in the main site table
-                siteSpecificData.remove('id_base_site');
-                siteSpecificData.remove('base_site_name');
-                siteSpecificData.remove('base_site_code');
-                siteSpecificData.remove('base_site_description');
-                siteSpecificData.remove('additional_data_keys');
-
-                final complementEntity = SiteComplementEntity(
-                  idBaseSite: siteId,
-                  idSitesGroup: groupId,
-                  data: siteSpecificData.isNotEmpty
-                      ? jsonEncode(siteSpecificData)
-                      : null,
-                );
-
-                siteComplements.add(complementEntity.toDomain());
-              }
+      for (var i = 0; i < siteIds.length; i += chunkSize) {
+        final chunk = siteIds.sublist(
+          i,
+          (i + chunkSize < siteIds.length) ? i + chunkSize : siteIds.length,
+        );
+        await Future.wait(chunk.map((id) async {
+          try {
+            final resp = await dioInstance.get(
+              '/monitorings/object/$moduleCode/site/$id',
+              queryParameters: {'depth': 0},
+              options: Options(headers: headers),
+            );
+            if (resp.statusCode != 200 ||
+                resp.data is! Map<String, dynamic>) {
+              logger.w('Site $id: statut ${resp.statusCode}, ignoré',
+                  tag: 'sync');
+              return;
             }
-          }
-        }
-      }
 
-      // 2. Récupérer les sites directement liés au module (hors groupes) qui ne sont pas déjà traités
-      List<dynamic>? directSitesList;
+            final siteData = resp.data as Map<String, dynamic>;
+            // Feature GeoJSON : propriétés sous `properties`, geometry à la racine
+            final properties =
+                (siteData['properties'] is Map<String, dynamic>)
+                    ? siteData['properties'] as Map<String, dynamic>
+                    : siteData;
+            final siteId = properties['id_base_site'] as int? ?? id;
 
-      // Try to find sites in different possible locations
-      if (moduleData['children'] != null &&
-          moduleData['children']['site'] != null) {
-        directSitesList = moduleData['children']['site'] as List;
-      } else if (moduleData['site'] != null) {
-        directSitesList = moduleData['site'] as List;
-      } else if (moduleData['sites'] != null) {
-        directSitesList = moduleData['sites'] as List;
-      }
-
-      if (directSitesList != null) {
-        for (var site in directSitesList) {
-          final siteData = site as Map<String, dynamic>;
-
-          // Extract site properties - handle different structures
-          Map<String, dynamic> properties;
-          if (siteData['properties'] != null) {
-            properties = siteData['properties'] as Map<String, dynamic>;
-          } else {
-            // If no properties field, use the site data itself
-            properties = siteData;
-          }
-          final siteId = properties['id_base_site'] ?? siteData['id'];
-
-          if (siteId != null && !moduleSiteIds.contains(siteId)) {
-            moduleSiteIds.add(siteId);
-
-            // Create enriched site data directly from the secure endpoint
-            final Map<String, dynamic> enrichedSite = {
+            // BaseSiteEntity.fromJson accepte `geometry` (Map GeoJSON) ou `geom`
+            // (String), on passe donc la géométrie brute sans pré-encoder.
+            final enrichedSite = <String, dynamic>{
               'id_base_site': siteId,
               'base_site_name': properties['base_site_name'],
-              'base_site_code':
-                  null, // Will be fetched with individual requests
-              'base_site_description':
-                  null, // Will be fetched with individual requests
-              'altitude_min': null, // Will be fetched with individual requests
-              'altitude_max': null, // Will be fetched with individual requests
-              'first_use_date':
-                  null, // Will be fetched with individual requests
-              'uuid_base_site':
-                  null, // Will be fetched with individual requests
-              'geometry': null,
+              'base_site_code': properties['base_site_code'],
+              'base_site_description': properties['base_site_description'],
+              'altitude_min': properties['altitude_min'],
+              'altitude_max': properties['altitude_max'],
+              'first_use_date': properties['first_use_date'],
+              'uuid_base_site': properties['uuid_base_site'],
+              'geometry': siteData['geometry'],
             };
 
-            enrichedSites.add(enrichedSite);
-
-            // Create site complement data for storage
-            final int? idSitesGroup = properties['id_sites_group'] as int?;
-
-            // Extract module-specific data from site properties (excluding base site fields)
-            final Map<String, dynamic> siteSpecificData = Map.from(properties);
-            // Remove base site fields that are stored in the main site table
+            final idSitesGroup = properties['id_sites_group'] as int?;
+            final siteSpecificData = Map<String, dynamic>.from(properties);
             siteSpecificData.remove('id_base_site');
             siteSpecificData.remove('base_site_name');
             siteSpecificData.remove('base_site_code');
@@ -255,13 +138,19 @@ class SitesApiImpl extends BaseApi implements SitesApi {
                   : null,
             );
 
+            enrichedSites.add(enrichedSite);
             siteComplements.add(complementEntity.toDomain());
+          } catch (e) {
+            logger.w('Erreur fetch site $id pour module $moduleCode: $e',
+                tag: 'sync');
           }
-        }
+        }));
       }
 
-      // Fetch additional details for each site using individual requests
-      await _fetchAdditionalSiteDetails(enrichedSites, moduleCode, token);
+      logger.i(
+        'Module $moduleCode: ${enrichedSites.length}/${siteIds.length} sites récupérés.',
+        tag: 'sync',
+      );
 
       return {
         'enriched_sites': enrichedSites,
@@ -273,60 +162,6 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch enriched sites: $e');
-    }
-  }
-
-  /// Fetch additional site details using individual secure requests with depth=0
-  Future<void> _fetchAdditionalSiteDetails(
-      List<Map<String, dynamic>> enrichedSites,
-      String moduleCode,
-      String token) async {
-    for (var site in enrichedSites) {
-      try {
-        final siteId = site['id_base_site'] as int;
-        final response = await dio.get(
-          '/monitorings/object/$moduleCode/site/$siteId',
-          queryParameters: {
-            'depth': 0, // We don't need visits data
-          },
-          options: Options(
-            headers: {'Authorization': 'Bearer $token'},
-          ),
-        );
-
-        if (response.statusCode == 200) {
-          final siteData = response.data as Map<String, dynamic>;
-
-          // Extract site properties - handle different structures
-          Map<String, dynamic> properties;
-          if (siteData['properties'] != null) {
-            properties = siteData['properties'] as Map<String, dynamic>;
-          } else {
-            // If no properties field, use the site data itself
-            properties = siteData;
-          }
-
-          // Update the site with additional details from the secure endpoint
-          site['base_site_code'] = properties['base_site_code'];
-          site['base_site_description'] = properties['base_site_description'];
-          site['altitude_min'] = properties['altitude_min'];
-          site['altitude_max'] = properties['altitude_max'];
-          site['first_use_date'] = properties['first_use_date'];
-          site['uuid_base_site'] = properties['uuid_base_site'];
-
-          // Also update geometry if available (convert from Map to JSON string)
-          if (siteData['geometry'] != null) {
-            final geometryData = siteData['geometry'];
-            if (geometryData is Map<String, dynamic>) {
-              site['geom'] = jsonEncode(geometryData);
-            } else if (geometryData is String) {
-              site['geom'] = geometryData;
-            }
-          }
-        }
-      } catch (e) {
-        // Keep null values for missing data
-      }
     }
   }
 

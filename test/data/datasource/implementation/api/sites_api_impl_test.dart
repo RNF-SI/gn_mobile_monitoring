@@ -190,7 +190,7 @@ void main() {
   group('fetchEnrichedSitesForModule', () {
     test('handles 204 No Content as valid empty response', () async {
       when(() => mockDio.get(
-            any(),
+            '/monitorings/list/MOD_TEST/site',
             queryParameters: any(named: 'queryParameters'),
             options: any(named: 'options'),
           )).thenAnswer((_) async => Response(
@@ -202,8 +202,100 @@ void main() {
       final result = await suppressOutput(
           () => sitesApi.fetchEnrichedSitesForModule('MOD_TEST', 'token'));
 
-      expect(result['sites'], isEmpty);
+      expect(result['enriched_sites'], isEmpty);
       expect(result['site_complements'], isEmpty);
+    });
+
+    test('récupère les sites via /list/ puis fetch unitaire en parallèle',
+        () async {
+      // Liste des IDs renvoyée par /monitorings/list/<code>/site
+      when(() => mockDio.get(
+            '/monitorings/list/MOD_TEST/site',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: [
+              {'id_base_site': 1, 'base_site_name': 'Site 1'},
+              {'id_base_site': 2, 'base_site_name': 'Site 2'},
+            ],
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      // Réponse unitaire par site : feature GeoJSON avec properties + geometry
+      when(() => mockDio.get(
+            '/monitorings/object/MOD_TEST/site/1',
+            queryParameters: {'depth': 0},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'type': 'Feature',
+              'geometry': {'type': 'Point', 'coordinates': [1.0, 2.0]},
+              'properties': {
+                'id_base_site': 1,
+                'base_site_name': 'Site 1',
+                'base_site_code': 'S1',
+                'base_site_description': 'Description 1',
+                'altitude_min': 100,
+                'altitude_max': 200,
+                'first_use_date': '2024-01-01',
+                'uuid_base_site': 'uuid-1',
+                'id_sites_group': 42,
+              },
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      when(() => mockDio.get(
+            '/monitorings/object/MOD_TEST/site/2',
+            queryParameters: {'depth': 0},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'type': 'Feature',
+              'geometry': null,
+              'properties': {
+                'id_base_site': 2,
+                'base_site_name': 'Site 2',
+                'base_site_code': 'S2',
+                'base_site_description': null,
+                'altitude_min': null,
+                'altitude_max': null,
+                'first_use_date': null,
+                'uuid_base_site': 'uuid-2',
+                // pas de id_sites_group : site hors groupe
+              },
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchEnrichedSitesForModule('MOD_TEST', 'token'));
+
+      final enrichedSites = result['enriched_sites'] as List;
+      expect(enrichedSites.length, 2);
+
+      // Site 1 : toutes les propriétés + géométrie brute + id_sites_group
+      final site1 = enrichedSites
+          .cast<Map<String, dynamic>>()
+          .firstWhere((s) => s['id_base_site'] == 1);
+      expect(site1['base_site_code'], 'S1');
+      expect(site1['altitude_min'], 100);
+      expect(site1['geometry'], isNotNull);
+
+      // Site 2 : sans groupe → idSitesGroup null dans le complement
+      final complements = result['site_complements'] as List;
+      expect(complements.length, 2);
+      final site1Complement = complements.firstWhere(
+        (c) => (c as dynamic).idBaseSite == 1,
+      ) as dynamic;
+      expect(site1Complement.idSitesGroup, 42);
+      final site2Complement = complements.firstWhere(
+        (c) => (c as dynamic).idBaseSite == 2,
+      ) as dynamic;
+      expect(site2Complement.idSitesGroup, isNull);
     });
   });
 }
