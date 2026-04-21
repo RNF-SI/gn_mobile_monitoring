@@ -130,14 +130,39 @@ class MockApiHandlers {
   }
 
   /// Configure handlers for datasets
+  /// Expose 2 routes GN : `/monitorings/object/<code>/module` pour la liste d'IDs
+  /// puis `/monitorings/util/dataset/<id>` pour chaque dataset individuellement.
   static Future<void> setupDatasets(MockApiInterceptor interceptor) async {
-    final datasets = await FixtureLoader.load('datasets/datasets.json');
+    final datasets = await FixtureLoader.load('datasets/datasets.json') as List;
 
-    interceptor.onGet(r'/meta/datasets', (options) async {
+    interceptor.onGet(r'/monitorings/object/[^/]+/module', (options) async {
       return Response(
         requestOptions: options,
         statusCode: 200,
-        data: datasets,
+        data: {
+          'properties': {
+            'datasets': datasets.map((d) => d['id_dataset']).toList(),
+          },
+        },
+      );
+    });
+
+    interceptor.onGet(r'/monitorings/util/dataset/\d+', (options) async {
+      final id = int.tryParse(options.path.split('/').last);
+      final dataset = datasets.firstWhere(
+        (d) => d['id_dataset'] == id,
+        orElse: () => null,
+      );
+      if (dataset == null) {
+        return Response(
+          requestOptions: options,
+          statusCode: 404,
+        );
+      }
+      return Response(
+        requestOptions: options,
+        statusCode: 200,
+        data: dataset,
       );
     });
   }

@@ -1,7 +1,6 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
@@ -59,20 +58,18 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       // Préparer les headers si un token est fourni
       final headers = token != null ? {'Authorization': 'Bearer $token'} : null;
       
-      // Créer une instance Dio avec timeout approprié
-      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 180));
-      
-      // Étape 1 : Récupérer le module avec depth=1 pour obtenir les datasets ET le module_code
+      // Requêtes légères : une instance Dio avec timeout raisonnable suffit
+      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 30));
+
+      // Étape 1a : récupérer module_code (payload minimal, pas de relations sérialisées)
       // Le token doit être fourni pour éviter une redirection 302 vers la page de login
       final moduleResponse = await dioInstance.get(
         '/monitorings/module/$moduleId',
-        queryParameters: {'depth': 1},
-        options: headers != null 
-          ? Options(headers: headers)
-          : null,
+        queryParameters: {'depth': 0},
+        options: headers != null ? Options(headers: headers) : null,
       );
-      
-      // 204 (No Content) signifie qu'il n'y a pas de données disponibles, 
+
+      // 204 (No Content) signifie qu'il n'y a pas de données disponibles,
       // mais c'est un cas valide (pas une erreur)
       if (moduleResponse.statusCode == 204) {
         logger.i(
@@ -83,7 +80,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         // Même avec 204, on peut récupérer la configuration
         final moduleData = moduleResponse.data as Map<String, dynamic>?;
         final moduleCode = moduleData?['module_code'] as String?;
-        
+
         // Essayer de récupérer quand même la configuration
         Map<String, dynamic> config = {};
         if (moduleCode != null) {
@@ -99,7 +96,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
             logger.w('Impossible de récupérer la configuration pour $moduleCode: $e', tag: 'sync');
           }
         }
-        
+
         return (
           nomenclatures: <NomenclatureEntity>[],
           datasets: <DatasetEntity>[],
@@ -114,29 +111,72 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       }
 
       final moduleData = moduleResponse.data as Map<String, dynamic>;
-      
-      // Extraire le module_code pour récupérer la configuration
       final moduleCode = moduleData['module_code'] as String?;
       if (moduleCode == null) {
         throw Exception('Module code not found in module data for module $moduleId');
       }
 
-      // Parser les datasets depuis le nouveau format
-      final List<DatasetEntity> datasets = [];
-      if (moduleData.containsKey('datasets') && moduleData['datasets'] is List) {
-        final datasetsList = moduleData['datasets'] as List<dynamic>;
-        for (var datasetJson in datasetsList) {
-          try {
-            final dataset = DatasetEntity.fromJson(datasetJson as Map<String, dynamic>);
-            datasets.add(dataset);
-          } catch (e) {
-            logger.w(
-              'Erreur lors du parsing d\'un dataset: $e\nDonnées: $datasetJson',
-              tag: 'sync',
-            );
-            // Continuer avec les autres datasets
+      // Étape 1b : récupérer la liste d'IDs des datasets via l'endpoint "object"
+      // (pattern utilisé par l'UI web GeoNature, scalable sur backend à sérialisation lente
+      // car `field_name=module_code` empêche l'expansion des relations côté SQLAlchemy)
+      final List<int> datasetIds = [];
+      try {
+        final objectResponse = await dioInstance.get(
+          '/monitorings/object/$moduleCode/module',
+          queryParameters: {'depth': 0, 'field_name': 'module_code'},
+          options: headers != null ? Options(headers: headers) : null,
+        );
+        if (objectResponse.statusCode == 200 && objectResponse.data != null) {
+          final data = objectResponse.data as Map<String, dynamic>;
+          // Les IDs sont sous `properties.datasets` (fallback racine par précaution)
+          final props = (data['properties'] is Map<String, dynamic>)
+              ? data['properties'] as Map<String, dynamic>
+              : data;
+          final rawIds = props['datasets'];
+          if (rawIds is List) {
+            for (final id in rawIds) {
+              if (id is int) {
+                datasetIds.add(id);
+              } else if (id is String) {
+                final parsed = int.tryParse(id);
+                if (parsed != null) datasetIds.add(parsed);
+              }
+            }
           }
         }
+      } catch (e) {
+        logger.w(
+          'Impossible de récupérer la liste des datasets pour $moduleCode: $e',
+          tag: 'sync',
+        );
+      }
+
+      // Étape 1c : fetch de chaque dataset en parallèle, avec concurrence limitée
+      // pour éviter de saturer le connection pool HTTP et le serveur.
+      final List<DatasetEntity> datasets = [];
+      const int chunkSize = 10;
+      for (var i = 0; i < datasetIds.length; i += chunkSize) {
+        final chunk = datasetIds.sublist(
+          i,
+          (i + chunkSize < datasetIds.length) ? i + chunkSize : datasetIds.length,
+        );
+        await Future.wait(chunk.map((id) async {
+          try {
+            final resp = await dioInstance.get(
+              '/monitorings/util/dataset/$id',
+              options: headers != null ? Options(headers: headers) : null,
+            );
+            if (resp.statusCode == 200 && resp.data is Map<String, dynamic>) {
+              datasets.add(
+                DatasetEntity.fromJson(resp.data as Map<String, dynamic>),
+              );
+            } else {
+              logger.w('Dataset $id: statut ${resp.statusCode}, ignoré', tag: 'sync');
+            }
+          } catch (e) {
+            logger.w('Erreur fetch dataset $id: $e', tag: 'sync');
+          }
+        }));
       }
 
       // Étape 2 : Récupérer la configuration du module pour obtenir les types de nomenclatures
