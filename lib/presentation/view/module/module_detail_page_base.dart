@@ -471,23 +471,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   /// même si la config du serveur ne le mentionne pas.
   Future<void> _loadOrphanSites() async {
     final usecase = getOrphanSitesByModuleUseCase;
+    final moduleId = widget.moduleInfo.module.id;
+    debugPrint(
+        '#157 _loadOrphanSites START moduleId=$moduleId hasUsecase=${usecase != null}');
     if (usecase == null) return;
     try {
-      final orphans = await usecase.execute(widget.moduleInfo.module.id);
+      final orphans = await usecase.execute(moduleId);
+      debugPrint(
+          '#157 _loadOrphanSites got ${orphans.length} orphans (module $moduleId) '
+          'configurationLoaded=$_configurationLoaded');
       if (!mounted) return;
       setState(() {
         _orphanSites = orphans;
         _orphanSitesLoaded = true;
-        // Si la config a déjà été chargée, recalculer les onglets au cas où
-        // les orphelins débloquent l'affichage de l'onglet Sites.
         if (_configurationLoaded) {
           _updateChildrenTypesFromConfig();
           _initializeTabController();
           _loadSitesIfAvailable();
         }
       });
-    } catch (e) {
-      debugPrint('Erreur lors du chargement des sites orphelins: $e');
+      debugPrint(
+          '#157 _loadOrphanSites FIN childrenTypes=$_childrenTypes '
+          'orphanSites=${_orphanSites?.length}');
+    } catch (e, st) {
+      debugPrint('#157 Erreur chargement sites orphelins: $e\n$st');
       if (mounted) {
         setState(() {
           _orphanSites = [];
@@ -589,6 +596,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }
     }
 
+    debugPrint(
+        '#157 _updateChildrenTypesFromConfig pre-orphan-check: '
+        'childrenTypes=$_childrenTypes orphansLoaded=$_orphanSitesLoaded '
+        'orphansCount=${_orphanSites?.length}');
+
     // Issue #157 : si le module a des sites sans groupe parent mais que la
     // config ne déclare pas l'onglet 'site', l'ajouter d'office pour que ces
     // sites orphelins soient accessibles.
@@ -597,6 +609,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         !_childrenTypes.contains('site')) {
       _childrenTypes = [..._childrenTypes, 'site'];
     }
+    debugPrint(
+        '#157 _updateChildrenTypesFromConfig post: childrenTypes=$_childrenTypes');
   }
 
   void _initializeTabController() {
