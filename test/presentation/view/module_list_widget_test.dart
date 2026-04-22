@@ -49,7 +49,8 @@ void main() {
     // Il n'y a pas de texte "Loading modules..." dans l'implémentation actuelle
   });
 
-  testWidgets('ModuleListWidget should display error state correctly',
+  testWidgets(
+      'ModuleListWidget should display error state with retry + copy (#168)',
       (WidgetTester tester) async {
     // Arrange
     final customState = custom_async_state.State<ModuleInfoList>.error(
@@ -74,8 +75,15 @@ void main() {
       ),
     );
 
-    // Assert
-    expect(find.text('Erreur: Exception: Failed to load modules'), findsOneWidget);
+    // Assert : le message d'erreur est copiable (#168) + bouton Réessayer +
+    // bouton Copier + le pull-to-refresh reste actif via RefreshIndicator.
+    expect(find.textContaining('Impossible de charger'), findsOneWidget);
+    expect(find.textContaining('Failed to load modules'), findsOneWidget);
+    expect(find.byKey(const Key('module-list-retry-button')), findsOneWidget);
+    expect(find.byKey(const Key('module-list-copy-error-button')),
+        findsOneWidget);
+    expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(find.byType(SelectableText), findsOneWidget);
   });
 
   testWidgets('ModuleListWidget should display modules correctly when loaded',

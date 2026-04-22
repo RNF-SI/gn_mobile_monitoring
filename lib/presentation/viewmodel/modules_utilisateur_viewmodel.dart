@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
@@ -176,10 +177,72 @@ class UserModulesViewModel
         );
       }
     } on Exception catch (e) {
-      state = custom_async_state.State.error(e);
+      _handleDownloadFailure(context, moduleInfo, newModuleInfo, e);
     } catch (e) {
-      print(e);
-      state = custom_async_state.State.error(Exception(e));
+      _handleDownloadFailure(context, moduleInfo, newModuleInfo, e);
+    }
+  }
+
+  /// Remet le module en état "non téléchargé" (pour que l'utilisateur puisse
+  /// retenter) et affiche l'erreur dans un dialog copiable (#168).
+  /// La liste globale reste fonctionnelle — plus de State.error qui masquait
+  /// l'écran entier.
+  void _handleDownloadFailure(
+    BuildContext context,
+    ModuleInfo originalModuleInfo,
+    ModuleInfo downloadingModuleInfo,
+    Object error,
+  ) {
+    final revertedInfo = downloadingModuleInfo.copyWith(
+      downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+      downloadProgress: 0.0,
+      currentStep: '',
+    );
+    if (state.data != null) {
+      state = custom_async_state.State.success(
+          state.data!.updateModuleInfo(revertedInfo));
+    }
+
+    final moduleLabel = originalModuleInfo.module.moduleLabel ??
+        originalModuleInfo.module.moduleCode ??
+        'ce module';
+    final message = error.toString();
+
+    if (context.mounted) {
+      showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('Échec du téléchargement de $moduleLabel'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                message,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: message));
+                if (dialogContext.mounted) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Erreur copiée dans le presse-papiers'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Copier'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
