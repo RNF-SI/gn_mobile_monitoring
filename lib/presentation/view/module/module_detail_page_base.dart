@@ -656,18 +656,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       _isLoadingSites = true;
       _currentSitesPage = 1;
 
+      // L'onglet Sites liste TOUS les sites du module (cohérent avec le
+      // comportement GeoNature web où l'onglet Sites affiche les 156 points
+      // du module plaquesreptiles, et pas seulement les sites hors groupe).
+      // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
+      // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
       final module = _updatedModule ?? widget.moduleInfo.module;
-
-      // Issue #157 : quand le module affiche aussi un onglet Groupes, l'onglet
-      // Sites ne doit contenir que les sites sans groupe parent (cohérent avec
-      // GeoNature web). Sinon on retombe sur tous les sites du module.
-      final bool hasGroupsTab = _childrenTypes.contains('sites_group');
-      if (hasGroupsTab && _orphanSitesLoaded && _orphanSites != null) {
-        _allSites = _orphanSites!;
-      } else {
-        _allSites = module.sites ?? [];
-      }
-
+      _allSites = module.sites ?? [];
       _filterSites();
 
       _isLoadingSites = false;
@@ -972,14 +967,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     String label = '';
 
     if (childType == 'site') {
-      // Issue #157 : en mode mixte (sites + groupes), on n'affiche que les
-      // orphelins dans l'onglet Sites → compter les orphelins uniquement.
-      final bool hasGroupsTab = _childrenTypes.contains('sites_group');
-      if (hasGroupsTab && _orphanSitesLoaded && _orphanSites != null) {
-        count = _orphanSites!.length;
-      } else {
-        count = module.sites?.length ?? 0;
-      }
+      // L'onglet Sites affiche TOUS les sites du module, comme sur le web.
+      count = module.sites?.length ?? 0;
       label = module.complement?.configuration?.site?.labelList ??
           module.complement?.configuration?.site?.label ??
           'Sites';
