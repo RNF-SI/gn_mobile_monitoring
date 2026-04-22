@@ -3,7 +3,9 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_last_dismissed_app_version_use_case.dart';
 import 'package:open_filex/open_filex.dart';
 
 enum AppUpdateState { idle, checking, updateAvailable, downloading, error }
@@ -42,6 +44,8 @@ final appUpdateServiceProvider =
     ref.read(checkAppUpdateUseCaseProvider),
     ref.read(downloadAppUpdateUseCaseProvider),
     ref.read(getTokenFromLocalStorageUseCaseProvider),
+    ref.read(getLastDismissedAppVersionUseCaseProvider),
+    ref.read(setLastDismissedAppVersionUseCaseProvider),
   );
 });
 
@@ -49,17 +53,25 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
   final CheckAppUpdateUseCase _checkAppUpdateUseCase;
   final DownloadAppUpdateUseCase _downloadAppUpdateUseCase;
   final GetTokenFromLocalStorageUseCase _getTokenUseCase;
-
-  /// Version déjà proposée à l'utilisateur (évite le double affichage)
-  String? _lastProposedVersionCode;
+  final GetLastDismissedAppVersionUseCase _getLastDismissedUseCase;
+  final SetLastDismissedAppVersionUseCase _setLastDismissedUseCase;
 
   AppUpdateService(
     this._checkAppUpdateUseCase,
     this._downloadAppUpdateUseCase,
     this._getTokenUseCase,
+    this._getLastDismissedUseCase,
+    this._setLastDismissedUseCase,
   ) : super(const AppUpdateStatus());
 
-  /// Vérifie si une mise à jour est disponible
+  /// Vérifie si une mise à jour est disponible.
+  ///
+  /// Ne redéclenche pas le dialog pour une version déjà refusée par
+  /// l'utilisateur lors d'une session précédente (issue #170). L'API ne
+  /// renvoyant un update que si la version distante est strictement
+  /// supérieure à celle installée, une simple égalité sur versionCode avec
+  /// la dernière version refusée suffit : si le serveur publie ensuite une
+  /// version encore plus récente, elle repassera.
   Future<void> checkForUpdate() async {
     // Ne pas vérifier si déjà en cours de vérification ou téléchargement
     if (state.state == AppUpdateState.checking ||
@@ -79,13 +91,13 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
       final update = await _checkAppUpdateUseCase.execute(token);
 
       if (update != null) {
-        // Éviter de proposer la même version deux fois
-        if (_lastProposedVersionCode == update.versionCode) {
+        final lastDismissed = await _getLastDismissedUseCase.execute();
+        if (lastDismissed != null && lastDismissed == update.versionCode) {
+          // L'utilisateur a déjà dit "Plus tard" pour cette version exacte.
           state = const AppUpdateStatus(state: AppUpdateState.idle);
           return;
         }
 
-        _lastProposedVersionCode = update.versionCode;
         state = AppUpdateStatus(
           state: AppUpdateState.updateAvailable,
           availableUpdate: update,
@@ -133,8 +145,17 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
     }
   }
 
-  /// Remet le service à l'état idle (après fermeture du dialog)
-  void dismiss() {
+  /// Remet le service à l'état idle (après fermeture du dialog) et persiste
+  /// la version refusée pour ne plus la reproposer après une relance (#170).
+  Future<void> dismiss() async {
+    final dismissedCode = state.availableUpdate?.versionCode;
     state = const AppUpdateStatus(state: AppUpdateState.idle);
+    if (dismissedCode != null && dismissedCode.isNotEmpty) {
+      try {
+        await _setLastDismissedUseCase.execute(dismissedCode);
+      } catch (_) {
+        // Best-effort : si la persistance échoue on ne bloque pas l'UI.
+      }
+    }
   }
 }

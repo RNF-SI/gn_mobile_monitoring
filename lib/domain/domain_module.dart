@@ -70,8 +70,12 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_suggestion_taxons_use_ca
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxon_by_cd_nom_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_taxons_by_list_id_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/is_taxon_in_list_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_dismissed_app_version_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_last_dismissed_app_version_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_last_dismissed_app_version_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_last_dismissed_app_version_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_name_from_local_storage_use_case.dart';
@@ -200,6 +204,17 @@ final setTokenFromLocalStorageUseCaseProvider =
 final getTokenFromLocalStorageUseCaseProvider =
     Provider<GetTokenFromLocalStorageUseCase>((ref) =>
         GetTokenFromLocalStorageUseCaseImpl(ref.watch(localStorageProvider)));
+
+// Issue #170 : dernière version d'APK refusée par l'utilisateur
+final getLastDismissedAppVersionUseCaseProvider =
+    Provider<GetLastDismissedAppVersionUseCase>((ref) =>
+        GetLastDismissedAppVersionUseCaseImpl(
+            ref.watch(localStorageProvider)));
+
+final setLastDismissedAppVersionUseCaseProvider =
+    Provider<SetLastDismissedAppVersionUseCase>((ref) =>
+        SetLastDismissedAppVersionUseCaseImpl(
+            ref.watch(localStorageProvider)));
 
 final clearUserIdFromLocalStorageUseCaseProvider =
     Provider<ClearUserIdFromLocalStorageUseCase>((ref) =>

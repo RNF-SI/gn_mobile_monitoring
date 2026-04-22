@@ -17,4 +17,8 @@ abstract class LocalStorageRepository {
   Future<void> setApiUrl(String apiUrl);
   Future<String?> getApiUrl();
   Future<void> clearApiUrl();
+
+  // Dernière version d'APK proposée et refusée par l'utilisateur (#170)
+  Future<void> setLastDismissedAppVersionCode(String versionCode);
+  Future<String?> getLastDismissedAppVersionCode();
 }
