@@ -53,6 +53,10 @@ abstract class SitesDatabase {
   
   /// Get sites by site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
+
+  /// Get sites by site group, filtered on a specific module via cor_site_module
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId);
   
   /// Insert a single site and return its ID
   Future<int> insertSite(BaseSite site);

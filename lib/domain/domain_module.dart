@@ -60,6 +60,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_suggestion_taxons_use_case.dart';
@@ -445,6 +447,13 @@ final getNomenclatureByIdUseCaseProvider = Provider<GetNomenclatureByIdUseCase>(
 // UseCase pour récupérer les sites associés à un groupe de sites
 final getSitesBySiteGroupUseCaseProvider = Provider<GetSitesBySiteGroupUseCase>(
   (ref) => GetSitesBySiteGroupUseCaseImpl(ref.watch(sitesRepositoryProvider)),
+);
+
+// UseCase pour récupérer les sites d'un groupe filtrés par module
+final getSitesBySiteGroupAndModuleUseCaseProvider =
+    Provider<GetSitesBySiteGroupAndModuleUseCase>(
+  (ref) => GetSitesBySiteGroupAndModuleUseCaseImpl(
+      ref.watch(sitesRepositoryProvider)),
 );
 
 final getVisitsBySiteAndModuleUseCaseProvider =

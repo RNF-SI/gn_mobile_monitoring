@@ -1156,7 +1156,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                   '  ✗ Aucune géométrie dans la base de données, calcul depuis les sites enfants...');
               // Calculer la géométrie à partir des sites enfants
               final calculatedGeom = await _calculateGroupGeometryFromSites(
-                  group.idSitesGroup, sitesDatabase);
+                  group.idSitesGroup,
+                  widget.moduleInfo.module.id,
+                  sitesDatabase);
               if (calculatedGeom != null) {
                 debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
                 // Retourner le groupe avec la géométrie calculée
@@ -1173,7 +1175,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 '  ✗ Groupe non trouvé dans la base de données, calcul depuis les sites enfants...');
             // Calculer la géométrie à partir des sites enfants
             final calculatedGeom = await _calculateGroupGeometryFromSites(
-                group.idSitesGroup, sitesDatabase);
+                group.idSitesGroup,
+                widget.moduleInfo.module.id,
+                sitesDatabase);
             if (calculatedGeom != null) {
               debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
               // Retourner le groupe avec la géométrie calculée
@@ -1200,11 +1204,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   /// Calcule la géométrie d'un groupe à partir de ses sites enfants
   /// Retourne un Polygon GeoJSON représentant l'enveloppe convexe (convex hull) des sites
-  Future<String?> _calculateGroupGeometryFromSites(
-      int siteGroupId, SitesDatabase sitesDatabase) async {
+  Future<String?> _calculateGroupGeometryFromSites(int siteGroupId,
+      int moduleId, SitesDatabase sitesDatabase) async {
     try {
-      // Récupérer tous les sites du groupe
-      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      // Récupérer les sites du groupe liés au module courant
+      final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+          siteGroupId, moduleId);
       debugPrint('  Nombre de sites dans le groupe: ${sites.length}');
 
       // Extraire les coordonnées de tous les sites qui ont une géométrie
@@ -1795,14 +1800,15 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-  /// Calcule le nombre de sites pour un groupe de sites
+  /// Calcule le nombre de sites d'un groupe rattachés au module courant
   Future<int> _calculateNbSites(int siteGroupId) async {
     if (widget.ref == null) {
       return 0;
     }
     try {
       final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
-      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+          siteGroupId, widget.moduleInfo.module.id);
       return sites.length;
     } catch (e) {
       debugPrint(

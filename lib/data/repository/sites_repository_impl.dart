@@ -859,6 +859,18 @@ class SitesRepositoryImpl implements SitesRepository {
   }
 
   @override
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId) async {
+    try {
+      return await database.getSitesBySiteGroupAndModule(
+          siteGroupId, moduleId);
+    } catch (error) {
+      print('Error getting sites by site group and module: $error');
+      throw Exception('Failed to get sites by site group and module');
+    }
+  }
+
+  @override
   Future<List<SiteComplement>> getAllSiteComplements() async {
     try {
       return await database.getAllSiteComplements();

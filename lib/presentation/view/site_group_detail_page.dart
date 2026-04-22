@@ -53,7 +53,9 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
     // Actualiser les données à l'ouverture de la page
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref
-          .read(siteGroupDetailViewModelProvider(widget.siteGroup).notifier)
+          .read(siteGroupDetailViewModelProvider(SiteGroupDetailArgs(
+                  widget.siteGroup, widget.moduleInfo.module.id))
+              .notifier)
           .refresh();
       _loadUserLocation();
     });
@@ -524,8 +526,8 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
 
   @override
   Widget build(BuildContext context) {
-    final sitesState =
-        ref.watch(siteGroupDetailViewModelProvider(widget.siteGroup));
+    final sitesState = ref.watch(siteGroupDetailViewModelProvider(
+        SiteGroupDetailArgs(widget.siteGroup, widget.moduleInfo.module.id)));
 
     // Récupérer la configuration pour personnaliser les libellés
     final module = widget.moduleInfo.module;

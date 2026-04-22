@@ -221,6 +221,14 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     return await db.sitesDao.getSitesBySiteGroup(siteGroupId);
   }
+
+  @override
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao
+        .getSitesBySiteGroupAndModule(siteGroupId, moduleId);
+  }
   
   @override
   Future<int> insertSite(BaseSite site) async {

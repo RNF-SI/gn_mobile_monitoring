@@ -2,12 +2,10 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_group_with_relations_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_by_id_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
@@ -27,9 +25,6 @@ class MockDeleteSiteGroupUseCase extends Mock
 class MockGetUserIdFromLocalStorageUseCase extends Mock
     implements GetUserIdFromLocalStorageUseCase {}
 
-class MockGetSitesBySiteGroupUseCase extends Mock
-    implements GetSitesBySiteGroupUseCase {}
-
 class MockGetSiteGroupsByIdUseCase extends Mock
     implements GetSiteGroupsByIdUseCase {}
 
@@ -42,7 +37,6 @@ void main() {
   late MockUpdateSiteGroupUseCase mockUpdateSiteGroupUseCase;
   late MockDeleteSiteGroupUseCase mockDeleteSiteGroupUseCase;
   late MockGetUserIdFromLocalStorageUseCase mockGetUserIdUseCase;
-  late MockGetSitesBySiteGroupUseCase mockGetSitesBySiteGroupUseCase;
   late MockGetSiteGroupsByIdUseCase mockGetSiteGroupsByIdUseCase;
   late MockFormDataProcessor mockFormDataProcessor;
 
@@ -51,7 +45,6 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const SiteGroup(idSitesGroup: 0));
-    registerFallbackValue(const BaseSite(idBaseSite: 0));
   });
 
   setUp(() {
@@ -60,7 +53,6 @@ void main() {
     mockUpdateSiteGroupUseCase = MockUpdateSiteGroupUseCase();
     mockDeleteSiteGroupUseCase = MockDeleteSiteGroupUseCase();
     mockGetUserIdUseCase = MockGetUserIdFromLocalStorageUseCase();
-    mockGetSitesBySiteGroupUseCase = MockGetSitesBySiteGroupUseCase();
     mockGetSiteGroupsByIdUseCase = MockGetSiteGroupsByIdUseCase();
     mockFormDataProcessor = MockFormDataProcessor();
 
@@ -69,7 +61,6 @@ void main() {
       mockUpdateSiteGroupUseCase,
       mockDeleteSiteGroupUseCase,
       mockGetUserIdUseCase,
-      mockGetSitesBySiteGroupUseCase,
       mockGetSiteGroupsByIdUseCase,
       mockFormDataProcessor,
       testModuleId,

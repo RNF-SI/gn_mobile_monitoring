@@ -701,6 +701,24 @@ class MockSitesDatabase extends _i1.Mock implements _i6.SitesDatabase {
       ) as _i5.Future<List<_i7.BaseSite>>);
 
   @override
+  _i5.Future<List<_i7.BaseSite>> getSitesBySiteGroupAndModule(
+    int? siteGroupId,
+    int? moduleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSitesBySiteGroupAndModule,
+          [
+            siteGroupId,
+            moduleId,
+          ],
+        ),
+        returnValue: _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+        returnValueForMissingStub:
+            _i5.Future<List<_i7.BaseSite>>.value(<_i7.BaseSite>[]),
+      ) as _i5.Future<List<_i7.BaseSite>>);
+
+  @override
   _i5.Future<int> insertSite(_i7.BaseSite? site) => (super.noSuchMethod(
         Invocation.method(
           #insertSite,

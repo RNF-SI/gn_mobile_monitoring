@@ -390,6 +390,25 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     return results.map((e) => e.toDomain()).toList();
   }
 
+  /// Get sites that belong to a site group AND are associated with a module
+  /// via cor_site_module. Used when listing a site group's sites in the context
+  /// of a given module (mirrors what GeoNature web does).
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId) async {
+    final query = select(tBaseSites).join([
+      innerJoin(
+          tSiteComplements,
+          tSiteComplements.idBaseSite.equalsExp(tBaseSites.idBaseSite) &
+              tSiteComplements.idSitesGroup.equals(siteGroupId)),
+      innerJoin(
+          corSiteModuleTable,
+          corSiteModuleTable.idBaseSite.equalsExp(tBaseSites.idBaseSite) &
+              corSiteModuleTable.idModule.equals(moduleId)),
+    ]);
+    final results = await query.map((row) => row.readTable(tBaseSites)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
+
   /// Get site complements for sites belonging to a specific module
   Future<List<SiteComplement>> getSiteComplementsByModuleId(int moduleId) async {
     final query = select(tSiteComplements).join([
