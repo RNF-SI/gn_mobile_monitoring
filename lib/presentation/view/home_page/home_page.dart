@@ -84,8 +84,12 @@ class HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
-    //Rafraichir les status de téléchargement des modules
-    ref.read(databaseSyncServiceProvider).refreshAllLists();
+    // Ne PAS appeler refreshAllLists() ici : c'est un side-effect qui recharge
+    // les modules depuis la DB à chaque rebuild (ex: keystroke dans la barre
+    // de recherche #163) et écrase le state éphémère d'un téléchargement en
+    // cours (moduleDownloading → moduleDownloaded trop tôt). Le ViewModel est
+    // déjà tenu à jour via loadModules() au boot, le pull-to-refresh,
+    // startDownloadModule et deleteAndReinitializeDatabase.
 
     final isSyncing = syncStatus.state == SyncState.inProgress;
 
