@@ -157,4 +157,78 @@ void main() {
     expect(find.text('Description 1'), findsOneWidget);
     expect(find.text('Description 2'), findsOneWidget);
   });
+
+  testWidgets(
+      'ModuleListWidget filtre la liste selon searchQuery (#163)',
+      (WidgetTester tester) async {
+    final modules = [
+      const Module(
+        id: 1,
+        moduleCode: 'oiseaux',
+        moduleLabel: 'Oiseaux rares',
+        moduleDesc: 'desc1',
+        modulePath: 'p1',
+        activeFrontend: true,
+        moduleTarget: 't1',
+        modulePicto: 'pic1',
+        moduleDocUrl: 'd1',
+        moduleGroup: 'g1',
+        downloaded: true,
+      ),
+      const Module(
+        id: 2,
+        moduleCode: 'reptiles',
+        moduleLabel: 'Reptiles',
+        moduleDesc: 'desc2',
+        modulePath: 'p2',
+        activeFrontend: true,
+        moduleTarget: 't2',
+        modulePicto: 'pic2',
+        moduleDocUrl: 'd2',
+        moduleGroup: 'g2',
+        downloaded: false,
+      ),
+    ];
+    final moduleInfos = modules
+        .map((m) => ModuleInfo(
+              module: m,
+              downloadStatus: m.downloaded == true
+                  ? ModuleDownloadStatus.moduleDownloaded
+                  : ModuleDownloadStatus.moduleNotDownloaded,
+            ))
+        .toList();
+    final state = custom_async_state.State<ModuleInfoList>.success(
+        ModuleInfoList(values: moduleInfos));
+    final container = ProviderContainer(
+      overrides: [userModuleListeProvider.overrideWithValue(state)],
+    );
+
+    // Filtre sur "rept" → ne garde que "Reptiles"
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ModuleListWidget(searchQuery: 'rept'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Reptiles'), findsOneWidget);
+    expect(find.text('Oiseaux rares'), findsNothing);
+
+    // Filtre sans résultat → message dédié
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ModuleListWidget(searchQuery: 'zzzzz'),
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('Aucun module ne correspond'), findsOneWidget);
+  });
 }

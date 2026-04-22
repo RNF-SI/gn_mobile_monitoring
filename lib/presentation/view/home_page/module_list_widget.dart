@@ -9,7 +9,19 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_
 import 'module_item_card_widget.dart';
 
 class ModuleListWidget extends ConsumerWidget {
-  const ModuleListWidget({super.key});
+  /// Requête de recherche appliquée à la liste (case-insensitive sur
+  /// moduleLabel + moduleCode). Null ou vide = pas de filtre (#163).
+  final String? searchQuery;
+
+  const ModuleListWidget({super.key, this.searchQuery});
+
+  bool _matchesQuery(moduleInfo) {
+    final q = searchQuery?.trim().toLowerCase() ?? '';
+    if (q.isEmpty) return true;
+    final label = (moduleInfo.module.moduleLabel ?? '').toLowerCase();
+    final code = (moduleInfo.module.moduleCode ?? '').toLowerCase();
+    return label.contains(q) || code.contains(q);
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,19 +36,51 @@ class ModuleListWidget extends ConsumerWidget {
           );
         }
 
-        // Séparer les modules téléchargés et à télécharger
+        // Séparer les modules téléchargés et à télécharger, et appliquer
+        // le filtre de recherche (#163).
         final downloadedModules = moduleInfoList.values
             .where((m) =>
-                m.downloadStatus == ModuleDownloadStatus.moduleDownloaded ||
-                m.downloadStatus == ModuleDownloadStatus.moduleDownloading ||
-                m.downloadStatus == ModuleDownloadStatus.moduleRemoving)
+                (m.downloadStatus == ModuleDownloadStatus.moduleDownloaded ||
+                    m.downloadStatus ==
+                        ModuleDownloadStatus.moduleDownloading ||
+                    m.downloadStatus == ModuleDownloadStatus.moduleRemoving) &&
+                _matchesQuery(m))
             .toList();
         final notDownloadedModules = moduleInfoList.values
             .where((m) =>
-                m.downloadStatus == ModuleDownloadStatus.moduleNotDownloaded ||
-                m.downloadStatus ==
-                    ModuleDownloadStatus.moduleFetchingDownload)
+                (m.downloadStatus ==
+                        ModuleDownloadStatus.moduleNotDownloaded ||
+                    m.downloadStatus ==
+                        ModuleDownloadStatus.moduleFetchingDownload) &&
+                _matchesQuery(m))
             .toList();
+
+        final hasActiveSearch =
+            (searchQuery?.trim().isNotEmpty ?? false);
+        if (hasActiveSearch &&
+            downloadedModules.isEmpty &&
+            notDownloadedModules.isEmpty) {
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: () async {
+              await ref
+                  .read(userModuleListeViewModelStateNotifierProvider.notifier)
+                  .loadModules();
+            },
+            child: ListView(
+              children: [
+                SizedBox(
+                    height: MediaQuery.of(context).size.height * 0.3),
+                Center(
+                  child: Text(
+                    'Aucun module ne correspond à « ${searchQuery!.trim()} »',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
 
         return RefreshIndicator(
           color: AppColors.primary,

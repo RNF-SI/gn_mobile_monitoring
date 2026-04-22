@@ -79,13 +79,20 @@ class UserModulesViewModel
         );
       }).toList();
 
-      // Trier les modules : téléchargés en premier, puis à télécharger
+      // Trier les modules : téléchargés en premier, puis alphabétique sur
+      // moduleLabel (avec fallback moduleCode) — issue #163.
       moduleInfos.sort((a, b) {
         final aDownloaded =
             a.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
         final bDownloaded =
             b.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
-        return aDownloaded.compareTo(bDownloaded);
+        final downloadCmp = aDownloaded.compareTo(bDownloaded);
+        if (downloadCmp != 0) return downloadCmp;
+        final aLabel = (a.module.moduleLabel ?? a.module.moduleCode ?? '')
+            .toLowerCase();
+        final bLabel = (b.module.moduleLabel ?? b.module.moduleCode ?? '')
+            .toLowerCase();
+        return aLabel.compareTo(bLabel);
       });
 
       state =
