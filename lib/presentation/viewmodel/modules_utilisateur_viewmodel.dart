@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
+import 'package:gn_mobile_monitoring/core/navigation/app_navigator_key.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -215,9 +216,16 @@ class UserModulesViewModel
         'ce module';
     final message = error.toString();
 
-    if (context.mounted) {
+    // Le context passé est souvent démonté au moment où on arrive ici (le
+    // widget du bouton a été reconstruit par le setState précédent).
+    // On utilise donc le Navigator racine de l'app pour un context stable.
+    final rootContext = appRootNavigatorKey.currentContext;
+    final dialogContextParent =
+        (context.mounted) ? context : rootContext;
+
+    if (dialogContextParent != null) {
       showDialog<void>(
-        context: context,
+        context: dialogContextParent,
         builder: (dialogContext) => AlertDialog(
           title: Text('Échec du téléchargement de $moduleLabel'),
           content: ConstrainedBox(

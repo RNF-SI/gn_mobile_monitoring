@@ -16,9 +16,11 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_se
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/error_boundary_widget.dart';
 import 'package:go_router/go_router.dart';
+import 'package:gn_mobile_monitoring/core/navigation/app_navigator_key.dart';
 import 'package:stack_trace/stack_trace.dart' as stack_trace;
 
 final _router = GoRouter(
+  navigatorKey: appRootNavigatorKey,
   routes: [
     GoRoute(
       path: '/',

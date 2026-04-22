@@ -18,6 +18,9 @@ import '../../mocks/mocks.dart';
 class MockBuildContext extends Mock implements BuildContext {}
 
 void main() {
+  // Nécessaire car _handleDownloadFailure accède à appRootNavigatorKey.currentContext
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late ProviderContainer container;
   late MockGetModulesUseCase mockGetModulesUseCase;
   late MockDownloadCompleteModuleUseCase mockDownloadCompleteModuleUseCase;
