@@ -239,6 +239,16 @@ class MockSitesDatabase implements SitesDatabase {
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async =>
       getSitesForModule(moduleId);
   @override
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId) async {
+    final sitesOfModule = await getSitesByModuleId(moduleId);
+    return sitesOfModule
+        .where((s) =>
+            !_complements.any((c) =>
+                c.idBaseSite == s.idBaseSite && c.idSitesGroup != null))
+        .toList();
+  }
+
+  @override
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async => _sites;
 
   @override

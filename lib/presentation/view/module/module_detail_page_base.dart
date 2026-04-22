@@ -10,10 +10,12 @@ import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/service/map_geometry_service_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_orphan_sites_by_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
@@ -326,8 +328,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
 
+  // Sites orphelins (sans groupe) pour ce module, chargés depuis la DB (#157)
+  List<BaseSite>? _orphanSites;
+  bool _orphanSitesLoaded = false;
+
   // Injection du use case pour respecter la Clean Architecture
   late GetCompleteModuleUseCase getCompleteModuleUseCase;
+  GetOrphanSitesByModuleUseCase? getOrphanSitesByModuleUseCase;
 
   @override
   ObjectConfig? get objectConfig {
@@ -459,9 +466,43 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Toujours charger la configuration complète du module quand la propriété est injectée
   }
 
+  /// Charge les sites orphelins (sans groupe parent) pour ce module (#157).
+  /// Si le module a au moins un site orphelin, l'onglet "Sites" sera ajouté
+  /// même si la config du serveur ne le mentionne pas.
+  Future<void> _loadOrphanSites() async {
+    final usecase = getOrphanSitesByModuleUseCase;
+    if (usecase == null) return;
+    try {
+      final orphans = await usecase.execute(widget.moduleInfo.module.id);
+      if (!mounted) return;
+      setState(() {
+        _orphanSites = orphans;
+        _orphanSitesLoaded = true;
+        // Si la config a déjà été chargée, recalculer les onglets au cas où
+        // les orphelins débloquent l'affichage de l'onglet Sites.
+        if (_configurationLoaded) {
+          _updateChildrenTypesFromConfig();
+          _initializeTabController();
+          _loadSitesIfAvailable();
+        }
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des sites orphelins: $e');
+      if (mounted) {
+        setState(() {
+          _orphanSites = [];
+          _orphanSitesLoaded = true;
+        });
+      }
+    }
+  }
+
   // Méthode pour charger le module complet avec toutes ses données associées
   Future<void> loadCompleteModule() async {
     try {
+      // Charger les sites orphelins en parallèle (#157)
+      _loadOrphanSites();
+
       // Utiliser le use case injecté par le widget parent pour récupérer le module complet
       // Cela inclut : configuration, sites, groupes de sites et données complémentaires
       final completeModule =
@@ -547,6 +588,15 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         _childrenTypes = ['site'];
       }
     }
+
+    // Issue #157 : si le module a des sites sans groupe parent mais que la
+    // config ne déclare pas l'onglet 'site', l'ajouter d'office pour que ces
+    // sites orphelins soient accessibles.
+    if (_orphanSitesLoaded &&
+        (_orphanSites?.isNotEmpty ?? false) &&
+        !_childrenTypes.contains('site')) {
+      _childrenTypes = [..._childrenTypes, 'site'];
+    }
   }
 
   void _initializeTabController() {
@@ -608,11 +658,18 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       _isLoadingSites = true;
       _currentSitesPage = 1;
 
-      // Les sites dans le module sont déjà filtrés
-      // pour ce module spécifique via la relation cor_site_module
       final module = _updatedModule ?? widget.moduleInfo.module;
-      final sitesForModule = module.sites ?? [];
-      _allSites = sitesForModule;
+
+      // Issue #157 : quand le module affiche aussi un onglet Groupes, l'onglet
+      // Sites ne doit contenir que les sites sans groupe parent (cohérent avec
+      // GeoNature web). Sinon on retombe sur tous les sites du module.
+      final bool hasGroupsTab = _childrenTypes.contains('sites_group');
+      if (hasGroupsTab && _orphanSitesLoaded && _orphanSites != null) {
+        _allSites = _orphanSites!;
+      } else {
+        _allSites = module.sites ?? [];
+      }
+
       _filterSites();
 
       _isLoadingSites = false;
@@ -887,7 +944,14 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     String label = '';
 
     if (childType == 'site') {
-      count = module.sites?.length ?? 0;
+      // Issue #157 : en mode mixte (sites + groupes), on n'affiche que les
+      // orphelins dans l'onglet Sites → compter les orphelins uniquement.
+      final bool hasGroupsTab = _childrenTypes.contains('sites_group');
+      if (hasGroupsTab && _orphanSitesLoaded && _orphanSites != null) {
+        count = _orphanSites!.length;
+      } else {
+        count = module.sites?.length ?? 0;
+      }
       label = module.complement?.configuration?.site?.labelList ??
           module.complement?.configuration?.site?.label ??
           'Sites';

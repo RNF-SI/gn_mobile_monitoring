@@ -60,6 +60,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id
 import 'package:gn_mobile_monitoring/domain/usecase/get_observations_by_visit_id_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_orphan_sites_by_module_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_orphan_sites_by_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
@@ -454,6 +456,13 @@ final getSitesBySiteGroupAndModuleUseCaseProvider =
     Provider<GetSitesBySiteGroupAndModuleUseCase>(
   (ref) => GetSitesBySiteGroupAndModuleUseCaseImpl(
       ref.watch(sitesRepositoryProvider)),
+);
+
+// UseCase pour récupérer les sites orphelins (sans groupe) d'un module (#157)
+final getOrphanSitesByModuleUseCaseProvider =
+    Provider<GetOrphanSitesByModuleUseCase>(
+  (ref) =>
+      GetOrphanSitesByModuleUseCaseImpl(ref.watch(sitesRepositoryProvider)),
 );
 
 final getVisitsBySiteAndModuleUseCaseProvider =

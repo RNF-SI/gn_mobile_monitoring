@@ -113,4 +113,51 @@ void main() {
           reason: 'La méthode sans filtre doit rester inchangée');
     });
   });
+
+  group('SitesDao.getOrphanSitesByModuleId (issue #157)', () {
+    setUp(() async {
+      // Ajouter sur moduleM70 :
+      //   OrphanA (500) : aucune ligne t_sites_complements → orphelin
+      //   OrphanB (501) : t_sites_complements avec idSitesGroup null → orphelin
+      //   GroupedSite (502) : t_sites_complements avec idSitesGroup = groupShared
+      await db.sitesDao.insertSites([
+        BaseSite(idBaseSite: 500, baseSiteName: 'OrphanA'),
+        BaseSite(idBaseSite: 501, baseSiteName: 'OrphanB'),
+        BaseSite(idBaseSite: 502, baseSiteName: 'GroupedSite'),
+      ]);
+
+      await db.sitesDao.insertComplements(const [
+        SiteComplement(idBaseSite: 501, idSitesGroup: null),
+        SiteComplement(idBaseSite: 502, idSitesGroup: groupShared),
+      ]);
+
+      await db.sitesDao.insertSitesModules(const [
+        SiteModule(idSite: 500, idModule: moduleM70),
+        SiteModule(idSite: 501, idModule: moduleM70),
+        SiteModule(idSite: 502, idModule: moduleM70),
+      ]);
+    });
+
+    test('ne renvoie que les sites sans idSitesGroup (ou sans complement)',
+        () async {
+      final result =
+          await db.sitesDao.getOrphanSitesByModuleId(moduleM70);
+      final ids = result.map((s) => s.idBaseSite).toSet();
+
+      expect(ids, containsAll({500, 501}),
+          reason:
+              'OrphanA (pas de complement) et OrphanB (idSitesGroup null) attendus');
+      expect(ids.contains(502), isFalse,
+          reason: 'GroupedSite ne doit pas apparaître');
+      // Les sites du groupe shared (101..104) ont tous idSitesGroup non null
+      expect(ids.any((id) => id >= 100 && id < 200), isFalse);
+    });
+
+    test('liste vide si le module n\'a aucun site orphelin', () async {
+      final result =
+          await db.sitesDao.getOrphanSitesByModuleId(moduleM12);
+      // Sur moduleM12 : seuls les sites 103, 104 (tous deux dans groupShared)
+      expect(result, isEmpty);
+    });
+  });
 }

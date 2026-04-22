@@ -209,7 +209,13 @@ class SitesDatabaseImpl implements SitesDatabase {
     final db = await _database;
     return await db.sitesDao.getSitesByModuleId(moduleId);
   }
-  
+
+  @override
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId) async {
+    final db = await _database;
+    return await db.sitesDao.getOrphanSitesByModuleId(moduleId);
+  }
+
   @override
   Future<List<SiteModule>> getSiteModulesBySiteId(int siteId) async {
     final db = await _database;

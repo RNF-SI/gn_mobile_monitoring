@@ -871,6 +871,16 @@ class SitesRepositoryImpl implements SitesRepository {
   }
 
   @override
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId) async {
+    try {
+      return await database.getOrphanSitesByModuleId(moduleId);
+    } catch (error) {
+      print('Error getting orphan sites by module: $error');
+      throw Exception('Failed to get orphan sites by module');
+    }
+  }
+
+  @override
   Future<List<SiteComplement>> getAllSiteComplements() async {
     try {
       return await database.getAllSiteComplements();

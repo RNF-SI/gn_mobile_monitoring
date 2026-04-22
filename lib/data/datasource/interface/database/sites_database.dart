@@ -49,6 +49,10 @@ abstract class SitesDatabase {
   Future<void> deleteSiteModule(int siteId, int moduleId);
   Future<List<SiteModule>> getAllSiteModules();
   Future<List<BaseSite>> getSitesByModuleId(int moduleId);
+
+  /// Sites d'un module sans groupe parent (issue #157)
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId);
+
   Future<List<SiteModule>> getSiteModulesBySiteId(int siteId);
   
   /// Get sites by site group

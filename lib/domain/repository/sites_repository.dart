@@ -31,6 +31,10 @@ abstract class SitesRepository {
   Future<List<BaseSite>> getSitesBySiteGroupAndModule(
       int siteGroupId, int moduleId);
 
+  /// Gets sites of a module that don't belong to any site group (orphans).
+  /// Used for the "Sites" tab when the module also has groups (issue #157).
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId);
+
   /// Fetches sites for a specific module
   Future<void> fetchSitesForModule(String moduleCode, String token);
 
