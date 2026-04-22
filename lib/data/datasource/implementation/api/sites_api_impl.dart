@@ -34,22 +34,20 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       String moduleCode, String token) async {
     try {
       final logger = AppLogger();
-      // 2 salves de requêtes légères : timeout de 30 s largement suffisant
-      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 30));
+      final dioInstance = createDio(receiveTimeout: const Duration(seconds: 60));
       final headers = {'Authorization': 'Bearer $token'};
 
-      // Étape 1 : liste légère des IDs de sites du module (route /list/ filtre
-      // sur le module et renvoie juste les colonnes demandées, pas de relations)
-      final listResponse = await dioInstance.get(
-        '/monitorings/list/$moduleCode/site',
-        queryParameters: {
-          'fields': 'id_base_site,base_site_name',
-          'limit': 100000,
-        },
+      // Un seul appel : /refacto/<code>/sites renvoie déjà tous les champs par
+      // site (base_site_*, altitudes, geometry, id_sites_group, meta_*, etc.)
+      // dans une enveloppe {count, items[], limit, page}.
+      // limit=100000 contourne le limit par défaut (50) côté backend.
+      final response = await dioInstance.get(
+        '/monitorings/refacto/$moduleCode/sites',
+        queryParameters: {'limit': 100000},
         options: Options(headers: headers),
       );
 
-      if (listResponse.statusCode == 204) {
+      if (response.statusCode == 204) {
         logger.i(
           'Module $moduleCode: réponse 204 (No Content) pour les sites. '
           'Aucun site disponible pour ce module.',
@@ -61,94 +59,66 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         };
       }
 
-      if (listResponse.statusCode != 200) {
+      if (response.statusCode != 200) {
         throw ApiException(
           'Failed to fetch sites for module $moduleCode',
-          statusCode: listResponse.statusCode,
+          statusCode: response.statusCode,
         );
       }
 
-      final items = (listResponse.data as List<dynamic>?) ?? const [];
-      final siteIds = items
-          .whereType<Map<String, dynamic>>()
-          .map((e) => e['id_base_site'])
-          .whereType<int>()
-          .toList();
+      final data = response.data as Map<String, dynamic>;
+      final items = (data['items'] as List<dynamic>?) ?? const [];
+      final serverCount = data['count'] as int?;
 
-      // Étape 2 : fetch unitaire en parallèle par chunks (évite de saturer
-      // le connection pool HTTP et le serveur)
+      // Détecte une troncature silencieuse : le serveur indique avoir plus de
+      // sites qu'il n'en renvoie (limit trop basse).
+      if (serverCount != null && serverCount > items.length) {
+        logger.w(
+          'Module $moduleCode: $serverCount sites côté serveur, '
+          'seulement ${items.length} reçus. Vérifier le paramètre limit.',
+          tag: 'sync',
+        );
+      }
+
       final List<Map<String, dynamic>> enrichedSites = [];
       final List<SiteComplement> siteComplements = [];
-      const int chunkSize = 10;
 
-      for (var i = 0; i < siteIds.length; i += chunkSize) {
-        final chunk = siteIds.sublist(
-          i,
-          (i + chunkSize < siteIds.length) ? i + chunkSize : siteIds.length,
-        );
-        await Future.wait(chunk.map((id) async {
-          try {
-            final resp = await dioInstance.get(
-              '/monitorings/object/$moduleCode/site/$id',
-              queryParameters: {'depth': 0},
-              options: Options(headers: headers),
-            );
-            if (resp.statusCode != 200 ||
-                resp.data is! Map<String, dynamic>) {
-              logger.w('Site $id: statut ${resp.statusCode}, ignoré',
-                  tag: 'sync');
-              return;
-            }
+      for (final item in items.whereType<Map<String, dynamic>>()) {
+        final siteId = item['id_base_site'] as int?;
+        if (siteId == null) continue;
 
-            final siteData = resp.data as Map<String, dynamic>;
-            // Feature GeoJSON : propriétés sous `properties`, geometry à la racine
-            final properties =
-                (siteData['properties'] is Map<String, dynamic>)
-                    ? siteData['properties'] as Map<String, dynamic>
-                    : siteData;
-            final siteId = properties['id_base_site'] as int? ?? id;
+        // BaseSiteEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
+        enrichedSites.add({
+          'id_base_site': siteId,
+          'base_site_name': item['base_site_name'],
+          'base_site_code': item['base_site_code'],
+          'base_site_description': item['base_site_description'],
+          'altitude_min': item['altitude_min'],
+          'altitude_max': item['altitude_max'],
+          'first_use_date': item['first_use_date'],
+          'uuid_base_site': item['uuid_base_site'],
+          'geometry': item['geometry'],
+        });
 
-            // BaseSiteEntity.fromJson accepte `geometry` (Map GeoJSON) ou `geom`
-            // (String), on passe donc la géométrie brute sans pré-encoder.
-            final enrichedSite = <String, dynamic>{
-              'id_base_site': siteId,
-              'base_site_name': properties['base_site_name'],
-              'base_site_code': properties['base_site_code'],
-              'base_site_description': properties['base_site_description'],
-              'altitude_min': properties['altitude_min'],
-              'altitude_max': properties['altitude_max'],
-              'first_use_date': properties['first_use_date'],
-              'uuid_base_site': properties['uuid_base_site'],
-              'geometry': siteData['geometry'],
-            };
+        final idSitesGroup = item['id_sites_group'] as int?;
+        final siteSpecificData = Map<String, dynamic>.from(item);
+        siteSpecificData.remove('id_base_site');
+        siteSpecificData.remove('base_site_name');
+        siteSpecificData.remove('base_site_code');
+        siteSpecificData.remove('base_site_description');
+        siteSpecificData.remove('additional_data_keys');
 
-            final idSitesGroup = properties['id_sites_group'] as int?;
-            final siteSpecificData = Map<String, dynamic>.from(properties);
-            siteSpecificData.remove('id_base_site');
-            siteSpecificData.remove('base_site_name');
-            siteSpecificData.remove('base_site_code');
-            siteSpecificData.remove('base_site_description');
-            siteSpecificData.remove('additional_data_keys');
-
-            final complementEntity = SiteComplementEntity(
-              idBaseSite: siteId,
-              idSitesGroup: idSitesGroup,
-              data: siteSpecificData.isNotEmpty
-                  ? jsonEncode(siteSpecificData)
-                  : null,
-            );
-
-            enrichedSites.add(enrichedSite);
-            siteComplements.add(complementEntity.toDomain());
-          } catch (e) {
-            logger.w('Erreur fetch site $id pour module $moduleCode: $e',
-                tag: 'sync');
-          }
-        }));
+        siteComplements.add(SiteComplementEntity(
+          idBaseSite: siteId,
+          idSitesGroup: idSitesGroup,
+          data: siteSpecificData.isNotEmpty
+              ? jsonEncode(siteSpecificData)
+              : null,
+        ).toDomain());
       }
 
       logger.i(
-        'Module $moduleCode: ${enrichedSites.length}/${siteIds.length} sites récupérés.',
+        'Module $moduleCode: ${enrichedSites.length} sites récupérés.',
         tag: 'sync',
       );
 
@@ -170,8 +140,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       String moduleCode, String token) async {
     try {
       // @since monitoring 1.2.0
+      // limit=100000 contourne le limit par défaut (50) côté backend, qui
+      // coupait silencieusement les modules avec > 50 groupes.
       final response = await dio.get(
         '/monitorings/refacto/$moduleCode/sites_groups',
+        queryParameters: {'limit': 100000},
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -198,31 +171,47 @@ class SitesApiImpl extends BaseApi implements SitesApi {
 
         // Extract site groups from the items array
         final items = data['items'] as List?;
+        final serverCount = data['count'] as int?;
+        if (items != null &&
+            serverCount != null &&
+            serverCount > items.length) {
+          AppLogger().w(
+            'Module $moduleCode: $serverCount groupes côté serveur, '
+            'seulement ${items.length} reçus. Vérifier le paramètre limit.',
+            tag: 'sync',
+          );
+        }
         if (items != null) {
           print('Found ${items.length} site groups for module $moduleCode');
 
-          for (var item in items) {
-            try {
-              final groupData = item as Map<String, dynamic>;
-              final groupId = groupData['id_sites_group'];
-
-              // Fetch individual site group to get complete data including 'data' field
-              final detailedGroupData = await _fetchDetailedSiteGroup(
-                moduleCode,
-                groupId,
-                token,
-              );
-
-              if (detailedGroupData != null) {
-                result.add(SiteGroupsWithModulesLabel(
-                  siteGroup: SiteGroupEntity.fromJson(detailedGroupData),
-                  moduleLabelList: [moduleCode],
-                ));
+          // Fetch unitaire par groupe en parallèle avec concurrence limitée,
+          // pour récupérer le champ `data` JSON absent de la route /refacto/.
+          // Mêmes chunks que pour les sites/datasets (10 appels concurrents).
+          const int chunkSize = 10;
+          for (var i = 0; i < items.length; i += chunkSize) {
+            final chunk = items.sublist(
+              i,
+              (i + chunkSize < items.length) ? i + chunkSize : items.length,
+            );
+            final detailedGroups = await Future.wait(chunk.map((item) async {
+              try {
+                final groupData = item as Map<String, dynamic>;
+                final groupId = groupData['id_sites_group'];
+                final detailedGroupData =
+                    await _fetchDetailedSiteGroup(moduleCode, groupId, token);
+                if (detailedGroupData != null) {
+                  return SiteGroupsWithModulesLabel(
+                    siteGroup: SiteGroupEntity.fromJson(detailedGroupData),
+                    moduleLabelList: [moduleCode],
+                  );
+                }
+              } catch (e) {
+                print('Error processing site group: $e');
+                print('Group data: $item');
               }
-            } catch (e) {
-              print('Error processing site group: $e');
-              print('Group data: $item');
-            }
+              return null;
+            }));
+            result.addAll(detailedGroups.whereType<SiteGroupsWithModulesLabel>());
           }
         } else {
           print(
