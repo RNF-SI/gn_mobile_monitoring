@@ -471,15 +471,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   /// même si la config du serveur ne le mentionne pas.
   Future<void> _loadOrphanSites() async {
     final usecase = getOrphanSitesByModuleUseCase;
-    final moduleId = widget.moduleInfo.module.id;
-    debugPrint(
-        '#157 _loadOrphanSites START moduleId=$moduleId hasUsecase=${usecase != null}');
     if (usecase == null) return;
     try {
-      final orphans = await usecase.execute(moduleId);
-      debugPrint(
-          '#157 _loadOrphanSites got ${orphans.length} orphans (module $moduleId) '
-          'configurationLoaded=$_configurationLoaded');
+      final orphans = await usecase.execute(widget.moduleInfo.module.id);
       if (!mounted) return;
       setState(() {
         _orphanSites = orphans;
@@ -490,11 +484,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
           _loadSitesIfAvailable();
         }
       });
-      debugPrint(
-          '#157 _loadOrphanSites FIN childrenTypes=$_childrenTypes '
-          'orphanSites=${_orphanSites?.length}');
-    } catch (e, st) {
-      debugPrint('#157 Erreur chargement sites orphelins: $e\n$st');
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des sites orphelins: $e');
       if (mounted) {
         setState(() {
           _orphanSites = [];
@@ -596,11 +587,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }
     }
 
-    debugPrint(
-        '#157 _updateChildrenTypesFromConfig pre-orphan-check: '
-        'childrenTypes=$_childrenTypes orphansLoaded=$_orphanSitesLoaded '
-        'orphansCount=${_orphanSites?.length}');
-
     // Issue #157 : si le module a des sites sans groupe parent mais que la
     // config ne déclare pas l'onglet 'site', l'ajouter d'office pour que ces
     // sites orphelins soient accessibles.
@@ -609,8 +595,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         !_childrenTypes.contains('site')) {
       _childrenTypes = [..._childrenTypes, 'site'];
     }
-    debugPrint(
-        '#157 _updateChildrenTypesFromConfig post: childrenTypes=$_childrenTypes');
   }
 
   void _initializeTabController() {
@@ -848,6 +832,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
     // Si on a des groupes de sites, les afficher directement sous la navigation
     final hasSiteGroups = _childrenTypes.contains('sites_group');
+    final hasSite = _childrenTypes.contains('site');
+    // Issue #157 : mode mixte = le module affiche à la fois des groupes et
+    // des sites orphelins. On montre alors un TabBar à 2 onglets
+    // (Groupes / Sites) au lieu d'afficher seulement les groupes.
+    final isMixedMode =
+        hasSiteGroups && hasSite && _tabController != null &&
+            _tabController!.length == 2;
 
     return Scaffold(
       appBar: buildAppBar(),
@@ -855,7 +846,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           buildBreadcrumb(),
-          if (hasSiteGroups)
+          if (isMixedMode)
+            Expanded(
+              child: Column(
+                children: [
+                  buildTabBar(
+                    tabController: _tabController!,
+                    tabs: _childrenTypes
+                        .map((t) => _buildTabLabel(t))
+                        .toList(),
+                  ),
+                  Expanded(
+                    child: TabBarView(
+                      controller: _tabController!,
+                      children: _childrenTypes.map((t) {
+                        if (t == 'sites_group') return _buildGroupsTab();
+                        if (t == 'site') return _buildSitesTab();
+                        return const SizedBox.shrink();
+                      }).toList(),
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else if (hasSiteGroups)
             Expanded(
               child: _buildGroupsTab(),
             )
