@@ -6,7 +6,6 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
 
@@ -17,7 +16,6 @@ class MenuActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final syncNotifier = ref.read(syncServiceProvider.notifier);
-    final databaseService = ref.read(databaseServiceProvider.notifier);
 
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
@@ -27,7 +25,7 @@ class MenuActions extends ConsumerWidget {
       icon: const Icon(Icons.menu), // Menu icon
       enabled: !isSyncing, // Désactiver le menu pendant la synchronisation
       onSelected: (value) => _handleMenuSelection(
-          value, ref, context, authViewModel, syncNotifier, databaseService),
+          value, ref, context, authViewModel, syncNotifier),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(
             Icons.download, 'Mettre à jour les données', 'sync_download'),
@@ -36,10 +34,6 @@ class MenuActions extends ConsumerWidget {
         const PopupMenuDivider(),
         _buildMenuItem(
             Icons.bug_report, 'Export des logs', 'export_logs'),
-        _buildMenuItem(
-            Icons.delete,
-            '[DEV] Suppression et rechargement de la base de données',
-            'delete'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(
@@ -69,7 +63,6 @@ class MenuActions extends ConsumerWidget {
     BuildContext context,
     authViewModel,
     SyncService syncService,
-    DatabaseService databaseService,
   ) async {
     switch (value) {
       case 'sync_download':
@@ -80,9 +73,6 @@ class MenuActions extends ConsumerWidget {
         break;
       case 'export_logs':
         await LogExportDialog.show(context);
-        break;
-      case 'delete':
-        await _confirmDelete(context, databaseService);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -96,43 +86,6 @@ class MenuActions extends ConsumerWidget {
       case 'logout':
         await _confirmLogout(context, authViewModel, ref);
         break;
-    }
-  }
-
-  Future<void> _confirmDelete(
-      BuildContext context, DatabaseService databaseService) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmation'),
-        content: const Text(
-            'Êtes-vous sûr de vouloir supprimer la base de données ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Confirmer'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await databaseService.deleteAndReinitializeDatabase();
-
-      // Afficher un message à la fin de la suppression
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('La base de données a été supprimée.'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(bottom: 100.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-      ));
     }
   }
 
