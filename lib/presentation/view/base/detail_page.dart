@@ -18,7 +18,15 @@ abstract class DetailPage extends StatefulWidget {
 }
 
 abstract class DetailPageState<T extends DetailPage> extends State<T> {
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _horizontalTableScrollController = ScrollController();
+  final ScrollController _verticalTableScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalTableScrollController.dispose();
+    _verticalTableScrollController.dispose();
+    super.dispose();
+  }
   /// Configuration de l'objet affiché
   ObjectConfig? get objectConfig;
 
@@ -480,34 +488,37 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
                         )
                       : Card(
                           elevation: 2,
-                          child: RawScrollbar(
-                            controller: _scrollController,
+                          child: Scrollbar(
+                            controller: _verticalTableScrollController,
                             thumbVisibility: true,
-                            interactive: true,
-                            thumbColor: Colors.redAccent,
-                            radius: Radius.circular(20),
-                            thickness: 7,
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            scrollDirection: Axis.horizontal,
                             child: SingleChildScrollView(
-                              child: DataTable(
-                                columns: columns,
-                                rows: rows,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: tableBorderColor,
-                                    width: 1,
+                              controller: _verticalTableScrollController,
+                              scrollDirection: Axis.vertical,
+                              child: Scrollbar(
+                                controller: _horizontalTableScrollController,
+                                thumbVisibility: true,
+                                notificationPredicate: (notif) =>
+                                    notif.depth == 1,
+                                child: SingleChildScrollView(
+                                  controller: _horizontalTableScrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    columns: columns,
+                                    rows: rows,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: tableBorderColor,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    headingRowColor: WidgetStateProperty.all(
+                                      tableHeaderColor,
+                                    ),
                                   ),
                                 ),
-                                headingRowColor: WidgetStateProperty.all(
-                                  tableHeaderColor,
-                                ),
                               ),
-                  
                             ),
                           ),
-                        ),
                         ),
             ),
           ],
