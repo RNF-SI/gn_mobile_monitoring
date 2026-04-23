@@ -505,6 +505,7 @@ class SitesRepositoryImpl implements SitesRepository {
 
         // 2. Récupérer les groupes de sites DISTANTS pour CE MODULE
         List<SiteGroup> remoteSiteGroups;
+        bool fetchFailed = false;
 
         try {
           final siteGroups =
@@ -520,9 +521,29 @@ class SitesRepositoryImpl implements SitesRepository {
               'la synchronisation des groupes de sites', e,
               moduleCode: module.moduleCode);
           print(errorMessage);
-          // Si le module n'a pas de groupes de sites, traiter comme une liste vide
+          fetchFailed = true;
           remoteSiteGroups = [];
-          // Ne pas faire continue, traiter comme un cas normal avec 0 groupe
+        }
+
+        // Protection : une erreur de fetch ne doit JAMAIS supprimer le local.
+        // De même, si le serveur renvoie 0 groupes alors qu'on en a localement,
+        // c'est suspect (panne silencieuse, permissions, incident réseau) : on
+        // skippe le diff pour ce module. L'utilisateur peut toujours forcer un
+        // re-téléchargement complet du module si c'est vraiment intentionnel
+        // côté serveur.
+        if (fetchFailed) {
+          print(
+              'Module ${module.moduleCode}: fetch des groupes en échec, '
+              'skip du diff (${localSiteGroupsForModule.length} groupes locaux '
+              'préservés).');
+          continue;
+        }
+        if (remoteSiteGroups.isEmpty && localSiteGroupsForModule.isNotEmpty) {
+          print(
+              'Module ${module.moduleCode}: le serveur renvoie 0 groupes '
+              'alors qu\'on en a ${localSiteGroupsForModule.length} '
+              'localement. Skip défensif du diff.');
+          continue;
         }
 
         // 3. Créer les ensembles d'IDs pour la comparaison
@@ -690,6 +711,11 @@ class SitesRepositoryImpl implements SitesRepository {
       print(
           'Synchronisation des groupes de sites pour ${modules.length} modules téléchargés');
 
+      // Modules dont le fetch a échoué OU qui ont renvoyé 0 alors qu'on avait
+      // du local : on exclut leurs groupes locaux du calcul "à supprimer".
+      // Une sync ratée ne doit jamais détruire de données.
+      final Set<int> skippedModuleIds = {};
+
       for (final module in modules) {
         if (module.moduleCode == null) continue;
 
@@ -703,6 +729,22 @@ class SitesRepositoryImpl implements SitesRepository {
 
           print(
               'Found ${siteGroups.length} site groups for module ${module.moduleCode}');
+
+          // Protection : si le serveur renvoie 0 alors qu'on a du local pour
+          // ce module, on ne fait pas confiance au diff (incident silencieux).
+          if (siteGroups.isEmpty) {
+            final localCountForModule = existingSiteGroupModules
+                .where((sgm) => sgm.idModule == module.id)
+                .length;
+            if (localCountForModule > 0) {
+              print(
+                  'Module ${module.moduleCode}: serveur renvoie 0 groupes '
+                  'alors qu\'on en a $localCountForModule localement. '
+                  'Skip défensif.');
+              skippedModuleIds.add(module.id);
+              continue;
+            }
+          }
 
           // Process all site groups from remote API
           for (final siteGroup in siteGroups) {
@@ -721,13 +763,19 @@ class SitesRepositoryImpl implements SitesRepository {
         } catch (e) {
           print(
               'Error incrementally fetching site groups for module ${module.moduleCode}: $e');
+          // Exclure ce module du calcul de suppression pour préserver son local
+          skippedModuleIds.add(module.id);
           continue;
         }
       }
 
-      // Track site group IDs that are associated with downloaded modules
+      // Track site group IDs that are associated with downloaded modules,
+      // EN EXCLUANT les modules dont le fetch a échoué ou a renvoyé un
+      // "0 suspect" : leurs groupes locaux ne doivent pas être candidats
+      // à suppression.
       final Set<int> downloadedModuleSiteGroupIds = {};
       for (final module in modules) {
+        if (skippedModuleIds.contains(module.id)) continue;
         final siteGroupModulesForThisModule =
             existingSiteGroupModules.where((sgm) => sgm.idModule == module.id);
         downloadedModuleSiteGroupIds.addAll(
@@ -757,10 +805,14 @@ class SitesRepositoryImpl implements SitesRepository {
         return !existingSiteGroupModuleKeys.contains(key);
       }).toList();
 
-      // Only delete site-group-module relationships for downloaded modules
+      // Only delete site-group-module relationships for downloaded modules,
+      // et jamais pour un module dont le fetch a échoué (skippedModuleIds).
       final siteGroupModulesToDelete = existingSiteGroupModules.where((sgm) {
         // Only consider relationships for downloaded modules
         if (!modules.any((m) => m.id == sgm.idModule)) {
+          return false;
+        }
+        if (skippedModuleIds.contains(sgm.idModule)) {
           return false;
         }
         final key = '${sgm.idSitesGroup}_${sgm.idModule}';

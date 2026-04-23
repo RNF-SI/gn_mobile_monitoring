@@ -135,100 +135,108 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     }
   }
 
+  /// Clés « standards » du modèle TMonitoringSitesGroups côté backend.
+  /// Toute clé top-level de la réponse /refacto/ qui ne figure pas ici est
+  /// considérée comme un attribut spécifique du module (aplati par
+  /// add_specific_attributes côté backend) et ré-injectée dans `data`.
+  static const _standardSiteGroupKeys = <String>{
+    'id_sites_group',
+    'sites_group_name',
+    'sites_group_code',
+    'sites_group_description',
+    'uuid_sites_group',
+    'comments',
+    'id_digitiser',
+    'altitude_min',
+    'altitude_max',
+    'geometry',
+    'meta_create_date',
+    'meta_update_date',
+    // Métadonnées de la réponse (pas des colonnes du modèle)
+    'pk',
+    'cruved',
+    'is_geom_from_child',
+    'medias',
+    'modules',
+    'nb_sites',
+    'nb_visits',
+  };
+
   @override
   Future<List<SiteGroupsWithModulesLabel>> fetchSiteGroupsForModule(
       String moduleCode, String token) async {
+    // /refacto/<code>/sites_groups renvoie `{count, items, limit, page}` avec
+    // toutes les colonnes standard + les attributs spécifiques du module
+    // aplatis au top-level. On reconstitue le champ `data` côté Dart et on
+    // n'a plus besoin du fetch unitaire N+1 qui saturait le serveur de Gil.
+    const pageSize = 100;
+    final logger = AppLogger();
+    final result = <SiteGroupsWithModulesLabel>[];
+
     try {
-      // @since monitoring 1.2.0
-      // limit=100000 contourne le limit par défaut (50) côté backend, qui
-      // coupait silencieusement les modules avec > 50 groupes.
-      final response = await dio.get(
-        '/monitorings/refacto/$moduleCode/sites_groups',
-        queryParameters: {'limit': 100000},
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
+      var page = 1;
+      int? serverCount;
 
-      // 204 (No Content) signifie qu'il n'y a pas de groupes de sites disponibles,
-      // mais c'est un cas valide - retourner une liste vide
-      if (response.statusCode == 204) {
-        final logger = AppLogger();
-        logger.i(
-          'Module $moduleCode: réponse 204 (No Content) pour les groupes de sites. '
-          'Aucun groupe de sites disponible pour ce module.',
-          tag: 'sync',
+      while (true) {
+        final response = await dio.get(
+          '/monitorings/refacto/$moduleCode/sites_groups',
+          queryParameters: {'limit': pageSize, 'page': page},
+          options: Options(
+            headers: {'Authorization': 'Bearer $token'},
+          ),
         );
-        return <SiteGroupsWithModulesLabel>[];
-      }
 
-      if (response.statusCode == 200) {
-        final data = response.data as Map<String, dynamic>;
-        final result = <SiteGroupsWithModulesLabel>[];
-
-        print(
-            'API Response for site groups module $moduleCode: ${data.keys.toList()}');
-
-        // Extract site groups from the items array
-        final items = data['items'] as List?;
-        final serverCount = data['count'] as int?;
-        if (items != null &&
-            serverCount != null &&
-            serverCount > items.length) {
-          AppLogger().w(
-            'Module $moduleCode: $serverCount groupes côté serveur, '
-            'seulement ${items.length} reçus. Vérifier le paramètre limit.',
+        if (response.statusCode == 204) {
+          logger.i(
+            'Module $moduleCode: réponse 204 pour les groupes de sites.',
             tag: 'sync',
           );
-        }
-        if (items != null) {
-          print('Found ${items.length} site groups for module $moduleCode');
-
-          // Fetch unitaire par groupe en parallèle avec concurrence limitée,
-          // pour récupérer le champ `data` JSON absent de la route /refacto/.
-          // Mêmes chunks que pour les sites/datasets (10 appels concurrents).
-          const int chunkSize = 10;
-          for (var i = 0; i < items.length; i += chunkSize) {
-            final chunk = items.sublist(
-              i,
-              (i + chunkSize < items.length) ? i + chunkSize : items.length,
-            );
-            final detailedGroups = await Future.wait(chunk.map((item) async {
-              try {
-                final groupData = item as Map<String, dynamic>;
-                final groupId = groupData['id_sites_group'];
-                final detailedGroupData =
-                    await _fetchDetailedSiteGroup(moduleCode, groupId, token);
-                if (detailedGroupData != null) {
-                  return SiteGroupsWithModulesLabel(
-                    siteGroup: SiteGroupEntity.fromJson(detailedGroupData),
-                    moduleLabelList: [moduleCode],
-                  );
-                }
-              } catch (e) {
-                print('Error processing site group: $e');
-                print('Group data: $item');
-              }
-              return null;
-            }));
-            result.addAll(detailedGroups.whereType<SiteGroupsWithModulesLabel>());
-          }
-        } else {
-          print(
-              'No items found in site groups response for module $moduleCode');
+          return <SiteGroupsWithModulesLabel>[];
         }
 
-        return result;
+        if (response.statusCode != 200) {
+          throw ApiException(
+            'Failed to fetch site groups for module $moduleCode',
+            statusCode: response.statusCode,
+          );
+        }
+
+        final data = response.data as Map<String, dynamic>;
+        serverCount ??= data['count'] as int?;
+        final items = (data['items'] as List?) ?? const [];
+
+        for (final item in items.whereType<Map<String, dynamic>>()) {
+          final built = _buildSiteGroupFromRefactoItem(item, moduleCode);
+          if (built != null) result.add(built);
+        }
+
+        // Sortie : page vide (fin) ou compte total atteint
+        if (items.isEmpty) break;
+        if (serverCount != null && result.length >= serverCount) break;
+        // Garde-fou : une page incomplète signale la fin (certains backends
+        // n'ont pas de `count` fiable).
+        if (items.length < pageSize) break;
+
+        page++;
+        if (page > 1000) {
+          logger.w(
+            'Module $moduleCode: pagination interrompue après 1000 pages '
+            '(sécurité). Groupes récupérés: ${result.length}.',
+            tag: 'sync',
+          );
+          break;
+        }
       }
 
-      throw ApiException(
-        'Failed to fetch site groups for module $moduleCode',
-        statusCode: response.statusCode,
+      logger.i(
+        'Module $moduleCode: ${result.length} groupes de sites récupérés '
+        '${serverCount != null ? "(serveur: $serverCount)" : ""}.',
+        tag: 'sync',
       );
+      return result;
     } on DioException catch (e) {
       // 403 = le module ne supporte pas les groupes de sites
       if (e.response?.statusCode == 403) {
-        final logger = AppLogger();
         logger.i(
           'Module $moduleCode: 403 pour les groupes de sites. '
           'Ce module ne supporte probablement pas les groupes de sites.',
@@ -244,51 +252,46 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     }
   }
 
-  /// Fetch detailed site group data including 'data' field
-  Future<Map<String, dynamic>?> _fetchDetailedSiteGroup(
-      String moduleCode, int groupId, String token) async {
+  /// Construit un SiteGroupsWithModulesLabel à partir d'un item de /refacto/.
+  /// Les clés non-standards (attributs spécifiques du module, aplatis par le
+  /// backend) sont recollées dans un Map `data` pour compatibilité avec
+  /// SiteGroupEntity.fromJson.
+  SiteGroupsWithModulesLabel? _buildSiteGroupFromRefactoItem(
+      Map<String, dynamic> item, String moduleCode) {
     try {
-      // @since monitoring 1.2.0
-      final response = await dio.get(
-        '/monitorings/sites_groups/$moduleCode/$groupId',
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode == 200) {
-        final groupData = response.data as Map<String, dynamic>;
-
-        // Convert the complete API response to our format
-        final Map<String, dynamic> formattedGroupData = {
-          'id_sites_group': groupData['id_sites_group'],
-          'sites_group_name': groupData['sites_group_name'],
-          'sites_group_code': groupData['sites_group_code'],
-          'sites_group_description': groupData['sites_group_description'],
-          'uuid_sites_group': groupData['uuid_sites_group'],
-          'comments': groupData['comments'],
-          'id_digitiser': groupData['id_digitiser'],
-          'altitude_min': groupData['altitude_min'],
-          'altitude_max': groupData['altitude_max'],
-          // Handle geometry with SRID prefix for site groups
-          'geom': groupData['geometry'] != null
-              ? (groupData['geometry'] is Map<String, dynamic>
-                  ? jsonEncode(groupData['geometry'])
-                  : groupData['geometry'].toString())
-              : null,
-          // Use the 'data' field from the detailed response
-          'data': groupData['data'] ?? {},
-        };
-
-        print(
-            'Creating detailed SiteGroupEntity from: ${formattedGroupData.keys.toList()}');
-
-        return formattedGroupData;
+      final dynamicData = <String, dynamic>{};
+      for (final entry in item.entries) {
+        if (!_standardSiteGroupKeys.contains(entry.key)) {
+          dynamicData[entry.key] = entry.value;
+        }
       }
+
+      final formattedGroupData = <String, dynamic>{
+        'id_sites_group': item['id_sites_group'],
+        'sites_group_name': item['sites_group_name'],
+        'sites_group_code': item['sites_group_code'],
+        'sites_group_description': item['sites_group_description'],
+        'uuid_sites_group': item['uuid_sites_group'],
+        'comments': item['comments'],
+        'id_digitiser': item['id_digitiser'],
+        'altitude_min': item['altitude_min'],
+        'altitude_max': item['altitude_max'],
+        // SiteGroupEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
+        'geometry': item['geometry'],
+        'data': dynamicData,
+      };
+
+      return SiteGroupsWithModulesLabel(
+        siteGroup: SiteGroupEntity.fromJson(formattedGroupData),
+        moduleLabelList: [moduleCode],
+      );
     } catch (e) {
-      print('Error fetching detailed site group $groupId: $e');
+      AppLogger().w(
+        'Module $moduleCode: échec parsing d\'un groupe depuis /refacto/: $e',
+        tag: 'sync',
+      );
+      return null;
     }
-    return null;
   }
 
   @override

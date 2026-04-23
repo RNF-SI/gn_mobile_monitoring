@@ -276,4 +276,186 @@ void main() {
       expect(site2Complement.idSitesGroup, isNull);
     });
   });
+
+  group('fetchSiteGroupsForModule', () {
+    test('gère 204 No Content comme liste vide', () async {
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites_groups',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: null,
+            statusCode: 204,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchSiteGroupsForModule('MOD_TEST', 'token'));
+
+      expect(result, isEmpty);
+    });
+
+    test('gère 403 comme liste vide (module sans support)', () async {
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites_groups',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          )).thenThrow(DioException(
+        response: Response(
+          statusCode: 403,
+          requestOptions: RequestOptions(path: '/test'),
+        ),
+        requestOptions: RequestOptions(path: '/test'),
+      ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchSiteGroupsForModule('MOD_TEST', 'token'));
+
+      expect(result, isEmpty);
+    });
+
+    test('un seul call /refacto/ suffit : data reconstitué depuis clés aplaties',
+        () async {
+      // /refacto/ retourne les attributs spécifiques (habitat_principal,
+      // id_inventor) aplatis au top-level. On doit les recoller dans data.
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites_groups',
+            queryParameters: {'limit': 100, 'page': 1},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'count': 2,
+              'limit': 100,
+              'page': 1,
+              'items': [
+                {
+                  'id_sites_group': 29,
+                  'sites_group_name': 'frec',
+                  'sites_group_code': null,
+                  'sites_group_description': null,
+                  'uuid_sites_group': '8d3c4dad-c11a-4f0b-8893-3b7447af3dd6',
+                  'comments': null,
+                  'id_digitiser': null,
+                  'altitude_min': null,
+                  'altitude_max': null,
+                  'geometry': {
+                    'type': 'Point',
+                    'coordinates': [5.04, 47.33],
+                  },
+                  // Clés non-standards (spécifiques) → à recoller dans data
+                  'habitat_principal': 'Forêt',
+                  'id_inventor': null,
+                  // Métadonnées backend à ignorer
+                  'pk': 'id_sites_group',
+                  'cruved': {'R': true},
+                  'medias': [],
+                  'modules': [12],
+                  'nb_sites': 1,
+                  'nb_visits': 1,
+                  'is_geom_from_child': true,
+                },
+                {
+                  'id_sites_group': 30,
+                  'sites_group_name': 'autre',
+                  'uuid_sites_group': 'b8e7d5f4-1234-5678-9abc-def012345678',
+                  'geometry': null,
+                  // Pas d'attributs spécifiques ici
+                },
+              ],
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchSiteGroupsForModule('MOD_TEST', 'token'));
+
+      expect(result.length, 2);
+
+      final group1 = result[0].siteGroup;
+      expect(group1.idSitesGroup, 29);
+      expect(group1.sitesGroupName, 'frec');
+      expect(group1.data, isNotNull);
+      expect(group1.data!['habitat_principal'], 'Forêt');
+      expect(group1.data!.containsKey('id_inventor'), isTrue);
+      // Les clés standards ne doivent PAS fuiter dans data
+      expect(group1.data!.containsKey('sites_group_name'), isFalse);
+      expect(group1.data!.containsKey('id_sites_group'), isFalse);
+
+      final group2 = result[1].siteGroup;
+      expect(group2.idSitesGroup, 30);
+      // Pas d'attributs spécifiques → data est un Map vide
+      expect(group2.data, isNotNull);
+      expect(group2.data, isEmpty);
+    });
+
+    test('paginate si count > pageSize', () async {
+      // Page 1 : 100 items, Page 2 : 50 items. Total attendu : 150.
+      final page1Items = List.generate(
+          100,
+          (i) => {
+                'id_sites_group': i + 1,
+                'sites_group_name': 'G${i + 1}',
+              });
+      final page2Items = List.generate(
+          50,
+          (i) => {
+                'id_sites_group': 101 + i,
+                'sites_group_name': 'G${101 + i}',
+              });
+
+      when(() => mockDio.get(
+            '/monitorings/refacto/BIG_MOD/sites_groups',
+            queryParameters: {'limit': 100, 'page': 1},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'count': 150,
+              'limit': 100,
+              'page': 1,
+              'items': page1Items,
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+      when(() => mockDio.get(
+            '/monitorings/refacto/BIG_MOD/sites_groups',
+            queryParameters: {'limit': 100, 'page': 2},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'count': 150,
+              'limit': 100,
+              'page': 2,
+              'items': page2Items,
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchSiteGroupsForModule('BIG_MOD', 'token'));
+
+      expect(result.length, 150);
+      expect(result.first.siteGroup.idSitesGroup, 1);
+      expect(result.last.siteGroup.idSitesGroup, 150);
+    });
+
+    test('throws NetworkException sur erreur réseau non-403', () async {
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites_groups',
+            queryParameters: any(named: 'queryParameters'),
+            options: any(named: 'options'),
+          )).thenThrow(DioException(
+        type: DioExceptionType.connectionTimeout,
+        requestOptions: RequestOptions(path: '/test'),
+      ));
+
+      expect(
+        () => suppressOutput(
+            () => sitesApi.fetchSiteGroupsForModule('MOD_TEST', 'token')),
+        throwsA(isA<NetworkException>()),
+      );
+    });
+  });
 }
