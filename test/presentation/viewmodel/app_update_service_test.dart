@@ -2,9 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_last_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/set_last_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -17,18 +15,10 @@ class MockDownloadAppUpdateUseCase extends Mock
 class MockGetTokenUseCase extends Mock
     implements GetTokenFromLocalStorageUseCase {}
 
-class MockGetLastDismissedUseCase extends Mock
-    implements GetLastDismissedAppVersionUseCase {}
-
-class MockSetLastDismissedUseCase extends Mock
-    implements SetLastDismissedAppVersionUseCase {}
-
 void main() {
   late MockCheckAppUpdateUseCase mockCheckUseCase;
   late MockDownloadAppUpdateUseCase mockDownloadUseCase;
   late MockGetTokenUseCase mockGetTokenUseCase;
-  late MockGetLastDismissedUseCase mockGetLastDismissedUseCase;
-  late MockSetLastDismissedUseCase mockSetLastDismissedUseCase;
   late AppUpdateService service;
 
   const updateV5 = MobileAppVersion(
@@ -42,21 +32,11 @@ void main() {
     mockCheckUseCase = MockCheckAppUpdateUseCase();
     mockDownloadUseCase = MockDownloadAppUpdateUseCase();
     mockGetTokenUseCase = MockGetTokenUseCase();
-    mockGetLastDismissedUseCase = MockGetLastDismissedUseCase();
-    mockSetLastDismissedUseCase = MockSetLastDismissedUseCase();
-
-    // Par défaut : rien n'a été refusé précédemment
-    when(() => mockGetLastDismissedUseCase.execute())
-        .thenAnswer((_) async => null);
-    when(() => mockSetLastDismissedUseCase.execute(any()))
-        .thenAnswer((_) async {});
 
     service = AppUpdateService(
       mockCheckUseCase,
       mockDownloadUseCase,
       mockGetTokenUseCase,
-      mockGetLastDismissedUseCase,
-      mockSetLastDismissedUseCase,
     );
   });
 
@@ -116,72 +96,71 @@ void main() {
       expect(service.state.state, AppUpdateState.idle);
     });
 
-    test('ne propose pas la même version deux fois dans la même session',
+    test(
+        'ne re-propose pas la même version dans la même session après un dismiss',
         () async {
       when(() => mockGetTokenUseCase.execute())
           .thenAnswer((_) async => 'token');
       when(() => mockCheckUseCase.execute('token'))
           .thenAnswer((_) async => updateV5);
 
-      // Premier check : aucune version persistée → updateAvailable
       await service.checkForUpdate();
       expect(service.state.state, AppUpdateState.updateAvailable);
 
-      // Dismiss : persiste '5'
-      await service.dismiss();
+      service.dismiss();
       expect(service.state.state, AppUpdateState.idle);
-      verify(() => mockSetLastDismissedUseCase.execute('5')).called(1);
 
-      // Simuler une relance : la version persistée est maintenant '5'
-      when(() => mockGetLastDismissedUseCase.execute())
-          .thenAnswer((_) async => '5');
-
-      // Deuxième check même version → idle (issue #170)
+      // Deuxième check dans la même session : la MAJ est toujours dispo côté
+      // serveur, mais le service ne la repropose pas pour ne pas spammer.
       await service.checkForUpdate();
       expect(service.state.state, AppUpdateState.idle);
     });
 
     test(
-        'issue #170 : une nouvelle instance du service ne re-propose pas une '
-        'version déjà refusée lors d\'une session précédente', () async {
-      // Simule une persistance laissée par une session antérieure
-      when(() => mockGetLastDismissedUseCase.execute())
-          .thenAnswer((_) async => '5');
+        'issue #170 : une nouvelle instance du service re-propose la MAJ '
+        'refusée lors d\'une session précédente (pas de persistance)',
+        () async {
       when(() => mockGetTokenUseCase.execute())
           .thenAnswer((_) async => 'token');
       when(() => mockCheckUseCase.execute('token'))
           .thenAnswer((_) async => updateV5);
 
-      // Nouvelle instance (aucun state en mémoire)
+      // Session 1 : propose → refus
+      await service.checkForUpdate();
+      service.dismiss();
+
+      // Session 2 : nouvelle instance, rien n'est persisté.
       final freshService = AppUpdateService(
         mockCheckUseCase,
         mockDownloadUseCase,
         mockGetTokenUseCase,
-        mockGetLastDismissedUseCase,
-        mockSetLastDismissedUseCase,
       );
 
       await freshService.checkForUpdate();
 
-      expect(freshService.state.state, AppUpdateState.idle,
+      expect(freshService.state.state, AppUpdateState.updateAvailable,
           reason:
-              'Une version déjà refusée ne doit plus être proposée au relancement');
+              'Le dismiss est volatile : une MAJ encore disponible doit être reproposée au relancement');
     });
 
-    test(
-        'issue #170 : propose à nouveau si le serveur publie une version '
-        'strictement plus récente que la dernière refusée', () async {
+    test('propose une nouvelle version même si une précédente a été refusée',
+        () async {
       const updateV6 = MobileAppVersion(
         idMobileApp: 1,
         appCode: 'MONITORING',
         versionCode: '6',
         urlApk: 'https://example.com/monitoring.apk',
       );
-      // Dernière version refusée : '5'. Le serveur expose maintenant '6'.
-      when(() => mockGetLastDismissedUseCase.execute())
-          .thenAnswer((_) async => '5');
+
       when(() => mockGetTokenUseCase.execute())
           .thenAnswer((_) async => 'token');
+      when(() => mockCheckUseCase.execute('token'))
+          .thenAnswer((_) async => updateV5);
+
+      await service.checkForUpdate();
+      service.dismiss();
+
+      // Le serveur expose maintenant v6 (version différente → proposée)
       when(() => mockCheckUseCase.execute('token'))
           .thenAnswer((_) async => updateV6);
 
@@ -201,7 +180,6 @@ void main() {
 
       await service.checkForUpdate();
 
-      // Mock download qui échoue
       when(() => mockDownloadUseCase.execute(
             any(),
             token: any(named: 'token'),
@@ -217,13 +195,12 @@ void main() {
     test('ne fait rien quand pas de mise à jour disponible', () async {
       await service.downloadAndInstall();
 
-      // Reste idle, pas de changement d'état
       expect(service.state.state, AppUpdateState.idle);
     });
   });
 
   group('dismiss', () {
-    test('remet le service à idle et persiste la version refusée', () async {
+    test('remet le service à idle', () async {
       when(() => mockGetTokenUseCase.execute())
           .thenAnswer((_) async => 'token');
       when(() => mockCheckUseCase.execute('token'))
@@ -232,15 +209,8 @@ void main() {
       await service.checkForUpdate();
       expect(service.state.state, AppUpdateState.updateAvailable);
 
-      await service.dismiss();
+      service.dismiss();
       expect(service.state.state, AppUpdateState.idle);
-      verify(() => mockSetLastDismissedUseCase.execute('5')).called(1);
-    });
-
-    test('ne persiste rien si aucun update disponible', () async {
-      await service.dismiss();
-
-      verifyNever(() => mockSetLastDismissedUseCase.execute(any()));
     });
   });
 }
