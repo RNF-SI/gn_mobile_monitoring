@@ -53,4 +53,9 @@ abstract class VisitesDatabase {
 
   /// Met à jour l'ID serveur d'une visite pour le suivi de synchronisation
   Future<bool> updateVisitServerId(int localVisitId, int serverId);
+
+  /// IDs des sites d'un module qui ont des visites non synchronisées
+  /// (serverVisitId NULL). Utilisé pour l'indicateur visuel dans la liste
+  /// des sites d'un module.
+  Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId);
 }

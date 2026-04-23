@@ -25,6 +25,22 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
   Future<List<TBaseVisit>> getVisitsBySite(int siteId) =>
       (select(tBaseVisits)..where((t) => t.idBaseSite.equals(siteId))).get();
 
+  /// IDs des sites du module qui ont au moins une visite pas encore téléversée
+  /// (serverVisitId NULL). Utilisé par l'UI pour signaler visuellement les
+  /// sites ayant des saisies locales en attente de synchronisation.
+  Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async {
+    final query = selectOnly(tBaseVisits, distinct: true)
+      ..addColumns([tBaseVisits.idBaseSite])
+      ..where(tBaseVisits.idModule.equals(moduleId) &
+          tBaseVisits.serverVisitId.isNull() &
+          tBaseVisits.idBaseSite.isNotNull());
+    final rows = await query.get();
+    return rows
+        .map((r) => r.read(tBaseVisits.idBaseSite))
+        .whereType<int>()
+        .toSet();
+  }
+
   Future<TBaseVisit> getVisitById(int id) =>
       (select(tBaseVisits)..where((t) => t.idBaseVisit.equals(id))).getSingle();
 

@@ -300,15 +300,16 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   List<String> _childrenTypes = [];
-  final ScrollController _sitesScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
-  static const int _sitesPerPage = 20;
-  int _currentSitesPage = 1;
   bool _isLoadingSites = false;
   List<dynamic> _displayedSites = [];
   List<dynamic> _filteredSites = [];
   List<dynamic> _allSites = [];
+
+  /// IDs des sites du module ayant au moins une visite non synchronisée.
+  /// Utilisé pour afficher un indicateur visuel sur la ligne du site (#XXX).
+  Set<int> _unsyncedSiteIds = {};
   List<dynamic> _filteredSiteGroups = [];
   String _searchQuery = '';
   bool _showGroupSearch = false;
@@ -454,9 +455,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   @override
   void initState() {
     super.initState();
-
-    // Ajouter un écouteur pour le défilement
-    _sitesScrollController.addListener(_handleScroll);
 
     // Charger la position GPS
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -618,17 +616,36 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_childrenTypes.contains('site') ||
         (module.sites != null && module.sites!.isNotEmpty)) {
       _loadInitialSites();
+      _loadUnsyncedSiteIds();
+    }
+  }
+
+  /// Récupère la liste des sites ayant des visites non téléversées pour ce
+  /// module. Silencieux en cas d'erreur : l'absence du badge ne bloque pas
+  /// l'affichage des sites.
+  Future<void> _loadUnsyncedSiteIds() async {
+    final ref = widget.ref;
+    if (ref == null) return;
+    final moduleId = (_updatedModule ?? widget.moduleInfo.module).id;
+    try {
+      final ids = await ref
+          .read(visitDatabaseProvider)
+          .getSiteIdsWithUnsyncedVisitsForModule(moduleId);
+      if (!mounted) return;
+      setState(() {
+        _unsyncedSiteIds = ids;
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement sites non synchronisés: $e');
     }
   }
 
   @override
   void dispose() {
-    _sitesScrollController.removeListener(_handleScroll);
     if (_tabController != null) {
       _tabController!.removeListener(_handleTabChange);
       _tabController!.dispose();
     }
-    _sitesScrollController.dispose();
     _searchController.dispose();
     _groupSearchController.dispose();
     super.dispose();
@@ -654,7 +671,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   void _loadInitialSites() {
     setState(() {
       _isLoadingSites = true;
-      _currentSitesPage = 1;
 
       // L'onglet Sites liste TOUS les sites du module (cohérent avec le
       // comportement GeoNature web où l'onglet Sites affiche les 156 points
@@ -681,7 +697,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }).toList();
     }
 
-    _displayedSites = _filteredSites.take(_sitesPerPage).toList();
+    _displayedSites = _filteredSites;
   }
 
   void _filterSiteGroups() {
@@ -700,49 +716,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
   }
 
-  void _loadMoreSites() {
-    if (_isLoadingSites) return;
-
-    setState(() {
-      _isLoadingSites = true;
-    });
-
-    final startIndex = _currentSitesPage * _sitesPerPage;
-    final endIndex = startIndex + _sitesPerPage;
-
-    if (startIndex < _filteredSites.length) {
-      setState(() {
-        _displayedSites.addAll(
-          _filteredSites.getRange(
-            startIndex,
-            endIndex > _filteredSites.length ? _filteredSites.length : endIndex,
-          ),
-        );
-        _currentSitesPage++;
-        _isLoadingSites = false;
-      });
-    } else {
-      setState(() {
-        _isLoadingSites = false;
-      });
-    }
-  }
-
   void _handleSearch(String value) {
     setState(() {
       _searchQuery = value;
-      _currentSitesPage = 1;
 
       _filterSites();
       _filterSiteGroups();
     });
-  }
-
-  void _handleScroll() {
-    if (_sitesScrollController.position.pixels >=
-        _sitesScrollController.position.maxScrollExtent - 200) {
-      _loadMoreSites();
-    }
   }
 
   @override
@@ -2387,27 +2367,49 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         cells: displayColumns.map((column) {
           // Colonne d'actions
           if (column == 'actions') {
+            final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
             return DataCell(
-              IconButton(
-                icon: const Icon(Icons.visibility, size: 20),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteDetailPage(
-                        site: site,
-                        moduleInfo: _updatedModule != null
-                            ? widget.moduleInfo
-                                .copyWith(module: _updatedModule!)
-                            : widget.moduleInfo,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.visibility, size: 20),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteDetailPage(
+                            site: site,
+                            moduleInfo: _updatedModule != null
+                                ? widget.moduleInfo
+                                    .copyWith(module: _updatedModule!)
+                                : widget.moduleInfo,
+                          ),
+                        ),
+                      );
+                      // L'utilisateur a pu créer/synchroniser une visite sur
+                      // ce site ; on rafraîchit le badge au retour.
+                      if (mounted) _loadUnsyncedSiteIds();
+                    },
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                  ),
+                  if (hasUnsyncedVisits)
+                    Tooltip(
+                      message: 'Saisies locales non téléversées',
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(left: 2),
+                        decoration: const BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  );
-                },
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
+                ],
               ),
             );
           }
