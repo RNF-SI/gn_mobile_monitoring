@@ -309,9 +309,20 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
         // Formater en fonction du type de widget
         switch (typeWidget) {
           case 'nomenclature':
-            // Idéalement récupérer le label de la nomenclature
-            // Pour l'instant, on utilise juste la valeur brute
-            displayValue = rawValue.toString();
+            // Les nomenclatures sauvegardées arrivent ici sous deux formes :
+            // - Map {id, cd_nomenclature, code_nomenclature_type, label}
+            //   (après passage par processFormDataForDisplay)
+            // - int (id brut) quand la résolution n'a pas pu se faire côté
+            //   viewmodel (ex : type de nomenclature non synchronisé).
+            if (rawValue is Map) {
+              final label = rawValue['label'] ??
+                  rawValue['label_fr'] ??
+                  rawValue['label_default'] ??
+                  rawValue['cd_nomenclature'];
+              displayValue = label?.toString() ?? '';
+            } else {
+              displayValue = rawValue.toString();
+            }
             break;
           case 'checkbox':
             displayValue = rawValue == true ? 'Oui' : 'Non';
