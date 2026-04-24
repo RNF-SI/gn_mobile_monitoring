@@ -58,14 +58,6 @@ class InMemoryLocalStorage implements LocalStorageRepository {
   @override
   Future<void> clearApiUrl() async => _store.remove('apiUrl');
 
-  @override
-  Future<void> setLastDismissedAppVersionCode(String versionCode) async =>
-      _store['lastDismissedAppVersionCode'] = versionCode;
-
-  @override
-  Future<String?> getLastDismissedAppVersionCode() async =>
-      _store['lastDismissedAppVersionCode'] as String?;
-
   /// Reset all stored values
   void reset() => _store.clear();
 }
