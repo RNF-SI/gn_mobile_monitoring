@@ -1,6 +1,7 @@
 import 'package:gn_mobile_monitoring/data/datasource/implementation/database/db.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/visites_database.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 
 class VisitesDatabaseImpl implements VisitesDatabase {
   Future<AppDatabase> get _db async => await DB.instance.database;
@@ -115,5 +116,11 @@ class VisitesDatabaseImpl implements VisitesDatabase {
   Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async {
     final db = await _db;
     return db.visitesDao.getSiteIdsWithUnsyncedVisitsForModule(moduleId);
+  }
+
+  @override
+  Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId) async {
+    final db = await _db;
+    return db.visitesDao.getVisitStatsForModule(moduleId);
   }
 }

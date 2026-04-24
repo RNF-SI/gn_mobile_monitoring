@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/data/db/database.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 
 abstract class VisitesDatabase {
   /// Get all visits
@@ -58,4 +59,9 @@ abstract class VisitesDatabase {
   /// (serverVisitId NULL). Utilisé pour l'indicateur visuel dans la liste
   /// des sites d'un module.
   Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId);
+
+  /// Dernière visite et nombre total de visites par site pour un module
+  /// donné, calculés depuis le cache local (inclut les saisies offline).
+  /// Clé = idBaseSite.
+  Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId);
 }

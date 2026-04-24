@@ -14,6 +14,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_orphan_sites_by_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
@@ -310,6 +311,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   /// IDs des sites du module ayant au moins une visite non synchronisée.
   /// Utilisé pour afficher un indicateur visuel sur la ligne du site (#XXX).
   Set<int> _unsyncedSiteIds = {};
+
+  /// Stats de visites (dernière visite, nombre total) par site pour ce
+  /// module, calculées localement depuis t_base_visits. Source des colonnes
+  /// "Dernier passage" et "Nb. passages" de l'onglet Sites.
+  Map<int, SiteVisitStats> _visitStatsBySiteId = {};
   List<dynamic> _filteredSiteGroups = [];
   String _searchQuery = '';
   bool _showGroupSearch = false;
@@ -616,27 +622,30 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_childrenTypes.contains('site') ||
         (module.sites != null && module.sites!.isNotEmpty)) {
       _loadInitialSites();
-      _loadUnsyncedSiteIds();
+      _loadVisitDerivedData();
     }
   }
 
-  /// Récupère la liste des sites ayant des visites non téléversées pour ce
-  /// module. Silencieux en cas d'erreur : l'absence du badge ne bloque pas
-  /// l'affichage des sites.
-  Future<void> _loadUnsyncedSiteIds() async {
+  /// Charge en parallèle les stats de visites par site et la liste des sites
+  /// ayant des visites non téléversées. Silencieux en cas d'erreur : la
+  /// dégradation se limite à des colonnes vides et à l'absence du badge.
+  Future<void> _loadVisitDerivedData() async {
     final ref = widget.ref;
     if (ref == null) return;
     final moduleId = (_updatedModule ?? widget.moduleInfo.module).id;
     try {
-      final ids = await ref
-          .read(visitDatabaseProvider)
-          .getSiteIdsWithUnsyncedVisitsForModule(moduleId);
+      final db = ref.read(visitDatabaseProvider);
+      final results = await Future.wait([
+        db.getSiteIdsWithUnsyncedVisitsForModule(moduleId),
+        db.getVisitStatsForModule(moduleId),
+      ]);
       if (!mounted) return;
       setState(() {
-        _unsyncedSiteIds = ids;
+        _unsyncedSiteIds = results[0] as Set<int>;
+        _visitStatsBySiteId = results[1] as Map<int, SiteVisitStats>;
       });
     } catch (e) {
-      debugPrint('Erreur chargement sites non synchronisés: $e');
+      debugPrint('Erreur chargement stats de visites: $e');
     }
   }
 
@@ -2352,6 +2361,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         'base_site_name': 'Nom',
         'base_site_code': 'Code',
         'base_site_description': 'Description',
+        'altitude_min': 'Altitude min',
+        'altitude_max': 'Altitude max',
+        'last_visit': 'Dernier passage',
+        'nb_visits': 'Nb. passages',
       },
     );
 
@@ -2388,8 +2401,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                         ),
                       );
                       // L'utilisateur a pu créer/synchroniser une visite sur
-                      // ce site ; on rafraîchit le badge au retour.
-                      if (mounted) _loadUnsyncedSiteIds();
+                      // ce site ; on rafraîchit le badge et les stats au
+                      // retour pour que "Dernier passage" / "Nb. passages"
+                      // reflètent la saisie immédiatement.
+                      if (mounted) _loadVisitDerivedData();
                     },
                     constraints: const BoxConstraints(
                       minWidth: 36,
@@ -2426,8 +2441,33 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             case 'base_site_description':
               value = site.baseSiteDescription;
               break;
+            case 'altitude_min':
+              value = site.altitudeMin;
+              break;
+            case 'altitude_max':
+              value = site.altitudeMax;
+              break;
+            case 'last_visit':
+              // Calculé localement depuis t_base_visits : prend en compte
+              // les saisies offline pas encore téléversées, contrairement
+              // au last_visit serveur. Formaté "dd/MM/yyyy" ici car la
+              // config `site` ne déclare généralement pas la colonne dans
+              // `generic`, donc formatDataCellValue n'a pas le type_widget
+              // `date` pour la formater elle-même.
+              final lastVisit =
+                  _visitStatsBySiteId[site.idBaseSite]?.lastVisit;
+              value = lastVisit != null
+                  ? '${lastVisit.day.toString().padLeft(2, '0')}/'
+                      '${lastVisit.month.toString().padLeft(2, '0')}/'
+                      '${lastVisit.year}'
+                  : null;
+              break;
+            case 'nb_visits':
+              value = _visitStatsBySiteId[site.idBaseSite]?.nbVisits ?? 0;
+              break;
             default:
-              // BaseSite n'a pas de propriété 'data', on laisse la valeur à null
+              // Colonne inconnue ou non encore exploitée (ex. "visitors",
+              // "comments" côté server complement → issue dédiée).
               value = null;
           }
 

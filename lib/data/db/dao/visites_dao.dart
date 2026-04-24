@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 
 part 'visites_dao.g.dart';
 
@@ -24,6 +25,38 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
           
   Future<List<TBaseVisit>> getVisitsBySite(int siteId) =>
       (select(tBaseVisits)..where((t) => t.idBaseSite.equals(siteId))).get();
+
+  /// Statistiques de visites agrégées par site pour un module donné. Pour
+  /// chaque site ayant au moins une visite enregistrée localement (uploadée
+  /// ou pas), on retourne la date de la dernière visite et le nombre total.
+  /// Source de la colonne "Dernier passage" et "Nb. passages" de l'onglet
+  /// Sites, remplaçant les champs serveur last_visit / nb_visits qui ne
+  /// tiennent pas compte des saisies offline pas encore téléversées.
+  Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId) async {
+    // visitDateMin est stocké en TEXT au format ISO ("YYYY-MM-DD..."), ce qui
+    // reste lexicographiquement ordonnable → MAX() texte = date max réelle.
+    final query = customSelect(
+      'SELECT id_base_site, COUNT(*) AS nb_visits, '
+      'MAX(visit_date_min) AS last_visit '
+      'FROM t_base_visits '
+      'WHERE id_module = ? AND id_base_site IS NOT NULL '
+      'GROUP BY id_base_site',
+      variables: [Variable.withInt(moduleId)],
+      readsFrom: {tBaseVisits},
+    );
+    final rows = await query.get();
+    final Map<int, SiteVisitStats> result = {};
+    for (final row in rows) {
+      final siteId = row.read<int>('id_base_site');
+      final nb = row.read<int>('nb_visits');
+      final lastVisitStr = row.readNullable<String>('last_visit');
+      result[siteId] = SiteVisitStats(
+        lastVisit: lastVisitStr != null ? DateTime.tryParse(lastVisitStr) : null,
+        nbVisits: nb,
+      );
+    }
+    return result;
+  }
 
   /// IDs des sites du module qui ont au moins une visite pas encore téléversée
   /// (serverVisitId NULL). Utilisé par l'UI pour signaler visuellement les

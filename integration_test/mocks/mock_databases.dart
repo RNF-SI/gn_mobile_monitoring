@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/data/entity/observation_detail_entity.dart'
 import 'package:gn_mobile_monitoring/data/entity/observation_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -408,6 +409,12 @@ class MockSitesDatabase implements SitesDatabase {
 class MockVisitesDatabase implements VisitesDatabase {
   final List<TBaseVisit> _visits = [];
 
+  /// Helper de seeding E2E : injecte directement des visites dans le mock
+  /// (sans passer par `insertVisit` qui attend un Companion).
+  void seedVisits(List<TBaseVisit> visits) {
+    _visits.addAll(visits);
+  }
+
   @override
   Future<List<TBaseVisit>> getAllVisits() async => List.from(_visits);
   @override
@@ -465,6 +472,28 @@ class MockVisitesDatabase implements VisitesDatabase {
               v.idBaseSite != null)
           .map((v) => v.idBaseSite!)
           .toSet();
+
+  @override
+  Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId) async {
+    final Map<int, List<TBaseVisit>> bySite = {};
+    for (final v in _visits) {
+      if (v.idModule != moduleId || v.idBaseSite == null) continue;
+      bySite.putIfAbsent(v.idBaseSite!, () => []).add(v);
+    }
+    return bySite.map((siteId, visits) {
+      DateTime? maxDate;
+      for (final v in visits) {
+        final parsed = DateTime.tryParse(v.visitDateMin);
+        if (parsed != null && (maxDate == null || parsed.isAfter(maxDate))) {
+          maxDate = parsed;
+        }
+      }
+      return MapEntry(
+        siteId,
+        SiteVisitStats(lastVisit: maxDate, nbVisits: visits.length),
+      );
+    });
+  }
 }
 
 // ============================================================================
