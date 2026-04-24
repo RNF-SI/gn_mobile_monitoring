@@ -455,6 +455,16 @@ class MockVisitesDatabase implements VisitesDatabase {
   @override
   Future<bool> updateVisitServerId(int localVisitId, int serverId) async =>
       true;
+
+  @override
+  Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async =>
+      _visits
+          .where((v) =>
+              v.idModule == moduleId &&
+              v.serverVisitId == null &&
+              v.idBaseSite != null)
+          .map((v) => v.idBaseSite!)
+          .toSet();
 }
 
 // ============================================================================
