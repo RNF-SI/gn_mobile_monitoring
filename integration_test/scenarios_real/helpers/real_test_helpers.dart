@@ -405,6 +405,50 @@ class RealTestHelpers {
         'Bouton non trouve dans la card de $moduleCode apres $timeout (la card s\'est probablement deplacee dans la liste)');
   }
 
+  /// Fait défiler la liste des modules jusqu'à ce que la card du module
+  /// cible soit montée dans le widget tree. Nécessaire depuis le commit
+  /// ccf2fde (tri + barre de recherche sur la liste des modules) : avec un
+  /// `ListView.builder`, les items hors viewport ne sont pas instanciés,
+  /// donc `find.byKey('module-card-XXX')` retourne vide tant qu'on n'a
+  /// pas scrollé jusqu'à eux. Utilise `scrollUntilVisible` qui gère
+  /// automatiquement cette contrainte.
+  static Future<void> scrollToModuleCard(
+    WidgetTester tester,
+    String moduleCode, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final moduleCard = find.byKey(Key('module-card-$moduleCode'));
+    if (moduleCard.evaluate().isNotEmpty) return;
+
+    final scrollable = find.byType(Scrollable).first;
+    final stopwatch = Stopwatch()..start();
+    // Remonter tout en haut d'abord pour partir d'un état connu.
+    try {
+      await tester.drag(scrollable, const Offset(0, 5000));
+      await pumpFor(tester, const Duration(milliseconds: 300));
+    } catch (_) {}
+
+    while (stopwatch.elapsed < timeout) {
+      if (moduleCard.evaluate().isNotEmpty) return;
+      try {
+        await tester.scrollUntilVisible(
+          moduleCard,
+          300,
+          scrollable: scrollable,
+          duration: const Duration(milliseconds: 50),
+        );
+        if (moduleCard.evaluate().isNotEmpty) return;
+      } catch (_) {
+        // scrollUntilVisible fail si on arrive en bas sans trouver.
+        // On laisse la boucle tenter une dernière fois avant de fail.
+      }
+      await pumpFor(tester, const Duration(milliseconds: 200));
+    }
+    fail(
+        'Card module-card-$moduleCode introuvable après scroll sur $timeout — '
+        'le module existe-t-il bien côté serveur pour cet utilisateur ?');
+  }
+
   /// Telecharge le module si necessaire et l'ouvre.
   /// Apres cette fonction, on est sur la page de detail du module.
   /// Pre-requis : on doit etre sur la HomePage avec la sync terminee.
@@ -419,6 +463,11 @@ class RealTestHelpers {
     final moduleCardKey = 'module-card-$moduleCode';
     final moduleCard = find.byKey(Key(moduleCardKey));
 
+    // Avec ListView.builder, la card n'existe dans le widget tree que si
+    // elle est dans/proche du viewport. Scroller jusqu'à elle avant de
+    // faire le waitForWidget.
+    await scrollToModuleCard(tester, moduleCode);
+
     // Verifier que la card du module est presente
     await waitForWidget(
       tester,
@@ -427,7 +476,7 @@ class RealTestHelpers {
       description: 'card du module $moduleCode',
     );
 
-    // Faire defiler jusqu'a la card si elle n'est pas visible (liste de modules longue)
+    // Centrer la card dans le viewport pour que les taps ensuite fonctionnent
     debugPrint('===== REGARDE l\'ecran : scroll vers $moduleCode =====');
     await tester.ensureVisible(moduleCard);
     await pumpFor(tester, visualDelay);
