@@ -149,8 +149,25 @@ void main() {
             .map((el) => (el.widget as Text).data ?? '')
             .where((s) => s.isNotEmpty)
             .toList();
-        debugPrint('--- DIAGNOSTIC : edit button absent, textes visibles ---');
+        final visibleKeys = find
+            .byWidgetPredicate((w) => w.key is ValueKey)
+            .evaluate()
+            .map((el) => (el.widget.key as ValueKey).value.toString())
+            .toSet()
+            .toList();
+        final visibleTypes = find
+            .byWidgetPredicate((w) =>
+                w.runtimeType.toString().startsWith('Site') ||
+                w.runtimeType.toString().startsWith('Form') ||
+                w.runtimeType.toString().contains('Page'))
+            .evaluate()
+            .map((el) => el.widget.runtimeType.toString())
+            .toSet()
+            .toList();
+        debugPrint('--- DIAGNOSTIC : edit button absent ---');
         debugPrint('Textes (${visibleTexts.length}): $visibleTexts');
+        debugPrint('Keys visibles (${visibleKeys.length}): $visibleKeys');
+        debugPrint('Widgets Page/Site/Form: $visibleTypes');
         debugPrint('--- FIN DIAGNOSTIC ---');
 
         // Fallback : naviguer back vers la liste et verifier que le site est bien present

@@ -196,8 +196,21 @@ class RealTestHelpers {
       await pumpFor(tester, const Duration(milliseconds: 500));
     }
 
-    debugPrint(
-        '[tapFormSave] Timeout: form toujours ouvert apres ${timeout.inSeconds}s');
+    // Timeout : on échoue au lieu de juste log, sinon le test continue
+    // en silence avec un faux succès et crashe plus tard sur un autre
+    // symptôme (ex: "bouton add-observation-button introuvable") qui masque
+    // la vraie cause (champ required non rempli, validation échouée).
+    final visibleTexts = find
+        .byType(Text)
+        .evaluate()
+        .map((e) => (e.widget as Text).data ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    fail(
+        '[tapFormSave] Timeout apres ${timeout.inSeconds}s : le form est toujours '
+        'ouvert, save refusé par la validation. Champs requis manquants '
+        'probablement. Textes visibles sur le form (${visibleTexts.length}): '
+        '$visibleTexts');
   }
 
   /// Login complet : ouvre l'app, saisit les credentials, attend la HomePage,

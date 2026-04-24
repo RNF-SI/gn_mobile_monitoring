@@ -623,6 +623,7 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
 
   /// Gère la sauvegarde du site
   Future<bool> _handleSave(BuildContext context, Map<String, dynamic> formData) async {
+    debugPrint('[SiteFormWrapper] _handleSave called, isEditMode=$_isEditMode');
     final viewModel = ref.read(siteFormViewModelProvider(
         (widget.moduleId ?? 1, widget.siteGroup?.idSitesGroup)).notifier);
 
@@ -685,14 +686,17 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
         }
       } else {
         // Création
+        debugPrint('[SiteFormWrapper] Calling createSiteFromFormData');
         siteId = await viewModel.createSiteFromFormData(
           formData,
           moduleId: widget.moduleId ?? 1,
           geomOverride: geomOverride,
         );
+        debugPrint('[SiteFormWrapper] createSiteFromFormData returned siteId=$siteId');
         success = siteId != null && siteId > 0;
 
         if (success) {
+          debugPrint('[SiteFormWrapper] Save OK, siteId=$siteId');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Site créé avec succès'),
@@ -702,20 +706,46 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
           // Naviguer vers la page de détail du site
           if (context.mounted) {
             final newSite = await viewModel.getSiteById(siteId);
+            debugPrint(
+                '[SiteFormWrapper] getSiteById returned: ${newSite != null ? "site(name=${newSite.baseSiteName}, isLocal=${newSite.isLocal})" : "null"}');
             final createVisit = await _askForVisit(context);
+            debugPrint(
+                '[SiteFormWrapper] _askForVisit returned: $createVisit, context.mounted=${context.mounted}');
             if (createVisit) {
             if (newSite != null && context.mounted) {
               await _navigateToVisitForm(context, newSite, widget.siteGroup, widget.moduleInfo);
                   return false; // Navigation personnalisée faite, empêcher le pop automatique
               }
             } else {
-                // L'utilisateur a dit "Non", naviguer vers la page de détail
-            if (newSite != null && context.mounted) {
-              await _navigateToSiteGroupDetailPage(context, widget.siteGroup, widget.moduleInfo);
-              await _navigateToSiteDetailPage(context, newSite, widget.siteGroup, widget.moduleInfo);
-              return false; // Navigation personnalisée faite, empêcher le pop automatique
+              // L'utilisateur a dit "Non" : on remplace la SiteFormPage par
+              // la SiteDetailPage du site nouvellement créé. L'ancien flux
+              // enchaînait pop + pushReplacement SiteGroupDetailPage puis
+              // push SiteDetailPage : le pop invalidait le context utilisé
+              // par le pushReplacement, produisant un état intermédiaire où
+              // la SiteDetailPage ne se montait jamais complètement
+              // (observé en E2E : "Textes visibles: [Site]" seul).
+              debugPrint(
+                  '[SiteFormWrapper] else branch: newSite!=null=${newSite != null}, mounted=${context.mounted}, moduleInfo!=null=${widget.moduleInfo != null}');
+              if (newSite != null && context.mounted &&
+                  widget.moduleInfo != null) {
+                debugPrint(
+                    '[SiteFormWrapper] pushReplacement → SiteDetailPage');
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SiteDetailPage(
+                      site: newSite,
+                      moduleInfo: widget.moduleInfo!,
+                      fromSiteGroup: widget.siteGroup,
+                    ),
+                  ),
+                );
+                return false; // Navigation personnalisée faite, empêcher le pop automatique
+              } else {
+                debugPrint(
+                    '[SiteFormWrapper] pushReplacement SKIP — fall-through au return success');
+              }
             }
-          }
           }
         }
       }
