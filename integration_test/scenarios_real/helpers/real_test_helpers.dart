@@ -723,11 +723,43 @@ class RealTestHelpers {
     final itemsCount = items.evaluate().length;
     final indexToTap = itemsCount > 1 ? 1 : 0;
 
-    try {
-      await tester.tap(items.at(indexToTap));
-    } catch (_) {
-      await tester.tap(items.at(indexToTap), warnIfMissed: false);
+    // Le menu dropdown est un overlay et peut rendre les items au-delà du
+    // viewport (ex: 13 items nomenclature sur un petit écran). Dans ce cas
+    // tester.tap échoue silencieusement avec un warning "Offset would not
+    // hit test" et le champ reste vide → le form save ne se valide jamais
+    // (observé sur real_site_management et real_many_taxa).
+    //
+    // Stratégie robuste :
+    //   1. scrollUntilVisible dans le Scrollable du menu (si présent) pour
+    //      amener l'item cible dans le viewport
+    //   2. tap avec warnIfMissed: false en dernier recours pour taper à
+    //      l'offset center même si le hit-test strict échoue
+    final itemFinder = items.at(indexToTap);
+    final menuScrollable = find.descendant(
+      of: find.byType(Overlay),
+      matching: find.byType(Scrollable),
+    );
+    if (menuScrollable.evaluate().isNotEmpty) {
+      try {
+        await tester.scrollUntilVisible(
+          itemFinder,
+          100,
+          scrollable: menuScrollable.last,
+          duration: const Duration(milliseconds: 50),
+        );
+      } catch (_) {
+        // Si l'item est au-dessus du viewport, scrollUntilVisible échoue
+        // avec un "scroll extents" error. On ignore et on tente ensureVisible.
+      }
     }
+    try {
+      await tester.ensureVisible(itemFinder);
+      await pumpFor(tester, const Duration(milliseconds: 300));
+    } catch (_) {}
+    // warnIfMissed: false pour tolérer le cas où l'item est partiellement
+    // obscurci par un ScrollEnd indicator. Le tap à l'offset du centre
+    // atteint quand même la zone tappable de l'item.
+    await tester.tap(itemFinder, warnIfMissed: false);
     await pumpFor(tester, const Duration(seconds: 2));
     debugPrint('Item dropdown selectionne pour $label');
   }
