@@ -213,4 +213,36 @@ void main() {
       expect(service.state.state, AppUpdateState.idle);
     });
   });
+
+  group('checkForUpdateManually', () {
+    test(
+        'repropose la MAJ après un dismiss dans la session (issue #170, '
+        'bouton "Mise à jour de l\'application")', () async {
+      when(() => mockGetTokenUseCase.execute())
+          .thenAnswer((_) async => 'token');
+      when(() => mockCheckUseCase.execute('token'))
+          .thenAnswer((_) async => updateV5);
+
+      await service.checkForUpdate();
+      service.dismiss();
+
+      // Un checkForUpdate "normal" ne la reproposerait pas dans cette session
+      await service.checkForUpdate();
+      expect(service.state.state, AppUpdateState.idle);
+
+      // Le check manuel lève le garde-fou et repropose la MAJ
+      await service.checkForUpdateManually();
+      expect(service.state.state, AppUpdateState.updateAvailable);
+    });
+
+    test('reste idle si aucune MAJ disponible', () async {
+      when(() => mockGetTokenUseCase.execute())
+          .thenAnswer((_) async => 'token');
+      when(() => mockCheckUseCase.execute('token'))
+          .thenAnswer((_) async => null);
+
+      await service.checkForUpdateManually();
+      expect(service.state.state, AppUpdateState.idle);
+    });
+  });
 }

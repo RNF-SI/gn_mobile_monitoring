@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
@@ -32,6 +33,8 @@ class MenuActions extends ConsumerWidget {
         _buildMenuItem(
             Icons.upload, 'Téléversement', 'sync_upload'),
         const PopupMenuDivider(),
+        _buildMenuItem(
+            Icons.system_update, 'Mise à jour de l\'application', 'app_update'),
         _buildMenuItem(
             Icons.bug_report, 'Export des logs', 'export_logs'),
         _buildMenuItem(
@@ -74,6 +77,9 @@ class MenuActions extends ConsumerWidget {
       case 'export_logs':
         await LogExportDialog.show(context);
         break;
+      case 'app_update':
+        await _checkAppUpdate(context, ref);
+        break;
       case 'version':
         _showVersionAlert(context);
         break;
@@ -86,6 +92,23 @@ class MenuActions extends ConsumerWidget {
       case 'logout':
         await _confirmLogout(context, authViewModel, ref);
         break;
+    }
+  }
+
+  /// Vérifie manuellement la disponibilité d'une nouvelle version de l'APK.
+  /// Utile pour un utilisateur qui a cliqué "Plus tard" dans la session et
+  /// veut reprendre le téléchargement sans redémarrer l'app (#170).
+  /// Si une MAJ est disponible, le dialog s'ouvre via le listener déjà actif
+  /// sur appUpdateServiceProvider dans HomePage ; sinon on informe
+  /// l'utilisateur via une SnackBar.
+  Future<void> _checkAppUpdate(BuildContext context, WidgetRef ref) async {
+    await ref.read(appUpdateServiceProvider.notifier).checkForUpdateManually();
+    if (!context.mounted) return;
+    final status = ref.read(appUpdateServiceProvider);
+    if (status.state != AppUpdateState.updateAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('L\'application est à jour.')),
+      );
     }
   }
 

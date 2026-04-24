@@ -141,4 +141,13 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
     _dismissedThisSession = state.availableUpdate?.versionCode;
     state = const AppUpdateStatus(state: AppUpdateState.idle);
   }
+
+  /// Re-vérifie la disponibilité d'une MAJ en levant le garde-fou "dismissed
+  /// this session". Utilisé par le bouton "Mise à jour de l'application" du
+  /// menu, qui permet à l'utilisateur de rouvrir le dialog après avoir dit
+  /// "Plus tard" dans la même session sans devoir redémarrer l'app.
+  Future<void> checkForUpdateManually() async {
+    _dismissedThisSession = null;
+    await checkForUpdate();
+  }
 }
