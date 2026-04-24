@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
@@ -47,6 +48,11 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   Map<String, dynamic>? _enrichedGroupData;
   Future<Map<String, dynamic>>? _enrichmentFuture;
 
+  /// Stats de visites par site (calculées depuis t_base_visits). Utilisées
+  /// pour afficher "dernier passage / nb passages" en subtitle de chaque
+  /// site listé dans le groupe. Clé = idBaseSite.
+  Map<int, SiteVisitStats> _visitStatsBySiteId = {};
+
   @override
   void initState() {
     super.initState();
@@ -58,7 +64,39 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               .notifier)
           .refresh();
       _loadUserLocation();
+      _loadVisitStats();
     });
+  }
+
+  /// Charge les stats de visites du module courant. Silencieux en cas
+  /// d'erreur : l'absence du subtitle ne bloque pas l'affichage des sites.
+  Future<void> _loadVisitStats() async {
+    try {
+      final stats = await ref
+          .read(visitDatabaseProvider)
+          .getVisitStatsForModule(widget.moduleInfo.module.id);
+      if (!mounted) return;
+      setState(() {
+        _visitStatsBySiteId = stats;
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement stats de visites du groupe: $e');
+    }
+  }
+
+  /// Format du subtitle "3 passages · dernier le 20/03/2026". Renvoie null
+  /// si aucune visite, pour que ExpansionTile ne réserve pas d'espace.
+  String? _buildVisitStatsSubtitle(int idBaseSite) {
+    final stats = _visitStatsBySiteId[idBaseSite];
+    if (stats == null || stats.nbVisits == 0) return null;
+    final plural = stats.nbVisits > 1 ? 's' : '';
+    final last = stats.lastVisit;
+    if (last == null) {
+      return '${stats.nbVisits} passage$plural';
+    }
+    final dd = last.day.toString().padLeft(2, '0');
+    final mm = last.month.toString().padLeft(2, '0');
+    return '${stats.nbVisits} passage$plural · dernier le $dd/$mm/${last.year}';
   }
 
   @override
@@ -1009,6 +1047,20 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               },
               tooltip: 'Voir les détails',
             ),
+            subtitle: () {
+              final statsLine = _buildVisitStatsSubtitle(site.idBaseSite);
+              if (statsLine == null) return null;
+              return Padding(
+                padding: const EdgeInsets.only(top: 4.0),
+                child: Text(
+                  statsLine,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                  ),
+                ),
+              );
+            }(),
             title: Row(
               children: [
                 Expanded(
