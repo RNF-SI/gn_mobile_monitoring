@@ -187,31 +187,6 @@ class ModulesRepositoryImpl implements ModulesRepository {
     }
   }
 
-  /// Détermine si un module utilise les groupes de sites.
-  /// Utilise bDrawSitesGroup du complément et la configuration du module.
-  /// Retourne true par défaut (conservateur) si aucun signal n'est disponible.
-  Future<bool> _moduleUsesSiteGroups(int moduleId, Map<String, dynamic>? config) async {
-    // Signal 1 : bDrawSitesGroup du complément
-    final complement = await database.getModuleComplementById(moduleId);
-    if (complement?.bDrawSitesGroup != null) {
-      return complement!.bDrawSitesGroup!;
-    }
-
-    // Signal 2 : configuration du module
-    if (config != null) {
-      final moduleConfig = ModuleConfiguration.fromJson(config);
-      final childrenTypes = moduleConfig.module?.childrenTypes;
-      if (childrenTypes != null && childrenTypes.isNotEmpty && !childrenTypes.contains('sites_group')) {
-        return false;
-      }
-      if (moduleConfig.sitesGroup == null) {
-        return false;
-      }
-    }
-
-    return true; // conservateur par défaut
-  }
-
   @override
   Future<void> downloadCompleteModule(
     int moduleId,
@@ -401,20 +376,22 @@ class ModulesRepositoryImpl implements ModulesRepository {
       onProgressUpdate?.call(0.80);
       await sitesRepository.fetchSitesForModule(moduleCode, token);
 
-      // 6. Download site groups for the module (seulement si le module les utilise)
-      final usesSiteGroups = await _moduleUsesSiteGroups(moduleId, config);
-      if (usesSiteGroups) {
-        onStepUpdate?.call('Groupes de sites');
-        onProgressUpdate?.call(0.95);
-        try {
-          await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
-        } catch (e) {
-          // Fallback gracieux : si les groupes de sites échouent, continuer sans
-          print('Warning: Could not fetch site groups for module $moduleCode: $e');
-        }
-      } else {
-        print('Module $moduleCode does not use site groups, skipping.');
-        onProgressUpdate?.call(0.95);
+      // 6. Download site groups for the module.
+      // On tente systématiquement l'appel : l'API renvoie une liste vide (ou
+      // 403 pour les modules qui ne supportent pas les groupes) et
+      // fetchSiteGroupsForModule gère ces cas. L'ancien gating par
+      // bDrawSitesGroup était buggy — un complément local avec cette colonne
+      // à false (héritage d'une sync antérieure) skippait définitivement le
+      // téléchargement, même si le serveur avait bien des groupes à fournir.
+      // Le flux "Mettre à jour les données" n'a jamais eu ce check, d'où
+      // l'asymétrie observée en prod.
+      onStepUpdate?.call('Groupes de sites');
+      onProgressUpdate?.call(0.95);
+      try {
+        await sitesRepository.fetchSiteGroupsForModule(moduleCode, token);
+      } catch (e) {
+        // Fallback gracieux : si les groupes de sites échouent, continuer sans
+        print('Warning: Could not fetch site groups for module $moduleCode: $e');
       }
     } catch (e) {
       throw Exception('Failed to download module data: $e');
