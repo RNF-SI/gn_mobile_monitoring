@@ -26,6 +26,7 @@ class _LoginPageState extends State<LoginPage> {
 
   bool _isLoading = false;
   bool _hasSubmitted = false;
+  bool _showHttpsWarning = false;
 
   void loading() {
     setState(() {
@@ -40,6 +41,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   void initState() {
     super.initState();
+    _apiUrl.addListener(_updateHttpsWarning);
     // Initialize API URL field from storage or use default
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
@@ -61,8 +63,18 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  void _updateHttpsWarning() {
+    final shouldWarn = Config.isInsecureHttpForProduction(_apiUrl.text);
+    if (shouldWarn != _showHttpsWarning) {
+      setState(() {
+        _showHttpsWarning = shouldWarn;
+      });
+    }
+  }
+
   @override
   void dispose() {
+    _apiUrl.removeListener(_updateHttpsWarning);
     super.dispose();
   }
 
@@ -197,21 +209,24 @@ class _LoginPageState extends State<LoginPage> {
                               autovalidateMode: _hasSubmitted
                                   ? AutovalidateMode.onUserInteraction
                                   : AutovalidateMode.disabled,
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'URL du serveur GeoNature',
                                 hintText: 'https://geonature.mondomaine.org',
-                                helperText:
-                                    'https:// est ajouté automatiquement si aucun schéma n\'est saisi',
+                                helperText: _showHttpsWarning
+                                    ? 'Avertissement : http:// peut être refusé par le serveur. Préférez https://.'
+                                    : 'https:// est ajouté automatiquement si aucun schéma n\'est saisi',
                                 helperMaxLines: 2,
+                                helperStyle: _showHttpsWarning
+                                    ? const TextStyle(
+                                        color: Colors.orange,
+                                        fontWeight: FontWeight.w600,
+                                      )
+                                    : null,
                               ),
                               keyboardType: TextInputType.url,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'L\'URL du serveur est nécessaire';
-                                }
-                                if (Config.isInsecureHttpForProduction(value)) {
-                                  return 'HTTPS est requis pour un serveur en production. '
-                                      'Remplacez http:// par https://.';
                                 }
                                 return null;
                               },
