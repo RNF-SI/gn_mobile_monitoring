@@ -29,6 +29,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_visit_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_dismissed_app_version_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_dismissed_app_version_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
@@ -234,6 +238,14 @@ final checkAppUpdateUseCaseProvider = Provider<CheckAppUpdateUseCase>(
 final downloadAppUpdateUseCaseProvider = Provider<DownloadAppUpdateUseCase>(
     (ref) =>
         DownloadAppUpdateUseCaseImpl(ref.watch(appUpdateRepositoryProvider)));
+
+final getDismissedAppVersionUseCaseProvider =
+    Provider<GetDismissedAppVersionUseCase>((ref) =>
+        GetDismissedAppVersionUseCaseImpl(ref.watch(localStorageProvider)));
+
+final setDismissedAppVersionUseCaseProvider =
+    Provider<SetDismissedAppVersionUseCase>((ref) =>
+        SetDismissedAppVersionUseCaseImpl(ref.watch(localStorageProvider)));
 
 final downloadCompleteModuleUseCaseProvider =
     Provider<DownloadCompleteModuleUseCase>(

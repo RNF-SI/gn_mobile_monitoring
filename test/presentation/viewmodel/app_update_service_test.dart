@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -15,10 +17,26 @@ class MockDownloadAppUpdateUseCase extends Mock
 class MockGetTokenUseCase extends Mock
     implements GetTokenFromLocalStorageUseCase {}
 
+class MockGetDismissedAppVersionUseCase extends Mock
+    implements GetDismissedAppVersionUseCase {}
+
+class MockSetDismissedAppVersionUseCase extends Mock
+    implements SetDismissedAppVersionUseCase {}
+
+/// Persistance en mémoire du versionCode refusé, partagée entre instances.
+/// Permet de simuler le SharedPreferences réel pour les tests qui vérifient
+/// le comportement à travers une "relance" de l'app (instance fraîche).
+class _InMemoryDismissedStore {
+  String? value;
+}
+
 void main() {
   late MockCheckAppUpdateUseCase mockCheckUseCase;
   late MockDownloadAppUpdateUseCase mockDownloadUseCase;
   late MockGetTokenUseCase mockGetTokenUseCase;
+  late MockGetDismissedAppVersionUseCase mockGetDismissedUseCase;
+  late MockSetDismissedAppVersionUseCase mockSetDismissedUseCase;
+  late _InMemoryDismissedStore dismissedStore;
   late AppUpdateService service;
 
   const updateV5 = MobileAppVersion(
@@ -28,16 +46,33 @@ void main() {
     urlApk: 'https://example.com/monitoring.apk',
   );
 
+  AppUpdateService buildService() {
+    return AppUpdateService(
+      mockCheckUseCase,
+      mockDownloadUseCase,
+      mockGetTokenUseCase,
+      mockGetDismissedUseCase,
+      mockSetDismissedUseCase,
+    );
+  }
+
   setUp(() {
     mockCheckUseCase = MockCheckAppUpdateUseCase();
     mockDownloadUseCase = MockDownloadAppUpdateUseCase();
     mockGetTokenUseCase = MockGetTokenUseCase();
+    mockGetDismissedUseCase = MockGetDismissedAppVersionUseCase();
+    mockSetDismissedUseCase = MockSetDismissedAppVersionUseCase();
+    dismissedStore = _InMemoryDismissedStore();
 
-    service = AppUpdateService(
-      mockCheckUseCase,
-      mockDownloadUseCase,
-      mockGetTokenUseCase,
-    );
+    when(() => mockGetDismissedUseCase.execute())
+        .thenAnswer((_) async => dismissedStore.value);
+    when(() => mockSetDismissedUseCase.execute(any()))
+        .thenAnswer((invocation) async {
+      dismissedStore.value =
+          invocation.positionalArguments.first as String?;
+    });
+
+    service = buildService();
   });
 
   group('checkForUpdate', () {
@@ -117,8 +152,8 @@ void main() {
     });
 
     test(
-        'issue #170 : une nouvelle instance du service re-propose la MAJ '
-        'refusée lors d\'une session précédente (pas de persistance)',
+        'fix issue #170 : une MAJ refusée est persistée et n\'est plus '
+        'reproposée après relance de l\'app (nouvelle instance du service)',
         () async {
       when(() => mockGetTokenUseCase.execute())
           .thenAnswer((_) async => 'token');
@@ -128,19 +163,59 @@ void main() {
       // Session 1 : propose → refus
       await service.checkForUpdate();
       service.dismiss();
+      // Laisse passer le fire-and-forget de persistance.
+      await Future.delayed(Duration.zero);
 
-      // Session 2 : nouvelle instance, rien n'est persisté.
-      final freshService = AppUpdateService(
-        mockCheckUseCase,
-        mockDownloadUseCase,
-        mockGetTokenUseCase,
-      );
+      // Session 2 : nouvelle instance ; le dismiss est rechargé depuis le store.
+      final freshService = buildService();
 
       await freshService.checkForUpdate();
 
-      expect(freshService.state.state, AppUpdateState.updateAvailable,
+      expect(freshService.state.state, AppUpdateState.idle,
           reason:
-              'Le dismiss est volatile : une MAJ encore disponible doit être reproposée au relancement');
+              'Le dismiss est persisté : la même version ne doit plus être reproposée après relance');
+    });
+
+    test(
+        'reste idle si l\'API renvoie un versionCode vide '
+        '(évite le dialog "version " vide)',
+        () async {
+      const updateEmpty = MobileAppVersion(
+        idMobileApp: 1,
+        appCode: 'MONITORING',
+        versionCode: '',
+        urlApk: 'https://example.com/monitoring.apk',
+      );
+
+      when(() => mockGetTokenUseCase.execute())
+          .thenAnswer((_) async => 'token');
+      when(() => mockCheckUseCase.execute('token'))
+          .thenAnswer((_) async => updateEmpty);
+
+      await service.checkForUpdate();
+
+      expect(service.state.state, AppUpdateState.idle);
+    });
+
+    test(
+        'ne relance pas un check quand un dialog updateAvailable est déjà '
+        'à l\'écran (évite la double popup boot + sync.success)',
+        () async {
+      when(() => mockGetTokenUseCase.execute())
+          .thenAnswer((_) async => 'token');
+      when(() => mockCheckUseCase.execute('token'))
+          .thenAnswer((_) async => updateV5);
+
+      await service.checkForUpdate();
+      expect(service.state.state, AppUpdateState.updateAvailable);
+
+      // Un 2e check (déclenché par sync.success après le boot) doit être ignoré
+      // pour ne pas rejouer la transition idle → updateAvailable et rouvrir
+      // un 2e dialog côté HomePage.
+      await service.checkForUpdate();
+
+      verify(() => mockCheckUseCase.execute('token')).called(1);
+      expect(service.state.state, AppUpdateState.updateAvailable);
     });
 
     test('propose une nouvelle version même si une précédente a été refusée',

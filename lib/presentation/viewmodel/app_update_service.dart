@@ -3,7 +3,9 @@ import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case.dart';
 import 'package:open_filex/open_filex.dart';
 
 enum AppUpdateState { idle, checking, updateAvailable, downloading, error }
@@ -42,6 +44,8 @@ final appUpdateServiceProvider =
     ref.read(checkAppUpdateUseCaseProvider),
     ref.read(downloadAppUpdateUseCaseProvider),
     ref.read(getTokenFromLocalStorageUseCaseProvider),
+    ref.read(getDismissedAppVersionUseCaseProvider),
+    ref.read(setDismissedAppVersionUseCaseProvider),
   );
 });
 
@@ -49,28 +53,45 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
   final CheckAppUpdateUseCase _checkAppUpdateUseCase;
   final DownloadAppUpdateUseCase _downloadAppUpdateUseCase;
   final GetTokenFromLocalStorageUseCase _getTokenUseCase;
+  final GetDismissedAppVersionUseCase _getDismissedUseCase;
+  final SetDismissedAppVersionUseCase _setDismissedUseCase;
 
-  // Version refusée par l'utilisateur pendant cette session uniquement.
-  // Non persistée : à chaque relance de l'app, une MAJ encore disponible sera
-  // reproposée (issue #170). Une MAJ déjà installée n'est plus proposée car
-  // l'API ne la renvoie que si strictement supérieure à la version installée.
-  String? _dismissedThisSession;
+  // Version refusée par l'utilisateur, persistée en SharedPreferences pour ne
+  // pas reproposer la même MAJ après un redémarrage de l'app. Un check manuel
+  // (menu "Mise à jour de l'application") ou une nouvelle version côté serveur
+  // lèvent ce garde-fou.
+  String? _dismissedVersionCode;
+  bool _dismissedLoaded = false;
 
   AppUpdateService(
     this._checkAppUpdateUseCase,
     this._downloadAppUpdateUseCase,
     this._getTokenUseCase,
+    this._getDismissedUseCase,
+    this._setDismissedUseCase,
   ) : super(const AppUpdateStatus());
 
+  Future<void> _ensureDismissedLoaded() async {
+    if (_dismissedLoaded) return;
+    _dismissedVersionCode = await _getDismissedUseCase.execute();
+    _dismissedLoaded = true;
+  }
+
   Future<void> checkForUpdate() async {
-    // Ne pas vérifier si déjà en cours de vérification ou téléchargement
+    // Ne pas relancer une vérification si :
+    // - une est déjà en cours (checking) ou un download tourne ;
+    // - un dialog updateAvailable est déjà à l'écran (sinon une 2e check
+    //   déclenchée par sync.success rejouerait la transition checking →
+    //   updateAvailable et la listener du HomePage rouvrirait un 2e dialog).
     if (state.state == AppUpdateState.checking ||
-        state.state == AppUpdateState.downloading) {
+        state.state == AppUpdateState.downloading ||
+        state.state == AppUpdateState.updateAvailable) {
       return;
     }
 
     try {
       state = state.copyWith(state: AppUpdateState.checking);
+      await _ensureDismissedLoaded();
 
       final token = await _getTokenUseCase.execute();
       if (token == null || token.isEmpty) {
@@ -81,9 +102,17 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
       final update = await _checkAppUpdateUseCase.execute(token);
 
       if (update != null) {
-        if (_dismissedThisSession != null &&
-            _dismissedThisSession == update.versionCode) {
-          // Déjà dit "Plus tard" pour cette version dans cette session.
+        // Réponse d'API incomplète (versionCode vide) : on ignore pour éviter
+        // un dialog "version " vide affiché côté UI.
+        final versionCode = update.versionCode;
+        if (versionCode.isEmpty) {
+          state = const AppUpdateStatus(state: AppUpdateState.idle);
+          return;
+        }
+
+        if (_dismissedVersionCode != null &&
+            _dismissedVersionCode == versionCode) {
+          // Déjà refusée par l'utilisateur (et persistée) : on ne repropose pas.
           state = const AppUpdateStatus(state: AppUpdateState.idle);
           return;
         }
@@ -135,19 +164,26 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
     }
   }
 
-  /// Ferme le dialog de MAJ et évite de le rouvrir pour la même version
-  /// jusqu'au prochain lancement de l'app (#170).
+  /// Ferme le dialog de MAJ et persiste le refus pour ne pas reproposer la
+  /// même version au prochain lancement (#170). Une nouvelle version côté
+  /// serveur ou un check manuel lèvent ce garde-fou.
   void dismiss() {
-    _dismissedThisSession = state.availableUpdate?.versionCode;
+    final code = state.availableUpdate?.versionCode;
+    _dismissedVersionCode = code;
+    _dismissedLoaded = true;
     state = const AppUpdateStatus(state: AppUpdateState.idle);
+    // Fire-and-forget : la persistance ne doit pas bloquer la fermeture du dialog.
+    _setDismissedUseCase.execute(code);
   }
 
-  /// Re-vérifie la disponibilité d'une MAJ en levant le garde-fou "dismissed
-  /// this session". Utilisé par le bouton "Mise à jour de l'application" du
+  /// Re-vérifie la disponibilité d'une MAJ en levant le garde-fou
+  /// "dismissed". Utilisé par le bouton "Mise à jour de l'application" du
   /// menu, qui permet à l'utilisateur de rouvrir le dialog après avoir dit
-  /// "Plus tard" dans la même session sans devoir redémarrer l'app.
+  /// "Plus tard".
   Future<void> checkForUpdateManually() async {
-    _dismissedThisSession = null;
+    _dismissedVersionCode = null;
+    _dismissedLoaded = true;
+    await _setDismissedUseCase.execute(null);
     await checkForUpdate();
   }
 }

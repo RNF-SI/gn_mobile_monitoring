@@ -17,4 +17,9 @@ abstract class LocalStorageRepository {
   Future<void> setApiUrl(String apiUrl);
   Future<String?> getApiUrl();
   Future<void> clearApiUrl();
+
+  // Versionner la dernière mise à jour applicative refusée par l'utilisateur,
+  // pour ne pas la reproposer au relancement (cf. AppUpdateService, issue #170).
+  Future<String?> getDismissedAppVersionCode();
+  Future<void> setDismissedAppVersionCode(String? versionCode);
 }
