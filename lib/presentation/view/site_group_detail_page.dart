@@ -53,6 +53,11 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
   /// site listé dans le groupe. Clé = idBaseSite.
   Map<int, SiteVisitStats> _visitStatsBySiteId = {};
 
+  /// IDs des sites du module ayant des visites locales pas encore téléversées.
+  /// Sert à afficher le badge orange "saisies en attente" sur chaque card
+  /// site, cohérent avec la vue tableau de `module_detail_page`.
+  Set<int> _unsyncedSiteIds = {};
+
   @override
   void initState() {
     super.initState();
@@ -64,20 +69,25 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
               .notifier)
           .refresh();
       _loadUserLocation();
-      _loadVisitStats();
+      _loadVisitDerivedData();
     });
   }
 
-  /// Charge les stats de visites du module courant. Silencieux en cas
-  /// d'erreur : l'absence du subtitle ne bloque pas l'affichage des sites.
-  Future<void> _loadVisitStats() async {
+  /// Charge en parallèle les stats de visites par site et la liste des sites
+  /// ayant des visites non téléversées. Silencieux en cas d'erreur : la
+  /// dégradation se limite à des subtitles vides et à l'absence du badge.
+  Future<void> _loadVisitDerivedData() async {
     try {
-      final stats = await ref
-          .read(visitDatabaseProvider)
-          .getVisitStatsForModule(widget.moduleInfo.module.id);
+      final db = ref.read(visitDatabaseProvider);
+      final moduleId = widget.moduleInfo.module.id;
+      final results = await Future.wait([
+        db.getSiteIdsWithUnsyncedVisitsForModule(moduleId),
+        db.getVisitStatsForModule(moduleId),
+      ]);
       if (!mounted) return;
       setState(() {
-        _visitStatsBySiteId = stats;
+        _unsyncedSiteIds = results[0] as Set<int>;
+        _visitStatsBySiteId = results[1] as Map<int, SiteVisitStats>;
       });
     } catch (e) {
       debugPrint('Erreur chargement stats de visites du groupe: $e');
@@ -1031,21 +1041,42 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             tilePadding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             childrenPadding: EdgeInsets.zero,
-            leading: IconButton(
-              icon: const Icon(Icons.visibility, size: 20),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SiteDetailPage(
-                      site: site,
-                      moduleInfo: widget.moduleInfo,
-                      fromSiteGroup: widget.siteGroup,
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteDetailPage(
+                          site: site,
+                          moduleInfo: widget.moduleInfo,
+                          fromSiteGroup: widget.siteGroup,
+                        ),
+                      ),
+                    );
+                    // Au retour, rafraîchir subtitle (stats) et badge orange
+                    // (saisies non téléversées) pour qu'une visite saisie sur
+                    // ce site s'y reflète immédiatement.
+                    if (mounted) _loadVisitDerivedData();
+                  },
+                  tooltip: 'Voir les détails',
+                ),
+                if (_unsyncedSiteIds.contains(site.idBaseSite))
+                  Tooltip(
+                    message: 'Saisies locales non téléversées',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                );
-              },
-              tooltip: 'Voir les détails',
+              ],
             ),
             subtitle: () {
               final statsLine = _buildVisitStatsSubtitle(site.idBaseSite);
@@ -1309,9 +1340,16 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           );
         }
 
-        // Filtrer les propriétés meta et ne garder que celles présentes dans les données
+        // Filtrer les propriétés meta et ne garder que celles présentes dans les données.
+        // `nb_visits` / `last_visit` sont exclus : ils dupliquent le subtitle
+        // "X passages · dernier le …" et leur valeur (issue du complément
+        // serveur) est de toute façon obsolète tant que la nouvelle visite
+        // locale n'est pas téléversée — on préfère toujours la stat locale.
         final filteredProperties = propertiesToShow.where((key) {
-          return !key.startsWith('meta_') && siteData.containsKey(key);
+          return !key.startsWith('meta_') &&
+              key != 'nb_visits' &&
+              key != 'last_visit' &&
+              siteData.containsKey(key);
         }).toList();
 
         return Padding(
