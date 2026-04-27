@@ -1,5 +1,12 @@
 /// Classe utilitaire pour formatter les valeurs affichées dans l'interface utilisateur
 class ValueFormatter {
+  /// Détecte une chaîne ISO date (YYYY-MM-DD seule, ou suivie d'un T et d'une
+  /// heure ISO). On reformatte en `dd/MM/yyyy` pour l'affichage côté UI.
+  /// Strict pour éviter de reformater une chaîne quelconque qui commencerait
+  /// par 4-2-2 chiffres mais qui serait du texte.
+  static final RegExp _isoDateRegex =
+      RegExp(r'^(\d{4})-(\d{2})-(\d{2})(?:T[\d:.\-+Z]+)?$');
+
   /// Formate une valeur quelconque pour l'affichage dans l'UI
   ///
   /// Gère les cas spéciaux comme les nomenclatures, les listes, les objets complexes, etc.
@@ -10,6 +17,15 @@ class ValueFormatter {
       return formatNomenclature(value);
     } else if (value is List) {
       return formatList(value);
+    } else if (value is String) {
+      // Reformatte les dates ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss) en
+      // français (dd/MM/yyyy) pour rester homogène avec les `formatDateString`
+      // utilisées ailleurs dans l'app.
+      final match = _isoDateRegex.firstMatch(value);
+      if (match != null) {
+        return '${match[3]}/${match[2]}/${match[1]}';
+      }
+      return value;
     } else {
       return value.toString();
     }

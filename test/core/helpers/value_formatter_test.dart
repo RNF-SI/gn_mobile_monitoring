@@ -20,6 +20,20 @@ void main() {
         expect(ValueFormatter.format([]), equals('Non renseigné'));
       });
 
+      test('reformatte une chaîne ISO date en jj/MM/aaaa', () {
+        expect(ValueFormatter.format('2026-04-24'), equals('24/04/2026'));
+        // Date-heure ISO : on garde uniquement la date côté UI, comme
+        // `formatDateString` dans le reste de l'app.
+        expect(ValueFormatter.format('2026-04-24T18:30:00.000Z'),
+            equals('24/04/2026'));
+      });
+
+      test('laisse intactes les chaînes qui ne sont pas une date ISO', () {
+        expect(ValueFormatter.format('hello'), equals('hello'));
+        expect(ValueFormatter.format('not-a-date'), equals('not-a-date'));
+        expect(ValueFormatter.format('24/04/2026'), equals('24/04/2026'));
+      });
+
       test('should call formatNomenclature for Map values', () {
         final map = {'label': 'Test Label'};
         expect(ValueFormatter.format(map), equals('Test Label'));
