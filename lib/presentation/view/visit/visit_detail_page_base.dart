@@ -50,6 +50,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
     with SingleTickerProviderStateMixin {
   bool _hasShownObservationDialog = false;
   BaseVisit? _fullVisit;
+  int? _nbObservations;
   TabController? _tabController;
 
   @override
@@ -119,6 +120,21 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
         );
       }
     });
+
+    // Charger le nombre d'observations associées pour pouvoir l'injecter dans
+    // objectData (et donc l'afficher dans le bloc "Données spécifiques de la
+    // visite" si la config liste `nb_observations`).
+    final obsViewModel = widget.ref
+        .read(observationsProvider(widget.visit.idBaseVisit).notifier);
+    obsViewModel.getObservationsByVisitId().then((observations) {
+      if (mounted) {
+        setState(() {
+          _nbObservations = observations.length;
+        });
+      }
+    }).catchError((_) {
+      // Silencieux : si le compte échoue, le champ s'affichera "Non renseigné".
+    });
   }
 
   void _proposeObservationCreation() {
@@ -170,10 +186,21 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
   @override
   Map<String, dynamic> get objectData {
-    if (_fullVisit?.data != null) {
-      return _fullVisit!.data!;
-    }
-    return {};
+    final visit = _fullVisit ?? widget.visit;
+    // Hydrate uniquement les champs "système" stockés sur l'entité (et pas
+    // dans la JSON `data`) qu'un utilisateur pourrait voir listés dans le
+    // `displayProperties` du module : ID, FK, dataset, digitiser, compteur
+    // d'observations. On évite les champs déjà rendus par le bandeau d'info
+    // de la page (date de visite, commentaires) pour ne pas dupliquer.
+    return {
+      if (visit.data != null) ...visit.data!,
+      'id_base_visit': visit.idBaseVisit,
+      if (visit.idBaseSite != null) 'id_base_site': visit.idBaseSite,
+      'id_dataset': visit.idDataset,
+      'id_module': visit.idModule,
+      if (visit.idDigitiser != null) 'id_digitiser': visit.idDigitiser,
+      if (_nbObservations != null) 'nb_observations': _nbObservations,
+    };
   }
 
   @override
