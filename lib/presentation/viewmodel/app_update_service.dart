@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
@@ -151,10 +152,15 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
         },
       );
 
-      // Ouvrir l'APK avec l'installeur Android
+      // Ouvrir l'APK avec l'installeur Android. OpenFilex.open lance l'intent
+      // dans un autre process : on peut donc terminer notre activité juste
+      // après pour ne pas laisser une 2e instance de l'app dans le sélecteur
+      // de tâches récentes (problème observé sous MIUI).
       await OpenFilex.open(filePath);
-
       state = const AppUpdateStatus(state: AppUpdateState.idle);
+      // Petit délai pour laisser l'intent s'afficher avant de fermer l'app.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await SystemNavigator.pop();
     } catch (e) {
       state = AppUpdateStatus(
         state: AppUpdateState.error,
