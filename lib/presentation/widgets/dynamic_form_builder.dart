@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/change_rule_processor.dart';
@@ -121,7 +122,35 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Précharger les nomenclatures nécessaires pour ce formulaire
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadNomenclatures();
+      _initializeCurrentUserFields();
     });
+  }
+
+  /// Pré-remplit les champs `CurrentUserField` (datalist + type_util:user mono)
+  /// avec l'utilisateur connecté, sauf si une valeur a déjà été chargée
+  /// (cas d'une édition d'observation existante avec un déterminateur défini).
+  Future<void> _initializeCurrentUserFields() async {
+    final userFields = _unifiedSchema.entries
+        .where((e) => e.value['widget_type'] == 'CurrentUserField')
+        .map((e) => e.key)
+        .toList();
+    if (userFields.isEmpty) return;
+
+    final userId = await ref
+        .read(getUserIdFromLocalStorageUseCaseProvider)
+        .execute();
+    if (userId <= 0) return;
+    if (!mounted) return;
+
+    var changed = false;
+    for (final fieldName in userFields) {
+      final current = _formValues[fieldName];
+      if (current == null || current == 0) {
+        _formValues[fieldName] = userId;
+        changed = true;
+      }
+    }
+    if (changed) setState(() {});
   }
 
   @override
@@ -936,6 +965,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             description: description);
       case 'ObserverField':
         return _buildObserverField(fieldName, label, isRequired,
+            description: description);
+      case 'CurrentUserField':
+        return _buildCurrentUserField(fieldName, label, isRequired,
             description: description);
       case 'NomenclatureSelector':
         return _buildNomenclatureField(
@@ -1782,6 +1814,93 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  /// Encadré commun aux champs auto-remplis avec l'utilisateur connecté
+  /// (observers et determiner). Affiche le label, l'éventuelle description,
+  /// un bloc enfant optionnel (par ex. les chips d'observateurs supplémentaires),
+  /// puis un container en lecture seule avec un message explicatif.
+  Widget _buildAutoFilledUserField({
+    required String label,
+    required bool required,
+    required String autoMessage,
+    String? description,
+    Widget? extraContent,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          if (extraContent != null) ...[
+            extraContent,
+            const SizedBox(height: 4),
+          ],
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoMessage,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Champ datalist mono-utilisateur (par ex. `determiner` dans Pièges IA).
+  /// Tant que l'API `users/menu` n'est pas câblée, on aligne le comportement
+  /// sur ObserverField : auto-remplissage avec l'utilisateur connecté et
+  /// affichage en lecture seule.
+  Widget _buildCurrentUserField(String fieldName, String label, bool required,
+      {String? description}) {
+    return _buildAutoFilledUserField(
+      label: label,
+      required: required,
+      description: description,
+      autoMessage: 'Vous êtes automatiquement assigné comme $label',
+    );
+  }
+
   // Pour les champs de type "observers"
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
@@ -1846,84 +1965,36 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Afficher les chips uniquement si la liste contient plusieurs observateurs
     final bool shouldShowChips = observersList.length > 1;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 13.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            required ? '$label *' : label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          if (description != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          const SizedBox(height: 4),
-          // Afficher les observateurs sélectionnés uniquement en mode édition
-          if (shouldShowChips)
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 4.0,
-              children: observersList.map<Widget>((observer) {
-                return Chip(
-                  label: Text('Observateur #$observer'),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
-                  labelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                  deleteIcon: Icon(Icons.close,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                  onDeleted: () {
-                    setState(() {
-                      (_formValues[fieldName] as List).remove(observer);
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          if (shouldShowChips) const SizedBox(height: 4),
-          // Champ désactivé pour indiquer que les observateurs sont déjà sélectionnés
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(4.0),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.person,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Vous êtes automatiquement ajouté comme observateur',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final Widget? chips = shouldShowChips
+        ? Wrap(
+            spacing: 8.0,
+            runSpacing: 4.0,
+            children: observersList.map<Widget>((observer) {
+              return Chip(
+                label: Text('Observateur #$observer'),
+                backgroundColor:
+                    Theme.of(context).colorScheme.primaryContainer,
+                labelStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                deleteIcon: Icon(Icons.close,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                onDeleted: () {
+                  setState(() {
+                    (_formValues[fieldName] as List).remove(observer);
+                  });
+                },
+              );
+            }).toList(),
+          )
+        : null;
+
+    return _buildAutoFilledUserField(
+      label: label,
+      required: required,
+      description: description,
+      autoMessage: 'Vous êtes automatiquement ajouté comme observateur',
+      extraContent: chips,
     );
   }
 

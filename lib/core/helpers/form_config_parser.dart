@@ -580,6 +580,12 @@ class FormConfigParser {
                 .contains('nomenclatures/nomenclature/')) {
           return 'NomenclatureSelector';
         }
+        // Datalist mono-utilisateur : aligné sur ObserverField (auto-rempli avec
+        // l'utilisateur connecté, en attendant le câblage de l'API users/menu).
+        if (fieldConfig['type_util'] == 'user' &&
+            fieldConfig['multiple'] != true) {
+          return 'CurrentUserField';
+        }
         // Sinon utiliser le widget datalist générique
         return 'DatalistField';
       case 'nomenclature':
