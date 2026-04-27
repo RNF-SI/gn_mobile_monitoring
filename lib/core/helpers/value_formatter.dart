@@ -68,16 +68,19 @@ class ValueFormatter {
     }
   }
 
-  /// Formatte un libellé (par exemple pour les en-têtes de colonnes ou les titres de champs)
-  /// 
-  /// Exemple: "id_nomenclature_type" -> "Id Nomenclature Type"
+  /// Formatte un libellé dérivé d'un nom de champ snake_case (utilisé en
+  /// fallback quand aucun `attribut_label` n'est défini dans la config).
+  /// Applique une casse "phrase" française : on majusculise uniquement la
+  /// première lettre, le reste reste en bas de casse pour ne pas torturer
+  /// les articles (`d'`, `de`, `du`, `le`, `la`...).
+  ///
+  /// Exemples :
+  /// - `id_nomenclature_type` -> `Id nomenclature type`
+  /// - `nombre_d_observations` -> `Nombre d observations`
+  /// - `date_min` -> `Date min`
   static String formatLabel(String key) {
-    return key
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((word) => word.isNotEmpty 
-            ? word[0].toUpperCase() + word.substring(1) 
-            : '')
-        .join(' ');
+    final spaced = key.replaceAll('_', ' ').toLowerCase();
+    if (spaced.isEmpty) return spaced;
+    return spaced[0].toUpperCase() + spaced.substring(1);
   }
 }

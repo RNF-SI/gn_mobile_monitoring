@@ -252,10 +252,12 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
 
     return columns.map((column) {
       String label = column;
+      bool labelFromConfig = false;
 
       // Vérifier d'abord les labels prédéfinis
       if (predefinedLabels.containsKey(column)) {
         label = predefinedLabels[column]!;
+        labelFromConfig = true;
       }
       // Sinon rechercher dans la configuration
       else {
@@ -264,11 +266,16 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
           if (schema.containsKey(column) &&
               schema[column].containsKey('attribut_label')) {
             label = schema[column]['attribut_label'];
+            labelFromConfig = true;
           }
           // Vérifier dans generic
           else if (itemConfig.generic != null &&
               itemConfig.generic!.containsKey(column)) {
-            label = itemConfig.generic![column]!.attributLabel ?? column;
+            final genericLabel = itemConfig.generic![column]!.attributLabel;
+            if (genericLabel != null) {
+              label = genericLabel;
+              labelFromConfig = true;
+            }
           }
           // Vérifier dans specific
           else if (itemConfig.specific != null &&
@@ -278,13 +285,19 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
             if (specificConfig != null &&
                 specificConfig.containsKey('attribut_label')) {
               label = specificConfig['attribut_label'];
+              labelFromConfig = true;
             }
           }
         }
       }
 
-      // Formater le libellé pour une meilleure présentation
-      label = ValueFormatter.formatLabel(label);
+      // Ne formater (snake_case → casse phrase) que si on est tombé sur le
+      // nom de colonne brut. Un libellé fourni par la config ou un mapping
+      // prédéfini est déjà rédigé proprement (ex. "Nombre d'observations")
+      // et le formatLabel naïf le casserait en "Nombre D'observations".
+      if (!labelFromConfig) {
+        label = ValueFormatter.formatLabel(label);
+      }
 
       return DataColumn(
         label: Text(
