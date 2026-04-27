@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:dio/dio.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/bad_credentials_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/authentication_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/user_entity.dart';
@@ -50,9 +51,7 @@ class AuthenticationApiImpl extends BaseApi implements AuthenticationApi {
       }
 
       if (statusCode == 401) {
-        throw Exception(
-          "Identifiants invalides. Vérifiez votre login et votre mot de passe.",
-        );
+        throw BadCredentialsException();
       }
 
       if (statusCode == 200) {

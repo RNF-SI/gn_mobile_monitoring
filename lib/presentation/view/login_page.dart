@@ -27,6 +27,9 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   bool _hasSubmitted = false;
   bool _showHttpsWarning = false;
+  bool _isPinging = false;
+  bool? _pingReachable;
+  String _lastPingedUrl = '';
 
   void loading() {
     setState(() {
@@ -65,11 +68,42 @@ class _LoginPageState extends State<LoginPage> {
 
   void _updateHttpsWarning() {
     final shouldWarn = Config.isInsecureHttpForProduction(_apiUrl.text);
-    if (shouldWarn != _showHttpsWarning) {
+    final pingObsolete =
+        _pingReachable != null && _apiUrl.text.trim() != _lastPingedUrl;
+    if (shouldWarn != _showHttpsWarning || pingObsolete) {
       setState(() {
         _showHttpsWarning = shouldWarn;
+        if (pingObsolete) {
+          _pingReachable = null;
+        }
       });
     }
+  }
+
+  Future<void> _pingServer() async {
+    if (_isPinging) return;
+    final urlToPing = _apiUrl.text.trim();
+    setState(() {
+      _isPinging = true;
+      _pingReachable = null;
+    });
+    final ref = ProviderScope.containerOf(context);
+    final auth = ref.read(authenticationViewModelProvider);
+    final result = await auth.pingServer(urlToPing);
+    if (!mounted) return;
+    setState(() {
+      _isPinging = false;
+      _pingReachable = result.reachable;
+      _lastPingedUrl = urlToPing;
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(result.message),
+        backgroundColor:
+            result.reachable ? Colors.green.shade700 : Colors.red.shade700,
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
@@ -222,6 +256,32 @@ class _LoginPageState extends State<LoginPage> {
                                         fontWeight: FontWeight.w600,
                                       )
                                     : null,
+                                suffixIcon: _isPinging
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(12),
+                                        child: SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(
+                                              strokeWidth: 2),
+                                        ),
+                                      )
+                                    : IconButton(
+                                        tooltip: 'Tester la connexion au serveur',
+                                        icon: Icon(
+                                          _pingReachable == null
+                                              ? Icons.network_check
+                                              : _pingReachable == true
+                                                  ? Icons.check_circle
+                                                  : Icons.error,
+                                          color: _pingReachable == null
+                                              ? null
+                                              : _pingReachable == true
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                        ),
+                                        onPressed: _pingServer,
+                                      ),
                               ),
                               keyboardType: TextInputType.url,
                               validator: (value) {
