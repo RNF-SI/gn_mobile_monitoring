@@ -1227,6 +1227,37 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  /// Résout une borne numérique (min/max) pouvant venir :
+  /// - directement comme `num` (cas standard, ex. `"min": 1`)
+  /// - sous forme de chaîne numérique (ex. `"min": "5"`)
+  /// - sous forme d'expression arrow function (ex. Transects Amphibiens :
+  ///   `"min": "({value}) => value.count_min"`) qui pointe sur la valeur
+  ///   d'un autre champ du même formulaire.
+  /// Retourne `null` si la borne ne peut être résolue, ce qui désactive la
+  /// contrainte côté validator au lieu de lever une exception runtime
+  /// (problème observé : le bouton "Valider" ne réagissait plus).
+  num? _resolveNumericBound(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    if (raw is String) {
+      final asNumber = num.tryParse(raw);
+      if (asNumber != null) return asNumber;
+      final trimmed = raw.trim();
+      // Formats supportés :
+      //   ({value}) => value.<field>
+      //   (value) => value.<field>
+      final match = RegExp(
+              r'^\(\{?value\}?\)\s*=>\s*value\.(\w+)$')
+          .firstMatch(trimmed);
+      if (match != null) {
+        final referenced = _formValues[match.group(1)!];
+        if (referenced is num) return referenced;
+        if (referenced is String) return num.tryParse(referenced);
+      }
+    }
+    return null;
+  }
+
   Widget _buildNumberField(String fieldName, String label, bool required,
       Map<String, dynamic> validations,
       {String? description}) {
@@ -1283,11 +1314,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 if (number == null) {
                   return 'Veuillez entrer un nombre valide';
                 }
-                if (validations['min'] != null && number < validations['min']) {
-                  return 'La valeur doit être supérieure ou égale à ${validations['min']}';
+                final minVal = _resolveNumericBound(validations['min']);
+                if (minVal != null && number < minVal) {
+                  return 'La valeur doit être supérieure ou égale à $minVal';
                 }
-                if (validations['max'] != null && number > validations['max']) {
-                  return 'La valeur doit être inférieure ou égale à ${validations['max']}';
+                final maxVal = _resolveNumericBound(validations['max']);
+                if (maxVal != null && number > maxVal) {
+                  return 'La valeur doit être inférieure ou égale à $maxVal';
                 }
               }
               return null;
