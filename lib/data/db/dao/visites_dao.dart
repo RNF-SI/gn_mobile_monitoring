@@ -5,12 +5,14 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 
 part 'visites_dao.g.dart';
 
-@DriftAccessor(tables: [TBaseVisits, TVisitComplements, CorVisitObserver])
+@DriftAccessor(
+    tables: [TBaseVisits, TVisitComplements, CorVisitObserver, TSiteComplements])
 class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
   VisitesDao(super.db);
 
@@ -70,6 +72,31 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
     final rows = await query.get();
     return rows
         .map((r) => r.read(tBaseVisits.idBaseSite))
+        .whereType<int>()
+        .toSet();
+  }
+
+  /// IDs des groupes de sites du module dont au moins un site a une visite
+  /// pas encore téléversée. Le rattachement site→groupe est porté par
+  /// `t_sites_complements.id_sites_group`. Permet à la vue groupes de
+  /// remonter le badge orange même quand l'utilisateur n'a pas encore
+  /// déplié le groupe pour voir le site concerné.
+  Future<Set<int>> getSiteGroupIdsWithUnsyncedVisitsForModule(
+      int moduleId) async {
+    final query = customSelect(
+      'SELECT DISTINCT tsc.id_sites_group AS id_sites_group '
+      'FROM t_base_visits tbv '
+      'INNER JOIN t_sites_complements tsc '
+      '  ON tsc.id_base_site = tbv.id_base_site '
+      'WHERE tbv.id_module = ? '
+      '  AND tbv.server_visit_id IS NULL '
+      '  AND tsc.id_sites_group IS NOT NULL',
+      variables: [Variable.withInt(moduleId)],
+      readsFrom: {tBaseVisits, tSiteComplements},
+    );
+    final rows = await query.get();
+    return rows
+        .map((r) => r.readNullable<int>('id_sites_group'))
         .whereType<int>()
         .toSet();
   }

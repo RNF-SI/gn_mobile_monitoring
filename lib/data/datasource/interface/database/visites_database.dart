@@ -60,6 +60,11 @@ abstract class VisitesDatabase {
   /// des sites d'un module.
   Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId);
 
+  /// IDs des groupes de sites d'un module dont au moins un site contient une
+  /// visite non synchronisée. Utilisé pour propager le badge orange à la
+  /// vue groupes (sans avoir à déplier chaque groupe).
+  Future<Set<int>> getSiteGroupIdsWithUnsyncedVisitsForModule(int moduleId);
+
   /// Dernière visite et nombre total de visites par site pour un module
   /// donné, calculés depuis le cache local (inclut les saisies offline).
   /// Clé = idBaseSite.

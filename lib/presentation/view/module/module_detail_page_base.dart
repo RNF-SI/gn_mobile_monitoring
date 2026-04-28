@@ -312,6 +312,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   /// Utilisé pour afficher un indicateur visuel sur la ligne du site (#XXX).
   Set<int> _unsyncedSiteIds = {};
 
+  /// IDs des groupes de sites du module dont au moins un site a une visite
+  /// non synchronisée. Permet d'afficher le badge orange sur la ligne du
+  /// groupe avant même que l'utilisateur ne le déplie.
+  Set<int> _unsyncedSiteGroupIds = {};
+
   /// Stats de visites (dernière visite, nombre total) par site pour ce
   /// module, calculées localement depuis t_base_visits. Source des colonnes
   /// "Dernier passage" et "Nb. passages" de l'onglet Sites.
@@ -638,11 +643,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       final results = await Future.wait([
         db.getSiteIdsWithUnsyncedVisitsForModule(moduleId),
         db.getVisitStatsForModule(moduleId),
+        db.getSiteGroupIdsWithUnsyncedVisitsForModule(moduleId),
       ]);
       if (!mounted) return;
       setState(() {
         _unsyncedSiteIds = results[0] as Set<int>;
         _visitStatsBySiteId = results[1] as Map<int, SiteVisitStats>;
+        _unsyncedSiteGroupIds = results[2] as Set<int>;
       });
     } catch (e) {
       debugPrint('Erreur chargement stats de visites: $e');
@@ -1500,22 +1507,44 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             tilePadding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             childrenPadding: EdgeInsets.zero,
-            leading: IconButton(
-              icon: const Icon(Icons.visibility, size: 20),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SiteGroupDetailPage(
-                      siteGroup: group,
-                      moduleInfo: _updatedModule != null
-                          ? widget.moduleInfo.copyWith(module: _updatedModule!)
-                          : widget.moduleInfo,
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteGroupDetailPage(
+                          siteGroup: group,
+                          moduleInfo: _updatedModule != null
+                              ? widget.moduleInfo
+                                  .copyWith(module: _updatedModule!)
+                              : widget.moduleInfo,
+                        ),
+                      ),
+                    );
+                    // Au retour : une visite a pu être créée/synchronisée
+                    // dans un site du groupe — on rafraîchit le badge orange
+                    // au niveau groupe également.
+                    if (mounted) _loadVisitDerivedData();
+                  },
+                  tooltip: 'Voir les détails',
+                ),
+                if (_unsyncedSiteGroupIds.contains(group.idSitesGroup))
+                  Tooltip(
+                    message: 'Saisies locales non téléversées',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                );
-              },
-              tooltip: 'Voir les détails',
+              ],
             ),
             title: Row(
               children: [
