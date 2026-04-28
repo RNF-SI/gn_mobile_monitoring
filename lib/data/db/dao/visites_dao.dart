@@ -112,7 +112,7 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
 
   /// IDs des groupes de sites du module dont au moins un site a une visite
   /// pas encore téléversée. Le rattachement site→groupe est porté par
-  /// `t_sites_complements.id_sites_group`. Permet à la vue groupes de
+  /// `t_site_complements.id_sites_group`. Permet à la vue groupes de
   /// remonter le badge orange même quand l'utilisateur n'a pas encore
   /// déplié le groupe pour voir le site concerné.
   Future<Set<int>> getSiteGroupIdsWithUnsyncedVisitsForModule(
@@ -120,7 +120,7 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
     final query = customSelect(
       'SELECT DISTINCT tsc.id_sites_group AS id_sites_group '
       'FROM t_base_visits tbv '
-      'INNER JOIN t_sites_complements tsc '
+      'INNER JOIN t_site_complements tsc '
       '  ON tsc.id_base_site = tbv.id_base_site '
       'WHERE tbv.id_module = ? '
       '  AND tbv.server_visit_id IS NULL '
