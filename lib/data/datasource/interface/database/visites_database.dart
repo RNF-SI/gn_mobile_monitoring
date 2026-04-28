@@ -69,4 +69,9 @@ abstract class VisitesDatabase {
   /// donné, calculés depuis le cache local (inclut les saisies offline).
   /// Clé = idBaseSite.
   Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId);
+
+  /// Nombre d'observations rattachées à chaque visite d'un module donné.
+  /// Utilisé pour la colonne `nb_observations` du tableau de visites et
+  /// pour l'affichage au détail visite. Clé = idBaseVisit.
+  Future<Map<int, int>> getObservationCountByVisitForModule(int moduleId);
 }

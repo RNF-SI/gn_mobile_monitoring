@@ -181,8 +181,16 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties =>
-      objectConfig?.displayProperties ?? objectConfig?.displayList;
+  List<String>? get displayProperties {
+    final base = objectConfig?.displayProperties ?? objectConfig?.displayList;
+    if (base == null || base.isEmpty) return base;
+    // On affiche systématiquement le compteur d'observations à la fin des
+    // propriétés de la visite, même si le module ne le met pas dans
+    // `display_properties` (souvent il est seulement dans `display_list`).
+    // La valeur est hydratée dans objectData via _nbObservations.
+    if (base.contains('nb_observations')) return base;
+    return [...base, 'nb_observations'];
+  }
 
   @override
   Map<String, dynamic> get objectData {

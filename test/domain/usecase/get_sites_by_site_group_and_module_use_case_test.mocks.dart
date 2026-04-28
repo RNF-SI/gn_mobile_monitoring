@@ -147,6 +147,16 @@ class MockSitesRepository extends _i1.Mock implements _i3.SitesRepository {
       ) as _i4.Future<List<_i6.BaseSite>>);
 
   @override
+  _i4.Future<List<_i6.BaseSite>> getOrphanSitesByModuleId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOrphanSitesByModuleId,
+          [moduleId],
+        ),
+        returnValue: _i4.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
+      ) as _i4.Future<List<_i6.BaseSite>>);
+
+  @override
   _i4.Future<void> fetchSitesForModule(
     String? moduleCode,
     String? token,

@@ -5,14 +5,20 @@ import 'package:flutter/foundation.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/cor_visit_observer.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_base_visits.dart';
+import 'package:gn_mobile_monitoring/data/db/tables/t_observations.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_sites_complements.dart';
 import 'package:gn_mobile_monitoring/data/db/tables/t_visit_complements.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 
 part 'visites_dao.g.dart';
 
-@DriftAccessor(
-    tables: [TBaseVisits, TVisitComplements, CorVisitObserver, TSiteComplements])
+@DriftAccessor(tables: [
+  TBaseVisits,
+  TVisitComplements,
+  CorVisitObserver,
+  TSiteComplements,
+  TObservations,
+])
 class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
   VisitesDao(super.db);
 
@@ -74,6 +80,34 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
         .map((r) => r.read(tBaseVisits.idBaseSite))
         .whereType<int>()
         .toSet();
+  }
+
+  /// Nombre d'observations rattachées à chaque visite d'un module donné,
+  /// calculé localement. Utilisé pour la colonne `nb_observations` du
+  /// tableau de visites (display_list) et pour l'affichage au détail visite.
+  /// Clé = idBaseVisit, valeur = compte d'observations. Inclut 0 pour les
+  /// visites sans observation grâce à un LEFT JOIN.
+  Future<Map<int, int>> getObservationCountByVisitForModule(
+      int moduleId) async {
+    final query = customSelect(
+      'SELECT tbv.id_base_visit AS id_base_visit, '
+      '       COUNT(t_obs.id_observation) AS nb_observations '
+      'FROM t_base_visits tbv '
+      'LEFT JOIN t_observations t_obs '
+      '  ON t_obs.id_base_visit = tbv.id_base_visit '
+      'WHERE tbv.id_module = ? '
+      'GROUP BY tbv.id_base_visit',
+      variables: [Variable.withInt(moduleId)],
+      readsFrom: {tBaseVisits, tObservations},
+    );
+    final rows = await query.get();
+    final Map<int, int> result = {};
+    for (final row in rows) {
+      final visitId = row.read<int>('id_base_visit');
+      final nb = row.read<int>('nb_observations');
+      result[visitId] = nb;
+    }
+    return result;
   }
 
   /// IDs des groupes de sites du module dont au moins un site a une visite

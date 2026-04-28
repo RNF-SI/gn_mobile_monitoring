@@ -97,6 +97,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
   /// dans la section "Propriétés du site" du détail.
   SiteVisitStats? _visitStats;
 
+  /// Nombre d'observations par visite pour le module courant. Utilisé pour
+  /// alimenter la colonne `nb_observations` du tableau de visites quand le
+  /// module la déclare dans son `display_list`. Clé = idBaseVisit.
+  Map<int, int> _observationCountByVisitId = {};
+
   @override
   Map<String, dynamic> get objectData {
     final Map<String, dynamic> data = {};
@@ -160,17 +165,23 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     _loadVisitStats();
   }
 
-  /// Charge les stats du site (nb_visits + last_visit calculés localement
-  /// depuis t_base_visits) pour les afficher dans les propriétés.
+  /// Charge en parallèle :
+  /// - les stats du site (nb_visits + last_visit) pour les propriétés ;
+  /// - le compte d'observations par visite pour la colonne `nb_observations`
+  ///   du tableau de visites.
   Future<void> _loadVisitStats() async {
     final moduleId = widget.moduleInfo?.module.id;
     if (moduleId == null) return;
     try {
       final db = widget.ref.read(visitDatabaseProvider);
-      final statsByModule = await db.getVisitStatsForModule(moduleId);
+      final results = await Future.wait([
+        db.getVisitStatsForModule(moduleId),
+        db.getObservationCountByVisitForModule(moduleId),
+      ]);
       if (!mounted) return;
       setState(() {
-        _visitStats = statsByModule[_site.idBaseSite];
+        _visitStats = (results[0] as Map<int, SiteVisitStats>)[_site.idBaseSite];
+        _observationCountByVisitId = results[1] as Map<int, int>;
       });
     } catch (e) {
       debugPrint('Erreur lors du chargement des stats du site: $e');
@@ -596,6 +607,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         'visit_date_min': 'Date de visite',
         'comments': 'Commentaires',
         'observers': 'Observateurs',
+        'nb_observations': 'Nb. observations',
       },
     );
   }
@@ -623,8 +635,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                 IconButton(
                   icon: const Icon(Icons.visibility, size: 20),
                   tooltip: 'Voir les détails',
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VisitDetailPage(
@@ -635,6 +647,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                         ),
                       ),
                     );
+                    // L'utilisateur a pu ajouter/supprimer des observations
+                    // sur cette visite : on rafraîchit la map
+                    // _observationCountByVisitId pour que la colonne
+                    // "Nb. observations" du tableau soit à jour.
+                    if (mounted) _loadVisitStats();
                   },
                   constraints: const BoxConstraints(
                     minWidth: 40,
@@ -716,6 +733,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
             );
           }
           return const DataCell(Text(''));
+        } else if (column == 'nb_observations') {
+          // Calculé localement depuis t_observations (la valeur n'est pas
+          // dans `visit.data`). Affiche 0 si la map n'a pas encore été
+          // chargée ou si la visite n'a aucune observation.
+          final count = _observationCountByVisitId[visit.idBaseVisit] ?? 0;
+          return DataCell(Text('$count'));
         }
 
         // Données spécifiques (depuis le champ data)
