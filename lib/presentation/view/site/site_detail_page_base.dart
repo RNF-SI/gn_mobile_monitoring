@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
@@ -75,10 +76,26 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties => objectConfig?.displayProperties;
+  List<String>? get displayProperties {
+    final base = objectConfig?.displayProperties;
+    if (base == null || base.isEmpty) return base;
+    // On affiche systématiquement les stats locales (calculées depuis
+    // t_base_visits) à la fin des propriétés du site, même si le module ne
+    // les a pas mises dans `display_properties`. Le formulaire les exclut
+    // (champ calculé), mais le détail mérite de les montrer.
+    final result = List<String>.from(base);
+    if (!result.contains('nb_visits')) result.add('nb_visits');
+    if (!result.contains('last_visit')) result.add('last_visit');
+    return result;
+  }
 
   // Site complement data pour le site courant
   SiteComplement? _siteComplement;
+
+  /// Stats locales du site (nb_visits + last_visit) issues de t_base_visits.
+  /// Chargées en initState et injectées dans `objectData` pour s'afficher
+  /// dans la section "Propriétés du site" du détail.
+  SiteVisitStats? _visitStats;
 
   @override
   Map<String, dynamic> get objectData {
@@ -118,6 +135,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       }
     }
 
+    // Stats locales calculées : on injecte les valeurs même nulles pour que
+    // le label "Nb. de passages" / "Dernier passage" apparaisse en
+    // "Non renseigné" si aucune visite, plutôt que d'être absent.
+    data['nb_visits'] = _visitStats?.nbVisits ?? 0;
+    data['last_visit'] = _visitStats?.lastVisit?.toIso8601String();
+
     return data;
   }
 
@@ -134,6 +157,24 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     _initializeTabController();
     _loadSiteComplement();
     _loadUserPosition();
+    _loadVisitStats();
+  }
+
+  /// Charge les stats du site (nb_visits + last_visit calculés localement
+  /// depuis t_base_visits) pour les afficher dans les propriétés.
+  Future<void> _loadVisitStats() async {
+    final moduleId = widget.moduleInfo?.module.id;
+    if (moduleId == null) return;
+    try {
+      final db = widget.ref.read(visitDatabaseProvider);
+      final statsByModule = await db.getVisitStatsForModule(moduleId);
+      if (!mounted) return;
+      setState(() {
+        _visitStats = statsByModule[_site.idBaseSite];
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des stats du site: $e');
+    }
   }
 
   /// Charge le complément du site depuis la base de données
@@ -165,6 +206,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       if (!mounted || updated == null) return;
       setState(() => _site = updated);
       await _loadSiteComplement();
+      await _loadVisitStats();
     } catch (e) {
       debugPrint('Erreur lors du rafraîchissement du site: $e');
     }
@@ -625,6 +667,9 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                         );
                         widget.ref
                             .invalidate(siteVisitsViewModelProvider(params));
+                        // Rafraîchir aussi nb_visits / last_visit affichés
+                        // dans les propriétés du site.
+                        if (mounted) _loadVisitStats();
                       });
                     }
                   },
@@ -769,6 +814,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       final params =
           (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
       widget.ref.invalidate(siteVisitsViewModelProvider(params));
+      // Rafraîchir aussi nb_visits / last_visit affichés dans les propriétés.
+      if (mounted) _loadVisitStats();
     });
   }
 
