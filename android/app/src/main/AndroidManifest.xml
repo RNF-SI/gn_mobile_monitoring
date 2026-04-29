@@ -10,7 +10,7 @@
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <application
-        android:label="gn_mobile_monitoring"
+        android:label="Monitoring"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

@@ -1,6 +1,6 @@
 {
-    "name": "gn_mobile_monitoring",
-    "short_name": "gn_mobile_monitoring",
+    "name": "Monitoring-mobile",
+    "short_name": "Monitoring",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
