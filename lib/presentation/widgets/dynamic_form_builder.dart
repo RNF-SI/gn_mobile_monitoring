@@ -234,7 +234,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       return;
     }
 
-    final dynamic defaultValue = fieldConfig['default'] ?? fieldConfig['value'];
+    // Aligné sur GeoNature web (`monitoring-object.service.ts` `toForm`) :
+    // seul `value` pré-remplit le champ. La clé `default` du JSON sert
+    // uniquement de documentation côté serveur / d'init côté admin web ;
+    // elle n'est jamais utilisée pour pré-remplir le formulaire de saisie.
+    final dynamic defaultValue = fieldConfig['value'];
     if (defaultValue == null) {
       return; // Aucune valeur par défaut à initialiser
     }
@@ -1723,11 +1727,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
   Widget _buildRadioField(String fieldName, String label, bool isRequired,
       Map<String, dynamic> fieldConfig, {String? description}) {
-    // Récupérer les valeurs possibles et la valeur par défaut
+    // Récupérer les valeurs possibles et la valeur par défaut.
+    // Aligné sur le web : on lit uniquement `value` (pas `default`).
     final List<dynamic> values = fieldConfig['values'] ?? [];
-    final String? defaultValue = 
-        fieldConfig['default']?.toString() ?? 
-        fieldConfig['value']?.toString();
+    final String? defaultValue = fieldConfig['value']?.toString();
     
     // Initialiser la valeur si elle n'existe pas
     if (_formValues[fieldName] == null && defaultValue != null) {
