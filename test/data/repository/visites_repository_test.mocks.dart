@@ -286,6 +286,16 @@ class MockVisitesDatabase extends _i1.Mock implements _i4.VisitesDatabase {
       ) as _i5.Future<bool>);
 
   @override
+  _i5.Future<Set<int>> getModuleIdsWithUnsyncedVisits() => (super.noSuchMethod(
+        Invocation.method(
+          #getModuleIdsWithUnsyncedVisits,
+          [],
+        ),
+        returnValue: _i5.Future<Set<int>>.value(<int>{}),
+        returnValueForMissingStub: _i5.Future<Set<int>>.value(<int>{}),
+      ) as _i5.Future<Set<int>>);
+
+  @override
   _i5.Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int? moduleId) =>
       (super.noSuchMethod(
         Invocation.method(

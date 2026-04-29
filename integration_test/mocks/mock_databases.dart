@@ -464,6 +464,12 @@ class MockVisitesDatabase implements VisitesDatabase {
       true;
 
   @override
+  Future<Set<int>> getModuleIdsWithUnsyncedVisits() async => _visits
+      .where((v) => v.serverVisitId == null)
+      .map((v) => v.idModule)
+      .toSet();
+
+  @override
   Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async =>
       _visits
           .where((v) =>

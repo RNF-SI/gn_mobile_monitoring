@@ -6,7 +6,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 
-import 'module_item_card_widget.dart';
+import 'module_item_card_widget.dart' show ModuleItemCardWidget, unsyncedModuleIdsProvider;
 
 class ModuleListWidget extends ConsumerWidget {
   /// Requête de recherche appliquée à la liste (case-insensitive sur
@@ -63,6 +63,7 @@ class ModuleListWidget extends ConsumerWidget {
           return RefreshIndicator(
             color: AppColors.primary,
             onRefresh: () async {
+              ref.invalidate(unsyncedModuleIdsProvider);
               await ref
                   .read(userModuleListeViewModelStateNotifierProvider.notifier)
                   .loadModules();

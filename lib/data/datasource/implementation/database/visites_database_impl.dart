@@ -113,6 +113,12 @@ class VisitesDatabaseImpl implements VisitesDatabase {
   }
 
   @override
+  Future<Set<int>> getModuleIdsWithUnsyncedVisits() async {
+    final db = await _db;
+    return db.visitesDao.getModuleIdsWithUnsyncedVisits();
+  }
+
+  @override
   Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async {
     final db = await _db;
     return db.visitesDao.getSiteIdsWithUnsyncedVisitsForModule(moduleId);

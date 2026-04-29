@@ -66,6 +66,21 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
     return result;
   }
 
+  /// IDs des modules ayant au moins une visite locale non téléversée.
+  /// Utilisé par la home page pour signaler les modules avec des saisies en
+  /// attente de sync — équivalent global de
+  /// `getSiteIdsWithUnsyncedVisitsForModule`, mais agrégé sur tous les modules.
+  Future<Set<int>> getModuleIdsWithUnsyncedVisits() async {
+    final query = selectOnly(tBaseVisits, distinct: true)
+      ..addColumns([tBaseVisits.idModule])
+      ..where(tBaseVisits.serverVisitId.isNull());
+    final rows = await query.get();
+    return rows
+        .map((r) => r.read(tBaseVisits.idModule))
+        .whereType<int>()
+        .toSet();
+  }
+
   /// IDs des sites du module qui ont au moins une visite pas encore téléversée
   /// (serverVisitId NULL). Utilisé par l'UI pour signaler visuellement les
   /// sites ayant des saisies locales en attente de synchronisation.

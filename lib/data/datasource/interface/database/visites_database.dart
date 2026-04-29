@@ -55,6 +55,10 @@ abstract class VisitesDatabase {
   /// Met à jour l'ID serveur d'une visite pour le suivi de synchronisation
   Future<bool> updateVisitServerId(int localVisitId, int serverId);
 
+  /// IDs des modules ayant au moins une visite locale non téléversée.
+  /// Utilisé sur la home page pour afficher un badge sur les cards module.
+  Future<Set<int>> getModuleIdsWithUnsyncedVisits();
+
   /// IDs des sites d'un module qui ont des visites non synchronisées
   /// (serverVisitId NULL). Utilisé pour l'indicateur visuel dans la liste
   /// des sites d'un module.
