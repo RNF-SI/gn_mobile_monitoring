@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/home_page/module_item_card_widget.dart'
+    show unsyncedModuleIdsProvider;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
@@ -512,29 +515,96 @@ class MenuActions extends ConsumerWidget {
           return;
         }
 
-        // Si un seul module, le synchroniser directement
-        if (availableModules.length == 1) {
-          await syncService.syncToServer(ref,
-              moduleCode: availableModules.first.moduleCode!);
+        // Modules ayant au moins une visite locale non téléversée. Permet de
+        // mettre en avant les modules réellement concernés et de couper court
+        // si tout est déjà à jour (cf. #179).
+        final unsyncedModuleIds =
+            await ref.read(visitDatabaseProvider).getModuleIdsWithUnsyncedVisits();
+        final modulesWithData = availableModules
+            .where((m) => unsyncedModuleIds.contains(m.id))
+            .toList();
+        final modulesUpToDate = availableModules
+            .where((m) => !unsyncedModuleIds.contains(m.id))
+            .toList();
+
+        if (modulesWithData.isEmpty) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Aucune donnée à téléverser : tous les modules sont à jour.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          return;
+        }
+
+        // Un seul module concerné → sync direct, pas de choix à faire.
+        String? selectedModuleCode;
+        if (modulesWithData.length == 1 && modulesUpToDate.isEmpty) {
+          selectedModuleCode = modulesWithData.first.moduleCode;
         } else {
-          // Laisser l'utilisateur choisir le module
-          final selectedModule = await showDialog<String>(
+          if (!context.mounted) return;
+          selectedModuleCode = await showDialog<String>(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text('Choisir un module'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Sélectionnez le module à synchroniser :'),
-                    const SizedBox(height: 16),
-                    ...availableModules.map((module) => ListTile(
-                          title: Text(module.moduleLabel ?? module.moduleCode!),
-                          subtitle: Text('Code: ${module.moduleCode}'),
-                          onTap: () =>
-                              Navigator.of(context).pop(module.moduleCode),
-                        )),
-                  ],
+                title: const Text('Choisir un module à téléverser'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (modulesWithData.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 4),
+                          child: Text(
+                            'Avec saisies à téléverser',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        ...modulesWithData.map((module) => ListTile(
+                              dense: true,
+                              title: Text(
+                                  module.moduleLabel ?? module.moduleCode!),
+                              subtitle: const Text('Saisies à téléverser'),
+                              trailing: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              onTap: () => Navigator.of(context)
+                                  .pop(module.moduleCode),
+                            )),
+                      ],
+                      if (modulesUpToDate.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 4),
+                          child: Text(
+                            'À jour',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(color: Colors.grey),
+                          ),
+                        ),
+                        ...modulesUpToDate.map((module) => ListTile(
+                              dense: true,
+                              enabled: false,
+                              title: Text(
+                                  module.moduleLabel ?? module.moduleCode!),
+                              subtitle: const Text('Aucune donnée à envoyer'),
+                            )),
+                      ],
+                    ],
+                  ),
                 ),
                 actions: [
                   TextButton(
@@ -545,10 +615,14 @@ class MenuActions extends ConsumerWidget {
               );
             },
           );
+        }
 
-          if (selectedModule != null) {
-            await syncService.syncToServer(ref, moduleCode: selectedModule);
-          }
+        if (selectedModuleCode != null) {
+          await syncService.syncToServer(ref, moduleCode: selectedModuleCode);
+          // Le badge "saisies non téléversées" doit refléter l'état après
+          // upload, qu'il ait réussi ou non (en cas d'échec partiel, certains
+          // items peuvent avoir été poussés).
+          ref.invalidate(unsyncedModuleIdsProvider);
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
