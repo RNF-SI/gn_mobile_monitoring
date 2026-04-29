@@ -18,6 +18,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart'
+    show localVisitsCounterProvider;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
 
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
@@ -58,6 +60,8 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
     datasetService,
     siteId,
     moduleId,
+    onLocalVisitsChanged: () =>
+        ref.read(localVisitsCounterProvider.notifier).update((s) => s + 1),
   );
 });
 
@@ -75,6 +79,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final DatasetService _datasetService;
   final int _siteId;
   final int _moduleId;
+  final void Function()? _onLocalVisitsChanged;
   bool _mounted = true;
   
   // Cache pour les datasets du module courant
@@ -93,12 +98,21 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     this._getUserNameUseCase,
     this._datasetService,
     this._siteId,
-    this._moduleId,
-  ) : super(const AsyncValue.loading()) {
+    this._moduleId, {
+    void Function()? onLocalVisitsChanged,
+  })  : _onLocalVisitsChanged = onLocalVisitsChanged,
+        super(const AsyncValue.loading()) {
     loadVisits();
     _loadDatasets();
   }
   
+  /// Notifie les providers qui dépendent de l'état "saisies non téléversées"
+  /// (badge orange sur les modules, modale de téléversement). Callback fournie
+  /// par le provider — null en test pour ne pas dépendre de Riverpod.
+  void _bumpLocalVisitsCounter() {
+    _onLocalVisitsChanged?.call();
+  }
+
   /// Charge les datasets associés au module courant
   Future<void> _loadDatasets() async {
     if (!_mounted) return;
@@ -170,6 +184,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
 
       // Recharger la liste des visites
       await loadVisits();
+      _bumpLocalVisitsCounter();
 
       return visitId;
     } catch (e) {
@@ -209,6 +224,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       // Recharger la liste des visites si la mise à jour a réussi
       if (success) {
         await loadVisits();
+        _bumpLocalVisitsCounter();
       }
 
       return success;
@@ -238,6 +254,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
       final success = await _deleteVisitUseCase.execute(visitId);
       if (success) {
         await loadVisits(); // Recharger la liste des visites
+        _bumpLocalVisitsCounter();
       }
       return success;
     } catch (e) {

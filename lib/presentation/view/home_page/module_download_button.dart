@@ -4,8 +4,6 @@ import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
-import 'package:gn_mobile_monitoring/presentation/view/home_page/module_item_card_widget.dart'
-    show unsyncedModuleIdsProvider;
 import 'package:gn_mobile_monitoring/presentation/view/module/module_loading_page.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
@@ -51,14 +49,11 @@ class ModuleDownloadButton extends HookConsumerWidget {
           break;
         case ModuleDownloadStatus.moduleDownloaded:
           // Navigate to the ModuleLoadingPage which will then load the module with its configuration
-          await Navigator.push(context, MaterialPageRoute<void>(
+          Navigator.push(context, MaterialPageRoute<void>(
             builder: (BuildContext context) {
               return ModuleLoadingPage(moduleInfo: moduleInfo);
             },
           ));
-          // Au retour, rafraîchir le badge "saisies non téléversées" : une
-          // visite a pu être créée ou téléversée pendant la session module.
-          ref.invalidate(unsyncedModuleIdsProvider);
           break;
         case ModuleDownloadStatus.moduleRemoving:
           // Handle the removing state, perhaps do nothing or show a message

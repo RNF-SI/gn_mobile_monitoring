@@ -4,12 +4,17 @@ import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/module_download_button.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 
 /// IDs des modules ayant au moins une visite locale non téléversée.
 /// Lu par chaque [ModuleItemCardWidget] pour décider d'afficher le point
-/// orange "Saisies locales non téléversées". Invalidé par le pull-to-refresh
-/// de [ModuleListWidget] et par le ViewModel des modules après un sync.
+/// orange "Saisies locales non téléversées". Se rafraîchit automatiquement
+/// après une mutation locale (`localVisitsCounterProvider`) ou un sync
+/// (`cacheVersionProvider`), donc plus besoin d'invalider à chaque
+/// navigation.
 final unsyncedModuleIdsProvider = FutureProvider<Set<int>>((ref) async {
+  ref.watch(localVisitsCounterProvider);
+  ref.watch(cacheVersionProvider);
   final db = ref.watch(visitDatabaseProvider);
   return db.getModuleIdsWithUnsyncedVisits();
 });
