@@ -182,33 +182,13 @@ class VisitFormWrapper extends ConsumerWidget {
           );
 
           final chainInput = ref.read(chainVisitInputProvider);
-          
-          if (!chainInput) {
-            // Vérifier si la configuration des observations existe
-            final hasObservationConfig = moduleInfo?.module.complement
-                    ?.configuration?.observation != null;
 
-            // Demander s'il souhaite saisir des observations
-            if (hasObservationConfig) {
-              final createObservations = await _askForObservations(context);
-              if (createObservations) {
-                if (context.mounted) {
-                  await _navigateToObservationForm(context, visit!.idBaseVisit, formData);
-                  return false; // Navigation personnalisée faite, empêcher le pop automatique
-                }
-              } else {
-                // L'utilisateur a dit "Non", naviguer vers la page de détail
-                if (context.mounted) {
-                  await _navigateToVisitDetailPage(context);
-                  return false; // Navigation personnalisée faite, empêcher le pop automatique
-                }
-              }
-            } else {
-              // Pas de config d'observation, naviguer directement vers la page de détail
-              if (context.mounted) {
-                await _navigateToVisitDetailPage(context);
-                return false; // Navigation personnalisée faite, empêcher le pop automatique
-              }
+          if (!chainInput) {
+            // En édition, retour direct à la page de détail : la visite peut
+            // déjà avoir des observations, proposer d'en créer prête à confusion.
+            if (context.mounted) {
+              await _navigateToVisitDetailPage(context);
+              return false; // Navigation personnalisée faite, empêcher le pop automatique
             }
           }
         }
