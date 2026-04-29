@@ -68,6 +68,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   final Set<String> _userClearedFields = <String>{};
   late Set<String> _criticalFields;
 
+  /// Valeurs utilisées pour calculer la clé du `KeyedSubtree` (cf.
+  /// `buildFormFieldsWithKey`). Découplée de `_formValues` pour que la clé
+  /// ne change pas à chaque keystroke d'un TextField/NumberField — sinon
+  /// l'arbre est détruit/recréé entre deux frappes et le clavier se ferme.
+  /// Mise à jour immédiate pour les widgets non textuels (dropdown, etc.),
+  /// à la perte de focus pour les champs textuels.
+  late Map<String, dynamic> _committedKeyValues;
+
   /// Flag pour éviter les boucles infinies lors de l'application des règles de changement
   bool _isApplyingChangeRules = false;
 
@@ -87,6 +95,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     super.initState();
     _textControllers = {};
     _formValues = Map<String, dynamic>.from(widget.initialValues ?? {});
+    _committedKeyValues = Map<String, dynamic>.from(_formValues);
 
     // Générer le schéma unifié
     _unifiedSchema = FormConfigParser.generateUnifiedSchema(
@@ -354,6 +363,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void resetForm() {
     _formKey.currentState?.reset();
     _formValues.clear();
+    _committedKeyValues.clear();
     _textControllers.forEach((key, controller) {
       controller.clear();
     });
@@ -531,6 +541,25 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   }
 
   // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
+  bool _isTextWidget(String fieldName) {
+    final type = _unifiedSchema[fieldName]?['widget_type']?.toString();
+    return type == 'TextField' ||
+        type == 'TextField_multiline' ||
+        type == 'NumberField';
+  }
+
+  /// Commit la valeur courante d'un champ textuel dans `_committedKeyValues`
+  /// pour permettre au `KeyedSubtree` de se rebuild si nécessaire (visibilité
+  /// d'un selector async qui en dépend, par exemple). Appelé sur perte de
+  /// focus / "Done" / tap en dehors.
+  void _commitTextFieldKey(String fieldName) {
+    final current = _formValues[fieldName];
+    if (_committedKeyValues[fieldName] == current) return;
+    setState(() {
+      _committedKeyValues[fieldName] = current;
+    });
+  }
+
   void updateFormValue(String fieldName, dynamic value) {
     // Debug pour cd_nom
     if (fieldName == 'cd_nom') {
@@ -567,6 +596,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         if (fieldName == 'cd_nom') {
           debugPrint('🐛 [DEBUG] cd_nom mis à jour: $value');
         }
+      }
+
+      // Pour les widgets non textuels (dropdown, checkbox, selector...), la
+      // valeur est immédiatement validée → propager dans la clé du
+      // KeyedSubtree. Pour les TextField/NumberField, on attend la perte de
+      // focus pour ne pas casser la saisie en cours.
+      if (!_isTextWidget(fieldName)) {
+        _committedKeyValues[fieldName] = _formValues[fieldName];
       }
     });
 
@@ -622,6 +659,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         // Appliquer les nouvelles valeurs
         result.fieldsToUpdate.forEach((fieldName, newValue) {
           _formValues[fieldName] = newValue;
+          // Une change rule est un commit logique : propager dans la clé.
+          _committedKeyValues[fieldName] = newValue;
 
           // Marquer ce champ comme défini par une règle de changement
           // pour qu'il soit préservé même s'il est caché
@@ -717,10 +756,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Identifier tous les champs critiques qui pourraient affecter la visibilité
     final Set<String> criticalFields = _getAllCriticalFields();
     
-    // Collecter les valeurs des champs critiques pour la clé
+    // Collecter les valeurs des champs critiques pour la clé.
+    // On lit `_committedKeyValues` (et non `_formValues`) : pour les
+    // TextField/NumberField, la valeur n'est commitée qu'à la perte de focus,
+    // ce qui évite la destruction du sous-arbre entre deux frappes.
     for (final fieldName in criticalFields) {
-      if (_formValues.containsKey(fieldName)) {
-        keyValues[fieldName] = _formValues[fieldName];
+      if (_committedKeyValues.containsKey(fieldName)) {
+        keyValues[fieldName] = _committedKeyValues[fieldName];
       }
     }
     
@@ -1034,6 +1076,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             onChanged: (value) {
               updateFormValue(fieldName, value);
             },
+            onEditingComplete: () => _commitTextFieldKey(fieldName),
+            onTapOutside: (_) => _commitTextFieldKey(fieldName),
           ),
         ],
       ),
@@ -1329,6 +1373,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               final parsedValue = int.tryParse(value);
               updateFormValue(fieldName, parsedValue ?? (value.isEmpty ? null : value));
             },
+            onEditingComplete: () => _commitTextFieldKey(fieldName),
+            onTapOutside: (_) => _commitTextFieldKey(fieldName),
           ),
         ],
       ),
