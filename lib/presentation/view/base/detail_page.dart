@@ -164,8 +164,22 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     Map<String, dynamic>?
         firstItemData, // Données du premier élément pour auto-détection
     bool filterMetaColumns =
-        true, // Filtrer les colonnes de métadonnées (geom, uuid, meta)
+        true, // Filtrer les colonnes de métadonnées (geom, uuid, meta, IDs techniques)
   }) {
+    // FK/PK techniques jamais utiles à afficher en cellule brute :
+    // l'utilisateur arrive forcément depuis le module / site / visite parent,
+    // et ces colonnes apparaîtraient toujours vides côté table puisque les
+    // valeurs sont stockées au top-level de l'entité, pas dans `data`.
+    const technicalIdKeys = {
+      'id_base_site',
+      'id_base_visit',
+      'id_observation',
+      'id_observation_detail',
+      'id_module',
+      'id_dataset',
+      'id_digitiser',
+      'id_inventor',
+    };
     List<String> displayColumns = List.from(standardColumns);
     Set<String> allPossibleKeys = <String>{};
 
@@ -204,7 +218,8 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
         keyIsValid = keyIsValid &&
             !key.contains('geom') &&
             !key.contains('uuid') &&
-            !key.contains('meta');
+            !key.contains('meta') &&
+            !technicalIdKeys.contains(key);
       }
 
       return keyIsValid;
