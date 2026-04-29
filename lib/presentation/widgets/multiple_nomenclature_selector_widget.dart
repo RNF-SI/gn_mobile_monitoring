@@ -176,36 +176,33 @@ class _MultipleNomenclatureSelectorWidgetState
                       ),
                     ),
 
-                    // Liste des nomenclatures avec checkboxes
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxHeight: 300, // Hauteur max pour éviter un widget trop grand
-                      ),
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        itemCount: nomenclatures.length,
-                        itemBuilder: (context, index) {
-                          final nomenclature = nomenclatures[index];
-                          final label = nomenclature.labelFr ??
-                              nomenclature.labelDefault ??
-                              nomenclature.cdNomenclature;
-                          final isSelected = _selectedIds.contains(nomenclature.id);
+                    // Liste des nomenclatures avec checkboxes.
+                    // Column (et non ListView) pour ne pas créer un scroll
+                    // imbriqué dans le SingleChildScrollView du formulaire :
+                    // une ListView capturait les gestes verticaux et empêchait
+                    // de descendre dans la page une fois ce champ saisi.
+                    Column(
+                      children: nomenclatures.map((nomenclature) {
+                        final label = nomenclature.labelFr ??
+                            nomenclature.labelDefault ??
+                            nomenclature.cdNomenclature;
+                        final isSelected =
+                            _selectedIds.contains(nomenclature.id);
 
-                          return CheckboxListTile(
-                            dense: true,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 0,
-                            ),
-                            title: Text(label),
-                            value: isSelected,
-                            onChanged: (bool? checked) {
-                              _toggleNomenclature(nomenclature.id);
-                            },
-                            controlAffinity: ListTileControlAffinity.leading,
-                          );
-                        },
-                      ),
+                        return CheckboxListTile(
+                          dense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 0,
+                          ),
+                          title: Text(label),
+                          value: isSelected,
+                          onChanged: (bool? checked) {
+                            _toggleNomenclature(nomenclature.id);
+                          },
+                          controlAffinity: ListTileControlAffinity.leading,
+                        );
+                      }).toList(),
                     ),
 
                     // Message de validation si requis et vide
