@@ -388,4 +388,146 @@ class ModulesDao extends DatabaseAccessor<AppDatabase> with _$ModulesDaoMixin {
       throw Exception('Failed to get datasets for module: $e');
     }
   }
+
+  /// Nombre de sites qui appartiennent uniquement à ce module
+  /// (= seraient supprimés à la désinstallation). Calcul fait via une
+  /// sous-requête : sites liés au module mais sans aucun lien avec un autre.
+  Future<int> countExclusiveSitesForModule(int moduleId) async {
+    final query = customSelect(
+      'SELECT COUNT(*) AS cnt FROM cor_site_module_table csm '
+      'WHERE csm.id_module = ? '
+      '  AND NOT EXISTS ('
+      '    SELECT 1 FROM cor_site_module_table csm2 '
+      '    WHERE csm2.id_base_site = csm.id_base_site '
+      '      AND csm2.id_module <> csm.id_module'
+      '  )',
+      variables: [Variable.withInt(moduleId)],
+      readsFrom: {corSiteModuleTable},
+    );
+    final row = await query.getSingle();
+    return row.read<int>('cnt');
+  }
+
+  /// Désinstalle un module : supprime visites, observations et toutes les
+  /// données qui n'appartiennent qu'à lui (sites, groupes, datasets, config).
+  /// Conserve les nomenclatures, types de site et taxons (partagés et peu
+  /// volumineux). Bascule `t_modules.downloaded = false` à la fin pour que
+  /// l'utilisateur puisse retélécharger ensuite.
+  ///
+  /// Atomique via [Transaction] : toute erreur en cours de chemin annule
+  /// l'ensemble des suppressions.
+  Future<void> uninstallModule(int moduleId) async {
+    await transaction(() async {
+      // 1. Visites du module + toutes leurs dépendances avant de couper.
+      await db.customStatement(
+        'DELETE FROM t_observation_details '
+        'WHERE id_observation IN ('
+        '  SELECT o.id_observation FROM t_observations o '
+        '  INNER JOIN t_base_visits v ON v.id_base_visit = o.id_base_visit '
+        '  WHERE v.id_module = ?'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM t_observations '
+        'WHERE id_base_visit IN ('
+        '  SELECT id_base_visit FROM t_base_visits WHERE id_module = ?'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM t_observation_complements '
+        'WHERE id_observation NOT IN (SELECT id_observation FROM t_observations)',
+      );
+      await db.customStatement(
+        'DELETE FROM cor_visit_observer '
+        'WHERE id_base_visit IN ('
+        '  SELECT id_base_visit FROM t_base_visits WHERE id_module = ?'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM t_visit_complements '
+        'WHERE id_base_visit IN ('
+        '  SELECT id_base_visit FROM t_base_visits WHERE id_module = ?'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM t_base_visits WHERE id_module = ?',
+        [moduleId],
+      );
+
+      // 2. Sites exclusifs : ceux liés à ce module et à aucun autre.
+      // On les snapshot avant de couper l'association cor_site_module.
+      await db.customStatement(
+        'DELETE FROM t_site_complements '
+        'WHERE id_base_site IN ('
+        '  SELECT csm.id_base_site FROM cor_site_module_table csm '
+        '  WHERE csm.id_module = ? '
+        '    AND NOT EXISTS ('
+        '      SELECT 1 FROM cor_site_module_table csm2 '
+        '      WHERE csm2.id_base_site = csm.id_base_site '
+        '        AND csm2.id_module <> csm.id_module'
+        '    )'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM t_base_sites '
+        'WHERE id_base_site IN ('
+        '  SELECT csm.id_base_site FROM cor_site_module_table csm '
+        '  WHERE csm.id_module = ? '
+        '    AND NOT EXISTS ('
+        '      SELECT 1 FROM cor_site_module_table csm2 '
+        '      WHERE csm2.id_base_site = csm.id_base_site '
+        '        AND csm2.id_module <> csm.id_module'
+        '    )'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM cor_site_module_table WHERE id_module = ?',
+        [moduleId],
+      );
+
+      // 3. Groupes de sites exclusifs.
+      await db.customStatement(
+        'DELETE FROM t_sites_groups '
+        'WHERE id_sites_group IN ('
+        '  SELECT cgm.id_sites_group FROM cor_sites_group_module_table cgm '
+        '  WHERE cgm.id_module = ? '
+        '    AND NOT EXISTS ('
+        '      SELECT 1 FROM cor_sites_group_module_table cgm2 '
+        '      WHERE cgm2.id_sites_group = cgm.id_sites_group '
+        '        AND cgm2.id_module <> cgm.id_module'
+        '    )'
+        ')',
+        [moduleId],
+      );
+      await db.customStatement(
+        'DELETE FROM cor_sites_group_module_table WHERE id_module = ?',
+        [moduleId],
+      );
+
+      // 4. Datasets : on coupe l'association ; on garde les datasets eux-
+      // mêmes (peu volumineux, partagés entre modules dans GeoNature).
+      await db.customStatement(
+        'DELETE FROM cor_module_dataset_table WHERE id_module = ?',
+        [moduleId],
+      );
+
+      // 5. Configuration du module : on la vide.
+      await (update(tModuleComplements)
+            ..where((t) => t.idModule.equals(moduleId)))
+          .write(const TModuleComplementsCompanion(
+        configuration: Value(null),
+      ));
+
+      // 6. Marker downloaded = false. Le module reste dans la liste pour
+      // permettre une réinstallation.
+      await (update(tModules)..where((t) => t.idModule.equals(moduleId)))
+          .write(const TModulesCompanion(downloaded: Value(false)));
+    });
+  }
 }

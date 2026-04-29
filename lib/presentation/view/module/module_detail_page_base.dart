@@ -21,6 +21,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/uninstall_module_action.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
@@ -798,6 +799,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             ),
+          )
+        else
+          UninstallModuleAction(
+            moduleId: widget.moduleInfo.module.id,
+            moduleLabel: widget.moduleInfo.module.moduleLabel ??
+                widget.moduleInfo.module.moduleCode ??
+                'le module',
           ),
       ],
     );

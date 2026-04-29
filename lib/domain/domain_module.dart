@@ -35,6 +35,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_us
 import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_uninstall_stats_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_module_uninstall_stats_use_case_impl.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/uninstall_module_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/uninstall_module_use_case_impl.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_module_taxons_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/fetch_modules_usecase_impl.dart';
@@ -252,6 +256,14 @@ final downloadCompleteModuleUseCaseProvider =
         (ref) => DownloadCompleteModuleUseCaseImpl(
               ref.watch(modulesRepositoryProvider),
             ));
+
+final uninstallModuleUseCaseProvider = Provider<UninstallModuleUseCase>(
+    (ref) => UninstallModuleUseCaseImpl(ref.watch(modulesRepositoryProvider)));
+
+final getModuleUninstallStatsUseCaseProvider =
+    Provider<GetModuleUninstallStatsUseCase>((ref) =>
+        GetModuleUninstallStatsUseCaseImpl(
+            ref.watch(modulesRepositoryProvider)));
 
 final getSiteGroupsUseCaseProvider = Provider<GetSiteGroupsUseCase>(
     (ref) => GetSiteGroupsUseCaseImpl(ref.watch(sitesRepositoryProvider)));

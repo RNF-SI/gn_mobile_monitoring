@@ -20,6 +20,7 @@ import 'package:gn_mobile_monitoring/domain/model/bib_type_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_uninstall_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
 import 'package:gn_mobile_monitoring/domain/repository/modules_repository.dart';
@@ -880,5 +881,15 @@ class ModulesRepositoryImpl implements ModulesRepository {
     }
 
     return trimmed;
+  }
+
+  @override
+  Future<ModuleUninstallStats> getUninstallStats(int moduleId) {
+    return database.getUninstallStats(moduleId);
+  }
+
+  @override
+  Future<void> uninstallModule(int moduleId) {
+    return database.uninstallModule(moduleId);
   }
 }

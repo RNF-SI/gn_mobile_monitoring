@@ -66,6 +66,28 @@ class VisitesDao extends DatabaseAccessor<AppDatabase> with _$VisitesDaoMixin {
     return result;
   }
 
+  /// Nombre de visites locales pour un module — utilisé par la désinstallation
+  /// de module pour avertir l'utilisateur de la perte de données.
+  Future<int> countVisitsForModule(int moduleId) async {
+    final query = selectOnly(tBaseVisits)
+      ..addColumns([tBaseVisits.idBaseVisit.count()])
+      ..where(tBaseVisits.idModule.equals(moduleId));
+    final row = await query.getSingle();
+    return row.read(tBaseVisits.idBaseVisit.count()) ?? 0;
+  }
+
+  /// Nombre de visites locales non encore téléversées pour un module.
+  /// Crée un sous-ensemble de [countVisitsForModule] : les visites déjà
+  /// poussées sur le serveur peuvent être désinstallées sans perte.
+  Future<int> countUnsyncedVisitsForModule(int moduleId) async {
+    final query = selectOnly(tBaseVisits)
+      ..addColumns([tBaseVisits.idBaseVisit.count()])
+      ..where(tBaseVisits.idModule.equals(moduleId) &
+          tBaseVisits.serverVisitId.isNull());
+    final row = await query.getSingle();
+    return row.read(tBaseVisits.idBaseVisit.count()) ?? 0;
+  }
+
   /// IDs des modules ayant au moins une visite locale non téléversée.
   /// Utilisé par la home page pour signaler les modules avec des saisies en
   /// attente de sync — équivalent global de
