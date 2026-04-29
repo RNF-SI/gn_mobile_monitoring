@@ -87,8 +87,10 @@ class BaseFormLayout extends StatelessWidget {
                     ),
                   ),
 
-                  // Option 1 : Masquer les boutons quand le clavier est visible
-                  if (!isKeyboardVisible) _buildActionButtons(context),
+                  // Toujours afficher les boutons : le Scaffold pousse le
+                  // layout au-dessus du clavier, masquer "Enregistrer" forçait
+                  // l'utilisateur à fermer le clavier avant de valider.
+                  _buildActionButtons(context),
                 ],
               ),
             ),
