@@ -14,8 +14,9 @@ class TBaseVisits extends Table {
   TextColumn get comments => text().nullable()();
   TextColumn get uuidBaseVisit => text().nullable()();
   IntColumn get serverVisitId => integer().nullable()();
-  TextColumn get metaCreateDate =>
-      text().withDefault(const Constant('CURRENT_TIMESTAMP'))();
-  TextColumn get metaUpdateDate =>
-      text().withDefault(const Constant('CURRENT_TIMESTAMP'))();
+  // Pas de `withDefault` : `Constant('CURRENT_TIMESTAMP')` insérait la chaîne
+  // littérale au lieu d'évaluer la fonction SQL. Le mapper Dart fournit
+  // toujours une vraie date ISO via `toCompanion[ForUpdate]()`.
+  TextColumn get metaCreateDate => text().nullable()();
+  TextColumn get metaUpdateDate => text().nullable()();
 }

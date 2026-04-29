@@ -9554,18 +9554,14 @@ class $TBaseVisitsTable extends TBaseVisits
       const VerificationMeta('metaCreateDate');
   @override
   late final GeneratedColumn<String> metaCreateDate = GeneratedColumn<String>(
-      'meta_create_date', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('CURRENT_TIMESTAMP'));
+      'meta_create_date', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   static const VerificationMeta _metaUpdateDateMeta =
       const VerificationMeta('metaUpdateDate');
   @override
   late final GeneratedColumn<String> metaUpdateDate = GeneratedColumn<String>(
-      'meta_update_date', aliasedName, false,
-      type: DriftSqlType.string,
-      requiredDuringInsert: false,
-      defaultValue: const Constant('CURRENT_TIMESTAMP'));
+      'meta_update_date', aliasedName, true,
+      type: DriftSqlType.string, requiredDuringInsert: false);
   @override
   List<GeneratedColumn> get $columns => [
         idBaseVisit,
@@ -9713,9 +9709,9 @@ class $TBaseVisitsTable extends TBaseVisits
       serverVisitId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}server_visit_id']),
       metaCreateDate: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}meta_create_date'])!,
+          DriftSqlType.string, data['${effectivePrefix}meta_create_date']),
       metaUpdateDate: attachedDatabase.typeMapping.read(
-          DriftSqlType.string, data['${effectivePrefix}meta_update_date'])!,
+          DriftSqlType.string, data['${effectivePrefix}meta_update_date']),
     );
   }
 
@@ -9738,8 +9734,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
   final String? comments;
   final String? uuidBaseVisit;
   final int? serverVisitId;
-  final String metaCreateDate;
-  final String metaUpdateDate;
+  final String? metaCreateDate;
+  final String? metaUpdateDate;
   const TBaseVisit(
       {required this.idBaseVisit,
       this.idBaseSite,
@@ -9753,8 +9749,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       this.comments,
       this.uuidBaseVisit,
       this.serverVisitId,
-      required this.metaCreateDate,
-      required this.metaUpdateDate});
+      this.metaCreateDate,
+      this.metaUpdateDate});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -9787,8 +9783,12 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
     if (!nullToAbsent || serverVisitId != null) {
       map['server_visit_id'] = Variable<int>(serverVisitId);
     }
-    map['meta_create_date'] = Variable<String>(metaCreateDate);
-    map['meta_update_date'] = Variable<String>(metaUpdateDate);
+    if (!nullToAbsent || metaCreateDate != null) {
+      map['meta_create_date'] = Variable<String>(metaCreateDate);
+    }
+    if (!nullToAbsent || metaUpdateDate != null) {
+      map['meta_update_date'] = Variable<String>(metaUpdateDate);
+    }
     return map;
   }
 
@@ -9823,8 +9823,12 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       serverVisitId: serverVisitId == null && nullToAbsent
           ? const Value.absent()
           : Value(serverVisitId),
-      metaCreateDate: Value(metaCreateDate),
-      metaUpdateDate: Value(metaUpdateDate),
+      metaCreateDate: metaCreateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaCreateDate),
+      metaUpdateDate: metaUpdateDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(metaUpdateDate),
     );
   }
 
@@ -9846,8 +9850,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       comments: serializer.fromJson<String?>(json['comments']),
       uuidBaseVisit: serializer.fromJson<String?>(json['uuidBaseVisit']),
       serverVisitId: serializer.fromJson<int?>(json['serverVisitId']),
-      metaCreateDate: serializer.fromJson<String>(json['metaCreateDate']),
-      metaUpdateDate: serializer.fromJson<String>(json['metaUpdateDate']),
+      metaCreateDate: serializer.fromJson<String?>(json['metaCreateDate']),
+      metaUpdateDate: serializer.fromJson<String?>(json['metaUpdateDate']),
     );
   }
   @override
@@ -9867,8 +9871,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
       'comments': serializer.toJson<String?>(comments),
       'uuidBaseVisit': serializer.toJson<String?>(uuidBaseVisit),
       'serverVisitId': serializer.toJson<int?>(serverVisitId),
-      'metaCreateDate': serializer.toJson<String>(metaCreateDate),
-      'metaUpdateDate': serializer.toJson<String>(metaUpdateDate),
+      'metaCreateDate': serializer.toJson<String?>(metaCreateDate),
+      'metaUpdateDate': serializer.toJson<String?>(metaUpdateDate),
     };
   }
 
@@ -9885,8 +9889,8 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
           Value<String?> comments = const Value.absent(),
           Value<String?> uuidBaseVisit = const Value.absent(),
           Value<int?> serverVisitId = const Value.absent(),
-          String? metaCreateDate,
-          String? metaUpdateDate}) =>
+          Value<String?> metaCreateDate = const Value.absent(),
+          Value<String?> metaUpdateDate = const Value.absent()}) =>
       TBaseVisit(
         idBaseVisit: idBaseVisit ?? this.idBaseVisit,
         idBaseSite: idBaseSite.present ? idBaseSite.value : this.idBaseSite,
@@ -9908,8 +9912,10 @@ class TBaseVisit extends DataClass implements Insertable<TBaseVisit> {
             uuidBaseVisit.present ? uuidBaseVisit.value : this.uuidBaseVisit,
         serverVisitId:
             serverVisitId.present ? serverVisitId.value : this.serverVisitId,
-        metaCreateDate: metaCreateDate ?? this.metaCreateDate,
-        metaUpdateDate: metaUpdateDate ?? this.metaUpdateDate,
+        metaCreateDate:
+            metaCreateDate.present ? metaCreateDate.value : this.metaCreateDate,
+        metaUpdateDate:
+            metaUpdateDate.present ? metaUpdateDate.value : this.metaUpdateDate,
       );
   TBaseVisit copyWithCompanion(TBaseVisitsCompanion data) {
     return TBaseVisit(
@@ -10022,8 +10028,8 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
   final Value<String?> comments;
   final Value<String?> uuidBaseVisit;
   final Value<int?> serverVisitId;
-  final Value<String> metaCreateDate;
-  final Value<String> metaUpdateDate;
+  final Value<String?> metaCreateDate;
+  final Value<String?> metaUpdateDate;
   const TBaseVisitsCompanion({
     this.idBaseVisit = const Value.absent(),
     this.idBaseSite = const Value.absent(),
@@ -10108,8 +10114,8 @@ class TBaseVisitsCompanion extends UpdateCompanion<TBaseVisit> {
       Value<String?>? comments,
       Value<String?>? uuidBaseVisit,
       Value<int?>? serverVisitId,
-      Value<String>? metaCreateDate,
-      Value<String>? metaUpdateDate}) {
+      Value<String?>? metaCreateDate,
+      Value<String?>? metaUpdateDate}) {
     return TBaseVisitsCompanion(
       idBaseVisit: idBaseVisit ?? this.idBaseVisit,
       idBaseSite: idBaseSite ?? this.idBaseSite,
@@ -17379,8 +17385,8 @@ typedef $$TBaseVisitsTableCreateCompanionBuilder = TBaseVisitsCompanion
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
   Value<int?> serverVisitId,
-  Value<String> metaCreateDate,
-  Value<String> metaUpdateDate,
+  Value<String?> metaCreateDate,
+  Value<String?> metaUpdateDate,
 });
 typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
     Function({
@@ -17396,8 +17402,8 @@ typedef $$TBaseVisitsTableUpdateCompanionBuilder = TBaseVisitsCompanion
   Value<String?> comments,
   Value<String?> uuidBaseVisit,
   Value<int?> serverVisitId,
-  Value<String> metaCreateDate,
-  Value<String> metaUpdateDate,
+  Value<String?> metaCreateDate,
+  Value<String?> metaUpdateDate,
 });
 
 final class $$TBaseVisitsTableReferences
@@ -17672,8 +17678,8 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
             Value<int?> serverVisitId = const Value.absent(),
-            Value<String> metaCreateDate = const Value.absent(),
-            Value<String> metaUpdateDate = const Value.absent(),
+            Value<String?> metaCreateDate = const Value.absent(),
+            Value<String?> metaUpdateDate = const Value.absent(),
           }) =>
               TBaseVisitsCompanion(
             idBaseVisit: idBaseVisit,
@@ -17706,8 +17712,8 @@ class $$TBaseVisitsTableTableManager extends RootTableManager<
             Value<String?> comments = const Value.absent(),
             Value<String?> uuidBaseVisit = const Value.absent(),
             Value<int?> serverVisitId = const Value.absent(),
-            Value<String> metaCreateDate = const Value.absent(),
-            Value<String> metaUpdateDate = const Value.absent(),
+            Value<String?> metaCreateDate = const Value.absent(),
+            Value<String?> metaUpdateDate = const Value.absent(),
           }) =>
               TBaseVisitsCompanion.insert(
             idBaseVisit: idBaseVisit,
