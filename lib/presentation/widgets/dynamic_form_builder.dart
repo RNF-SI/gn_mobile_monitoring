@@ -1344,6 +1344,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           TextFormField(
+            key: ValueKey('${fieldName}_$required'),
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
               border: OutlineInputBorder(),

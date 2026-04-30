@@ -118,6 +118,16 @@ void main() {
           debugPrint(
               'Champ "expertise" absent sur ce module → on continue');
         }
+        // Depuis #180 (commit 4d8ab29), `default` ne pre-remplit plus rien ;
+        // POPAmphibien expose `num_passage` requis sans `value` initiale.
+        // Le champ est un NumberField sur le serveur réel.
+        try {
+          await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
+              isRequired: true);
+        } catch (_) {
+          debugPrint(
+              'Champ "num_passage" absent sur ce module → on continue');
+        }
         try {
           await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
               isRequired: true);
@@ -148,13 +158,15 @@ void main() {
 
           final obsStopwatch = Stopwatch()..start();
 
-          // Ouvrir le formulaire
+          // Ouvrir le formulaire. Timeout généreux : la création precedente
+          // peut avoir pris >45s (tapFormSave timeout) avant que VisitDetailPage
+          // se restabilise avec son bouton add.
           final addObsButton =
               find.byKey(const Key('add-observation-button'));
           await RealTestHelpers.waitForWidget(
             tester,
             addObsButton,
-            timeout: const Duration(seconds: 10),
+            timeout: const Duration(seconds: 60),
             description: 'bouton add-observation-button',
           );
           await tester.tap(addObsButton);

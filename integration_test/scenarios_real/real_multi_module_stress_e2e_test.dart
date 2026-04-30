@@ -192,9 +192,16 @@ Future<void> _exerciseModule(
   if (find.text('Non').evaluate().isNotEmpty) {
     await RealTestHelpers.tapRadioOption(tester, 'Non');
   }
-  // Champs heritage POPAmphibien : expertise + date
+  // Champs heritage POPAmphibien : expertise + num_passage + date.
+  // num_passage est requis depuis #180 (commit 4d8ab29) qui a aligne le mobile
+  // sur le web : seul `value` pre-remplit (plus `default`). Sur le serveur
+  // reel, num_passage est un NumberField.
   try {
     await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
+  } catch (_) {}
+  try {
+    await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
+        isRequired: true);
   } catch (_) {}
   try {
     await RealTestHelpers.pickFormDate(tester, 'visit_date_min',

@@ -500,6 +500,16 @@ class MockVisitesDatabase implements VisitesDatabase {
       );
     });
   }
+
+  @override
+  Future<Set<int>> getSiteGroupIdsWithUnsyncedVisitsForModule(
+          int moduleId) async =>
+      <int>{};
+
+  @override
+  Future<Map<int, int>> getObservationCountByVisitForModule(
+          int moduleId) async =>
+      <int, int>{};
 }
 
 // ============================================================================

@@ -111,7 +111,15 @@ void main() {
       // 2. Selectionner expertise (DropdownButtonFormField select_expertise_*)
       await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
 
-      // 3. Date de visite (champ requis)
+      // 3. N° de passage : depuis #180 (commit 4d8ab29), seul `value` (et plus
+      // `default`) pre-remplit un champ. POPAmphibien a `default: 1` mais pas
+      // de `value`, donc le champ arrive vide → on le saisit explicitement.
+      // Sur le serveur réel, le champ est rendu comme un NumberField
+      // (TextFormField numérique avec key `num_passage_true`).
+      await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
+          isRequired: true);
+
+      // 4. Date de visite (champ requis)
       await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
           isRequired: true);
 

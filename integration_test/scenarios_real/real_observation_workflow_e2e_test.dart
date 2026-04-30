@@ -98,6 +98,11 @@ void main() {
       // masque la plupart des champs requis)
       await RealTestHelpers.tapRadioOption(tester, 'Non');
       await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
+      // N° de passage requis : depuis #180 (commit 4d8ab29), seul `value`
+      // pre-remplit un champ ; POPAmphibien n'a que `default: 1`. Le champ est
+      // un NumberField sur le serveur réel.
+      await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
+          isRequired: true);
       await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
           isRequired: true);
       await RealTestHelpers.tapFormSave(tester);

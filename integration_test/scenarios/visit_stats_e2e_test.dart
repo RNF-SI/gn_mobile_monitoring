@@ -128,11 +128,13 @@ void main() {
       moduleRobot.expectSite('Site de test Alpha');
       moduleRobot.expectSite('Site de test Beta');
 
-      // Headers des colonnes : predefinedLabels passe par ValueFormatter
-      // .formatLabel qui Title-Case chaque mot → "Dernier Passage" et
-      // "Nb. Passages".
-      expect(find.text('Dernier Passage'), findsOneWidget);
-      expect(find.text('Nb. Passages'), findsOneWidget);
+      // Headers des colonnes : un libellé venant de `predefinedLabels` est
+      // déjà rédigé proprement (cf. buildDataColumns dans detail_page.dart
+      // qui n'appelle pas `formatLabel` quand `labelFromConfig` est vrai),
+      // donc on attend la capitalisation française naturelle (Dernier
+      // passage / Nb. passages, pas le Title-Case anglais).
+      expect(find.text('Dernier passage'), findsOneWidget);
+      expect(find.text('Nb. passages'), findsOneWidget);
 
       // Alpha : 2 visites, dernière 20/03/2026. Beta : 1 visite, 10/02/2026.
       expect(find.text('20/03/2026'), findsOneWidget,
