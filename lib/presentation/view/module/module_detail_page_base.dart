@@ -820,15 +820,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   Widget build(BuildContext context) {
     final childContent = buildChildrenContent();
 
-    // Détecter si le clavier est visible
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-
-    // Ajuster les valeurs de flex selon l'état du clavier
-    // Sans clavier: 40% propriétés / 60% tableaux
-    // Avec clavier: 20% propriétés / 80% tableaux
-    final int propertiesFlex = isKeyboardVisible ? 1 : 2;
-    final int childrenFlex = isKeyboardVisible ? 4 : 3;
-
     // Si on a des groupes de sites, les afficher directement sous la navigation
     final hasSiteGroups = _childrenTypes.contains('sites_group');
     final hasSite = _childrenTypes.contains('site');
@@ -839,6 +830,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         hasSiteGroups && hasSite && _tabController != null &&
             _tabController!.length == 2;
 
+    // Toutes les infos « propriétés » du module sont déjà accessibles via la
+    // breadcrumb dépliable (« Afficher les détails ») ; on ne réserve donc
+    // pas un Expanded au-dessus du tableau, qui restait vide en pratique et
+    // mangeait ~40% de la hauteur (retour Camille v1.1.0).
     return Scaffold(
       appBar: buildAppBar(),
       body: Column(
@@ -869,26 +864,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               ),
             )
           else if (hasSiteGroups)
-            Expanded(
-              child: _buildGroupsTab(),
-            )
-          else if (childContent == null)
-            Expanded(child: buildBaseContent())
+            Expanded(child: _buildGroupsTab())
+          else if (childContent != null)
+            Expanded(child: childContent)
           else
-            Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    flex: propertiesFlex,
-                    child: buildBaseContent(),
-                  ),
-                  Expanded(
-                    flex: childrenFlex,
-                    child: childContent,
-                  ),
-                ],
-              ),
-            ),
+            Expanded(child: buildBaseContent()),
         ],
       ),
       floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
