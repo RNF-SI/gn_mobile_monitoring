@@ -135,8 +135,12 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
 
 2. **Déposer l'APK** (téléchargé depuis les releases GitHub) :
    ```bash
-   cp monitoring-x.y.z.apk <GEONATURE>/backend/media/mobile/monitoring/monitoring.apk
+   cp monitoring-v<X.Y.Z>-geonature-<M.m>.apk <GEONATURE>/backend/media/mobile/monitoring/monitoring.apk
    ```
+
+   > ⚠️ **Le nom du fichier sur le serveur doit correspondre EXACTEMENT au champ « Chemin relatif » de l'admin** (étape 3). L'app construit l'URL de téléchargement directement à partir de ce chemin — un nom différent → 404 → la mise à jour reste bloquée en chargement chez l'utilisateur.
+   >
+   > La convention est de renommer en `monitoring.apk` (URL stable d'une release à l'autre, le chemin admin ne change jamais — seul le **Code de version** est à incrémenter à chaque release).
 
 3. **Enregistrer l'application** dans l'admin GeoNature :
    - Aller dans **Administration > Autres > Applications mobiles**
@@ -151,7 +155,7 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
 
    > ⚠️ **Code de version** : ne pas confondre avec le nom de version (`1.0.0`). C'est un entier strictement croissant, fixé à la compilation (buildNumber de `pubspec.yaml`), que l'admin doit saisir tel quel. L'app ne propose une mise à jour que si la valeur admin est **strictement supérieure** à celle de l'APK installé.
 
-4. **Mettre à jour** : lors d'une nouvelle version, remplacer l'APK et incrémenter le **Code de version** dans l'admin.
+4. **Mettre à jour** : lors d'une nouvelle version, **remplacer le fichier `monitoring.apk`** sur le serveur (en renommant le nouvel APK téléchargé) et incrémenter le **Code de version** dans l'admin. Le chemin relatif reste inchangé.
 
 L'application vérifie automatiquement au lancement et après chaque synchronisation si une mise à jour est disponible.
 
