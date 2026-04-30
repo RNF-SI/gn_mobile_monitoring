@@ -10,14 +10,18 @@ import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/database/sites_database.dart';
 import 'package:gn_mobile_monitoring/data/service/map_geometry_service_impl.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
+import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_complete_module_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_orphan_sites_by_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/map/gen_map.dart';
 import 'package:gn_mobile_monitoring/presentation/view/module/site_group_form_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/module/uninstall_module_action.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_detail_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site/site_form_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/site_group_detail_page.dart';
@@ -298,15 +302,26 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     with SingleTickerProviderStateMixin {
   TabController? _tabController;
   List<String> _childrenTypes = [];
-  final ScrollController _sitesScrollController = ScrollController();
   final TextEditingController _searchController = TextEditingController();
 
-  static const int _sitesPerPage = 20;
-  int _currentSitesPage = 1;
   bool _isLoadingSites = false;
   List<dynamic> _displayedSites = [];
   List<dynamic> _filteredSites = [];
   List<dynamic> _allSites = [];
+
+  /// IDs des sites du module ayant au moins une visite non synchronisée.
+  /// Utilisé pour afficher un indicateur visuel sur la ligne du site (#XXX).
+  Set<int> _unsyncedSiteIds = {};
+
+  /// IDs des groupes de sites du module dont au moins un site a une visite
+  /// non synchronisée. Permet d'afficher le badge orange sur la ligne du
+  /// groupe avant même que l'utilisateur ne le déplie.
+  Set<int> _unsyncedSiteGroupIds = {};
+
+  /// Stats de visites (dernière visite, nombre total) par site pour ce
+  /// module, calculées localement depuis t_base_visits. Source des colonnes
+  /// "Dernier passage" et "Nb. passages" de l'onglet Sites.
+  Map<int, SiteVisitStats> _visitStatsBySiteId = {};
   List<dynamic> _filteredSiteGroups = [];
   String _searchQuery = '';
   bool _showGroupSearch = false;
@@ -326,8 +341,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   // Module avec configuration complète (utilisé uniquement quand la configuration est chargée dynamiquement)
   Module? _updatedModule;
 
+  // Sites orphelins (sans groupe) pour ce module, chargés depuis la DB (#157)
+  List<BaseSite>? _orphanSites;
+  bool _orphanSitesLoaded = false;
+
   // Injection du use case pour respecter la Clean Architecture
   late GetCompleteModuleUseCase getCompleteModuleUseCase;
+  GetOrphanSitesByModuleUseCase? getOrphanSitesByModuleUseCase;
 
   @override
   ObjectConfig? get objectConfig {
@@ -448,9 +468,6 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   void initState() {
     super.initState();
 
-    // Ajouter un écouteur pour le défilement
-    _sitesScrollController.addListener(_handleScroll);
-
     // Charger la position GPS
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadUserLocation();
@@ -459,9 +476,41 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     // Toujours charger la configuration complète du module quand la propriété est injectée
   }
 
+  /// Charge les sites orphelins (sans groupe parent) pour ce module (#157).
+  /// Si le module a au moins un site orphelin, l'onglet "Sites" sera ajouté
+  /// même si la config du serveur ne le mentionne pas.
+  Future<void> _loadOrphanSites() async {
+    final usecase = getOrphanSitesByModuleUseCase;
+    if (usecase == null) return;
+    try {
+      final orphans = await usecase.execute(widget.moduleInfo.module.id);
+      if (!mounted) return;
+      setState(() {
+        _orphanSites = orphans;
+        _orphanSitesLoaded = true;
+        if (_configurationLoaded) {
+          _updateChildrenTypesFromConfig();
+          _initializeTabController();
+          _loadSitesIfAvailable();
+        }
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des sites orphelins: $e');
+      if (mounted) {
+        setState(() {
+          _orphanSites = [];
+          _orphanSitesLoaded = true;
+        });
+      }
+    }
+  }
+
   // Méthode pour charger le module complet avec toutes ses données associées
   Future<void> loadCompleteModule() async {
     try {
+      // Charger les sites orphelins en parallèle (#157)
+      _loadOrphanSites();
+
       // Utiliser le use case injecté par le widget parent pour récupérer le module complet
       // Cela inclut : configuration, sites, groupes de sites et données complémentaires
       final completeModule =
@@ -547,6 +596,15 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         _childrenTypes = ['site'];
       }
     }
+
+    // Issue #157 : si le module a des sites sans groupe parent mais que la
+    // config ne déclare pas l'onglet 'site', l'ajouter d'office pour que ces
+    // sites orphelins soient accessibles.
+    if (_orphanSitesLoaded &&
+        (_orphanSites?.isNotEmpty ?? false) &&
+        !_childrenTypes.contains('site')) {
+      _childrenTypes = [..._childrenTypes, 'site'];
+    }
   }
 
   void _initializeTabController() {
@@ -570,17 +628,41 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     if (_childrenTypes.contains('site') ||
         (module.sites != null && module.sites!.isNotEmpty)) {
       _loadInitialSites();
+      _loadVisitDerivedData();
+    }
+  }
+
+  /// Charge en parallèle les stats de visites par site et la liste des sites
+  /// ayant des visites non téléversées. Silencieux en cas d'erreur : la
+  /// dégradation se limite à des colonnes vides et à l'absence du badge.
+  Future<void> _loadVisitDerivedData() async {
+    final ref = widget.ref;
+    if (ref == null) return;
+    final moduleId = (_updatedModule ?? widget.moduleInfo.module).id;
+    try {
+      final db = ref.read(visitDatabaseProvider);
+      final results = await Future.wait([
+        db.getSiteIdsWithUnsyncedVisitsForModule(moduleId),
+        db.getVisitStatsForModule(moduleId),
+        db.getSiteGroupIdsWithUnsyncedVisitsForModule(moduleId),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _unsyncedSiteIds = results[0] as Set<int>;
+        _visitStatsBySiteId = results[1] as Map<int, SiteVisitStats>;
+        _unsyncedSiteGroupIds = results[2] as Set<int>;
+      });
+    } catch (e) {
+      debugPrint('Erreur chargement stats de visites: $e');
     }
   }
 
   @override
   void dispose() {
-    _sitesScrollController.removeListener(_handleScroll);
     if (_tabController != null) {
       _tabController!.removeListener(_handleTabChange);
       _tabController!.dispose();
     }
-    _sitesScrollController.dispose();
     _searchController.dispose();
     _groupSearchController.dispose();
     super.dispose();
@@ -606,13 +688,14 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   void _loadInitialSites() {
     setState(() {
       _isLoadingSites = true;
-      _currentSitesPage = 1;
 
-      // Les sites dans le module sont déjà filtrés
-      // pour ce module spécifique via la relation cor_site_module
+      // L'onglet Sites liste TOUS les sites du module (cohérent avec le
+      // comportement GeoNature web où l'onglet Sites affiche les 156 points
+      // du module plaquesreptiles, et pas seulement les sites hors groupe).
+      // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
+      // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
       final module = _updatedModule ?? widget.moduleInfo.module;
-      final sitesForModule = module.sites ?? [];
-      _allSites = sitesForModule;
+      _allSites = module.sites ?? [];
       _filterSites();
 
       _isLoadingSites = false;
@@ -631,7 +714,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       }).toList();
     }
 
-    _displayedSites = _filteredSites.take(_sitesPerPage).toList();
+    _displayedSites = _filteredSites;
   }
 
   void _filterSiteGroups() {
@@ -650,49 +733,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
   }
 
-  void _loadMoreSites() {
-    if (_isLoadingSites) return;
-
-    setState(() {
-      _isLoadingSites = true;
-    });
-
-    final startIndex = _currentSitesPage * _sitesPerPage;
-    final endIndex = startIndex + _sitesPerPage;
-
-    if (startIndex < _filteredSites.length) {
-      setState(() {
-        _displayedSites.addAll(
-          _filteredSites.getRange(
-            startIndex,
-            endIndex > _filteredSites.length ? _filteredSites.length : endIndex,
-          ),
-        );
-        _currentSitesPage++;
-        _isLoadingSites = false;
-      });
-    } else {
-      setState(() {
-        _isLoadingSites = false;
-      });
-    }
-  }
-
   void _handleSearch(String value) {
     setState(() {
       _searchQuery = value;
-      _currentSitesPage = 1;
 
       _filterSites();
       _filterSiteGroups();
     });
-  }
-
-  void _handleScroll() {
-    if (_sitesScrollController.position.pixels >=
-        _sitesScrollController.position.maxScrollExtent - 200) {
-      _loadMoreSites();
-    }
   }
 
   @override
@@ -752,6 +799,13 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
               ),
             ),
+          )
+        else
+          UninstallModuleAction(
+            moduleId: widget.moduleInfo.module.id,
+            moduleLabel: widget.moduleInfo.module.moduleLabel ??
+                widget.moduleInfo.module.moduleCode ??
+                'le module',
           ),
       ],
     );
@@ -766,45 +820,55 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   Widget build(BuildContext context) {
     final childContent = buildChildrenContent();
 
-    // Détecter si le clavier est visible
-    final bool isKeyboardVisible = MediaQuery.of(context).viewInsets.bottom > 0;
-
-    // Ajuster les valeurs de flex selon l'état du clavier
-    // Sans clavier: 40% propriétés / 60% tableaux
-    // Avec clavier: 20% propriétés / 80% tableaux
-    final int propertiesFlex = isKeyboardVisible ? 1 : 2;
-    final int childrenFlex = isKeyboardVisible ? 4 : 3;
-
     // Si on a des groupes de sites, les afficher directement sous la navigation
     final hasSiteGroups = _childrenTypes.contains('sites_group');
+    final hasSite = _childrenTypes.contains('site');
+    // Issue #157 : mode mixte = le module affiche à la fois des groupes et
+    // des sites orphelins. On montre alors un TabBar à 2 onglets
+    // (Groupes / Sites) au lieu d'afficher seulement les groupes.
+    final isMixedMode =
+        hasSiteGroups && hasSite && _tabController != null &&
+            _tabController!.length == 2;
 
+    // Toutes les infos « propriétés » du module sont déjà accessibles via la
+    // breadcrumb dépliable (« Afficher les détails ») ; on ne réserve donc
+    // pas un Expanded au-dessus du tableau, qui restait vide en pratique et
+    // mangeait ~40% de la hauteur (retour Camille v1.1.0).
     return Scaffold(
       appBar: buildAppBar(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           buildBreadcrumb(),
-          if (hasSiteGroups)
-            Expanded(
-              child: _buildGroupsTab(),
-            )
-          else if (childContent == null)
-            Expanded(child: buildBaseContent())
-          else
+          if (isMixedMode)
             Expanded(
               child: Column(
                 children: [
-                  Expanded(
-                    flex: propertiesFlex,
-                    child: buildBaseContent(),
+                  buildTabBar(
+                    tabController: _tabController!,
+                    tabs: _childrenTypes
+                        .map((t) => _buildTabLabel(t))
+                        .toList(),
                   ),
                   Expanded(
-                    flex: childrenFlex,
-                    child: childContent,
+                    child: TabBarView(
+                      controller: _tabController!,
+                      children: _childrenTypes.map((t) {
+                        if (t == 'sites_group') return _buildGroupsTab();
+                        if (t == 'site') return _buildSitesTab();
+                        return const SizedBox.shrink();
+                      }).toList(),
+                    ),
                   ),
                 ],
               ),
-            ),
+            )
+          else if (hasSiteGroups)
+            Expanded(child: _buildGroupsTab())
+          else if (childContent != null)
+            Expanded(child: childContent)
+          else
+            Expanded(child: buildBaseContent()),
         ],
       ),
       floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
@@ -887,6 +951,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     String label = '';
 
     if (childType == 'site') {
+      // L'onglet Sites affiche TOUS les sites du module, comme sur le web.
       count = module.sites?.length ?? 0;
       label = module.complement?.configuration?.site?.labelList ??
           module.complement?.configuration?.site?.label ??
@@ -1156,7 +1221,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                   '  ✗ Aucune géométrie dans la base de données, calcul depuis les sites enfants...');
               // Calculer la géométrie à partir des sites enfants
               final calculatedGeom = await _calculateGroupGeometryFromSites(
-                  group.idSitesGroup, sitesDatabase);
+                  group.idSitesGroup,
+                  widget.moduleInfo.module.id,
+                  sitesDatabase);
               if (calculatedGeom != null) {
                 debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
                 // Retourner le groupe avec la géométrie calculée
@@ -1173,7 +1240,9 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 '  ✗ Groupe non trouvé dans la base de données, calcul depuis les sites enfants...');
             // Calculer la géométrie à partir des sites enfants
             final calculatedGeom = await _calculateGroupGeometryFromSites(
-                group.idSitesGroup, sitesDatabase);
+                group.idSitesGroup,
+                widget.moduleInfo.module.id,
+                sitesDatabase);
             if (calculatedGeom != null) {
               debugPrint('  ✓ Géométrie calculée depuis les sites enfants');
               // Retourner le groupe avec la géométrie calculée
@@ -1200,11 +1269,12 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
 
   /// Calcule la géométrie d'un groupe à partir de ses sites enfants
   /// Retourne un Polygon GeoJSON représentant l'enveloppe convexe (convex hull) des sites
-  Future<String?> _calculateGroupGeometryFromSites(
-      int siteGroupId, SitesDatabase sitesDatabase) async {
+  Future<String?> _calculateGroupGeometryFromSites(int siteGroupId,
+      int moduleId, SitesDatabase sitesDatabase) async {
     try {
-      // Récupérer tous les sites du groupe
-      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      // Récupérer les sites du groupe liés au module courant
+      final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+          siteGroupId, moduleId);
       debugPrint('  Nombre de sites dans le groupe: ${sites.length}');
 
       // Extraire les coordonnées de tous les sites qui ont une géométrie
@@ -1425,22 +1495,44 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             tilePadding:
                 const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             childrenPadding: EdgeInsets.zero,
-            leading: IconButton(
-              icon: const Icon(Icons.visibility, size: 20),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SiteGroupDetailPage(
-                      siteGroup: group,
-                      moduleInfo: _updatedModule != null
-                          ? widget.moduleInfo.copyWith(module: _updatedModule!)
-                          : widget.moduleInfo,
+            leading: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.visibility, size: 20),
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => SiteGroupDetailPage(
+                          siteGroup: group,
+                          moduleInfo: _updatedModule != null
+                              ? widget.moduleInfo
+                                  .copyWith(module: _updatedModule!)
+                              : widget.moduleInfo,
+                        ),
+                      ),
+                    );
+                    // Au retour : une visite a pu être créée/synchronisée
+                    // dans un site du groupe — on rafraîchit le badge orange
+                    // au niveau groupe également.
+                    if (mounted) _loadVisitDerivedData();
+                  },
+                  tooltip: 'Voir les détails',
+                ),
+                if (_unsyncedSiteGroupIds.contains(group.idSitesGroup))
+                  Tooltip(
+                    message: 'Saisies locales non téléversées',
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.orange,
+                        shape: BoxShape.circle,
+                      ),
                     ),
                   ),
-                );
-              },
-              tooltip: 'Voir les détails',
+              ],
             ),
             title: Row(
               children: [
@@ -1795,14 +1887,15 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     );
   }
 
-  /// Calcule le nombre de sites pour un groupe de sites
+  /// Calcule le nombre de sites d'un groupe rattachés au module courant
   Future<int> _calculateNbSites(int siteGroupId) async {
     if (widget.ref == null) {
       return 0;
     }
     try {
       final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
-      final sites = await sitesDatabase.getSitesBySiteGroup(siteGroupId);
+      final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+          siteGroupId, widget.moduleInfo.module.id);
       return sites.length;
     } catch (e) {
       debugPrint(
@@ -2285,6 +2378,10 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         'base_site_name': 'Nom',
         'base_site_code': 'Code',
         'base_site_description': 'Description',
+        'altitude_min': 'Altitude min',
+        'altitude_max': 'Altitude max',
+        'last_visit': 'Dernier passage',
+        'nb_visits': 'Nb. passages',
       },
     );
 
@@ -2300,27 +2397,51 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         cells: displayColumns.map((column) {
           // Colonne d'actions
           if (column == 'actions') {
+            final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
             return DataCell(
-              IconButton(
-                icon: const Icon(Icons.visibility, size: 20),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => SiteDetailPage(
-                        site: site,
-                        moduleInfo: _updatedModule != null
-                            ? widget.moduleInfo
-                                .copyWith(module: _updatedModule!)
-                            : widget.moduleInfo,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.visibility, size: 20),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteDetailPage(
+                            site: site,
+                            moduleInfo: _updatedModule != null
+                                ? widget.moduleInfo
+                                    .copyWith(module: _updatedModule!)
+                                : widget.moduleInfo,
+                          ),
+                        ),
+                      );
+                      // L'utilisateur a pu créer/synchroniser une visite sur
+                      // ce site ; on rafraîchit le badge et les stats au
+                      // retour pour que "Dernier passage" / "Nb. passages"
+                      // reflètent la saisie immédiatement.
+                      if (mounted) _loadVisitDerivedData();
+                    },
+                    constraints: const BoxConstraints(
+                      minWidth: 36,
+                      minHeight: 36,
+                    ),
+                  ),
+                  if (hasUnsyncedVisits)
+                    Tooltip(
+                      message: 'Saisies locales non téléversées',
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        margin: const EdgeInsets.only(left: 2),
+                        decoration: const BoxDecoration(
+                          color: Colors.orange,
+                          shape: BoxShape.circle,
+                        ),
                       ),
                     ),
-                  );
-                },
-                constraints: const BoxConstraints(
-                  minWidth: 36,
-                  minHeight: 36,
-                ),
+                ],
               ),
             );
           }
@@ -2337,8 +2458,33 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             case 'base_site_description':
               value = site.baseSiteDescription;
               break;
+            case 'altitude_min':
+              value = site.altitudeMin;
+              break;
+            case 'altitude_max':
+              value = site.altitudeMax;
+              break;
+            case 'last_visit':
+              // Calculé localement depuis t_base_visits : prend en compte
+              // les saisies offline pas encore téléversées, contrairement
+              // au last_visit serveur. Formaté "dd/MM/yyyy" ici car la
+              // config `site` ne déclare généralement pas la colonne dans
+              // `generic`, donc formatDataCellValue n'a pas le type_widget
+              // `date` pour la formater elle-même.
+              final lastVisit =
+                  _visitStatsBySiteId[site.idBaseSite]?.lastVisit;
+              value = lastVisit != null
+                  ? '${lastVisit.day.toString().padLeft(2, '0')}/'
+                      '${lastVisit.month.toString().padLeft(2, '0')}/'
+                      '${lastVisit.year}'
+                  : null;
+              break;
+            case 'nb_visits':
+              value = _visitStatsBySiteId[site.idBaseSite]?.nbVisits ?? 0;
+              break;
             default:
-              // BaseSite n'a pas de propriété 'data', on laisse la valeur à null
+              // Colonne inconnue ou non encore exploitée (ex. "visitors",
+              // "comments" côté server complement → issue dédiée).
               value = null;
           }
 

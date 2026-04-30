@@ -1,10 +1,10 @@
-# GN Mobile Monitoring
+# Mobile-monitoring
 
-Portage mobile du module monitoring de GeoNature pour la saisie de données protocolées sur smartphone.
+Application mobile du module Monitoring de GeoNature, pour la saisie de données de protocoles de suivi sur smartphone.
 
 ## 📱 Description
 
-GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il permet la saisie de données protocolées directement depuis un smartphone et leur envoi vers votre instance GeoNature.
+Monitoring-mobile est une application mobile du module Monitoring de GeoNature. Elle permet la saisie de données de protocoles de suivi directement depuis un smartphone et leur envoi vers votre instance GeoNature.
 
 ## ✨ Fonctionnalités
 
@@ -18,18 +18,19 @@ GN Mobile Monitoring est un portage mobile du module monitoring de GeoNature. Il
 
 | Version app mobile | GeoNature core | Monitoring serveur (min) | Code de version (à saisir côté admin GeoNature) |
 |---|---|---|---|
-| `v1.0.0` | ≥ 2.16.x | 1.2.6 | `1` |
+| `v1.1.0-geonature-2.17` | 2.17.x | ≥ 1.2.6 | `2` |
+| `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 | `1` |
 
 Le **code de version** est la valeur à renseigner côté admin GeoNature (voir [Déploiement](#-déploiement-et-mise-à-jour)). Pour l'historique complet des releases, voir [`docs/VERSIONS.md`](./docs/VERSIONS.md).
 
-L'application vérifie automatiquement la version du module monitoring sur le serveur avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
+L'application vérifie automatiquement la version du module Monitoring sur le serveur GeoNature avant chaque téléchargement de module. Si la version est inférieure à la version minimale requise, le téléchargement est bloqué avec un message explicatif.
 
 Chaque ligne majeure GeoNature a sa propre branche de support : `support/geonature-2.17` et `support/geonature-2.16` pour les hotfixes. Le développement courant sur `develop` cible la prochaine compat.
 
 ## 📋 Prérequis
 
 - Android 5.0 minimum
-- GeoNature 2.16.x ou 2.17.x avec le module monitoring correspondant (voir matrice ci-dessus)
+- GeoNature 2.16.x ou 2.17.x avec le module Monitoring correspondant (voir matrice ci-dessus)
 - Compte utilisateur avec droits sur les modules
 
 ## 🚀 Installation
@@ -58,7 +59,7 @@ flutter run
 1. Lancer l'application
 2. Saisir l'URL de votre instance GeoNature
 3. Se connecter avec ses identifiants GeoNature
-4. Télécharger les modules de monitoring souhaités
+4. Télécharger les modules de Monitoring souhaités
 
 ## 🛠️ Développement
 

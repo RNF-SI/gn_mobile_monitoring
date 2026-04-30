@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 import 'package:gn_mobile_monitoring/presentation/view/base/detail_page.dart';
@@ -75,10 +76,31 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties => objectConfig?.displayProperties;
+  List<String>? get displayProperties {
+    final base = objectConfig?.displayProperties;
+    if (base == null || base.isEmpty) return base;
+    // On affiche systématiquement les stats locales (calculées depuis
+    // t_base_visits) à la fin des propriétés du site, même si le module ne
+    // les a pas mises dans `display_properties`. Le formulaire les exclut
+    // (champ calculé), mais le détail mérite de les montrer.
+    final result = List<String>.from(base);
+    if (!result.contains('nb_visits')) result.add('nb_visits');
+    if (!result.contains('last_visit')) result.add('last_visit');
+    return result;
+  }
 
   // Site complement data pour le site courant
   SiteComplement? _siteComplement;
+
+  /// Stats locales du site (nb_visits + last_visit) issues de t_base_visits.
+  /// Chargées en initState et injectées dans `objectData` pour s'afficher
+  /// dans la section "Propriétés du site" du détail.
+  SiteVisitStats? _visitStats;
+
+  /// Nombre d'observations par visite pour le module courant. Utilisé pour
+  /// alimenter la colonne `nb_observations` du tableau de visites quand le
+  /// module la déclare dans son `display_list`. Clé = idBaseVisit.
+  Map<int, int> _observationCountByVisitId = {};
 
   @override
   Map<String, dynamic> get objectData {
@@ -118,6 +140,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       }
     }
 
+    // Stats locales calculées : on injecte les valeurs même nulles pour que
+    // le label "Nb. de passages" / "Dernier passage" apparaisse en
+    // "Non renseigné" si aucune visite, plutôt que d'être absent.
+    data['nb_visits'] = _visitStats?.nbVisits ?? 0;
+    data['last_visit'] = _visitStats?.lastVisit?.toIso8601String();
+
     return data;
   }
 
@@ -134,6 +162,30 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     _initializeTabController();
     _loadSiteComplement();
     _loadUserPosition();
+    _loadVisitStats();
+  }
+
+  /// Charge en parallèle :
+  /// - les stats du site (nb_visits + last_visit) pour les propriétés ;
+  /// - le compte d'observations par visite pour la colonne `nb_observations`
+  ///   du tableau de visites.
+  Future<void> _loadVisitStats() async {
+    final moduleId = widget.moduleInfo?.module.id;
+    if (moduleId == null) return;
+    try {
+      final db = widget.ref.read(visitDatabaseProvider);
+      final results = await Future.wait([
+        db.getVisitStatsForModule(moduleId),
+        db.getObservationCountByVisitForModule(moduleId),
+      ]);
+      if (!mounted) return;
+      setState(() {
+        _visitStats = (results[0] as Map<int, SiteVisitStats>)[_site.idBaseSite];
+        _observationCountByVisitId = results[1] as Map<int, int>;
+      });
+    } catch (e) {
+      debugPrint('Erreur lors du chargement des stats du site: $e');
+    }
   }
 
   /// Charge le complément du site depuis la base de données
@@ -165,6 +217,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       if (!mounted || updated == null) return;
       setState(() => _site = updated);
       await _loadSiteComplement();
+      await _loadVisitStats();
     } catch (e) {
       debugPrint('Erreur lors du rafraîchissement du site: $e');
     }
@@ -554,6 +607,7 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
         'visit_date_min': 'Date de visite',
         'comments': 'Commentaires',
         'observers': 'Observateurs',
+        'nb_observations': 'Nb. observations',
       },
     );
   }
@@ -581,8 +635,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                 IconButton(
                   icon: const Icon(Icons.visibility, size: 20),
                   tooltip: 'Voir les détails',
-                  onPressed: () {
-                    Navigator.push(
+                  onPressed: () async {
+                    await Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => VisitDetailPage(
@@ -593,6 +647,11 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                         ),
                       ),
                     );
+                    // L'utilisateur a pu ajouter/supprimer des observations
+                    // sur cette visite : on rafraîchit la map
+                    // _observationCountByVisitId pour que la colonne
+                    // "Nb. observations" du tableau soit à jour.
+                    if (mounted) _loadVisitStats();
                   },
                   constraints: const BoxConstraints(
                     minWidth: 40,
@@ -625,6 +684,9 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
                         );
                         widget.ref
                             .invalidate(siteVisitsViewModelProvider(params));
+                        // Rafraîchir aussi nb_visits / last_visit affichés
+                        // dans les propriétés du site.
+                        if (mounted) _loadVisitStats();
                       });
                     }
                   },
@@ -671,6 +733,12 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
             );
           }
           return const DataCell(Text(''));
+        } else if (column == 'nb_observations') {
+          // Calculé localement depuis t_observations (la valeur n'est pas
+          // dans `visit.data`). Affiche 0 si la map n'a pas encore été
+          // chargée ou si la visite n'a aucune observation.
+          final count = _observationCountByVisitId[visit.idBaseVisit] ?? 0;
+          return DataCell(Text('$count'));
         }
 
         // Données spécifiques (depuis le champ data)
@@ -769,6 +837,8 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
       final params =
           (_site.idBaseSite, widget.moduleInfo?.module.id ?? 0);
       widget.ref.invalidate(siteVisitsViewModelProvider(params));
+      // Rafraîchir aussi nb_visits / last_visit affichés dans les propriétés.
+      if (mounted) _loadVisitStats();
     });
   }
 

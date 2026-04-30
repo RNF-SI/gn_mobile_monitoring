@@ -14,23 +14,61 @@ class Config {
   // Set the base URL from localStorage
   static void setStoredApiUrl(String? baseUrl) {
     if (baseUrl != null) {
-      // Nettoyer l'URL pour s'assurer qu'elle ne contient pas /api
-      String cleanUrl = baseUrl.trim();
-      
-      // Supprimer le slash final s'il existe
-      if (cleanUrl.endsWith('/')) {
-        cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-      }
-      
-      // Supprimer /api s'il est présent
-      if (cleanUrl.endsWith('/api')) {
-        cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
-      }
-      
-      _storedBaseUrl = cleanUrl;
+      _storedBaseUrl = normalizeUserInputUrl(baseUrl);
     } else {
       _storedBaseUrl = null;
     }
+  }
+
+  /// Nettoie une URL saisie par l'utilisateur :
+  /// - trim + ajout du schéma https:// par défaut si aucun n'est fourni
+  /// - retrait de la query (`?...`) et du fragment (`#/login`, `#/home`, …)
+  ///   typiquement présents quand l'URL est copiée depuis la SPA GeoNature
+  /// - retrait du slash final et du suffixe /api
+  static String normalizeUserInputUrl(String rawUrl) {
+    String cleanUrl = rawUrl.trim();
+    if (cleanUrl.isEmpty) return cleanUrl;
+
+    if (!cleanUrl.startsWith('http://') &&
+        !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
+    }
+
+    Uri parsed;
+    try {
+      parsed = Uri.parse(cleanUrl);
+    } catch (_) {
+      return cleanUrl;
+    }
+    if (!parsed.hasAuthority) return cleanUrl;
+
+    String path = parsed.path;
+    if (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+    if (path.endsWith('/api')) {
+      path = path.substring(0, path.length - 4);
+    }
+
+    final cleaned = Uri(
+      scheme: parsed.scheme,
+      userInfo: parsed.userInfo.isEmpty ? null : parsed.userInfo,
+      host: parsed.host,
+      port: parsed.hasPort ? parsed.port : null,
+      path: path,
+    );
+    return cleaned.toString();
+  }
+
+  /// Indique si l'URL utilise le schéma HTTP non sécurisé contre un host
+  /// qui n'est pas un environnement de développement local.
+  /// Utile pour afficher un avertissement dans l'écran de connexion.
+  static bool isInsecureHttpForProduction(String url) {
+    final trimmed = url.trim();
+    if (!trimmed.startsWith('http://')) {
+      return false;
+    }
+    return !_isDevEnvironment(trimmed);
   }
 
   // Clear the stored URL

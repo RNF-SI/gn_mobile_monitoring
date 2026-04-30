@@ -4,6 +4,9 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
+import 'package:gn_mobile_monitoring/core/errors/exceptions/bad_credentials_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/login_error_formatter.dart';
+import 'package:gn_mobile_monitoring/core/widgets/copyable_error_dialog.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
@@ -154,6 +157,61 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
     }
   }
 
+  /// Vérifie que le serveur GeoNature répond à une requête HTTP.
+  /// Toute réponse HTTP (même 404/500) signifie que le serveur existe ;
+  /// seuls timeout, DNS et connexion refusée comptent comme injoignable.
+  Future<({bool reachable, String message})> pingServer(String rawUrl) async {
+    final trimmed = rawUrl.trim();
+    if (trimmed.isEmpty) {
+      return (reachable: false, message: "Saisissez une URL d'abord.");
+    }
+
+    final normalized = Config.normalizeUserInputUrl(trimmed);
+    final dio = Dio(BaseOptions(
+      baseUrl: normalized,
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+      sendTimeout: const Duration(seconds: 5),
+      followRedirects: true,
+      validateStatus: (_) => true,
+    ));
+
+    try {
+      final response = await dio.get('/');
+      return (
+        reachable: true,
+        message: 'Serveur joignable (HTTP ${response.statusCode}).',
+      );
+    } on DioException catch (e) {
+      switch (e.type) {
+        case DioExceptionType.connectionTimeout:
+        case DioExceptionType.receiveTimeout:
+        case DioExceptionType.sendTimeout:
+          return (
+            reachable: false,
+            message: 'Délai dépassé : le serveur ne répond pas.',
+          );
+        case DioExceptionType.connectionError:
+          return (
+            reachable: false,
+            message: 'Connexion impossible : vérifiez l\'URL et le réseau.',
+          );
+        case DioExceptionType.badCertificate:
+          return (
+            reachable: false,
+            message: 'Certificat SSL invalide.',
+          );
+        default:
+          return (
+            reachable: false,
+            message: 'Erreur réseau : ${e.message ?? e.type.name}.',
+          );
+      }
+    } catch (e) {
+      return (reachable: false, message: 'Erreur inattendue : $e');
+    }
+  }
+
   Future<void> signInWithEmailAndPassword(
     final String identifiant,
     final String password,
@@ -225,74 +283,42 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
           _updateLoginStatus(LoginStatusInfo.error(e.toString()));
         }
       });
-    } on DioException catch (e) {
-      var errorObj = {};
-      String errorText;
-      if (e.response != null) {
-        errorObj['data'] = e.response!.data;
-        errorObj['headers'] = e.response!.headers;
-        errorObj['requestOptions'] = e.response!.requestOptions;
-        errorText =
-            "${e.error} : Le serveur a été atteint, mais ce dernier a renvoyé une exception";
-      } else {
-        errorObj['message'] = e.message;
-        errorObj['requestOptions'] = e.requestOptions;
-        errorText =
-            "${e.error}: La requète n'a pas pu être mise en place ou envoyée";
-      }
+    } on BadCredentialsException catch (e) {
+      // Cas courant : on évite le dialog lourd et on affiche une SnackBar.
+      state = loadingState.State.error(e);
+      _updateLoginStatus(LoginStatusInfo.error(e.message));
 
-      _updateLoginStatus(LoginStatusInfo.error(errorText));
-
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: Text(errorText),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              itemCount: errorObj.length,
-              itemBuilder: (BuildContext context, int index) {
-                String key = errorObj.keys.elementAt(index);
-                return Column(
-                  children: <Widget>[
-                    ListTile(
-                      title: Text(key),
-                      subtitle: Text("${errorObj[key]}"),
-                    ),
-                    const Divider(
-                      height: 2.0,
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: const Text("OK"))
-          ],
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: Colors.red.shade700,
+          duration: const Duration(seconds: 4),
         ),
+      );
+    } on DioException catch (e) {
+      state = loadingState.State.error(e);
+      final formatted = LoginErrorMessage.from(e);
+      _updateLoginStatus(LoginStatusInfo.error(formatted.message));
+
+      if (!context.mounted) return;
+      await showCopyableErrorDialog(
+        context,
+        title: 'Erreur de connexion',
+        message: formatted.message,
+        details: formatted.details,
       );
     } on Exception catch (e) {
       state = loadingState.State.error(e);
-      _updateLoginStatus(LoginStatusInfo.error(e.toString()));
+      final formatted = LoginErrorMessage.from(e);
+      _updateLoginStatus(LoginStatusInfo.error(formatted.message));
 
-      await showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Error Occured'),
-          content: Text(e.toString()),
-          actions: [
-            TextButton(
-                onPressed: () {
-                  Navigator.of(ctx).pop();
-                },
-                child: const Text("OK"))
-          ],
-        ),
+      if (!context.mounted) return;
+      await showCopyableErrorDialog(
+        context,
+        title: 'Erreur de connexion',
+        message: formatted.message,
+        details: formatted.details,
       );
     }
   }

@@ -306,6 +306,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
       children: [
         // Champ de recherche/affichage
         TextFormField(
+          key: const Key('taxon-search-field'),
           controller: _searchController,
           decoration: InputDecoration(
             labelText: widget.isRequired ? '${widget.label} *' : widget.label,
@@ -369,6 +370,7 @@ class _TaxonSelectorWidgetState extends ConsumerState<TaxonSelectorWidget> {
           )
         else if (_searchResults.isNotEmpty)
           Container(
+            key: const Key('taxon-search-results'),
             margin: const EdgeInsets.only(top: 4),
             constraints: const BoxConstraints(maxHeight: 150),
             decoration: BoxDecoration(

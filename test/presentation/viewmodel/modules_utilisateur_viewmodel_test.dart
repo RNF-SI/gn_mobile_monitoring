@@ -18,6 +18,9 @@ import '../../mocks/mocks.dart';
 class MockBuildContext extends Mock implements BuildContext {}
 
 void main() {
+  // Nécessaire car _handleDownloadFailure accède à appRootNavigatorKey.currentContext
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   late ProviderContainer container;
   late MockGetModulesUseCase mockGetModulesUseCase;
   late MockDownloadCompleteModuleUseCase mockDownloadCompleteModuleUseCase;
@@ -213,8 +216,9 @@ void main() {
     expect(updatedModuleInfo.downloadProgress, equals(1.0));
   });
 
-  test('startDownloadModule should handle download errors gracefully',
-      () async {
+  test(
+      'startDownloadModule : sur erreur, le module revient à moduleNotDownloaded '
+      'sans faire passer la liste en State.error (#168)', () async {
     // Arrange
     final mockModule = const Module(
       id: 1,
@@ -249,7 +253,8 @@ void main() {
         .thenAnswer((_) async => 'test-token');
 
     // Mock download usecase to throw error
-    when(() => mockDownloadCompleteModuleUseCase.execute(any(), any(), any(), any()))
+    when(() =>
+            mockDownloadCompleteModuleUseCase.execute(any(), any(), any(), any()))
         .thenThrow(Exception('Download failed'));
 
     // Act
@@ -257,9 +262,15 @@ void main() {
 
     // Assert
     final state = container.read(userModuleListeViewModelStateNotifierProvider);
-    expect(state, isA<custom_async_state.State<ModuleInfoList>>());
-    expect(state.data, isNull);
-    expect(state.toString(), contains('Download failed'));
+    // Avant le fix #168, state passait en error et state.data était null →
+    // la liste entière disparaissait. Maintenant, la liste reste visible.
+    expect(state.data, isNotNull,
+        reason: 'La liste des modules ne doit pas disparaître sur erreur');
+    final refreshed = state.data!.values.firstWhere((m) => m.module.id == 1);
+    expect(refreshed.downloadStatus, ModuleDownloadStatus.moduleNotDownloaded,
+        reason:
+            'Le module en échec doit repasser à moduleNotDownloaded pour retry');
+    expect(refreshed.downloadProgress, 0.0);
   });
 
   test(

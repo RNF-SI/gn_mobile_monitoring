@@ -30,9 +30,11 @@ class _ModuleDetailPageState extends ConsumerState<ModuleDetailPage> {
     final moduleDetailPageBaseState =
         _moduleDetailPageBaseStateKey.currentState;
     if (moduleDetailPageBaseState != null) {
-      // Injection du use case provenant du provider
+      // Injection des use cases provenant des providers
       moduleDetailPageBaseState.getCompleteModuleUseCase =
           ref.read(getCompleteModuleUseCaseProvider);
+      moduleDetailPageBaseState.getOrphanSitesByModuleUseCase =
+          ref.read(getOrphanSitesByModuleUseCaseProvider);
       // Démarrer le chargement du module complet (incluant sites et configuration)
       moduleDetailPageBaseState.loadCompleteModule();
     }

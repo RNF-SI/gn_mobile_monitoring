@@ -418,6 +418,16 @@ class MockSitesDatabase extends _i1.Mock implements _i5.SitesDatabase {
       ) as _i3.Future<List<_i6.BaseSite>>);
 
   @override
+  _i3.Future<List<_i6.BaseSite>> getOrphanSitesByModuleId(int? moduleId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getOrphanSitesByModuleId,
+          [moduleId],
+        ),
+        returnValue: _i3.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
+      ) as _i3.Future<List<_i6.BaseSite>>);
+
+  @override
   _i3.Future<List<_i9.SiteModule>> getSiteModulesBySiteId(int? siteId) =>
       (super.noSuchMethod(
         Invocation.method(
@@ -433,6 +443,22 @@ class MockSitesDatabase extends _i1.Mock implements _i5.SitesDatabase {
         Invocation.method(
           #getSitesBySiteGroup,
           [siteGroupId],
+        ),
+        returnValue: _i3.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
+      ) as _i3.Future<List<_i6.BaseSite>>);
+
+  @override
+  _i3.Future<List<_i6.BaseSite>> getSitesBySiteGroupAndModule(
+    int? siteGroupId,
+    int? moduleId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #getSitesBySiteGroupAndModule,
+          [
+            siteGroupId,
+            moduleId,
+          ],
         ),
         returnValue: _i3.Future<List<_i6.BaseSite>>.value(<_i6.BaseSite>[]),
       ) as _i3.Future<List<_i6.BaseSite>>);

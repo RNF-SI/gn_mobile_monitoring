@@ -6,6 +6,7 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   static const String inProgressCorCyclePlacetteKey =
       'inProgressCorCyclePlacetteIdList';
   static const String apiUrlKey = 'apiUrl';
+  static const String dismissedAppVersionCodeKey = 'dismissedAppVersionCode';
 
   static Future init() async {
     _preferences = await SharedPreferences.getInstance();
@@ -91,5 +92,19 @@ class LocalStorageRepositoryImpl implements LocalStorageRepository {
   @override
   Future<void> clearApiUrl() async {
     await _preferences?.remove(apiUrlKey);
+  }
+
+  @override
+  Future<String?> getDismissedAppVersionCode() async {
+    return _preferences?.getString(dismissedAppVersionCodeKey);
+  }
+
+  @override
+  Future<void> setDismissedAppVersionCode(String? versionCode) async {
+    if (versionCode == null) {
+      await _preferences?.remove(dismissedAppVersionCodeKey);
+    } else {
+      await _preferences?.setString(dismissedAppVersionCodeKey, versionCode);
+    }
   }
 }

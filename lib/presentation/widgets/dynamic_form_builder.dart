@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:meta/meta.dart';
 import 'package:gn_mobile_monitoring/core/helpers/form_config_parser.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/change_rule_processor.dart';
@@ -67,6 +68,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   final Set<String> _userClearedFields = <String>{};
   late Set<String> _criticalFields;
 
+  /// Valeurs utilisées pour calculer la clé du `KeyedSubtree` (cf.
+  /// `buildFormFieldsWithKey`). Découplée de `_formValues` pour que la clé
+  /// ne change pas à chaque keystroke d'un TextField/NumberField — sinon
+  /// l'arbre est détruit/recréé entre deux frappes et le clavier se ferme.
+  /// Mise à jour immédiate pour les widgets non textuels (dropdown, etc.),
+  /// à la perte de focus pour les champs textuels.
+  late Map<String, dynamic> _committedKeyValues;
+
   /// Flag pour éviter les boucles infinies lors de l'application des règles de changement
   bool _isApplyingChangeRules = false;
 
@@ -86,6 +95,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     super.initState();
     _textControllers = {};
     _formValues = Map<String, dynamic>.from(widget.initialValues ?? {});
+    _committedKeyValues = Map<String, dynamic>.from(_formValues);
 
     // Générer le schéma unifié
     _unifiedSchema = FormConfigParser.generateUnifiedSchema(
@@ -121,7 +131,35 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Précharger les nomenclatures nécessaires pour ce formulaire
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadNomenclatures();
+      _initializeCurrentUserFields();
     });
+  }
+
+  /// Pré-remplit les champs `CurrentUserField` (datalist + type_util:user mono)
+  /// avec l'utilisateur connecté, sauf si une valeur a déjà été chargée
+  /// (cas d'une édition d'observation existante avec un déterminateur défini).
+  Future<void> _initializeCurrentUserFields() async {
+    final userFields = _unifiedSchema.entries
+        .where((e) => e.value['widget_type'] == 'CurrentUserField')
+        .map((e) => e.key)
+        .toList();
+    if (userFields.isEmpty) return;
+
+    final userId = await ref
+        .read(getUserIdFromLocalStorageUseCaseProvider)
+        .execute();
+    if (userId <= 0) return;
+    if (!mounted) return;
+
+    var changed = false;
+    for (final fieldName in userFields) {
+      final current = _formValues[fieldName];
+      if (current == null || current == 0) {
+        _formValues[fieldName] = userId;
+        changed = true;
+      }
+    }
+    if (changed) setState(() {});
   }
 
   @override
@@ -196,7 +234,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       return;
     }
 
-    final dynamic defaultValue = fieldConfig['default'] ?? fieldConfig['value'];
+    // Aligné sur GeoNature web (`monitoring-object.service.ts` `toForm`) :
+    // seul `value` pré-remplit le champ. La clé `default` du JSON sert
+    // uniquement de documentation côté serveur / d'init côté admin web ;
+    // elle n'est jamais utilisée pour pré-remplir le formulaire de saisie.
+    final dynamic defaultValue = fieldConfig['value'];
     if (defaultValue == null) {
       return; // Aucune valeur par défaut à initialiser
     }
@@ -325,6 +367,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   void resetForm() {
     _formKey.currentState?.reset();
     _formValues.clear();
+    _committedKeyValues.clear();
     _textControllers.forEach((key, controller) {
       controller.clear();
     });
@@ -502,6 +545,25 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   }
 
   // Méthode pour mettre à jour une valeur et forcer le recalcul de la visibilité
+  bool _isTextWidget(String fieldName) {
+    final type = _unifiedSchema[fieldName]?['widget_type']?.toString();
+    return type == 'TextField' ||
+        type == 'TextField_multiline' ||
+        type == 'NumberField';
+  }
+
+  /// Commit la valeur courante d'un champ textuel dans `_committedKeyValues`
+  /// pour permettre au `KeyedSubtree` de se rebuild si nécessaire (visibilité
+  /// d'un selector async qui en dépend, par exemple). Appelé sur perte de
+  /// focus / "Done" / tap en dehors.
+  void _commitTextFieldKey(String fieldName) {
+    final current = _formValues[fieldName];
+    if (_committedKeyValues[fieldName] == current) return;
+    setState(() {
+      _committedKeyValues[fieldName] = current;
+    });
+  }
+
   void updateFormValue(String fieldName, dynamic value) {
     // Debug pour cd_nom
     if (fieldName == 'cd_nom') {
@@ -538,6 +600,14 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         if (fieldName == 'cd_nom') {
           debugPrint('🐛 [DEBUG] cd_nom mis à jour: $value');
         }
+      }
+
+      // Pour les widgets non textuels (dropdown, checkbox, selector...), la
+      // valeur est immédiatement validée → propager dans la clé du
+      // KeyedSubtree. Pour les TextField/NumberField, on attend la perte de
+      // focus pour ne pas casser la saisie en cours.
+      if (!_isTextWidget(fieldName)) {
+        _committedKeyValues[fieldName] = _formValues[fieldName];
       }
     });
 
@@ -593,6 +663,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         // Appliquer les nouvelles valeurs
         result.fieldsToUpdate.forEach((fieldName, newValue) {
           _formValues[fieldName] = newValue;
+          // Une change rule est un commit logique : propager dans la clé.
+          _committedKeyValues[fieldName] = newValue;
 
           // Marquer ce champ comme défini par une règle de changement
           // pour qu'il soit préservé même s'il est caché
@@ -688,10 +760,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Identifier tous les champs critiques qui pourraient affecter la visibilité
     final Set<String> criticalFields = _getAllCriticalFields();
     
-    // Collecter les valeurs des champs critiques pour la clé
+    // Collecter les valeurs des champs critiques pour la clé.
+    // On lit `_committedKeyValues` (et non `_formValues`) : pour les
+    // TextField/NumberField, la valeur n'est commitée qu'à la perte de focus,
+    // ce qui évite la destruction du sous-arbre entre deux frappes.
     for (final fieldName in criticalFields) {
-      if (_formValues.containsKey(fieldName)) {
-        keyValues[fieldName] = _formValues[fieldName];
+      if (_committedKeyValues.containsKey(fieldName)) {
+        keyValues[fieldName] = _committedKeyValues[fieldName];
       }
     }
     
@@ -937,6 +1012,9 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       case 'ObserverField':
         return _buildObserverField(fieldName, label, isRequired,
             description: description);
+      case 'CurrentUserField':
+        return _buildCurrentUserField(fieldName, label, isRequired,
+            description: description);
       case 'NomenclatureSelector':
         return _buildNomenclatureField(
             fieldName, label, isRequired, fieldConfig,
@@ -1002,6 +1080,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             onChanged: (value) {
               updateFormValue(fieldName, value);
             },
+            onEditingComplete: () => _commitTextFieldKey(fieldName),
+            onTapOutside: (_) => _commitTextFieldKey(fieldName),
           ),
         ],
       ),
@@ -1195,6 +1275,37 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  /// Résout une borne numérique (min/max) pouvant venir :
+  /// - directement comme `num` (cas standard, ex. `"min": 1`)
+  /// - sous forme de chaîne numérique (ex. `"min": "5"`)
+  /// - sous forme d'expression arrow function (ex. Transects Amphibiens :
+  ///   `"min": "({value}) => value.count_min"`) qui pointe sur la valeur
+  ///   d'un autre champ du même formulaire.
+  /// Retourne `null` si la borne ne peut être résolue, ce qui désactive la
+  /// contrainte côté validator au lieu de lever une exception runtime
+  /// (problème observé : le bouton "Valider" ne réagissait plus).
+  num? _resolveNumericBound(dynamic raw) {
+    if (raw == null) return null;
+    if (raw is num) return raw;
+    if (raw is String) {
+      final asNumber = num.tryParse(raw);
+      if (asNumber != null) return asNumber;
+      final trimmed = raw.trim();
+      // Formats supportés :
+      //   ({value}) => value.<field>
+      //   (value) => value.<field>
+      final match = RegExp(
+              r'^\(\{?value\}?\)\s*=>\s*value\.(\w+)$')
+          .firstMatch(trimmed);
+      if (match != null) {
+        final referenced = _formValues[match.group(1)!];
+        if (referenced is num) return referenced;
+        if (referenced is String) return num.tryParse(referenced);
+      }
+    }
+    return null;
+  }
+
   Widget _buildNumberField(String fieldName, String label, bool required,
       Map<String, dynamic> validations,
       {String? description}) {
@@ -1233,6 +1344,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             ),
           const SizedBox(height: 4),
           TextFormField(
+            key: ValueKey('${fieldName}_$required'),
             controller: _textControllers[fieldName],
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
@@ -1251,11 +1363,13 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 if (number == null) {
                   return 'Veuillez entrer un nombre valide';
                 }
-                if (validations['min'] != null && number < validations['min']) {
-                  return 'La valeur doit être supérieure ou égale à ${validations['min']}';
+                final minVal = _resolveNumericBound(validations['min']);
+                if (minVal != null && number < minVal) {
+                  return 'La valeur doit être supérieure ou égale à $minVal';
                 }
-                if (validations['max'] != null && number > validations['max']) {
-                  return 'La valeur doit être inférieure ou égale à ${validations['max']}';
+                final maxVal = _resolveNumericBound(validations['max']);
+                if (maxVal != null && number > maxVal) {
+                  return 'La valeur doit être inférieure ou égale à $maxVal';
                 }
               }
               return null;
@@ -1264,6 +1378,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               final parsedValue = int.tryParse(value);
               updateFormValue(fieldName, parsedValue ?? (value.isEmpty ? null : value));
             },
+            onEditingComplete: () => _commitTextFieldKey(fieldName),
+            onTapOutside: (_) => _commitTextFieldKey(fieldName),
           ),
         ],
       ),
@@ -1612,11 +1728,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
 
   Widget _buildRadioField(String fieldName, String label, bool isRequired,
       Map<String, dynamic> fieldConfig, {String? description}) {
-    // Récupérer les valeurs possibles et la valeur par défaut
+    // Récupérer les valeurs possibles et la valeur par défaut.
+    // Aligné sur le web : on lit uniquement `value` (pas `default`).
     final List<dynamic> values = fieldConfig['values'] ?? [];
-    final String? defaultValue = 
-        fieldConfig['default']?.toString() ?? 
-        fieldConfig['value']?.toString();
+    final String? defaultValue = fieldConfig['value']?.toString();
     
     // Initialiser la valeur si elle n'existe pas
     if (_formValues[fieldName] == null && defaultValue != null) {
@@ -1782,6 +1897,93 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     );
   }
 
+  /// Encadré commun aux champs auto-remplis avec l'utilisateur connecté
+  /// (observers et determiner). Affiche le label, l'éventuelle description,
+  /// un bloc enfant optionnel (par ex. les chips d'observateurs supplémentaires),
+  /// puis un container en lecture seule avec un message explicatif.
+  Widget _buildAutoFilledUserField({
+    required String label,
+    required bool required,
+    required String autoMessage,
+    String? description,
+    Widget? extraContent,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 13.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            required ? '$label *' : label,
+            style: const TextStyle(fontWeight: FontWeight.w500),
+          ),
+          if (description != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4.0),
+              child: Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontStyle: FontStyle.italic,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+          const SizedBox(height: 4),
+          if (extraContent != null) ...[
+            extraContent,
+            const SizedBox(height: 4),
+          ],
+          Container(
+            padding: const EdgeInsets.all(12.0),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .surfaceContainerHighest
+                  .withOpacity(0.3),
+              borderRadius: BorderRadius.circular(4.0),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.person,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    autoMessage,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Champ datalist mono-utilisateur (par ex. `determiner` dans Pièges IA).
+  /// Tant que l'API `users/menu` n'est pas câblée, on aligne le comportement
+  /// sur ObserverField : auto-remplissage avec l'utilisateur connecté et
+  /// affichage en lecture seule.
+  Widget _buildCurrentUserField(String fieldName, String label, bool required,
+      {String? description}) {
+    return _buildAutoFilledUserField(
+      label: label,
+      required: required,
+      description: description,
+      autoMessage: 'Vous êtes automatiquement assigné comme $label',
+    );
+  }
+
   // Pour les champs de type "observers"
   Widget _buildObserverField(String fieldName, String label, bool required,
       {String? description}) {
@@ -1846,84 +2048,36 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Afficher les chips uniquement si la liste contient plusieurs observateurs
     final bool shouldShowChips = observersList.length > 1;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 13.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            required ? '$label *' : label,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          if (description != null)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4.0),
-              child: Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontStyle: FontStyle.italic,
-                  color: Colors.grey,
-                ),
-              ),
-            ),
-          const SizedBox(height: 4),
-          // Afficher les observateurs sélectionnés uniquement en mode édition
-          if (shouldShowChips)
-            Wrap(
-              spacing: 8.0,
-              runSpacing: 4.0,
-              children: observersList.map<Widget>((observer) {
-                return Chip(
-                  label: Text('Observateur #$observer'),
-                  backgroundColor:
-                      Theme.of(context).colorScheme.primaryContainer,
-                  labelStyle: TextStyle(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                  deleteIcon: Icon(Icons.close,
-                      size: 18,
-                      color: Theme.of(context).colorScheme.onPrimaryContainer),
-                  onDeleted: () {
-                    setState(() {
-                      (_formValues[fieldName] as List).remove(observer);
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-          if (shouldShowChips) const SizedBox(height: 4),
-          // Champ désactivé pour indiquer que les observateurs sont déjà sélectionnés
-          Container(
-            padding: const EdgeInsets.all(12.0),
-            decoration: BoxDecoration(
-              color:
-                  Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(4.0),
-              border: Border.all(
-                color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.person,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Vous êtes automatiquement ajouté comme observateur',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    final Widget? chips = shouldShowChips
+        ? Wrap(
+            spacing: 8.0,
+            runSpacing: 4.0,
+            children: observersList.map<Widget>((observer) {
+              return Chip(
+                label: Text('Observateur #$observer'),
+                backgroundColor:
+                    Theme.of(context).colorScheme.primaryContainer,
+                labelStyle: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                deleteIcon: Icon(Icons.close,
+                    size: 18,
+                    color: Theme.of(context).colorScheme.onPrimaryContainer),
+                onDeleted: () {
+                  setState(() {
+                    (_formValues[fieldName] as List).remove(observer);
+                  });
+                },
+              );
+            }).toList(),
+          )
+        : null;
+
+    return _buildAutoFilledUserField(
+      label: label,
+      required: required,
+      description: description,
+      autoMessage: 'Vous êtes automatiquement ajouté comme observateur',
+      extraContent: chips,
     );
   }
 

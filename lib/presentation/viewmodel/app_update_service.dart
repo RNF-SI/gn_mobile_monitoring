@@ -1,9 +1,12 @@
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/mobile_app_version.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/check_app_update_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_app_update_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_dismissed_app_version_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_token_from_local_storage_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/set_dismissed_app_version_use_case.dart';
 import 'package:open_filex/open_filex.dart';
 
 enum AppUpdateState { idle, checking, updateAvailable, downloading, error }
@@ -42,6 +45,8 @@ final appUpdateServiceProvider =
     ref.read(checkAppUpdateUseCaseProvider),
     ref.read(downloadAppUpdateUseCaseProvider),
     ref.read(getTokenFromLocalStorageUseCaseProvider),
+    ref.read(getDismissedAppVersionUseCaseProvider),
+    ref.read(setDismissedAppVersionUseCaseProvider),
   );
 });
 
@@ -49,26 +54,45 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
   final CheckAppUpdateUseCase _checkAppUpdateUseCase;
   final DownloadAppUpdateUseCase _downloadAppUpdateUseCase;
   final GetTokenFromLocalStorageUseCase _getTokenUseCase;
+  final GetDismissedAppVersionUseCase _getDismissedUseCase;
+  final SetDismissedAppVersionUseCase _setDismissedUseCase;
 
-  /// Version déjà proposée à l'utilisateur (évite le double affichage)
-  String? _lastProposedVersionCode;
+  // Version refusée par l'utilisateur, persistée en SharedPreferences pour ne
+  // pas reproposer la même MAJ après un redémarrage de l'app. Un check manuel
+  // (menu "Mise à jour de l'application") ou une nouvelle version côté serveur
+  // lèvent ce garde-fou.
+  String? _dismissedVersionCode;
+  bool _dismissedLoaded = false;
 
   AppUpdateService(
     this._checkAppUpdateUseCase,
     this._downloadAppUpdateUseCase,
     this._getTokenUseCase,
+    this._getDismissedUseCase,
+    this._setDismissedUseCase,
   ) : super(const AppUpdateStatus());
 
-  /// Vérifie si une mise à jour est disponible
+  Future<void> _ensureDismissedLoaded() async {
+    if (_dismissedLoaded) return;
+    _dismissedVersionCode = await _getDismissedUseCase.execute();
+    _dismissedLoaded = true;
+  }
+
   Future<void> checkForUpdate() async {
-    // Ne pas vérifier si déjà en cours de vérification ou téléchargement
+    // Ne pas relancer une vérification si :
+    // - une est déjà en cours (checking) ou un download tourne ;
+    // - un dialog updateAvailable est déjà à l'écran (sinon une 2e check
+    //   déclenchée par sync.success rejouerait la transition checking →
+    //   updateAvailable et la listener du HomePage rouvrirait un 2e dialog).
     if (state.state == AppUpdateState.checking ||
-        state.state == AppUpdateState.downloading) {
+        state.state == AppUpdateState.downloading ||
+        state.state == AppUpdateState.updateAvailable) {
       return;
     }
 
     try {
       state = state.copyWith(state: AppUpdateState.checking);
+      await _ensureDismissedLoaded();
 
       final token = await _getTokenUseCase.execute();
       if (token == null || token.isEmpty) {
@@ -79,13 +103,21 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
       final update = await _checkAppUpdateUseCase.execute(token);
 
       if (update != null) {
-        // Éviter de proposer la même version deux fois
-        if (_lastProposedVersionCode == update.versionCode) {
+        // Réponse d'API incomplète (versionCode vide) : on ignore pour éviter
+        // un dialog "version " vide affiché côté UI.
+        final versionCode = update.versionCode;
+        if (versionCode.isEmpty) {
           state = const AppUpdateStatus(state: AppUpdateState.idle);
           return;
         }
 
-        _lastProposedVersionCode = update.versionCode;
+        if (_dismissedVersionCode != null &&
+            _dismissedVersionCode == versionCode) {
+          // Déjà refusée par l'utilisateur (et persistée) : on ne repropose pas.
+          state = const AppUpdateStatus(state: AppUpdateState.idle);
+          return;
+        }
+
         state = AppUpdateStatus(
           state: AppUpdateState.updateAvailable,
           availableUpdate: update,
@@ -120,10 +152,15 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
         },
       );
 
-      // Ouvrir l'APK avec l'installeur Android
+      // Ouvrir l'APK avec l'installeur Android. OpenFilex.open lance l'intent
+      // dans un autre process : on peut donc terminer notre activité juste
+      // après pour ne pas laisser une 2e instance de l'app dans le sélecteur
+      // de tâches récentes (problème observé sous MIUI).
       await OpenFilex.open(filePath);
-
       state = const AppUpdateStatus(state: AppUpdateState.idle);
+      // Petit délai pour laisser l'intent s'afficher avant de fermer l'app.
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      await SystemNavigator.pop();
     } catch (e) {
       state = AppUpdateStatus(
         state: AppUpdateState.error,
@@ -133,8 +170,26 @@ class AppUpdateService extends StateNotifier<AppUpdateStatus> {
     }
   }
 
-  /// Remet le service à l'état idle (après fermeture du dialog)
+  /// Ferme le dialog de MAJ et persiste le refus pour ne pas reproposer la
+  /// même version au prochain lancement (#170). Une nouvelle version côté
+  /// serveur ou un check manuel lèvent ce garde-fou.
   void dismiss() {
+    final code = state.availableUpdate?.versionCode;
+    _dismissedVersionCode = code;
+    _dismissedLoaded = true;
     state = const AppUpdateStatus(state: AppUpdateState.idle);
+    // Fire-and-forget : la persistance ne doit pas bloquer la fermeture du dialog.
+    _setDismissedUseCase.execute(code);
+  }
+
+  /// Re-vérifie la disponibilité d'une MAJ en levant le garde-fou
+  /// "dismissed". Utilisé par le bouton "Mise à jour de l'application" du
+  /// menu, qui permet à l'utilisateur de rouvrir le dialog après avoir dit
+  /// "Plus tard".
+  Future<void> checkForUpdateManually() async {
+    _dismissedVersionCode = null;
+    _dismissedLoaded = true;
+    await _setDismissedUseCase.execute(null);
+    await checkForUpdate();
   }
 }

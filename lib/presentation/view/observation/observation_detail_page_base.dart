@@ -78,7 +78,20 @@ class ObservationDetailPageBaseState
       objectConfig?.displayProperties ?? objectConfig?.displayList;
 
   @override
-  Map<String, dynamic> get objectData => (_fullObservation ?? widget.observation).data ?? {};
+  Map<String, dynamic> get objectData {
+    final obs = _fullObservation ?? widget.observation;
+    // Hydrate uniquement les champs "système" stockés sur l'entité (et pas
+    // dans la JSON `data`) qu'un utilisateur pourrait voir listés dans le
+    // `displayProperties` du module : ID et FK. On évite les champs déjà
+    // rendus par le bandeau d'info (cd_nom, commentaires, dates) pour ne pas
+    // dupliquer leur affichage.
+    return {
+      if (obs.data != null) ...obs.data!,
+      'id_observation': obs.idObservation,
+      if (obs.idBaseVisit != null) 'id_base_visit': obs.idBaseVisit,
+      if (obs.idDigitiser != null) 'id_digitiser': obs.idDigitiser,
+    };
+  }
 
   @override
   String get propertiesTitle => 'Données spécifiques de l\'observation';

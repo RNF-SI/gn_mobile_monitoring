@@ -20,6 +20,20 @@ void main() {
         expect(ValueFormatter.format([]), equals('Non renseigné'));
       });
 
+      test('reformatte une chaîne ISO date en jj/MM/aaaa', () {
+        expect(ValueFormatter.format('2026-04-24'), equals('24/04/2026'));
+        // Date-heure ISO : on garde uniquement la date côté UI, comme
+        // `formatDateString` dans le reste de l'app.
+        expect(ValueFormatter.format('2026-04-24T18:30:00.000Z'),
+            equals('24/04/2026'));
+      });
+
+      test('laisse intactes les chaînes qui ne sont pas une date ISO', () {
+        expect(ValueFormatter.format('hello'), equals('hello'));
+        expect(ValueFormatter.format('not-a-date'), equals('not-a-date'));
+        expect(ValueFormatter.format('24/04/2026'), equals('24/04/2026'));
+      });
+
       test('should call formatNomenclature for Map values', () {
         final map = {'label': 'Test Label'};
         expect(ValueFormatter.format(map), equals('Test Label'));
@@ -64,13 +78,25 @@ void main() {
     });
 
     group('formatLabel', () {
-      test('should capitalize words and replace underscores with spaces', () {
-        expect(ValueFormatter.formatLabel('id_nomenclature_type'), equals('Id Nomenclature Type'));
-        expect(ValueFormatter.formatLabel('test_label'), equals('Test Label'));
+      test('applique une casse phrase (1re lettre seule en majuscule)', () {
+        expect(ValueFormatter.formatLabel('id_nomenclature_type'),
+            equals('Id nomenclature type'));
+        expect(ValueFormatter.formatLabel('test_label'), equals('Test label'));
         expect(ValueFormatter.formatLabel('single'), equals('Single'));
       });
 
-      test('should handle empty strings and edge cases', () {
+      test(
+          'préserve les articles français en bas de casse (évite "Nombre D\'observations")',
+          () {
+        // Cas concret remonté par Gil : un fallback ne doit plus capitaliser
+        // "d", "de", "du" comme s\'ils étaient des mots autonomes.
+        expect(ValueFormatter.formatLabel('nombre_d_observations'),
+            equals('Nombre d observations'));
+        expect(ValueFormatter.formatLabel('date_de_releve_du_piege'),
+            equals('Date de releve du piege'));
+      });
+
+      test('gère chaînes vides et cas limites', () {
         expect(ValueFormatter.formatLabel(''), equals(''));
         expect(ValueFormatter.formatLabel('_'), equals(' '));
         expect(ValueFormatter.formatLabel('__'), equals('  '));

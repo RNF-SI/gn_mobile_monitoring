@@ -49,7 +49,8 @@ void main() {
     // Il n'y a pas de texte "Loading modules..." dans l'implémentation actuelle
   });
 
-  testWidgets('ModuleListWidget should display error state correctly',
+  testWidgets(
+      'ModuleListWidget should display error state with retry + copy (#168)',
       (WidgetTester tester) async {
     // Arrange
     final customState = custom_async_state.State<ModuleInfoList>.error(
@@ -74,8 +75,15 @@ void main() {
       ),
     );
 
-    // Assert
-    expect(find.text('Erreur: Exception: Failed to load modules'), findsOneWidget);
+    // Assert : le message d'erreur est copiable (#168) + bouton Réessayer +
+    // bouton Copier + le pull-to-refresh reste actif via RefreshIndicator.
+    expect(find.textContaining('Impossible de charger'), findsOneWidget);
+    expect(find.textContaining('Failed to load modules'), findsOneWidget);
+    expect(find.byKey(const Key('module-list-retry-button')), findsOneWidget);
+    expect(find.byKey(const Key('module-list-copy-error-button')),
+        findsOneWidget);
+    expect(find.byType(RefreshIndicator), findsOneWidget);
+    expect(find.byType(SelectableText), findsOneWidget);
   });
 
   testWidgets('ModuleListWidget should display modules correctly when loaded',
@@ -148,5 +156,79 @@ void main() {
     expect(find.text('Module 2'), findsOneWidget);
     expect(find.text('Description 1'), findsOneWidget);
     expect(find.text('Description 2'), findsOneWidget);
+  });
+
+  testWidgets(
+      'ModuleListWidget filtre la liste selon searchQuery (#163)',
+      (WidgetTester tester) async {
+    final modules = [
+      const Module(
+        id: 1,
+        moduleCode: 'oiseaux',
+        moduleLabel: 'Oiseaux rares',
+        moduleDesc: 'desc1',
+        modulePath: 'p1',
+        activeFrontend: true,
+        moduleTarget: 't1',
+        modulePicto: 'pic1',
+        moduleDocUrl: 'd1',
+        moduleGroup: 'g1',
+        downloaded: true,
+      ),
+      const Module(
+        id: 2,
+        moduleCode: 'reptiles',
+        moduleLabel: 'Reptiles',
+        moduleDesc: 'desc2',
+        modulePath: 'p2',
+        activeFrontend: true,
+        moduleTarget: 't2',
+        modulePicto: 'pic2',
+        moduleDocUrl: 'd2',
+        moduleGroup: 'g2',
+        downloaded: false,
+      ),
+    ];
+    final moduleInfos = modules
+        .map((m) => ModuleInfo(
+              module: m,
+              downloadStatus: m.downloaded == true
+                  ? ModuleDownloadStatus.moduleDownloaded
+                  : ModuleDownloadStatus.moduleNotDownloaded,
+            ))
+        .toList();
+    final state = custom_async_state.State<ModuleInfoList>.success(
+        ModuleInfoList(values: moduleInfos));
+    final container = ProviderContainer(
+      overrides: [userModuleListeProvider.overrideWithValue(state)],
+    );
+
+    // Filtre sur "rept" → ne garde que "Reptiles"
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ModuleListWidget(searchQuery: 'rept'),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Reptiles'), findsOneWidget);
+    expect(find.text('Oiseaux rares'), findsNothing);
+
+    // Filtre sans résultat → message dédié
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: const MaterialApp(
+          home: Scaffold(
+            body: ModuleListWidget(searchQuery: 'zzzzz'),
+          ),
+        ),
+      ),
+    );
+    expect(find.textContaining('Aucun module ne correspond'), findsOneWidget);
   });
 }

@@ -310,8 +310,10 @@ class VisitRepositoryImpl implements VisitRepository {
 
   @override
   Future<bool> updateVisit(BaseVisitEntity visit) async {
-    // 1. Mettre à jour la visite de base
-    final success = await _visitesDatabase.updateVisit(visit.toCompanion());
+    // 1. Mettre à jour la visite de base — `toCompanionForUpdate()` préserve
+    // `meta_create_date` et actualise `meta_update_date` à maintenant.
+    final success =
+        await _visitesDatabase.updateVisit(visit.toCompanionForUpdate());
 
     if (success) {
       // 2. Mettre à jour les observateurs

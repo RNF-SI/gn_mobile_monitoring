@@ -291,6 +291,27 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     return results.map((e) => e.toDomain()).toList();
   }
 
+  /// Sites du module qui n'appartiennent à aucun groupe.
+  /// Correspond à la vue "Sites" sur GeoNature web quand des groupes existent
+  /// aussi : ces sites doivent apparaître dans un onglet dédié (issue #157).
+  ///
+  /// Un site est considéré orphelin si :
+  ///   - il n'a pas d'entrée dans t_sites_complements, OU
+  ///   - son id_sites_group est NULL dans t_sites_complements.
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId) async {
+    final query = select(tBaseSites).join([
+      innerJoin(
+          corSiteModuleTable,
+          corSiteModuleTable.idBaseSite.equalsExp(tBaseSites.idBaseSite) &
+              corSiteModuleTable.idModule.equals(moduleId)),
+      leftOuterJoin(tSiteComplements,
+          tSiteComplements.idBaseSite.equalsExp(tBaseSites.idBaseSite)),
+    ]);
+    query.where(tSiteComplements.idSitesGroup.isNull());
+    final results = await query.map((row) => row.readTable(tBaseSites)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
+
   Future<List<SiteModule>> getAllSiteModules() async {
     final results = await select(corSiteModuleTable).get();
     return results
@@ -386,6 +407,25 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
           tSiteComplements.idBaseSite.equalsExp(tBaseSites.idBaseSite))
     ]);
     query.where(tSiteComplements.idSitesGroup.equals(siteGroupId));
+    final results = await query.map((row) => row.readTable(tBaseSites)).get();
+    return results.map((e) => e.toDomain()).toList();
+  }
+
+  /// Get sites that belong to a site group AND are associated with a module
+  /// via cor_site_module. Used when listing a site group's sites in the context
+  /// of a given module (mirrors what GeoNature web does).
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId) async {
+    final query = select(tBaseSites).join([
+      innerJoin(
+          tSiteComplements,
+          tSiteComplements.idBaseSite.equalsExp(tBaseSites.idBaseSite) &
+              tSiteComplements.idSitesGroup.equals(siteGroupId)),
+      innerJoin(
+          corSiteModuleTable,
+          corSiteModuleTable.idBaseSite.equalsExp(tBaseSites.idBaseSite) &
+              corSiteModuleTable.idModule.equals(moduleId)),
+    ]);
     final results = await query.map((row) => row.readTable(tBaseSites)).get();
     return results.map((e) => e.toDomain()).toList();
   }

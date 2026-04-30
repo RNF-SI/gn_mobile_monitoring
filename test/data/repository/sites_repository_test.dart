@@ -244,6 +244,53 @@ void main() {
   });
 
 
+  group('incrementalSyncSiteGroupsWithConflictHandling (défensif)', () {
+    // Garde-fou anti-régression du bug du 22 avril 2026 :
+    // une erreur de fetch (ou un renvoi [] suspect) ne doit JAMAIS wiper
+    // les groupes locaux. Sinon la moindre instabilité serveur = perte de
+    // données côté mobile.
+
+    test('fetch en échec : les groupes locaux sont préservés', () async {
+      when(() => mockModulesDatabase.getDownloadedModules())
+          .thenAnswer((_) async => [testModules[0]]);
+      when(() => mockSitesDatabase.getSiteGroupsByModuleId(testModules[0].id))
+          .thenAnswer((_) async => testSiteGroups2);
+      // API throw → historiquement on remplaçait par [] → tout était
+      // marqué "toDelete". Le fix défensif doit skipper le diff.
+      when(() => mockSitesApi
+              .fetchSiteGroupsForModule(testModules[0].moduleCode!, testToken))
+          .thenThrow(Exception('network timeout'));
+
+      final result = await repository
+          .incrementalSyncSiteGroupsWithConflictHandling(testToken);
+
+      // Aucune suppression ne doit être déclenchée
+      verifyNever(() => mockSitesDatabase.deleteSiteGroup(any()));
+      verifyNever(
+          () => mockSitesDatabase.deleteSiteGroupModule(any(), any()));
+      expect(result.itemsDeleted, 0);
+    });
+
+    test('remote vide + local non-vide : skip défensif', () async {
+      when(() => mockModulesDatabase.getDownloadedModules())
+          .thenAnswer((_) async => [testModules[0]]);
+      when(() => mockSitesDatabase.getSiteGroupsByModuleId(testModules[0].id))
+          .thenAnswer((_) async => testSiteGroups2);
+      // API OK mais renvoie 0 → on ne fait pas confiance si on a du local.
+      when(() => mockSitesApi
+              .fetchSiteGroupsForModule(testModules[0].moduleCode!, testToken))
+          .thenAnswer((_) async => <SiteGroupsWithModulesLabel>[]);
+
+      final result = await repository
+          .incrementalSyncSiteGroupsWithConflictHandling(testToken);
+
+      verifyNever(() => mockSitesDatabase.deleteSiteGroup(any()));
+      verifyNever(
+          () => mockSitesDatabase.deleteSiteGroupModule(any(), any()));
+      expect(result.itemsDeleted, 0);
+    });
+  });
+
   group('incrementalSyncSiteGroupsAndSitesGroupModules', () {
     test('should incrementally update site groups in database', () async {
       // Arrange

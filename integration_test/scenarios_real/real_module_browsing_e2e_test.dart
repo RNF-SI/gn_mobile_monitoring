@@ -41,14 +41,9 @@ void main() {
       final homeRobot = HomeRobot(tester);
       homeRobot.expectHomePageVisible();
 
-      // Verifier que le module est present dans la liste
-      final moduleCardKey = 'module-card-${config.moduleCode}';
-      await RealTestHelpers.waitForWidget(
-        tester,
-        find.byKey(Key(moduleCardKey)),
-        timeout: const Duration(seconds: 15),
-        description: 'card du module ${config.moduleCode}',
-      );
+      // Verifier que le module est present dans la liste (avec scroll car
+      // ListView.builder n'instancie que les items visibles)
+      await RealTestHelpers.scrollToModuleCard(tester, config.moduleCode);
 
       debugPrint('Module ${config.moduleCode} trouve dans la liste');
     });
@@ -61,14 +56,7 @@ void main() {
       final homeRobot = HomeRobot(tester);
       homeRobot.expectHomePageVisible();
 
-      final moduleCardKey = 'module-card-${config.moduleCode}';
-      await RealTestHelpers.waitForWidget(
-        tester,
-        find.byKey(Key(moduleCardKey)),
-        timeout: const Duration(seconds: 15),
-      );
-
-      // Telecharger ou ouvrir (scope au module cible via le helper partage)
+      // downloadAndOpenModule scrolle automatiquement vers la card cible
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
 
       // Verifier qu'on a quitte la HomePage
@@ -81,13 +69,7 @@ void main() {
     testWidgets('Navigation dans un site du module', (tester) async {
       await RealTestHelpers.loginAndReachHome(tester, testApp, config);
 
-      final moduleCardKey = 'module-card-${config.moduleCode}';
-      await RealTestHelpers.waitForWidget(
-        tester,
-        find.byKey(Key(moduleCardKey)),
-        timeout: const Duration(seconds: 15),
-      );
-
+      // downloadAndOpenModule scrolle automatiquement vers la card cible
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
 
       final moduleDetailRobot = ModuleDetailRobot(tester);

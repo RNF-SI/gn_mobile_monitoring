@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.1.0+2
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -82,6 +82,24 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^3.0.1
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  # Mode "adaptive" sur Android 8+ : la couleur primary du thème remplit tout
+  # le masque (rond, squircle, …) du launcher, et le visuel blanc se pose
+  # par-dessus — sans le « carré dans un rond blanc » des icônes legacy.
+  min_sdk_android: 21
+  adaptive_icon_background: "#F5B027"
+  adaptive_icon_foreground: "assets/icons/app_icon_foreground.png"
+  web:
+    generate: true
+    image_path: "assets/icons/app_icon.png"
+    background_color: "#F5B027"
+    theme_color: "#F5B027"
+  image_path: "assets/icons/app_icon.png"
+  remove_alpha_ios: true
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

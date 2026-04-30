@@ -6,7 +6,7 @@
 import 'dart:async' as _i3;
 
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart' as _i4;
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart'
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase.dart'
     as _i2;
 import 'package:mockito/mockito.dart' as _i1;
 
@@ -23,21 +23,27 @@ import 'package:mockito/mockito.dart' as _i1;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-/// A class which mocks [GetSitesBySiteGroupUseCase].
+/// A class which mocks [GetSitesBySiteGroupAndModuleUseCase].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockGetSitesBySiteGroupUseCase extends _i1.Mock
-    implements _i2.GetSitesBySiteGroupUseCase {
-  MockGetSitesBySiteGroupUseCase() {
+class MockGetSitesBySiteGroupAndModuleUseCase extends _i1.Mock
+    implements _i2.GetSitesBySiteGroupAndModuleUseCase {
+  MockGetSitesBySiteGroupAndModuleUseCase() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i3.Future<List<_i4.BaseSite>> execute(int? siteGroupId) =>
+  _i3.Future<List<_i4.BaseSite>> execute(
+    int? siteGroupId,
+    int? moduleId,
+  ) =>
       (super.noSuchMethod(
         Invocation.method(
           #execute,
-          [siteGroupId],
+          [
+            siteGroupId,
+            moduleId,
+          ],
         ),
         returnValue: _i3.Future<List<_i4.BaseSite>>.value(<_i4.BaseSite>[]),
       ) as _i3.Future<List<_i4.BaseSite>>);

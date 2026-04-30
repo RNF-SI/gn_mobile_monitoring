@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
+import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
+import 'package:gn_mobile_monitoring/presentation/view/home_page/module_item_card_widget.dart'
+    show unsyncedModuleIdsProvider;
+import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
-import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
 
@@ -17,7 +20,6 @@ class MenuActions extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authViewModel = ref.read(authenticationViewModelProvider);
     final syncNotifier = ref.read(syncServiceProvider.notifier);
-    final databaseService = ref.read(databaseServiceProvider.notifier);
 
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
@@ -27,7 +29,7 @@ class MenuActions extends ConsumerWidget {
       icon: const Icon(Icons.menu), // Menu icon
       enabled: !isSyncing, // Désactiver le menu pendant la synchronisation
       onSelected: (value) => _handleMenuSelection(
-          value, ref, context, authViewModel, syncNotifier, databaseService),
+          value, ref, context, authViewModel, syncNotifier),
       itemBuilder: (BuildContext context) => [
         _buildMenuItem(
             Icons.download, 'Mettre à jour les données', 'sync_download'),
@@ -35,11 +37,9 @@ class MenuActions extends ConsumerWidget {
             Icons.upload, 'Téléversement', 'sync_upload'),
         const PopupMenuDivider(),
         _buildMenuItem(
-            Icons.bug_report, 'Export des logs', 'export_logs'),
+            Icons.system_update, 'Mise à jour de l\'application', 'app_update'),
         _buildMenuItem(
-            Icons.delete,
-            '[DEV] Suppression et rechargement de la base de données',
-            'delete'),
+            Icons.bug_report, 'Export des logs', 'export_logs'),
         _buildMenuItem(
             Icons.info_outline, 'Informations sur la version', 'version'),
         _buildMenuItem(
@@ -69,7 +69,6 @@ class MenuActions extends ConsumerWidget {
     BuildContext context,
     authViewModel,
     SyncService syncService,
-    DatabaseService databaseService,
   ) async {
     switch (value) {
       case 'sync_download':
@@ -81,8 +80,8 @@ class MenuActions extends ConsumerWidget {
       case 'export_logs':
         await LogExportDialog.show(context);
         break;
-      case 'delete':
-        await _confirmDelete(context, databaseService);
+      case 'app_update':
+        await _checkAppUpdate(context, ref);
         break;
       case 'version':
         _showVersionAlert(context);
@@ -99,40 +98,20 @@ class MenuActions extends ConsumerWidget {
     }
   }
 
-  Future<void> _confirmDelete(
-      BuildContext context, DatabaseService databaseService) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Confirmation'),
-        content: const Text(
-            'Êtes-vous sûr de vouloir supprimer la base de données ?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Annuler'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: const Text('Confirmer'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      await databaseService.deleteAndReinitializeDatabase();
-
-      // Afficher un message à la fin de la suppression
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-        content: Text('La base de données a été supprimée.'),
-        duration: Duration(seconds: 3),
-        behavior: SnackBarBehavior.floating,
-        margin: EdgeInsets.only(bottom: 100.0),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-        ),
-      ));
+  /// Vérifie manuellement la disponibilité d'une nouvelle version de l'APK.
+  /// Utile pour un utilisateur qui a cliqué "Plus tard" dans la session et
+  /// veut reprendre le téléchargement sans redémarrer l'app (#170).
+  /// Si une MAJ est disponible, le dialog s'ouvre via le listener déjà actif
+  /// sur appUpdateServiceProvider dans HomePage ; sinon on informe
+  /// l'utilisateur via une SnackBar.
+  Future<void> _checkAppUpdate(BuildContext context, WidgetRef ref) async {
+    await ref.read(appUpdateServiceProvider.notifier).checkForUpdateManually();
+    if (!context.mounted) return;
+    final status = ref.read(appUpdateServiceProvider);
+    if (status.state != AppUpdateState.updateAvailable) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('L\'application est à jour.')),
+      );
     }
   }
 
@@ -536,29 +515,96 @@ class MenuActions extends ConsumerWidget {
           return;
         }
 
-        // Si un seul module, le synchroniser directement
-        if (availableModules.length == 1) {
-          await syncService.syncToServer(ref,
-              moduleCode: availableModules.first.moduleCode!);
+        // Modules ayant au moins une visite locale non téléversée. Permet de
+        // mettre en avant les modules réellement concernés et de couper court
+        // si tout est déjà à jour (cf. #179).
+        final unsyncedModuleIds =
+            await ref.read(visitDatabaseProvider).getModuleIdsWithUnsyncedVisits();
+        final modulesWithData = availableModules
+            .where((m) => unsyncedModuleIds.contains(m.id))
+            .toList();
+        final modulesUpToDate = availableModules
+            .where((m) => !unsyncedModuleIds.contains(m.id))
+            .toList();
+
+        if (modulesWithData.isEmpty) {
+          if (!context.mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                  'Aucune donnée à téléverser : tous les modules sont à jour.'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          return;
+        }
+
+        // Un seul module concerné → sync direct, pas de choix à faire.
+        String? selectedModuleCode;
+        if (modulesWithData.length == 1 && modulesUpToDate.isEmpty) {
+          selectedModuleCode = modulesWithData.first.moduleCode;
         } else {
-          // Laisser l'utilisateur choisir le module
-          final selectedModule = await showDialog<String>(
+          if (!context.mounted) return;
+          selectedModuleCode = await showDialog<String>(
             context: context,
             builder: (BuildContext context) {
               return AlertDialog(
-                title: const Text('Choisir un module'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Text('Sélectionnez le module à synchroniser :'),
-                    const SizedBox(height: 16),
-                    ...availableModules.map((module) => ListTile(
-                          title: Text(module.moduleLabel ?? module.moduleCode!),
-                          subtitle: Text('Code: ${module.moduleCode}'),
-                          onTap: () =>
-                              Navigator.of(context).pop(module.moduleCode),
-                        )),
-                  ],
+                title: const Text('Choisir un module à téléverser'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (modulesWithData.isNotEmpty) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 4),
+                          child: Text(
+                            'Avec saisies à téléverser',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        ...modulesWithData.map((module) => ListTile(
+                              dense: true,
+                              title: Text(
+                                  module.moduleLabel ?? module.moduleCode!),
+                              subtitle: const Text('Saisies à téléverser'),
+                              trailing: Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              onTap: () => Navigator.of(context)
+                                  .pop(module.moduleCode),
+                            )),
+                      ],
+                      if (modulesUpToDate.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 4, bottom: 4),
+                          child: Text(
+                            'À jour',
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium
+                                ?.copyWith(color: Colors.grey),
+                          ),
+                        ),
+                        ...modulesUpToDate.map((module) => ListTile(
+                              dense: true,
+                              enabled: false,
+                              title: Text(
+                                  module.moduleLabel ?? module.moduleCode!),
+                              subtitle: const Text('Aucune donnée à envoyer'),
+                            )),
+                      ],
+                    ],
+                  ),
                 ),
                 actions: [
                   TextButton(
@@ -569,10 +615,14 @@ class MenuActions extends ConsumerWidget {
               );
             },
           );
+        }
 
-          if (selectedModule != null) {
-            await syncService.syncToServer(ref, moduleCode: selectedModule);
-          }
+        if (selectedModuleCode != null) {
+          await syncService.syncToServer(ref, moduleCode: selectedModuleCode);
+          // Le badge "saisies non téléversées" doit refléter l'état après
+          // upload, qu'il ait réussi ou non (en cas d'échec partiel, certains
+          // items peuvent avoir été poussés).
+          ref.invalidate(unsyncedModuleIdsProvider);
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(

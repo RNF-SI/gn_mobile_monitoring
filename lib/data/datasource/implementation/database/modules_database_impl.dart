@@ -4,6 +4,7 @@ import 'package:gn_mobile_monitoring/data/datasource/interface/database/modules_
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_uninstall_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 class ModuleDatabaseImpl implements ModulesDatabase {
@@ -204,5 +205,34 @@ class ModuleDatabaseImpl implements ModulesDatabase {
   Future<List<int>> getDatasetIdsForModule(int moduleId) async {
     final db = await _database;
     return await db.modulesDao.getDatasetIdsForModule(moduleId);
+  }
+
+  @override
+  Future<int> countExclusiveSitesForModule(int moduleId) async {
+    final db = await _database;
+    return await db.modulesDao.countExclusiveSitesForModule(moduleId);
+  }
+
+  @override
+  Future<ModuleUninstallStats> getUninstallStats(int moduleId) async {
+    final db = await _database;
+    final results = await Future.wait([
+      db.visitesDao.countVisitsForModule(moduleId),
+      db.visitesDao.countUnsyncedVisitsForModule(moduleId),
+      db.observationDao.countObservationsForModule(moduleId),
+      db.modulesDao.countExclusiveSitesForModule(moduleId),
+    ]);
+    return ModuleUninstallStats(
+      totalVisits: results[0],
+      unsyncedVisits: results[1],
+      totalObservations: results[2],
+      exclusiveSites: results[3],
+    );
+  }
+
+  @override
+  Future<void> uninstallModule(int moduleId) async {
+    final db = await _database;
+    await db.modulesDao.uninstallModule(moduleId);
   }
 }

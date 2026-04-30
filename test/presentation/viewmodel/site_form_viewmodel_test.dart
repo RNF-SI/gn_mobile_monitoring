@@ -7,7 +7,6 @@ import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_with_relations_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
@@ -28,9 +27,6 @@ class MockDeleteSiteUseCase extends Mock implements DeleteSiteUseCase {}
 
 class MockGetUserIdFromLocalStorageUseCase extends Mock
     implements GetUserIdFromLocalStorageUseCase {}
-
-class MockGetSitesBySiteGroupUseCase extends Mock
-    implements GetSitesBySiteGroupUseCase {}
 
 class MockGetSiteByIdUseCase extends Mock implements GetSiteByIdUseCase {}
 
@@ -53,7 +49,6 @@ void main() {
   late MockUpdateSiteUseCase mockUpdateSiteUseCase;
   late MockDeleteSiteUseCase mockDeleteSiteUseCase;
   late MockGetUserIdFromLocalStorageUseCase mockGetUserIdUseCase;
-  late MockGetSitesBySiteGroupUseCase mockGetSitesBySiteGroupUseCase;
   late MockGetSiteByIdUseCase mockGetSiteByIdUseCase;
   late MockGetUserLocationUseCase mockGetUserLocationUseCase;
   late MockFormDataProcessor mockFormDataProcessor;
@@ -73,7 +68,6 @@ void main() {
     mockUpdateSiteUseCase = MockUpdateSiteUseCase();
     mockDeleteSiteUseCase = MockDeleteSiteUseCase();
     mockGetUserIdUseCase = MockGetUserIdFromLocalStorageUseCase();
-    mockGetSitesBySiteGroupUseCase = MockGetSitesBySiteGroupUseCase();
     mockGetSiteByIdUseCase = MockGetSiteByIdUseCase();
     mockGetUserLocationUseCase = MockGetUserLocationUseCase();
     mockFormDataProcessor = MockFormDataProcessor();
@@ -84,7 +78,6 @@ void main() {
       mockUpdateSiteUseCase,
       mockDeleteSiteUseCase,
       mockGetUserIdUseCase,
-      mockGetSitesBySiteGroupUseCase,
       mockGetSiteByIdUseCase,
       mockGetUserLocationUseCase,
       mockFormDataProcessor,
@@ -159,13 +152,11 @@ void main() {
     test('inclut le complement avec id_sites_group quand siteGroupId > 0',
         () async {
       // Arrange - recréer le viewModel avec un siteGroupId > 0
-      // mais en passant directement sans charger
       final vm = SiteFormViewModel(
         mockCreateSiteWithRelationsUseCase,
         mockUpdateSiteUseCase,
         mockDeleteSiteUseCase,
         mockGetUserIdUseCase,
-        mockGetSitesBySiteGroupUseCase,
         mockGetSiteByIdUseCase,
         mockGetUserLocationUseCase,
         mockFormDataProcessor,
@@ -173,13 +164,6 @@ void main() {
         testModuleId,
         5, // siteGroupId > 0
       );
-
-      // Pour le loadSite() appelé dans le constructeur quand siteGroupId > 0
-      when(() => mockGetSitesBySiteGroupUseCase.execute(5))
-          .thenAnswer((_) async => []);
-
-      // Attendre le chargement initial
-      await Future.delayed(Duration.zero);
 
       final formData = {
         'base_site_name': 'Site In Group',

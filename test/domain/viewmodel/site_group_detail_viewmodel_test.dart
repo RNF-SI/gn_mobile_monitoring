@@ -3,33 +3,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
+import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_and_module_usecase.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_detail_viewmodel.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'site_group_detail_viewmodel_test.mocks.dart';
 
-// Créer un provider modifié pour les tests qui n'appelle pas loadSites() automatiquement
+// Provider de test qui n'appelle pas loadSites() automatiquement
 final testSiteGroupDetailViewModelProvider = StateNotifierProvider.family<
-    SiteGroupDetailViewModel, AsyncValue<List<BaseSite>>, SiteGroup>(
-  (ref, siteGroup) => SiteGroupDetailViewModel(
-    ref.watch(getSitesBySiteGroupUseCaseProvider),
-    siteGroup,
+    SiteGroupDetailViewModel,
+    AsyncValue<List<BaseSite>>,
+    SiteGroupDetailArgs>(
+  (ref, args) => SiteGroupDetailViewModel(
+    ref.watch(getSitesBySiteGroupAndModuleUseCaseProvider),
+    args.siteGroup,
+    args.moduleId,
   ),
 );
 
-@GenerateMocks([GetSitesBySiteGroupUseCase])
+@GenerateMocks([GetSitesBySiteGroupAndModuleUseCase])
 void main() {
-  late MockGetSitesBySiteGroupUseCase mockGetSitesBySiteGroupUseCase;
+  late MockGetSitesBySiteGroupAndModuleUseCase mockUseCase;
   late ProviderContainer container;
 
+  const moduleId = 42;
   final testSiteGroup = SiteGroup(
     idSitesGroup: 1,
     sitesGroupName: 'Test Group',
     sitesGroupCode: 'TG001',
     sitesGroupDescription: 'Test Description',
   );
+  final args = SiteGroupDetailArgs(testSiteGroup, moduleId);
 
   final testSites = [
     BaseSite(
@@ -51,18 +56,17 @@ void main() {
   ];
 
   setUp(() {
-    mockGetSitesBySiteGroupUseCase = MockGetSitesBySiteGroupUseCase();
+    mockUseCase = MockGetSitesBySiteGroupAndModuleUseCase();
 
     container = ProviderContainer(
       overrides: [
-        getSitesBySiteGroupUseCaseProvider
-            .overrideWithValue(mockGetSitesBySiteGroupUseCase),
+        getSitesBySiteGroupAndModuleUseCaseProvider
+            .overrideWithValue(mockUseCase),
       ],
     );
 
-    // Add a listener to the provider we're testing to trigger updates
     container.listen(
-      testSiteGroupDetailViewModelProvider(testSiteGroup),
+      testSiteGroupDetailViewModelProvider(args),
       (previous, next) {},
     );
   });
@@ -72,53 +76,58 @@ void main() {
   });
 
   test('initial state should be loading', () {
-    // Arrange
-    when(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
+    when(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
         .thenAnswer((_) async => testSites);
 
-    // Act & Assert
     expect(
-      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(args)),
       const AsyncValue<List<BaseSite>>.loading(),
     );
   });
 
   test('should return data when use case succeeds', () async {
-    // Arrange
-    when(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
+    when(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
         .thenAnswer((_) async => testSites);
 
-    // Act - simulate the callback being triggered after the future completes
     await container
-        .read(testSiteGroupDetailViewModelProvider(testSiteGroup).notifier)
+        .read(testSiteGroupDetailViewModelProvider(args).notifier)
         .loadSites();
 
-    // Assert
     expect(
-      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(args)),
       AsyncValue<List<BaseSite>>.data(testSites),
     );
-    verify(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
+    verify(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
         .called(1);
   });
 
-  test('should return error when use case fails', () async {
-    // Arrange
-    final exception = Exception('Test error');
-    when(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
-        .thenThrow(exception);
+  test('should forward the moduleId to the use case', () async {
+    when(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
+        .thenAnswer((_) async => testSites);
 
-    // Act
     await container
-        .read(testSiteGroupDetailViewModelProvider(testSiteGroup).notifier)
+        .read(testSiteGroupDetailViewModelProvider(args).notifier)
         .loadSites();
 
-    // Assert
+    verify(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
+        .called(1);
+    verifyNever(mockUseCase.execute(testSiteGroup.idSitesGroup, any));
+  });
+
+  test('should return error when use case fails', () async {
+    final exception = Exception('Test error');
+    when(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
+        .thenThrow(exception);
+
+    await container
+        .read(testSiteGroupDetailViewModelProvider(args).notifier)
+        .loadSites();
+
     expect(
-      container.read(testSiteGroupDetailViewModelProvider(testSiteGroup)),
+      container.read(testSiteGroupDetailViewModelProvider(args)),
       isA<AsyncError<List<BaseSite>>>(),
     );
-    verify(mockGetSitesBySiteGroupUseCase.execute(testSiteGroup.idSitesGroup))
+    verify(mockUseCase.execute(testSiteGroup.idSitesGroup, moduleId))
         .called(1);
   });
 }

@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/helpers/hidden_expression_evaluator.dart';
-import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/taxon_service.dart';
 
@@ -333,55 +333,34 @@ class FormDataProcessor {
     final processedData = Map<String, dynamic>.from(formData);
 
     // TRAITEMENT DES NOMENCLATURES
-    // Récupérer le service de nomenclature
-    final nomenclatureService = ref.read(nomenclatureServiceProvider.notifier);
+    // Résolution directe via l'id : on récupère la nomenclature complète
+    // (label, cd_nomenclature, code_type) en une seule requête DAO, ce qui
+    // fonctionne pour TOUS les types — y compris SEXE et ceux qui n'étaient
+    // pas codés en dur dans l'ancienne boucle.
+    final getNomenclatureByIdUseCase =
+        ref.read(getNomenclatureByIdUseCaseProvider);
 
-    // Rechercher les champs de nomenclature (commençant par id_nomenclature_)
     final nomenclatureFields = processedData.keys
         .where((key) =>
             key.startsWith('id_nomenclature_') && processedData[key] is int)
         .toList();
 
-    // Pour chaque champ de nomenclature, convertir l'ID en objet
     for (final fieldName in nomenclatureFields) {
       final idNomenclature = processedData[fieldName] as int;
 
       try {
-        // Récupérer toutes les nomenclatures disponibles
-        final allTypes = [
-          'BRAUNBLANQABDOM',
-          'STADE_VIE',
-          'TYPE_MEDIA',
-          'TYPE_SITE',
-          // Ajouter d'autres types au besoin
-        ];
+        final nomenclature =
+            await getNomenclatureByIdUseCase.execute(idNomenclature);
 
-        // Chercher la nomenclature correspondante parmi tous les types
-        Nomenclature? foundNomenclature;
-        String? foundType;
-
-        for (final type in allTypes) {
-          final nomenclatures =
-              await nomenclatureService.getNomenclaturesByTypeCode(type);
-          final match =
-              nomenclatures.where((n) => n.id == idNomenclature).toList();
-
-          if (match.isNotEmpty) {
-            foundNomenclature = match.first;
-            foundType = type;
-            break;
-          }
-        }
-
-        if (foundNomenclature != null && foundType != null) {
-          // Construire l'objet pour l'affichage
+        if (nomenclature != null) {
           processedData[fieldName] = {
-            'id': foundNomenclature.id,
-            'code_nomenclature_type': foundType,
-            'cd_nomenclature': foundNomenclature.cdNomenclature,
-            'label': foundNomenclature.labelFr ??
-                foundNomenclature.labelDefault ??
-                foundNomenclature.cdNomenclature,
+            'id': nomenclature.id,
+            if (nomenclature.codeType != null)
+              'code_nomenclature_type': nomenclature.codeType,
+            'cd_nomenclature': nomenclature.cdNomenclature,
+            'label': nomenclature.labelFr ??
+                nomenclature.labelDefault ??
+                nomenclature.cdNomenclature,
           };
         }
         // Si aucune nomenclature n'est trouvée, conserver l'ID tel quel

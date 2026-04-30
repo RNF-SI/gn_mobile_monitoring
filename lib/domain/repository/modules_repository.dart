@@ -1,6 +1,7 @@
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_uninstall_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 
 abstract class ModulesRepository {
@@ -111,4 +112,17 @@ abstract class ModulesRepository {
 
   /// Rafraîchit la configuration d'un module (prétraitement JS→Dart + stockage)
   Future<void> refreshModuleConfiguration(int moduleId, Map<String, dynamic> configuration);
+
+  /// Stats à afficher avant la désinstallation : nombre de visites,
+  /// d'observations, de sites exclusifs, et de saisies non téléversées
+  /// (données définitivement perdues à la suppression).
+  Future<ModuleUninstallStats> getUninstallStats(int moduleId);
+
+  /// Désinstalle un module : suppression atomique de toutes les données
+  /// qui n'appartiennent qu'à ce module (visites, observations, sites
+  /// exclusifs, configuration, associations datasets). Le module reste
+  /// dans la liste des modules disponibles avec `downloaded = false`,
+  /// pour permettre une réinstallation. Les nomenclatures, types de site
+  /// et taxons (partagés) sont conservés.
+  Future<void> uninstallModule(int moduleId);
 }

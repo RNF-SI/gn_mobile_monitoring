@@ -580,6 +580,12 @@ class FormConfigParser {
                 .contains('nomenclatures/nomenclature/')) {
           return 'NomenclatureSelector';
         }
+        // Datalist mono-utilisateur : aligné sur ObserverField (auto-rempli avec
+        // l'utilisateur connecté, en attendant le câblage de l'API users/menu).
+        if (fieldConfig['type_util'] == 'user' &&
+            fieldConfig['multiple'] != true) {
+          return 'CurrentUserField';
+        }
         // Sinon utiliser le widget datalist générique
         return 'DatalistField';
       case 'nomenclature':
@@ -673,7 +679,7 @@ class FormConfigParser {
     final globalFieldsToExclude = [
       'uuid_base_visit',
       'uuid_observation',
-      'uuid_base_site', 
+      'uuid_base_site',
       'uuid_sites_group',
       'uuid_module_complement',
       'nb_observations',
@@ -681,6 +687,15 @@ class FormConfigParser {
       'id_digitiser',
       'observers_txt',
       'id_base_site',
+      // `nb_visits` et `last_visit` sont calculés localement depuis
+      // `t_base_visits` (cf. visites_dao.getVisitStatsForModule). Certains
+      // modules (ex. Pièges IA) déclarent quand même un override dans
+      // `specific` pour personnaliser leur libellé de colonne ; sans cette
+      // exclusion la branche `isInSpecific` les injecte dans le formulaire
+      // site comme champ texte saisissable, ce qui n'a pas de sens pour un
+      // champ calculé.
+      'nb_visits',
+      'last_visit',
     ];
 
     // Liste des champs à exclure spécifiquement pour les groupes de sites

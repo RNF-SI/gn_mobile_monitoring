@@ -1,5 +1,12 @@
 /// Classe utilitaire pour formatter les valeurs affichées dans l'interface utilisateur
 class ValueFormatter {
+  /// Détecte une chaîne ISO date (YYYY-MM-DD seule, ou suivie d'un T et d'une
+  /// heure ISO). On reformatte en `dd/MM/yyyy` pour l'affichage côté UI.
+  /// Strict pour éviter de reformater une chaîne quelconque qui commencerait
+  /// par 4-2-2 chiffres mais qui serait du texte.
+  static final RegExp _isoDateRegex =
+      RegExp(r'^(\d{4})-(\d{2})-(\d{2})(?:T[\d:.\-+Z]+)?$');
+
   /// Formate une valeur quelconque pour l'affichage dans l'UI
   ///
   /// Gère les cas spéciaux comme les nomenclatures, les listes, les objets complexes, etc.
@@ -10,6 +17,15 @@ class ValueFormatter {
       return formatNomenclature(value);
     } else if (value is List) {
       return formatList(value);
+    } else if (value is String) {
+      // Reformatte les dates ISO (YYYY-MM-DD ou YYYY-MM-DDTHH:mm:ss) en
+      // français (dd/MM/yyyy) pour rester homogène avec les `formatDateString`
+      // utilisées ailleurs dans l'app.
+      final match = _isoDateRegex.firstMatch(value);
+      if (match != null) {
+        return '${match[3]}/${match[2]}/${match[1]}';
+      }
+      return value;
     } else {
       return value.toString();
     }
@@ -68,16 +84,19 @@ class ValueFormatter {
     }
   }
 
-  /// Formatte un libellé (par exemple pour les en-têtes de colonnes ou les titres de champs)
-  /// 
-  /// Exemple: "id_nomenclature_type" -> "Id Nomenclature Type"
+  /// Formatte un libellé dérivé d'un nom de champ snake_case (utilisé en
+  /// fallback quand aucun `attribut_label` n'est défini dans la config).
+  /// Applique une casse "phrase" française : on majusculise uniquement la
+  /// première lettre, le reste reste en bas de casse pour ne pas torturer
+  /// les articles (`d'`, `de`, `du`, `le`, `la`...).
+  ///
+  /// Exemples :
+  /// - `id_nomenclature_type` -> `Id nomenclature type`
+  /// - `nombre_d_observations` -> `Nombre d observations`
+  /// - `date_min` -> `Date min`
   static String formatLabel(String key) {
-    return key
-        .replaceAll('_', ' ')
-        .split(' ')
-        .map((word) => word.isNotEmpty 
-            ? word[0].toUpperCase() + word.substring(1) 
-            : '')
-        .join(' ');
+    final spaced = key.replaceAll('_', ' ').toLowerCase();
+    if (spaced.isEmpty) return spaced;
+    return spaced[0].toUpperCase() + spaced.substring(1);
   }
 }

@@ -25,6 +25,16 @@ abstract class SitesRepository {
   /// Gets sites associated with a specific site group
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId);
 
+  /// Gets sites of a site group that are also associated with a given module
+  /// (via cor_site_module). Matches GeoNature web behavior when browsing a
+  /// site group under a module.
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+      int siteGroupId, int moduleId);
+
+  /// Gets sites of a module that don't belong to any site group (orphans).
+  /// Used for the "Sites" tab when the module also has groups (issue #157).
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId);
+
   /// Fetches sites for a specific module
   Future<void> fetchSitesForModule(String moduleCode, String token);
 

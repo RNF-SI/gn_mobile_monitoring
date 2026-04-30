@@ -431,6 +431,86 @@ void main() {
       expect(longTooltip.message, longValue); // Tooltip pour les valeurs longues
     });
     
+    test(
+        'formatDataCellValue pour les nomenclatures : extrait le label de '
+        'la Map ou rend l\'id brut en fallback', () {
+      final schema = {
+        'nomenclature_field': {
+          'type_widget': 'nomenclature',
+          'attribut_label': 'Nomenclature',
+        },
+      };
+
+      // Cas 1 : Map complète avec `label` — cas nominal après passage par
+      // processFormDataForDisplay.
+      final withLabel = testState.testFormatDataCellValue(
+        rawValue: {
+          'id': 7,
+          'code_nomenclature_type': 'STADE_VIE',
+          'cd_nomenclature': 'Adulte',
+          'label': 'Adulte',
+        },
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(withLabel, 'Adulte');
+
+      // Cas 2 : Map sans `label` mais avec `label_fr` — fallback 1.
+      final withLabelFr = testState.testFormatDataCellValue(
+        rawValue: {
+          'id': 163,
+          'code_nomenclature_type': 'SEXE',
+          'cd_nomenclature': 'M',
+          'label_fr': 'Mâle',
+        },
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(withLabelFr, 'Mâle');
+
+      // Cas 3 : Map sans label, sans label_fr, avec `label_default` —
+      // fallback 2.
+      final withLabelDefault = testState.testFormatDataCellValue(
+        rawValue: {
+          'id': 99,
+          'label_default': 'Male',
+        },
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(withLabelDefault, 'Male');
+
+      // Cas 4 : Map sans aucun label — on tombe sur cd_nomenclature.
+      final cdOnly = testState.testFormatDataCellValue(
+        rawValue: {
+          'id': 99,
+          'cd_nomenclature': 'M',
+        },
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(cdOnly, 'M');
+
+      // Cas 5 : int brut — la résolution viewmodel n'a pas pu produire la
+      // Map (ex. nomenclature non synchronisée). On rend l'id pour qu'on
+      // voie au moins quelque chose, au lieu du JSON `{...}` qui s'affichait
+      // avant le fix.
+      final rawInt = testState.testFormatDataCellValue(
+        rawValue: 163,
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(rawInt, '163');
+
+      // Cas 6 : null — gardé en phase avec la règle générale.
+      final nullValue = testState.testFormatDataCellValue(
+        rawValue: null,
+        columnName: 'nomenclature_field',
+        schema: schema,
+      );
+      expect(nullValue, '');
+    });
+
     test('formatDataCellValue handles boolean values correctly', () {
       // Créer un schéma simple pour le test
       final schema = {

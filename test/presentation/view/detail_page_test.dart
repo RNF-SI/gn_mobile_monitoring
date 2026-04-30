@@ -303,11 +303,11 @@ void main() {
         predefinedLabels: predefinedLabels,
       );
       
-      // Vérifier les labels des colonnes
+      // Vérifier les labels des colonnes (capitalisation française : on garde la casse de la source)
       expect((result[0].label as Text).data, 'Actions');  // De predefinedLabels
-      expect((result[1].label as Text).data, 'Date De Création');  // De itemConfig.generic
+      expect((result[1].label as Text).data, 'Date de création');  // De itemConfig.generic
       expect((result[2].label as Text).data, 'Actif');  // De itemConfig.generic
-      expect((result[3].label as Text).data, 'Champ Personnalisé');  // De predefinedLabels
+      expect((result[3].label as Text).data, 'Champ personnalisé');  // De predefinedLabels
     });
 
     test('formatDataCellValue should format values based on schema', () {

@@ -25,6 +25,7 @@ extension BaseVisitMapper on TBaseVisit {
 
 extension BaseVisitEntityMapper on BaseVisitEntity {
   TBaseVisitsCompanion toCompanion() {
+    final nowIso = DateTime.now().toIso8601String();
     return TBaseVisitsCompanion(
       // Pour les nouvelles visites (ID=0), utiliser Value.absent() pour laisser SQLite générer un ID
       idBaseVisit: idBaseVisit == 0 ? const Value.absent() : Value(idBaseVisit),
@@ -47,8 +48,21 @@ extension BaseVisitEntityMapper on BaseVisitEntity {
       uuidBaseVisit:
           uuidBaseVisit == null ? const Value.absent() : Value(uuidBaseVisit),
       serverVisitId: serverVisitId == null ? const Value.absent() : Value(serverVisitId), // 🔧 FIX: Ajouter le mapping du serverVisitId
+      // Aligné sur GeoNature web (DEFAULT now() côté Postgres) : on fournit
+      // explicitement la date côté client, fallback maintenant si l'entité
+      // n'en a pas. L'ancien DEFAULT était la chaîne littérale
+      // "CURRENT_TIMESTAMP" — corrigé sur le stock par migration029.
+      metaCreateDate: Value(metaCreateDate ?? nowIso),
+      metaUpdateDate: Value(metaUpdateDate ?? nowIso),
+    );
+  }
+
+  /// Companion pour un UPDATE : préserve `metaCreateDate` (jamais réécrite)
+  /// et force `metaUpdateDate` à maintenant.
+  TBaseVisitsCompanion toCompanionForUpdate() {
+    return toCompanion().copyWith(
       metaCreateDate: const Value.absent(),
-      metaUpdateDate: const Value.absent(),
+      metaUpdateDate: Value(DateTime.now().toIso8601String()),
     );
   }
 }

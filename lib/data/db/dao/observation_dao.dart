@@ -136,6 +136,21 @@ class ObservationDao extends DatabaseAccessor<AppDatabase>
     return updated > 0;
   }
 
+  /// Nombre d'observations liées à un module via leurs visites — utilisé par
+  /// la désinstallation pour avertir l'utilisateur du volume de données qui
+  /// sera perdu.
+  Future<int> countObservationsForModule(int moduleId) async {
+    final query = customSelect(
+      'SELECT COUNT(*) AS cnt FROM t_observations o '
+      'INNER JOIN t_base_visits v ON v.id_base_visit = o.id_base_visit '
+      'WHERE v.id_module = ?',
+      variables: [Variable.withInt(moduleId)],
+      readsFrom: {tObservations, db.tBaseVisits},
+    );
+    final row = await query.getSingle();
+    return row.read<int>('cnt');
+  }
+
   /// Supprime une observation
   Future<int> deleteObservation(int observationId) async {
     return await (delete(tObservations)

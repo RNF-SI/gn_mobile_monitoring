@@ -1,5 +1,6 @@
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_uninstall_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/sites_group_module.dart';
 
 abstract class ModulesDatabase {
@@ -55,4 +56,17 @@ abstract class ModulesDatabase {
   
   Future<Module?> getModuleIdByLabel(String moduleLabel);
   Future<Module?> getModuleByCode(String moduleCode);
+
+  /// Nombre de sites n'appartenant qu'à ce module (et qui seront supprimés
+  /// à la désinstallation). Utilisé par les stats pré-désinstallation.
+  Future<int> countExclusiveSitesForModule(int moduleId);
+
+  /// Stats à afficher avant désinstallation : agrégation de comptages
+  /// répartis sur plusieurs tables (visites, observations, sites).
+  Future<ModuleUninstallStats> getUninstallStats(int moduleId);
+
+  /// Désinstalle un module en transaction : suppression des visites,
+  /// observations, sites/groupes/datasets exclusifs, et reset de
+  /// `downloaded` à false. Voir [ModulesDao.uninstallModule] pour le détail.
+  Future<void> uninstallModule(int moduleId);
 }

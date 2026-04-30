@@ -18,7 +18,15 @@ abstract class DetailPage extends StatefulWidget {
 }
 
 abstract class DetailPageState<T extends DetailPage> extends State<T> {
-  final ScrollController _scrollController = ScrollController();
+  final ScrollController _horizontalTableScrollController = ScrollController();
+  final ScrollController _verticalTableScrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _horizontalTableScrollController.dispose();
+    _verticalTableScrollController.dispose();
+    super.dispose();
+  }
   /// Configuration de l'objet affiché
   ObjectConfig? get objectConfig;
 
@@ -156,8 +164,22 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
     Map<String, dynamic>?
         firstItemData, // Données du premier élément pour auto-détection
     bool filterMetaColumns =
-        true, // Filtrer les colonnes de métadonnées (geom, uuid, meta)
+        true, // Filtrer les colonnes de métadonnées (geom, uuid, meta, IDs techniques)
   }) {
+    // FK/PK techniques jamais utiles à afficher en cellule brute :
+    // l'utilisateur arrive forcément depuis le module / site / visite parent,
+    // et ces colonnes apparaîtraient toujours vides côté table puisque les
+    // valeurs sont stockées au top-level de l'entité, pas dans `data`.
+    const technicalIdKeys = {
+      'id_base_site',
+      'id_base_visit',
+      'id_observation',
+      'id_observation_detail',
+      'id_module',
+      'id_dataset',
+      'id_digitiser',
+      'id_inventor',
+    };
     List<String> displayColumns = List.from(standardColumns);
     Set<String> allPossibleKeys = <String>{};
 
@@ -196,7 +218,8 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
         keyIsValid = keyIsValid &&
             !key.contains('geom') &&
             !key.contains('uuid') &&
-            !key.contains('meta');
+            !key.contains('meta') &&
+            !technicalIdKeys.contains(key);
       }
 
       return keyIsValid;
@@ -244,10 +267,12 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
 
     return columns.map((column) {
       String label = column;
+      bool labelFromConfig = false;
 
       // Vérifier d'abord les labels prédéfinis
       if (predefinedLabels.containsKey(column)) {
         label = predefinedLabels[column]!;
+        labelFromConfig = true;
       }
       // Sinon rechercher dans la configuration
       else {
@@ -256,11 +281,16 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
           if (schema.containsKey(column) &&
               schema[column].containsKey('attribut_label')) {
             label = schema[column]['attribut_label'];
+            labelFromConfig = true;
           }
           // Vérifier dans generic
           else if (itemConfig.generic != null &&
               itemConfig.generic!.containsKey(column)) {
-            label = itemConfig.generic![column]!.attributLabel ?? column;
+            final genericLabel = itemConfig.generic![column]!.attributLabel;
+            if (genericLabel != null) {
+              label = genericLabel;
+              labelFromConfig = true;
+            }
           }
           // Vérifier dans specific
           else if (itemConfig.specific != null &&
@@ -270,13 +300,19 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
             if (specificConfig != null &&
                 specificConfig.containsKey('attribut_label')) {
               label = specificConfig['attribut_label'];
+              labelFromConfig = true;
             }
           }
         }
       }
 
-      // Formater le libellé pour une meilleure présentation
-      label = ValueFormatter.formatLabel(label);
+      // Ne formater (snake_case → casse phrase) que si on est tombé sur le
+      // nom de colonne brut. Un libellé fourni par la config ou un mapping
+      // prédéfini est déjà rédigé proprement (ex. "Nombre d'observations")
+      // et le formatLabel naïf le casserait en "Nombre D'observations".
+      if (!labelFromConfig) {
+        label = ValueFormatter.formatLabel(label);
+      }
 
       return DataColumn(
         label: Text(
@@ -309,9 +345,20 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
         // Formater en fonction du type de widget
         switch (typeWidget) {
           case 'nomenclature':
-            // Idéalement récupérer le label de la nomenclature
-            // Pour l'instant, on utilise juste la valeur brute
-            displayValue = rawValue.toString();
+            // Les nomenclatures sauvegardées arrivent ici sous deux formes :
+            // - Map {id, cd_nomenclature, code_nomenclature_type, label}
+            //   (après passage par processFormDataForDisplay)
+            // - int (id brut) quand la résolution n'a pas pu se faire côté
+            //   viewmodel (ex : type de nomenclature non synchronisé).
+            if (rawValue is Map) {
+              final label = rawValue['label'] ??
+                  rawValue['label_fr'] ??
+                  rawValue['label_default'] ??
+                  rawValue['cd_nomenclature'];
+              displayValue = label?.toString() ?? '';
+            } else {
+              displayValue = rawValue.toString();
+            }
             break;
           case 'checkbox':
             displayValue = rawValue == true ? 'Oui' : 'Non';
@@ -469,34 +516,37 @@ abstract class DetailPageState<T extends DetailPage> extends State<T> {
                         )
                       : Card(
                           elevation: 2,
-                          child: RawScrollbar(
-                            controller: _scrollController,
+                          child: Scrollbar(
+                            controller: _verticalTableScrollController,
                             thumbVisibility: true,
-                            interactive: true,
-                            thumbColor: Colors.redAccent,
-                            radius: Radius.circular(20),
-                            thickness: 7,
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            scrollDirection: Axis.horizontal,
                             child: SingleChildScrollView(
-                              child: DataTable(
-                                columns: columns,
-                                rows: rows,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: tableBorderColor,
-                                    width: 1,
+                              controller: _verticalTableScrollController,
+                              scrollDirection: Axis.vertical,
+                              child: Scrollbar(
+                                controller: _horizontalTableScrollController,
+                                thumbVisibility: true,
+                                notificationPredicate: (notif) =>
+                                    notif.depth == 1,
+                                child: SingleChildScrollView(
+                                  controller: _horizontalTableScrollController,
+                                  scrollDirection: Axis.horizontal,
+                                  child: DataTable(
+                                    columns: columns,
+                                    rows: rows,
+                                    decoration: BoxDecoration(
+                                      border: Border.all(
+                                        color: tableBorderColor,
+                                        width: 1,
+                                      ),
+                                    ),
+                                    headingRowColor: WidgetStateProperty.all(
+                                      tableHeaderColor,
+                                    ),
                                   ),
                                 ),
-                                headingRowColor: WidgetStateProperty.all(
-                                  tableHeaderColor,
-                                ),
                               ),
-                  
                             ),
                           ),
-                        ),
                         ),
             ),
           ],

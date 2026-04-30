@@ -13,6 +13,7 @@ import 'package:gn_mobile_monitoring/data/entity/observation_detail_entity.dart'
 import 'package:gn_mobile_monitoring/data/entity/observation_entity.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/dataset.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_visit_stats.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
@@ -239,7 +240,25 @@ class MockSitesDatabase implements SitesDatabase {
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async =>
       getSitesForModule(moduleId);
   @override
+  Future<List<BaseSite>> getOrphanSitesByModuleId(int moduleId) async {
+    final sitesOfModule = await getSitesByModuleId(moduleId);
+    return sitesOfModule
+        .where((s) =>
+            !_complements.any((c) =>
+                c.idBaseSite == s.idBaseSite && c.idSitesGroup != null))
+        .toList();
+  }
+
+  @override
   Future<List<BaseSite>> getSitesBySiteGroup(int siteGroupId) async => _sites;
+
+  @override
+  Future<List<BaseSite>> getSitesBySiteGroupAndModule(
+          int siteGroupId, int moduleId) async =>
+      _sites
+          .where((s) => _siteModules.any(
+              (sm) => sm.idSite == s.idBaseSite && sm.idModule == moduleId))
+          .toList();
 
   @override
   Future<int> insertSite(BaseSite site) async {
@@ -390,6 +409,12 @@ class MockSitesDatabase implements SitesDatabase {
 class MockVisitesDatabase implements VisitesDatabase {
   final List<TBaseVisit> _visits = [];
 
+  /// Helper de seeding E2E : injecte directement des visites dans le mock
+  /// (sans passer par `insertVisit` qui attend un Companion).
+  void seedVisits(List<TBaseVisit> visits) {
+    _visits.addAll(visits);
+  }
+
   @override
   Future<List<TBaseVisit>> getAllVisits() async => List.from(_visits);
   @override
@@ -437,6 +462,54 @@ class MockVisitesDatabase implements VisitesDatabase {
   @override
   Future<bool> updateVisitServerId(int localVisitId, int serverId) async =>
       true;
+
+  @override
+  Future<Set<int>> getModuleIdsWithUnsyncedVisits() async => _visits
+      .where((v) => v.serverVisitId == null)
+      .map((v) => v.idModule)
+      .toSet();
+
+  @override
+  Future<Set<int>> getSiteIdsWithUnsyncedVisitsForModule(int moduleId) async =>
+      _visits
+          .where((v) =>
+              v.idModule == moduleId &&
+              v.serverVisitId == null &&
+              v.idBaseSite != null)
+          .map((v) => v.idBaseSite!)
+          .toSet();
+
+  @override
+  Future<Map<int, SiteVisitStats>> getVisitStatsForModule(int moduleId) async {
+    final Map<int, List<TBaseVisit>> bySite = {};
+    for (final v in _visits) {
+      if (v.idModule != moduleId || v.idBaseSite == null) continue;
+      bySite.putIfAbsent(v.idBaseSite!, () => []).add(v);
+    }
+    return bySite.map((siteId, visits) {
+      DateTime? maxDate;
+      for (final v in visits) {
+        final parsed = DateTime.tryParse(v.visitDateMin);
+        if (parsed != null && (maxDate == null || parsed.isAfter(maxDate))) {
+          maxDate = parsed;
+        }
+      }
+      return MapEntry(
+        siteId,
+        SiteVisitStats(lastVisit: maxDate, nbVisits: visits.length),
+      );
+    });
+  }
+
+  @override
+  Future<Set<int>> getSiteGroupIdsWithUnsyncedVisitsForModule(
+          int moduleId) async =>
+      <int>{};
+
+  @override
+  Future<Map<int, int>> getObservationCountByVisitForModule(
+          int moduleId) async =>
+      <int, int>{};
 }
 
 // ============================================================================

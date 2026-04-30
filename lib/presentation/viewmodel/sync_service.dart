@@ -21,6 +21,13 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisate
 /// Provider pour la version du cache - incrémenté après chaque sync pour forcer le rafraîchissement
 final cacheVersionProvider = StateProvider<int>((ref) => 0);
 
+/// Compteur incrémenté à chaque mutation locale de visite (création, mise à
+/// jour, suppression). Les providers qui dépendent de l'état "saisies non
+/// téléversées" (ex: badge orange sur les modules de la home, modale de
+/// téléversement) le watchent pour se rafraîchir sans dépendre d'une
+/// invalidation côté navigation.
+final localVisitsCounterProvider = StateProvider<int>((ref) => 0);
+
 /// Provider pour le service de synchronisation
 final syncServiceProvider =
     StateNotifierProvider<SyncService, SyncStatus>((ref) {

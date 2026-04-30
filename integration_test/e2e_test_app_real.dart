@@ -18,14 +18,26 @@ class RealE2EConfig {
   final String serverUrl;
   final String username;
   final String password;
-  final String moduleCode;
+
+  /// Liste des modules a tester (source de verite).
+  /// Pour les tests mono-module existants, on utilise le getter [moduleCode]
+  /// qui retourne le premier element. Les tests multi-modules iterent sur
+  /// la liste complete.
+  final List<String> moduleCodes;
+
+  /// Active l'etape d'upload dans les tests qui le supportent.
+  final bool withUpload;
 
   const RealE2EConfig({
     required this.serverUrl,
     required this.username,
     required this.password,
-    required this.moduleCode,
+    required this.moduleCodes,
+    this.withUpload = false,
   });
+
+  /// Module courant pour les tests mono-module (= moduleCodes.first).
+  String get moduleCode => moduleCodes.first;
 
   /// Charge la configuration depuis les --dart-define passes au build.
   /// Fallback : lit le fichier .env.test a la racine du projet.
@@ -34,19 +46,35 @@ class RealE2EConfig {
     const envServerUrl = String.fromEnvironment('TEST_SERVER_URL');
     const envUsername = String.fromEnvironment('TEST_USERNAME');
     const envPassword = String.fromEnvironment('TEST_PASSWORD');
+    const envModuleCodes = String.fromEnvironment('TEST_MODULE_CODES');
     const envModuleCode = String.fromEnvironment('TEST_MODULE_CODE');
+    const envWithUpload = String.fromEnvironment('TEST_WITH_UPLOAD');
 
     if (envServerUrl.isNotEmpty) {
       return RealE2EConfig(
         serverUrl: envServerUrl,
         username: envUsername.isNotEmpty ? envUsername : 'admin',
         password: envPassword.isNotEmpty ? envPassword : 'admin',
-        moduleCode: envModuleCode.isNotEmpty ? envModuleCode : 'POPAmphibien',
+        moduleCodes: _parseModuleCodes(envModuleCodes, envModuleCode),
+        withUpload: envWithUpload == 'true' || envWithUpload == '1',
       );
     }
 
     // Priorite 2 : fichier .env.test (pour le lancement depuis le host)
     return _loadFromEnvFile();
+  }
+
+  static List<String> _parseModuleCodes(String csv, String single) {
+    if (csv.isNotEmpty) {
+      final parsed = csv
+          .split(',')
+          .map((m) => m.trim())
+          .where((m) => m.isNotEmpty)
+          .toList();
+      if (parsed.isNotEmpty) return parsed;
+    }
+    if (single.isNotEmpty) return [single];
+    return ['POPAmphibien'];
   }
 
   static RealE2EConfig _loadFromEnvFile() {
@@ -74,11 +102,16 @@ class RealE2EConfig {
       }
     }
 
+    final withUpload = envMap['TEST_WITH_UPLOAD'];
     return RealE2EConfig(
       serverUrl: envMap['TEST_SERVER_URL'] ?? 'http://10.0.2.2:8000',
       username: envMap['TEST_USERNAME'] ?? 'admin',
       password: envMap['TEST_PASSWORD'] ?? 'admin',
-      moduleCode: envMap['TEST_MODULE_CODE'] ?? 'POPAmphibien',
+      moduleCodes: _parseModuleCodes(
+        envMap['TEST_MODULE_CODES'] ?? '',
+        envMap['TEST_MODULE_CODE'] ?? '',
+      ),
+      withUpload: withUpload == 'true' || withUpload == '1',
     );
   }
 }

@@ -69,11 +69,12 @@ class TestDataSeeder {
   static ModuleConfiguration createModuleConfig({
     List<String>? siteGeometryTypes,
     bool includeSitesGroup = false,
+    List<String>? siteDisplayList,
   }) {
     final siteConfig = <String, dynamic>{
       'label': 'Site',
       'id_field_name': 'id_base_site',
-      'display_list': ['base_site_name', 'base_site_code'],
+      'display_list': siteDisplayList ?? ['base_site_name', 'base_site_code'],
       'display_properties': ['base_site_name', 'base_site_code'],
       'generic': {
         'base_site_name': {
@@ -221,10 +222,12 @@ class TestDataSeeder {
     List<String>? siteGeometryTypes,
     List<BaseSite>? extraSites,
     bool includeSitesGroup = false,
+    List<String>? siteDisplayList,
   }) async {
     final config = createModuleConfig(
       siteGeometryTypes: siteGeometryTypes,
       includeSitesGroup: includeSitesGroup,
+      siteDisplayList: siteDisplayList,
     );
 
     // Les sites seedés sont marqués `isLocal: true` et `serverSiteId: null`
@@ -368,12 +371,14 @@ class TestDataSeeder {
     List<String>? siteGeometryTypes,
     List<BaseSite>? extraSites,
     bool includeSitesGroup = false,
+    List<String>? siteDisplayList,
   }) async {
     await seedLoggedInUser();
     await seedDownloadedModule(
       siteGeometryTypes: siteGeometryTypes,
       extraSites: extraSites,
       includeSitesGroup: includeSitesGroup,
+      siteDisplayList: siteDisplayList,
     );
     await seedNomenclatures();
     await seedDatasets();

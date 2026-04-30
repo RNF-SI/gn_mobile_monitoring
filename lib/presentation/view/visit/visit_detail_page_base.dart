@@ -50,6 +50,7 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
     with SingleTickerProviderStateMixin {
   bool _hasShownObservationDialog = false;
   BaseVisit? _fullVisit;
+  int? _nbObservations;
   TabController? _tabController;
 
   @override
@@ -119,6 +120,21 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
         );
       }
     });
+
+    // Charger le nombre d'observations associées pour pouvoir l'injecter dans
+    // objectData (et donc l'afficher dans le bloc "Données spécifiques de la
+    // visite" si la config liste `nb_observations`).
+    final obsViewModel = widget.ref
+        .read(observationsProvider(widget.visit.idBaseVisit).notifier);
+    obsViewModel.getObservationsByVisitId().then((observations) {
+      if (mounted) {
+        setState(() {
+          _nbObservations = observations.length;
+        });
+      }
+    }).catchError((_) {
+      // Silencieux : si le compte échoue, le champ s'affichera "Non renseigné".
+    });
   }
 
   void _proposeObservationCreation() {
@@ -165,15 +181,43 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
       widget.moduleInfo?.module.complement?.configuration?.custom;
 
   @override
-  List<String>? get displayProperties =>
-      objectConfig?.displayProperties ?? objectConfig?.displayList;
+  List<String>? get displayProperties {
+    final base = objectConfig?.displayProperties ?? objectConfig?.displayList;
+    if (base == null || base.isEmpty) return base;
+    // On affiche systématiquement le compteur d'observations à la fin des
+    // propriétés de la visite, même si le module ne le met pas dans
+    // `display_properties` (souvent il est seulement dans `display_list`).
+    // La valeur est hydratée dans objectData via _nbObservations.
+    if (base.contains('nb_observations')) return base;
+    return [...base, 'nb_observations'];
+  }
 
   @override
   Map<String, dynamic> get objectData {
-    if (_fullVisit?.data != null) {
-      return _fullVisit!.data!;
-    }
-    return {};
+    final visit = _fullVisit ?? widget.visit;
+    // Hydrate les champs stockés au top-level de l'entité (et pas dans la
+    // JSON `data`) pour qu'ils apparaissent dans la section "Données
+    // spécifiques" si la config du module les déclare via `display_properties`
+    // avec leur propre `attribut_label` (ex. Pièges IA libelle visit_date_max
+    // en "Date de relevé du piège", visit_date_min en "Date de début du
+    // piégeage", etc.). Le léger doublon avec le bandeau d'info "Informations
+    // générales" est volontaire : le bandeau utilise des labels génériques
+    // (Date de visite / Fin de visite), la section propriétés porte les
+    // labels métier spécifiques au module.
+    return {
+      if (visit.data != null) ...visit.data!,
+      'id_base_visit': visit.idBaseVisit,
+      if (visit.idBaseSite != null) 'id_base_site': visit.idBaseSite,
+      'id_dataset': visit.idDataset,
+      'id_module': visit.idModule,
+      if (visit.idDigitiser != null) 'id_digitiser': visit.idDigitiser,
+      'visit_date_min': visit.visitDateMin,
+      if (visit.visitDateMax != null) 'visit_date_max': visit.visitDateMax,
+      if (visit.comments != null) 'comments': visit.comments,
+      if (visit.metaCreateDate != null) 'meta_create_date': visit.metaCreateDate,
+      if (visit.metaUpdateDate != null) 'meta_update_date': visit.metaUpdateDate,
+      if (_nbObservations != null) 'nb_observations': _nbObservations,
+    };
   }
 
   @override
@@ -423,6 +467,22 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
     return 'Détails de la visite';
   }
 
+  /// Vrai si la section "Données spécifiques" va déjà rendre ce champ — auquel
+  /// cas le bandeau d'info générique le saute pour ne pas le doubler. Couvre
+  /// les 3 sources qu'utilise `PropertyDisplayWidget` pour décider quoi
+  /// afficher : le `display_properties` explicite, et son fallback sur les
+  /// clés `generic`/`specific` de la config quand celui-ci est absent.
+  bool _isInDisplayProperties(String fieldName) {
+    if (displayProperties?.contains(fieldName) ?? false) return true;
+    if (displayProperties != null && displayProperties!.isNotEmpty) {
+      return false;
+    }
+    final config = objectConfig;
+    if (config == null) return false;
+    return (config.generic?.containsKey(fieldName) ?? false) ||
+        (config.specific?.containsKey(fieldName) ?? false);
+  }
+
   @override
   Widget buildBaseContent() {
     if (_fullVisit == null) {
@@ -450,18 +510,26 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
                   const SizedBox(height: 16),
                   _buildInfoRow(
                       'Site', widget.site.baseSiteName ?? 'Non spécifié'),
-                  _buildInfoRow('Date de visite',
-                      formatDateString(_fullVisit!.visitDateMin)),
+                  // Quand le module liste explicitement un champ dans
+                  // `display_properties` (ex. visit_date_min en "Date de
+                  // début du piégeage"), on laisse la section "Données
+                  // spécifiques" l'afficher avec son label métier au lieu de
+                  // le doublonner ici en label générique.
+                  if (!_isInDisplayProperties('visit_date_min'))
+                    _buildInfoRow('Date de visite',
+                        formatDateString(_fullVisit!.visitDateMin)),
                   if (_fullVisit!.visitDateMax != null &&
-                      _fullVisit!.visitDateMax != _fullVisit!.visitDateMin)
+                      _fullVisit!.visitDateMax != _fullVisit!.visitDateMin &&
+                      !_isInDisplayProperties('visit_date_max'))
                     _buildInfoRow('Fin de visite',
                         formatDateString(_fullVisit!.visitDateMax!)),
-                  _buildInfoRow(
-                      'Observateurs',
-                      _fullVisit!.observers != null &&
-                              _fullVisit!.observers!.isNotEmpty
-                          ? '${_fullVisit!.observers!.length} observateur(s)'
-                          : 'Aucun observateur'),
+                  if (!_isInDisplayProperties('observers'))
+                    _buildInfoRow(
+                        'Observateurs',
+                        _fullVisit!.observers != null &&
+                                _fullVisit!.observers!.isNotEmpty
+                            ? '${_fullVisit!.observers!.length} observateur(s)'
+                            : 'Aucun observateur'),
                   _buildInfoRow(
                       'Date de création',
                       _fullVisit!.metaCreateDate != null
@@ -478,8 +546,12 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
           const SizedBox(height: 16),
 
-          // Commentaires
-          if (_fullVisit!.comments != null && _fullVisit!.comments!.isNotEmpty)
+          // Commentaires : carte standalone uniquement si le module ne liste
+          // pas déjà `comments` dans `display_properties` (sinon ils seront
+          // affichés via la section "Données spécifiques").
+          if (_fullVisit!.comments != null &&
+              _fullVisit!.comments!.isNotEmpty &&
+              !_isInDisplayProperties('comments'))
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -498,8 +570,13 @@ class _VisitDetailPageBaseState extends DetailPageState<VisitDetailPageBase>
 
           const SizedBox(height: 16),
 
-          // Données spécifiques au module si présentes
-          if (_fullVisit!.data != null && _fullVisit!.data!.isNotEmpty)
+          // Données spécifiques au module : on rend la section dès qu'au
+          // moins un champ est listé dans `display_properties`. Même si
+          // `_fullVisit.data` est vide, on a hydraté les FK / dates / nb
+          // d'observations dans `objectData`, et la config peut vouloir les
+          // afficher avec ses propres labels.
+          if ((displayProperties != null && displayProperties!.isNotEmpty) ||
+              (_fullVisit!.data != null && _fullVisit!.data!.isNotEmpty))
             buildPropertiesWidget(),
         ],
       ),

@@ -9,7 +9,6 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/create_site_with_relations_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_site_by_id_use_case.dart';
-import 'package:gn_mobile_monitoring/domain/usecase/get_sites_by_site_group_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/delete_site_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case.dart';
@@ -21,8 +20,6 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     void,
     (int, int?)>((ref, params) {
   final (moduleId, siteGroupId) = params;
-  final getSitesBySiteGroupUseCase =
-      ref.watch(getSitesBySiteGroupUseCaseProvider);
   final createSiteWithRelationsUseCase =
       ref.watch(createSiteWithRelationsUseCaseProvider);
   final updateSiteUseCase = ref.watch(updateSiteUseCaseProvider);
@@ -38,7 +35,6 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     updateSiteUseCase,
     deleteSiteUseCase,
     getUserIdUseCase,
-    getSitesBySiteGroupUseCase,
     getSiteByIdUseCase,
     getUserLocationUseCase,
     formDataProcessor,
@@ -53,7 +49,6 @@ class SiteFormViewModel extends StateNotifier<void> {
   final UpdateSiteUseCase _updateSiteUseCase;
   final DeleteSiteUseCase _deleteSiteUseCase;
   final GetUserIdFromLocalStorageUseCase _getUserIdUseCase;
-  final GetSitesBySiteGroupUseCase _getSitesBySiteGroupUseCase;
   final GetSiteByIdUseCase _getSiteByIdUseCase;
   final GetUserLocationUseCase _getUserLocationUseCase;
   final FormDataProcessor _formDataProcessor;
@@ -61,52 +56,18 @@ class SiteFormViewModel extends StateNotifier<void> {
   final int _moduleId;
   final int _siteGroupId;
 
-  bool _mounted = true;
-
   SiteFormViewModel(
     this._createSiteWithRelationsUseCase,
     this._updateSiteUseCase,
     this._deleteSiteUseCase,
     this._getUserIdUseCase,
-    this._getSitesBySiteGroupUseCase,
     this._getSiteByIdUseCase,
     this._getUserLocationUseCase,
     this._formDataProcessor,
     this._sitesDatabase,
     this._moduleId,
     this._siteGroupId,
-  ) : super(const AsyncValue.loading()) {
-    if (_siteGroupId > 0) {
-      loadSite();
-    }
-  }
-
-  /// Charge tous les sites pour le groupe de sites
-  Future<void> loadSite() async {
-    if (!_mounted) return;
-
-    try {
-      state = const AsyncValue.loading();
-      final sites =
-          await _getSitesBySiteGroupUseCase.execute(_siteGroupId);
-
-      // Traiter les données pour l'affichage - convertir les IDs de nomenclature en objets
-      final processedSites =
-          await Future.wait(sites.map((site) async {
-        final processedData = await _formDataProcessor
-            .processFormDataForDisplay(site.data!);
-        return site.copyWith(data: processedData);
-      }));
-
-      if (_mounted) {
-        state = AsyncValue.data(processedSites);
-      }
-    } catch (e, stack) {
-      if (_mounted) {
-        state = AsyncValue.error(e, stack);
-      }
-    }
-  }
+  ) : super(null);
 
   /// Crée un nouveau site à partir des données du formulaire
   /// Retourne l'ID du site créé

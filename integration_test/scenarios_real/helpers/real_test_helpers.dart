@@ -405,6 +405,50 @@ class RealTestHelpers {
         'Bouton non trouve dans la card de $moduleCode apres $timeout (la card s\'est probablement deplacee dans la liste)');
   }
 
+  /// Fait défiler la liste des modules jusqu'à ce que la card du module
+  /// cible soit montée dans le widget tree. Nécessaire depuis le commit
+  /// ccf2fde (tri + barre de recherche sur la liste des modules) : avec un
+  /// `ListView.builder`, les items hors viewport ne sont pas instanciés,
+  /// donc `find.byKey('module-card-XXX')` retourne vide tant qu'on n'a
+  /// pas scrollé jusqu'à eux. Utilise `scrollUntilVisible` qui gère
+  /// automatiquement cette contrainte.
+  static Future<void> scrollToModuleCard(
+    WidgetTester tester,
+    String moduleCode, {
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final moduleCard = find.byKey(Key('module-card-$moduleCode'));
+    if (moduleCard.evaluate().isNotEmpty) return;
+
+    final scrollable = find.byType(Scrollable).first;
+    final stopwatch = Stopwatch()..start();
+    // Remonter tout en haut d'abord pour partir d'un état connu.
+    try {
+      await tester.drag(scrollable, const Offset(0, 5000));
+      await pumpFor(tester, const Duration(milliseconds: 300));
+    } catch (_) {}
+
+    while (stopwatch.elapsed < timeout) {
+      if (moduleCard.evaluate().isNotEmpty) return;
+      try {
+        await tester.scrollUntilVisible(
+          moduleCard,
+          300,
+          scrollable: scrollable,
+          duration: const Duration(milliseconds: 50),
+        );
+        if (moduleCard.evaluate().isNotEmpty) return;
+      } catch (_) {
+        // scrollUntilVisible fail si on arrive en bas sans trouver.
+        // On laisse la boucle tenter une dernière fois avant de fail.
+      }
+      await pumpFor(tester, const Duration(milliseconds: 200));
+    }
+    fail(
+        'Card module-card-$moduleCode introuvable après scroll sur $timeout — '
+        'le module existe-t-il bien côté serveur pour cet utilisateur ?');
+  }
+
   /// Telecharge le module si necessaire et l'ouvre.
   /// Apres cette fonction, on est sur la page de detail du module.
   /// Pre-requis : on doit etre sur la HomePage avec la sync terminee.
@@ -419,6 +463,11 @@ class RealTestHelpers {
     final moduleCardKey = 'module-card-$moduleCode';
     final moduleCard = find.byKey(Key(moduleCardKey));
 
+    // Avec ListView.builder, la card n'existe dans le widget tree que si
+    // elle est dans/proche du viewport. Scroller jusqu'à elle avant de
+    // faire le waitForWidget.
+    await scrollToModuleCard(tester, moduleCode);
+
     // Verifier que la card du module est presente
     await waitForWidget(
       tester,
@@ -427,7 +476,7 @@ class RealTestHelpers {
       description: 'card du module $moduleCode',
     );
 
-    // Faire defiler jusqu'a la card si elle n'est pas visible (liste de modules longue)
+    // Centrer la card dans le viewport pour que les taps ensuite fonctionnent
     debugPrint('===== REGARDE l\'ecran : scroll vers $moduleCode =====');
     await tester.ensureVisible(moduleCard);
     await pumpFor(tester, visualDelay);
@@ -674,11 +723,43 @@ class RealTestHelpers {
     final itemsCount = items.evaluate().length;
     final indexToTap = itemsCount > 1 ? 1 : 0;
 
-    try {
-      await tester.tap(items.at(indexToTap));
-    } catch (_) {
-      await tester.tap(items.at(indexToTap), warnIfMissed: false);
+    // Le menu dropdown est un overlay et peut rendre les items au-delà du
+    // viewport (ex: 13 items nomenclature sur un petit écran). Dans ce cas
+    // tester.tap échoue silencieusement avec un warning "Offset would not
+    // hit test" et le champ reste vide → le form save ne se valide jamais
+    // (observé sur real_site_management et real_many_taxa).
+    //
+    // Stratégie robuste :
+    //   1. scrollUntilVisible dans le Scrollable du menu (si présent) pour
+    //      amener l'item cible dans le viewport
+    //   2. tap avec warnIfMissed: false en dernier recours pour taper à
+    //      l'offset center même si le hit-test strict échoue
+    final itemFinder = items.at(indexToTap);
+    final menuScrollable = find.descendant(
+      of: find.byType(Overlay),
+      matching: find.byType(Scrollable),
+    );
+    if (menuScrollable.evaluate().isNotEmpty) {
+      try {
+        await tester.scrollUntilVisible(
+          itemFinder,
+          100,
+          scrollable: menuScrollable.last,
+          duration: const Duration(milliseconds: 50),
+        );
+      } catch (_) {
+        // Si l'item est au-dessus du viewport, scrollUntilVisible échoue
+        // avec un "scroll extents" error. On ignore et on tente ensureVisible.
+      }
     }
+    try {
+      await tester.ensureVisible(itemFinder);
+      await pumpFor(tester, const Duration(milliseconds: 300));
+    } catch (_) {}
+    // warnIfMissed: false pour tolérer le cas où l'item est partiellement
+    // obscurci par un ScrollEnd indicator. Le tap à l'offset du centre
+    // atteint quand même la zone tappable de l'item.
+    await tester.tap(itemFinder, warnIfMissed: false);
     await pumpFor(tester, const Duration(seconds: 2));
     debugPrint('Item dropdown selectionne pour $label');
   }
@@ -740,7 +821,15 @@ class RealTestHelpers {
   /// Tape sur le bouton form-save-button.
   /// Cache automatiquement le clavier au cas ou et ferme les dialogs eventuels
   /// qui apparaissent apres save (ex: "Creer une visite ?").
-  static Future<void> tapFormSave(WidgetTester tester) async {
+  ///
+  /// [closeTimeout] : delai max d'attente pour la fermeture du form. La valeur
+  /// par defaut (45s) couvre les saves classiques ; les payloads lourds
+  /// (e.g. observation avec beaucoup de nomenclatures) sur un serveur sature
+  /// peuvent necessiter plus.
+  static Future<void> tapFormSave(
+    WidgetTester tester, {
+    Duration closeTimeout = const Duration(seconds: 45),
+  }) async {
     await hideKeyboard(tester);
 
     final saveButton = find.byKey(const Key('form-save-button'));
@@ -759,8 +848,7 @@ class RealTestHelpers {
     // (succes du save) tout en dismissant les dialogs qui apparaissent
     // a timing variable ("Creer une visite ?", etc.).
     // Plus robuste qu'un pumpFor fixe suivi d'un dismiss one-shot.
-    await _waitForFormClosedOrDismiss(tester,
-        timeout: const Duration(seconds: 45));
+    await _waitForFormClosedOrDismiss(tester, timeout: closeTimeout);
   }
 
   /// Verifie qu'on n'est PLUS sur un formulaire (le bouton form-save-button
@@ -805,6 +893,191 @@ class RealTestHelpers {
   // ==========================================================================
   // NAVIGATION HELPERS
   // ==========================================================================
+
+  /// Revient a la HomePage depuis n'importe quelle page de navigation en
+  /// pop-ant jusqu'a voir "Mes Modules".
+  static Future<void> navigateBackToHome(
+    WidgetTester tester, {
+    int maxPops = 6,
+  }) async {
+    for (var i = 0; i < maxPops; i++) {
+      if (find.text('Mes Modules').evaluate().isNotEmpty) return;
+      final back = find.byTooltip('Back');
+      if (back.evaluate().isNotEmpty) {
+        await tester.tap(back.first);
+        await pumpFor(tester, const Duration(seconds: 2));
+        continue;
+      }
+      final backBtn = find.byType(BackButton);
+      if (backBtn.evaluate().isNotEmpty) {
+        await tester.tap(backBtn.first);
+        await pumpFor(tester, const Duration(seconds: 2));
+        continue;
+      }
+      break; // plus rien a pop
+    }
+    if (find.text('Mes Modules').evaluate().isEmpty) {
+      fail('navigateBackToHome: impossible de revenir a la HomePage');
+    }
+  }
+
+  /// Declenche un upload via le menu "Téléversement" depuis la HomePage.
+  /// Attend la fin du sync. Si le dialog "Synchronisation requise" apparait
+  /// et [requireDownloadFirst] est faux, l'upload est skip avec un warning.
+  static Future<void> triggerSyncUploadFromHome(
+    WidgetTester tester, {
+    bool skipIfDownloadRequired = true,
+  }) async {
+    final menuButton = find.byIcon(Icons.menu);
+    await waitForWidget(
+      tester,
+      menuButton,
+      timeout: const Duration(seconds: 10),
+      description: 'menu burger pour upload',
+    );
+    await tester.tap(menuButton);
+    await pumpFor(tester, const Duration(seconds: 2));
+
+    final uploadMenuItem = find.byKey(const Key('menu-sync_upload'));
+    await waitForWidget(
+      tester,
+      uploadMenuItem,
+      timeout: const Duration(seconds: 5),
+      description: 'item menu-sync_upload',
+    );
+    await tester.tap(uploadMenuItem);
+    await pumpFor(tester, const Duration(seconds: 3));
+
+    if (find.text('Synchronisation requise').evaluate().isNotEmpty) {
+      if (skipIfDownloadRequired) {
+        debugPrint(
+            'Dialog "Synchronisation requise" : upload skip (relancez apres sync-download)');
+        for (final btnText in ['Fermer', 'Annuler', 'OK']) {
+          final btn = find.text(btnText);
+          if (btn.evaluate().isNotEmpty) {
+            await tester.tap(btn.first);
+            break;
+          }
+        }
+        return;
+      } else {
+        fail(
+            'Upload bloque par "Synchronisation requise" (download requis au prealable)');
+      }
+    }
+
+    final sendButton = find.widgetWithText(ElevatedButton, 'Envoyer');
+    await waitForWidget(
+      tester,
+      sendButton,
+      timeout: const Duration(seconds: 10),
+      description: 'bouton "Envoyer"',
+    );
+    await tester.tap(sendButton);
+    await pumpFor(tester, const Duration(seconds: 2));
+
+    // Module selector multi-modules : tout cocher si la UI le permet,
+    // sinon choisir le premier item.
+    if (find.text('Sélectionner un module').evaluate().isNotEmpty) {
+      // Essayer de tout cocher via un bouton "Tout selectionner" s'il existe
+      final selectAll = find.text('Tout sélectionner');
+      if (selectAll.evaluate().isNotEmpty) {
+        await tester.tap(selectAll.first);
+        await pumpFor(tester, const Duration(seconds: 1));
+      } else {
+        // Fallback : cocher chaque checkbox visible
+        final checkboxes = find.byType(Checkbox);
+        for (var i = 0; i < checkboxes.evaluate().length; i++) {
+          await tester.tap(checkboxes.at(i));
+          await pumpFor(tester, const Duration(milliseconds: 300));
+        }
+        if (checkboxes.evaluate().isEmpty) {
+          // Pas de checkbox → fallback premier ListTile
+          final listTiles = find.byType(ListTile);
+          if (listTiles.evaluate().isNotEmpty) {
+            await tester.tap(listTiles.first);
+            await pumpFor(tester, const Duration(seconds: 1));
+          }
+        }
+      }
+      // Valider la selection
+      for (final btnText in ['Envoyer', 'Valider', 'OK']) {
+        final btn = find.widgetWithText(ElevatedButton, btnText);
+        if (btn.evaluate().isNotEmpty) {
+          await tester.tap(btn.first);
+          await pumpFor(tester, const Duration(seconds: 2));
+          break;
+        }
+      }
+    }
+
+    await waitForSyncToFinish(
+      tester,
+      timeout: const Duration(minutes: 5),
+    );
+    debugPrint('Upload termine');
+    await dismissBlockingDialogs(tester);
+  }
+
+  /// Selectionne un taxon via le TaxonSelectorWidget en tapant [searchQuery]
+  /// dans le champ de recherche, puis en tapant sur le [resultIndex]-ieme
+  /// resultat (index 0-based). Le champ declenche la recherche a partir de
+  /// 3 caracteres, donc [searchQuery] doit faire >= 3 caracteres.
+  ///
+  /// Keys utilisees (ajoutees dans taxon_selector_widget.dart) :
+  ///   - `taxon-search-field` : le TextFormField de recherche
+  ///   - `taxon-search-results` : le Container qui wrappe la ListView
+  ///
+  /// Throws via fail() si le champ ou les resultats n'apparaissent pas.
+  static Future<void> selectTaxonBySearch(
+    WidgetTester tester,
+    String searchQuery, {
+    int resultIndex = 0,
+    Duration debounce = const Duration(seconds: 2),
+  }) async {
+    assert(searchQuery.length >= 3,
+        'searchQuery doit faire >= 3 caracteres (trigger de recherche du widget)');
+
+    final searchField = find.byKey(const Key('taxon-search-field'));
+    await waitForWidget(
+      tester,
+      searchField,
+      timeout: const Duration(seconds: 10),
+      description: 'taxon-search-field',
+    );
+    await tester.ensureVisible(searchField);
+    await pumpFor(tester, const Duration(milliseconds: 300));
+    await tester.enterText(searchField, searchQuery);
+    await pumpFor(tester, debounce);
+    await hideKeyboard(tester);
+
+    // Attendre l'apparition du Container de resultats (recherche > 0 hits).
+    final resultsContainer = find.byKey(const Key('taxon-search-results'));
+    await waitForWidget(
+      tester,
+      resultsContainer,
+      timeout: const Duration(seconds: 10),
+      description: 'taxon-search-results pour "$searchQuery"',
+    );
+
+    final resultTiles = find.descendant(
+      of: resultsContainer,
+      matching: find.byType(ListTile),
+    );
+    final count = resultTiles.evaluate().length;
+    if (count == 0) {
+      fail('Aucun ListTile dans les resultats de recherche "$searchQuery"');
+    }
+    if (resultIndex >= count) {
+      fail(
+          'resultIndex $resultIndex hors plage (il y a $count resultats pour "$searchQuery")');
+    }
+
+    debugPrint(
+        'Taxon search "$searchQuery" → $count resultat(s), tap sur index $resultIndex');
+    await tester.tap(resultTiles.at(resultIndex));
+    await pumpFor(tester, const Duration(seconds: 1));
+  }
 
   /// Tape sur un onglet par son texte (TabBar).
   static Future<void> tapTab(WidgetTester tester, String tabText) async {

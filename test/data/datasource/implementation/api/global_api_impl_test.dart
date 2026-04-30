@@ -60,31 +60,11 @@ void main() {
         const moduleId = 1;
         const moduleCode = 'TEST_MODULE';
 
-        // Mock module response
+        // Mock module response (depth=0, juste module_code)
         final mockModuleResponse = MockResponse<Map<String, dynamic>>();
         final moduleData = {
           'id_module': moduleId,
           'module_code': moduleCode,
-          'datasets': [
-            {
-              'id_dataset': 1,
-              'unique_dataset_id': 'UUID-TEST-001',
-              'id_acquisition_framework': 1,
-              'dataset_name': 'Test Dataset',
-              'dataset_shortname': 'TD',
-              'dataset_desc': 'Test Description',
-              'id_nomenclature_data_type': 1,
-              'marine_domain': false,
-              'terrestrial_domain': true,
-              'id_nomenclature_dataset_objectif': 1,
-              'id_nomenclature_collecting_method': 1,
-              'id_nomenclature_data_origin': 1,
-              'id_nomenclature_source_status': 1,
-              'id_nomenclature_resource_type': 1,
-              'active': true,
-              'meta_create_date': '2023-01-01T00:00:00.000Z',
-            },
-          ],
         };
 
         when(() => mockModuleResponse.data).thenReturn(moduleData);
@@ -92,9 +72,53 @@ void main() {
 
         when(() => mockDio.get(
           '/monitorings/module/$moduleId',
-          queryParameters: {'depth': 1},
+          queryParameters: {'depth': 0},
           options: any(named: 'options'),
         )).thenAnswer((_) async => mockModuleResponse);
+
+        // Mock object/module response (liste d'IDs datasets)
+        final mockObjectResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockObjectResponse.data).thenReturn({
+          'module_code': moduleCode,
+          'properties': {
+            'module_code': moduleCode,
+            'datasets': [1],
+          },
+        });
+        when(() => mockObjectResponse.statusCode).thenReturn(200);
+
+        when(() => mockDio.get(
+          '/monitorings/object/$moduleCode/module',
+          queryParameters: {'depth': 0, 'field_name': 'module_code'},
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => mockObjectResponse);
+
+        // Mock util/dataset response (dict TDatasets à plat)
+        final mockDatasetResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockDatasetResponse.data).thenReturn({
+          'id_dataset': 1,
+          'unique_dataset_id': 'UUID-TEST-001',
+          'id_acquisition_framework': 1,
+          'dataset_name': 'Test Dataset',
+          'dataset_shortname': 'TD',
+          'dataset_desc': 'Test Description',
+          'id_nomenclature_data_type': 1,
+          'marine_domain': false,
+          'terrestrial_domain': true,
+          'id_nomenclature_dataset_objectif': 1,
+          'id_nomenclature_collecting_method': 1,
+          'id_nomenclature_data_origin': 1,
+          'id_nomenclature_source_status': 1,
+          'id_nomenclature_resource_type': 1,
+          'active': true,
+          'meta_create_date': '2023-01-01T00:00:00.000Z',
+        });
+        when(() => mockDatasetResponse.statusCode).thenReturn(200);
+
+        when(() => mockDio.get(
+          '/monitorings/util/dataset/1',
+          options: any(named: 'options'),
+        )).thenAnswer((_) async => mockDatasetResponse);
 
         // Mock config response with nomenclature types (as list of strings)
         final mockConfigResponse = MockResponse<Map<String, dynamic>>();
@@ -148,7 +172,7 @@ void main() {
 
         when(() => mockDio.get(
           '/monitorings/module/$moduleId',
-          queryParameters: {'depth': 1},
+          queryParameters: {'depth': 0},
           options: any(named: 'options'),
         )).thenThrow(DioException(
           requestOptions: RequestOptions(path: ''),
@@ -333,41 +357,65 @@ void main() {
 
         // Mock getNomenclaturesAndDatasets for each module
         for (final moduleId in moduleIds) {
-          // Mock module response
-          final mockModuleResponse = MockResponse<Map<String, dynamic>>();
-          final moduleData = {
-            'id_module': moduleId,
-            'module_code': 'TEST_MODULE_$moduleId',
-            'datasets': [
-              {
-                'id_dataset': moduleId,
-                'unique_dataset_id': 'UUID-TEST-00$moduleId',
-                'id_acquisition_framework': 1,
-                'dataset_name': 'Test Dataset $moduleId',
-                'dataset_shortname': 'TD$moduleId',
-                'dataset_desc': 'Test Description',
-                'id_nomenclature_data_type': 1,
-                'marine_domain': false,
-                'terrestrial_domain': true,
-                'id_nomenclature_dataset_objectif': 1,
-                'id_nomenclature_collecting_method': 1,
-                'id_nomenclature_data_origin': 1,
-                'id_nomenclature_source_status': 1,
-                'id_nomenclature_resource_type': 1,
-                'active': true,
-                'meta_create_date': '2023-01-01T00:00:00.000Z',
-              },
-            ],
-          };
+          final moduleCode = 'TEST_MODULE_$moduleId';
 
-          when(() => mockModuleResponse.data).thenReturn(moduleData);
+          // Mock module response (depth=0, juste module_code)
+          final mockModuleResponse = MockResponse<Map<String, dynamic>>();
+          when(() => mockModuleResponse.data).thenReturn({
+            'id_module': moduleId,
+            'module_code': moduleCode,
+          });
           when(() => mockModuleResponse.statusCode).thenReturn(200);
 
           when(() => mockDio.get(
             '/monitorings/module/$moduleId',
-            queryParameters: {'depth': 1},
+            queryParameters: {'depth': 0},
             options: any(named: 'options'),
           )).thenAnswer((_) async => mockModuleResponse);
+
+          // Mock object/module response (liste d'IDs datasets)
+          final mockObjectResponse = MockResponse<Map<String, dynamic>>();
+          when(() => mockObjectResponse.data).thenReturn({
+            'module_code': moduleCode,
+            'properties': {
+              'module_code': moduleCode,
+              'datasets': [moduleId],
+            },
+          });
+          when(() => mockObjectResponse.statusCode).thenReturn(200);
+
+          when(() => mockDio.get(
+            '/monitorings/object/$moduleCode/module',
+            queryParameters: {'depth': 0, 'field_name': 'module_code'},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => mockObjectResponse);
+
+          // Mock util/dataset response
+          final mockDatasetResponse = MockResponse<Map<String, dynamic>>();
+          when(() => mockDatasetResponse.data).thenReturn({
+            'id_dataset': moduleId,
+            'unique_dataset_id': 'UUID-TEST-00$moduleId',
+            'id_acquisition_framework': 1,
+            'dataset_name': 'Test Dataset $moduleId',
+            'dataset_shortname': 'TD$moduleId',
+            'dataset_desc': 'Test Description',
+            'id_nomenclature_data_type': 1,
+            'marine_domain': false,
+            'terrestrial_domain': true,
+            'id_nomenclature_dataset_objectif': 1,
+            'id_nomenclature_collecting_method': 1,
+            'id_nomenclature_data_origin': 1,
+            'id_nomenclature_source_status': 1,
+            'id_nomenclature_resource_type': 1,
+            'active': true,
+            'meta_create_date': '2023-01-01T00:00:00.000Z',
+          });
+          when(() => mockDatasetResponse.statusCode).thenReturn(200);
+
+          when(() => mockDio.get(
+            '/monitorings/util/dataset/$moduleId',
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => mockDatasetResponse);
 
           // Mock config response
           final mockConfigResponse = MockResponse<Map<String, dynamic>>();
@@ -375,7 +423,7 @@ void main() {
           when(() => mockConfigResponse.statusCode).thenReturn(200);
 
           when(() => mockDio.get(
-            '/monitorings/config/TEST_MODULE_$moduleId',
+            '/monitorings/config/$moduleCode',
             options: any(named: 'options'),
           )).thenAnswer((_) async => mockConfigResponse);
         }

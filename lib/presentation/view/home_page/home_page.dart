@@ -20,6 +20,27 @@ class HomePage extends ConsumerStatefulWidget {
 class HomePageState extends ConsumerState<HomePage> {
   bool _syncServiceInitialized = false;
 
+  // Recherche modules (issue #163)
+  bool _isSearchActive = false;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearchActive = !_isSearchActive;
+      if (!_isSearchActive) {
+        _searchController.clear();
+        _searchQuery = '';
+      }
+    });
+  }
+
   @override
   void initState() {
     super.initState();
@@ -63,8 +84,12 @@ class HomePageState extends ConsumerState<HomePage> {
   Widget build(BuildContext context) {
     // Observer le statut de synchronisation
     final syncStatus = ref.watch(syncServiceProvider);
-    //Rafraichir les status de téléchargement des modules
-    ref.read(databaseSyncServiceProvider).refreshAllLists();
+    // Ne PAS appeler refreshAllLists() ici : c'est un side-effect qui recharge
+    // les modules depuis la DB à chaque rebuild (ex: keystroke dans la barre
+    // de recherche #163) et écrase le state éphémère d'un téléchargement en
+    // cours (moduleDownloading → moduleDownloaded trop tôt). Le ViewModel est
+    // déjà tenu à jour via loadModules() au boot, le pull-to-refresh,
+    // startDownloadModule et deleteAndReinitializeDatabase.
 
     final isSyncing = syncStatus.state == SyncState.inProgress;
 
@@ -77,16 +102,40 @@ class HomePageState extends ConsumerState<HomePage> {
         Scaffold(
           appBar: AppBar(
             backgroundColor: AppColors.dark, // Brand color
-            title: const Text("Mes Modules"),
-            actions: const [
-              MenuActions(),
+            title: _isSearchActive
+                ? TextField(
+                    key: const Key('module-list-search-field'),
+                    controller: _searchController,
+                    autofocus: true,
+                    style: const TextStyle(color: AppColors.white),
+                    cursorColor: AppColors.white,
+                    decoration: const InputDecoration(
+                      hintText: 'Rechercher un module…',
+                      hintStyle: TextStyle(color: Colors.white70),
+                      border: InputBorder.none,
+                    ),
+                    onChanged: (value) {
+                      setState(() => _searchQuery = value);
+                    },
+                  )
+                : const Text("Mes Modules"),
+            actions: [
+              IconButton(
+                key: const Key('module-list-search-toggle'),
+                icon: Icon(_isSearchActive ? Icons.close : Icons.search),
+                tooltip: _isSearchActive ? 'Fermer la recherche' : 'Rechercher',
+                onPressed: isSyncing ? null : _toggleSearch,
+              ),
+              const MenuActions(),
             ],
           ),
           body: Column(
-            children: const [
-              SyncStatusWidget(), // Widget de statut de synchronisation
+            children: [
+              const SyncStatusWidget(), // Widget de statut de synchronisation
               Expanded(
-                child: ModuleListWidget(),
+                child: ModuleListWidget(
+                  searchQuery: _isSearchActive ? _searchQuery : null,
+                ),
               ),
             ],
           ),

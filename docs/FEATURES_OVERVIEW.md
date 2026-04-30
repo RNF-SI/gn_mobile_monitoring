@@ -260,6 +260,22 @@ ou avec API :
 }
 ```
 
+#### CurrentUserField - Datalist mono-utilisateur (ex: déterminateur)
+⚠️ **Note** : Tant que l'API `users/menu/<id_list>` n'est pas câblée localement, tout champ `datalist` ciblant un utilisateur unique (`type_util: "user"`, `multiple: false`) est traité comme `ObserverField` : auto-rempli avec l'utilisateur connecté et affiché en lecture seule (chrome partagé via `_buildAutoFilledUserField`).
+
+```json
+{
+  "determiner": {
+    "type_widget": "datalist",
+    "attribut_label": "Déterminateur",
+    "api": "users/menu/__MODULE.ID_LIST_OBSERVER",
+    "type_util": "user",
+    "multiple": false,
+    "required": true
+  }
+}
+```
+
 ## 🔄 Mapping Configuration → Widget
 
 | Configuration JSON | Widget Flutter | Particularités |
@@ -276,6 +292,7 @@ ou avec API :
 | `"type_widget": "nomenclature"` | NomenclatureSelector | Référentiels GN |
 | `"type_widget": "taxonomy"` | TaxonSelector | Recherche taxonomique |
 | `"type_widget": "observers"` | ObserverField | Multi-sélection |
+| `"type_widget": "datalist"` + `"type_util": "user"` (`multiple: false`) | CurrentUserField | Auto-rempli avec l'utilisateur connecté (chrome partagé avec ObserverField) |
 | `"attribut_name": "id_dataset"` | DatasetSelector | Auto-détection |
 
 ## 🎯 Logique Conditionnelle

@@ -675,8 +675,17 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   /// Build sites list for site group popup
   Widget _buildSiteGroupSitesList(BuildContext context, int siteId) {
+    // Quand la popup est ouverte dans le contexte d'un module, filtrer les
+    // sites par ce module (issue #169). Fallback sans filtre si la carte
+    // est utilisée hors contexte module (moduleInfo null).
+    final moduleId = widget.moduleInfo?.module.id;
+    final sitesFuture = moduleId != null
+        ? ref
+            .read(getSitesBySiteGroupAndModuleUseCaseProvider)
+            .execute(siteId, moduleId)
+        : ref.read(getSitesBySiteGroupUseCaseProvider).execute(siteId);
     return FutureBuilder<List<BaseSite>>(
-      future: ref.read(getSitesBySiteGroupUseCaseProvider).execute(siteId),
+      future: sitesFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Padding(

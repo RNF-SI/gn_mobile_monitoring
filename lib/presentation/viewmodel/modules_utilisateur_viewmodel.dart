@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
+import 'package:gn_mobile_monitoring/core/navigation/app_navigator_key.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/download_complete_module_usecase.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/get_modules_usecase.dart';
@@ -78,13 +80,20 @@ class UserModulesViewModel
         );
       }).toList();
 
-      // Trier les modules : téléchargés en premier, puis à télécharger
+      // Trier les modules : téléchargés en premier, puis alphabétique sur
+      // moduleLabel (avec fallback moduleCode) — issue #163.
       moduleInfos.sort((a, b) {
         final aDownloaded =
             a.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
         final bDownloaded =
             b.downloadStatus == ModuleDownloadStatus.moduleDownloaded ? 0 : 1;
-        return aDownloaded.compareTo(bDownloaded);
+        final downloadCmp = aDownloaded.compareTo(bDownloaded);
+        if (downloadCmp != 0) return downloadCmp;
+        final aLabel = (a.module.moduleLabel ?? a.module.moduleCode ?? '')
+            .toLowerCase();
+        final bLabel = (b.module.moduleLabel ?? b.module.moduleCode ?? '')
+            .toLowerCase();
+        return aLabel.compareTo(bLabel);
       });
 
       state =
@@ -176,10 +185,79 @@ class UserModulesViewModel
         );
       }
     } on Exception catch (e) {
-      state = custom_async_state.State.error(e);
+      _handleDownloadFailure(context, moduleInfo, newModuleInfo, e);
     } catch (e) {
-      print(e);
-      state = custom_async_state.State.error(Exception(e));
+      _handleDownloadFailure(context, moduleInfo, newModuleInfo, e);
+    }
+  }
+
+  /// Remet le module en état "non téléchargé" (pour que l'utilisateur puisse
+  /// retenter) et affiche l'erreur dans un dialog copiable (#168).
+  /// La liste globale reste fonctionnelle — plus de State.error qui masquait
+  /// l'écran entier.
+  void _handleDownloadFailure(
+    BuildContext context,
+    ModuleInfo originalModuleInfo,
+    ModuleInfo downloadingModuleInfo,
+    Object error,
+  ) {
+    final revertedInfo = downloadingModuleInfo.copyWith(
+      downloadStatus: ModuleDownloadStatus.moduleNotDownloaded,
+      downloadProgress: 0.0,
+      currentStep: '',
+    );
+    if (state.data != null) {
+      state = custom_async_state.State.success(
+          state.data!.updateModuleInfo(revertedInfo));
+    }
+
+    final moduleLabel = originalModuleInfo.module.moduleLabel ??
+        originalModuleInfo.module.moduleCode ??
+        'ce module';
+    final message = error.toString();
+
+    // Le context passé est souvent démonté au moment où on arrive ici (le
+    // widget du bouton a été reconstruit par le setState précédent).
+    // On utilise donc le Navigator racine de l'app pour un context stable.
+    final rootContext = appRootNavigatorKey.currentContext;
+    final dialogContextParent =
+        (context.mounted) ? context : rootContext;
+
+    if (dialogContextParent != null) {
+      showDialog<void>(
+        context: dialogContextParent,
+        builder: (dialogContext) => AlertDialog(
+          title: Text('Échec du téléchargement de $moduleLabel'),
+          content: ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 400),
+            child: SingleChildScrollView(
+              child: SelectableText(
+                message,
+                style: const TextStyle(fontSize: 13),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () async {
+                await Clipboard.setData(ClipboardData(text: message));
+                if (dialogContext.mounted) {
+                  ScaffoldMessenger.of(dialogContext).showSnackBar(
+                    const SnackBar(
+                      content: Text('Erreur copiée dans le presse-papiers'),
+                    ),
+                  );
+                }
+              },
+              child: const Text('Copier'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Fermer'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
