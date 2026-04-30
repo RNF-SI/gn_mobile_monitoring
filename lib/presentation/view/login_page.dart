@@ -130,20 +130,35 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          // Overlay de couleur verte semi-transparent pour la lisibilité
+          // Overlay sombre pour rehausser le contraste du formulaire et du
+          // titre par-dessus la photo de fond (sans quoi labels et helpers
+          // orange clair se perdent sur les zones claires de l'image).
           Positioned.fill(
             child: Container(
-              color: AppColors.dark.withOpacity(0.2),
+              color: Colors.black.withOpacity(0.45),
             ),
           ),
-          // Contenu du formulaire
+          // Contenu du formulaire — centré verticalement dans la zone visible.
+          // On réserve `bottomReserved` en bas pour ne pas chevaucher le logo
+          // LIFE positionné en absolu, et on garde le scroll au cas où le
+          // contenu déborde (petits écrans / clavier ouvert).
           Positioned.fill(
             child: SafeArea(
-              child: SingleChildScrollView(
-                // Ajouter un padding vertical pour mieux positionner le formulaire
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: Consumer(builder: (context, ref, _) {
+              child: LayoutBuilder(builder: (context, constraints) {
+                const topPadding = 20.0;
+                const bottomReserved = 160.0; // logo LIFE + texte copyright
+                final centeredMinHeight =
+                    (constraints.maxHeight - topPadding - bottomReserved)
+                        .clamp(0.0, double.infinity);
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.only(
+                    top: topPadding,
+                    bottom: bottomReserved,
+                  ),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: centeredMinHeight),
+                    child: Consumer(builder: (context, ref, _) {
                   final auth = ref.watch(authenticationViewModelProvider);
 
                   Future<void> onPressedFunction() async {
@@ -172,11 +187,23 @@ class _LoginPageState extends State<LoginPage> {
                         mainAxisAlignment:
                             MainAxisAlignment.values[2], // Center the children
                         children: [
+                          // Titre par-dessus l'image, lisible grâce à l'overlay
+                          // sombre. On garde une ombre portée pour qu'il
+                          // reste contrasté même si la photo change un jour.
                           const Text.rich(
                             TextSpan(
                               text: 'Monitoring',
                               style: TextStyle(
-                                  color: AppColors.white, fontSize: 34),
+                                color: AppColors.white,
+                                fontSize: 34,
+                                shadows: [
+                                  Shadow(
+                                    color: Colors.black54,
+                                    blurRadius: 4,
+                                    offset: Offset(0, 2),
+                                  ),
+                                ],
+                              ),
                               children: [
                                 TextSpan(
                                   text: 'Mobile',
@@ -184,129 +211,153 @@ class _LoginPageState extends State<LoginPage> {
                                     fontWeight: FontWeight.bold,
                                     color: AppColors.primary,
                                     fontSize: 45,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.black54,
+                                        blurRadius: 4,
+                                        offset: Offset(0, 2),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                          const SizedBox(
-                              height: 20), // Space between title and form
+                          const SizedBox(height: 24),
+                          // Panneau opaque autour des champs : remet le
+                          // formulaire dans un fond blanc où les labels et
+                          // helpers orange du thème redeviennent lisibles
+                          // (avant : tout était transparent sur la photo).
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: TextFormField(
-                              key: const Key('login-identifiant-field'),
-                              controller: _identifiant,
-                              keyboardType: TextInputType.emailAddress,
-                              autovalidateMode: _hasSubmitted
-                                  ? AutovalidateMode.onUserInteraction
-                                  : AutovalidateMode.disabled,
-                              decoration: const InputDecoration(
-                                labelText: 'Identifiant',
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Card(
+                              elevation: 6,
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return "L'identifiant est nécessaire";
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(
-                              height: 16), // Space between form fields
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: TextFormField(
-                              key: const Key('login-password-field'),
-                              controller: _password,
-                              obscureText: true,
-                              autovalidateMode: _hasSubmitted
-                                  ? AutovalidateMode.onUserInteraction
-                                  : AutovalidateMode.disabled,
-                              decoration: const InputDecoration(
-                                labelText: 'Mot de Passe',
-                              ),
-                              validator: (value) {
-                                if (value!.isEmpty) {
-                                  return 'Le mot de passe est nécessaire';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          // URL de l'API (maintenant toujours visible)
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            child: TextFormField(
-                              controller: _apiUrl,
-                              autovalidateMode: _hasSubmitted
-                                  ? AutovalidateMode.onUserInteraction
-                                  : AutovalidateMode.disabled,
-                              decoration: InputDecoration(
-                                labelText: 'URL du serveur GeoNature',
-                                hintText: 'https://geonature.mondomaine.org',
-                                helperText: _showHttpsWarning
-                                    ? 'Avertissement : http:// peut être refusé par le serveur. Préférez https://.'
-                                    : 'https:// est ajouté automatiquement si aucun schéma n\'est saisi',
-                                helperMaxLines: 2,
-                                helperStyle: _showHttpsWarning
-                                    ? const TextStyle(
-                                        color: Colors.orange,
-                                        fontWeight: FontWeight.w600,
-                                      )
-                                    : null,
-                                suffixIcon: _isPinging
-                                    ? const Padding(
-                                        padding: EdgeInsets.all(12),
-                                        child: SizedBox(
-                                          width: 20,
-                                          height: 20,
-                                          child: CircularProgressIndicator(
-                                              strokeWidth: 2),
-                                        ),
-                                      )
-                                    : IconButton(
-                                        tooltip: 'Tester la connexion au serveur',
-                                        icon: Icon(
-                                          _pingReachable == null
-                                              ? Icons.network_check
-                                              : _pingReachable == true
-                                                  ? Icons.check_circle
-                                                  : Icons.error,
-                                          color: _pingReachable == null
-                                              ? null
-                                              : _pingReachable == true
-                                                  ? Colors.green
-                                                  : Colors.red,
-                                        ),
-                                        onPressed: _pingServer,
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextFormField(
+                                      key: const Key('login-identifiant-field'),
+                                      controller: _identifiant,
+                                      keyboardType: TextInputType.emailAddress,
+                                      autovalidateMode: _hasSubmitted
+                                          ? AutovalidateMode.onUserInteraction
+                                          : AutovalidateMode.disabled,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Identifiant',
                                       ),
+                                      validator: (value) {
+                                        if (value!.isEmpty) {
+                                          return "L'identifiant est nécessaire";
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      key: const Key('login-password-field'),
+                                      controller: _password,
+                                      obscureText: true,
+                                      autovalidateMode: _hasSubmitted
+                                          ? AutovalidateMode.onUserInteraction
+                                          : AutovalidateMode.disabled,
+                                      decoration: const InputDecoration(
+                                        labelText: 'Mot de Passe',
+                                      ),
+                                      validator: (value) {
+                                        if (value!.isEmpty) {
+                                          return 'Le mot de passe est nécessaire';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 16),
+                                    TextFormField(
+                                      controller: _apiUrl,
+                                      autovalidateMode: _hasSubmitted
+                                          ? AutovalidateMode.onUserInteraction
+                                          : AutovalidateMode.disabled,
+                                      decoration: InputDecoration(
+                                        labelText: 'URL du serveur GeoNature',
+                                        hintText: 'https://geonature.mondomaine.org',
+                                        helperText: _showHttpsWarning
+                                            ? 'Avertissement : http:// peut être refusé par le serveur. Préférez https://.'
+                                            : 'https:// est ajouté automatiquement si aucun schéma n\'est saisi',
+                                        helperMaxLines: 2,
+                                        helperStyle: _showHttpsWarning
+                                            ? const TextStyle(
+                                                color: Colors.orange,
+                                                fontWeight: FontWeight.w600,
+                                              )
+                                            : const TextStyle(
+                                                color: Colors.black54,
+                                              ),
+                                        suffixIcon: _isPinging
+                                            ? const Padding(
+                                                padding: EdgeInsets.all(12),
+                                                child: SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                      strokeWidth: 2),
+                                                ),
+                                              )
+                                            : IconButton(
+                                                tooltip:
+                                                    'Tester la connexion au serveur',
+                                                icon: Icon(
+                                                  _pingReachable == null
+                                                      ? Icons.network_check
+                                                      : _pingReachable == true
+                                                          ? Icons.check_circle
+                                                          : Icons.error,
+                                                  color: _pingReachable == null
+                                                      ? null
+                                                      : _pingReachable == true
+                                                          ? Colors.green
+                                                          : Colors.red,
+                                                ),
+                                                onPressed: _pingServer,
+                                              ),
+                                      ),
+                                      keyboardType: TextInputType.url,
+                                      validator: (value) {
+                                        if (value == null ||
+                                            value.trim().isEmpty) {
+                                          return 'L\'URL du serveur est nécessaire';
+                                        }
+                                        return null;
+                                      },
+                                    ),
+                                    const SizedBox(height: 24),
+                                    MaterialButton(
+                                      key: const Key('login-button'),
+                                      onPressed: onPressedFunction,
+                                      color: AppColors.primary,
+                                      textColor: Colors.white,
+                                      minWidth: double.infinity,
+                                      padding: const EdgeInsets.symmetric(
+                                          vertical: 15),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(25),
+                                      ),
+                                      child: Text(
+                                        type == Status.login
+                                            ? 'Se connecter'
+                                            : 'Sign up',
+                                        style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              keyboardType: TextInputType.url,
-                              validator: (value) {
-                                if (value == null || value.trim().isEmpty) {
-                                  return 'L\'URL du serveur est nécessaire';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 20), // Space before the button
-                          MaterialButton(
-                            key: const Key('login-button'),
-                            onPressed: onPressedFunction,
-                            color: AppColors.primary,
-                            textColor: Colors.white,
-                            minWidth: 200,
-                            padding: const EdgeInsets.symmetric(vertical: 15),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                            child: Text(
-                              type == Status.login ? 'Se connecter' : 'Sign up',
-                              style:
-                                  const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ),
                           const SizedBox(height: 20), // Space at the bottom
@@ -392,8 +443,10 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   );
-                }),
-              ),
+                    }),
+                  ),
+                );
+              }),
             ),
           ),
           // Logo LIFE et texte de copyright en bas
