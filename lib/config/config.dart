@@ -21,27 +21,43 @@ class Config {
   }
 
   /// Nettoie une URL saisie par l'utilisateur :
-  /// - trim + retrait du slash final
-  /// - retrait du suffixe /api si présent
-  /// - ajout du schéma https:// par défaut si aucun schéma n'est fourni
+  /// - trim + ajout du schéma https:// par défaut si aucun n'est fourni
+  /// - retrait de la query (`?...`) et du fragment (`#/login`, `#/home`, …)
+  ///   typiquement présents quand l'URL est copiée depuis la SPA GeoNature
+  /// - retrait du slash final et du suffixe /api
   static String normalizeUserInputUrl(String rawUrl) {
     String cleanUrl = rawUrl.trim();
+    if (cleanUrl.isEmpty) return cleanUrl;
 
-    if (cleanUrl.endsWith('/')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 1);
-    }
-
-    if (cleanUrl.endsWith('/api')) {
-      cleanUrl = cleanUrl.substring(0, cleanUrl.length - 4);
-    }
-
-    if (cleanUrl.isNotEmpty &&
-        !cleanUrl.startsWith('http://') &&
+    if (!cleanUrl.startsWith('http://') &&
         !cleanUrl.startsWith('https://')) {
       cleanUrl = 'https://$cleanUrl';
     }
 
-    return cleanUrl;
+    Uri parsed;
+    try {
+      parsed = Uri.parse(cleanUrl);
+    } catch (_) {
+      return cleanUrl;
+    }
+    if (!parsed.hasAuthority) return cleanUrl;
+
+    String path = parsed.path;
+    if (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
+    }
+    if (path.endsWith('/api')) {
+      path = path.substring(0, path.length - 4);
+    }
+
+    final cleaned = Uri(
+      scheme: parsed.scheme,
+      userInfo: parsed.userInfo.isEmpty ? null : parsed.userInfo,
+      host: parsed.host,
+      port: parsed.hasPort ? parsed.port : null,
+      path: path,
+    );
+    return cleaned.toString();
   }
 
   /// Indique si l'URL utilise le schéma HTTP non sécurisé contre un host

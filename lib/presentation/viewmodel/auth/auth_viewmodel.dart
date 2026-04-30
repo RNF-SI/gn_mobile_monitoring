@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/bad_credentials_exception.dart';
+import 'package:gn_mobile_monitoring/core/errors/login_error_formatter.dart';
 import 'package:gn_mobile_monitoring/core/widgets/copyable_error_dialog.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/domain/model/user.dart';
@@ -296,40 +297,28 @@ class AuthenticationViewModel extends StateNotifier<loadingState.State<User>> {
         ),
       );
     } on DioException catch (e) {
-      final Map<String, Object?> errorObj = {};
-      String errorText;
-      if (e.response != null) {
-        errorObj['statusCode'] = e.response!.statusCode;
-        errorObj['data'] = e.response!.data;
-        errorObj['headers'] = e.response!.headers;
-        errorObj['requestOptions'] = e.response!.requestOptions;
-        errorText =
-            "${e.error} : Le serveur a été atteint, mais ce dernier a renvoyé une exception";
-      } else {
-        errorObj['message'] = e.message;
-        errorObj['requestOptions'] = e.requestOptions;
-        errorText =
-            "${e.error}: La requète n'a pas pu être mise en place ou envoyée";
-      }
-
-      _updateLoginStatus(LoginStatusInfo.error(errorText));
+      state = loadingState.State.error(e);
+      final formatted = LoginErrorMessage.from(e);
+      _updateLoginStatus(LoginStatusInfo.error(formatted.message));
 
       if (!context.mounted) return;
       await showCopyableErrorDialog(
         context,
         title: 'Erreur de connexion',
-        message: errorText,
-        details: errorObj,
+        message: formatted.message,
+        details: formatted.details,
       );
     } on Exception catch (e) {
       state = loadingState.State.error(e);
-      _updateLoginStatus(LoginStatusInfo.error(e.toString()));
+      final formatted = LoginErrorMessage.from(e);
+      _updateLoginStatus(LoginStatusInfo.error(formatted.message));
 
       if (!context.mounted) return;
       await showCopyableErrorDialog(
         context,
         title: 'Erreur de connexion',
-        message: e.toString(),
+        message: formatted.message,
+        details: formatted.details,
       );
     }
   }
