@@ -37,7 +37,15 @@ void main() {
     await TestEnvironmentSetup.tearDown();
   });
 
-  group('Authentification avec serveur GeoNature de test', () {
+  group(
+    'Authentification avec serveur GeoNature de test',
+    skip:
+        'TestWidgetsFlutterBinding bloque les HTTP réels (status 400 forcé) → '
+        'ces tests ne peuvent pas valider auth contre un vrai serveur. '
+        'Pour de l\'auth E2E réelle, utiliser '
+        'integration_test/scenarios_real/real_auth_e2e_test.dart '
+        '(qui passe via IntegrationTestWidgetsFlutterBinding sur device).',
+    () {
     test('Connexion réussie avec credentials valides', () async {
       // Skip si pas de configuration
       if (config == null) {

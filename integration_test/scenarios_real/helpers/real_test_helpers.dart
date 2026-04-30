@@ -821,7 +821,15 @@ class RealTestHelpers {
   /// Tape sur le bouton form-save-button.
   /// Cache automatiquement le clavier au cas ou et ferme les dialogs eventuels
   /// qui apparaissent apres save (ex: "Creer une visite ?").
-  static Future<void> tapFormSave(WidgetTester tester) async {
+  ///
+  /// [closeTimeout] : delai max d'attente pour la fermeture du form. La valeur
+  /// par defaut (45s) couvre les saves classiques ; les payloads lourds
+  /// (e.g. observation avec beaucoup de nomenclatures) sur un serveur sature
+  /// peuvent necessiter plus.
+  static Future<void> tapFormSave(
+    WidgetTester tester, {
+    Duration closeTimeout = const Duration(seconds: 45),
+  }) async {
     await hideKeyboard(tester);
 
     final saveButton = find.byKey(const Key('form-save-button'));
@@ -840,8 +848,7 @@ class RealTestHelpers {
     // (succes du save) tout en dismissant les dialogs qui apparaissent
     // a timing variable ("Creer une visite ?", etc.).
     // Plus robuste qu'un pumpFor fixe suivi d'un dismiss one-shot.
-    await _waitForFormClosedOrDismiss(tester,
-        timeout: const Duration(seconds: 45));
+    await _waitForFormClosedOrDismiss(tester, timeout: closeTimeout);
   }
 
   /// Verifie qu'on n'est PLUS sur un formulaire (le bouton form-save-button
