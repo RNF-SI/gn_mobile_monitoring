@@ -2465,186 +2465,23 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     return null;
   }
 
+  /// Onglet Sites en ListView virtualisée. L'ancien `buildDataTable`
+  /// construisait les 1085 DataRow d'un coup → freeze ~300-500ms sur l'UI
+  /// thread, parfois jusqu'à l'ANR quand un second rebuild de la table
+  /// arrivait (stats de visites). `ListView.builder` ne construit que les
+  /// items visibles, l'ouverture est quasi-instantanée même à 5000+ sites.
   Widget _buildSitesTab() {
-    // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
-
-    // Obtenir la configuration des sites
     final siteConfig = module.complement?.configuration?.site;
+    final customConfig = module.complement?.configuration?.custom;
 
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Déterminer les colonnes à afficher pour les sites
-    List<String> standardColumns = [
-      'actions',
-      'base_site_name',
-      'base_site_code',
-      'base_site_description'
-    ];
-
-    // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
-    Map<String, dynamic>? firstItemData;
-
-    List<String> displayColumns = determineDataColumns(
-      standardColumns: standardColumns,
-      itemConfig: siteConfig,
-      firstItemData: firstItemData,
-      filterMetaColumns: true,
-    );
-
-    // Créer les colonnes du DataTable
-    List<DataColumn> columns = buildDataColumns(
-      columns: displayColumns,
-      itemConfig: siteConfig,
-      predefinedLabels: {
-        'actions': 'Action',
-        'base_site_name': 'Nom',
-        'base_site_code': 'Code',
-        'base_site_description': 'Description',
-        'altitude_min': 'Altitude min',
-        'altitude_max': 'Altitude max',
-        'last_visit': 'Dernier passage',
-        'nb_visits': 'Nb. passages',
-      },
-    );
-
-    // Générer le schéma pour le formatage des cellules
-    Map<String, dynamic> schema = {};
-    if (siteConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
-    }
-
-    // Construire les lignes du tableau
-    List<DataRow> rows = _displayedSites.map((site) {
-      return DataRow(
-        cells: displayColumns.map((column) {
-          // Colonne d'actions
-          if (column == 'actions') {
-            final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
-            return DataCell(
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.visibility, size: 20),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SiteDetailPage(
-                            site: site,
-                            moduleInfo: _updatedModule != null
-                                ? widget.moduleInfo
-                                    .copyWith(module: _updatedModule!)
-                                : widget.moduleInfo,
-                          ),
-                        ),
-                      );
-                      // L'utilisateur a pu créer/synchroniser une visite sur
-                      // ce site ; on rafraîchit le badge et les stats au
-                      // retour pour que "Dernier passage" / "Nb. passages"
-                      // reflètent la saisie immédiatement.
-                      if (mounted) _loadVisitDerivedData();
-                    },
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                  ),
-                  if (hasUnsyncedVisits)
-                    Tooltip(
-                      message: 'Saisies locales non téléversées',
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        margin: const EdgeInsets.only(left: 2),
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }
-
-          // Propriétés standard du site
-          dynamic value;
-          switch (column) {
-            case 'base_site_name':
-              value = site.baseSiteName;
-              break;
-            case 'base_site_code':
-              value = site.baseSiteCode;
-              break;
-            case 'base_site_description':
-              value = site.baseSiteDescription;
-              break;
-            case 'altitude_min':
-              value = site.altitudeMin;
-              break;
-            case 'altitude_max':
-              value = site.altitudeMax;
-              break;
-            case 'last_visit':
-              // Calculé localement depuis t_base_visits : prend en compte
-              // les saisies offline pas encore téléversées, contrairement
-              // au last_visit serveur. Formaté "dd/MM/yyyy" ici car la
-              // config `site` ne déclare généralement pas la colonne dans
-              // `generic`, donc formatDataCellValue n'a pas le type_widget
-              // `date` pour la formater elle-même.
-              final lastVisit =
-                  _visitStatsBySiteId[site.idBaseSite]?.lastVisit;
-              value = lastVisit != null
-                  ? '${lastVisit.day.toString().padLeft(2, '0')}/'
-                      '${lastVisit.month.toString().padLeft(2, '0')}/'
-                      '${lastVisit.year}'
-                  : null;
-              break;
-            case 'nb_visits':
-              value = _visitStatsBySiteId[site.idBaseSite]?.nbVisits ?? 0;
-              break;
-            default:
-              // Colonne inconnue ou non encore exploitée (ex. "visitors",
-              // "comments" côté server complement → issue dédiée).
-              value = null;
-          }
-
-          // Formater la valeur et créer la cellule
-          String displayValue = formatDataCellValue(
-            rawValue: value,
-            columnName: column,
-            schema: schema,
-          );
-
-          return buildFormattedDataCell(
-            value: displayValue,
-            enableTooltip: true,
-          );
-        }).toList(),
-      );
-    }).toList();
-
-    // Message vide personnalisé
-    Widget emptyMessage = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Text(
-        'Aucun site associé à ce module',
-        style: TextStyle(
-          fontSize: 16,
-          color: AppColors.hint,
-        ),
-      ),
-    );
-
-    // Bouton d'ajout de site si éditable
     Widget? addButton;
     final isEditable = _isSiteEditableOnField(siteConfig);
     if (isEditable && siteConfig != null) {
-      final customConfig = module.complement?.configuration?.custom;
       final currentModuleInfo = _updatedModule != null
           ? widget.moduleInfo.copyWith(module: _updatedModule!)
           : widget.moduleInfo;
@@ -2662,27 +2499,205 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               ),
             ),
           );
-          // Recharger les sites après retour du formulaire
-          if (mounted) {
-            loadCompleteModule();
-          }
+          if (mounted) loadCompleteModule();
         },
         icon: const Icon(Icons.add_circle),
         tooltip: 'Ajouter un ${siteConfig.label ?? 'site'}',
       );
     }
 
-    // Utiliser notre méthode factorisée buildDataTable
-    return buildDataTable(
-      columns: columns,
-      rows: rows,
-      showSearch: true,
-      searchHint: "Rechercher un site",
-      searchController: _searchController,
-      onSearchChanged: _handleSearch,
-      headerActions: addButton,
-      emptyMessage: emptyMessage,
-      isLoading: _isLoadingSites,
+    return Column(
+      children: [
+        // Recherche + bouton ajout
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _handleSearch,
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher un site',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              if (addButton != null) addButton,
+            ],
+          ),
+        ),
+        // Compteur de résultats — utile quand on filtre dans 1000+ sites
+        if (_allSites.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 12, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _searchQuery.isEmpty
+                    ? '${_displayedSites.length} site${_displayedSites.length > 1 ? 's' : ''}'
+                    : '${_displayedSites.length} / ${_allSites.length} site${_allSites.length > 1 ? 's' : ''}',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ),
+          ),
+        Expanded(
+          child: _displayedSites.isEmpty
+              ? Center(
+                  child: Text(
+                    _allSites.isEmpty
+                        ? 'Aucun site associé à ce module'
+                        : 'Aucun site ne correspond à la recherche',
+                    style: TextStyle(fontSize: 16, color: AppColors.hint),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _displayedSites.length,
+                  itemBuilder: (context, index) {
+                    final site = _displayedSites[index] as BaseSite;
+                    return _buildSiteCard(site);
+                  },
+                ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildSiteCard(BaseSite site) {
+    final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
+    final stats = _visitStatsBySiteId[site.idBaseSite];
+    final title =
+        site.baseSiteName ?? site.baseSiteCode ?? 'Site ${site.idBaseSite}';
+    final showCode =
+        site.baseSiteCode != null && site.baseSiteCode != site.baseSiteName;
+
+    final chips = <Widget>[];
+    final altitudeText =
+        _formatAltitudeRange(site.altitudeMin, site.altitudeMax);
+    if (altitudeText != null) {
+      chips.add(_buildSiteInfoChip(Icons.terrain, altitudeText));
+    }
+    final lastVisit = stats?.lastVisit;
+    if (lastVisit != null) {
+      chips.add(_buildSiteInfoChip(
+        Icons.event,
+        '${lastVisit.day.toString().padLeft(2, '0')}/'
+            '${lastVisit.month.toString().padLeft(2, '0')}/${lastVisit.year}',
+      ));
+    }
+    final nbVisits = stats?.nbVisits ?? 0;
+    if (nbVisits > 0) {
+      chips.add(_buildSiteInfoChip(
+        Icons.repeat,
+        '$nbVisits passage${nbVisits > 1 ? 's' : ''}',
+      ));
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SiteDetailPage(
+                site: site,
+                moduleInfo: _updatedModule != null
+                    ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                    : widget.moduleInfo,
+              ),
+            ),
+          );
+          // L'utilisateur a pu créer/synchroniser une visite — on
+          // rafraîchit les stats au retour pour que « Dernier passage » /
+          // « Nb. passages » reflètent la saisie immédiatement.
+          if (mounted) _loadVisitDerivedData();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                    if (showCode)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          site.baseSiteCode!,
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ),
+                    if (site.baseSiteDescription != null &&
+                        site.baseSiteDescription!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          site.baseSiteDescription!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    if (chips.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 4,
+                          children: chips,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (hasUnsyncedVisits)
+                Tooltip(
+                  message: 'Saisies locales non téléversées',
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiteInfoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: Colors.grey[600]),
+        const SizedBox(width: 3),
+        Text(text, style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+      ],
+    );
+  }
+
+  String? _formatAltitudeRange(int? min, int? max) {
+    if (min == null && max == null) return null;
+    if (min == null) return '≤ ${max}m';
+    if (max == null) return '≥ ${min}m';
+    if (min == max) return '${min}m';
+    return '$min–${max}m';
   }
 }
