@@ -688,17 +688,25 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   void _loadInitialSites() {
     setState(() {
       _isLoadingSites = true;
+    });
+    // Repousser la construction des DataRow d'une frame : pour les gros
+    // modules (1000+ sites) buildDataTable bloque ~300-500ms le thread UI,
+    // sans ce yield le spinner n'a pas le temps de peindre — l'utilisateur
+    // ne voit qu'un écran figé.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        // L'onglet Sites liste TOUS les sites du module (cohérent avec le
+        // comportement GeoNature web où l'onglet Sites affiche les 156 points
+        // du module plaquesreptiles, et pas seulement les sites hors groupe).
+        // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
+        // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
+        final module = _updatedModule ?? widget.moduleInfo.module;
+        _allSites = module.sites ?? [];
+        _filterSites();
 
-      // L'onglet Sites liste TOUS les sites du module (cohérent avec le
-      // comportement GeoNature web où l'onglet Sites affiche les 156 points
-      // du module plaquesreptiles, et pas seulement les sites hors groupe).
-      // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
-      // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
-      final module = _updatedModule ?? widget.moduleInfo.module;
-      _allSites = module.sites ?? [];
-      _filterSites();
-
-      _isLoadingSites = false;
+        _isLoadingSites = false;
+      });
     });
   }
 
@@ -840,7 +848,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           buildBreadcrumb(),
-          if (isMixedMode)
+          // Pendant `loadCompleteModule` (récup module + sites depuis la DB),
+          // _childrenTypes est vide → l'ancien build retombait sur
+          // buildBaseContent (juste les propriétés) sans feedback visuel : sur
+          // un gros module (1000+ sites) ça donnait l'impression d'un freeze.
+          if (_isInitialLoading)
+            const Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text(
+                      'Chargement du module…',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (isMixedMode)
             Expanded(
               child: Column(
                 children: [
@@ -871,7 +899,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             Expanded(child: buildBaseContent()),
         ],
       ),
-      floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
+      // Bouton carte : groupes si dispo (priorité), sinon sites pour les
+      // modules sans groupes (endpoint serveur en 403 ou simplement vide).
+      floatingActionButton: hasSiteGroups
+          ? _buildGroupsMapButton()
+          : (hasSite ? _buildSitesMapButton() : null),
     );
   }
 
@@ -1942,6 +1974,99 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       tooltip: 'Afficher la carte des groupes de sites',
       child: const Icon(Icons.map, color: Colors.white),
     );
+  }
+
+  /// FAB carte pour les modules qui n'ont que des sites (pas de groupes).
+  /// Réutilise [GeometriesMapWidget] tel quel — le flux GeoJSON string →
+  /// MapViewModel parse est celui qui marche pour les cartes de groupes.
+  Widget _buildSitesMapButton() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final ObjectConfig? siteConfig = module.complement?.configuration?.site;
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
+
+    final List<BaseSite> sitesToDisplay =
+        _allSites.whereType<BaseSite>().toList();
+
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Carte des ${siteConfig?.label ?? 'sites'}',
+                ),
+              ),
+              body: GeometriesMapWidget(
+                geojsonData: _convertSitesToGeoJSON(sitesToDisplay),
+                displayList:
+                    siteConfig?.displayList ?? siteConfig?.displayProperties,
+                siteConfig: siteConfig,
+                customConfig: customConfig,
+                moduleInfo: _updatedModule != null
+                    ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                    : widget.moduleInfo,
+                siteGroup: null,
+                isModuleSitesMap: true,
+              ),
+            ),
+          ),
+        );
+      },
+      tooltip: 'Afficher la carte des sites',
+      child: const Icon(Icons.map, color: Colors.white),
+    );
+  }
+
+  /// Convertit une liste de BaseSite en GeoJSON pour GeometriesMapWidget.
+  String? _convertSitesToGeoJSON(List<BaseSite> sites) {
+    if (sites.isEmpty) return null;
+
+    final List<Map<String, dynamic>> geoJsonFeatures = [];
+
+    for (final site in sites) {
+      if (site.geom == null || site.geom!.isEmpty) continue;
+
+      try {
+        final Map<String, dynamic> geometry = jsonDecode(site.geom!);
+
+        final feature = <String, dynamic>{
+          'id': site.idBaseSite,
+          'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
+          'description': site.baseSiteDescription ?? '',
+          'geom': geometry,
+        };
+
+        if (site.baseSiteCode != null) {
+          feature['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          feature['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          feature['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          feature['first_use_date'] = site.firstUseDate!.toString();
+        }
+        if (site.altitudeMin != null) {
+          feature['altitude_min'] = site.altitudeMin;
+        }
+        if (site.altitudeMax != null) {
+          feature['altitude_max'] = site.altitudeMax;
+        }
+
+        geoJsonFeatures.add(feature);
+      } catch (e) {
+        debugPrint(
+            'Erreur parsing geometry pour site ${site.idBaseSite}: $e');
+      }
+    }
+
+    if (geoJsonFeatures.isEmpty) return null;
+
+    return jsonEncode(geoJsonFeatures);
   }
 
   /// Convertit une liste de SiteGroup en format GeoJSON pour GeometriesMapWidget

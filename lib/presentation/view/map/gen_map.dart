@@ -32,6 +32,12 @@ class GeometriesMapWidget extends ConsumerStatefulWidget {
   final ModuleInfo? moduleInfo;
   final SiteGroup? siteGroup;
 
+  /// Indique que les markers représentent des sites directement attachés au
+  /// module (cas où le module n'a pas de groupes). Sans ce flag, un `siteGroup`
+  /// nul signifie « markers = groupes de sites » — branchement par défaut
+  /// utilisé pour le popup et la navigation « Voir les détails ».
+  final bool isModuleSitesMap;
+
   const GeometriesMapWidget({
     super.key,
     required this.geojsonData,
@@ -41,6 +47,7 @@ class GeometriesMapWidget extends ConsumerStatefulWidget {
     this.customConfig,
     this.moduleInfo,
     this.siteGroup,
+    this.isModuleSitesMap = false,
   });
 
   @override
@@ -52,6 +59,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   late final MapController mapController;
   List<Marker> userMarkers = [];
   bool _hasInitiallyFitBounds = false;
+
+  /// Vrai quand chaque marker correspond à un site (et non à un groupe) :
+  /// soit on est dans un groupe de sites (siteGroup non nul), soit le module
+  /// n'a pas de groupes du tout (isModuleSitesMap). Sans ce flag, un
+  /// `siteGroup == null` envoyait toujours « Voir les détails » vers la page
+  /// d'un groupe → erreur « Impossible de charger le groupe de sites ».
+  bool get _markersAreSites =>
+      widget.siteGroup != null || widget.isModuleSitesMap;
 
   @override
   void initState() {
@@ -608,7 +623,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       });
     }
 
-    if (displayProperties.isEmpty && widget.siteGroup != null) {
+    if (displayProperties.isEmpty && _markersAreSites) {
       displayProperties.add(
         const Padding(
           padding: EdgeInsets.all(8.0),
@@ -633,7 +648,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             children: [
               ...displayProperties,
               // Show sites count for site groups
-              if (widget.siteGroup == null && siteId != null)
+              if (!_markersAreSites && siteId != null)
                 _buildSiteGroupSitesList(context, siteId),
               // Action buttons
               if (siteId != null && widget.moduleInfo != null)
@@ -824,7 +839,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   Widget _buildAddButton(
       BuildContext context, Map<String, dynamic> properties, int siteId) {
-    if (widget.siteGroup == null) {
+    if (!_markersAreSites) {
       // Site group context - add site button
       if (widget.moduleInfo!.module.complement?.configuration?.site != null) {
         return SizedBox(
@@ -865,7 +880,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   Future<void> _navigateToDetails(
       BuildContext context, Map<String, dynamic> properties, int siteId) async {
-    if (widget.siteGroup == null) {
+    if (!_markersAreSites) {
       // Navigate to site group details
       final groupId = properties['id'] as int?;
       if (groupId != null) {
