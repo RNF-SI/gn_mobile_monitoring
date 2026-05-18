@@ -95,9 +95,13 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     final mapState = ref.watch(mapViewModelProvider(_viewModelParams));
     final viewModel = ref.read(mapViewModelProvider(_viewModelParams).notifier);
 
-    // Fit bounds when features are loaded and not yet fitted
+    // Fit bounds when features are loaded and not yet fitted. Le check
+    // `mounted` dans le callback évite les crashes natifs si l'utilisateur
+    // pop la page avant que la frame suivante n'exécute le fitCamera (le
+    // mapController a alors été disposé).
     if (!_hasInitiallyFitBounds && mapState.hasFeatures && !mapState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _fitBoundsToFeatures(viewModel);
         _hasInitiallyFitBounds = true;
       });
@@ -774,19 +778,9 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   }
 
   Widget _buildScrollableSitesList(List<BaseSite> sites) {
-    final scrollController = ScrollController();
-    return SizedBox(
-      height: 200,
-      child: Scrollbar(
-        controller: scrollController,
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          controller: scrollController,
-          child: Column(
-            children: sites.map((site) => _buildSiteListItem(site)).toList(),
-          ),
-        ),
-      ),
+    return _ScrollableSitesList(
+      sites: sites,
+      itemBuilder: _buildSiteListItem,
     );
   }
 
@@ -991,5 +985,54 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         ),
       );
     }
+  }
+}
+
+/// Liste scrollable utilisée dans le popup d'un groupe de sites. Extraite
+/// en widget Stateful pour pouvoir disposer son `ScrollController` ; sans
+/// ça, chaque ouverture de popup laissait fuir un controller en mémoire.
+class _ScrollableSitesList extends StatefulWidget {
+  final List<BaseSite> sites;
+  final Widget Function(BaseSite site) itemBuilder;
+
+  const _ScrollableSitesList({
+    required this.sites,
+    required this.itemBuilder,
+  });
+
+  @override
+  State<_ScrollableSitesList> createState() => _ScrollableSitesListState();
+}
+
+class _ScrollableSitesListState extends State<_ScrollableSitesList> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: widget.sites.map(widget.itemBuilder).toList(),
+          ),
+        ),
+      ),
+    );
   }
 }

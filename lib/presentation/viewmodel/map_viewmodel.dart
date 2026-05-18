@@ -46,9 +46,15 @@ class MapViewModelParams {
   int get hashCode => geoJsonData.hashCode;
 }
 
-/// Provider pour le MapViewModel
-final mapViewModelProvider =
-    StateNotifierProvider.family<MapViewModel, MapState, MapViewModelParams>(
+/// Provider pour le MapViewModel.
+///
+/// `.autoDispose` est critique : sans ça Riverpod garde l'instance en cache
+/// indéfiniment, et `_positionSubscription` (watchPosition GPS continu) ne
+/// se cancel jamais même après que l'utilisateur quitte la carte. Chaque
+/// ouverture accumulait une souscription supplémentaire — ANR garanti
+/// après quelques aller-retours liste modules ↔ carte.
+final mapViewModelProvider = StateNotifierProvider.autoDispose
+    .family<MapViewModel, MapState, MapViewModelParams>(
   (ref, params) {
     final loadMapFeaturesUseCase = ref.watch(loadMapFeaturesUseCaseProvider);
     final loadMapTileLayersUseCase = ref.watch(loadMapTileLayersUseCaseProvider);
