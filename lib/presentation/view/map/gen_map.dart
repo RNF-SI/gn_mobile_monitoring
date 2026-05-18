@@ -277,14 +277,25 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   /// Fit map bounds to all features
   void _fitBoundsToFeatures(MapViewModel viewModel) {
     final bounds = viewModel.computeGlobalBounds();
-    if (bounds != null) {
-      mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints([bounds.southWest, bounds.northEast]),
-          padding: const EdgeInsets.all(40),
-        ),
-      );
+    if (bounds == null) return;
+
+    // Bounds dégénérée (un seul point unique, ou plusieurs sites tous aux
+    // mêmes coordonnées) → fitCamera calcule un zoom infini et l'assertion
+    // `zoom.isFinite` d'flutter_map fait crasher l'app nativement
+    // (tombstoned). On centre simplement la caméra sur ce point à un zoom
+    // raisonnable.
+    if (bounds.southWest.latitude == bounds.northEast.latitude &&
+        bounds.southWest.longitude == bounds.northEast.longitude) {
+      mapController.move(bounds.southWest, 15);
+      return;
     }
+
+    mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints([bounds.southWest, bounds.northEast]),
+        padding: const EdgeInsets.all(40),
+      ),
+    );
   }
 
   /// Build site markers from point features
@@ -359,7 +370,15 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             width: 150,
             height: labelHeight,
             rotate: true,
-            child: _buildLabelContainer(labelText),
+            // Le label d'un groupe (polygone/polyline) n'avait pas de
+            // handler de tap — il bloquait visuellement la zone du polygone
+            // sans rien faire au clic. On l'aligne sur le comportement des
+            // markers points : tap → popup avec « Voir les détails ».
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _showFeaturePopup(context, centroid, feature),
+              child: _buildLabelContainer(labelText),
+            ),
           ),
         );
       }
