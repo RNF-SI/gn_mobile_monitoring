@@ -188,6 +188,13 @@ class MapViewModel extends StateNotifier<MapState> {
         );
       }
 
+      // L'utilisateur peut avoir pop la page pendant le `await execute()`
+      // initial. Sans ce guard, on s'abonne quand même au stream GPS et le
+      // listener orphelin n'est jamais cancel (dispose a déjà tourné). Avec
+      // .autoDispose ça arrive à chaque navigation rapide → fuite cumulative
+      // qui peut converger vers une saturation du receiver natif.
+      if (!_mounted) return;
+
       // Démarrer le tracking en continu
       _positionSubscription =
           _getUserLocationUseCase.watchPosition().listen((result) {

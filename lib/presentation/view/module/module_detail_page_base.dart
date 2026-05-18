@@ -1569,10 +1569,32 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             title: Row(
               children: [
                 Expanded(
-                  child: _buildGroupTitle(
-                    group,
-                    sitesGroupConfig,
-                    parsedGroupConfig,
+                  // Tap sur le titre → ouvre directement la page du groupe.
+                  // Sans ça, le titre ne servait qu'à déplier l'ExpansionTile
+                  // (peu utile pour les groupes sans sites où l'expansion ne
+                  // montre que les propriétés). L'icône œil reste accessible
+                  // dans `leading` pour la même action.
+                  child: InkWell(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteGroupDetailPage(
+                            siteGroup: group,
+                            moduleInfo: _updatedModule != null
+                                ? widget.moduleInfo
+                                    .copyWith(module: _updatedModule!)
+                                : widget.moduleInfo,
+                          ),
+                        ),
+                      );
+                      if (mounted) _loadVisitDerivedData();
+                    },
+                    child: _buildGroupTitle(
+                      group,
+                      sitesGroupConfig,
+                      parsedGroupConfig,
+                    ),
                   ),
                 ),
                 // Afficher la distance à droite
@@ -1948,7 +1970,21 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         _cachedGroups ?? _filteredSiteGroups.whereType<SiteGroup>().toList();
 
     return FloatingActionButton(
-      onPressed: () {
+      onPressed: () async {
+        // Pour les groupes sans geom propre, on dérive un centroïde depuis
+        // leurs sites (s'ils en ont) — sinon ils étaient invisibles sur la
+        // carte et donc inaccessibles. Loader dialog pendant les requêtes
+        // DB qui peuvent prendre quelques centaines de ms si beaucoup de
+        // groupes sont à augmenter.
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+        final augmented =
+            await _augmentGroupsWithFallbackCentroids(groupsToDisplay);
+        if (!mounted) return;
+        Navigator.of(context).pop();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1959,7 +1995,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ),
               ),
               body: GeometriesMapWidget(
-                geojsonData: _convertSiteGroupsToGeoJSON(groupsToDisplay),
+                geojsonData: _convertSiteGroupsToGeoJSON(augmented),
                 displayList: sitesGroupConfig?.displayList ??
                     sitesGroupConfig?.displayProperties,
                 siteConfig: null, // Pas de siteConfig pour les groupes
@@ -1974,6 +2010,92 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       tooltip: 'Afficher la carte des groupes de sites',
       child: const Icon(Icons.map, color: Colors.white),
     );
+  }
+
+  /// Pour chaque groupe sans `geom` propre, on essaie de calculer un
+  /// centroïde à partir des géométries de ses sites. Si on y arrive, on
+  /// renvoie un clone du groupe avec un geom Point synthétique → il devient
+  /// visible et cliquable sur la carte. Sinon (groupe sans sites positionnés
+  /// non plus) on garde le groupe tel quel — il sera filtré dans
+  /// `_convertSiteGroupsToGeoJSON`, donc absent de la carte mais toujours
+  /// accessible via l'onglet Groupes.
+  Future<List<SiteGroup>> _augmentGroupsWithFallbackCentroids(
+      List<SiteGroup> groups) async {
+    if (widget.ref == null) return groups;
+    final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+    final moduleId = (_updatedModule ?? widget.moduleInfo.module).id;
+
+    final result = <SiteGroup>[];
+    for (final group in groups) {
+      if (group.geom != null && group.geom!.isNotEmpty) {
+        result.add(group);
+        continue;
+      }
+      try {
+        final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+            group.idSitesGroup, moduleId);
+        final centroid = _centroidFromSites(sites);
+        if (centroid != null) {
+          // Synthèse d'un geom Point en GeoJSON (lon, lat).
+          final syntheticGeom = jsonEncode({
+            'type': 'Point',
+            'coordinates': [centroid.longitude, centroid.latitude],
+          });
+          result.add(group.copyWith(geom: syntheticGeom));
+        } else {
+          result.add(group);
+        }
+      } catch (e) {
+        debugPrint(
+            'Erreur calcul centroïde groupe ${group.idSitesGroup}: $e');
+        result.add(group);
+      }
+    }
+    return result;
+  }
+
+  /// Moyenne arithmétique des positions des sites — suffisant pour un point
+  /// indicatif. Parse les geoms Point/LineString/Polygon et prend le premier
+  /// point de chaque (centroïde géométrique exact pas nécessaire ici).
+  LatLng? _centroidFromSites(List<BaseSite> sites) {
+    double sumLat = 0;
+    double sumLng = 0;
+    int count = 0;
+    for (final site in sites) {
+      if (site.geom == null || site.geom!.isEmpty) continue;
+      try {
+        final geom = jsonDecode(site.geom!) as Map<String, dynamic>;
+        final coords = geom['coordinates'];
+        double? lat;
+        double? lng;
+        switch (geom['type']) {
+          case 'Point':
+            lng = (coords[0] as num).toDouble();
+            lat = (coords[1] as num).toDouble();
+            break;
+          case 'LineString':
+            final first = (coords as List).first;
+            lng = (first[0] as num).toDouble();
+            lat = (first[1] as num).toDouble();
+            break;
+          case 'Polygon':
+            final firstRing = (coords as List).first as List;
+            final first = firstRing.first;
+            lng = (first[0] as num).toDouble();
+            lat = (first[1] as num).toDouble();
+            break;
+        }
+        if (lat != null && lng != null) {
+          sumLat += lat;
+          sumLng += lng;
+          count++;
+        }
+      } catch (_) {
+        // geom invalide, on saute
+      }
+    }
+    if (count == 0) return null;
+    return LatLng(sumLat / count, sumLng / count);
   }
 
   /// FAB carte pour les modules qui n'ont que des sites (pas de groupes).
