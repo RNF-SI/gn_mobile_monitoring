@@ -688,17 +688,25 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
   void _loadInitialSites() {
     setState(() {
       _isLoadingSites = true;
+    });
+    // Repousser la construction des DataRow d'une frame : pour les gros
+    // modules (1000+ sites) buildDataTable bloque ~300-500ms le thread UI,
+    // sans ce yield le spinner n'a pas le temps de peindre — l'utilisateur
+    // ne voit qu'un écran figé.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() {
+        // L'onglet Sites liste TOUS les sites du module (cohérent avec le
+        // comportement GeoNature web où l'onglet Sites affiche les 156 points
+        // du module plaquesreptiles, et pas seulement les sites hors groupe).
+        // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
+        // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
+        final module = _updatedModule ?? widget.moduleInfo.module;
+        _allSites = module.sites ?? [];
+        _filterSites();
 
-      // L'onglet Sites liste TOUS les sites du module (cohérent avec le
-      // comportement GeoNature web où l'onglet Sites affiche les 156 points
-      // du module plaquesreptiles, et pas seulement les sites hors groupe).
-      // Les orphelins servent uniquement à forcer l'AJOUT de l'onglet quand
-      // la config serveur ne le déclare pas — voir _updateChildrenTypesFromConfig.
-      final module = _updatedModule ?? widget.moduleInfo.module;
-      _allSites = module.sites ?? [];
-      _filterSites();
-
-      _isLoadingSites = false;
+        _isLoadingSites = false;
+      });
     });
   }
 
@@ -840,7 +848,27 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           buildBreadcrumb(),
-          if (isMixedMode)
+          // Pendant `loadCompleteModule` (récup module + sites depuis la DB),
+          // _childrenTypes est vide → l'ancien build retombait sur
+          // buildBaseContent (juste les propriétés) sans feedback visuel : sur
+          // un gros module (1000+ sites) ça donnait l'impression d'un freeze.
+          if (_isInitialLoading)
+            const Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(height: 12),
+                    Text(
+                      'Chargement du module…',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else if (isMixedMode)
             Expanded(
               child: Column(
                 children: [
@@ -871,7 +899,11 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             Expanded(child: buildBaseContent()),
         ],
       ),
-      floatingActionButton: hasSiteGroups ? _buildGroupsMapButton() : null,
+      // Bouton carte : groupes si dispo (priorité), sinon sites pour les
+      // modules sans groupes (endpoint serveur en 403 ou simplement vide).
+      floatingActionButton: hasSiteGroups
+          ? _buildGroupsMapButton()
+          : (hasSite ? _buildSitesMapButton() : null),
     );
   }
 
@@ -1537,10 +1569,32 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
             title: Row(
               children: [
                 Expanded(
-                  child: _buildGroupTitle(
-                    group,
-                    sitesGroupConfig,
-                    parsedGroupConfig,
+                  // Tap sur le titre → ouvre directement la page du groupe.
+                  // Sans ça, le titre ne servait qu'à déplier l'ExpansionTile
+                  // (peu utile pour les groupes sans sites où l'expansion ne
+                  // montre que les propriétés). L'icône œil reste accessible
+                  // dans `leading` pour la même action.
+                  child: InkWell(
+                    onTap: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => SiteGroupDetailPage(
+                            siteGroup: group,
+                            moduleInfo: _updatedModule != null
+                                ? widget.moduleInfo
+                                    .copyWith(module: _updatedModule!)
+                                : widget.moduleInfo,
+                          ),
+                        ),
+                      );
+                      if (mounted) _loadVisitDerivedData();
+                    },
+                    child: _buildGroupTitle(
+                      group,
+                      sitesGroupConfig,
+                      parsedGroupConfig,
+                    ),
                   ),
                 ),
                 // Afficher la distance à droite
@@ -1916,7 +1970,21 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
         _cachedGroups ?? _filteredSiteGroups.whereType<SiteGroup>().toList();
 
     return FloatingActionButton(
-      onPressed: () {
+      onPressed: () async {
+        // Pour les groupes sans geom propre, on dérive un centroïde depuis
+        // leurs sites (s'ils en ont) — sinon ils étaient invisibles sur la
+        // carte et donc inaccessibles. Loader dialog pendant les requêtes
+        // DB qui peuvent prendre quelques centaines de ms si beaucoup de
+        // groupes sont à augmenter.
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (_) => const Center(child: CircularProgressIndicator()),
+        );
+        final augmented =
+            await _augmentGroupsWithFallbackCentroids(groupsToDisplay);
+        if (!mounted) return;
+        Navigator.of(context).pop();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -1927,7 +1995,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ),
               ),
               body: GeometriesMapWidget(
-                geojsonData: _convertSiteGroupsToGeoJSON(groupsToDisplay),
+                geojsonData: _convertSiteGroupsToGeoJSON(augmented),
                 displayList: sitesGroupConfig?.displayList ??
                     sitesGroupConfig?.displayProperties,
                 siteConfig: null, // Pas de siteConfig pour les groupes
@@ -1942,6 +2010,185 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       tooltip: 'Afficher la carte des groupes de sites',
       child: const Icon(Icons.map, color: Colors.white),
     );
+  }
+
+  /// Pour chaque groupe sans `geom` propre, on essaie de calculer un
+  /// centroïde à partir des géométries de ses sites. Si on y arrive, on
+  /// renvoie un clone du groupe avec un geom Point synthétique → il devient
+  /// visible et cliquable sur la carte. Sinon (groupe sans sites positionnés
+  /// non plus) on garde le groupe tel quel — il sera filtré dans
+  /// `_convertSiteGroupsToGeoJSON`, donc absent de la carte mais toujours
+  /// accessible via l'onglet Groupes.
+  Future<List<SiteGroup>> _augmentGroupsWithFallbackCentroids(
+      List<SiteGroup> groups) async {
+    if (widget.ref == null) return groups;
+    final sitesDatabase = widget.ref!.read(siteDatabaseProvider);
+    final moduleId = (_updatedModule ?? widget.moduleInfo.module).id;
+
+    final result = <SiteGroup>[];
+    for (final group in groups) {
+      if (group.geom != null && group.geom!.isNotEmpty) {
+        result.add(group);
+        continue;
+      }
+      try {
+        final sites = await sitesDatabase.getSitesBySiteGroupAndModule(
+            group.idSitesGroup, moduleId);
+        final centroid = _centroidFromSites(sites);
+        if (centroid != null) {
+          // Synthèse d'un geom Point en GeoJSON (lon, lat).
+          final syntheticGeom = jsonEncode({
+            'type': 'Point',
+            'coordinates': [centroid.longitude, centroid.latitude],
+          });
+          result.add(group.copyWith(geom: syntheticGeom));
+        } else {
+          result.add(group);
+        }
+      } catch (e) {
+        debugPrint(
+            'Erreur calcul centroïde groupe ${group.idSitesGroup}: $e');
+        result.add(group);
+      }
+    }
+    return result;
+  }
+
+  /// Moyenne arithmétique des positions des sites — suffisant pour un point
+  /// indicatif. Parse les geoms Point/LineString/Polygon et prend le premier
+  /// point de chaque (centroïde géométrique exact pas nécessaire ici).
+  LatLng? _centroidFromSites(List<BaseSite> sites) {
+    double sumLat = 0;
+    double sumLng = 0;
+    int count = 0;
+    for (final site in sites) {
+      if (site.geom == null || site.geom!.isEmpty) continue;
+      try {
+        final geom = jsonDecode(site.geom!) as Map<String, dynamic>;
+        final coords = geom['coordinates'];
+        double? lat;
+        double? lng;
+        switch (geom['type']) {
+          case 'Point':
+            lng = (coords[0] as num).toDouble();
+            lat = (coords[1] as num).toDouble();
+            break;
+          case 'LineString':
+            final first = (coords as List).first;
+            lng = (first[0] as num).toDouble();
+            lat = (first[1] as num).toDouble();
+            break;
+          case 'Polygon':
+            final firstRing = (coords as List).first as List;
+            final first = firstRing.first;
+            lng = (first[0] as num).toDouble();
+            lat = (first[1] as num).toDouble();
+            break;
+        }
+        if (lat != null && lng != null) {
+          sumLat += lat;
+          sumLng += lng;
+          count++;
+        }
+      } catch (_) {
+        // geom invalide, on saute
+      }
+    }
+    if (count == 0) return null;
+    return LatLng(sumLat / count, sumLng / count);
+  }
+
+  /// FAB carte pour les modules qui n'ont que des sites (pas de groupes).
+  /// Réutilise [GeometriesMapWidget] tel quel — le flux GeoJSON string →
+  /// MapViewModel parse est celui qui marche pour les cartes de groupes.
+  Widget _buildSitesMapButton() {
+    final module = _updatedModule ?? widget.moduleInfo.module;
+    final ObjectConfig? siteConfig = module.complement?.configuration?.site;
+    final CustomConfig? customConfig = module.complement?.configuration?.custom;
+
+    final List<BaseSite> sitesToDisplay =
+        _allSites.whereType<BaseSite>().toList();
+
+    return FloatingActionButton(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(
+                  'Carte des ${siteConfig?.label ?? 'sites'}',
+                ),
+              ),
+              body: GeometriesMapWidget(
+                geojsonData: _convertSitesToGeoJSON(sitesToDisplay),
+                displayList:
+                    siteConfig?.displayList ?? siteConfig?.displayProperties,
+                siteConfig: siteConfig,
+                customConfig: customConfig,
+                moduleInfo: _updatedModule != null
+                    ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                    : widget.moduleInfo,
+                siteGroup: null,
+                isModuleSitesMap: true,
+              ),
+            ),
+          ),
+        );
+      },
+      tooltip: 'Afficher la carte des sites',
+      child: const Icon(Icons.map, color: Colors.white),
+    );
+  }
+
+  /// Convertit une liste de BaseSite en GeoJSON pour GeometriesMapWidget.
+  String? _convertSitesToGeoJSON(List<BaseSite> sites) {
+    if (sites.isEmpty) return null;
+
+    final List<Map<String, dynamic>> geoJsonFeatures = [];
+
+    for (final site in sites) {
+      if (site.geom == null || site.geom!.isEmpty) continue;
+
+      try {
+        final Map<String, dynamic> geometry = jsonDecode(site.geom!);
+
+        final feature = <String, dynamic>{
+          'id': site.idBaseSite,
+          'name': site.baseSiteName ?? 'Site ${site.idBaseSite}',
+          'description': site.baseSiteDescription ?? '',
+          'geom': geometry,
+        };
+
+        if (site.baseSiteCode != null) {
+          feature['base_site_code'] = site.baseSiteCode;
+        }
+        if (site.baseSiteName != null) {
+          feature['base_site_name'] = site.baseSiteName;
+        }
+        if (site.baseSiteDescription != null) {
+          feature['base_site_description'] = site.baseSiteDescription;
+        }
+        if (site.firstUseDate != null) {
+          feature['first_use_date'] = site.firstUseDate!.toString();
+        }
+        if (site.altitudeMin != null) {
+          feature['altitude_min'] = site.altitudeMin;
+        }
+        if (site.altitudeMax != null) {
+          feature['altitude_max'] = site.altitudeMax;
+        }
+
+        geoJsonFeatures.add(feature);
+      } catch (e) {
+        debugPrint(
+            'Erreur parsing geometry pour site ${site.idBaseSite}: $e');
+      }
+    }
+
+    if (geoJsonFeatures.isEmpty) return null;
+
+    return jsonEncode(geoJsonFeatures);
   }
 
   /// Convertit une liste de SiteGroup en format GeoJSON pour GeometriesMapWidget
@@ -2340,186 +2587,23 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     return null;
   }
 
+  /// Onglet Sites en ListView virtualisée. L'ancien `buildDataTable`
+  /// construisait les 1085 DataRow d'un coup → freeze ~300-500ms sur l'UI
+  /// thread, parfois jusqu'à l'ANR quand un second rebuild de la table
+  /// arrivait (stats de visites). `ListView.builder` ne construit que les
+  /// items visibles, l'ouverture est quasi-instantanée même à 5000+ sites.
   Widget _buildSitesTab() {
-    // Utiliser le module mis à jour s'il est disponible
     final module = _updatedModule ?? widget.moduleInfo.module;
-
-    // Obtenir la configuration des sites
     final siteConfig = module.complement?.configuration?.site;
+    final customConfig = module.complement?.configuration?.custom;
 
     if (_isLoadingSites && _displayedSites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    // Déterminer les colonnes à afficher pour les sites
-    List<String> standardColumns = [
-      'actions',
-      'base_site_name',
-      'base_site_code',
-      'base_site_description'
-    ];
-
-    // BaseSite n'a pas de propriété 'data' directement, nous devons donc éviter d'y accéder
-    Map<String, dynamic>? firstItemData;
-
-    List<String> displayColumns = determineDataColumns(
-      standardColumns: standardColumns,
-      itemConfig: siteConfig,
-      firstItemData: firstItemData,
-      filterMetaColumns: true,
-    );
-
-    // Créer les colonnes du DataTable
-    List<DataColumn> columns = buildDataColumns(
-      columns: displayColumns,
-      itemConfig: siteConfig,
-      predefinedLabels: {
-        'actions': 'Action',
-        'base_site_name': 'Nom',
-        'base_site_code': 'Code',
-        'base_site_description': 'Description',
-        'altitude_min': 'Altitude min',
-        'altitude_max': 'Altitude max',
-        'last_visit': 'Dernier passage',
-        'nb_visits': 'Nb. passages',
-      },
-    );
-
-    // Générer le schéma pour le formatage des cellules
-    Map<String, dynamic> schema = {};
-    if (siteConfig != null) {
-      schema = FormConfigParser.generateUnifiedSchema(siteConfig, customConfig);
-    }
-
-    // Construire les lignes du tableau
-    List<DataRow> rows = _displayedSites.map((site) {
-      return DataRow(
-        cells: displayColumns.map((column) {
-          // Colonne d'actions
-          if (column == 'actions') {
-            final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
-            return DataCell(
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.visibility, size: 20),
-                    onPressed: () async {
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => SiteDetailPage(
-                            site: site,
-                            moduleInfo: _updatedModule != null
-                                ? widget.moduleInfo
-                                    .copyWith(module: _updatedModule!)
-                                : widget.moduleInfo,
-                          ),
-                        ),
-                      );
-                      // L'utilisateur a pu créer/synchroniser une visite sur
-                      // ce site ; on rafraîchit le badge et les stats au
-                      // retour pour que "Dernier passage" / "Nb. passages"
-                      // reflètent la saisie immédiatement.
-                      if (mounted) _loadVisitDerivedData();
-                    },
-                    constraints: const BoxConstraints(
-                      minWidth: 36,
-                      minHeight: 36,
-                    ),
-                  ),
-                  if (hasUnsyncedVisits)
-                    Tooltip(
-                      message: 'Saisies locales non téléversées',
-                      child: Container(
-                        width: 10,
-                        height: 10,
-                        margin: const EdgeInsets.only(left: 2),
-                        decoration: const BoxDecoration(
-                          color: Colors.orange,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            );
-          }
-
-          // Propriétés standard du site
-          dynamic value;
-          switch (column) {
-            case 'base_site_name':
-              value = site.baseSiteName;
-              break;
-            case 'base_site_code':
-              value = site.baseSiteCode;
-              break;
-            case 'base_site_description':
-              value = site.baseSiteDescription;
-              break;
-            case 'altitude_min':
-              value = site.altitudeMin;
-              break;
-            case 'altitude_max':
-              value = site.altitudeMax;
-              break;
-            case 'last_visit':
-              // Calculé localement depuis t_base_visits : prend en compte
-              // les saisies offline pas encore téléversées, contrairement
-              // au last_visit serveur. Formaté "dd/MM/yyyy" ici car la
-              // config `site` ne déclare généralement pas la colonne dans
-              // `generic`, donc formatDataCellValue n'a pas le type_widget
-              // `date` pour la formater elle-même.
-              final lastVisit =
-                  _visitStatsBySiteId[site.idBaseSite]?.lastVisit;
-              value = lastVisit != null
-                  ? '${lastVisit.day.toString().padLeft(2, '0')}/'
-                      '${lastVisit.month.toString().padLeft(2, '0')}/'
-                      '${lastVisit.year}'
-                  : null;
-              break;
-            case 'nb_visits':
-              value = _visitStatsBySiteId[site.idBaseSite]?.nbVisits ?? 0;
-              break;
-            default:
-              // Colonne inconnue ou non encore exploitée (ex. "visitors",
-              // "comments" côté server complement → issue dédiée).
-              value = null;
-          }
-
-          // Formater la valeur et créer la cellule
-          String displayValue = formatDataCellValue(
-            rawValue: value,
-            columnName: column,
-            schema: schema,
-          );
-
-          return buildFormattedDataCell(
-            value: displayValue,
-            enableTooltip: true,
-          );
-        }).toList(),
-      );
-    }).toList();
-
-    // Message vide personnalisé
-    Widget emptyMessage = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Text(
-        'Aucun site associé à ce module',
-        style: TextStyle(
-          fontSize: 16,
-          color: AppColors.hint,
-        ),
-      ),
-    );
-
-    // Bouton d'ajout de site si éditable
     Widget? addButton;
     final isEditable = _isSiteEditableOnField(siteConfig);
     if (isEditable && siteConfig != null) {
-      final customConfig = module.complement?.configuration?.custom;
       final currentModuleInfo = _updatedModule != null
           ? widget.moduleInfo.copyWith(module: _updatedModule!)
           : widget.moduleInfo;
@@ -2537,27 +2621,205 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
               ),
             ),
           );
-          // Recharger les sites après retour du formulaire
-          if (mounted) {
-            loadCompleteModule();
-          }
+          if (mounted) loadCompleteModule();
         },
         icon: const Icon(Icons.add_circle),
         tooltip: 'Ajouter un ${siteConfig.label ?? 'site'}',
       );
     }
 
-    // Utiliser notre méthode factorisée buildDataTable
-    return buildDataTable(
-      columns: columns,
-      rows: rows,
-      showSearch: true,
-      searchHint: "Rechercher un site",
-      searchController: _searchController,
-      onSearchChanged: _handleSearch,
-      headerActions: addButton,
-      emptyMessage: emptyMessage,
-      isLoading: _isLoadingSites,
+    return Column(
+      children: [
+        // Recherche + bouton ajout
+        Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+          child: Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: _handleSearch,
+                  decoration: const InputDecoration(
+                    hintText: 'Rechercher un site',
+                    prefixIcon: Icon(Icons.search),
+                    border: OutlineInputBorder(),
+                    isDense: true,
+                  ),
+                ),
+              ),
+              if (addButton != null) addButton,
+            ],
+          ),
+        ),
+        // Compteur de résultats — utile quand on filtre dans 1000+ sites
+        if (_allSites.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(left: 12, right: 12, bottom: 4),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                _searchQuery.isEmpty
+                    ? '${_displayedSites.length} site${_displayedSites.length > 1 ? 's' : ''}'
+                    : '${_displayedSites.length} / ${_allSites.length} site${_allSites.length > 1 ? 's' : ''}',
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ),
+          ),
+        Expanded(
+          child: _displayedSites.isEmpty
+              ? Center(
+                  child: Text(
+                    _allSites.isEmpty
+                        ? 'Aucun site associé à ce module'
+                        : 'Aucun site ne correspond à la recherche',
+                    style: TextStyle(fontSize: 16, color: AppColors.hint),
+                  ),
+                )
+              : ListView.builder(
+                  itemCount: _displayedSites.length,
+                  itemBuilder: (context, index) {
+                    final site = _displayedSites[index] as BaseSite;
+                    return _buildSiteCard(site);
+                  },
+                ),
+        ),
+      ],
     );
+  }
+
+  Widget _buildSiteCard(BaseSite site) {
+    final hasUnsyncedVisits = _unsyncedSiteIds.contains(site.idBaseSite);
+    final stats = _visitStatsBySiteId[site.idBaseSite];
+    final title =
+        site.baseSiteName ?? site.baseSiteCode ?? 'Site ${site.idBaseSite}';
+    final showCode =
+        site.baseSiteCode != null && site.baseSiteCode != site.baseSiteName;
+
+    final chips = <Widget>[];
+    final altitudeText =
+        _formatAltitudeRange(site.altitudeMin, site.altitudeMax);
+    if (altitudeText != null) {
+      chips.add(_buildSiteInfoChip(Icons.terrain, altitudeText));
+    }
+    final lastVisit = stats?.lastVisit;
+    if (lastVisit != null) {
+      chips.add(_buildSiteInfoChip(
+        Icons.event,
+        '${lastVisit.day.toString().padLeft(2, '0')}/'
+            '${lastVisit.month.toString().padLeft(2, '0')}/${lastVisit.year}',
+      ));
+    }
+    final nbVisits = stats?.nbVisits ?? 0;
+    if (nbVisits > 0) {
+      chips.add(_buildSiteInfoChip(
+        Icons.repeat,
+        '$nbVisits passage${nbVisits > 1 ? 's' : ''}',
+      ));
+    }
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      child: InkWell(
+        onTap: () async {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SiteDetailPage(
+                site: site,
+                moduleInfo: _updatedModule != null
+                    ? widget.moduleInfo.copyWith(module: _updatedModule!)
+                    : widget.moduleInfo,
+              ),
+            ),
+          );
+          // L'utilisateur a pu créer/synchroniser une visite — on
+          // rafraîchit les stats au retour pour que « Dernier passage » /
+          // « Nb. passages » reflètent la saisie immédiatement.
+          if (mounted) _loadVisitDerivedData();
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w600, fontSize: 15),
+                    ),
+                    if (showCode)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Text(
+                          site.baseSiteCode!,
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey[600]),
+                        ),
+                      ),
+                    if (site.baseSiteDescription != null &&
+                        site.baseSiteDescription!.trim().isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          site.baseSiteDescription!,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                    if (chips.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Wrap(
+                          spacing: 10,
+                          runSpacing: 4,
+                          children: chips,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              if (hasUnsyncedVisits)
+                Tooltip(
+                  message: 'Saisies locales non téléversées',
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    margin: const EdgeInsets.symmetric(horizontal: 6),
+                    decoration: const BoxDecoration(
+                      color: Colors.orange,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+              const Icon(Icons.chevron_right, color: Colors.grey),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSiteInfoChip(IconData icon, String text) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 13, color: Colors.grey[600]),
+        const SizedBox(width: 3),
+        Text(text, style: TextStyle(fontSize: 11, color: Colors.grey[700])),
+      ],
+    );
+  }
+
+  String? _formatAltitudeRange(int? min, int? max) {
+    if (min == null && max == null) return null;
+    if (min == null) return '≤ ${max}m';
+    if (max == null) return '≥ ${min}m';
+    if (min == max) return '${min}m';
+    return '$min–${max}m';
   }
 }

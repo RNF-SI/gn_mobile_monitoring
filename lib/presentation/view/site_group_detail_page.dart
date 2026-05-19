@@ -854,7 +854,15 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      // Pas de FAB carte si le groupe ne contient aucun site : ouvrir une
+      // carte vide centrée par défaut (Paris ou GPS) sans aucun marker est
+      // confusant. Le FAB réapparaîtra automatiquement dès qu'un site est
+      // ajouté au groupe. Pendant le chargement, on cache aussi par défaut.
+      floatingActionButton: sitesState.maybeWhen(
+            data: (sites) => sites.isNotEmpty,
+            orElse: () => false,
+          )
+          ? FloatingActionButton(
         onPressed: () {
           Navigator.push(
             context,
@@ -940,7 +948,8 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
           );
         },
         child: const Icon(Icons.map),
-      ),
+      )
+          : null,
     );
   }
 

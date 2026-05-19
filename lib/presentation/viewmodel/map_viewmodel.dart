@@ -46,9 +46,15 @@ class MapViewModelParams {
   int get hashCode => geoJsonData.hashCode;
 }
 
-/// Provider pour le MapViewModel
-final mapViewModelProvider =
-    StateNotifierProvider.family<MapViewModel, MapState, MapViewModelParams>(
+/// Provider pour le MapViewModel.
+///
+/// `.autoDispose` est critique : sans ça Riverpod garde l'instance en cache
+/// indéfiniment, et `_positionSubscription` (watchPosition GPS continu) ne
+/// se cancel jamais même après que l'utilisateur quitte la carte. Chaque
+/// ouverture accumulait une souscription supplémentaire — ANR garanti
+/// après quelques aller-retours liste modules ↔ carte.
+final mapViewModelProvider = StateNotifierProvider.autoDispose
+    .family<MapViewModel, MapState, MapViewModelParams>(
   (ref, params) {
     final loadMapFeaturesUseCase = ref.watch(loadMapFeaturesUseCaseProvider);
     final loadMapTileLayersUseCase = ref.watch(loadMapTileLayersUseCaseProvider);
@@ -181,6 +187,13 @@ class MapViewModel extends StateNotifier<MapState> {
           userAccuracy: locationResult.accuracy,
         );
       }
+
+      // L'utilisateur peut avoir pop la page pendant le `await execute()`
+      // initial. Sans ce guard, on s'abonne quand même au stream GPS et le
+      // listener orphelin n'est jamais cancel (dispose a déjà tourné). Avec
+      // .autoDispose ça arrive à chaque navigation rapide → fuite cumulative
+      // qui peut converger vers une saturation du receiver natif.
+      if (!_mounted) return;
 
       // Démarrer le tracking en continu
       _positionSubscription =

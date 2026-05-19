@@ -32,6 +32,12 @@ class GeometriesMapWidget extends ConsumerStatefulWidget {
   final ModuleInfo? moduleInfo;
   final SiteGroup? siteGroup;
 
+  /// Indique que les markers représentent des sites directement attachés au
+  /// module (cas où le module n'a pas de groupes). Sans ce flag, un `siteGroup`
+  /// nul signifie « markers = groupes de sites » — branchement par défaut
+  /// utilisé pour le popup et la navigation « Voir les détails ».
+  final bool isModuleSitesMap;
+
   const GeometriesMapWidget({
     super.key,
     required this.geojsonData,
@@ -41,6 +47,7 @@ class GeometriesMapWidget extends ConsumerStatefulWidget {
     this.customConfig,
     this.moduleInfo,
     this.siteGroup,
+    this.isModuleSitesMap = false,
   });
 
   @override
@@ -52,6 +59,14 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   late final MapController mapController;
   List<Marker> userMarkers = [];
   bool _hasInitiallyFitBounds = false;
+
+  /// Vrai quand chaque marker correspond à un site (et non à un groupe) :
+  /// soit on est dans un groupe de sites (siteGroup non nul), soit le module
+  /// n'a pas de groupes du tout (isModuleSitesMap). Sans ce flag, un
+  /// `siteGroup == null` envoyait toujours « Voir les détails » vers la page
+  /// d'un groupe → erreur « Impossible de charger le groupe de sites ».
+  bool get _markersAreSites =>
+      widget.siteGroup != null || widget.isModuleSitesMap;
 
   @override
   void initState() {
@@ -80,9 +95,13 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
     final mapState = ref.watch(mapViewModelProvider(_viewModelParams));
     final viewModel = ref.read(mapViewModelProvider(_viewModelParams).notifier);
 
-    // Fit bounds when features are loaded and not yet fitted
+    // Fit bounds when features are loaded and not yet fitted. Le check
+    // `mounted` dans le callback évite les crashes natifs si l'utilisateur
+    // pop la page avant que la frame suivante n'exécute le fitCamera (le
+    // mapController a alors été disposé).
     if (!_hasInitiallyFitBounds && mapState.hasFeatures && !mapState.isLoading) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         _fitBoundsToFeatures(viewModel);
         _hasInitiallyFitBounds = true;
       });
@@ -258,14 +277,25 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   /// Fit map bounds to all features
   void _fitBoundsToFeatures(MapViewModel viewModel) {
     final bounds = viewModel.computeGlobalBounds();
-    if (bounds != null) {
-      mapController.fitCamera(
-        CameraFit.bounds(
-          bounds: LatLngBounds.fromPoints([bounds.southWest, bounds.northEast]),
-          padding: const EdgeInsets.all(40),
-        ),
-      );
+    if (bounds == null) return;
+
+    // Bounds dégénérée (un seul point unique, ou plusieurs sites tous aux
+    // mêmes coordonnées) → fitCamera calcule un zoom infini et l'assertion
+    // `zoom.isFinite` d'flutter_map fait crasher l'app nativement
+    // (tombstoned). On centre simplement la caméra sur ce point à un zoom
+    // raisonnable.
+    if (bounds.southWest.latitude == bounds.northEast.latitude &&
+        bounds.southWest.longitude == bounds.northEast.longitude) {
+      mapController.move(bounds.southWest, 15);
+      return;
     }
+
+    mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: LatLngBounds.fromPoints([bounds.southWest, bounds.northEast]),
+        padding: const EdgeInsets.all(40),
+      ),
+    );
   }
 
   /// Build site markers from point features
@@ -340,7 +370,15 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             width: 150,
             height: labelHeight,
             rotate: true,
-            child: _buildLabelContainer(labelText),
+            // Le label d'un groupe (polygone/polyline) n'avait pas de
+            // handler de tap — il bloquait visuellement la zone du polygone
+            // sans rien faire au clic. On l'aligne sur le comportement des
+            // markers points : tap → popup avec « Voir les détails ».
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => _showFeaturePopup(context, centroid, feature),
+              child: _buildLabelContainer(labelText),
+            ),
           ),
         );
       }
@@ -608,7 +646,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
       });
     }
 
-    if (displayProperties.isEmpty && widget.siteGroup != null) {
+    if (displayProperties.isEmpty && _markersAreSites) {
       displayProperties.add(
         const Padding(
           padding: EdgeInsets.all(8.0),
@@ -633,7 +671,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
             children: [
               ...displayProperties,
               // Show sites count for site groups
-              if (widget.siteGroup == null && siteId != null)
+              if (!_markersAreSites && siteId != null)
                 _buildSiteGroupSitesList(context, siteId),
               // Action buttons
               if (siteId != null && widget.moduleInfo != null)
@@ -759,19 +797,9 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
   }
 
   Widget _buildScrollableSitesList(List<BaseSite> sites) {
-    final scrollController = ScrollController();
-    return SizedBox(
-      height: 200,
-      child: Scrollbar(
-        controller: scrollController,
-        thumbVisibility: true,
-        child: SingleChildScrollView(
-          controller: scrollController,
-          child: Column(
-            children: sites.map((site) => _buildSiteListItem(site)).toList(),
-          ),
-        ),
-      ),
+    return _ScrollableSitesList(
+      sites: sites,
+      itemBuilder: _buildSiteListItem,
     );
   }
 
@@ -824,7 +852,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   Widget _buildAddButton(
       BuildContext context, Map<String, dynamic> properties, int siteId) {
-    if (widget.siteGroup == null) {
+    if (!_markersAreSites) {
       // Site group context - add site button
       if (widget.moduleInfo!.module.complement?.configuration?.site != null) {
         return SizedBox(
@@ -865,7 +893,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
 
   Future<void> _navigateToDetails(
       BuildContext context, Map<String, dynamic> properties, int siteId) async {
-    if (widget.siteGroup == null) {
+    if (!_markersAreSites) {
       // Navigate to site group details
       final groupId = properties['id'] as int?;
       if (groupId != null) {
@@ -976,5 +1004,54 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
         ),
       );
     }
+  }
+}
+
+/// Liste scrollable utilisée dans le popup d'un groupe de sites. Extraite
+/// en widget Stateful pour pouvoir disposer son `ScrollController` ; sans
+/// ça, chaque ouverture de popup laissait fuir un controller en mémoire.
+class _ScrollableSitesList extends StatefulWidget {
+  final List<BaseSite> sites;
+  final Widget Function(BaseSite site) itemBuilder;
+
+  const _ScrollableSitesList({
+    required this.sites,
+    required this.itemBuilder,
+  });
+
+  @override
+  State<_ScrollableSitesList> createState() => _ScrollableSitesListState();
+}
+
+class _ScrollableSitesListState extends State<_ScrollableSitesList> {
+  late final ScrollController _scrollController;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        child: SingleChildScrollView(
+          controller: _scrollController,
+          child: Column(
+            children: widget.sites.map(widget.itemBuilder).toList(),
+          ),
+        ),
+      ),
+    );
   }
 }
