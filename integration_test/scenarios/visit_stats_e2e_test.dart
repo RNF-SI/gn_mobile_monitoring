@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/db/database.dart';
 import 'package:integration_test/integration_test.dart';
@@ -30,7 +31,7 @@ void main() {
     });
 
     testWidgets(
-        'le tableau Sites affiche Dernier passage et Nb. passages par site, '
+        'la liste Sites affiche Dernier passage et Nb. passages par site, '
         'inclut les visites non téléversées', (tester) async {
       // Config module avec last_visit / nb_visits dans display_list
       await seeder.seedAll(siteDisplayList: [
@@ -128,27 +129,26 @@ void main() {
       moduleRobot.expectSite('Site de test Alpha');
       moduleRobot.expectSite('Site de test Beta');
 
-      // Headers des colonnes : un libellé venant de `predefinedLabels` est
-      // déjà rédigé proprement (cf. buildDataColumns dans detail_page.dart
-      // qui n'appelle pas `formatLabel` quand `labelFromConfig` est vrai),
-      // donc on attend la capitalisation française naturelle (Dernier
-      // passage / Nb. passages, pas le Title-Case anglais).
-      expect(find.text('Dernier passage'), findsOneWidget);
-      expect(find.text('Nb. passages'), findsOneWidget);
+      // Depuis le refactor de l'onglet Sites en ListView.builder, il n'y a
+      // plus de DataTable avec des entêtes de colonnes — les infos visites
+      // sont rendues sous forme de chips dans chaque Card. On vérifie donc
+      // le contenu des chips, pas des cellules.
 
-      // Alpha : 2 visites, dernière 20/03/2026. Beta : 1 visite, 10/02/2026.
+      // Dates de dernière visite (format dd/MM/yyyy identique à l'ancien rendu)
       expect(find.text('20/03/2026'), findsOneWidget,
           reason:
               'Dernière visite de Alpha (inclut la visite non téléversée)');
       expect(find.text('10/02/2026'), findsOneWidget,
           reason: 'Dernière visite de Beta');
-      expect(find.text('2'), findsOneWidget,
+      // Nb. passages — désormais affiché avec pluriel ("N passages" / "1 passage")
+      // dans la chip Icons.repeat de la Card.
+      expect(find.text('2 passages'), findsOneWidget,
           reason: 'Nb visites pour Alpha');
-      expect(find.text('1'), findsOneWidget,
+      expect(find.text('1 passage'), findsOneWidget,
           reason: 'Nb visites pour Beta');
     });
 
-    testWidgets('un site sans visite affiche 0 en Nb. passages',
+    testWidgets('un site sans visite ne montre aucune puce Nb. passages',
         (tester) async {
       await seeder.seedAll(siteDisplayList: [
         'base_site_name',
@@ -185,11 +185,18 @@ void main() {
         const Duration(seconds: 15),
       );
 
-      // Deux sites seedés, tous deux sans visite → chacun doit afficher '0'
-      // dans la cellule Nb. passages.
-      expect(find.text('0'), findsNWidgets(2),
+      // Depuis le refactor en ListView.builder, la Card de chaque site
+      // masque la chip nb_passages si la valeur est 0 (UX mobile : on
+      // évite la pollution visuelle). On vérifie donc que :
+      // 1. les 2 sites sont bien rendus
+      // 2. aucune chip Icons.repeat (compteur visites) n'est affichée
+      //    → l'absence implique 0
+      final moduleRobot = ModuleDetailRobot(tester);
+      moduleRobot.expectSite('Site de test Alpha');
+      moduleRobot.expectSite('Site de test Beta');
+      expect(find.byIcon(Icons.repeat), findsNothing,
           reason:
-              'Chaque site sans visite doit rendre 0 en Nb. passages');
+              'Aucun site n\'a de visite, donc pas de puce nb passages');
     });
   });
 }
