@@ -2,7 +2,7 @@
 
 Ce document liste les versions de l'app mobile publiées officiellement, avec les informations nécessaires au déploiement côté serveur GeoNature.
 
-> 💡 **Tu cherches juste la valeur à saisir dans le champ « Code de version » de l'admin GeoNature ?** Elle est publiée pour chaque release dans la section [Versions](#versions) ci-dessous (colonne **Code de version**). Pour la dernière release `v1.1.0`, c'est `2`.
+> 💡 **Tu cherches juste la valeur à saisir dans le champ « Code de version » de l'admin GeoNature ?** Elle est publiée pour chaque release dans la section [Versions](#versions) ci-dessous (colonne **Code de version**). Pour la dernière release `v1.1.1`, c'est `3`.
 
 ## Comment utiliser ce document
 
@@ -15,6 +15,18 @@ Chaque entrée décrit une release :
 - **Module `gn_module_monitoring`** : version minimale du module serveur. Vérifiée automatiquement par l'app avant chaque téléchargement de module.
 
 ## Versions
+
+### v1.1.1
+
+- **Date** : 2026-05-19
+- **Code de version** : `3`
+- **GeoNature core** : 2.17.x
+- **Module `gn_module_monitoring`** : ≥ 1.2.6
+- **Tag Git** : [`v1.1.1-geonature-2.17`](https://github.com/RNF-SI/gn_mobile_monitoring/releases/tag/v1.1.1-geonature-2.17)
+- **APK** : `monitoring-v1.1.1-geonature-2.17.apk`
+- **Branche de support** : `support/geonature-2.17`
+
+Release de correctifs sur la ligne GeoNature 2.17.x. Ajout de la **carte des sites pour les modules sans groupes de sites**, virtualisation de l'onglet Sites (`ListView.builder`) pour les performances, et plusieurs correctifs carte/GPS (crash sur bounds dégénérés, `autoDispose` du MapViewModel et fuite GPS, titres de groupes cliquables). Voir les [notes de release complètes](https://github.com/RNF-SI/gn_mobile_monitoring/releases/tag/v1.1.1-geonature-2.17).
 
 ### v1.1.0
 

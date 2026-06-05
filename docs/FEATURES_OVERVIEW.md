@@ -4,9 +4,21 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 
 > 💡 Pour la documentation technique détaillée des expressions JavaScript, voir [JAVASCRIPT_EXPRESSIONS.md](JAVASCRIPT_EXPRESSIONS.md)
 
-## 🆕 Dernières Améliorations (Avril 2026 — `v1.0.0`)
+## 🆕 Dernières Améliorations (Mai 2026 — `v1.1.1`)
 
-### Saisie et visualisation de géométrie de site
+### Release `v1.1.1` (2026-05-19)
+- ✅ Carte des sites pour les modules **sans groupes de sites** (+ UX de chargement)
+- ✅ Onglet Sites virtualisé (`ListView.builder`) — meilleures performances sur les gros modules
+- ✅ Correctifs carte : crash sur bounds dégénérés, `autoDispose` du MapViewModel, fuite GPS
+- ✅ Titres de groupes cliquables, labels et FAB sur la vue groupes
+
+### Release `v1.1.0` (2026-04-30)
+- ✅ Renommage de l'app en **Monitoring** avec nouveau logo
+- ✅ Badges orange pour visualiser les saisies non synchronisées
+- ✅ Désinstallation de modules depuis le menu détail
+- ✅ Refonte des appels d'API de synchronisation (endpoints `/refacto/` du module serveur)
+
+### Saisie et visualisation de géométrie de site (`v1.0.0`)
 L'app gère désormais la création et l'édition de géométries de site directement depuis le mobile — fini le besoin de passer par l'interface web pour tracer une aire.
 
 - ✅ Support `Point`, `LineString`, `Polygon` (et les variantes `Multi*` en lecture)
@@ -24,7 +36,7 @@ L'app gère désormais la création et l'édition de géométries de site direct
 
 ### Infrastructure de tests E2E
 - ✅ **12 scénarios E2E réels** contre un GeoNature local (auth, module, sites, groupes, visites, observations, sync download, sync upload)
-- ✅ **33 scénarios E2E mock** avec bases in-memory et interceptor Dio, lancés sur Pixel 6a
+- ✅ **35 scénarios E2E mock** avec bases in-memory et interceptor Dio, lancés sur Pixel 6a
 - ✅ Helpers communs pour dismiss de dialogs bloquants et attente de fin de sync post-login
 
 ### Support des Expressions `required` (antérieur, rappel)
@@ -390,7 +402,7 @@ Seuls les modules validés en conditions de terrain sont listés ici. Les autres
 - **Framework** : Flutter 3.38.4 (Dart 3.10.3)
 - **Architecture** : Clean Architecture (Domain/Data/Presentation)
 - **State Management** : Riverpod
-- **Base de données locale** : Drift (SQLite, 28 migrations)
+- **Base de données locale** : Drift (SQLite, 29 migrations)
 - **Carte** : `flutter_map` + tuiles OpenStreetMap
 - **Localisation** : `geolocator` 14.x
 - **HTTP** : Dio 5.x
@@ -487,11 +499,24 @@ Pour mettre à jour le tableau après avoir testé un module :
 
 ---
 
-**Dernière mise à jour** : avril 2026 (release `v1.0.0`)
+**Dernière mise à jour** : mai 2026 (release `v1.1.1`)
 **Version de l'application** : Flutter 3.38.4 / Dart 3.10.3
 **Architecture** : Clean Architecture avec Riverpod
 
 ## 📋 Historique des Changements
+
+### Release `v1.1.1` — mai 2026
+- ✅ Carte des sites pour les modules sans groupes de sites (+ UX de chargement)
+- ✅ Onglet Sites virtualisé via `ListView.builder` (performances)
+- ✅ Correctifs carte : crash bounds dégénérés, `autoDispose` du MapViewModel, fuite GPS
+- ✅ Titres de groupes cliquables, labels et FAB sur la vue groupes
+
+### Release `v1.1.0` — avril 2026
+- ✅ Renommage de l'app en **Monitoring** avec nouveau logo
+- ✅ Badges orange sur la liste pour repérer les saisies non synchronisées
+- ✅ Désinstallation d'un module depuis le menu détail
+- ✅ Refonte des appels d'API de synchronisation (endpoints `/refacto/` du module serveur)
+- ✅ Une trentaine de correctifs de saisie
 
 ### Release `v1.0.0` — avril 2026
 - ✅ Picker de géométrie site `LineString`/`Polygon` plein écran avec validation des polygones auto-intersectés
