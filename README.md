@@ -36,24 +36,9 @@ Chaque ligne majeure GeoNature a sa propre branche de support : `support/geonatu
 
 ## 🚀 Installation
 
-### Application Android (bêta)
+### Application Android
+
 Téléchargez la dernière version APK depuis les [Releases](../../releases).
-
-### Depuis les sources
-```bash
-# Cloner le repository
-git clone https://github.com/RNF-SI/gn_mobile_monitoring/
-cd gn_mobile_monitoring
-
-# Installer les dépendances
-flutter pub get
-
-# Générer le code
-flutter pub run build_runner build --delete-conflicting-outputs
-
-# Lancer l'application
-flutter run
-```
 
 ## ⚙️ Configuration
 
@@ -61,68 +46,6 @@ flutter run
 2. Saisir l'URL de votre instance GeoNature
 3. Se connecter avec ses identifiants GeoNature
 4. Télécharger les modules de Monitoring souhaités
-
-## 🛠️ Développement
-
-L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
-
-### Documentation
-- [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
-- [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) — documentation technique des expressions JS
-- [Tâches](./TASKS.md)
-- [Snippets](./SNIPPETS.md)
-- [.cursorrules](./CURSORRULES.md)
-- [Fichiers de Prompts](./PROMPTS.md)
-
-## 🧪 Tests
-
-### Tests unitaires
-```bash
-make test              # Exécute les tests unitaires
-make test-unit         # Alias pour les tests unitaires
-```
-
-### Tests d'intégration
-Les tests d'intégration vérifient l'interaction avec les API réelles de GeoNature.
-
-#### Configuration
-1. Copier le fichier de configuration : `cp .env.test.example .env.test`
-2. Configurer avec des identifiants réels (déjà configuré pour POPAmphibien/POPReptile)
-
-#### Exécution
-```bash
-make test-integration              # Tests d'intégration avec vraies requêtes HTTP
-make test-integration-manual       # Validation rapide de la configuration
-```
-
-Pour plus de détails, voir [la documentation des tests d'intégration](./test/integration/README.md).
-
-#### Tests E2E contre un vrai serveur GeoNature
-Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNature
-(login, navigation module, CRUD sites/visites/observations).
-
-```bash
-./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
-```
-
-Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
-configuration, la procédure après reboot et le troubleshooting.
-
-## 🔄 CI/CD
-
-Le projet utilise GitHub Actions pour l'intégration continue :
-- Tests unitaires sur chaque push
-- Tests d'intégration sur les pull requests vers `develop` et `main`
-- Analyse statique du code avec `flutter analyze`
-
-Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
-
-## 📦 Déploiement et mise à jour
-
-### Publier une nouvelle version
-
-1. Compiler l'APK : `flutter build apk --release`
-2. Créer une release sur GitHub avec l'APK en pièce jointe
 
 ### Configurer le serveur GeoNature
 
@@ -159,6 +82,91 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
 4. **Mettre à jour** : lors d'une nouvelle version, **remplacer le fichier `monitoring.apk`** sur le serveur (en renommant le nouvel APK téléchargé) et incrémenter le **Code de version** dans l'admin. Le chemin relatif reste inchangé.
 
 L'application vérifie automatiquement au lancement et après chaque synchronisation si une mise à jour est disponible.
+
+## 🛠️ Développement
+
+### Installation depuis les sources
+
+```bash
+# Cloner le repository
+git clone https://github.com/RNF-SI/gn_mobile_monitoring/
+cd gn_mobile_monitoring
+
+# Installer les dépendances
+flutter pub get
+
+# Générer le code
+flutter pub run build_runner build --delete-conflicting-outputs
+
+# Lancer l'application
+flutter run
+```
+
+L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
+
+### Documentation
+
+- [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
+- [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) — documentation technique des expressions JS
+- [Tâches](./TASKS.md)
+- [Snippets](./SNIPPETS.md)
+- [.cursorrules](./CURSORRULES.md)
+- [Fichiers de Prompts](./PROMPTS.md)
+
+## 🧪 Tests
+
+### Tests unitaires
+
+```bash
+make test              # Exécute les tests unitaires
+make test-unit         # Alias pour les tests unitaires
+```
+
+### Tests d'intégration
+
+Les tests d'intégration vérifient l'interaction avec les API réelles de GeoNature.
+
+#### Configuration
+
+1. Copier le fichier de configuration : `cp .env.test.example .env.test`
+2. Configurer avec des identifiants réels (déjà configuré pour POPAmphibien/POPReptile)
+
+#### Exécution
+
+```bash
+make test-integration              # Tests d'intégration avec vraies requêtes HTTP
+make test-integration-manual       # Validation rapide de la configuration
+```
+
+Pour plus de détails, voir [la documentation des tests d'intégration](./test/integration/README.md).
+
+#### Tests E2E contre un vrai serveur GeoNature
+
+Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNature
+(login, navigation module, CRUD sites/visites/observations).
+
+```bash
+./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
+```
+
+Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
+configuration, la procédure après reboot et le troubleshooting.
+
+## 🔄 CI/CD
+
+Le projet utilise GitHub Actions pour l'intégration continue :
+- Tests unitaires sur chaque push
+- Tests d'intégration sur les pull requests vers `develop` et `main`
+- Analyse statique du code avec `flutter analyze`
+
+Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+
+## 📦 Déploiement et mise à jour
+
+### Publier une nouvelle version
+
+1. Compiler l'APK : `flutter build apk --release`
+2. Créer une release sur GitHub avec l'APK en pièce jointe
 
 ## 🤝 Contribution
 
