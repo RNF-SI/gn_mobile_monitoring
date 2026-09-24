@@ -117,6 +117,43 @@ Le projet utilise GitHub Actions pour l'intégration continue :
 
 Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
 
+## 🧾 SBOM et Dependency-Track
+
+Le script `scripts/generate-sbom.sh` produit un SBOM CycloneDX 1.6 (JSON) des
+dépendances Dart/Flutter dans `sbom/`. Le graphe vient de `flutter pub deps`,
+et les empreintes SHA-256 viennent de `pubspec.lock`. L'outillage Python est
+installé dans un venv local, `.sbom-tools/`. Les dépendances natives Android
+(Gradle) ne sont pas couvertes.
+
+Le workflow [.github/workflows/sbom.yml](.github/workflows/sbom.yml) le lance
+à chaque release publiée (ou manuellement). Il envoie le SBOM dans
+Dependency-Track et le conserve comme artefact du workflow. Il utilise les
+secrets `DT_URL` et `DT_API_KEY`.
+
+Génération manuelle :
+
+```bash
+flutter pub get
+scripts/generate-sbom.sh               # dépendances de production uniquement
+scripts/generate-sbom.sh --avec-dev    # + dev_dependencies (build_runner, mockito…)
+
+# Envoi vers Dependency-Track (projet gn_mobile_monitoring-dart)
+DT_URL=https://dependencytrack.reserves-naturelles.org DT_API_KEY=… \
+  scripts/generate-sbom.sh --envoi
+```
+
+Le script utilise deux notions de version distinctes :
+
+- **`DT_VERSION`** (défaut `prod`) : la version du *projet* dans
+  Dependency-Track, qui représente l'environnement. Elle reste fixe :
+  chaque envoi remplace le SBOM de `gn_mobile_monitoring-dart@prod`, sans
+  créer un nouveau projet à chaque release.
+- **`APP_VERSION`** : la version applicative inscrite dans le SBOM
+  (composant racine). En CI, c'est le tag de la release. Par défaut, c'est
+  le champ `version` du `pubspec.yaml`.
+
+Autres variables : `DT_PROJET`, le préfixe des projets (défaut : nom du dépôt).
+
 ## 📦 Déploiement et mise à jour
 
 ### Publier une nouvelle version

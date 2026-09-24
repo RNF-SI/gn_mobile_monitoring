@@ -1,0 +1,50 @@
+name: SBOM
+
+# Génère le SBOM CycloneDX des dépendances Dart/Flutter et l'envoie dans
+# Dependency-Track (projet <dépôt>-dart, version "prod").
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sbom:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.38.4"
+          channel: "stable"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Le graphe vient de `flutter pub deps`, qui exige des dépendances
+      # réellement résolues : le pubspec.lock seul ne suffit pas.
+      - name: Installer les dépendances
+        run: flutter pub get --enforce-lockfile
+
+      - name: Générer et envoyer le SBOM
+        env:
+          DT_URL: ${{ secrets.DT_URL }}
+          DT_API_KEY: ${{ secrets.DT_API_KEY }}
+          DT_PROJET: ${{ github.event.repository.name }}
+          DT_VERSION: prod
+          # Tag de la release ; version du pubspec.yaml en lancement manuel
+          APP_VERSION: ${{ github.event.release.tag_name }}
+        run: scripts/generate-sbom.sh --envoi
+
+      - name: Conserver les SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom/
+          if-no-files-found: warn
