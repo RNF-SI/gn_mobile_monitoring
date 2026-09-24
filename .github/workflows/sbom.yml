@@ -28,8 +28,10 @@ jobs:
 
       # Le graphe vient de `flutter pub deps`, qui exige des dépendances
       # réellement résolues : le pubspec.lock seul ne suffit pas.
+      # Pas de --enforce-lockfile : les paquets épinglés par le SDK Flutter
+      # (characters, matcher…) suivent la version de Flutter de la CI.
       - name: Installer les dépendances
-        run: flutter pub get --enforce-lockfile
+        run: flutter pub get
 
       - name: Générer et envoyer le SBOM
         env:
