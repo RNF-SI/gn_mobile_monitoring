@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.d
 import 'package:gn_mobile_monitoring/presentation/viewmodel/database/database_sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/app_update_dialog.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/app_version_text.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/sync_status_widget.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -135,6 +136,15 @@ class HomePageState extends ConsumerState<HomePage> {
               Expanded(
                 child: ModuleListWidget(
                   searchQuery: _isSearchActive ? _searchQuery : null,
+                ),
+              ),
+              const SafeArea(
+                top: false,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 6),
+                  child: AppVersionText(
+                    style: TextStyle(fontSize: 12, color: AppColors.hint),
+                  ),
                 ),
               ),
             ],

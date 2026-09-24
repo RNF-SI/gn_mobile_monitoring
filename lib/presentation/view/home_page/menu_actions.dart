@@ -11,6 +11,7 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/module_item_car
 import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/app_version_text.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
 
 class MenuActions extends ConsumerWidget {
@@ -238,8 +239,16 @@ class MenuActions extends ConsumerWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Informations sur la version'),
-          content: const Text(
-              "Cette application est conçue pour la version minimal 1.0.0 de monitoring."),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppVersionText(style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text(
+                  "Cette application est conçue pour la version minimale 1.0.0 du module monitoring de GeoNature."),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

@@ -7,7 +7,6 @@ class FundersPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF598979), // Brand color
         title: const Text("Financeurs du projet"),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
