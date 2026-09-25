@@ -66,3 +66,7 @@ config_example_apollons.json
 config_example_ecrevisse.json
 config_example_chiro.json
 app_logs.txt
+
+# SBOM (scripts/generate-sbom.sh)
+sbom/
+.sbom-tools/
