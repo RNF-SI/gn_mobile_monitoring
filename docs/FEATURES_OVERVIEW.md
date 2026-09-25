@@ -10,6 +10,7 @@ Ce document présente les capacités et limitations de l'application mobile GeoN
 - ✅ **Correctifs des formulaires (audit septembre 2026)**, vérifiés contre le module web 1.3.0 et les configurations réelles de [protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi) (voir [Bugs corrigés](#bugs-corrigés-audit-septembre-2026)) :
   - nouvel **interpréteur JavaScript** pour `hidden`, `required` et les règles `change` : parenthèses, `!( … )`, `'2' == 2`, comparaisons avec un champ vide, `includes()`, arithmétique… donnent le même résultat que sur le web ;
   - enregistrement des visites avec une nomenclature simple (erreur « `_Map` is not a subtype of `num?` », module blaireautière) ;
+  - widget `multiselect` (cases à cocher) et choix du groupe de sites à la création d'un site depuis l'onglet Sites ;
   - valeurs fixes des champs masqués (`hidden: true` + `value`, ex. taxon unique) enregistrées ;
   - nomenclatures à choix multiple conservées à l'enregistrement (observations, sites, groupes) ; clé web `multi_select` reconnue ;
   - règles `change` conservées au format d'origine (plus de perte des `const`/`patchValue` hors `if`) ;
@@ -52,9 +53,9 @@ L'app gère désormais la création et l'édition de géométries de site direct
 
 ### Infrastructure de tests
 - ✅ **15 scénarios E2E réels** (11 fichiers dans `integration_test/scenarios_real/`, dont 1 désactivé : `real_many_taxa_e2e_test`) contre un GeoNature local (auth, module, sites, groupes, visites, observations, sync download, sync upload, stress multi-modules)
-- ✅ **52 scénarios E2E mock** (11 fichiers dans `integration_test/scenarios/`, dont 17 de non-régression des formulaires dans `audit_bugs_e2e_test.dart`) avec bases in-memory et interceptor Dio, lancés sur émulateur Pixel 6 (API 35) via `scripts/run_device_test.sh`
+- ✅ **54 scénarios E2E mock** (11 fichiers dans `integration_test/scenarios/`, dont 19 de non-régression des formulaires dans `audit_bugs_e2e_test.dart`) avec bases in-memory et interceptor Dio, lancés sur émulateur Pixel 6 (API 35) via `scripts/run_device_test.sh`
 - ✅ Helpers communs pour dismiss de dialogs bloquants et attente de fin de sync post-login
-- ✅ **~1555 tests unitaires/widget** (`flutter test test/`) : tous passent (7 tests marqués `skip`) — septembre 2026, dont un corpus de 1 330 évaluations d'expressions comparées à JavaScript (`test/fixtures/js_expressions_corpus.json`)
+- ✅ **~1565 tests unitaires/widget** (`flutter test test/`) : tous passent (7 tests marqués `skip`) — septembre 2026, dont un corpus de 1 330 évaluations d'expressions comparées à JavaScript (`test/fixtures/js_expressions_corpus.json`)
 
 ### Expressions conditionnelles et règles de changement (rappel)
 L'application supporte les **validations conditionnelles dynamiques** avec évaluation des expressions JavaScript pour `required` et `hidden` (astérisque rouge mis à jour en temps réel, champs cachés ignorés par la validation), ainsi que les **règles `change`** (mise à jour automatique de champs, ex. `presence = "Non"` → `cd_nom` fixé).
@@ -371,7 +372,8 @@ Comportement réel (tout champ nommé `observers`, quel que soit son `type_widge
 | `"type_widget": "date"` ou `"type_util": "date"` | DatePicker | Stockage ISO `YYYY-MM-DD`, affichage `jj/MM/aaaa` |
 | `"type_widget": "time"` | TimePicker | Format `HH:MM` |
 | `"type_widget": "select"` | DropdownButton | `values` chaînes ou `{value, label}` |
-| `"type_widget": "datalist"` (+ `values`) | DatalistField | Recherche, simple ou `multiple` ; `api` hors nomenclature/user non chargée |
+| `"type_widget": "datalist"` (+ `values`) | DatalistField | Recherche, simple ou `multiple` ; `api` hors nomenclature/user non chargée (sauf groupes de sites, proposés depuis la base locale) |
+| `"type_widget": "multiselect"` (+ `values`) | DatalistField multiple | Cases à cocher, valeur : liste des `value` cochées |
 | `"type_widget": "radio"` | RadioButton | Choix unique, valeurs scalaires |
 | `"type_widget": "bool_checkbox"` / `"checkbox"` | Checkbox | Valeur booléenne, `false` par défaut |
 | `"type_widget": "nomenclature"` (ou `type_util`/`api` nomenclature) | NomenclatureSelector | Simple (dropdown) ou `multiple` / `multi_select` (cases à cocher) ; `filters` ignoré |
@@ -457,7 +459,9 @@ Comportement réel (tout champ nommé `observers`, quel que soit son `type_widge
 
 ## 📊 Statut de Test des Modules
 
-Seuls les modules validés en conditions de terrain sont listés ici. Les autres modules de `gn_module_monitoring` peuvent fonctionner mais ne bénéficient pas d'une validation formelle sur cette version.
+> 📋 **Tableau complet par module** (37 protocoles : analyse des configurations, tests automatisés, retours terrain) : [MODULES_COMPATIBILITY.md](MODULES_COMPATIBILITY.md).
+
+Modules validés en conditions de terrain :
 
 | Module | Testé | Fonctionne | Notes |
 |--------|-------|------------|-------|
@@ -466,7 +470,7 @@ Seuls les modules validés en conditions de terrain sont listés ici. Les autres
 
 **Légende** : ✅ Testé et fonctionne | 🔄 Partiellement testé | ⚠️ Fonctionne partiellement | ❌ Incompatible
 
-> ℹ️ Pour proposer la validation d'un autre module, voir la section [Processus de Test d'un Nouveau Module](#-processus-de-test-dun-nouveau-module) en fin de document.
+> ℹ️ Pour proposer la validation d'un autre module, voir la section [Processus de Test d'un Nouveau Module](#-processus-de-test-dun-nouveau-module) en fin de document, et reporter le résultat dans [MODULES_COMPATIBILITY.md](MODULES_COMPATIBILITY.md).
 
 ## ⚠️ Limitations Connues
 
@@ -482,6 +486,8 @@ Les 289 expressions `hidden`/`required` (28 modules) de [PnX-SI/protocoles_suivi
 | Bug | Modules touchés | Correctif | Test de non-régression |
 |---|---|---|---|
 | **Visite : erreur « `_Map<String, dynamic>` is not a subtype of type `num?` » à l'enregistrement** (nomenclature simple stockée en objet, colonne `id_nomenclature_tech_collect_campanule`) ; les autres nomenclatures simples des visites partaient au serveur en objet | suivi_terriers_blaireau_gmb (remonté du terrain en v1.1.1), suivi_nardaie | Les visites passent par `FormDataProcessor.processFormData` comme les observations et sites (objet → `id_nomenclature`, `{code_nomenclature_type, cd_nomenclature}` résolu) | `test/presentation/viewmodel/site_visits_viewmodel_test.dart`, E2E blaireautière |
+| Widget `multiselect` rendu en champ texte | ecrevisses_pattes_blanches, nidif_gypa, stom | Rendu en liste à cases à cocher (valeur : liste des `value` cochées, comme `pnx-multiselect`) | `test/presentation/widgets/multiselect_widget_test.dart`, E2E stom |
+| « Groupe de site » obligatoire mais liste vide pour un site créé depuis l'onglet Sites du module (enregistrement impossible) | petite_chouette_montagne | Groupes du module proposés dans la liste ; groupe choisi rattaché au site | `test/presentation/widgets/site_group_field_test.dart`, `site_form_viewmodel_test.dart`, E2E petite_chouette_montagne |
 | Champ `hidden: true` + `value` non enregistré (observations/visites sans taxon) | nidif_gypa, apollons, cheveches, craves, popanomaloglossus | Valeur fixe initialisée et envoyée (`DynamicFormBuilder._initializeFixedHiddenValues`) | `test/presentation/widgets/fixed_hidden_values_test.dart`, E2E popanomaloglossus |
 | Nomenclatures multiples `id_nomenclature_*` supprimées à l'enregistrement | RHOMEOOdonate, RHOMEOOrthoptere, osmodermes, arbres_interet_ecologique | Listes d'IDs conservées (`FormDataProcessor.processFormData`) | `test/presentation/viewmodel/form_data_processor_test.dart`, E2E bug 1 |
 | Règles `change` : `const`/`patchValue` hors `if` perdus au téléchargement | RHOMEOFlore, suivi_phytosocio (nom de site) | Règles conservées au format d'origine | `test/presentation/viewmodel/change_rule_processor_real_configs_test.dart`, E2E RHOMEOFlore |
@@ -496,7 +502,7 @@ Les 289 expressions `hidden`/`required` (28 modules) de [PnX-SI/protocoles_suivi
 | `value['a'] \|\| value['b']` lu comme un seul accès | aucun (latent) | Interpréteur JavaScript | Corpus, E2E bug 2 |
 | Nomenclature multiple avec ID en chaîne : plantage | aucun connu | Conversion tolérante | `multiple_nomenclature_initial_value_test.dart` |
 
-> 🧪 Tests sur émulateur : [`integration_test/scenarios/audit_bugs_e2e_test.dart`](../integration_test/scenarios/audit_bugs_e2e_test.dart) (17 scénarios, dont des extraits de configurations réelles), lancés avec `scripts/run_device_test.sh`.
+> 🧪 Tests sur émulateur : [`integration_test/scenarios/audit_bugs_e2e_test.dart`](../integration_test/scenarios/audit_bugs_e2e_test.dart) (19 scénarios, dont des extraits de configurations réelles), lancés avec `scripts/run_device_test.sh`.
 
 > ℹ️ **Config à signaler aux auteurs** : `petite_chouette_montagne` compare `value.cd_nom != 3507`, alors que le taxon est un objet dans le formulaire web ; ses champs se comportent donc de la même façon (non conforme à l'intention) sur le web et sur mobile.
 
@@ -665,7 +671,9 @@ Pour mettre à jour le tableau après avoir testé un module :
 
 ### Septembre 2026 — post `v1.1.1`
 - ✅ Correctifs de l'audit des formulaires : enregistrement des visites avec nomenclature simple (blaireautière), interpréteur JavaScript, champs masqués à valeur fixe, nomenclatures multiples, règles `change` conservées au format d'origine, contexte `meta.nomenclatures` et taxon en objet, clé `multi_select` (voir [Bugs corrigés](#bugs-corrigés-audit-septembre-2026))
-- ✅ Tests : corpus d'expressions comparé à JavaScript, 17 scénarios E2E de non-régression, scripts `scripts/run_device_test.sh` et `scripts/protocoles_audit/`
+- ✅ Widget `multiselect` et choix du groupe de sites à la création d'un site depuis le module
+- ✅ Tableau de compatibilité des 37 modules ([MODULES_COMPATIBILITY.md](MODULES_COMPATIBILITY.md))
+- ✅ Tests : corpus d'expressions comparé à JavaScript, 19 scénarios E2E de non-régression, scripts `scripts/run_device_test.sh` et `scripts/protocoles_audit/`
 - ✅ Version de l'app affichée sur l'accueil et dans le dialogue « Informations sur la version »
 - ✅ Page Financeurs alignée sur le thème
 - ✅ Audit de ce document contre le code : statuts des widgets, limitations et comptage des tests mis à jour

@@ -98,7 +98,7 @@ scripts/run_device_test.sh integration_test/scenarios/<test>.dart emulator-5554
 
 ### Non-régression des formulaires
 
-`scenarios/audit_bugs_e2e_test.dart` (17 scénarios) rejoue les bugs relevés puis corrigés lors de l'audit de septembre 2026 (voir `docs/FEATURES_OVERVIEW.md`, « Bugs corrigés »), dont des extraits de configurations réelles de protocoles_suivi (POPAmphibien, pt_ecoute_avifaune, RHOMEOFlore, suivi_loutre, suivi_terriers_blaireau, popanomaloglossus). Chaque test vérifie le comportement du module web : un échec signifie qu'un bug est revenu. Les tests « Témoin » vérifient le banc de test.
+`scenarios/audit_bugs_e2e_test.dart` (19 scénarios) rejoue les bugs relevés puis corrigés lors de l'audit de septembre 2026 (voir `docs/FEATURES_OVERVIEW.md`, « Bugs corrigés »), dont des extraits de configurations réelles de protocoles_suivi (POPAmphibien, pt_ecoute_avifaune, RHOMEOFlore, suivi_loutre, suivi_terriers_blaireau, popanomaloglossus, stom, petite_chouette_montagne). Chaque test vérifie le comportement du module web : un échec signifie qu'un bug est revenu. Les tests « Témoin » vérifient le banc de test.
 
 ### Échec connu indépendant du code
 

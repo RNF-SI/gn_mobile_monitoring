@@ -68,6 +68,7 @@ L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clea
 
 ### Documentation
 - [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
+- [Compatibilité des modules](./docs/MODULES_COMPATIBILITY.md) — état de chaque protocole de suivi (configuration, tests automatisés, retours terrain)
 - [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) — documentation technique des expressions JS
 - [Tâches](./TASKS.md)
 - [Snippets](./SNIPPETS.md)
