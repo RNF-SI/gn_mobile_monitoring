@@ -171,8 +171,11 @@ class _LoginPageState extends State<LoginPage> {
                       final normalizedBaseUrl = _normalizeBaseUrl(_apiUrl.text);
                       await auth.saveApiUrl(normalizedBaseUrl);
 
+                      // trim() : les claviers Android ajoutent souvent un
+                      // espace après une suggestion (« admin ») que GeoNature
+                      // rejette en « Identifiants invalides » (issue #200).
                       await auth.signInWithEmailAndPassword(
-                          _identifiant.text, _password.text, context, ref);
+                          _identifiant.text.trim(), _password.text, context, ref);
                       if (mounted) {
                         loading();
                       }
@@ -245,6 +248,9 @@ class _LoginPageState extends State<LoginPage> {
                                       key: const Key('login-identifiant-field'),
                                       controller: _identifiant,
                                       keyboardType: TextInputType.emailAddress,
+                                      autocorrect: false,
+                                      enableSuggestions: false,
+                                      textCapitalization: TextCapitalization.none,
                                       autovalidateMode: _hasSubmitted
                                           ? AutovalidateMode.onUserInteraction
                                           : AutovalidateMode.disabled,
@@ -252,7 +258,7 @@ class _LoginPageState extends State<LoginPage> {
                                         labelText: 'Identifiant',
                                       ),
                                       validator: (value) {
-                                        if (value!.isEmpty) {
+                                        if (value!.trim().isEmpty) {
                                           return "L'identifiant est nécessaire";
                                         }
                                         return null;

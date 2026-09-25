@@ -42,13 +42,12 @@ class Config {
     }
     if (!parsed.hasAuthority) return cleanUrl;
 
-    String path = parsed.path;
-    if (path.endsWith('/')) {
-      path = path.substring(0, path.length - 1);
-    }
-    if (path.endsWith('/api')) {
-      path = path.substring(0, path.length - 4);
-    }
+    // Coupe au segment /api, qu'il soit final (…/geonature/api) ou suivi
+    // d'une route copiée telle quelle (…/geonature/api/auth/login).
+    final segments = parsed.pathSegments.where((s) => s.isNotEmpty).toList();
+    final apiIndex = segments.lastIndexOf('api');
+    final kept = apiIndex >= 0 ? segments.sublist(0, apiIndex) : segments;
+    final path = kept.isEmpty ? '' : '/${kept.join('/')}';
 
     final cleaned = Uri(
       scheme: parsed.scheme,

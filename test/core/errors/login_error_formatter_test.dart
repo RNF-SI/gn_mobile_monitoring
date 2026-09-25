@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/core/errors/login_error_formatter.dart';
@@ -28,6 +30,30 @@ void main() {
       final result = LoginErrorMessage.from(
           _dio(type: DioExceptionType.connectionError));
       expect(result.message, contains('Connexion impossible'));
+    });
+
+    test('expose une HandshakeException (unknown) au lieu du message générique',
+        () {
+      final result = LoginErrorMessage.from(DioException(
+        type: DioExceptionType.unknown,
+        error: const HandshakeException(
+            'Handshake error in client',
+            OSError('CERTIFICATE_VERIFY_FAILED: unable to get local issuer '
+                'certificate')),
+        requestOptions:
+            RequestOptions(path: 'https://demo.geonature.fr/geonature'),
+      ));
+      expect(result.message, contains('connexion sécurisée'));
+      expect(result.details['error'], contains('CERTIFICATE_VERIFY_FAILED'));
+    });
+
+    test('détecte une erreur DNS portée par error plutôt que message', () {
+      final result = LoginErrorMessage.from(DioException(
+        type: DioExceptionType.unknown,
+        error: const SocketException('Failed host lookup: foo.invalid'),
+        requestOptions: RequestOptions(path: 'https://foo.invalid'),
+      ));
+      expect(result.message, contains('nom de domaine'));
     });
 
     test('mappe un certificat invalide vers un message HTTPS', () {

@@ -31,6 +31,19 @@ void main() {
       );
     });
 
+    test("retire /api et la route qui suit (URL d'endpoint collée, #200)", () {
+      expect(
+        Config.normalizeUserInputUrl(
+            'https://demo.geonature.fr/geonature/api/auth/login'),
+        'https://demo.geonature.fr/geonature',
+      );
+      expect(
+        Config.normalizeUserInputUrl(
+            'https://geonature.lpo-aura.org/api/monitorings/modules/'),
+        'https://geonature.lpo-aura.org',
+      );
+    });
+
     test('retire le fragment SPA `#/` collé en fin (URL copiée du navigateur)',
         () {
       expect(

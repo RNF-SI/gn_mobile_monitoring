@@ -129,6 +129,28 @@ void main() {
   });
 
   testWidgets(
+      "LoginPage retire les espaces autour de l'identifiant (issue #200)",
+      (WidgetTester tester) async {
+    when(() => mockAuthViewModel.signInWithEmailAndPassword(
+        any(), any(), any(), any())).thenAnswer((_) async {});
+    when(() => mockAuthViewModel.saveApiUrl(any())).thenAnswer((_) async {});
+
+    await pumpLoginPage(tester, LoginStatusInfo.initial);
+
+    // Espace final ajouté par la suggestion du clavier
+    await tester.enterText(find.byType(TextFormField).at(0), 'admin ');
+    await tester.enterText(find.byType(TextFormField).at(1), 'admin');
+    await tester.enterText(
+        find.byType(TextFormField).at(2), 'https://test-api.example.com');
+
+    await tester.tap(find.byType(MaterialButton));
+    await tester.pump();
+
+    verify(() => mockAuthViewModel.signInWithEmailAndPassword(
+        'admin', 'admin', any(), any())).called(1);
+  });
+
+  testWidgets(
       'LoginPage should display loading indicator during authentication',
       (WidgetTester tester) async {
     // This test is now simpler - we're just checking if the authenticating state would
