@@ -1562,7 +1562,8 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Pour l'instant, nous gérons seulement les valeurs statiques
     // Les API seront implémentées dans une version ultérieure
     
-    final isMultiple = fieldConfig['multiple'] == true;
+    final isMultiple = fieldConfig['multiple'] == true ||
+        fieldConfig['type_widget'] == 'multiselect';
     
     return Padding(
       padding: const EdgeInsets.only(bottom: 13.0),

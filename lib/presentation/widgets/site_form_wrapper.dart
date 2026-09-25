@@ -305,7 +305,10 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final enrichedConfig = _enrichSiteConfigWithTypesSite();
+    final enrichedConfig = siteConfigWithSitesGroupOptions(
+      _enrichSiteConfigWithTypesSite(),
+      widget.moduleInfo?.module.sitesGroup ?? const [],
+    );
 
     // Vérifier si le site peut être modifié
     final bool isSynced = widget.site?.serverSiteId != null;
@@ -788,4 +791,49 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
       }
     }
   }
+}
+
+/// Options du champ `id_sites_group` : groupes de sites du module (le web
+/// les charge via `api: __MONITORINGS_PATH/list/<module>/sites_group`, non
+/// disponible hors ligne). Sans elles, la liste était vide et un champ
+/// obligatoire bloquait la création d'un site depuis l'onglet Sites
+/// (ex. petite_chouette_montagne). La valeur choisie est une chaîne,
+/// reconvertie en entier par SiteFormViewModel.
+ObjectConfig siteConfigWithSitesGroupOptions(
+    ObjectConfig config, List<SiteGroup> siteGroups) {
+  if (siteGroups.isEmpty) return config;
+  final values = [
+    for (final group in siteGroups)
+      {
+        'value': group.idSitesGroup.toString(),
+        'label': group.sitesGroupName ??
+            group.sitesGroupCode ??
+            'Groupe ${group.idSitesGroup}',
+      },
+  ];
+
+  final generic = config.generic;
+  final specific = config.specific;
+  final inGeneric = generic?.containsKey('id_sites_group') ?? false;
+  final inSpecific = specific?['id_sites_group'] is Map;
+  if (!inGeneric && !inSpecific) return config;
+
+  return config.copyWith(
+    generic: inGeneric
+        ? {
+            ...generic!,
+            'id_sites_group':
+                generic['id_sites_group']!.copyWith(values: values),
+          }
+        : generic,
+    specific: inSpecific
+        ? {
+            ...specific!,
+            'id_sites_group': {
+              ...Map<String, dynamic>.from(specific['id_sites_group'] as Map),
+              'values': values,
+            },
+          }
+        : specific,
+  );
 }

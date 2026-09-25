@@ -590,6 +590,10 @@ class FormConfigParser {
         return 'DatalistField';
       case 'nomenclature':
         return 'NomenclatureSelector';
+      case 'multiselect':
+        // Widget web pnx-multiselect : `values` {value, label}, la valeur est
+        // la liste des `value` cochées → datalist à choix multiple
+        return 'DatalistField';
       case 'taxonomy':
         return 'TaxonSelector';
       case 'bool_checkbox':

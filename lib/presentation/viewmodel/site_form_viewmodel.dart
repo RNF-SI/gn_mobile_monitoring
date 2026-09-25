@@ -118,7 +118,7 @@ class SiteFormViewModel extends StateNotifier<void> {
       if (complementData.isNotEmpty) {
         complement = SiteComplement(
           idBaseSite: 0, // Sera mis à jour par le use case
-          idSitesGroup: _siteGroupId,
+          idSitesGroup: _siteGroupIdFor(processedData),
           data: jsonEncode(complementData),
         );
       }
@@ -137,15 +137,28 @@ class SiteFormViewModel extends StateNotifier<void> {
     }
   }
 
+  /// Groupe de sites du site : celui d'où l'on vient (navigation) en priorité,
+  /// sinon la valeur du champ `id_sites_group` du formulaire (sites créés
+  /// depuis l'onglet Sites d'un module dont les sites peuvent être rattachés
+  /// à un groupe, ex. petite_chouette_montagne).
+  int? _siteGroupIdFor(Map<String, dynamic> processedData) {
+    if (_siteGroupId > 0) return _siteGroupId;
+    final raw = processedData['id_sites_group'];
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    return id != null && id > 0 ? id : null;
+  }
+
   /// Prépare les données du complément de site
   Map<String, dynamic> _prepareComplementData(
     Map<String, dynamic> processedData,
   ) {
     final complementData = <String, dynamic>{};
 
-    // Ajouter le groupe de sites si spécifié
-    if (_siteGroupId > 0) {
-      complementData['id_sites_group'] = _siteGroupId;
+    // Groupe de sites : celui de la navigation, sinon celui choisi dans le
+    // formulaire (datalist → chaîne, convertie en entier)
+    final siteGroupId = _siteGroupIdFor(processedData);
+    if (siteGroupId != null) {
+      complementData['id_sites_group'] = siteGroupId;
     }
 
     // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
@@ -229,7 +242,7 @@ class SiteFormViewModel extends StateNotifier<void> {
         if (complementData.isNotEmpty) {
           final complement = SiteComplement(
             idBaseSite: existingSite.idBaseSite,
-            idSitesGroup: _siteGroupId > 0 ? _siteGroupId : null,
+            idSitesGroup: _siteGroupIdFor(processedData),
             data: jsonEncode(complementData),
           );
           await _sitesDatabase.insertSiteComplements([complement]);

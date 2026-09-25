@@ -6,9 +6,11 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature_type.dart';
+import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/dynamic_form_builder.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/site_form_wrapper.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app.dart';
@@ -678,6 +680,67 @@ void main() {
           values, const BaseSite(idBaseSite: siteId, baseSiteName: 'Blaireautière'));
       expect(visitId, greaterThan(0),
           reason: 'L\'enregistrement doit aboutir sans erreur de cast');
+    });
+
+    // stom/visit.json : widget web `multiselect` (rendu en champ texte avant
+    // 09/2026, idem ecrevisses_pattes_blanches et nidif_gypa).
+    testWidgets('stom : multiselect en cases à cocher', (tester) async {
+      final config = await downloadConfig('visit', {
+        'specific': {
+          'elem_paysager': {
+            'type_widget': 'multiselect',
+            'attribut_label': 'Éléments paysagers',
+            'values': [
+              {'value': 'Bâti', 'label': 'Bâti'},
+              {'value': 'Câblage', 'label': 'Câblage'},
+              {'value': 'Clôture', 'label': 'Clôture'},
+            ],
+          },
+        },
+      });
+      final form = await pumpForm(tester, config, objectType: 'visit');
+
+      await tester.tap(find.text('Bâti'));
+      await settle(tester);
+      await tester.tap(find.text('Clôture'));
+      await settle(tester);
+      expect(form.getFormValues()['elem_paysager'],
+          unorderedEquals(['Bâti', 'Clôture']));
+    });
+
+    // petite_chouette_montagne/site.json : sites sous un groupe ou sous le
+    // module ; depuis l'onglet Sites, « Groupe de site » (obligatoire) était
+    // une liste vide et bloquait l'enregistrement.
+    testWidgets('petite_chouette_montagne : groupe de site sélectionnable',
+        (tester) async {
+      final config = await downloadConfig('site', {
+        'specific': {
+          'id_sites_group': {
+            'type_widget': 'datalist',
+            'attribut_label': 'Groupe de site',
+            'type_util': 'sites_group',
+            'api':
+                '__MONITORINGS_PATH/list/__MODULE.MODULE_CODE/sites_group?id_module=__MODULE.ID_MODULE',
+            'required': true,
+            'hidden': false,
+          },
+        },
+      });
+      final form = await pumpForm(
+        tester,
+        siteConfigWithSitesGroupOptions(config, const [
+          SiteGroup(idSitesGroup: 12, sitesGroupName: 'Zone Nord'),
+          SiteGroup(idSitesGroup: 13, sitesGroupName: 'Zone Sud'),
+        ]),
+        objectType: 'site',
+      );
+
+      await tester.tap(find.byType(TextField).first);
+      await settle(tester);
+      await tester.tap(find.text('Zone Sud').last);
+      await settle(tester);
+      expect(form.getFormValues()['id_sites_group'], '13');
+      expect(form.validate(), isTrue);
     });
   });
 }
