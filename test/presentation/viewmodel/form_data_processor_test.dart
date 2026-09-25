@@ -80,6 +80,41 @@ void main() {
       expect(result, equals({'id_nomenclature_test': 42}));
     });
 
+    // Régression audit 09/2026 : les listes (nomenclatures multiples) étaient
+    // supprimées par le « Cas 4 » (RHOMEOOdonate, RHOMEOOrthoptere,
+    // osmodermes, arbres_interet_ecologique).
+    test('should keep a multiple nomenclature list of IDs', () async {
+      final result = await formDataProcessor.processFormData({
+        'id_nomenclature_behaviour': [654, 657],
+      });
+
+      expect(result['id_nomenclature_behaviour'], equals([654, 657]));
+    });
+
+    test('should normalize multiple nomenclature items to int IDs', () async {
+      final result = await formDataProcessor.processFormData({
+        'id_nomenclature_life_stage': [
+          '657',
+          {'id': 658, 'label': 'Adulte'},
+          {'id': '659'},
+          'abc',
+          0,
+          null,
+        ],
+      });
+
+      expect(result['id_nomenclature_life_stage'], equals([657, 658, 659]));
+    });
+
+    test('should keep an empty multiple nomenclature list', () async {
+      final result = await formDataProcessor.processFormData({
+        'id_nomenclature_behaviour': <int>[],
+      });
+
+      expect(result['id_nomenclature_behaviour'], isEmpty);
+      expect(result.containsKey('id_nomenclature_behaviour'), isTrue);
+    });
+
     test('should lookup nomenclature ID when only code and type are provided',
         () async {
       final formData = {

@@ -863,6 +863,10 @@ class FormConfigParser {
             'type_util': fieldConfig['type_util'],
           // Ajouter la propriété multiple pour les sélections multiples
           if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+          // Widget nomenclature web : la sélection multiple se déclare avec
+          // `multi_select` (datalist : `multiple`)
+          if (fieldConfig['multi_select'] != null)
+            'multi_select': fieldConfig['multi_select'],
           // Ajouter la configuration des règles de changement automatique
           if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
         };
@@ -924,6 +928,8 @@ class FormConfigParser {
               if (fieldConfig['type_util'] != null)
                 'type_util': fieldConfig['type_util'],
               if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+              if (fieldConfig['multi_select'] != null)
+                'multi_select': fieldConfig['multi_select'],
               // Ajouter la configuration des règles de changement automatique
               if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
             };

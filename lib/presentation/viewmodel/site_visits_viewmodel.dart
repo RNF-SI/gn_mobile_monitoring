@@ -21,6 +21,7 @@ import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart'
     show localVisitsCounterProvider;
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
 
 final siteVisitsViewModelProvider = StateNotifierProvider.family<
     SiteVisitsViewModel,
@@ -62,6 +63,7 @@ final siteVisitsViewModelProvider = StateNotifierProvider.family<
     moduleId,
     onLocalVisitsChanged: () =>
         ref.read(localVisitsCounterProvider.notifier).update((s) => s + 1),
+    formDataProcessor: ref.read(formDataProcessorProvider),
   );
 });
 
@@ -80,6 +82,7 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
   final int _siteId;
   final int _moduleId;
   final void Function()? _onLocalVisitsChanged;
+  final FormDataProcessor? _formDataProcessor;
   bool _mounted = true;
   
   // Cache pour les datasets du module courant
@@ -100,7 +103,9 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     this._siteId,
     this._moduleId, {
     void Function()? onLocalVisitsChanged,
+    FormDataProcessor? formDataProcessor,
   })  : _onLocalVisitsChanged = onLocalVisitsChanged,
+        _formDataProcessor = formDataProcessor,
         super(const AsyncValue.loading()) {
     loadVisits();
     _loadDatasets();
@@ -335,8 +340,17 @@ class SiteVisitsViewModel extends StateNotifier<AsyncValue<List<BaseVisit>>> {
     // Récupérer l'ID de l'utilisateur connecté
     final userId = await _getUserIdUseCase.execute();
 
-    // Prétraiter les données du formulaire pour normaliser les champs d'heure
-    final Map<String, dynamic> processedFormData = Map.from(formData);
+    // Nomenclatures → id_nomenclature (le sélecteur simple stocke
+    // {id, cd_nomenclature, …}, une valeur fixe de config
+    // {code_nomenclature_type, cd_nomenclature}), cd_nom → int : même
+    // traitement que les observations et sites, format attendu par le serveur
+    // et par les colonnes typées de BaseVisit.
+    final formDataProcessor = _formDataProcessor;
+    final Map<String, dynamic> processedFormData = formDataProcessor != null
+        ? await formDataProcessor.processFormData(formData)
+        : Map.from(formData);
+
+    // Normaliser les champs d'heure
     processedFormData.forEach((key, value) {
       if (key.toLowerCase().contains('time') &&
           !key.toLowerCase().contains('date') &&

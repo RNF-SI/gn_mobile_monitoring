@@ -12,7 +12,10 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_visit_with_details_use_c
 import 'package:gn_mobile_monitoring/domain/usecase/get_visits_by_site_and_module_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/save_visit_complement_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_visit_use_case.dart';
+import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/datasets_service.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/nomenclature_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -44,6 +47,10 @@ class MockGetUserNameFromLocalStorageUseCase extends Mock
     implements GetUserNameFromLocalStorageUseCase {}
 
 class MockDatasetService extends Mock implements DatasetService {}
+
+class MockNomenclatureService extends Mock implements NomenclatureService {}
+
+class MockRef extends Mock implements Ref {}
 
 // Fake class for BaseVisit to use as fallback
 class FakeBaseVisit extends Fake implements BaseVisit {}
@@ -553,6 +560,93 @@ void main() {
       // Assert - no exception thrown, no mock called
       verifyNever(
           () => mockGetVisitsBySiteAndModuleUseCase.execute(any(), any()));
+    });
+  });
+
+  // Régression 09/2026 (module suivi_terriers_blaireau_gmb, v1.1.1) :
+  // « type '_Map<String, dynamic>' is not a subtype of type 'num?' » à
+  // l'enregistrement d'une visite. Le sélecteur de nomenclature stocke
+  // {id, cd_nomenclature, …} ; la colonne idNomenclatureTechCollectCampanule
+  // attend un entier.
+  group('SiteVisitsViewModel - Nomenclatures', () {
+    late SiteVisitsViewModel vm;
+    late MockNomenclatureService nomenclatureService;
+    final site = BaseSite(idBaseSite: testSiteId, baseSiteName: 'Blaireautière');
+
+    setUp(() {
+      nomenclatureService = MockNomenclatureService();
+      final ref = MockRef();
+      when(() => ref.read(nomenclatureServiceProvider.notifier))
+          .thenReturn(nomenclatureService);
+      when(() => mockCreateVisitUseCase.execute(any()))
+          .thenAnswer((_) async => 7);
+      when(() => mockGetVisitsBySiteAndModuleUseCase.execute(testSiteId, 1))
+          .thenAnswer((_) async => []);
+      vm = SiteVisitsViewModel(
+        mockGetVisitsBySiteAndModuleUseCase,
+        mockGetVisitWithDetailsUseCase,
+        mockGetObservationsByVisitIdUseCase,
+        mockGetVisitComplementUseCase,
+        mockSaveVisitComplementUseCase,
+        mockCreateVisitUseCase,
+        mockUpdateVisitUseCase,
+        mockDeleteVisitUseCase,
+        mockGetUserIdUseCase,
+        mockGetUserNameUseCase,
+        mockDatasetService,
+        testSiteId,
+        1,
+        formDataProcessor: FormDataProcessor(ref),
+      );
+    });
+
+    BaseVisit createdVisit() =>
+        verify(() => mockCreateVisitUseCase.execute(captureAny()))
+            .captured
+            .last as BaseVisit;
+
+    test('suivi_terriers_blaireau_gmb : nomenclature simple en objet', () async {
+      final id = await vm.createVisitFromFormData({
+        'visit_date_min': '2026-09-25',
+        'id_nomenclature_tech_collect_campanule': {
+          'id': 330,
+          'code_nomenclature_type': 'TECHNIQUE_OBS',
+          'cd_nomenclature': '12',
+          'label': 'Observation directe',
+        },
+        'indices_blai': [801, 802],
+        'depredation': <int>[],
+        'nb_gueule_act': 3,
+      }, site);
+
+      expect(id, 7);
+      final visit = createdVisit();
+      expect(visit.idNomenclatureTechCollectCampanule, 330);
+      expect(visit.data?['indices_blai'], [801, 802]);
+    });
+
+    test('suivi_nardaie : valeur fixe {code_nomenclature_type, cd_nomenclature}',
+        () async {
+      when(() => nomenclatureService.getNomenclaturesByTypeCode('TECHNIQUE_OBS'))
+          .thenAnswer((_) async => [
+                const Nomenclature(
+                  id: 133133,
+                  idType: 100,
+                  codeType: 'TECHNIQUE_OBS',
+                  cdNomenclature: '133',
+                  labelDefault: 'Relevé',
+                ),
+              ]);
+
+      await vm.createVisitFromFormData({
+        'visit_date_min': '2026-09-25',
+        'id_nomenclature_tech_collect_campanule': {
+          'code_nomenclature_type': 'TECHNIQUE_OBS',
+          'cd_nomenclature': '133',
+        },
+      }, site);
+
+      expect(createdVisit().idNomenclatureTechCollectCampanule, 133133);
     });
   });
 }

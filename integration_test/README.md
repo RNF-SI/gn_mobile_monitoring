@@ -38,6 +38,7 @@ integration_test/
 │   ├── observation_form_robot.dart
 │   └── sync_robot.dart
 ├── scenarios/                       # Tests E2E mock (APIs simulées)
+│   ├── audit_bugs_e2e_test.dart     # Non-régression des formulaires (audit 09/2026)
 │   ├── auth_e2e_test.dart
 │   ├── module_browsing_e2e_test.dart
 │   ├── site_management_e2e_test.dart
@@ -46,6 +47,7 @@ integration_test/
 │   ├── visit_workflow_e2e_test.dart
 │   ├── observation_workflow_e2e_test.dart
 │   ├── sync_e2e_test.dart
+│   ├── visit_stats_e2e_test.dart
 │   └── full_user_journey_e2e_test.dart
 └── scenarios_real/                  # Tests E2E réels (voir docs/E2E_REAL_API_TESTS.md)
     ├── helpers/real_test_helpers.dart
@@ -85,6 +87,22 @@ flutter test integration_test/
 # Un scénario spécifique
 flutter test integration_test/scenarios/auth_e2e_test.dart
 ```
+
+### Si `flutter test` échoue au build Gradle (JDK)
+
+`flutter test` compile avec le JDK d'Android Studio, que Gradle 8.7 peut refuser. Le script suivant compile l'APK via `gradlew` avec le JDK 17 puis lance le test avec `flutter drive` :
+
+```bash
+scripts/run_device_test.sh integration_test/scenarios/<test>.dart emulator-5554
+```
+
+### Non-régression des formulaires
+
+`scenarios/audit_bugs_e2e_test.dart` (17 scénarios) rejoue les bugs relevés puis corrigés lors de l'audit de septembre 2026 (voir `docs/FEATURES_OVERVIEW.md`, « Bugs corrigés »), dont des extraits de configurations réelles de protocoles_suivi (POPAmphibien, pt_ecoute_avifaune, RHOMEOFlore, suivi_loutre, suivi_terriers_blaireau, popanomaloglossus). Chaque test vérifie le comportement du module web : un échec signifie qu'un bug est revenu. Les tests « Témoin » vérifient le banc de test.
+
+### Échec connu indépendant du code
+
+`site_geometry_e2e_test.dart` › « Édition d'un site LineString » peut échouer par une `SocketException` sur `tile.openstreetmap.org` (errno 101) levée après la fin du test : l'émulateur n'atteint pas le serveur de tuiles (IPv6). L'échec se reproduit à l'identique sur le code antérieur à l'audit (vérifié en septembre 2026).
 
 ## Ajout d'un nouveau test
 

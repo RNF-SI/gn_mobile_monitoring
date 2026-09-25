@@ -83,6 +83,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   /// Ces champs doivent être préservés à la sauvegarde même s'ils sont cachés
   final Set<String> _fieldsSetByChangeRules = <String>{};
 
+  /// Champs `hidden: true` porteurs d'une `value` fixe dans la config
+  /// (ex. taxon unique d'un protocole). Absents du schéma affiché, mais leur
+  /// valeur est enregistrée comme sur le web.
+  late Set<String> _fixedHiddenFields;
+
   /// Champs modifiés manuellement par l'utilisateur (pas via règle de changement)
   /// Utilisé pour résoudre objForm.controls.xxx.dirty dans les règles de changement
   final Set<String> _dirtyFields = <String>{};
@@ -95,6 +100,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     super.initState();
     _textControllers = {};
     _formValues = Map<String, dynamic>.from(widget.initialValues ?? {});
+    _initializeFixedHiddenValues();
     _committedKeyValues = Map<String, dynamic>.from(_formValues);
 
     // Générer le schéma unifié
@@ -295,25 +301,123 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return metadataPatterns.any((pattern) => fieldName.contains(pattern));
   }
 
+  /// Initialise les champs `hidden: true` qui ont une `value` dans la config
+  /// (generic puis specific, specific prioritaire). Comme sur le web
+  /// (`x ?? elem.value`), une valeur déjà chargée en édition est conservée.
+  /// `id_nomenclature_type_site` est exclu : le type de site passe par
+  /// `types_site` (SiteFormWrapper).
+  void _initializeFixedHiddenValues() {
+    final merged = <String, Map<String, dynamic>>{};
+    widget.objectConfig.generic?.forEach((name, config) {
+      merged[name] = {
+        'hidden': config.hidden,
+        'value': config.value,
+        'type_widget': config.typeWidget,
+      };
+    });
+    widget.objectConfig.specific?.forEach((name, config) {
+      if (config is Map) {
+        merged[name] = {...?merged[name], ...Map<String, dynamic>.from(config)};
+      }
+    });
+
+    _fixedHiddenFields = {
+      for (final entry in merged.entries)
+        if (entry.value['hidden'] == true &&
+            entry.value['value'] != null &&
+            entry.value['type_widget'] != null &&
+            entry.key != 'id_nomenclature_type_site')
+          entry.key,
+    };
+    for (final fieldName in _fixedHiddenFields) {
+      _formValues[fieldName] ??= merged[fieldName]!['value'];
+    }
+  }
+
+  /// Contexte des expressions `hidden` / `required`, aligné sur le module
+  /// web (`{value, meta}`, monitoring-form.component.ts) :
+  /// - un champ taxonomique est exposé en objet `{cd_nom: …}`, comme la
+  ///   valeur du widget web (`value.cd_nom.cd_nom`) ;
+  /// - `meta.nomenclatures` indexe les nomenclatures du formulaire par ID.
+  Map<String, dynamic> _buildEvaluationContext(Map<String, dynamic> values) {
+    return ref.read(formDataProcessorProvider).prepareEvaluationContext(
+          values: _valuesForExpressions(values),
+          metadata: _expressionMetadata(),
+        );
+  }
+
+  Map<String, dynamic> _valuesForExpressions(Map<String, dynamic> values) {
+    final result = Map<String, dynamic>.from(values);
+    _unifiedSchema.forEach((fieldName, config) {
+      if (config is! Map) return;
+      final value = result[fieldName];
+      if (value == null) return;
+      if (_isTaxonomyConfig(config)) {
+        if (value is Map) return;
+        final cdNom = value is int ? value : int.tryParse(value.toString());
+        if (cdNom != null) result[fieldName] = {'cd_nom': cdNom};
+      } else if (FormConfigParser.isNomenclatureField(
+          Map<String, dynamic>.from(config))) {
+        // Web : la valeur d'une nomenclature est son id_nomenclature
+        // (liste d'ids en sélection multiple) ; le sélecteur de l'app peut
+        // stocker un objet {id, …}.
+        dynamic idOf(dynamic v) => v is Map ? v['id'] : v;
+        result[fieldName] = value is List ? value.map(idOf).toList() : idOf(value);
+      }
+    });
+    return result;
+  }
+
+  static bool _isTaxonomyConfig(Map config) =>
+      config['type_widget'] == 'taxonomy' ||
+      config['type_util'] == 'taxonomy' ||
+      config['widget_type'] == 'TaxonSelector';
+
+  /// `meta` des expressions et règles `change` (hors `dataset` : le web ne
+  /// le renseigne que par effet de bord de cache, et l'ancien
+  /// `idListTaxonomy` masquait à tort le choix du jeu de données).
+  Map<String, dynamic> _expressionMetadata() {
+    return {
+      'bChainInput': widget.chainInput ?? false,
+      'parents': {
+        'site': widget.objectConfig,
+        'module': widget.customConfig?.idModule,
+      },
+      'nomenclatures': _metaNomenclatures(),
+    };
+  }
+
+  Map<int, Map<String, dynamic>>? _metaNomenclaturesCache;
+  int _metaNomenclaturesSourceLength = -1;
+
+  Map<int, Map<String, dynamic>> _metaNomenclatures() {
+    final byId =
+        ref.read(nomenclatureServiceProvider.notifier).nomenclatureByIdCache;
+    if (_metaNomenclaturesCache == null ||
+        _metaNomenclaturesSourceLength != byId.length) {
+      _metaNomenclaturesCache = {
+        for (final n in byId.values)
+          n.id: {
+            'id_nomenclature': n.id,
+            'cd_nomenclature': n.cdNomenclature,
+            'mnemonique': n.mnemonique,
+            'label_default': n.labelDefault,
+            'label_fr': n.labelFr,
+            'code_type': n.codeType,
+          },
+      };
+      _metaNomenclaturesSourceLength = byId.length;
+    }
+    return _metaNomenclaturesCache!;
+  }
+
   /// Prépare un contexte d'évaluation initial basé sur les valeurs initiales et par défaut
   Map<String, dynamic> _prepareInitialEvaluationContext() {
-    final formDataProcessor = ref.read(formDataProcessorProvider);
-    
     // Utiliser les valeurs initiales du widget + valeurs déjà présentes
     final initialValues = Map<String, dynamic>.from(widget.initialValues ?? {});
     initialValues.addAll(_formValues);
-    
-    return formDataProcessor.prepareEvaluationContext(
-      values: initialValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+
+    return _buildEvaluationContext(initialValues);
   }
 
   /// Définit la valeur par défaut en fonction du type de widget
@@ -412,8 +516,11 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         final nomenclatureService =
             ref.read(nomenclatureServiceProvider.notifier);
 
-        // Précharger les nomenclatures pour tous les types identifiés
-        nomenclatureService.preloadNomenclatures(typeCodes.toList());
+        // Précharger les nomenclatures pour tous les types identifiés, puis
+        // réévaluer les expressions qui lisent `meta.nomenclatures`
+        nomenclatureService.preloadNomenclatures(typeCodes.toList()).then((_) {
+          if (mounted) setState(() {});
+        });
       }
     } catch (e) {
       print('Erreur lors du préchargement des nomenclatures: $e');
@@ -434,17 +541,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     
     // Préparer le contexte d'évaluation pour déterminer la visibilité
     final formDataProcessor = ref.read(formDataProcessorProvider);
-    final evaluationContext = formDataProcessor.prepareEvaluationContext(
-      values: _formValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+    final evaluationContext = _buildEvaluationContext(_formValues);
     
     // Examiner chaque champ pour décider s'il doit être inclus
     _unifiedSchema.forEach((fieldName, fieldConfig) {
@@ -513,6 +610,15 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         }
       }
     });
+
+    // Inclure les valeurs fixes des champs masqués de la config (le web
+    // envoie tout champ du schéma, masqué ou non)
+    for (final fieldName in _fixedHiddenFields) {
+      if (!filteredValues.containsKey(fieldName) &&
+          _formValues[fieldName] != null) {
+        filteredValues[fieldName] = _formValues[fieldName];
+      }
+    }
 
     // Inclure les champs calculés par les règles de changement qui ne sont pas dans le schema
     // (ex: base_site_name hidden: true mais calculé par les change rules)
@@ -640,14 +746,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       changeConfig: changeConfig,
       triggerFieldName: triggerFieldName,
       dirtyFields: _dirtyFields,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
+      metadata: _expressionMetadata(),
     );
 
     if (result.hasChanges) {
@@ -853,17 +952,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     final formDataProcessor = ref.read(formDataProcessorProvider);
 
     // Préparer le contexte d'évaluation
-    final evaluationContext = formDataProcessor.prepareEvaluationContext(
-      values: _formValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+    final evaluationContext = _buildEvaluationContext(_formValues);
 
     // Vérifier si le champ est caché
     final fieldConfig = _unifiedSchema[fieldName];
@@ -919,17 +1008,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Préparer le contexte d'évaluation avec les valeurs actuelles du formulaire
     // et les métadonnées disponibles
     final Map<String, dynamic> evaluationContext =
-        formDataProcessor.prepareEvaluationContext(
-      values: _formValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+        _buildEvaluationContext(_formValues);
 
     // Évaluer si le champ doit être masqué (avec support des cascades)
     final isHidden = formDataProcessor.isFieldHidden(fieldName, evaluationContext,
@@ -951,17 +1030,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     // Évaluer si le champ est requis (supporte les expressions conditionnelles)
     final formDataProcessor = ref.read(formDataProcessorProvider);
     final Map<String, dynamic> evaluationContext =
-        formDataProcessor.prepareEvaluationContext(
-      values: _formValues,
-      metadata: {
-        'bChainInput': widget.chainInput ?? false,
-        'parents': {
-          'site': widget.objectConfig,
-          'module': widget.customConfig?.idModule,
-        },
-        'dataset': widget.customConfig?.idListTaxonomy,
-      },
-    );
+        _buildEvaluationContext(_formValues);
 
     // Utiliser la nouvelle méthode pour évaluer required (supporte les expressions)
     final bool isRequired = formDataProcessor.isFieldRequired(
@@ -2086,8 +2155,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       Map<String, dynamic> fieldConfig,
       {String? description}) {
 
-    // Vérifier si le champ permet la sélection multiple
-    final bool isMultiple = fieldConfig['multiple'] == true;
+    // Sélection multiple : `multi_select` (widget nomenclature web) ou
+    // `multiple` (datalist)
+    final bool isMultiple = fieldConfig['multiple'] == true ||
+        fieldConfig['multi_select'] == true;
 
     if (isMultiple) {
       // Utiliser le widget de sélection multiple
@@ -2181,19 +2252,19 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     if (_formValues.containsKey(fieldName)) {
       final value = _formValues[fieldName];
 
+      // Un ID peut arriver en int, en chaîne ou dans une Map {'id': ...}
+      // (l'ID lui-même pouvant être une chaîne).
+      int? idOf(dynamic e) {
+        final raw = e is Map ? e['id'] : e;
+        return raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+      }
+
       if (value is List) {
-        // Convertir tous les éléments en int
-        currentValue = value.map((e) {
-          if (e is int) return e;
-          if (e is Map && e.containsKey('id')) return e['id'] as int;
-          return int.tryParse(e.toString());
-        }).whereType<int>().toList();
-      } else if (value is int) {
-        // Convertir un seul int en liste
-        currentValue = [value];
-      } else if (value is Map && value.containsKey('id')) {
-        // Extraire l'ID d'une map
-        currentValue = [value['id'] as int];
+        currentValue = value.map(idOf).whereType<int>().toList();
+      } else if (value != null) {
+        // Valeur unique (int, chaîne ou Map) : convertir en liste
+        final id = idOf(value);
+        if (id != null) currentValue = [id];
       }
     }
 
