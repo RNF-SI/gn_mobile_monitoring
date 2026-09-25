@@ -139,14 +139,14 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           // Contenu du formulaire — centré verticalement dans la zone visible.
-          // On réserve `bottomReserved` en bas pour ne pas chevaucher le logo
-          // LIFE positionné en absolu, et on garde le scroll au cas où le
+          // On réserve `bottomReserved` en bas pour ne pas chevaucher le crédit
+          // photo positionné en absolu, et on garde le scroll au cas où le
           // contenu déborde (petits écrans / clavier ouvert).
           Positioned.fill(
             child: SafeArea(
               child: LayoutBuilder(builder: (context, constraints) {
                 const topPadding = 20.0;
-                const bottomReserved = 160.0; // logo LIFE + texte copyright
+                const bottomReserved = 50.0; // texte copyright
                 final centeredMinHeight =
                     (constraints.maxHeight - topPadding - bottomReserved)
                         .clamp(0.0, double.infinity);
@@ -455,7 +455,7 @@ class _LoginPageState extends State<LoginPage> {
               }),
             ),
           ),
-          // Logo LIFE et texte de copyright en bas
+          // Crédit photo en bas
           Positioned(
             bottom: 15,
             left: 0,
@@ -464,12 +464,6 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Image.asset(
-                    'assets/photo/logo_life.png',
-                    height: 100,
-                    fit: BoxFit.contain,
-                  ),
-                  const SizedBox(height: 8),
                   const Text(
                     '© B CAUVIN',
                     style: TextStyle(

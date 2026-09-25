@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gn_mobile_monitoring/core/widgets/eu_funding_notice.dart';
 
 class FundersPage extends StatelessWidget {
   const FundersPage({super.key});
@@ -13,35 +14,14 @@ class FundersPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text(
-                "Ce projet est financé par :",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 40),
-              // Life logo
-              Image.asset(
-                'assets/logos/life.jpg',
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-              const SizedBox(height: 40),
-              // Biodiv France logo
-              Image.asset(
-                'assets/logos/biodiv_france.png',
-                height: 120,
-                fit: BoxFit.contain,
-              ),
-            ],
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: const EuFundingNotice(),
+            ),
           ),
         ),
       ),
