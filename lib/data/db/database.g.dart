@@ -2403,8 +2403,8 @@ class $TDatasetsTable extends TDatasets
   @override
   late final GeneratedColumn<int> idNomenclatureDatasetObjectif =
       GeneratedColumn<int>(
-          'id_nomenclature_dataset_objectif', aliasedName, false,
-          type: DriftSqlType.int, requiredDuringInsert: true);
+          'id_nomenclature_dataset_objectif', aliasedName, true,
+          type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _bboxWestMeta =
       const VerificationMeta('bboxWest');
   @override
@@ -2613,8 +2613,6 @@ class $TDatasetsTable extends TDatasets
           idNomenclatureDatasetObjectif.isAcceptableOrUnknown(
               data['id_nomenclature_dataset_objectif']!,
               _idNomenclatureDatasetObjectifMeta));
-    } else if (isInserting) {
-      context.missing(_idNomenclatureDatasetObjectifMeta);
     }
     if (data.containsKey('bbox_west')) {
       context.handle(_bboxWestMeta,
@@ -2733,7 +2731,7 @@ class $TDatasetsTable extends TDatasets
           DriftSqlType.bool, data['${effectivePrefix}terrestrial_domain'])!,
       idNomenclatureDatasetObjectif: attachedDatabase.typeMapping.read(
           DriftSqlType.int,
-          data['${effectivePrefix}id_nomenclature_dataset_objectif'])!,
+          data['${effectivePrefix}id_nomenclature_dataset_objectif']),
       bboxWest: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}bbox_west']),
       bboxEast: attachedDatabase.typeMapping
@@ -2786,7 +2784,7 @@ class TDataset extends DataClass implements Insertable<TDataset> {
   final String? keywords;
   final bool marineDomain;
   final bool terrestrialDomain;
-  final int idNomenclatureDatasetObjectif;
+  final int? idNomenclatureDatasetObjectif;
   final double? bboxWest;
   final double? bboxEast;
   final double? bboxSouth;
@@ -2812,7 +2810,7 @@ class TDataset extends DataClass implements Insertable<TDataset> {
       this.keywords,
       required this.marineDomain,
       required this.terrestrialDomain,
-      required this.idNomenclatureDatasetObjectif,
+      this.idNomenclatureDatasetObjectif,
       this.bboxWest,
       this.bboxEast,
       this.bboxSouth,
@@ -2842,8 +2840,10 @@ class TDataset extends DataClass implements Insertable<TDataset> {
     }
     map['marine_domain'] = Variable<bool>(marineDomain);
     map['terrestrial_domain'] = Variable<bool>(terrestrialDomain);
-    map['id_nomenclature_dataset_objectif'] =
-        Variable<int>(idNomenclatureDatasetObjectif);
+    if (!nullToAbsent || idNomenclatureDatasetObjectif != null) {
+      map['id_nomenclature_dataset_objectif'] =
+          Variable<int>(idNomenclatureDatasetObjectif);
+    }
     if (!nullToAbsent || bboxWest != null) {
       map['bbox_west'] = Variable<double>(bboxWest);
     }
@@ -2897,7 +2897,10 @@ class TDataset extends DataClass implements Insertable<TDataset> {
           : Value(keywords),
       marineDomain: Value(marineDomain),
       terrestrialDomain: Value(terrestrialDomain),
-      idNomenclatureDatasetObjectif: Value(idNomenclatureDatasetObjectif),
+      idNomenclatureDatasetObjectif:
+          idNomenclatureDatasetObjectif == null && nullToAbsent
+              ? const Value.absent()
+              : Value(idNomenclatureDatasetObjectif),
       bboxWest: bboxWest == null && nullToAbsent
           ? const Value.absent()
           : Value(bboxWest),
@@ -2950,7 +2953,7 @@ class TDataset extends DataClass implements Insertable<TDataset> {
       marineDomain: serializer.fromJson<bool>(json['marineDomain']),
       terrestrialDomain: serializer.fromJson<bool>(json['terrestrialDomain']),
       idNomenclatureDatasetObjectif:
-          serializer.fromJson<int>(json['idNomenclatureDatasetObjectif']),
+          serializer.fromJson<int?>(json['idNomenclatureDatasetObjectif']),
       bboxWest: serializer.fromJson<double?>(json['bboxWest']),
       bboxEast: serializer.fromJson<double?>(json['bboxEast']),
       bboxSouth: serializer.fromJson<double?>(json['bboxSouth']),
@@ -2986,7 +2989,7 @@ class TDataset extends DataClass implements Insertable<TDataset> {
       'marineDomain': serializer.toJson<bool>(marineDomain),
       'terrestrialDomain': serializer.toJson<bool>(terrestrialDomain),
       'idNomenclatureDatasetObjectif':
-          serializer.toJson<int>(idNomenclatureDatasetObjectif),
+          serializer.toJson<int?>(idNomenclatureDatasetObjectif),
       'bboxWest': serializer.toJson<double?>(bboxWest),
       'bboxEast': serializer.toJson<double?>(bboxEast),
       'bboxSouth': serializer.toJson<double?>(bboxSouth),
@@ -3019,7 +3022,7 @@ class TDataset extends DataClass implements Insertable<TDataset> {
           Value<String?> keywords = const Value.absent(),
           bool? marineDomain,
           bool? terrestrialDomain,
-          int? idNomenclatureDatasetObjectif,
+          Value<int?> idNomenclatureDatasetObjectif = const Value.absent(),
           Value<double?> bboxWest = const Value.absent(),
           Value<double?> bboxEast = const Value.absent(),
           Value<double?> bboxSouth = const Value.absent(),
@@ -3047,8 +3050,9 @@ class TDataset extends DataClass implements Insertable<TDataset> {
         keywords: keywords.present ? keywords.value : this.keywords,
         marineDomain: marineDomain ?? this.marineDomain,
         terrestrialDomain: terrestrialDomain ?? this.terrestrialDomain,
-        idNomenclatureDatasetObjectif:
-            idNomenclatureDatasetObjectif ?? this.idNomenclatureDatasetObjectif,
+        idNomenclatureDatasetObjectif: idNomenclatureDatasetObjectif.present
+            ? idNomenclatureDatasetObjectif.value
+            : this.idNomenclatureDatasetObjectif,
         bboxWest: bboxWest.present ? bboxWest.value : this.bboxWest,
         bboxEast: bboxEast.present ? bboxEast.value : this.bboxEast,
         bboxSouth: bboxSouth.present ? bboxSouth.value : this.bboxSouth,
@@ -3237,7 +3241,7 @@ class TDatasetsCompanion extends UpdateCompanion<TDataset> {
   final Value<String?> keywords;
   final Value<bool> marineDomain;
   final Value<bool> terrestrialDomain;
-  final Value<int> idNomenclatureDatasetObjectif;
+  final Value<int?> idNomenclatureDatasetObjectif;
   final Value<double?> bboxWest;
   final Value<double?> bboxEast;
   final Value<double?> bboxSouth;
@@ -3290,7 +3294,7 @@ class TDatasetsCompanion extends UpdateCompanion<TDataset> {
     this.keywords = const Value.absent(),
     required bool marineDomain,
     required bool terrestrialDomain,
-    required int idNomenclatureDatasetObjectif,
+    this.idNomenclatureDatasetObjectif = const Value.absent(),
     this.bboxWest = const Value.absent(),
     this.bboxEast = const Value.absent(),
     this.bboxSouth = const Value.absent(),
@@ -3313,7 +3317,6 @@ class TDatasetsCompanion extends UpdateCompanion<TDataset> {
         idNomenclatureDataType = Value(idNomenclatureDataType),
         marineDomain = Value(marineDomain),
         terrestrialDomain = Value(terrestrialDomain),
-        idNomenclatureDatasetObjectif = Value(idNomenclatureDatasetObjectif),
         idNomenclatureCollectingMethod = Value(idNomenclatureCollectingMethod),
         idNomenclatureDataOrigin = Value(idNomenclatureDataOrigin),
         idNomenclatureSourceStatus = Value(idNomenclatureSourceStatus),
@@ -3392,7 +3395,7 @@ class TDatasetsCompanion extends UpdateCompanion<TDataset> {
       Value<String?>? keywords,
       Value<bool>? marineDomain,
       Value<bool>? terrestrialDomain,
-      Value<int>? idNomenclatureDatasetObjectif,
+      Value<int?>? idNomenclatureDatasetObjectif,
       Value<double?>? bboxWest,
       Value<double?>? bboxEast,
       Value<double?>? bboxSouth,
@@ -13802,7 +13805,7 @@ typedef $$TDatasetsTableCreateCompanionBuilder = TDatasetsCompanion Function({
   Value<String?> keywords,
   required bool marineDomain,
   required bool terrestrialDomain,
-  required int idNomenclatureDatasetObjectif,
+  Value<int?> idNomenclatureDatasetObjectif,
   Value<double?> bboxWest,
   Value<double?> bboxEast,
   Value<double?> bboxSouth,
@@ -13829,7 +13832,7 @@ typedef $$TDatasetsTableUpdateCompanionBuilder = TDatasetsCompanion Function({
   Value<String?> keywords,
   Value<bool> marineDomain,
   Value<bool> terrestrialDomain,
-  Value<int> idNomenclatureDatasetObjectif,
+  Value<int?> idNomenclatureDatasetObjectif,
   Value<double?> bboxWest,
   Value<double?> bboxEast,
   Value<double?> bboxSouth,
@@ -14161,7 +14164,7 @@ class $$TDatasetsTableTableManager extends RootTableManager<
             Value<String?> keywords = const Value.absent(),
             Value<bool> marineDomain = const Value.absent(),
             Value<bool> terrestrialDomain = const Value.absent(),
-            Value<int> idNomenclatureDatasetObjectif = const Value.absent(),
+            Value<int?> idNomenclatureDatasetObjectif = const Value.absent(),
             Value<double?> bboxWest = const Value.absent(),
             Value<double?> bboxEast = const Value.absent(),
             Value<double?> bboxSouth = const Value.absent(),
@@ -14215,7 +14218,7 @@ class $$TDatasetsTableTableManager extends RootTableManager<
             Value<String?> keywords = const Value.absent(),
             required bool marineDomain,
             required bool terrestrialDomain,
-            required int idNomenclatureDatasetObjectif,
+            Value<int?> idNomenclatureDatasetObjectif = const Value.absent(),
             Value<double?> bboxWest = const Value.absent(),
             Value<double?> bboxEast = const Value.absent(),
             Value<double?> bboxSouth = const Value.absent(),

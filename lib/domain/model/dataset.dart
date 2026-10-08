@@ -15,7 +15,7 @@ class Dataset with _$Dataset {
     String? keywords,
     required bool marineDomain,
     required bool terrestrialDomain,
-    required int idNomenclatureDatasetObjectif,
+    int? idNomenclatureDatasetObjectif, // absent depuis GeoNature 2.18 (#4103)
     double? bboxWest,
     double? bboxEast,
     double? bboxSouth,

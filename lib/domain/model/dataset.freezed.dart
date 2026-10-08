@@ -26,7 +26,8 @@ mixin _$Dataset {
   String? get keywords => throw _privateConstructorUsedError;
   bool get marineDomain => throw _privateConstructorUsedError;
   bool get terrestrialDomain => throw _privateConstructorUsedError;
-  int get idNomenclatureDatasetObjectif => throw _privateConstructorUsedError;
+  int? get idNomenclatureDatasetObjectif =>
+      throw _privateConstructorUsedError; // absent depuis GeoNature 2.18 (#4103)
   double? get bboxWest => throw _privateConstructorUsedError;
   double? get bboxEast => throw _privateConstructorUsedError;
   double? get bboxSouth => throw _privateConstructorUsedError;
@@ -62,7 +63,7 @@ abstract class $DatasetCopyWith<$Res> {
       String? keywords,
       bool marineDomain,
       bool terrestrialDomain,
-      int idNomenclatureDatasetObjectif,
+      int? idNomenclatureDatasetObjectif,
       double? bboxWest,
       double? bboxEast,
       double? bboxSouth,
@@ -102,7 +103,7 @@ class _$DatasetCopyWithImpl<$Res, $Val extends Dataset>
     Object? keywords = freezed,
     Object? marineDomain = null,
     Object? terrestrialDomain = null,
-    Object? idNomenclatureDatasetObjectif = null,
+    Object? idNomenclatureDatasetObjectif = freezed,
     Object? bboxWest = freezed,
     Object? bboxEast = freezed,
     Object? bboxSouth = freezed,
@@ -159,10 +160,10 @@ class _$DatasetCopyWithImpl<$Res, $Val extends Dataset>
           ? _value.terrestrialDomain
           : terrestrialDomain // ignore: cast_nullable_to_non_nullable
               as bool,
-      idNomenclatureDatasetObjectif: null == idNomenclatureDatasetObjectif
+      idNomenclatureDatasetObjectif: freezed == idNomenclatureDatasetObjectif
           ? _value.idNomenclatureDatasetObjectif
           : idNomenclatureDatasetObjectif // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       bboxWest: freezed == bboxWest
           ? _value.bboxWest
           : bboxWest // ignore: cast_nullable_to_non_nullable
@@ -241,7 +242,7 @@ abstract class _$$DatasetImplCopyWith<$Res> implements $DatasetCopyWith<$Res> {
       String? keywords,
       bool marineDomain,
       bool terrestrialDomain,
-      int idNomenclatureDatasetObjectif,
+      int? idNomenclatureDatasetObjectif,
       double? bboxWest,
       double? bboxEast,
       double? bboxSouth,
@@ -279,7 +280,7 @@ class __$$DatasetImplCopyWithImpl<$Res>
     Object? keywords = freezed,
     Object? marineDomain = null,
     Object? terrestrialDomain = null,
-    Object? idNomenclatureDatasetObjectif = null,
+    Object? idNomenclatureDatasetObjectif = freezed,
     Object? bboxWest = freezed,
     Object? bboxEast = freezed,
     Object? bboxSouth = freezed,
@@ -336,10 +337,10 @@ class __$$DatasetImplCopyWithImpl<$Res>
           ? _value.terrestrialDomain
           : terrestrialDomain // ignore: cast_nullable_to_non_nullable
               as bool,
-      idNomenclatureDatasetObjectif: null == idNomenclatureDatasetObjectif
+      idNomenclatureDatasetObjectif: freezed == idNomenclatureDatasetObjectif
           ? _value.idNomenclatureDatasetObjectif
           : idNomenclatureDatasetObjectif // ignore: cast_nullable_to_non_nullable
-              as int,
+              as int?,
       bboxWest: freezed == bboxWest
           ? _value.bboxWest
           : bboxWest // ignore: cast_nullable_to_non_nullable
@@ -414,7 +415,7 @@ class _$DatasetImpl implements _Dataset {
       this.keywords,
       required this.marineDomain,
       required this.terrestrialDomain,
-      required this.idNomenclatureDatasetObjectif,
+      this.idNomenclatureDatasetObjectif,
       this.bboxWest,
       this.bboxEast,
       this.bboxSouth,
@@ -453,7 +454,8 @@ class _$DatasetImpl implements _Dataset {
   @override
   final bool terrestrialDomain;
   @override
-  final int idNomenclatureDatasetObjectif;
+  final int? idNomenclatureDatasetObjectif;
+// absent depuis GeoNature 2.18 (#4103)
   @override
   final double? bboxWest;
   @override
@@ -598,7 +600,7 @@ abstract class _Dataset implements Dataset {
       final String? keywords,
       required final bool marineDomain,
       required final bool terrestrialDomain,
-      required final int idNomenclatureDatasetObjectif,
+      final int? idNomenclatureDatasetObjectif,
       final double? bboxWest,
       final double? bboxEast,
       final double? bboxSouth,
@@ -635,8 +637,8 @@ abstract class _Dataset implements Dataset {
   @override
   bool get terrestrialDomain;
   @override
-  int get idNomenclatureDatasetObjectif;
-  @override
+  int? get idNomenclatureDatasetObjectif;
+  @override // absent depuis GeoNature 2.18 (#4103)
   double? get bboxWest;
   @override
   double? get bboxEast;

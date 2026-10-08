@@ -15,6 +15,18 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
+/// Ramène `types_site` à une liste d'ids, quel que soit le format serveur :
+/// - monitoring <= 1.3.0 : `[{id_nomenclature_type_site: 940, label: ..., config: ...}]`
+/// - monitoring >= 1.3.2 : `[940]`
+List<int> normalizeTypesSite(List<dynamic> typesSite) {
+  return typesSite
+      .map((e) => e is Map
+          ? e['id_nomenclature_type_site']
+          : (e is int ? e : int.tryParse(e.toString())))
+      .whereType<int>()
+      .toList();
+}
+
 class SitesApiImpl extends BaseApi implements SitesApi {
   final Connectivity _connectivity;
 
@@ -87,7 +99,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final siteId = item['id_base_site'] as int?;
         if (siteId == null) continue;
 
-        // BaseSiteEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
+        // BaseSiteEntity.fromJson accepte `geometry` (Map ou String) ou `geom`.
+        // monitoring >= 1.3.2 renvoie `geom` (objet GeoJSON) au lieu de
+        // `geometry` (chaîne GeoJSON).
         enrichedSites.add({
           'id_base_site': siteId,
           'base_site_name': item['base_site_name'],
@@ -97,7 +111,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           'altitude_max': item['altitude_max'],
           'first_use_date': item['first_use_date'],
           'uuid_base_site': item['uuid_base_site'],
-          'geometry': item['geometry'],
+          'geometry': item['geometry'] ?? item['geom'],
         });
 
         final idSitesGroup = item['id_sites_group'] as int?;
@@ -107,6 +121,12 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         siteSpecificData.remove('base_site_code');
         siteSpecificData.remove('base_site_description');
         siteSpecificData.remove('additional_data_keys');
+        // La géométrie est portée par le site, pas par ses données spécifiques
+        siteSpecificData.remove('geom');
+        if (siteSpecificData['types_site'] is List) {
+          siteSpecificData['types_site'] =
+              normalizeTypesSite(siteSpecificData['types_site'] as List);
+        }
 
         siteComplements.add(SiteComplementEntity(
           idBaseSite: siteId,
@@ -150,6 +170,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     'altitude_min',
     'altitude_max',
     'geometry',
+    'geom', // monitoring >= 1.3.2
     'meta_create_date',
     'meta_update_date',
     // Métadonnées de la réponse (pas des colonnes du modèle)
@@ -277,7 +298,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         'altitude_min': item['altitude_min'],
         'altitude_max': item['altitude_max'],
         // SiteGroupEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
-        'geometry': item['geometry'],
+        // (monitoring >= 1.3.2 renvoie `geom`)
+        'geometry': item['geometry'] ?? item['geom'],
         'data': dynamicData,
       };
 
