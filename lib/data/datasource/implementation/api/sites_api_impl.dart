@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
@@ -29,9 +30,15 @@ List<int> normalizeTypesSite(List<dynamic> typesSite) {
 
 class SitesApiImpl extends BaseApi implements SitesApi {
   final Connectivity _connectivity;
+  final MonitoringApiModeResolver _modeResolver;
 
-  SitesApiImpl({Connectivity? connectivity, Dio? dio})
+  SitesApiImpl(
+      {Connectivity? connectivity,
+      Dio? dio,
+      MonitoringApiModeResolver modeResolver =
+          const MonitoringApiModeResolver()})
       : _connectivity = connectivity ?? Connectivity(),
+        _modeResolver = modeResolver,
         super(dio: dio);
 
   @override
@@ -382,6 +389,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         });
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.site,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -389,7 +403,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] ENVOI SITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/site');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       if (token.length > 10) {
@@ -402,14 +416,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
       final response = await dio.post(
-        '/monitorings/object/$moduleCode/site',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -434,7 +448,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.site,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi du site. Status code: ${response.statusCode}');
@@ -562,6 +577,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         });
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.site,
+        legacyBody: requestBody,
+        id: siteId,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -569,8 +592,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] MISE À JOUR SITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer
-          .writeln('URL: $apiBase/monitorings/object/$moduleCode/site/$siteId');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       if (token.length > 10) {
@@ -583,14 +605,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête PATCH
       final response = await dio.patch(
-        '/monitorings/object/$moduleCode/site/$siteId',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -615,7 +637,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.site,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de la mise à jour du site. Status code: ${response.statusCode}');
@@ -796,6 +819,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             sanitized;
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.sitesGroup,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -803,8 +833,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] ENVOI GROUPE DE SITES AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln(
-          'URL: $apiBase/monitorings/object/$moduleCode/sites_group');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       if (token.length > 10) {
@@ -818,14 +847,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln(
           '------------------------------------------------------------------');
       logBuffer.writeln(
-          const JsonEncoder.withIndent('  ').convert(requestBody));
+          const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
       final response = await dio.post(
-        '/monitorings/object/$moduleCode/sites_group',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -850,7 +879,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.sitesGroup,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi du groupe de sites. Status code: ${response.statusCode}');

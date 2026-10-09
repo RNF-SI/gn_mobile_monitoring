@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 
@@ -13,8 +14,15 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
   final Connectivity _connectivity;
   final Dio? _dio;
 
-  ObservationDetailsApiImpl({Connectivity? connectivity, Dio? dio})
+  final MonitoringApiModeResolver _modeResolver;
+
+  ObservationDetailsApiImpl(
+      {Connectivity? connectivity,
+      Dio? dio,
+      MonitoringApiModeResolver modeResolver =
+          const MonitoringApiModeResolver()})
         : _connectivity = connectivity ?? Connectivity(),
+          _modeResolver = modeResolver,
           _dio = dio;
 
   @override
@@ -272,6 +280,13 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
       // Créer un champ data vide pour la compatibilité avec certaines API (au cas où)
       requestBody['data'] = {};
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.observationDetail,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -279,8 +294,7 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
       logBuffer.writeln('[API] ENVOI DÉTAIL D\'OBSERVATION AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln(
-          'URL: $apiBase/monitorings/object/$moduleCode/observation_detail');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -294,17 +308,16 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(request.body));
 
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '/monitorings/object/$moduleCode/observation_detail';
 
       // Envoyer la requête
       final response = await dio.post(
-        endpoint,
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           // Augmenter les timeouts pour éviter les erreurs ETIMEDOUT
@@ -334,7 +347,9 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
             tag: 'sync');
 
         // Analyse détaillée de la réponse du serveur
-        final serverResponse = response.data as Map<String, dynamic>;
+        final serverResponse = normalizeWriteResponse(
+            MonitoringObjectType.observationDetail,
+            response.data as Map<String, dynamic>);
 
         logger.i('Analyse détaillée de la réponse du serveur:', tag: 'sync');
 

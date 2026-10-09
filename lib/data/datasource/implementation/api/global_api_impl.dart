@@ -116,32 +116,40 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         throw Exception('Module code not found in module data for module $moduleId');
       }
 
-      // Étape 1b : récupérer la liste d'IDs des datasets via l'endpoint "object"
-      // (pattern utilisé par l'UI web GeoNature, scalable sur backend à sérialisation lente
-      // car `field_name=module_code` empêche l'expansion des relations côté SQLAlchemy)
+      // Étape 1b : récupérer la liste d'IDs des datasets. Depuis la refonte
+      // monitoring (#513), `/module/<id>` les renvoie directement ; sinon on
+      // passe par l'endpoint "object" legacy (pattern de l'UI web ≤ 1.3.x,
+      // scalable sur backend à sérialisation lente car `field_name=module_code`
+      // empêche l'expansion des relations côté SQLAlchemy)
       final List<int> datasetIds = [];
+      void addDatasetIds(Object? rawIds) {
+        if (rawIds is! List) return;
+        for (final id in rawIds) {
+          if (id is int) {
+            datasetIds.add(id);
+          } else if (id is String) {
+            final parsed = int.tryParse(id);
+            if (parsed != null) datasetIds.add(parsed);
+          }
+        }
+      }
+
       try {
-        final objectResponse = await dioInstance.get(
-          '/monitorings/object/$moduleCode/module',
-          queryParameters: {'depth': 0, 'field_name': 'module_code'},
-          options: headers != null ? Options(headers: headers) : null,
-        );
-        if (objectResponse.statusCode == 200 && objectResponse.data != null) {
-          final data = objectResponse.data as Map<String, dynamic>;
-          // Les IDs sont sous `properties.datasets` (fallback racine par précaution)
-          final props = (data['properties'] is Map<String, dynamic>)
-              ? data['properties'] as Map<String, dynamic>
-              : data;
-          final rawIds = props['datasets'];
-          if (rawIds is List) {
-            for (final id in rawIds) {
-              if (id is int) {
-                datasetIds.add(id);
-              } else if (id is String) {
-                final parsed = int.tryParse(id);
-                if (parsed != null) datasetIds.add(parsed);
-              }
-            }
+        if (moduleData['datasets'] is List) {
+          addDatasetIds(moduleData['datasets']);
+        } else {
+          final objectResponse = await dioInstance.get(
+            '/monitorings/object/$moduleCode/module',
+            queryParameters: {'depth': 0, 'field_name': 'module_code'},
+            options: headers != null ? Options(headers: headers) : null,
+          );
+          if (objectResponse.statusCode == 200 && objectResponse.data != null) {
+            final data = objectResponse.data as Map<String, dynamic>;
+            // Les IDs sont sous `properties.datasets` (fallback racine par précaution)
+            final props = (data['properties'] is Map<String, dynamic>)
+                ? data['properties'] as Map<String, dynamic>
+                : data;
+            addDatasetIds(props['datasets']);
           }
         }
       } catch (e) {

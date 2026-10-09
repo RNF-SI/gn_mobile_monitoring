@@ -7,14 +7,21 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 
 class VisitsApiImpl extends BaseApi implements VisitsApi {
   final Connectivity _connectivity;
+  final MonitoringApiModeResolver _modeResolver;
 
-  VisitsApiImpl({super.dio, Connectivity? connectivity})
-        : _connectivity = connectivity ?? Connectivity();
+  VisitsApiImpl(
+      {super.dio,
+      Connectivity? connectivity,
+      MonitoringApiModeResolver modeResolver =
+          const MonitoringApiModeResolver()})
+      : _connectivity = connectivity ?? Connectivity(),
+        _modeResolver = modeResolver;
 
   @override
   Future<Map<String, dynamic>> sendVisit(
@@ -100,6 +107,13 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
 
       // Les vérifications des champs obligatoires ont été déplacées en début de méthode
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.visit,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -107,7 +121,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('[API] ENVOI VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -121,16 +135,15 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(request.body));
 
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
-      // Utiliser l'URL correcte selon les spécifications du backend: /monitorings/object/<module_code>/visit
       final response = await dio.post(
-        '/monitorings/object/$moduleCode/visit',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           // Augmenter les timeouts pour éviter les erreurs ETIMEDOUT
@@ -156,7 +169,8 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.visit,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi de la visite. Status code: ${response.statusCode}');
@@ -301,6 +315,14 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
             visit.idNomenclatureGrpTyp;
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.visit,
+        legacyBody: requestBody,
+        id: visitId,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -308,7 +330,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('[API] MISE À JOUR VISITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/visit/$visitId');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -322,15 +344,15 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(request.body));
 
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête PATCH avec l'ID dans l'URL
       final response = await dio.patch(
-        '/monitorings/object/$moduleCode/visit/$visitId',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -355,7 +377,8 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.visit,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de la mise à jour de la visite. Status code: ${response.statusCode}');

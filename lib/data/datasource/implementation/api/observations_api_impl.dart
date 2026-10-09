@@ -8,6 +8,7 @@ import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/sync_error_simulator.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 
@@ -15,8 +16,15 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
   final Connectivity _connectivity;
   final Dio? _dio;
 
-  ObservationsApiImpl({Connectivity? connectivity, Dio? dio})
+  final MonitoringApiModeResolver _modeResolver;
+
+  ObservationsApiImpl(
+      {Connectivity? connectivity,
+      Dio? dio,
+      MonitoringApiModeResolver modeResolver =
+          const MonitoringApiModeResolver()})
         : _connectivity = connectivity ?? Connectivity(),
+          _modeResolver = modeResolver,
           _dio = dio;
 
   @override
@@ -161,6 +169,13 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
         logger.w('[TEST] Corps de requête potentiellement corrompu pour simulation', tag: 'sync');
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.observation,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -171,8 +186,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       }
       logBuffer.writeln(
           '==================================================================');
-      logBuffer
-          .writeln('URL: $apiBase/monitorings/object/$moduleCode/observation');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       // Afficher de façon sécurisée le token (juste les premiers caractères)
@@ -186,17 +200,16 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(request.body));
 
       // Écrire dans le fichier log via AppLogger
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '/monitorings/object/$moduleCode/observation';
 
       // Envoyer la requête
       final response = await dio.post(
-        endpoint,
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           // Augmenter les timeouts pour éviter les erreurs ETIMEDOUT
@@ -224,7 +237,8 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       if (response.statusCode == 201 || response.statusCode == 200) {
         logger.i('Observation envoyée avec succès: ${response.data}',
             tag: 'sync');
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.observation,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi de l\'observation. Status code: ${response.statusCode}');
@@ -396,6 +410,14 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
         logger.w('[TEST] Corps de requête potentiellement corrompu pour simulation', tag: 'sync');
       }
 
+      final request = MonitoringWriteRequest.build(
+        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.observation,
+        legacyBody: requestBody,
+        id: observationId,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln('\n==================================================================');
@@ -404,7 +426,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
         logBuffer.writeln('[🧪 MODE TEST] ${SyncErrorSimulator.getErrorDescription()}');
       }
       logBuffer.writeln('==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/observation/$observationId');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       if (token.length > 10) {
@@ -415,16 +437,15 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
 
       logBuffer.writeln('BODY:');
       logBuffer.writeln('------------------------------------------------------------------');
-      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
-      String endpoint = '/monitorings/object/$moduleCode/observation/$observationId';
 
       // Envoyer la requête PATCH
       final response = await dio.patch(
-        endpoint,
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -447,7 +468,8 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         logger.i('Observation mise à jour avec succès: ${response.data}', tag: 'sync');
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.observation,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception('Erreur lors de la mise à jour de l\'observation. Status code: ${response.statusCode}');
       }
