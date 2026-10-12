@@ -116,7 +116,9 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
 
           items.add(DropdownMenuItem<String>(
             value: nomenclature.cdNomenclature,
-            child: Text(label),
+            // Une ligne par choix : un libellé long passerait sinon sur
+            // deux lignes dans un champ prévu pour une seule.
+            child: Text(label, overflow: TextOverflow.ellipsis),
           ));
         }
 
