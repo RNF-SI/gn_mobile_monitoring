@@ -129,7 +129,11 @@ class NomenclatureSelectorWidget extends ConsumerWidget {
             border: const OutlineInputBorder(),
           ),
           isExpanded: true,
-          initialValue: cdNomenclature,
+          // Un code absent des nomenclatures téléchargées (valeur par défaut
+          // de la config, donnée ancienne) ferait échouer le DropdownButton :
+          // on laisse alors le champ vide.
+          initialValue:
+              nomenclatureMap.containsKey(cdNomenclature) ? cdNomenclature : null,
           items: items,
           onChanged: (value) {
             if (value == null) {

@@ -1,0 +1,881 @@
+{
+ "custom": {
+  "CODE_OBSERVERS_LIST": "obsocctax",
+  "__MODULE.B_DRAW_SITES_GROUP": null,
+  "__MODULE.B_SYNTHESE": null,
+  "__MODULE.CD_NOM": null,
+  "__MODULE.IDS_TYPE_SITE": [
+   {
+    "id_nomenclature_type_site": 998
+   }
+  ],
+  "__MODULE.ID_LIST_OBSERVER": 1,
+  "__MODULE.ID_LIST_TAXONOMY": 102,
+  "__MODULE.ID_MODULE": 20,
+  "__MODULE.MODULE_CODE": "ecrevisses_pattes_blanches",
+  "__MODULE.TAXONOMY_DISPLAY_FIELD_NAME": null,
+  "__MODULE.TYPES_SITE": [
+   {
+    "config": null,
+    "id_nomenclature_type_site": 998
+   }
+  ],
+  "__MONITORINGS_PATH": "monitorings"
+ },
+ "data": {
+  "nomenclature": [
+   "TYPE_MEDIA",
+   "TYPE_SITE",
+   "STATUT_OBS",
+   "STATUT_SOURCE"
+  ]
+ },
+ "module": {
+  "b_draw_sites_group": null,
+  "b_synthese": null,
+  "cd_nom": null,
+  "children_types": [
+   "site"
+  ],
+  "description_field_name": "module_label",
+  "display_form": [],
+  "display_list": [
+   "module_label",
+   "module_desc",
+   "datasets"
+  ],
+  "display_properties": [
+   "module_label",
+   "module_desc",
+   "datasets"
+  ],
+  "export_csv": [
+   {
+    "label": "Observations",
+    "method": "observations",
+    "type": "csv"
+   },
+   {
+    "label": "Analyse",
+    "method": "analyse",
+    "type": "csv"
+   }
+  ],
+  "filters": {},
+  "generic": {
+   "active_frontend": {
+    "attribut_label": "Afficher dans le menu ?",
+    "definition": "Afficher le module dans le menu de GeoNature. (Recharger la page pour voir les modifications).",
+    "type_widget": "bool_checkbox"
+   },
+   "b_draw_sites_group": {
+    "attribut_label": "Dessiner les groupes de sites",
+    "definition": "Affichage des groupes de site en dessinant l'enveloppe des sites du groupe et en affichant l'aire du groupe de sites",
+    "hidden": true,
+    "type_widget": "bool_checkbox"
+   },
+   "b_synthese": {
+    "attribut_label": "Activer la synthèse ?",
+    "definition": "Insertion automatique des nouvelles données dans la synthèse.",
+    "type_widget": "bool_checkbox"
+   },
+   "cd_nom": {
+    "attribut_label": "Espèce",
+    "hidden": true,
+    "required": false,
+    "type_util": "taxonomy",
+    "type_widget": "taxonomy"
+   },
+   "datasets": {
+    "attribut_label": "Jeu de données",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_list_observer": {
+    "api": "users/listes",
+    "application": "GeoNature",
+    "attribut_label": "Liste des observateurs",
+    "definition": "Liste des observateurs. À gérer dans UsersHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "observer_list",
+    "type_widget": "datalist"
+   },
+   "id_list_taxonomy": {
+    "api": "biblistes/",
+    "application": "TaxHub",
+    "attribut_label": "Liste des taxons",
+    "data_path": "data",
+    "definition": "Liste des taxons. À gérer dans TaxHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "taxonomy_list",
+    "type_widget": "datalist"
+   },
+   "id_module": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_module_complements",
+    "type_widget": "medias"
+   },
+   "module_code": {
+    "attribut_label": "Code",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_desc": {
+    "attribut_label": "Description",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_label": {
+    "attribut_label": "Nom",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_path": {
+    "attribut_label": "Path",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_picto": {
+    "attribut_label": "Icone dans le menu",
+    "required": true,
+    "type_widget": "text"
+   },
+   "taxonomy_display_field_name": {
+    "attribut_label": "Affichage des taxons",
+    "designStyle": "bootstrap",
+    "required": true,
+    "type_widget": "datalist",
+    "values": [
+     {
+      "label": "Nom vernaculaire ou nom latin",
+      "value": "nom_vern,lb_nom"
+     },
+     {
+      "label": "Nom latin",
+      "value": "lb_nom"
+     }
+    ]
+   },
+   "types_site": {
+    "api": "monitorings/sites/types",
+    "application": "GeoNature",
+    "attribut_label": "Types de sites",
+    "data_path": "items",
+    "definition": "Permet de paramétrer la compatibilité de ce module avec les types de sites",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_module_complement": {
+    "attribut_label": "uuid"
+   }
+  },
+  "genre": "M",
+  "id_field_name": "id_module",
+  "id_list_observer": 1,
+  "id_list_taxonomy": 102,
+  "id_module": 20,
+  "id_table_location": 14,
+  "label": "Module",
+  "module_code": "ecrevisses_pattes_blanches",
+  "module_desc": "Module pour le protocole de suivis des écrevisses à pattes blanches",
+  "module_label": "Ecrevisses à pattes blanches",
+  "parent_types": [],
+  "properties_keys": [
+   "id_module",
+   "module_code",
+   "module_label",
+   "module_path",
+   "module_desc",
+   "module_picto",
+   "uuid_module_complement",
+   "datasets",
+   "id_list_observer",
+   "id_list_taxonomy",
+   "b_synthese",
+   "b_draw_sites_group",
+   "taxonomy_display_field_name",
+   "cd_nom",
+   "active_frontend",
+   "types_site",
+   "medias"
+  ],
+  "root_object": true,
+  "specific": {},
+  "taxonomy_display_field_name": null,
+  "types_site": {
+   "998": {
+    "name": "Site ecrevisses"
+   }
+  },
+  "uuid_field_name": "uuid_module_complement"
+ },
+ "observation": {
+  "chained": true,
+  "children_types": [],
+  "description_field_name": "id_observation",
+  "display_form": [],
+  "display_list": [
+   "cd_nom",
+   "id_nomenclature_statut_observation"
+  ],
+  "display_properties": [
+   "uuid_observation",
+   "cd_nom",
+   "id_nomenclature_statut_observation",
+   "nb_0_50m",
+   "nb_50_100m",
+   "nb_100_150m",
+   "nb_150_200m",
+   "nb",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "cd_nom": {
+    "attribut_label": "Espèce",
+    "id_list": 102,
+    "required": true,
+    "type_util": "taxonomy",
+    "type_widget": "radio",
+    "value": 18437,
+    "values": [
+     {
+      "label": "Écrevisse à pattes blanches (Austropotamobius pallipes)",
+      "value": 18437
+     },
+     {
+      "label": "Écrevisse signal (Pacifastacus leniusculus)",
+      "value": 162667
+     }
+    ]
+   },
+   "comments": {
+    "attribut_label": "Commentaires",
+    "required": false,
+    "type_widget": "textarea"
+   },
+   "id_base_visit": {
+    "attribut_label": "Id visite",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Numérisateur",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_individual": {
+    "attribut_label": "Id individu",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "id_observation": {
+    "attribut_label": "Id observation",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_observations",
+    "type_widget": "medias"
+   },
+   "uuid_observation": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "F",
+  "id_field_name": "id_observation",
+  "id_table_location": 5,
+  "label": "Observation",
+  "label_list": "Observations",
+  "parent_types": [
+   "visit"
+  ],
+  "properties_keys": [
+   "id_observation",
+   "id_base_visit",
+   "id_digitiser",
+   "id_individual",
+   "cd_nom",
+   "comments",
+   "uuid_observation",
+   "medias",
+   "id_nomenclature_statut_observation",
+   "nb_0_50m",
+   "nb_50_100m",
+   "nb_100_150m",
+   "nb_150_200m",
+   "nb",
+   "statut_source"
+  ],
+  "specific": {
+   "id_nomenclature_statut_observation": {
+    "attribut_label": "Statut d'observation",
+    "code_nomenclature_type": "STATUT_OBS",
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "nomenclature"
+   },
+   "nb": {
+    "attribut_label": "Nombre (NE PAS REMPLIR remplacé par les champs nombre par tronçons)",
+    "hidden": "TRUE",
+    "type_widget": "number"
+   },
+   "nb_0_50m": {
+    "attribut_label": "0-50m (nombre)",
+    "type_widget": "number",
+    "value": "0"
+   },
+   "nb_100_150m": {
+    "attribut_label": "100-150m (nombre)",
+    "type_widget": "number",
+    "value": "0"
+   },
+   "nb_150_200m": {
+    "attribut_label": "150-200m (nombre)",
+    "type_widget": "number",
+    "value": "0"
+   },
+   "nb_50_100m": {
+    "attribut_label": "50 - 100m (nombre)",
+    "type_widget": "number",
+    "value": "0"
+   },
+   "statut_source": {
+    "api": "nomenclatures/nomenclature/STATUT_SOURCE",
+    "application": "GeoNature",
+    "attribut_label": "Statut de la source",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "Te"
+    },
+    "designStyle": "bootstrap",
+    "hidden": true,
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "multiple": false,
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   }
+  },
+  "uuid_field_name": "uuid_observation"
+ },
+ "site": {
+  "chained": true,
+  "children_types": [
+   "visit"
+  ],
+  "description_field_name": "base_site_name",
+  "display_form": [],
+  "display_list": [
+   "base_site_code",
+   "base_site_name",
+   "last_visit",
+   "bassin_versant",
+   "nb_visits"
+  ],
+  "display_properties": [
+   "base_site_code",
+   "base_site_name",
+   "base_site_description",
+   "bassin_versant",
+   "sous_bassin_versant",
+   "last_visit",
+   "nb_visits"
+  ],
+  "filters": {},
+  "generic": {
+   "altitude_max": {
+    "attribut_label": "Altitude (max)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "altitude_min": {
+    "attribut_label": "Altitude (min)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "base_site_code": {
+    "attribut_label": "Code",
+    "required": true,
+    "type_widget": "text"
+   },
+   "base_site_description": {
+    "attribut_label": "Description",
+    "type_widget": "textarea"
+   },
+   "base_site_name": {
+    "attribut_label": "Nom du cours d'eau",
+    "required": true,
+    "type_widget": "text"
+   },
+   "first_use_date": {
+    "attribut_label": "Date description",
+    "required": true,
+    "type_widget": "date"
+   },
+   "id_base_site": {
+    "attribut_label": "Id site",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_inventor": {
+    "attribut_label": "Observateur",
+    "code_list": 1,
+    "multi_select": false,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "last_visit": {
+    "attribut_label": "Dernière visite",
+    "hidden": true,
+    "type_widget": "date"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_sites",
+    "type_widget": "medias"
+   },
+   "nb_individuals": {
+    "attribut_label": "Nb. individus",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "nb_visits": {
+    "attribut_label": "Nb. visites",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "types_site": {
+    "api": "monitorings/modules/ecrevisses_pattes_blanches/types_sites",
+    "application": "GeoNature",
+    "attribut_label": "Type(s) de site",
+    "definition": "Permet de n'avoir que les types de site lié au module",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "nullDefault": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_base_site": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "M",
+  "geom_field_name": "geom",
+  "geometry_type": "Point",
+  "id_field_name": "id_base_site",
+  "id_table_location": 2,
+  "label": "Site",
+  "label_list": "Sites",
+  "map_label_field_name": "base_site_code",
+  "parent_types": [
+   "module"
+  ],
+  "properties_keys": [
+   "id_base_site",
+   "base_site_code",
+   "base_site_name",
+   "base_site_description",
+   "id_inventor",
+   "id_digitiser",
+   "first_use_date",
+   "last_visit",
+   "nb_visits",
+   "nb_individuals",
+   "uuid_base_site",
+   "medias",
+   "altitude_min",
+   "altitude_max",
+   "types_site",
+   "id_nomenclature_type_site",
+   "bassin_versant",
+   "sous_bassin_versant"
+  ],
+  "sorts": [
+   {
+    "dir": "asc",
+    "prop": "base_site_name"
+   }
+  ],
+  "specific": {
+   "bassin_versant": {
+    "attribut_label": "Bassin versant",
+    "type_widget": "select",
+    "values": [
+     "ADG",
+     "LB",
+     "RMC"
+    ]
+   },
+   "id_nomenclature_type_site": {
+    "attribut_label": "Type site",
+    "hidden": true,
+    "type_util": "nomenclature",
+    "type_widget": "text",
+    "value": {
+     "cd_nomenclature": "PT_ECREVISSES",
+     "code_nomenclature_type": "TYPE_SITE"
+    }
+   },
+   "sous_bassin_versant": {
+    "attribut_label": "Sous bassin versant",
+    "type_widget": "select",
+    "values": [
+     "LOT",
+     "CHA",
+     "GALEIZON",
+     "GARD",
+     "TARN",
+     "GARD_AL",
+     "CEZE_LU",
+     "ALLIER",
+     "BES",
+     "TRU"
+    ]
+   }
+  },
+  "types_site": {
+   "998": {
+    "name": "Site ecrevisses"
+   }
+  },
+  "uuid_field_name": "uuid_base_site"
+ },
+ "tree": {
+  "module": {
+   "site": {
+    "visit": {
+     "observation": null
+    }
+   }
+  }
+ },
+ "visit": {
+  "chain_show": [
+   "visit_date_min",
+   "id_base_site"
+  ],
+  "chained": true,
+  "children_types": [
+   "observation"
+  ],
+  "description_field_name": "visit_date_min",
+  "display_form": [],
+  "display_list": [
+   "id_base_site",
+   "visit_date_min",
+   "observers"
+  ],
+  "display_properties": [
+   "id_base_site",
+   "id_dataset",
+   "observers",
+   "participants_nom",
+   "organisme",
+   "visit_date_min",
+   "time_start",
+   "time_end",
+   "periode",
+   "lineaire_prospection",
+   "conditions_d_observation",
+   "technique",
+   "largeur_du_cours_d_eau_m",
+   "ripisylve",
+   "substrats_majoritaires",
+   "habitats_aquatiques",
+   "colmatage",
+   "remarques_normalisees",
+   "lineaire_assec_m",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "comments": {
+    "attribut_label": "Commentaires",
+    "type_widget": "text"
+   },
+   "id_base_site": {
+    "attribut_label": "ID SITE",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_base_visit": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_dataset": {
+    "attribut_label": "Jeu de données",
+    "creatable_in_module": "ecrevisses_pattes_blanches.MONITORINGS_VISITES",
+    "hidden": "({meta}) => meta.dataset && Object.keys(meta.dataset).length == 1",
+    "module_code": "ecrevisses_pattes_blanches",
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_module": {
+    "attribut_label": "ID Module",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_visits",
+    "type_widget": "medias"
+   },
+   "nb_observations": {
+    "attribut_label": "Nombre d'observations",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "observers": {
+    "attribut_label": "Observateur",
+    "code_list": 1,
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "observers_txt": {
+    "attribut_label": "Observateur(s) (extérieur)",
+    "hidden": true,
+    "required": false,
+    "type_widget": "observers-text"
+   },
+   "uuid_base_visit": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   },
+   "visit_date_max": {
+    "attribut_label": "Date (max)",
+    "hidden": true,
+    "type_widget": "date"
+   },
+   "visit_date_min": {
+    "attribut_label": "Date",
+    "required": true,
+    "type_widget": "date"
+   }
+  },
+  "genre": "F",
+  "id_field_name": "id_base_visit",
+  "id_table_location": 3,
+  "keep": [
+   "visit_date_min",
+   "observers",
+   "id_dataset",
+   "comment"
+  ],
+  "label": "Visite",
+  "label_list": "Visites",
+  "map_label_field_name": "base_site_code",
+  "parent_types": [
+   "site"
+  ],
+  "properties_keys": [
+   "id_base_visit",
+   "id_base_site",
+   "id_module",
+   "observers",
+   "observers_txt",
+   "id_digitiser",
+   "visit_date_min",
+   "visit_date_max",
+   "comments",
+   "uuid_base_visit",
+   "id_dataset",
+   "nb_observations",
+   "medias",
+   "time_start",
+   "time_end",
+   "periode",
+   "lineaire_prospection",
+   "participants_nom",
+   "organisme",
+   "conditions_d_observation",
+   "technique",
+   "ripisylve",
+   "substrats_majoritaires",
+   "habitats_aquatiques",
+   "colmatage",
+   "largeur_du_cours_d_eau_m",
+   "remarques_normalisees",
+   "lineaire_assec_m"
+  ],
+  "sorts": [
+   {
+    "dir": "desc",
+    "prop": "visit_date_min"
+   }
+  ],
+  "specific": {
+   "colmatage": {
+    "attribut_label": "Colmatage",
+    "required": true,
+    "type_widget": "radio",
+    "value": "non",
+    "values": [
+     "oui",
+     "non"
+    ]
+   },
+   "conditions_d_observation": {
+    "attribut_label": "Conditions d'observation",
+    "type_widget": "select",
+    "values": [
+     "Bonnes",
+     "Moyennes",
+     "Mauvaises"
+    ]
+   },
+   "habitats_aquatiques": {
+    "attribut_label": "Habitats aquatiques",
+    "multi_select": true,
+    "multiple": true,
+    "type_widget": "multiselect",
+    "values": [
+     "Sous berges",
+     "Chevelu racinaire",
+     "Embacle branchage",
+     "Blocs",
+     "Vegetation aquatique",
+     "Litière"
+    ]
+   },
+   "largeur_du_cours_d_eau_m": {
+    "attribut_label": "Largeur moyenne du cours d'eau (m)",
+    "type_widget": "number"
+   },
+   "lineaire_assec_m": {
+    "attribut_label": "Lineaire assec (m)",
+    "required": true,
+    "type_widget": "text"
+   },
+   "lineaire_prospection": {
+    "attribut_label": "Lineaire prospection (m)",
+    "required": true,
+    "type_widget": "number"
+   },
+   "organisme": {
+    "attribut_label": "Organisme",
+    "type_widget": "text"
+   },
+   "participants_nom": {
+    "attribut_label": "Observateurs extérieurs (NOM prénom)",
+    "type_widget": "text"
+   },
+   "periode": {
+    "attribut_label": "Période",
+    "type_widget": "select",
+    "values": [
+     "Nocturne",
+     "Diurne"
+    ]
+   },
+   "remarques_normalisees": {
+    "attribut_label": "Remarques normalisées",
+    "type_widget": "text"
+   },
+   "ripisylve": {
+    "attribut_label": "Ripisylve",
+    "required": true,
+    "type_widget": "radio",
+    "value": "non",
+    "values": [
+     "continue",
+     "discontinue",
+     "abscence"
+    ]
+   },
+   "substrats_majoritaires": {
+    "attribut_label": "Substrats majoritaires",
+    "multi_select": true,
+    "multiple": true,
+    "type_widget": "multiselect",
+    "values": [
+     "Limon sable",
+     "Graviers (2.5-25mm)",
+     "Pierre galets (25-250mm)",
+     "Blocs (>250mm)",
+     "Dalle"
+    ]
+   },
+   "technique": {
+    "attribut_label": "Technique",
+    "type_widget": "select",
+    "values": [
+     "Pêche sondage",
+     "Visuelle",
+     "Nasses"
+    ]
+   },
+   "time_end": {
+    "attribut_label": "Heure de fin",
+    "type_widget": "time"
+   },
+   "time_start": {
+    "attribut_label": "Heure de début",
+    "type_widget": "time"
+   }
+  },
+  "uuid_field_name": "uuid_base_visit"
+ }
+}
