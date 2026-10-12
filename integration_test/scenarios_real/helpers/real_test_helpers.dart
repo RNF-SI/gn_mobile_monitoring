@@ -976,39 +976,18 @@ class RealTestHelpers {
     await tester.tap(sendButton);
     await pumpFor(tester, const Duration(seconds: 2));
 
-    // Module selector multi-modules : tout cocher si la UI le permet,
-    // sinon choisir le premier item.
-    if (find.text('Sélectionner un module').evaluate().isNotEmpty) {
-      // Essayer de tout cocher via un bouton "Tout selectionner" s'il existe
-      final selectAll = find.text('Tout sélectionner');
-      if (selectAll.evaluate().isNotEmpty) {
-        await tester.tap(selectAll.first);
-        await pumpFor(tester, const Duration(seconds: 1));
-      } else {
-        // Fallback : cocher chaque checkbox visible
-        final checkboxes = find.byType(Checkbox);
-        for (var i = 0; i < checkboxes.evaluate().length; i++) {
-          await tester.tap(checkboxes.at(i));
-          await pumpFor(tester, const Duration(milliseconds: 300));
-        }
-        if (checkboxes.evaluate().isEmpty) {
-          // Pas de checkbox → fallback premier ListTile
-          final listTiles = find.byType(ListTile);
-          if (listTiles.evaluate().isNotEmpty) {
-            await tester.tap(listTiles.first);
-            await pumpFor(tester, const Duration(seconds: 1));
-          }
-        }
+    // Plusieurs modules : l'app demande lequel téléverser (un à la fois).
+    // On prend le premier module qui a des saisies en attente.
+    if (find.text('Choisir un module à téléverser').evaluate().isNotEmpty) {
+      final pending = find.ancestor(
+        of: find.text('Saisies à téléverser'),
+        matching: find.byType(ListTile),
+      );
+      if (pending.evaluate().isEmpty) {
+        fail('Choix du module : aucun module avec des saisies à téléverser');
       }
-      // Valider la selection
-      for (final btnText in ['Envoyer', 'Valider', 'OK']) {
-        final btn = find.widgetWithText(ElevatedButton, btnText);
-        if (btn.evaluate().isNotEmpty) {
-          await tester.tap(btn.first);
-          await pumpFor(tester, const Duration(seconds: 2));
-          break;
-        }
-      }
+      await tester.tap(pending.first);
+      await pumpFor(tester, const Duration(seconds: 2));
     }
 
     await waitForSyncToFinish(
