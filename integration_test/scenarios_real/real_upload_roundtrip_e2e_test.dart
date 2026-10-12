@@ -138,7 +138,16 @@ void main() {
       final r = await dio.get('/monitorings/object/$moduleCode/visit/$idVisit',
           queryParameters: {'depth': 1});
       props = Map<String, dynamic>.from(r.data['properties'] as Map);
-      observations = ((r.data['children'] ?? {})['observation'] ?? []) as List;
+      // Les enfants sont abrégés (sans commentaires) : relire chaque
+      // observation en entier.
+      final children =
+          ((r.data['children'] ?? {})['observation'] ?? []) as List;
+      observations = [
+        for (final child in children)
+          (await dio.get(
+                  '/monitorings/object/$moduleCode/observation/${child['id']}'))
+              .data
+      ];
     }
 
     Object? field(Map m, String key) => m[key] ?? (m['data'] as Map?)?[key];
