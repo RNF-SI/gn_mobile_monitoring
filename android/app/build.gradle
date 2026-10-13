@@ -5,8 +5,16 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+// Clé de publication : chemin et mots de passe dans android/key.properties
+// (jamais commité, cf. android/.gitignore). Modèle : key.properties.example.
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
+}
+
 android {
-    namespace = "com.example.gn_mobile_monitoring"
+    namespace = "org.reserves_naturelles.monitoring"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,8 +28,9 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.gn_mobile_monitoring"
+        // Identifiant définitif depuis la v1.2.0 (avant : com.example.gn_mobile_monitoring,
+        // signé avec une clé de debug perdue) : la v1.2.0 s'installe à côté de la v1.1.1.
+        applicationId = "org.reserves_naturelles.monitoring"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -30,15 +39,36 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile = file(keystoreProperties["storeFile"])
+                storePassword = keystoreProperties["storePassword"]
+                keyAlias = keystoreProperties["keyAlias"]
+                keyPassword = keystoreProperties["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.debug
+            // Toujours la clé de publication : une version publiée signée avec
+            // une autre clé ne pourrait plus être mise à jour chez les utilisateurs.
+            signingConfig = signingConfigs.release
         }
     }
 }
 
 flutter {
     source = "../.."
+}
+
+// Échouer clairement plutôt que produire un APK de publication non signé.
+gradle.taskGraph.whenReady { graph ->
+    def releaseTask = graph.allTasks.any { it.name.toLowerCase().contains("release") && it.project == project }
+    if (releaseTask && !keystorePropertiesFile.exists()) {
+        throw new GradleException(
+            "android/key.properties introuvable : la version de publication doit être signée " +
+            "avec la clé de publication (voir android/key.properties.example).")
+    }
 }
