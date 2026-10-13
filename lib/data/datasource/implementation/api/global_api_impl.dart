@@ -423,43 +423,6 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getNomenclatureTypes() async {
-    try {
-      final response =
-          await dio.get('/nomenclatures/nomenclature_types');
-
-      if (response.statusCode == 200) {
-        final items = response.data as List<dynamic>;
-        return items.map((item) => item as Map<String, dynamic>).toList();
-      } else {
-        throw Exception(
-            'Failed to fetch nomenclature types. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching nomenclature types: $e');
-    }
-  }
-
-  @override
-  Future<Map<String, dynamic>> getNomenclatureTypeByMnemonique(
-      String mnemonique) async {
-    try {
-      final response = await dio
-          .get('/nomenclatures/nomenclature_types/$mnemonique');
-
-      if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception(
-            'Failed to fetch nomenclature type with mnemonique $mnemonique. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception(
-          'Error fetching nomenclature type with mnemonique $mnemonique: $e');
-    }
-  }
-
-  @override
   Future<bool> checkConnectivity() async {
     try {
       // Vérifier la connectivité réseau
