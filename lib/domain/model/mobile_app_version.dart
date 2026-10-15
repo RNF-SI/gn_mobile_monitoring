@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'mobile_app_version.freezed.dart';
 
 @freezed
-class MobileAppVersion with _$MobileAppVersion {
+abstract class MobileAppVersion with _$MobileAppVersion {
   const factory MobileAppVersion({
     required int idMobileApp,
     required String appCode,

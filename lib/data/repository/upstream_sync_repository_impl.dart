@@ -197,13 +197,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += observationsResult.itemsAdded;
             itemsUpdated += observationsResult.itemsUpdated;
             itemsSkipped += observationsResult.itemsSkipped;
-            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            itemsDeleted += observationsResult.itemsDeleted;
             
             // Accumuler les statistiques détaillées pour les observations
             totalObservationsAdded += observationsResult.itemsAdded;
-            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            totalObservationsDeleted += observationsResult.itemsDeleted;
             
-            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted} supprimées', tag: 'sync');
             
             // Vérifier si les observations ont réussi
             if (!observationsResult.success) {
@@ -468,13 +468,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += observationsResult.itemsAdded;
             itemsUpdated += observationsResult.itemsUpdated;
             itemsSkipped += observationsResult.itemsSkipped;
-            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            itemsDeleted += observationsResult.itemsDeleted;
             
             // Accumuler les statistiques détaillées pour les observations
             totalObservationsAdded += observationsResult.itemsAdded;
-            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            totalObservationsDeleted += observationsResult.itemsDeleted;
             
-            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted} supprimées', tag: 'sync');
             
             if (observationsResult.success) {
               // Si les observations ont réussi, supprimer la visite localement
@@ -778,9 +778,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += detailsResult.itemsAdded;
             itemsUpdated += detailsResult.itemsUpdated;
             itemsSkipped += detailsResult.itemsSkipped;
-            itemsDeleted += detailsResult.itemsDeleted ?? 0;
+            itemsDeleted += detailsResult.itemsDeleted;
             
-            _logger.i('Stats détails: +${detailsResult.itemsAdded} ajoutés, +${detailsResult.itemsUpdated} mis à jour, +${detailsResult.itemsSkipped} ignorés, +${detailsResult.itemsDeleted ?? 0} supprimés', tag: 'sync');
+            _logger.i('Stats détails: +${detailsResult.itemsAdded} ajoutés, +${detailsResult.itemsUpdated} mis à jour, +${detailsResult.itemsSkipped} ignorés, +${detailsResult.itemsDeleted} supprimés', tag: 'sync');
 
             // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
             if (!detailsResult.success && detailsResult.errorMessage != null) {

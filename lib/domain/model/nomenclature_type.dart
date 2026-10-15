@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'nomenclature_type.freezed.dart';
 
 @freezed
-class NomenclatureType with _$NomenclatureType {
+abstract class NomenclatureType with _$NomenclatureType {
   const factory NomenclatureType({
     required int idType,
     String? mnemonique,

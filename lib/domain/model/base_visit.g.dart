@@ -6,29 +6,28 @@ part of 'base_visit.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$BaseVisitImpl _$$BaseVisitImplFromJson(Map<String, dynamic> json) =>
-    _$BaseVisitImpl(
-      idBaseVisit: (json['idBaseVisit'] as num).toInt(),
-      idBaseSite: (json['idBaseSite'] as num?)?.toInt(),
-      idDataset: (json['idDataset'] as num).toInt(),
-      idModule: (json['idModule'] as num).toInt(),
-      idDigitiser: (json['idDigitiser'] as num?)?.toInt(),
-      visitDateMin: json['visitDateMin'] as String,
-      visitDateMax: json['visitDateMax'] as String?,
-      idNomenclatureTechCollectCampanule:
-          (json['idNomenclatureTechCollectCampanule'] as num?)?.toInt(),
-      idNomenclatureGrpTyp: (json['idNomenclatureGrpTyp'] as num?)?.toInt(),
-      comments: json['comments'] as String?,
-      uuidBaseVisit: json['uuidBaseVisit'] as String?,
-      metaCreateDate: json['metaCreateDate'] as String?,
-      metaUpdateDate: json['metaUpdateDate'] as String?,
-      observers: (json['observers'] as List<dynamic>?)
-          ?.map((e) => (e as num).toInt())
-          .toList(),
-      data: json['data'] as Map<String, dynamic>?,
-    );
+_BaseVisit _$BaseVisitFromJson(Map<String, dynamic> json) => _BaseVisit(
+  idBaseVisit: (json['idBaseVisit'] as num).toInt(),
+  idBaseSite: (json['idBaseSite'] as num?)?.toInt(),
+  idDataset: (json['idDataset'] as num).toInt(),
+  idModule: (json['idModule'] as num).toInt(),
+  idDigitiser: (json['idDigitiser'] as num?)?.toInt(),
+  visitDateMin: json['visitDateMin'] as String,
+  visitDateMax: json['visitDateMax'] as String?,
+  idNomenclatureTechCollectCampanule:
+      (json['idNomenclatureTechCollectCampanule'] as num?)?.toInt(),
+  idNomenclatureGrpTyp: (json['idNomenclatureGrpTyp'] as num?)?.toInt(),
+  comments: json['comments'] as String?,
+  uuidBaseVisit: json['uuidBaseVisit'] as String?,
+  metaCreateDate: json['metaCreateDate'] as String?,
+  metaUpdateDate: json['metaUpdateDate'] as String?,
+  observers: (json['observers'] as List<dynamic>?)
+      ?.map((e) => (e as num).toInt())
+      .toList(),
+  data: json['data'] as Map<String, dynamic>?,
+);
 
-Map<String, dynamic> _$$BaseVisitImplToJson(_$BaseVisitImpl instance) =>
+Map<String, dynamic> _$BaseVisitToJson(_BaseVisit instance) =>
     <String, dynamic>{
       'idBaseVisit': instance.idBaseVisit,
       'idBaseSite': instance.idBaseSite,

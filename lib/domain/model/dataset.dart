@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'dataset.freezed.dart';
 
 @freezed
-class Dataset with _$Dataset {
+abstract class Dataset with _$Dataset {
   const factory Dataset({
     required int id, // idDataset
     required String uniqueDatasetId, // UUID

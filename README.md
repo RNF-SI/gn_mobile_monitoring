@@ -64,7 +64,7 @@ flutter run
 
 ## 🛠️ Développement
 
-L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
+L'application utilise Flutter 3.47.7 (Dart 3.13.5) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
 
 ### Documentation
 - [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations

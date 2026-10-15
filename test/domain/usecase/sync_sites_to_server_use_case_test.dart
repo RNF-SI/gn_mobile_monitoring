@@ -13,6 +13,17 @@ void main() {
   late SyncSitesToServerUseCase useCase;
   late MockUpstreamSyncRepository mockUpstreamSyncRepository;
 
+  setUpAll(() {
+    // SyncResult est une union sealed : Mockito ne peut pas en générer un
+    // faux automatiquement.
+    provideDummy<SyncResult>(SyncResult.success(
+      itemsProcessed: 0,
+      itemsAdded: 0,
+      itemsUpdated: 0,
+      itemsSkipped: 0,
+    ));
+  });
+
   setUp(() {
     mockUpstreamSyncRepository = MockUpstreamSyncRepository();
     useCase = SyncSitesToServerUseCaseImpl(mockUpstreamSyncRepository);

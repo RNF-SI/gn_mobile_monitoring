@@ -4,7 +4,7 @@ import 'package:gn_mobile_monitoring/presentation/model/module_info.dart';
 part 'module_info_list.freezed.dart';
 
 @freezed
-class ModuleInfoList with _$ModuleInfoList {
+abstract class ModuleInfoList with _$ModuleInfoList {
   const factory ModuleInfoList({required List<ModuleInfo> values}) =
       _ModuleInfoList;
 

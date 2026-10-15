@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,601 +9,363 @@ part of 'module.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
 /// @nodoc
 mixin _$Module {
-  int get id => throw _privateConstructorUsedError;
-  String? get moduleCode => throw _privateConstructorUsedError;
-  String? get moduleLabel => throw _privateConstructorUsedError;
-  String? get modulePicto => throw _privateConstructorUsedError;
-  String? get moduleDesc => throw _privateConstructorUsedError;
-  String? get moduleGroup => throw _privateConstructorUsedError;
-  String? get modulePath => throw _privateConstructorUsedError;
-  String? get moduleExternalUrl => throw _privateConstructorUsedError;
-  String? get moduleTarget => throw _privateConstructorUsedError;
-  String? get moduleComment => throw _privateConstructorUsedError;
-  bool? get activeFrontend => throw _privateConstructorUsedError;
-  bool? get activeBackend => throw _privateConstructorUsedError;
-  String? get moduleDocUrl => throw _privateConstructorUsedError;
-  int? get moduleOrder => throw _privateConstructorUsedError;
-  String? get ngModule => throw _privateConstructorUsedError;
-  DateTime? get metaCreateDate => throw _privateConstructorUsedError;
-  DateTime? get metaUpdateDate => throw _privateConstructorUsedError;
-  bool? get downloaded => throw _privateConstructorUsedError;
-  ModuleComplement? get complement => throw _privateConstructorUsedError;
-  List<SiteGroup>? get sitesGroup => throw _privateConstructorUsedError;
-  List<BaseSite>? get sites => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
-  $ModuleCopyWith<Module> get copyWith => throw _privateConstructorUsedError;
+ int get id; String? get moduleCode; String? get moduleLabel; String? get modulePicto; String? get moduleDesc; String? get moduleGroup; String? get modulePath; String? get moduleExternalUrl; String? get moduleTarget; String? get moduleComment; bool? get activeFrontend; bool? get activeBackend; String? get moduleDocUrl; int? get moduleOrder; String? get ngModule; DateTime? get metaCreateDate; DateTime? get metaUpdateDate; bool? get downloaded; ModuleComplement? get complement; List<SiteGroup>? get sitesGroup; List<BaseSite>? get sites;
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$ModuleCopyWith<Module> get copyWith => _$ModuleCopyWithImpl<Module>(this as Module, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is Module&&(identical(other.id, id) || other.id == id)&&(identical(other.moduleCode, moduleCode) || other.moduleCode == moduleCode)&&(identical(other.moduleLabel, moduleLabel) || other.moduleLabel == moduleLabel)&&(identical(other.modulePicto, modulePicto) || other.modulePicto == modulePicto)&&(identical(other.moduleDesc, moduleDesc) || other.moduleDesc == moduleDesc)&&(identical(other.moduleGroup, moduleGroup) || other.moduleGroup == moduleGroup)&&(identical(other.modulePath, modulePath) || other.modulePath == modulePath)&&(identical(other.moduleExternalUrl, moduleExternalUrl) || other.moduleExternalUrl == moduleExternalUrl)&&(identical(other.moduleTarget, moduleTarget) || other.moduleTarget == moduleTarget)&&(identical(other.moduleComment, moduleComment) || other.moduleComment == moduleComment)&&(identical(other.activeFrontend, activeFrontend) || other.activeFrontend == activeFrontend)&&(identical(other.activeBackend, activeBackend) || other.activeBackend == activeBackend)&&(identical(other.moduleDocUrl, moduleDocUrl) || other.moduleDocUrl == moduleDocUrl)&&(identical(other.moduleOrder, moduleOrder) || other.moduleOrder == moduleOrder)&&(identical(other.ngModule, ngModule) || other.ngModule == ngModule)&&(identical(other.metaCreateDate, metaCreateDate) || other.metaCreateDate == metaCreateDate)&&(identical(other.metaUpdateDate, metaUpdateDate) || other.metaUpdateDate == metaUpdateDate)&&(identical(other.downloaded, downloaded) || other.downloaded == downloaded)&&(identical(other.complement, complement) || other.complement == complement)&&const DeepCollectionEquality().equals(other.sitesGroup, sitesGroup)&&const DeepCollectionEquality().equals(other.sites, sites));
+}
+
+
+@override
+int get hashCode => Object.hashAll([runtimeType,id,moduleCode,moduleLabel,modulePicto,moduleDesc,moduleGroup,modulePath,moduleExternalUrl,moduleTarget,moduleComment,activeFrontend,activeBackend,moduleDocUrl,moduleOrder,ngModule,metaCreateDate,metaUpdateDate,downloaded,complement,const DeepCollectionEquality().hash(sitesGroup),const DeepCollectionEquality().hash(sites)]);
+
+@override
+String toString() {
+  return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $ModuleCopyWith<$Res> {
-  factory $ModuleCopyWith(Module value, $Res Function(Module) then) =
-      _$ModuleCopyWithImpl<$Res, Module>;
-  @useResult
-  $Res call(
-      {int id,
-      String? moduleCode,
-      String? moduleLabel,
-      String? modulePicto,
-      String? moduleDesc,
-      String? moduleGroup,
-      String? modulePath,
-      String? moduleExternalUrl,
-      String? moduleTarget,
-      String? moduleComment,
-      bool? activeFrontend,
-      bool? activeBackend,
-      String? moduleDocUrl,
-      int? moduleOrder,
-      String? ngModule,
-      DateTime? metaCreateDate,
-      DateTime? metaUpdateDate,
-      bool? downloaded,
-      ModuleComplement? complement,
-      List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
+abstract mixin class $ModuleCopyWith<$Res>  {
+  factory $ModuleCopyWith(Module value, $Res Function(Module) _then) = _$ModuleCopyWithImpl;
+@useResult
+$Res call({
+ int id, String? moduleCode, String? moduleLabel, String? modulePicto, String? moduleDesc, String? moduleGroup, String? modulePath, String? moduleExternalUrl, String? moduleTarget, String? moduleComment, bool? activeFrontend, bool? activeBackend, String? moduleDocUrl, int? moduleOrder, String? ngModule, DateTime? metaCreateDate, DateTime? metaUpdateDate, bool? downloaded, ModuleComplement? complement, List<SiteGroup>? sitesGroup, List<BaseSite>? sites
+});
 
-  $ModuleComplementCopyWith<$Res>? get complement;
+
+$ModuleComplementCopyWith<$Res>? get complement;
+
 }
-
 /// @nodoc
-class _$ModuleCopyWithImpl<$Res, $Val extends Module>
+class _$ModuleCopyWithImpl<$Res>
     implements $ModuleCopyWith<$Res> {
-  _$ModuleCopyWithImpl(this._value, this._then);
+  _$ModuleCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final Module _self;
+  final $Res Function(Module) _then;
 
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? moduleCode = freezed,
-    Object? moduleLabel = freezed,
-    Object? modulePicto = freezed,
-    Object? moduleDesc = freezed,
-    Object? moduleGroup = freezed,
-    Object? modulePath = freezed,
-    Object? moduleExternalUrl = freezed,
-    Object? moduleTarget = freezed,
-    Object? moduleComment = freezed,
-    Object? activeFrontend = freezed,
-    Object? activeBackend = freezed,
-    Object? moduleDocUrl = freezed,
-    Object? moduleOrder = freezed,
-    Object? ngModule = freezed,
-    Object? metaCreateDate = freezed,
-    Object? metaUpdateDate = freezed,
-    Object? downloaded = freezed,
-    Object? complement = freezed,
-    Object? sitesGroup = freezed,
-    Object? sites = freezed,
-  }) {
-    return _then(_value.copyWith(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      moduleCode: freezed == moduleCode
-          ? _value.moduleCode
-          : moduleCode // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleLabel: freezed == moduleLabel
-          ? _value.moduleLabel
-          : moduleLabel // ignore: cast_nullable_to_non_nullable
-              as String?,
-      modulePicto: freezed == modulePicto
-          ? _value.modulePicto
-          : modulePicto // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleDesc: freezed == moduleDesc
-          ? _value.moduleDesc
-          : moduleDesc // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleGroup: freezed == moduleGroup
-          ? _value.moduleGroup
-          : moduleGroup // ignore: cast_nullable_to_non_nullable
-              as String?,
-      modulePath: freezed == modulePath
-          ? _value.modulePath
-          : modulePath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleExternalUrl: freezed == moduleExternalUrl
-          ? _value.moduleExternalUrl
-          : moduleExternalUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleTarget: freezed == moduleTarget
-          ? _value.moduleTarget
-          : moduleTarget // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleComment: freezed == moduleComment
-          ? _value.moduleComment
-          : moduleComment // ignore: cast_nullable_to_non_nullable
-              as String?,
-      activeFrontend: freezed == activeFrontend
-          ? _value.activeFrontend
-          : activeFrontend // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      activeBackend: freezed == activeBackend
-          ? _value.activeBackend
-          : activeBackend // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      moduleDocUrl: freezed == moduleDocUrl
-          ? _value.moduleDocUrl
-          : moduleDocUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleOrder: freezed == moduleOrder
-          ? _value.moduleOrder
-          : moduleOrder // ignore: cast_nullable_to_non_nullable
-              as int?,
-      ngModule: freezed == ngModule
-          ? _value.ngModule
-          : ngModule // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metaCreateDate: freezed == metaCreateDate
-          ? _value.metaCreateDate
-          : metaCreateDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metaUpdateDate: freezed == metaUpdateDate
-          ? _value.metaUpdateDate
-          : metaUpdateDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      downloaded: freezed == downloaded
-          ? _value.downloaded
-          : downloaded // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      complement: freezed == complement
-          ? _value.complement
-          : complement // ignore: cast_nullable_to_non_nullable
-              as ModuleComplement?,
-      sitesGroup: freezed == sitesGroup
-          ? _value.sitesGroup
-          : sitesGroup // ignore: cast_nullable_to_non_nullable
-              as List<SiteGroup>?,
-      sites: freezed == sites
-          ? _value.sites
-          : sites // ignore: cast_nullable_to_non_nullable
-              as List<BaseSite>?,
-    ) as $Val);
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? moduleCode = freezed,Object? moduleLabel = freezed,Object? modulePicto = freezed,Object? moduleDesc = freezed,Object? moduleGroup = freezed,Object? modulePath = freezed,Object? moduleExternalUrl = freezed,Object? moduleTarget = freezed,Object? moduleComment = freezed,Object? activeFrontend = freezed,Object? activeBackend = freezed,Object? moduleDocUrl = freezed,Object? moduleOrder = freezed,Object? ngModule = freezed,Object? metaCreateDate = freezed,Object? metaUpdateDate = freezed,Object? downloaded = freezed,Object? complement = freezed,Object? sitesGroup = freezed,Object? sites = freezed,}) {
+  return _then(_self.copyWith(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,moduleCode: freezed == moduleCode ? _self.moduleCode : moduleCode // ignore: cast_nullable_to_non_nullable
+as String?,moduleLabel: freezed == moduleLabel ? _self.moduleLabel : moduleLabel // ignore: cast_nullable_to_non_nullable
+as String?,modulePicto: freezed == modulePicto ? _self.modulePicto : modulePicto // ignore: cast_nullable_to_non_nullable
+as String?,moduleDesc: freezed == moduleDesc ? _self.moduleDesc : moduleDesc // ignore: cast_nullable_to_non_nullable
+as String?,moduleGroup: freezed == moduleGroup ? _self.moduleGroup : moduleGroup // ignore: cast_nullable_to_non_nullable
+as String?,modulePath: freezed == modulePath ? _self.modulePath : modulePath // ignore: cast_nullable_to_non_nullable
+as String?,moduleExternalUrl: freezed == moduleExternalUrl ? _self.moduleExternalUrl : moduleExternalUrl // ignore: cast_nullable_to_non_nullable
+as String?,moduleTarget: freezed == moduleTarget ? _self.moduleTarget : moduleTarget // ignore: cast_nullable_to_non_nullable
+as String?,moduleComment: freezed == moduleComment ? _self.moduleComment : moduleComment // ignore: cast_nullable_to_non_nullable
+as String?,activeFrontend: freezed == activeFrontend ? _self.activeFrontend : activeFrontend // ignore: cast_nullable_to_non_nullable
+as bool?,activeBackend: freezed == activeBackend ? _self.activeBackend : activeBackend // ignore: cast_nullable_to_non_nullable
+as bool?,moduleDocUrl: freezed == moduleDocUrl ? _self.moduleDocUrl : moduleDocUrl // ignore: cast_nullable_to_non_nullable
+as String?,moduleOrder: freezed == moduleOrder ? _self.moduleOrder : moduleOrder // ignore: cast_nullable_to_non_nullable
+as int?,ngModule: freezed == ngModule ? _self.ngModule : ngModule // ignore: cast_nullable_to_non_nullable
+as String?,metaCreateDate: freezed == metaCreateDate ? _self.metaCreateDate : metaCreateDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,metaUpdateDate: freezed == metaUpdateDate ? _self.metaUpdateDate : metaUpdateDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,downloaded: freezed == downloaded ? _self.downloaded : downloaded // ignore: cast_nullable_to_non_nullable
+as bool?,complement: freezed == complement ? _self.complement : complement // ignore: cast_nullable_to_non_nullable
+as ModuleComplement?,sitesGroup: freezed == sitesGroup ? _self.sitesGroup : sitesGroup // ignore: cast_nullable_to_non_nullable
+as List<SiteGroup>?,sites: freezed == sites ? _self.sites : sites // ignore: cast_nullable_to_non_nullable
+as List<BaseSite>?,
+  ));
+}
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ModuleComplementCopyWith<$Res>? get complement {
+    if (_self.complement == null) {
+    return null;
   }
 
-  @override
-  @pragma('vm:prefer-inline')
-  $ModuleComplementCopyWith<$Res>? get complement {
-    if (_value.complement == null) {
-      return null;
-    }
-
-    return $ModuleComplementCopyWith<$Res>(_value.complement!, (value) {
-      return _then(_value.copyWith(complement: value) as $Val);
-    });
-  }
+  return $ModuleComplementCopyWith<$Res>(_self.complement!, (value) {
+    return _then(_self.copyWith(complement: value));
+  });
+}
 }
 
-/// @nodoc
-abstract class _$$ModuleImplCopyWith<$Res> implements $ModuleCopyWith<$Res> {
-  factory _$$ModuleImplCopyWith(
-          _$ModuleImpl value, $Res Function(_$ModuleImpl) then) =
-      __$$ModuleImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call(
-      {int id,
-      String? moduleCode,
-      String? moduleLabel,
-      String? modulePicto,
-      String? moduleDesc,
-      String? moduleGroup,
-      String? modulePath,
-      String? moduleExternalUrl,
-      String? moduleTarget,
-      String? moduleComment,
-      bool? activeFrontend,
-      bool? activeBackend,
-      String? moduleDocUrl,
-      int? moduleOrder,
-      String? ngModule,
-      DateTime? metaCreateDate,
-      DateTime? metaUpdateDate,
-      bool? downloaded,
-      ModuleComplement? complement,
-      List<SiteGroup>? sitesGroup,
-      List<BaseSite>? sites});
 
-  @override
-  $ModuleComplementCopyWith<$Res>? get complement;
+/// Adds pattern-matching-related methods to [Module].
+extension ModulePatterns on Module {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _Module value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _Module() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _Module value)  $default,){
+final _that = this;
+switch (_that) {
+case _Module():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _Module value)?  $default,){
+final _that = this;
+switch (_that) {
+case _Module() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int id,  String? moduleCode,  String? moduleLabel,  String? modulePicto,  String? moduleDesc,  String? moduleGroup,  String? modulePath,  String? moduleExternalUrl,  String? moduleTarget,  String? moduleComment,  bool? activeFrontend,  bool? activeBackend,  String? moduleDocUrl,  int? moduleOrder,  String? ngModule,  DateTime? metaCreateDate,  DateTime? metaUpdateDate,  bool? downloaded,  ModuleComplement? complement,  List<SiteGroup>? sitesGroup,  List<BaseSite>? sites)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _Module() when $default != null:
+return $default(_that.id,_that.moduleCode,_that.moduleLabel,_that.modulePicto,_that.moduleDesc,_that.moduleGroup,_that.modulePath,_that.moduleExternalUrl,_that.moduleTarget,_that.moduleComment,_that.activeFrontend,_that.activeBackend,_that.moduleDocUrl,_that.moduleOrder,_that.ngModule,_that.metaCreateDate,_that.metaUpdateDate,_that.downloaded,_that.complement,_that.sitesGroup,_that.sites);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int id,  String? moduleCode,  String? moduleLabel,  String? modulePicto,  String? moduleDesc,  String? moduleGroup,  String? modulePath,  String? moduleExternalUrl,  String? moduleTarget,  String? moduleComment,  bool? activeFrontend,  bool? activeBackend,  String? moduleDocUrl,  int? moduleOrder,  String? ngModule,  DateTime? metaCreateDate,  DateTime? metaUpdateDate,  bool? downloaded,  ModuleComplement? complement,  List<SiteGroup>? sitesGroup,  List<BaseSite>? sites)  $default,) {final _that = this;
+switch (_that) {
+case _Module():
+return $default(_that.id,_that.moduleCode,_that.moduleLabel,_that.modulePicto,_that.moduleDesc,_that.moduleGroup,_that.modulePath,_that.moduleExternalUrl,_that.moduleTarget,_that.moduleComment,_that.activeFrontend,_that.activeBackend,_that.moduleDocUrl,_that.moduleOrder,_that.ngModule,_that.metaCreateDate,_that.metaUpdateDate,_that.downloaded,_that.complement,_that.sitesGroup,_that.sites);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int id,  String? moduleCode,  String? moduleLabel,  String? modulePicto,  String? moduleDesc,  String? moduleGroup,  String? modulePath,  String? moduleExternalUrl,  String? moduleTarget,  String? moduleComment,  bool? activeFrontend,  bool? activeBackend,  String? moduleDocUrl,  int? moduleOrder,  String? ngModule,  DateTime? metaCreateDate,  DateTime? metaUpdateDate,  bool? downloaded,  ModuleComplement? complement,  List<SiteGroup>? sitesGroup,  List<BaseSite>? sites)?  $default,) {final _that = this;
+switch (_that) {
+case _Module() when $default != null:
+return $default(_that.id,_that.moduleCode,_that.moduleLabel,_that.modulePicto,_that.moduleDesc,_that.moduleGroup,_that.modulePath,_that.moduleExternalUrl,_that.moduleTarget,_that.moduleComment,_that.activeFrontend,_that.activeBackend,_that.moduleDocUrl,_that.moduleOrder,_that.ngModule,_that.metaCreateDate,_that.metaUpdateDate,_that.downloaded,_that.complement,_that.sitesGroup,_that.sites);case _:
+  return null;
+
+}
 }
 
-/// @nodoc
-class __$$ModuleImplCopyWithImpl<$Res>
-    extends _$ModuleCopyWithImpl<$Res, _$ModuleImpl>
-    implements _$$ModuleImplCopyWith<$Res> {
-  __$$ModuleImplCopyWithImpl(
-      _$ModuleImpl _value, $Res Function(_$ModuleImpl) _then)
-      : super(_value, _then);
-
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? id = null,
-    Object? moduleCode = freezed,
-    Object? moduleLabel = freezed,
-    Object? modulePicto = freezed,
-    Object? moduleDesc = freezed,
-    Object? moduleGroup = freezed,
-    Object? modulePath = freezed,
-    Object? moduleExternalUrl = freezed,
-    Object? moduleTarget = freezed,
-    Object? moduleComment = freezed,
-    Object? activeFrontend = freezed,
-    Object? activeBackend = freezed,
-    Object? moduleDocUrl = freezed,
-    Object? moduleOrder = freezed,
-    Object? ngModule = freezed,
-    Object? metaCreateDate = freezed,
-    Object? metaUpdateDate = freezed,
-    Object? downloaded = freezed,
-    Object? complement = freezed,
-    Object? sitesGroup = freezed,
-    Object? sites = freezed,
-  }) {
-    return _then(_$ModuleImpl(
-      id: null == id
-          ? _value.id
-          : id // ignore: cast_nullable_to_non_nullable
-              as int,
-      moduleCode: freezed == moduleCode
-          ? _value.moduleCode
-          : moduleCode // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleLabel: freezed == moduleLabel
-          ? _value.moduleLabel
-          : moduleLabel // ignore: cast_nullable_to_non_nullable
-              as String?,
-      modulePicto: freezed == modulePicto
-          ? _value.modulePicto
-          : modulePicto // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleDesc: freezed == moduleDesc
-          ? _value.moduleDesc
-          : moduleDesc // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleGroup: freezed == moduleGroup
-          ? _value.moduleGroup
-          : moduleGroup // ignore: cast_nullable_to_non_nullable
-              as String?,
-      modulePath: freezed == modulePath
-          ? _value.modulePath
-          : modulePath // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleExternalUrl: freezed == moduleExternalUrl
-          ? _value.moduleExternalUrl
-          : moduleExternalUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleTarget: freezed == moduleTarget
-          ? _value.moduleTarget
-          : moduleTarget // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleComment: freezed == moduleComment
-          ? _value.moduleComment
-          : moduleComment // ignore: cast_nullable_to_non_nullable
-              as String?,
-      activeFrontend: freezed == activeFrontend
-          ? _value.activeFrontend
-          : activeFrontend // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      activeBackend: freezed == activeBackend
-          ? _value.activeBackend
-          : activeBackend // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      moduleDocUrl: freezed == moduleDocUrl
-          ? _value.moduleDocUrl
-          : moduleDocUrl // ignore: cast_nullable_to_non_nullable
-              as String?,
-      moduleOrder: freezed == moduleOrder
-          ? _value.moduleOrder
-          : moduleOrder // ignore: cast_nullable_to_non_nullable
-              as int?,
-      ngModule: freezed == ngModule
-          ? _value.ngModule
-          : ngModule // ignore: cast_nullable_to_non_nullable
-              as String?,
-      metaCreateDate: freezed == metaCreateDate
-          ? _value.metaCreateDate
-          : metaCreateDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      metaUpdateDate: freezed == metaUpdateDate
-          ? _value.metaUpdateDate
-          : metaUpdateDate // ignore: cast_nullable_to_non_nullable
-              as DateTime?,
-      downloaded: freezed == downloaded
-          ? _value.downloaded
-          : downloaded // ignore: cast_nullable_to_non_nullable
-              as bool?,
-      complement: freezed == complement
-          ? _value.complement
-          : complement // ignore: cast_nullable_to_non_nullable
-              as ModuleComplement?,
-      sitesGroup: freezed == sitesGroup
-          ? _value._sitesGroup
-          : sitesGroup // ignore: cast_nullable_to_non_nullable
-              as List<SiteGroup>?,
-      sites: freezed == sites
-          ? _value._sites
-          : sites // ignore: cast_nullable_to_non_nullable
-              as List<BaseSite>?,
-    ));
-  }
 }
 
 /// @nodoc
 
-class _$ModuleImpl implements _Module {
-  const _$ModuleImpl(
-      {required this.id,
-      this.moduleCode,
-      this.moduleLabel,
-      this.modulePicto,
-      this.moduleDesc,
-      this.moduleGroup,
-      this.modulePath,
-      this.moduleExternalUrl,
-      this.moduleTarget,
-      this.moduleComment,
-      this.activeFrontend,
-      this.activeBackend,
-      this.moduleDocUrl,
-      this.moduleOrder,
-      this.ngModule,
-      this.metaCreateDate,
-      this.metaUpdateDate,
-      this.downloaded,
-      this.complement,
-      final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites})
-      : _sitesGroup = sitesGroup,
-        _sites = sites;
 
-  @override
-  final int id;
-  @override
-  final String? moduleCode;
-  @override
-  final String? moduleLabel;
-  @override
-  final String? modulePicto;
-  @override
-  final String? moduleDesc;
-  @override
-  final String? moduleGroup;
-  @override
-  final String? modulePath;
-  @override
-  final String? moduleExternalUrl;
-  @override
-  final String? moduleTarget;
-  @override
-  final String? moduleComment;
-  @override
-  final bool? activeFrontend;
-  @override
-  final bool? activeBackend;
-  @override
-  final String? moduleDocUrl;
-  @override
-  final int? moduleOrder;
-  @override
-  final String? ngModule;
-  @override
-  final DateTime? metaCreateDate;
-  @override
-  final DateTime? metaUpdateDate;
-  @override
-  final bool? downloaded;
-  @override
-  final ModuleComplement? complement;
-  final List<SiteGroup>? _sitesGroup;
-  @override
-  List<SiteGroup>? get sitesGroup {
-    final value = _sitesGroup;
-    if (value == null) return null;
-    if (_sitesGroup is EqualUnmodifiableListView) return _sitesGroup;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
+class _Module implements Module {
+  const _Module({required this.id, this.moduleCode, this.moduleLabel, this.modulePicto, this.moduleDesc, this.moduleGroup, this.modulePath, this.moduleExternalUrl, this.moduleTarget, this.moduleComment, this.activeFrontend, this.activeBackend, this.moduleDocUrl, this.moduleOrder, this.ngModule, this.metaCreateDate, this.metaUpdateDate, this.downloaded, this.complement, final  List<SiteGroup>? sitesGroup, final  List<BaseSite>? sites}): _sitesGroup = sitesGroup,_sites = sites;
+  
 
-  final List<BaseSite>? _sites;
-  @override
-  List<BaseSite>? get sites {
-    final value = _sites;
-    if (value == null) return null;
-    if (_sites is EqualUnmodifiableListView) return _sites;
-    // ignore: implicit_dynamic_type
-    return EqualUnmodifiableListView(value);
-  }
-
-  @override
-  String toString() {
-    return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$ModuleImpl &&
-            (identical(other.id, id) || other.id == id) &&
-            (identical(other.moduleCode, moduleCode) ||
-                other.moduleCode == moduleCode) &&
-            (identical(other.moduleLabel, moduleLabel) ||
-                other.moduleLabel == moduleLabel) &&
-            (identical(other.modulePicto, modulePicto) ||
-                other.modulePicto == modulePicto) &&
-            (identical(other.moduleDesc, moduleDesc) ||
-                other.moduleDesc == moduleDesc) &&
-            (identical(other.moduleGroup, moduleGroup) ||
-                other.moduleGroup == moduleGroup) &&
-            (identical(other.modulePath, modulePath) ||
-                other.modulePath == modulePath) &&
-            (identical(other.moduleExternalUrl, moduleExternalUrl) ||
-                other.moduleExternalUrl == moduleExternalUrl) &&
-            (identical(other.moduleTarget, moduleTarget) ||
-                other.moduleTarget == moduleTarget) &&
-            (identical(other.moduleComment, moduleComment) ||
-                other.moduleComment == moduleComment) &&
-            (identical(other.activeFrontend, activeFrontend) ||
-                other.activeFrontend == activeFrontend) &&
-            (identical(other.activeBackend, activeBackend) ||
-                other.activeBackend == activeBackend) &&
-            (identical(other.moduleDocUrl, moduleDocUrl) ||
-                other.moduleDocUrl == moduleDocUrl) &&
-            (identical(other.moduleOrder, moduleOrder) ||
-                other.moduleOrder == moduleOrder) &&
-            (identical(other.ngModule, ngModule) ||
-                other.ngModule == ngModule) &&
-            (identical(other.metaCreateDate, metaCreateDate) ||
-                other.metaCreateDate == metaCreateDate) &&
-            (identical(other.metaUpdateDate, metaUpdateDate) ||
-                other.metaUpdateDate == metaUpdateDate) &&
-            (identical(other.downloaded, downloaded) ||
-                other.downloaded == downloaded) &&
-            (identical(other.complement, complement) ||
-                other.complement == complement) &&
-            const DeepCollectionEquality()
-                .equals(other._sitesGroup, _sitesGroup) &&
-            const DeepCollectionEquality().equals(other._sites, _sites));
-  }
-
-  @override
-  int get hashCode => Object.hashAll([
-        runtimeType,
-        id,
-        moduleCode,
-        moduleLabel,
-        modulePicto,
-        moduleDesc,
-        moduleGroup,
-        modulePath,
-        moduleExternalUrl,
-        moduleTarget,
-        moduleComment,
-        activeFrontend,
-        activeBackend,
-        moduleDocUrl,
-        moduleOrder,
-        ngModule,
-        metaCreateDate,
-        metaUpdateDate,
-        downloaded,
-        complement,
-        const DeepCollectionEquality().hash(_sitesGroup),
-        const DeepCollectionEquality().hash(_sites)
-      ]);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
-      __$$ModuleImplCopyWithImpl<_$ModuleImpl>(this, _$identity);
+@override final  int id;
+@override final  String? moduleCode;
+@override final  String? moduleLabel;
+@override final  String? modulePicto;
+@override final  String? moduleDesc;
+@override final  String? moduleGroup;
+@override final  String? modulePath;
+@override final  String? moduleExternalUrl;
+@override final  String? moduleTarget;
+@override final  String? moduleComment;
+@override final  bool? activeFrontend;
+@override final  bool? activeBackend;
+@override final  String? moduleDocUrl;
+@override final  int? moduleOrder;
+@override final  String? ngModule;
+@override final  DateTime? metaCreateDate;
+@override final  DateTime? metaUpdateDate;
+@override final  bool? downloaded;
+@override final  ModuleComplement? complement;
+ final  List<SiteGroup>? _sitesGroup;
+@override List<SiteGroup>? get sitesGroup {
+  final value = _sitesGroup;
+  if (value == null) return null;
+  if (_sitesGroup is EqualUnmodifiableListView) return _sitesGroup;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
 }
 
-abstract class _Module implements Module {
-  const factory _Module(
-      {required final int id,
-      final String? moduleCode,
-      final String? moduleLabel,
-      final String? modulePicto,
-      final String? moduleDesc,
-      final String? moduleGroup,
-      final String? modulePath,
-      final String? moduleExternalUrl,
-      final String? moduleTarget,
-      final String? moduleComment,
-      final bool? activeFrontend,
-      final bool? activeBackend,
-      final String? moduleDocUrl,
-      final int? moduleOrder,
-      final String? ngModule,
-      final DateTime? metaCreateDate,
-      final DateTime? metaUpdateDate,
-      final bool? downloaded,
-      final ModuleComplement? complement,
-      final List<SiteGroup>? sitesGroup,
-      final List<BaseSite>? sites}) = _$ModuleImpl;
-
-  @override
-  int get id;
-  @override
-  String? get moduleCode;
-  @override
-  String? get moduleLabel;
-  @override
-  String? get modulePicto;
-  @override
-  String? get moduleDesc;
-  @override
-  String? get moduleGroup;
-  @override
-  String? get modulePath;
-  @override
-  String? get moduleExternalUrl;
-  @override
-  String? get moduleTarget;
-  @override
-  String? get moduleComment;
-  @override
-  bool? get activeFrontend;
-  @override
-  bool? get activeBackend;
-  @override
-  String? get moduleDocUrl;
-  @override
-  int? get moduleOrder;
-  @override
-  String? get ngModule;
-  @override
-  DateTime? get metaCreateDate;
-  @override
-  DateTime? get metaUpdateDate;
-  @override
-  bool? get downloaded;
-  @override
-  ModuleComplement? get complement;
-  @override
-  List<SiteGroup>? get sitesGroup;
-  @override
-  List<BaseSite>? get sites;
-  @override
-  @JsonKey(ignore: true)
-  _$$ModuleImplCopyWith<_$ModuleImpl> get copyWith =>
-      throw _privateConstructorUsedError;
+ final  List<BaseSite>? _sites;
+@override List<BaseSite>? get sites {
+  final value = _sites;
+  if (value == null) return null;
+  if (_sites is EqualUnmodifiableListView) return _sites;
+  // ignore: implicit_dynamic_type
+  return EqualUnmodifiableListView(value);
 }
+
+
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$ModuleCopyWith<_Module> get copyWith => __$ModuleCopyWithImpl<_Module>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _Module&&(identical(other.id, id) || other.id == id)&&(identical(other.moduleCode, moduleCode) || other.moduleCode == moduleCode)&&(identical(other.moduleLabel, moduleLabel) || other.moduleLabel == moduleLabel)&&(identical(other.modulePicto, modulePicto) || other.modulePicto == modulePicto)&&(identical(other.moduleDesc, moduleDesc) || other.moduleDesc == moduleDesc)&&(identical(other.moduleGroup, moduleGroup) || other.moduleGroup == moduleGroup)&&(identical(other.modulePath, modulePath) || other.modulePath == modulePath)&&(identical(other.moduleExternalUrl, moduleExternalUrl) || other.moduleExternalUrl == moduleExternalUrl)&&(identical(other.moduleTarget, moduleTarget) || other.moduleTarget == moduleTarget)&&(identical(other.moduleComment, moduleComment) || other.moduleComment == moduleComment)&&(identical(other.activeFrontend, activeFrontend) || other.activeFrontend == activeFrontend)&&(identical(other.activeBackend, activeBackend) || other.activeBackend == activeBackend)&&(identical(other.moduleDocUrl, moduleDocUrl) || other.moduleDocUrl == moduleDocUrl)&&(identical(other.moduleOrder, moduleOrder) || other.moduleOrder == moduleOrder)&&(identical(other.ngModule, ngModule) || other.ngModule == ngModule)&&(identical(other.metaCreateDate, metaCreateDate) || other.metaCreateDate == metaCreateDate)&&(identical(other.metaUpdateDate, metaUpdateDate) || other.metaUpdateDate == metaUpdateDate)&&(identical(other.downloaded, downloaded) || other.downloaded == downloaded)&&(identical(other.complement, complement) || other.complement == complement)&&const DeepCollectionEquality().equals(other._sitesGroup, _sitesGroup)&&const DeepCollectionEquality().equals(other._sites, _sites));
+}
+
+
+@override
+int get hashCode => Object.hashAll([runtimeType,id,moduleCode,moduleLabel,modulePicto,moduleDesc,moduleGroup,modulePath,moduleExternalUrl,moduleTarget,moduleComment,activeFrontend,activeBackend,moduleDocUrl,moduleOrder,ngModule,metaCreateDate,metaUpdateDate,downloaded,complement,const DeepCollectionEquality().hash(_sitesGroup),const DeepCollectionEquality().hash(_sites)]);
+
+@override
+String toString() {
+  return 'Module(id: $id, moduleCode: $moduleCode, moduleLabel: $moduleLabel, modulePicto: $modulePicto, moduleDesc: $moduleDesc, moduleGroup: $moduleGroup, modulePath: $modulePath, moduleExternalUrl: $moduleExternalUrl, moduleTarget: $moduleTarget, moduleComment: $moduleComment, activeFrontend: $activeFrontend, activeBackend: $activeBackend, moduleDocUrl: $moduleDocUrl, moduleOrder: $moduleOrder, ngModule: $ngModule, metaCreateDate: $metaCreateDate, metaUpdateDate: $metaUpdateDate, downloaded: $downloaded, complement: $complement, sitesGroup: $sitesGroup, sites: $sites)';
+}
+
+
+}
+
+/// @nodoc
+abstract mixin class _$ModuleCopyWith<$Res> implements $ModuleCopyWith<$Res> {
+  factory _$ModuleCopyWith(_Module value, $Res Function(_Module) _then) = __$ModuleCopyWithImpl;
+@override @useResult
+$Res call({
+ int id, String? moduleCode, String? moduleLabel, String? modulePicto, String? moduleDesc, String? moduleGroup, String? modulePath, String? moduleExternalUrl, String? moduleTarget, String? moduleComment, bool? activeFrontend, bool? activeBackend, String? moduleDocUrl, int? moduleOrder, String? ngModule, DateTime? metaCreateDate, DateTime? metaUpdateDate, bool? downloaded, ModuleComplement? complement, List<SiteGroup>? sitesGroup, List<BaseSite>? sites
+});
+
+
+@override $ModuleComplementCopyWith<$Res>? get complement;
+
+}
+/// @nodoc
+class __$ModuleCopyWithImpl<$Res>
+    implements _$ModuleCopyWith<$Res> {
+  __$ModuleCopyWithImpl(this._self, this._then);
+
+  final _Module _self;
+  final $Res Function(_Module) _then;
+
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? moduleCode = freezed,Object? moduleLabel = freezed,Object? modulePicto = freezed,Object? moduleDesc = freezed,Object? moduleGroup = freezed,Object? modulePath = freezed,Object? moduleExternalUrl = freezed,Object? moduleTarget = freezed,Object? moduleComment = freezed,Object? activeFrontend = freezed,Object? activeBackend = freezed,Object? moduleDocUrl = freezed,Object? moduleOrder = freezed,Object? ngModule = freezed,Object? metaCreateDate = freezed,Object? metaUpdateDate = freezed,Object? downloaded = freezed,Object? complement = freezed,Object? sitesGroup = freezed,Object? sites = freezed,}) {
+  return _then(_Module(
+id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
+as int,moduleCode: freezed == moduleCode ? _self.moduleCode : moduleCode // ignore: cast_nullable_to_non_nullable
+as String?,moduleLabel: freezed == moduleLabel ? _self.moduleLabel : moduleLabel // ignore: cast_nullable_to_non_nullable
+as String?,modulePicto: freezed == modulePicto ? _self.modulePicto : modulePicto // ignore: cast_nullable_to_non_nullable
+as String?,moduleDesc: freezed == moduleDesc ? _self.moduleDesc : moduleDesc // ignore: cast_nullable_to_non_nullable
+as String?,moduleGroup: freezed == moduleGroup ? _self.moduleGroup : moduleGroup // ignore: cast_nullable_to_non_nullable
+as String?,modulePath: freezed == modulePath ? _self.modulePath : modulePath // ignore: cast_nullable_to_non_nullable
+as String?,moduleExternalUrl: freezed == moduleExternalUrl ? _self.moduleExternalUrl : moduleExternalUrl // ignore: cast_nullable_to_non_nullable
+as String?,moduleTarget: freezed == moduleTarget ? _self.moduleTarget : moduleTarget // ignore: cast_nullable_to_non_nullable
+as String?,moduleComment: freezed == moduleComment ? _self.moduleComment : moduleComment // ignore: cast_nullable_to_non_nullable
+as String?,activeFrontend: freezed == activeFrontend ? _self.activeFrontend : activeFrontend // ignore: cast_nullable_to_non_nullable
+as bool?,activeBackend: freezed == activeBackend ? _self.activeBackend : activeBackend // ignore: cast_nullable_to_non_nullable
+as bool?,moduleDocUrl: freezed == moduleDocUrl ? _self.moduleDocUrl : moduleDocUrl // ignore: cast_nullable_to_non_nullable
+as String?,moduleOrder: freezed == moduleOrder ? _self.moduleOrder : moduleOrder // ignore: cast_nullable_to_non_nullable
+as int?,ngModule: freezed == ngModule ? _self.ngModule : ngModule // ignore: cast_nullable_to_non_nullable
+as String?,metaCreateDate: freezed == metaCreateDate ? _self.metaCreateDate : metaCreateDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,metaUpdateDate: freezed == metaUpdateDate ? _self.metaUpdateDate : metaUpdateDate // ignore: cast_nullable_to_non_nullable
+as DateTime?,downloaded: freezed == downloaded ? _self.downloaded : downloaded // ignore: cast_nullable_to_non_nullable
+as bool?,complement: freezed == complement ? _self.complement : complement // ignore: cast_nullable_to_non_nullable
+as ModuleComplement?,sitesGroup: freezed == sitesGroup ? _self._sitesGroup : sitesGroup // ignore: cast_nullable_to_non_nullable
+as List<SiteGroup>?,sites: freezed == sites ? _self._sites : sites // ignore: cast_nullable_to_non_nullable
+as List<BaseSite>?,
+  ));
+}
+
+/// Create a copy of Module
+/// with the given fields replaced by the non-null parameter values.
+@override
+@pragma('vm:prefer-inline')
+$ModuleComplementCopyWith<$Res>? get complement {
+    if (_self.complement == null) {
+    return null;
+  }
+
+  return $ModuleComplementCopyWith<$Res>(_self.complement!, (value) {
+    return _then(_self.copyWith(complement: value));
+  });
+}
+}
+
+// dart format on

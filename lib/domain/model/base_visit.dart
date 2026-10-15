@@ -4,7 +4,7 @@ part 'base_visit.freezed.dart';
 part 'base_visit.g.dart';
 
 @freezed
-class BaseVisit with _$BaseVisit {
+abstract class BaseVisit with _$BaseVisit {
   const factory BaseVisit({
     required int idBaseVisit,
     int? idBaseSite,

@@ -5,7 +5,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'module_configuration.freezed.dart';
 
 @freezed
-class ModuleConfiguration with _$ModuleConfiguration {
+abstract class ModuleConfiguration with _$ModuleConfiguration {
   const factory ModuleConfiguration({
     CustomConfig? custom,
     DataConfig? data,
@@ -104,7 +104,7 @@ extension ModuleConfigurationX on ModuleConfiguration {
 }
 
 @freezed
-class CustomConfig with _$CustomConfig {
+abstract class CustomConfig with _$CustomConfig {
   const factory CustomConfig({
     @JsonKey(name: '__MODULE.B_DRAW_SITES_GROUP') bool? drawSitesGroup,
     @JsonKey(name: '__MODULE.B_SYNTHESE') bool? synthese,
@@ -198,7 +198,7 @@ extension CustomConfigX on CustomConfig {
 }
 
 @freezed
-class TypeSite with _$TypeSite {
+abstract class TypeSite with _$TypeSite {
   const factory TypeSite({
     int? idNomenclatureTypeSite,
     dynamic config,
@@ -221,7 +221,7 @@ extension TypeSiteX on TypeSite {
 }
 
 @freezed
-class DataConfig with _$DataConfig {
+abstract class DataConfig with _$DataConfig {
   const factory DataConfig({
     List<String>? nomenclature,
     int? user,
@@ -245,7 +245,7 @@ extension DataConfigX on DataConfig {
 }
 
 @freezed
-class ModuleConfig with _$ModuleConfig {
+abstract class ModuleConfig with _$ModuleConfig {
   const factory ModuleConfig({
     @JsonKey(name: 'b_draw_sites_group') bool? drawSitesGroup,
     @JsonKey(name: 'b_synthese') bool? synthese,
@@ -381,7 +381,7 @@ extension ModuleConfigX on ModuleConfig {
 }
 
 @freezed
-class CruvedConfig with _$CruvedConfig {
+abstract class CruvedConfig with _$CruvedConfig {
   const factory CruvedConfig({
     int? C,
     int? R,
@@ -415,7 +415,7 @@ extension CruvedConfigX on CruvedConfig {
 }
 
 @freezed
-class ExportConfig with _$ExportConfig {
+abstract class ExportConfig with _$ExportConfig {
   const factory ExportConfig({
     String? label,
     String? method,
@@ -453,7 +453,7 @@ bool? _toBool(dynamic value) {
 }
 
 @freezed
-class GenericFieldConfig with _$GenericFieldConfig {
+abstract class GenericFieldConfig with _$GenericFieldConfig {
   const factory GenericFieldConfig({
     @JsonKey(name: 'attribut_label') String? attributLabel,
     String? definition,
@@ -527,7 +527,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
 }
 
 @freezed
-class TypeSiteConfig with _$TypeSiteConfig {
+abstract class TypeSiteConfig with _$TypeSiteConfig {
   const factory TypeSiteConfig({
     List<dynamic>? displayProperties,
     String? name,
@@ -549,7 +549,7 @@ extension TypeSiteConfigX on TypeSiteConfig {
 }
 
 @freezed
-class ObjectConfig with _$ObjectConfig {
+abstract class ObjectConfig with _$ObjectConfig {
   const factory ObjectConfig({
     bool? chained,
     /// Configuration des règles de changement automatique (format JS)
@@ -791,7 +791,7 @@ extension ObjectConfigX on ObjectConfig {
 }
 
 @freezed
-class SortConfig with _$SortConfig {
+abstract class SortConfig with _$SortConfig {
   const factory SortConfig({
     String? dir,
     String? prop,
@@ -813,7 +813,7 @@ extension SortConfigX on SortConfig {
 }
 
 @freezed
-class TreeConfig with _$TreeConfig {
+abstract class TreeConfig with _$TreeConfig {
   const factory TreeConfig({
     Map<String, dynamic>? module,
   }) = _TreeConfig;

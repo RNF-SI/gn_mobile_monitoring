@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'base_site.freezed.dart';
 
 @freezed
-class BaseSite with _$BaseSite {
+abstract class BaseSite with _$BaseSite {
   const factory BaseSite({
     required int idBaseSite,
     String? baseSiteName,

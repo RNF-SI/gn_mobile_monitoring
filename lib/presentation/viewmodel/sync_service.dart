@@ -2094,12 +2094,12 @@ class SyncService extends StateNotifier<SyncStatus> {
         grandTotalAdded += result.itemsAdded;
         grandTotalUpdated += result.itemsUpdated;
         grandTotalSkipped += result.itemsSkipped;
-        grandTotalDeleted += result.itemsDeleted ?? 0;
+        grandTotalDeleted += result.itemsDeleted;
       } else {
         // Fallback avec estimation
         final totalAdded = result.itemsAdded;
         final totalUpdated = result.itemsUpdated;
-        final totalDeleted = result.itemsDeleted ?? 0;
+        final totalDeleted = result.itemsDeleted;
         final totalSkipped = result.itemsSkipped;
 
         final visitesRatio = 0.2;

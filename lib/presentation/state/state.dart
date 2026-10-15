@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'state.freezed.dart';
 
 @freezed
-class State<T> with _$State<T> {
+sealed class State<T> with _$State<T> {
   const State._();
 
   const factory State.init() = _init<T>;

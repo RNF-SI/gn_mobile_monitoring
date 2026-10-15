@@ -187,7 +187,7 @@ class ConflictDialogWidget extends ConsumerWidget {
     // Grouper les conflits par type d'entité
     final Map<String, List<domain.SyncConflict>> conflictsByType = {};
     for (final conflict in conflicts) {
-      final type = conflict.entityType ?? 'Inconnu';
+      final type = conflict.entityType;
       conflictsByType.putIfAbsent(type, () => []).add(conflict);
     }
     
@@ -204,7 +204,7 @@ class ConflictDialogWidget extends ConsumerWidget {
     int index = 1;
     for (final conflict in conflicts) {
       report.writeln('');
-      report.writeln('$index. ${conflict.entityType ?? "Type inconnu"} (ID: ${conflict.entityId ?? "inconnu"})');
+      report.writeln('$index. ${conflict.entityType} (ID: ${conflict.entityId})');
       report.writeln('   Type de conflit: ${_getConflictTypeDescription(conflict.conflictType)}');
       
       if (conflict.affectedField != null) {

@@ -47,7 +47,7 @@ enum SyncType {
 
 /// Représente le statut d'une opération de synchronisation
 @freezed
-class SyncStatus with _$SyncStatus {
+sealed class SyncStatus with _$SyncStatus {
   const SyncStatus._(); // Constructeur privé pour ajouter des méthodes si nécessaire
   
   const factory SyncStatus({
