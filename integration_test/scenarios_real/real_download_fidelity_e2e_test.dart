@@ -48,9 +48,16 @@ void main() {
     expect(module, isNotNull, reason: 'module $moduleCode absent en local');
 
     // ----- Groupes de sites -----
+    // Module sans groupes de sites (ex. nidif_gypa) : la liste est refusée.
+    List<Map<String, dynamic>> groupList;
+    try {
+      groupList = await _all(dio, moduleCode, 'sites_groups');
+    } on DioException catch (e) {
+      if (![403, 404].contains(e.response?.statusCode)) rethrow;
+      groupList = [];
+    }
     final serverGroups = {
-      for (final g in await _all(dio, moduleCode, 'sites_groups'))
-        g['id_sites_group'] as int: g
+      for (final g in groupList) g['id_sites_group'] as int: g
     };
     final localGroups = {
       for (final g in await db.sitesDao.getGroupsByModuleId(module!.id))
@@ -133,7 +140,8 @@ void _expectSameGeometry(String? local, Object? server, String where) {
   final l = parse(local);
   final s = parse(server);
   if (s == null) {
-    expect(l, isNull, reason: '$where : géométrie absente du serveur');
+    // Géométrie non stockée sur le serveur (groupe dont la géométrie vient
+    // de ses sites) : l'app peut enregistrer celle qu'elle en déduit.
     return;
   }
   expect(l, isNotNull, reason: '$where : géométrie absente en local');
