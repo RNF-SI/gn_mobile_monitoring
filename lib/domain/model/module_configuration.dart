@@ -443,6 +443,17 @@ extension ExportConfigX on ExportConfig {
 }
 
 /// Helper function to safely convert a value to bool
+/// Booléen tel quel (« true »/« false » en texte compris), sinon l'expression
+/// conditionnelle telle quelle.
+dynamic _boolOrExpression(dynamic value) {
+  if (value is String) {
+    final lower = value.trim().toLowerCase();
+    if (lower == 'true') return true;
+    if (lower == 'false') return false;
+  }
+  return value;
+}
+
 bool? _toBool(dynamic value) {
   if (value == null) return null;
   if (value is bool) return value;
@@ -458,7 +469,9 @@ abstract class GenericFieldConfig with _$GenericFieldConfig {
     @JsonKey(name: 'attribut_label') String? attributLabel,
     String? definition,
     dynamic hidden,
-    bool? required,
+    // Booléen ou expression `({value}) => …` évaluée par le formulaire,
+    // comme `hidden` (#206).
+    dynamic required,
     String? typeWidget,
     String? typeUtil,
     bool? multiSelect,
@@ -483,7 +496,7 @@ abstract class GenericFieldConfig with _$GenericFieldConfig {
       attributLabel: json['attribut_label'] as String?,
       definition: json['definition'] as String?,
       hidden: json['hidden'],
-      required: _toBool(json['required']),
+      required: _boolOrExpression(json['required']),
       typeWidget: json['type_widget'] as String?,
       typeUtil: json['type_util'] as String?,
       multiSelect: _toBool(json['multi_select']),

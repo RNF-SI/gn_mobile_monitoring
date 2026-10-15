@@ -2368,7 +2368,9 @@ as String?,
 /// @nodoc
 mixin _$GenericFieldConfig {
 
-@JsonKey(name: 'attribut_label') String? get attributLabel; String? get definition; dynamic get hidden; bool? get required; String? get typeWidget; String? get typeUtil; bool? get multiSelect; String? get api; String? get application; String? get keyLabel; String? get keyValue; bool? get multiple; dynamic get values; dynamic get value; dynamic get default_; String? get designStyle; String? get dataPath;@JsonKey(name: 'id_list') dynamic get idList;/// Configuration des règles de changement automatique
+@JsonKey(name: 'attribut_label') String? get attributLabel; String? get definition; dynamic get hidden;// Booléen ou expression `({value}) => …` évaluée par le formulaire,
+// comme `hidden` (#206).
+ dynamic get required; String? get typeWidget; String? get typeUtil; bool? get multiSelect; String? get api; String? get application; String? get keyLabel; String? get keyValue; bool? get multiple; dynamic get values; dynamic get value; dynamic get default_; String? get designStyle; String? get dataPath;@JsonKey(name: 'id_list') dynamic get idList;/// Configuration des règles de changement automatique
 /// Format: {"rules": [{"when": "...", "set": {...}}, ...]}
  dynamic get change;
 /// Create a copy of GenericFieldConfig
@@ -2381,12 +2383,12 @@ $GenericFieldConfigCopyWith<GenericFieldConfig> get copyWith => _$GenericFieldCo
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenericFieldConfig&&(identical(other.attributLabel, attributLabel) || other.attributLabel == attributLabel)&&(identical(other.definition, definition) || other.definition == definition)&&const DeepCollectionEquality().equals(other.hidden, hidden)&&(identical(other.required, required) || other.required == required)&&(identical(other.typeWidget, typeWidget) || other.typeWidget == typeWidget)&&(identical(other.typeUtil, typeUtil) || other.typeUtil == typeUtil)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&(identical(other.api, api) || other.api == api)&&(identical(other.application, application) || other.application == application)&&(identical(other.keyLabel, keyLabel) || other.keyLabel == keyLabel)&&(identical(other.keyValue, keyValue) || other.keyValue == keyValue)&&(identical(other.multiple, multiple) || other.multiple == multiple)&&const DeepCollectionEquality().equals(other.values, values)&&const DeepCollectionEquality().equals(other.value, value)&&const DeepCollectionEquality().equals(other.default_, default_)&&(identical(other.designStyle, designStyle) || other.designStyle == designStyle)&&(identical(other.dataPath, dataPath) || other.dataPath == dataPath)&&const DeepCollectionEquality().equals(other.idList, idList)&&const DeepCollectionEquality().equals(other.change, change));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is GenericFieldConfig&&(identical(other.attributLabel, attributLabel) || other.attributLabel == attributLabel)&&(identical(other.definition, definition) || other.definition == definition)&&const DeepCollectionEquality().equals(other.hidden, hidden)&&const DeepCollectionEquality().equals(other.required, required)&&(identical(other.typeWidget, typeWidget) || other.typeWidget == typeWidget)&&(identical(other.typeUtil, typeUtil) || other.typeUtil == typeUtil)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&(identical(other.api, api) || other.api == api)&&(identical(other.application, application) || other.application == application)&&(identical(other.keyLabel, keyLabel) || other.keyLabel == keyLabel)&&(identical(other.keyValue, keyValue) || other.keyValue == keyValue)&&(identical(other.multiple, multiple) || other.multiple == multiple)&&const DeepCollectionEquality().equals(other.values, values)&&const DeepCollectionEquality().equals(other.value, value)&&const DeepCollectionEquality().equals(other.default_, default_)&&(identical(other.designStyle, designStyle) || other.designStyle == designStyle)&&(identical(other.dataPath, dataPath) || other.dataPath == dataPath)&&const DeepCollectionEquality().equals(other.idList, idList)&&const DeepCollectionEquality().equals(other.change, change));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,attributLabel,definition,const DeepCollectionEquality().hash(hidden),required,typeWidget,typeUtil,multiSelect,api,application,keyLabel,keyValue,multiple,const DeepCollectionEquality().hash(values),const DeepCollectionEquality().hash(value),const DeepCollectionEquality().hash(default_),designStyle,dataPath,const DeepCollectionEquality().hash(idList),const DeepCollectionEquality().hash(change)]);
+int get hashCode => Object.hashAll([runtimeType,attributLabel,definition,const DeepCollectionEquality().hash(hidden),const DeepCollectionEquality().hash(required),typeWidget,typeUtil,multiSelect,api,application,keyLabel,keyValue,multiple,const DeepCollectionEquality().hash(values),const DeepCollectionEquality().hash(value),const DeepCollectionEquality().hash(default_),designStyle,dataPath,const DeepCollectionEquality().hash(idList),const DeepCollectionEquality().hash(change)]);
 
 @override
 String toString() {
@@ -2401,7 +2403,7 @@ abstract mixin class $GenericFieldConfigCopyWith<$Res>  {
   factory $GenericFieldConfigCopyWith(GenericFieldConfig value, $Res Function(GenericFieldConfig) _then) = _$GenericFieldConfigCopyWithImpl;
 @useResult
 $Res call({
-@JsonKey(name: 'attribut_label') String? attributLabel, String? definition, dynamic hidden, bool? required, String? typeWidget, String? typeUtil, bool? multiSelect, String? api, String? application, String? keyLabel, String? keyValue, bool? multiple, dynamic values, dynamic value, dynamic default_, String? designStyle, String? dataPath,@JsonKey(name: 'id_list') dynamic idList, dynamic change
+@JsonKey(name: 'attribut_label') String? attributLabel, String? definition, dynamic hidden, dynamic required, String? typeWidget, String? typeUtil, bool? multiSelect, String? api, String? application, String? keyLabel, String? keyValue, bool? multiple, dynamic values, dynamic value, dynamic default_, String? designStyle, String? dataPath,@JsonKey(name: 'id_list') dynamic idList, dynamic change
 });
 
 
@@ -2424,7 +2426,7 @@ attributLabel: freezed == attributLabel ? _self.attributLabel : attributLabel //
 as String?,definition: freezed == definition ? _self.definition : definition // ignore: cast_nullable_to_non_nullable
 as String?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as dynamic,required: freezed == required ? _self.required : required // ignore: cast_nullable_to_non_nullable
-as bool?,typeWidget: freezed == typeWidget ? _self.typeWidget : typeWidget // ignore: cast_nullable_to_non_nullable
+as dynamic,typeWidget: freezed == typeWidget ? _self.typeWidget : typeWidget // ignore: cast_nullable_to_non_nullable
 as String?,typeUtil: freezed == typeUtil ? _self.typeUtil : typeUtil // ignore: cast_nullable_to_non_nullable
 as String?,multiSelect: freezed == multiSelect ? _self.multiSelect : multiSelect // ignore: cast_nullable_to_non_nullable
 as bool?,api: freezed == api ? _self.api : api // ignore: cast_nullable_to_non_nullable
@@ -2524,7 +2526,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  bool? required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  dynamic required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _GenericFieldConfig() when $default != null:
 return $default(_that.attributLabel,_that.definition,_that.hidden,_that.required,_that.typeWidget,_that.typeUtil,_that.multiSelect,_that.api,_that.application,_that.keyLabel,_that.keyValue,_that.multiple,_that.values,_that.value,_that.default_,_that.designStyle,_that.dataPath,_that.idList,_that.change);case _:
@@ -2545,7 +2547,7 @@ return $default(_that.attributLabel,_that.definition,_that.hidden,_that.required
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  bool? required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  dynamic required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)  $default,) {final _that = this;
 switch (_that) {
 case _GenericFieldConfig():
 return $default(_that.attributLabel,_that.definition,_that.hidden,_that.required,_that.typeWidget,_that.typeUtil,_that.multiSelect,_that.api,_that.application,_that.keyLabel,_that.keyValue,_that.multiple,_that.values,_that.value,_that.default_,_that.designStyle,_that.dataPath,_that.idList,_that.change);case _:
@@ -2565,7 +2567,7 @@ return $default(_that.attributLabel,_that.definition,_that.hidden,_that.required
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  bool? required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function(@JsonKey(name: 'attribut_label')  String? attributLabel,  String? definition,  dynamic hidden,  dynamic required,  String? typeWidget,  String? typeUtil,  bool? multiSelect,  String? api,  String? application,  String? keyLabel,  String? keyValue,  bool? multiple,  dynamic values,  dynamic value,  dynamic default_,  String? designStyle,  String? dataPath, @JsonKey(name: 'id_list')  dynamic idList,  dynamic change)?  $default,) {final _that = this;
 switch (_that) {
 case _GenericFieldConfig() when $default != null:
 return $default(_that.attributLabel,_that.definition,_that.hidden,_that.required,_that.typeWidget,_that.typeUtil,_that.multiSelect,_that.api,_that.application,_that.keyLabel,_that.keyValue,_that.multiple,_that.values,_that.value,_that.default_,_that.designStyle,_that.dataPath,_that.idList,_that.change);case _:
@@ -2586,7 +2588,9 @@ class _GenericFieldConfig implements GenericFieldConfig {
 @override@JsonKey(name: 'attribut_label') final  String? attributLabel;
 @override final  String? definition;
 @override final  dynamic hidden;
-@override final  bool? required;
+// Booléen ou expression `({value}) => …` évaluée par le formulaire,
+// comme `hidden` (#206).
+@override final  dynamic required;
 @override final  String? typeWidget;
 @override final  String? typeUtil;
 @override final  bool? multiSelect;
@@ -2615,12 +2619,12 @@ _$GenericFieldConfigCopyWith<_GenericFieldConfig> get copyWith => __$GenericFiel
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenericFieldConfig&&(identical(other.attributLabel, attributLabel) || other.attributLabel == attributLabel)&&(identical(other.definition, definition) || other.definition == definition)&&const DeepCollectionEquality().equals(other.hidden, hidden)&&(identical(other.required, required) || other.required == required)&&(identical(other.typeWidget, typeWidget) || other.typeWidget == typeWidget)&&(identical(other.typeUtil, typeUtil) || other.typeUtil == typeUtil)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&(identical(other.api, api) || other.api == api)&&(identical(other.application, application) || other.application == application)&&(identical(other.keyLabel, keyLabel) || other.keyLabel == keyLabel)&&(identical(other.keyValue, keyValue) || other.keyValue == keyValue)&&(identical(other.multiple, multiple) || other.multiple == multiple)&&const DeepCollectionEquality().equals(other.values, values)&&const DeepCollectionEquality().equals(other.value, value)&&const DeepCollectionEquality().equals(other.default_, default_)&&(identical(other.designStyle, designStyle) || other.designStyle == designStyle)&&(identical(other.dataPath, dataPath) || other.dataPath == dataPath)&&const DeepCollectionEquality().equals(other.idList, idList)&&const DeepCollectionEquality().equals(other.change, change));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _GenericFieldConfig&&(identical(other.attributLabel, attributLabel) || other.attributLabel == attributLabel)&&(identical(other.definition, definition) || other.definition == definition)&&const DeepCollectionEquality().equals(other.hidden, hidden)&&const DeepCollectionEquality().equals(other.required, required)&&(identical(other.typeWidget, typeWidget) || other.typeWidget == typeWidget)&&(identical(other.typeUtil, typeUtil) || other.typeUtil == typeUtil)&&(identical(other.multiSelect, multiSelect) || other.multiSelect == multiSelect)&&(identical(other.api, api) || other.api == api)&&(identical(other.application, application) || other.application == application)&&(identical(other.keyLabel, keyLabel) || other.keyLabel == keyLabel)&&(identical(other.keyValue, keyValue) || other.keyValue == keyValue)&&(identical(other.multiple, multiple) || other.multiple == multiple)&&const DeepCollectionEquality().equals(other.values, values)&&const DeepCollectionEquality().equals(other.value, value)&&const DeepCollectionEquality().equals(other.default_, default_)&&(identical(other.designStyle, designStyle) || other.designStyle == designStyle)&&(identical(other.dataPath, dataPath) || other.dataPath == dataPath)&&const DeepCollectionEquality().equals(other.idList, idList)&&const DeepCollectionEquality().equals(other.change, change));
 }
 
 
 @override
-int get hashCode => Object.hashAll([runtimeType,attributLabel,definition,const DeepCollectionEquality().hash(hidden),required,typeWidget,typeUtil,multiSelect,api,application,keyLabel,keyValue,multiple,const DeepCollectionEquality().hash(values),const DeepCollectionEquality().hash(value),const DeepCollectionEquality().hash(default_),designStyle,dataPath,const DeepCollectionEquality().hash(idList),const DeepCollectionEquality().hash(change)]);
+int get hashCode => Object.hashAll([runtimeType,attributLabel,definition,const DeepCollectionEquality().hash(hidden),const DeepCollectionEquality().hash(required),typeWidget,typeUtil,multiSelect,api,application,keyLabel,keyValue,multiple,const DeepCollectionEquality().hash(values),const DeepCollectionEquality().hash(value),const DeepCollectionEquality().hash(default_),designStyle,dataPath,const DeepCollectionEquality().hash(idList),const DeepCollectionEquality().hash(change)]);
 
 @override
 String toString() {
@@ -2635,7 +2639,7 @@ abstract mixin class _$GenericFieldConfigCopyWith<$Res> implements $GenericField
   factory _$GenericFieldConfigCopyWith(_GenericFieldConfig value, $Res Function(_GenericFieldConfig) _then) = __$GenericFieldConfigCopyWithImpl;
 @override @useResult
 $Res call({
-@JsonKey(name: 'attribut_label') String? attributLabel, String? definition, dynamic hidden, bool? required, String? typeWidget, String? typeUtil, bool? multiSelect, String? api, String? application, String? keyLabel, String? keyValue, bool? multiple, dynamic values, dynamic value, dynamic default_, String? designStyle, String? dataPath,@JsonKey(name: 'id_list') dynamic idList, dynamic change
+@JsonKey(name: 'attribut_label') String? attributLabel, String? definition, dynamic hidden, dynamic required, String? typeWidget, String? typeUtil, bool? multiSelect, String? api, String? application, String? keyLabel, String? keyValue, bool? multiple, dynamic values, dynamic value, dynamic default_, String? designStyle, String? dataPath,@JsonKey(name: 'id_list') dynamic idList, dynamic change
 });
 
 
@@ -2658,7 +2662,7 @@ attributLabel: freezed == attributLabel ? _self.attributLabel : attributLabel //
 as String?,definition: freezed == definition ? _self.definition : definition // ignore: cast_nullable_to_non_nullable
 as String?,hidden: freezed == hidden ? _self.hidden : hidden // ignore: cast_nullable_to_non_nullable
 as dynamic,required: freezed == required ? _self.required : required // ignore: cast_nullable_to_non_nullable
-as bool?,typeWidget: freezed == typeWidget ? _self.typeWidget : typeWidget // ignore: cast_nullable_to_non_nullable
+as dynamic,typeWidget: freezed == typeWidget ? _self.typeWidget : typeWidget // ignore: cast_nullable_to_non_nullable
 as String?,typeUtil: freezed == typeUtil ? _self.typeUtil : typeUtil // ignore: cast_nullable_to_non_nullable
 as String?,multiSelect: freezed == multiSelect ? _self.multiSelect : multiSelect // ignore: cast_nullable_to_non_nullable
 as bool?,api: freezed == api ? _self.api : api // ignore: cast_nullable_to_non_nullable
