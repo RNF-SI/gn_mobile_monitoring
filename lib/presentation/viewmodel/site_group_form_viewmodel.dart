@@ -10,6 +10,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_site_groups_by_id_usecas
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_storage_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_group_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart'
+    show localVisitsCounterProvider;
 
 final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     SiteGroupFormViewModel,
@@ -33,6 +35,8 @@ final siteGroupFormViewModelProvider = StateNotifierProvider.family<
     formDataProcessor,
     moduleId,
     siteGroupId ?? 0,
+    onLocalGroupsChanged: () =>
+        ref.read(localVisitsCounterProvider.notifier).update((s) => s + 1),
   );
 });
 
@@ -46,6 +50,10 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   final int _moduleId;
   final int _siteGroupId;
 
+  /// Prévient la home qu'un groupe local a été créé ou supprimé, pour
+  /// rafraîchir le badge « saisies non téléversées » (#204).
+  final void Function()? _onLocalGroupsChanged;
+
   SiteGroupFormViewModel(
     this._createSiteGroupWithRelationsUseCase,
     this._updateSiteGroupUseCase,
@@ -54,8 +62,10 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
     this._getSiteGroupByIdUseCase,
     this._formDataProcessor,
     this._moduleId,
-    this._siteGroupId,
-  ) : super(null);
+    this._siteGroupId, {
+    void Function()? onLocalGroupsChanged,
+  })  : _onLocalGroupsChanged = onLocalGroupsChanged,
+        super(null);
 
   /// Crée un nouveau groupe de site à partir des données du formulaire
   /// Retourne l'ID du site créé
@@ -83,6 +93,7 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
         moduleId: moduleId ?? _moduleId,
       );
 
+      _onLocalGroupsChanged?.call();
       return siteGroupId;
     } catch (e) {
       debugPrint('Erreur lors de la création du groupe sites: $e');
@@ -131,7 +142,9 @@ class SiteGroupFormViewModel extends StateNotifier<void> {
   /// Supprime un site
   Future<bool> deleteSiteGroup(int siteGroupId) async {
     try {
-      return await _deleteSiteGroupUseCase.execute(siteGroupId);
+      final deleted = await _deleteSiteGroupUseCase.execute(siteGroupId);
+      if (deleted) _onLocalGroupsChanged?.call();
+      return deleted;
     } catch (e) {
       debugPrint('Erreur lors de la suppression du groupe de site: $e');
       return false;

@@ -22,7 +22,8 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisate
 final cacheVersionProvider = StateProvider<int>((ref) => 0);
 
 /// Compteur incrémenté à chaque mutation locale de visite (création, mise à
-/// jour, suppression). Les providers qui dépendent de l'état "saisies non
+/// jour, suppression), et à la création ou suppression d'un site ou d'un
+/// groupe de sites local (#204). Les providers qui dépendent de l'état "saisies non
 /// téléversées" (ex: badge orange sur les modules de la home, modale de
 /// téléversement) le watchent pour se rafraîchir sans dépendre d'une
 /// invalidation côté navigation.

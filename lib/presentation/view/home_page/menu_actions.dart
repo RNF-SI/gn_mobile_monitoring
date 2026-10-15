@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
@@ -524,11 +523,12 @@ class MenuActions extends ConsumerWidget {
           return;
         }
 
-        // Modules ayant au moins une visite locale non téléversée. Permet de
-        // mettre en avant les modules réellement concernés et de couper court
-        // si tout est déjà à jour (cf. #179).
+        // Modules ayant des saisies locales à téléverser (visites, sites ou
+        // groupes créés sur l'appareil). Permet de mettre en avant les modules
+        // réellement concernés et de couper court si tout est déjà à jour
+        // (cf. #179, #204). Même critère que le badge des cartes de module.
         final unsyncedModuleIds =
-            await ref.read(visitDatabaseProvider).getModuleIdsWithUnsyncedVisits();
+            await ref.refresh(unsyncedModuleIdsProvider.future);
         final modulesWithData = availableModules
             .where((m) => unsyncedModuleIds.contains(m.id))
             .toList();
