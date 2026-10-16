@@ -111,12 +111,16 @@ configuration, la procédure après reboot et le troubleshooting.
 
 ## 🔄 CI/CD
 
-Le projet utilise GitHub Actions pour l'intégration continue :
-- Tests unitaires sur chaque push
-- Tests d'intégration sur les pull requests vers `develop` et `main`
-- Analyse statique du code avec `flutter analyze`
+Le projet utilise GitHub Actions pour l'intégration continue, sur chaque push
+et chaque pull request vers `develop` et `main` :
+- `flutter_tests.yml` : analyse statique (`flutter analyze`) et tests unitaires
+  et de widgets, avec la couverture envoyée à Codecov
+- `e2e_tests.yml` : scénarios E2E simulés (`integration_test/scenarios/`) sur
+  un émulateur Android
 
-Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+Les tests contre un vrai serveur GeoNature (`test/integration/`,
+`integration_test/scenarios_real/`) ne tournent pas en CI : ils se lancent en
+local (voir plus haut).
 
 ## 🧾 SBOM et Dependency-Track
 

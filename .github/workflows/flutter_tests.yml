@@ -9,23 +9,33 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: "3.47.7"
           channel: "stable"
+          cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
       - name: Generate code
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+        run: dart run build_runner build --delete-conflicting-outputs
 
       - name: Analyze code
         run: flutter analyze --no-fatal-infos
 
+      # Les tests tagués `integration` (test/integration/) demandent un vrai
+      # serveur : ils se lancent en local (voir test/integration/README.md).
       - name: Run tests
-        run: flutter test
+        run: flutter test --exclude-tags=integration --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v7
+        with:
+          files: ./coverage/lcov.info
+          flags: unittests
