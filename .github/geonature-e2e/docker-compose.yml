@@ -1,0 +1,56 @@
+# GeoNature + module monitoring pour les e2e réels (integration_test/scenarios_real/).
+# Images de PnX-SI/GeoNature-Docker-services. Base minimale : TAXREF, données
+# exemples et utilisateurs UsersHub (admin/admin), sans couches SIG ni mailles.
+# Lancement et données de test : voir up.sh.
+
+x-db: &db
+  POSTGRES_DB: geonature2db
+  POSTGRES_USER: geonatadmin
+  POSTGRES_PASSWORD: geonatadmin
+
+services:
+  postgres:
+    image: postgis/postgis:15-3.4
+    environment:
+      <<: *db
+    volumes:
+      - ./add-extensions.sql:/docker-entrypoint-initdb.d/add-extensions.sql:ro
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "geonature2db", "-U", "geonatadmin", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  geonature:
+    image: ${GEONATURE_IMAGE:-ghcr.io/pnx-si/geonature-backend-extra:2.17.4}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      <<: *db
+      GEONATURE_SQLALCHEMY_DATABASE_URI: postgresql://geonatadmin:geonatadmin@postgres:5432/geonature2db
+      GEONATURE_SECRET_KEY: e2e-mobile-not-a-secret
+      GEONATURE_URL_APPLICATION: http://127.0.0.1:${GEONATURE_PORT:-5000}
+      GEONATURE_API_ENDPOINT: http://127.0.0.1:${GEONATURE_PORT:-5000}
+      GEONATURE_CONFIG_FILE: /dist/config/geonature_config.toml
+      srid_local: 2154
+      add_sample_data: "true"
+      install_bdc_statuts: "false"
+      install_sig_layers: "false"
+      install_grid_layer: "false"
+      install_ref_sensitivity: "false"
+      usershub: "true"
+      usershub_samples: "true"
+    volumes:
+      - ./geonature_config.toml:/dist/config/geonature_config.toml:ro
+      - ${PROTOCOLES_DIR:-./protocoles}:/protocoles:ro
+      - ./seed:/seed:ro
+      - media:/dist/media
+    # Port côté hôte : l'app n'ajoute pas /api pour 5000 (lib/config/config.dart).
+    ports:
+      - "${GEONATURE_PORT:-5000}:8000"
+    command: ["gunicorn", "geonature:create_app()", "--workers=2", "--threads=2",
+              "--access-logfile=-", "--bind=0.0.0.0:8000"]
+
+volumes:
+  media:

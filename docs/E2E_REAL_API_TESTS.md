@@ -73,6 +73,18 @@ valider l'intégration bout-en-bout :
 Chaque test crée ses propres données avec un timestamp pour éviter les
 collisions, et les laisse sur le serveur (préfixe `E2E_` pour identifier).
 
+## En CI et avec un GeoNature en Docker
+
+Le workflow `.github/workflows/e2e_real_tests.yml` lance tous les scénarios
+réels chaque lundi, et à la main (onglet Actions) avant une release. Il monte
+GeoNature + monitoring en Docker avec les protocoles POP et leurs données de
+test, puis lance les scénarios sur un émulateur, une fois pour POPAmphibien
+(avec le scénario multi-modules) et une fois pour POPReptile. L'image GeoNature
+se choisit au lancement manuel.
+
+Le même serveur se monte en local, sans toucher à une install existante :
+voir [`.github/geonature-e2e/README.md`](../.github/geonature-e2e/README.md).
+
 ## Procédure après reboot du PC
 
 `adb reverse` et le mode "stayon" sont **non persistants** — ils sautent à
