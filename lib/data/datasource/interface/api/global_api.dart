@@ -28,14 +28,19 @@ abstract class GlobalApi {
   /// Renvoie la configuration complète d'un module
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode);
 
-  /// Renvoie les types de sites disponibles
-  Future<List<Map<String, dynamic>>> getSiteTypes();
+  /// Renvoie les types de sites disponibles.
+  ///
+  /// [token] est requis par la refonte de monitoring (gn_module_monitoring#748,
+  /// routes `/sites/types*` en `login_required`).
+  Future<List<Map<String, dynamic>>> getSiteTypes({String? token});
 
   /// Renvoie un type de site par son identifiant
-  Future<Map<String, dynamic>> getSiteTypeById(int idNomenclatureTypeSite);
+  Future<Map<String, dynamic>> getSiteTypeById(int idNomenclatureTypeSite,
+      {String? token});
 
   /// Renvoie un type de site par son label
-  Future<Map<String, dynamic>> getSiteTypeByLabel(String label);
+  Future<Map<String, dynamic>> getSiteTypeByLabel(String label,
+      {String? token});
 
   // Methods added for synchronization
 

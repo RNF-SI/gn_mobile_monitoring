@@ -268,7 +268,7 @@ class ModulesRepositoryImpl implements ModulesRepository {
       // 3. Fetch Site Types
       onStepUpdate?.call('Types de sites');
       onProgressUpdate?.call(0.45);
-      final siteTypesData = await globalApi.getSiteTypes();
+      final siteTypesData = await globalApi.getSiteTypes(token: token);
 
       // Extract the site types that are related to this module from the configuration
       final moduleConfig = ModuleConfiguration.fromJson(config);
@@ -283,7 +283,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
           try {
             // Fetch specific site type information
             final siteTypeData =
-                await globalApi.getSiteTypeById(int.parse(siteTypeId));
+                await globalApi.getSiteTypeById(int.parse(siteTypeId),
+                    token: token);
 
             // Create BibTypeSite domain object
             final typeSiteConfig = moduleTypesSite[siteTypeId];

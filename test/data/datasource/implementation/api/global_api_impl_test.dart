@@ -274,6 +274,32 @@ void main() {
         expect(result, true);
       });
 
+      test('401 (routes authentifiées, #209) → serveur joignable', () async {
+        when(() => mockConnectivity.checkConnectivity())
+            .thenAnswer((_) async => [ConnectivityResult.wifi]);
+        final mockResponse = MockResponse<dynamic>();
+        when(() => mockResponse.statusCode).thenReturn(401);
+        when(() => mockDio.get(
+              '/monitorings/sites/types',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockResponse);
+
+        expect(await globalApi.checkConnectivity(), true);
+      });
+
+      test('500 → serveur non joignable', () async {
+        when(() => mockConnectivity.checkConnectivity())
+            .thenAnswer((_) async => [ConnectivityResult.wifi]);
+        final mockResponse = MockResponse<dynamic>();
+        when(() => mockResponse.statusCode).thenReturn(500);
+        when(() => mockDio.get(
+              '/monitorings/sites/types',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockResponse);
+
+        expect(await globalApi.checkConnectivity(), false);
+      });
+
       test('should return false when server is not accessible', () async {
         when(() => mockConnectivity.checkConnectivity())
             .thenAnswer((_) async => [ConnectivityResult.wifi]);
@@ -379,6 +405,23 @@ void main() {
     });
 
     group('getSiteTypes', () {
+      test('envoie le jeton quand il est fourni (#209)', () async {
+        final mockResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockResponse.data).thenReturn({'items': []});
+        when(() => mockResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get('/monitorings/sites/types',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => mockResponse);
+
+        await globalApi.getSiteTypes(token: 'jeton');
+
+        final options = verify(() => mockDio.get('/monitorings/sites/types',
+                options: captureAny(named: 'options')))
+            .captured
+            .single as Options;
+        expect(options.headers?['Authorization'], 'Bearer jeton');
+      });
+
       test('should return site types successfully', () async {
         final mockResponse = MockResponse<Map<String, dynamic>>();
         final responseData = {

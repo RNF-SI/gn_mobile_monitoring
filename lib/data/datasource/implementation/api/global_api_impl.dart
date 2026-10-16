@@ -368,10 +368,16 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     }
   }
 
+  /// En-tête d'authentification, ou `null` (options par défaut) sans jeton.
+  Options? _authOptions(String? token) => token == null
+      ? null
+      : Options(headers: {'Authorization': 'Bearer $token'});
+
   @override
-  Future<List<Map<String, dynamic>>> getSiteTypes() async {
+  Future<List<Map<String, dynamic>>> getSiteTypes({String? token}) async {
     try {
-      final response = await dio.get('/monitorings/sites/types');
+      final response = await dio.get('/monitorings/sites/types',
+          options: _authOptions(token));
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -387,11 +393,12 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   }
 
   @override
-  Future<Map<String, dynamic>> getSiteTypeById(
-      int idNomenclatureTypeSite) async {
+  Future<Map<String, dynamic>> getSiteTypeById(int idNomenclatureTypeSite,
+      {String? token}) async {
     try {
-      final response = await dio
-          .get('/monitorings/sites/types/$idNomenclatureTypeSite');
+      final response = await dio.get(
+          '/monitorings/sites/types/$idNomenclatureTypeSite',
+          options: _authOptions(token));
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -406,10 +413,11 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   }
 
   @override
-  Future<Map<String, dynamic>> getSiteTypeByLabel(String label) async {
+  Future<Map<String, dynamic>> getSiteTypeByLabel(String label,
+      {String? token}) async {
     try {
       final response = await dio.get('/monitorings/sites/types/label',
-          queryParameters: {'label_fr': label});
+          queryParameters: {'label_fr': label}, options: _authOptions(token));
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -436,13 +444,19 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       final response = await dio.get(
         '/monitorings/sites/types',
         options: Options(
+          // Sans cet en-tête, une route `login_required` redirige (302) vers
+          // la page de connexion du frontend au lieu de répondre 401.
+          headers: {'Accept': 'application/json'},
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 5),
         ),
       );
 
-      return response.statusCode == 200;
+      // 401/403 : serveur joignable, la route exige une session
+      // (refonte de monitoring, gn_module_monitoring#748).
+      final status = response.statusCode;
+      return status == 200 || status == 401 || status == 403;
     } catch (e) {
       // En cas d'erreur, on considère que le serveur n'est pas accessible
       return false;
