@@ -20,7 +20,8 @@ import 'helpers/real_test_helpers.dart';
 /// champ.
 ///
 /// Lectures via `/monitorings/refacto/<module>/...`, disponibles en
-/// monitoring 1.3.x comme après la refonte (#513).
+/// monitoring 1.3.x comme après la refonte (#513), sauf la liste des
+/// observations, absente en 1.3.x : elles sont alors lues dans la visite.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
@@ -136,8 +137,7 @@ void main() {
         await _list(dio, moduleCode, 'visits', {'id_base_site': idSite});
     expect(visits, hasLength(1), reason: 'visite absente du serveur');
     final idVisit = visits.single['id_base_visit'] as int;
-    final observations = await _list(
-        dio, moduleCode, 'observations', {'id_base_visit': idVisit});
+    final observations = await _observations(dio, moduleCode, idVisit);
     expect(observations, hasLength(1),
         reason: 'observation absente du serveur');
     debugPrint('Aller-retour vérifié ($moduleCode) : site $idSite, '
@@ -169,5 +169,23 @@ Future<List<Map<String, dynamic>>> _list(Dio dio, String moduleCode,
       queryParameters: {'limit': 100, ...filters});
   return (resp.data['items'] as List)
       .map((e) => Map<String, dynamic>.from(e as Map))
+      .toList();
+}
+
+/// Observations de la visite : route `refacto` après la refonte, sinon les
+/// enfants de la visite (monitoring 1.3.x).
+Future<List<Map<String, dynamic>>> _observations(
+    Dio dio, String moduleCode, int idVisit) async {
+  try {
+    return await _list(
+        dio, moduleCode, 'observations', {'id_base_visit': idVisit});
+  } on DioException catch (e) {
+    if (e.response?.statusCode != 404) rethrow;
+  }
+  final resp = await dio.get('/monitorings/object/$moduleCode/visit/$idVisit',
+      queryParameters: {'depth': 1});
+  final children = (resp.data['children'] as Map?)?['observation'] as List?;
+  return (children ?? const [])
+      .map((e) => Map<String, dynamic>.from((e as Map)['properties'] as Map))
       .toList();
 }
