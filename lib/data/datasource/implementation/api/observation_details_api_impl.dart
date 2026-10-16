@@ -281,7 +281,7 @@ class ObservationDetailsApiImpl extends BaseApi implements ObservationDetailsApi
       requestBody['data'] = {};
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.observationDetail,
         legacyBody: requestBody,

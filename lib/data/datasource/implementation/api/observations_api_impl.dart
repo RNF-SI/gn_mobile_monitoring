@@ -170,7 +170,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.observation,
         legacyBody: requestBody,
@@ -411,7 +411,7 @@ class ObservationsApiImpl extends BaseApi implements ObservationsApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.observation,
         legacyBody: requestBody,

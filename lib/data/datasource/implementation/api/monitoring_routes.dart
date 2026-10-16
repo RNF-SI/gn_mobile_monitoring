@@ -8,8 +8,8 @@ enum MonitoringApiMode {
   /// ≤ 1.3.x). Dépréciées par la refonte (gn_module_monitoring#513).
   legacy,
 
-  /// Routes de la refonte : `/monitorings/<module>/<types>` et
-  /// `/monitorings/<module>/<types>/<id>`, corps JSON à plat.
+  /// Nouvelle API : `<base>/<module>/<types>` et `<base>/<module>/<types>/<id>`,
+  /// corps JSON à plat (base résolue par [MonitoringApiModeResolver]).
   current,
 }
 
@@ -32,49 +32,118 @@ enum MonitoringObjectType {
   final String pk;
 }
 
-/// Détecte, une fois par serveur, si les routes de la refonte sont
-/// disponibles.
+/// Routes monitoring retenues pour un serveur : famille d'écriture et
+/// préfixes de la nouvelle API.
+class MonitoringApiRoutes {
+  final MonitoringApiMode mode;
+
+  /// Base des lectures `<readBase>/<module>/sites`, `/sites_groups`…
+  final String readBase;
+
+  /// Base des écritures `<writeBase>/<module>/<types>` en mode
+  /// [MonitoringApiMode.current] (inutilisée en legacy).
+  final String writeBase;
+
+  const MonitoringApiRoutes({
+    required this.mode,
+    this.readBase = MonitoringApiModeResolver.refactoBase,
+    this.writeBase = MonitoringApiModeResolver.refactoBase,
+  });
+
+  /// Monitoring ≤ 1.3.x : écritures `/object/...`, lectures sous `/refacto`.
+  static const legacy = MonitoringApiRoutes(mode: MonitoringApiMode.legacy);
+}
+
+/// Détecte, une fois par serveur, où se trouvent les routes de la nouvelle
+/// API.
 ///
-/// Sonde : `GET /monitorings/module/<module_code>?field_name=module_code`.
-/// Monitoring ≤ 1.3.x n'expose que `/module/<int>` (404), la refonte accepte
-/// un code (200). La version déclarée du module ne suffit pas : develop
-/// annonce encore 1.3.2.
+/// La nouvelle API est servie sous un préfixe (`/monitorings/refacto`,
+/// gn_module_monitoring#748) appelé à disparaître (`/monitorings`, annoncé
+/// pour GeoNature 2.18.1). Plutôt que de déduire le préfixe d'une version,
+/// on demande au serveur les méthodes acceptées (`OPTIONS`, en-tête `Allow`)
+/// sur `<base>/<module>/sites` pour chaque base candidate :
+/// - lectures : première base qui accepte GET ;
+/// - écritures : première base qui accepte POST, sinon routes legacy.
+///
+/// | Serveur                 | lectures                 | écritures            |
+/// |-------------------------|--------------------------|----------------------|
+/// | monitoring 1.3.x        | /monitorings/refacto     | legacy `/object/...` |
+/// | develop avant #748      | /monitorings/refacto     | /monitorings         |
+/// | refact-hotfixes (#748)  | /monitorings/refacto     | /monitorings/refacto |
+/// | 2.18.1 (préfixe retiré) | /monitorings             | /monitorings         |
 class MonitoringApiModeResolver {
-  static final Map<String, MonitoringApiMode> _cache = {};
+  static const refactoBase = '/monitorings/refacto';
+  static const rootBase = '/monitorings';
+
+  /// Ordre de préférence des bases de la nouvelle API.
+  static const candidateBases = [refactoBase, rootBase];
+
+  static final Map<String, MonitoringApiRoutes> _cache = {};
 
   const MonitoringApiModeResolver();
 
-  Future<MonitoringApiMode> resolve(
+  Future<MonitoringApiRoutes> resolve(
       Dio dio, String token, String moduleCode) async {
     final key = Config.apiBase;
     final cached = _cache[key];
     if (cached != null) return cached;
 
-    try {
-      final response = await dio.get(
-        '/monitorings/module/$moduleCode',
-        queryParameters: {'field_name': 'module_code', 'depth': 0},
-        options: Options(headers: {'Authorization': 'Bearer $token'}),
-      );
-      if (response.statusCode == 200) {
-        return _remember(key, MonitoringApiMode.current);
+    String? readBase;
+    String? writeBase;
+    var conclusive = true;
+    for (final base in candidateBases) {
+      final allowed = await _allowedMethods(dio, token, '$base/$moduleCode/sites');
+      if (allowed == null) {
+        conclusive = false;
+        continue;
       }
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 404) {
-        return _remember(key, MonitoringApiMode.legacy);
-      }
-    } catch (_) {
-      // Réponse inattendue : on retombe sur les routes legacy sans mémoriser.
+      if (readBase == null && allowed.contains('GET')) readBase = base;
+      if (writeBase == null && allowed.contains('POST')) writeBase = base;
     }
-    // Erreur réseau ou statut inattendu : les routes legacy existent sur toutes
-    // les versions connues, on les utilise sans figer le choix.
-    return MonitoringApiMode.legacy;
+
+    final routes = writeBase != null
+        ? MonitoringApiRoutes(
+            mode: MonitoringApiMode.current,
+            readBase: readBase ?? writeBase,
+            writeBase: writeBase,
+          )
+        : MonitoringApiRoutes(
+            mode: MonitoringApiMode.legacy,
+            readBase: readBase ?? refactoBase,
+          );
+
+    // Erreur réseau ou serveur muet : on n'en tire rien de définitif.
+    if (!conclusive && writeBase == null) return routes;
+    _cache[key] = routes;
+    AppLogger().i(
+        '[API] Routes monitoring : ${routes.mode.name}, lectures '
+        '${routes.readBase}, écritures ${routes.writeBase} ($key)',
+        tag: 'sync');
+    return routes;
   }
 
-  MonitoringApiMode _remember(String key, MonitoringApiMode mode) {
-    _cache[key] = mode;
-    AppLogger().i('[API] Routes monitoring : ${mode.name} ($key)', tag: 'sync');
-    return mode;
+  /// Méthodes acceptées par [path] : ensemble vide si la route n'existe pas
+  /// (404/405), `null` si la réponse ne permet pas de conclure.
+  Future<Set<String>?> _allowedMethods(
+      Dio dio, String token, String path) async {
+    try {
+      final response = await dio.request(
+        path,
+        options: Options(
+          method: 'OPTIONS',
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+      final allow = response.headers.value('allow');
+      if (allow == null) return null;
+      return allow.split(',').map((m) => m.trim().toUpperCase()).toSet();
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == 404 || status == 405) return const {};
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Pour les tests, et après un changement de serveur.
@@ -94,20 +163,20 @@ class MonitoringWriteRequest {
   /// formulaire web : `{...properties, geom}`, plus la clé primaire pour un
   /// PATCH (sans elle, certaines routes créent un nouvel objet).
   factory MonitoringWriteRequest.build({
-    required MonitoringApiMode mode,
+    required MonitoringApiRoutes routes,
     required String moduleCode,
     required MonitoringObjectType type,
     required Map<String, dynamic> legacyBody,
     int? id,
   }) {
-    if (mode == MonitoringApiMode.legacy) {
+    if (routes.mode == MonitoringApiMode.legacy) {
       final path = '/monitorings/object/$moduleCode/${type.legacyName}'
           '${id != null ? '/$id' : ''}';
       return MonitoringWriteRequest(path, legacyBody);
     }
 
-    final path =
-        '/monitorings/$moduleCode/${type.currentName}${id != null ? '/$id' : ''}';
+    final path = '${routes.writeBase}/$moduleCode/${type.currentName}'
+        '${id != null ? '/$id' : ''}';
     return MonitoringWriteRequest(path, flattenBody(type, legacyBody, id: id));
   }
 

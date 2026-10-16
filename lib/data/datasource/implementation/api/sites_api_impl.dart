@@ -60,8 +60,10 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       // site (base_site_*, altitudes, geometry, id_sites_group, meta_*, etc.)
       // dans une enveloppe {count, items[], limit, page}.
       // limit=100000 contourne le limit par défaut (50) côté backend.
+      final routes =
+          await _modeResolver.resolve(dioInstance, token, moduleCode);
       final response = await dioInstance.get(
-        '/monitorings/refacto/$moduleCode/sites',
+        '${routes.readBase}/$moduleCode/sites',
         queryParameters: {'limit': 100000},
         options: Options(headers: headers),
       );
@@ -204,10 +206,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     try {
       var page = 1;
       int? serverCount;
+      final routes = await _modeResolver.resolve(dio, token, moduleCode);
 
       while (true) {
         final response = await dio.get(
-          '/monitorings/refacto/$moduleCode/sites_groups',
+          '${routes.readBase}/$moduleCode/sites_groups',
           queryParameters: {'limit': pageSize, 'page': page},
           options: Options(
             headers: {'Authorization': 'Bearer $token'},
@@ -390,7 +393,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.site,
         legacyBody: requestBody,
@@ -578,7 +581,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.site,
         legacyBody: requestBody,
@@ -820,7 +823,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.sitesGroup,
         legacyBody: requestBody,

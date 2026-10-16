@@ -14,14 +14,16 @@ class MockDio extends Mock implements Dio {}
 class MockConnectivity extends Mock implements Connectivity {}
 
 class _FixedModeResolver extends MonitoringApiModeResolver {
-  const _FixedModeResolver(this.mode);
-  final MonitoringApiMode mode;
+  const _FixedModeResolver(this.routes);
+  final MonitoringApiRoutes routes;
 
   @override
-  Future<MonitoringApiMode> resolve(
+  Future<MonitoringApiRoutes> resolve(
           Dio dio, String token, String moduleCode) async =>
-      mode;
+      routes;
 }
+
+const _refacto = MonitoringApiRoutes(mode: MonitoringApiMode.current);
 
 Response<dynamic> _response(String path, int status, [dynamic data]) =>
     Response(
@@ -50,7 +52,7 @@ void main() {
 
     test('legacy : route générique, corps inchangé', () {
       final request = MonitoringWriteRequest.build(
-        mode: MonitoringApiMode.legacy,
+        routes: MonitoringApiRoutes.legacy,
         moduleCode: 'POPAmphibien',
         type: MonitoringObjectType.visit,
         legacyBody: legacyVisit,
@@ -63,13 +65,13 @@ void main() {
 
     test('current : POST sur la route du module avec un corps à plat', () {
       final request = MonitoringWriteRequest.build(
-        mode: MonitoringApiMode.current,
+        routes: _refacto,
         moduleCode: 'POPAmphibien',
         type: MonitoringObjectType.visit,
         legacyBody: legacyVisit,
       );
 
-      expect(request.path, '/monitorings/POPAmphibien/visits');
+      expect(request.path, '/monitorings/refacto/POPAmphibien/visits');
       expect(request.body, {
         'id_base_site': 4,
         'visit_date_min': '2026-10-08',
@@ -82,7 +84,7 @@ void main() {
 
     test('current : PATCH avec la clé primaire dans le corps', () {
       final request = MonitoringWriteRequest.build(
-        mode: MonitoringApiMode.current,
+        routes: _refacto,
         moduleCode: 'POPAmphibien',
         type: MonitoringObjectType.observation,
         legacyBody: {
@@ -93,7 +95,7 @@ void main() {
         id: 6,
       );
 
-      expect(request.path, '/monitorings/POPAmphibien/observations/6');
+      expect(request.path, '/monitorings/refacto/POPAmphibien/observations/6');
       expect(request.body,
           {'id_base_visit': 7, 'cd_nom': 212, 'id_observation': 6});
     });
@@ -104,7 +106,7 @@ void main() {
         'coordinates': [5.75, 45.15]
       };
       final request = MonitoringWriteRequest.build(
-        mode: MonitoringApiMode.current,
+        routes: _refacto,
         moduleCode: 'POPAmphibien',
         type: MonitoringObjectType.site,
         legacyBody: {
@@ -119,7 +121,7 @@ void main() {
         },
       );
 
-      expect(request.path, '/monitorings/POPAmphibien/sites');
+      expect(request.path, '/monitorings/refacto/POPAmphibien/sites');
       expect(request.body, {
         'base_site_name': 'Site',
         'first_use_date': '2026-10-08',
@@ -130,16 +132,32 @@ void main() {
 
     test('chemins de chaque type en mode current', () {
       String path(MonitoringObjectType type) => MonitoringWriteRequest.build(
-            mode: MonitoringApiMode.current,
+            routes: _refacto,
             moduleCode: 'M',
             type: type,
             legacyBody: const {'properties': {}},
           ).path;
 
       expect(
-          path(MonitoringObjectType.sitesGroup), '/monitorings/M/sites_groups');
+          path(MonitoringObjectType.sitesGroup), '/monitorings/refacto/M/sites_groups');
       expect(path(MonitoringObjectType.observationDetail),
-          '/monitorings/M/observation_details');
+          '/monitorings/refacto/M/observation_details');
+    });
+
+    test('current : base d\'écriture sans préfixe (GeoNature 2.18.1)', () {
+      final request = MonitoringWriteRequest.build(
+        routes: const MonitoringApiRoutes(
+          mode: MonitoringApiMode.current,
+          readBase: MonitoringApiModeResolver.rootBase,
+          writeBase: MonitoringApiModeResolver.rootBase,
+        ),
+        moduleCode: 'M',
+        type: MonitoringObjectType.visit,
+        legacyBody: const {'properties': {}},
+        id: 3,
+      );
+
+      expect(request.path, '/monitorings/M/visits/3');
     });
   });
 
@@ -161,7 +179,8 @@ void main() {
 
   group('MonitoringApiModeResolver', () {
     late MockDio dio;
-    const probe = '/monitorings/module/POPAmphibien';
+    const refactoSites = '/monitorings/refacto/POPAmphibien/sites';
+    const rootSites = '/monitorings/POPAmphibien/sites';
 
     setUp(() {
       dio = MockDio();
@@ -174,59 +193,103 @@ void main() {
       Config.clearStoredApiUrl();
     });
 
-    void stubProbe(Future<Response<dynamic>> Function() answer) {
-      when(() => dio.get(
-            probe,
-            queryParameters: {'field_name': 'module_code', 'depth': 0},
-            options: any(named: 'options'),
-          )).thenAnswer((_) => answer());
+    DioException notFound(String path) => DioException(
+          requestOptions: RequestOptions(path: path),
+          response: _response(path, 404),
+          type: DioExceptionType.badResponse,
+        );
+
+    /// [allow] : en-tête `Allow` renvoyé, ou null pour un 404.
+    void stubOptions(String path, String? allow) {
+      when(() => dio.request(path, options: any(named: 'options')))
+          .thenAnswer((_) async {
+        if (allow == null) throw notFound(path);
+        return Response(
+          requestOptions: RequestOptions(path: path, method: 'OPTIONS'),
+          statusCode: 200,
+          headers: Headers.fromMap({
+            'allow': [allow]
+          }),
+        );
+      });
     }
 
-    test('200 → routes de la refonte, mémorisé par serveur', () async {
-      stubProbe(() async => _response(probe, 200, {'module_code': 'x'}));
-      const resolver = MonitoringApiModeResolver();
+    Future<MonitoringApiRoutes> resolve() =>
+        const MonitoringApiModeResolver().resolve(dio, 't', 'POPAmphibien');
 
-      expect(await resolver.resolve(dio, 't', 'POPAmphibien'),
-          MonitoringApiMode.current);
-      expect(await resolver.resolve(dio, 't', 'POPAmphibien'),
-          MonitoringApiMode.current);
-      verify(() => dio.get(probe,
-          queryParameters: any(named: 'queryParameters'),
-          options: any(named: 'options'))).called(1);
+    test('refact-hotfixes : lectures et écritures sous /refacto, mémorisé',
+        () async {
+      stubOptions(refactoSites, 'GET, POST, HEAD, OPTIONS');
+      stubOptions(rootSites, null);
+
+      final routes = await resolve();
+      expect(routes.mode, MonitoringApiMode.current);
+      expect(routes.readBase, '/monitorings/refacto');
+      expect(routes.writeBase, '/monitorings/refacto');
+
+      await resolve();
+      verify(() => dio.request(refactoSites, options: any(named: 'options')))
+          .called(1);
     });
 
-    test('404 (monitoring ≤ 1.3.x) → routes legacy', () async {
-      stubProbe(() async => throw DioException(
-            requestOptions: RequestOptions(path: probe),
-            response: _response(probe, 404),
-            type: DioExceptionType.badResponse,
-          ));
+    test('2.18.1 : préfixe retiré', () async {
+      stubOptions(refactoSites, null);
+      stubOptions(rootSites, 'OPTIONS, GET, POST');
 
-      expect(
-          await const MonitoringApiModeResolver()
-              .resolve(dio, 't', 'POPAmphibien'),
-          MonitoringApiMode.legacy);
+      final routes = await resolve();
+      expect(routes.mode, MonitoringApiMode.current);
+      expect(routes.readBase, '/monitorings');
+      expect(routes.writeBase, '/monitorings');
+    });
+
+    test('develop avant #748 : lectures /refacto, écritures sans préfixe',
+        () async {
+      stubOptions(refactoSites, 'HEAD, OPTIONS, GET');
+      stubOptions(rootSites, 'OPTIONS, POST');
+
+      final routes = await resolve();
+      expect(routes.mode, MonitoringApiMode.current);
+      expect(routes.readBase, '/monitorings/refacto');
+      expect(routes.writeBase, '/monitorings');
+    });
+
+    test('monitoring 1.3.x : écritures legacy, lectures /refacto', () async {
+      stubOptions(refactoSites, 'HEAD, GET, OPTIONS');
+      stubOptions(rootSites, null);
+
+      final routes = await resolve();
+      expect(routes.mode, MonitoringApiMode.legacy);
+      expect(routes.readBase, '/monitorings/refacto');
     });
 
     test('erreur réseau → legacy sans mémoriser', () async {
-      stubProbe(() async => throw DioException(
-            requestOptions: RequestOptions(path: probe),
-            type: DioExceptionType.connectionError,
-          ));
-      const resolver = MonitoringApiModeResolver();
-      expect(await resolver.resolve(dio, 't', 'POPAmphibien'),
-          MonitoringApiMode.legacy);
+      when(() => dio.request(any(), options: any(named: 'options')))
+          .thenAnswer((_) async => throw DioException(
+                requestOptions: RequestOptions(path: refactoSites),
+                type: DioExceptionType.connectionError,
+              ));
+      expect((await resolve()).mode, MonitoringApiMode.legacy);
 
-      stubProbe(() async => _response(probe, 200, {}));
-      expect(await resolver.resolve(dio, 't', 'POPAmphibien'),
-          MonitoringApiMode.current);
+      stubOptions(refactoSites, 'GET, POST');
+      stubOptions(rootSites, null);
+      expect((await resolve()).mode, MonitoringApiMode.current);
+    });
+
+    test('réponse sans en-tête Allow → legacy sans mémoriser', () async {
+      when(() => dio.request(any(), options: any(named: 'options')))
+          .thenAnswer((_) async => _response(refactoSites, 204));
+      expect((await resolve()).mode, MonitoringApiMode.legacy);
+
+      stubOptions(refactoSites, 'GET, POST');
+      stubOptions(rootSites, null);
+      expect((await resolve()).mode, MonitoringApiMode.current);
     });
   });
 
   group('API d\'écriture en mode current', () {
     late MockDio dio;
     late MockConnectivity connectivity;
-    const current = _FixedModeResolver(MonitoringApiMode.current);
+    const current = _FixedModeResolver(_refacto);
 
     setUp(() {
       dio = MockDio();
@@ -242,7 +305,7 @@ void main() {
                 options: any(named: 'options'),
               ))
           .thenAnswer((_) async => _response(
-              '/monitorings/POPAmphibien/visits', 200, {'id_base_visit': 42}));
+              '/monitorings/refacto/POPAmphibien/visits', 200, {'id_base_visit': 42}));
 
       final result = await VisitsApiImpl(
               dio: dio, connectivity: connectivity, modeResolver: current)
@@ -261,7 +324,7 @@ void main() {
 
       expect(result['id'], 42);
       final captured = verify(() => dio.post(
-            '/monitorings/POPAmphibien/visits',
+            '/monitorings/refacto/POPAmphibien/visits',
             data: captureAny(named: 'data'),
             options: any(named: 'options'),
           )).captured.single as Map<String, dynamic>;
@@ -277,7 +340,7 @@ void main() {
                 options: any(named: 'options'),
               ))
           .thenAnswer((_) async => _response(
-              '/monitorings/POPAmphibien/sites/21', 201, {'id_base_site': 21}));
+              '/monitorings/refacto/POPAmphibien/sites/21', 201, {'id_base_site': 21}));
 
       final result = await SitesApiImpl(
               dio: dio, connectivity: connectivity, modeResolver: current)
@@ -295,7 +358,7 @@ void main() {
 
       expect(result['id'], 21);
       final captured = verify(() => dio.patch(
-            '/monitorings/POPAmphibien/sites/21',
+            '/monitorings/refacto/POPAmphibien/sites/21',
             data: captureAny(named: 'data'),
             options: any(named: 'options'),
           )).captured.single as Map<String, dynamic>;

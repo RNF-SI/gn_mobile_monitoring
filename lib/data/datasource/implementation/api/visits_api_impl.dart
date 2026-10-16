@@ -108,7 +108,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       // Les vérifications des champs obligatoires ont été déplacées en début de méthode
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.visit,
         legacyBody: requestBody,
@@ -316,7 +316,7 @@ class VisitsApiImpl extends BaseApi implements VisitsApi {
       }
 
       final request = MonitoringWriteRequest.build(
-        mode: await _modeResolver.resolve(dio, token, moduleCode),
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
         moduleCode: moduleCode,
         type: MonitoringObjectType.visit,
         legacyBody: requestBody,
