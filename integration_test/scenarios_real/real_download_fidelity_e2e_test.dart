@@ -74,7 +74,7 @@ void main() {
       expect(l.sitesGroupName, s['sites_group_name'], reason: '$where : nom');
       expect(l.sitesGroupCode, s['sites_group_code'], reason: '$where : code');
       expect(l.uuidSitesGroup, s['uuid_sites_group'], reason: '$where : uuid');
-      _expectSameGeometry(l.geom, s['geometry'], where);
+      _expectSameGeometry(l.geom, s['geometry'] ?? s['geom'], where);
     }
 
     // ----- Sites -----
@@ -99,7 +99,7 @@ void main() {
       expect(l.uuidBaseSite, s['uuid_base_site'], reason: '$where : uuid');
       expect(_day(l.firstUseDate), s['first_use_date'],
           reason: '$where : date de première utilisation');
-      _expectSameGeometry(l.geom, s['geometry'], where);
+      _expectSameGeometry(l.geom, s['geometry'] ?? s['geom'], where);
 
       final complement =
           await db.sitesDao.getSiteComplementById(l.idBaseSite);

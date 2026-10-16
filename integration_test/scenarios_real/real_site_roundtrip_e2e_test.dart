@@ -117,7 +117,8 @@ void main() {
     expect((serverSite['types_site'] as List?)?.isNotEmpty, isTrue,
         reason: 'le site doit avoir au moins un type de site');
 
-    final geometry = _geometry(serverSite['geometry']);
+    final geometry =
+        _geometry(serverSite['geometry'] ?? serverSite['geom']);
     expect(geometry['type'], 'Point');
     final coords = (geometry['coordinates'] as List).cast<num>();
     expect(coords[0], closeTo(position.longitude, 1e-5),
@@ -177,7 +178,8 @@ Future<int> _moduleId(Dio dio, String moduleCode) async {
   return module['id_module'] as int;
 }
 
-/// La géométrie est renvoyée en chaîne GeoJSON (1.3.x) ou en objet.
+/// La géométrie est renvoyée en chaîne GeoJSON (1.3.x) ou en objet, sous
+/// `geometry` ou `geom` (monitoring develop) selon la version.
 Map<String, dynamic> _geometry(Object? raw) {
   if (raw is String) return Map<String, dynamic>.from(jsonDecode(raw) as Map);
   if (raw is Map) return Map<String, dynamic>.from(raw);
