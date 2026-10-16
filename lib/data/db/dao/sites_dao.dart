@@ -194,9 +194,15 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
 
   // Delete a single site group
   Future<void> deleteSiteGroup(int siteGroupId) async {
-    await (delete(tSitesGroups)
-          ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
-        .go();
+    await transaction(() async {
+      // Sans quoi l'association reste et pointe vers un groupe disparu.
+      await (delete(corSitesGroupModuleTable)
+            ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
+          .go();
+      await (delete(tSitesGroups)
+            ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
+          .go();
+    });
   }
 
   // Clear all site groups
@@ -287,8 +293,9 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   }
 
   Future<List<SiteGroup>> getGroupsByModuleId(int moduleId) async {
+    // Jointure interne : une association vers un groupe absent est ignorée.
     final query = select(corSitesGroupModuleTable).join([
-      leftOuterJoin(
+      innerJoin(
           tSitesGroups,
           tSitesGroups.idSitesGroup
               .equalsExp(corSitesGroupModuleTable.idSitesGroup))
@@ -311,8 +318,9 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   }
 
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
+    // Jointure interne : une association vers un site absent est ignorée.
     final query = select(corSiteModuleTable).join([
-      leftOuterJoin(tBaseSites,
+      innerJoin(tBaseSites,
           tBaseSites.idBaseSite.equalsExp(corSiteModuleTable.idBaseSite))
     ]);
     query.where(corSiteModuleTable.idModule.equals(moduleId));
