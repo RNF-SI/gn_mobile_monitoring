@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/api_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/sites_api.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_complement_entity.dart';
 import 'package:gn_mobile_monitoring/data/entity/site_group_entity.dart';
@@ -15,11 +16,29 @@ import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_complement.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 
+/// Ramène `types_site` à une liste d'ids, quel que soit le format serveur :
+/// - monitoring <= 1.3.0 : `[{id_nomenclature_type_site: 940, label: ..., config: ...}]`
+/// - monitoring >= 1.3.2 : `[940]`
+List<int> normalizeTypesSite(List<dynamic> typesSite) {
+  return typesSite
+      .map((e) => e is Map
+          ? e['id_nomenclature_type_site']
+          : (e is int ? e : int.tryParse(e.toString())))
+      .whereType<int>()
+      .toList();
+}
+
 class SitesApiImpl extends BaseApi implements SitesApi {
   final Connectivity _connectivity;
+  final MonitoringApiModeResolver _modeResolver;
 
-  SitesApiImpl({Connectivity? connectivity, Dio? dio})
+  SitesApiImpl(
+      {Connectivity? connectivity,
+      Dio? dio,
+      MonitoringApiModeResolver modeResolver =
+          const MonitoringApiModeResolver()})
       : _connectivity = connectivity ?? Connectivity(),
+        _modeResolver = modeResolver,
         super(dio: dio);
 
   @override
@@ -41,8 +60,10 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       // site (base_site_*, altitudes, geometry, id_sites_group, meta_*, etc.)
       // dans une enveloppe {count, items[], limit, page}.
       // limit=100000 contourne le limit par défaut (50) côté backend.
+      final routes =
+          await _modeResolver.resolve(dioInstance, token, moduleCode);
       final response = await dioInstance.get(
-        '/monitorings/refacto/$moduleCode/sites',
+        '${routes.readBase}/$moduleCode/sites',
         queryParameters: {'limit': 100000},
         options: Options(headers: headers),
       );
@@ -87,7 +108,9 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         final siteId = item['id_base_site'] as int?;
         if (siteId == null) continue;
 
-        // BaseSiteEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
+        // BaseSiteEntity.fromJson accepte `geometry` (Map ou String) ou `geom`.
+        // monitoring >= 1.3.2 renvoie `geom` (objet GeoJSON) au lieu de
+        // `geometry` (chaîne GeoJSON).
         enrichedSites.add({
           'id_base_site': siteId,
           'base_site_name': item['base_site_name'],
@@ -97,7 +120,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
           'altitude_max': item['altitude_max'],
           'first_use_date': item['first_use_date'],
           'uuid_base_site': item['uuid_base_site'],
-          'geometry': item['geometry'],
+          'geometry': item['geometry'] ?? item['geom'],
         });
 
         final idSitesGroup = item['id_sites_group'] as int?;
@@ -107,6 +130,12 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         siteSpecificData.remove('base_site_code');
         siteSpecificData.remove('base_site_description');
         siteSpecificData.remove('additional_data_keys');
+        // La géométrie est portée par le site, pas par ses données spécifiques
+        siteSpecificData.remove('geom');
+        if (siteSpecificData['types_site'] is List) {
+          siteSpecificData['types_site'] =
+              normalizeTypesSite(siteSpecificData['types_site'] as List);
+        }
 
         siteComplements.add(SiteComplementEntity(
           idBaseSite: siteId,
@@ -150,6 +179,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     'altitude_min',
     'altitude_max',
     'geometry',
+    'geom', // monitoring >= 1.3.2
     'meta_create_date',
     'meta_update_date',
     // Métadonnées de la réponse (pas des colonnes du modèle)
@@ -176,10 +206,11 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     try {
       var page = 1;
       int? serverCount;
+      final routes = await _modeResolver.resolve(dio, token, moduleCode);
 
       while (true) {
         final response = await dio.get(
-          '/monitorings/refacto/$moduleCode/sites_groups',
+          '${routes.readBase}/$moduleCode/sites_groups',
           queryParameters: {'limit': pageSize, 'page': page},
           options: Options(
             headers: {'Authorization': 'Bearer $token'},
@@ -277,7 +308,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         'altitude_min': item['altitude_min'],
         'altitude_max': item['altitude_max'],
         // SiteGroupEntity.fromJson accepte `geometry` (Map ou String) ou `geom`
-        'geometry': item['geometry'],
+        // (monitoring >= 1.3.2 renvoie `geom`)
+        'geometry': item['geometry'] ?? item['geom'],
         'data': dynamicData,
       };
 
@@ -360,6 +392,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         });
       }
 
+      final request = MonitoringWriteRequest.build(
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.site,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -367,7 +406,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] ENVOI SITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln('URL: $apiBase/monitorings/object/$moduleCode/site');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       if (token.length > 10) {
@@ -380,14 +419,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
       final response = await dio.post(
-        '/monitorings/object/$moduleCode/site',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -412,7 +451,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.site,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi du site. Status code: ${response.statusCode}');
@@ -540,6 +580,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
         });
       }
 
+      final request = MonitoringWriteRequest.build(
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.site,
+        legacyBody: requestBody,
+        id: siteId,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -547,8 +595,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] MISE À JOUR SITE AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer
-          .writeln('URL: $apiBase/monitorings/object/$moduleCode/site/$siteId');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: PATCH');
 
       if (token.length > 10) {
@@ -561,14 +608,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('BODY:');
       logBuffer.writeln(
           '------------------------------------------------------------------');
-      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(requestBody));
+      logBuffer.writeln(const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête PATCH
       final response = await dio.patch(
-        '/monitorings/object/$moduleCode/site/$siteId',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -593,7 +640,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.site,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de la mise à jour du site. Status code: ${response.statusCode}');
@@ -774,6 +822,13 @@ class SitesApiImpl extends BaseApi implements SitesApi {
             sanitized;
       }
 
+      final request = MonitoringWriteRequest.build(
+        routes: await _modeResolver.resolve(dio, token, moduleCode),
+        moduleCode: moduleCode,
+        type: MonitoringObjectType.sitesGroup,
+        legacyBody: requestBody,
+      );
+
       // Log détaillé pour le débogage
       StringBuffer logBuffer = StringBuffer();
       logBuffer.writeln(
@@ -781,8 +836,7 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln('[API] ENVOI GROUPE DE SITES AU SERVEUR');
       logBuffer.writeln(
           '==================================================================');
-      logBuffer.writeln(
-          'URL: $apiBase/monitorings/object/$moduleCode/sites_group');
+      logBuffer.writeln('URL: $apiBase${request.path}');
       logBuffer.writeln('MÉTHODE: POST');
 
       if (token.length > 10) {
@@ -796,14 +850,14 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logBuffer.writeln(
           '------------------------------------------------------------------');
       logBuffer.writeln(
-          const JsonEncoder.withIndent('  ').convert(requestBody));
+          const JsonEncoder.withIndent('  ').convert(request.body));
 
       logger.i(logBuffer.toString(), tag: 'sync');
 
       // Envoyer la requête
       final response = await dio.post(
-        '/monitorings/object/$moduleCode/sites_group',
-        data: requestBody,
+        request.path,
+        data: request.body,
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
           receiveTimeout: const Duration(seconds: 30),
@@ -828,7 +882,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
       logger.i(logBuffer.toString(), tag: 'sync');
 
       if (response.statusCode == 201 || response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        return normalizeWriteResponse(MonitoringObjectType.sitesGroup,
+            response.data as Map<String, dynamic>);
       } else {
         throw Exception(
             'Erreur lors de l\'envoi du groupe de sites. Status code: ${response.statusCode}');

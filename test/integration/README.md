@@ -292,29 +292,13 @@ LIMIT 5;
 
 ## 🔄 CI/CD
 
-### Workflow GitHub Actions
+Ces tests ne tournent pas en CI : il leur faut un vrai serveur GeoNature et
+des identifiants. La CI (`.github/workflows/flutter_tests.yml`) lance les
+tests unitaires en excluant le tag `integration` :
 
-Le workflow `.github/workflows/integration_tests.yml` exécute :
-
-1. **Unit tests** (toujours) : Tests rapides avec mocks
-2. **Integration tests** (sur main/develop) : Tests avec serveur réel
-
-### Déclenchement
-
-- **Automatique** : Push sur `main` ou `develop`
-- **Manuel** : Via l'onglet "Actions" → "Integration Tests" → "Run workflow"
-- **Pull requests** : Tests unitaires uniquement (économie de temps)
-
-### Résultats
-
-- ✅ **Success** : Tous les tests passent
-- ❌ **Failure** : Au moins un test échoue
-- ⏭️ **Skipped** : Tests d'intégration non exécutés (PR ou branche autre que main/develop)
-
-### Artifacts
-
-Les résultats des tests sont uploadés comme artifacts dans GitHub Actions :
-- **integration-test-results** : Résultats détaillés et couverture
+```bash
+flutter test --exclude-tags=integration
+```
 
 ---
 

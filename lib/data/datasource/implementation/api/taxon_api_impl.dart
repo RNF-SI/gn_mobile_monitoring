@@ -43,9 +43,10 @@ class TaxonApiImpl extends BaseApi implements TaxonApi {
     const maxRetries = 3;
     for (var attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        // Utilise /api/taxref comme occtax mobile (mieux optimisé pour la pagination)
+        // Utilise /api/taxref comme occtax mobile (mieux optimisé pour la pagination).
+        // Barre finale : sans elle, le serveur répond par une redirection 308.
         final response = await dio.get(
-          '/taxhub/api/taxref',
+          '/taxhub/api/taxref/',
           queryParameters: {
             'limit': limit,
             'page': page,
@@ -140,103 +141,6 @@ class TaxonApiImpl extends BaseApi implements TaxonApi {
           originalDioException: e);
     } catch (e) {
       throw ApiException('Failed to fetch taxon list: $e');
-    }
-  }
-
-  @override
-  Future<Taxon> getTaxonByCdNom(int cdNom) async {
-    try {
-      final response = await dio.get(
-        '/taxonomie/taxref/$cdNom',
-      );
-
-      if (response.statusCode == 200) {
-        final json = response.data;
-        return _parseTaxon(json);
-      }
-
-      throw ApiException(
-        'Failed to load taxon with cd_nom $cdNom',
-        statusCode: response.statusCode,
-      );
-    } on DioException catch (e) {
-      throw NetworkException(
-          'Network error while fetching taxon: ${e.message}',
-          originalDioException: e);
-    } catch (e) {
-      throw ApiException('Failed to fetch taxon: $e');
-    }
-  }
-
-  Taxon _parseTaxon(Map<String, dynamic> json) {
-    return Taxon(
-      cdNom: json['cd_nom'],
-      cdRef: json['cd_ref'],
-      idStatut: json['id_statut'],
-      idHabitat: json['id_habitat'],
-      idRang: json['id_rang'],
-      regne: json['regne'],
-      phylum: json['phylum'],
-      classe: json['classe'],
-      ordre: json['ordre'],
-      famille: json['famille'],
-      sousFamille: json['sous_famille'],
-      tribu: json['tribu'],
-      cdTaxsup: json['cd_taxsup'],
-      cdSup: json['cd_sup'],
-      lbNom: json['lb_nom'],
-      lbAuteur: json['lb_auteur'],
-      nomComplet: json['nom_complet'] ?? 'Sans nom',
-      nomCompletHtml: json['nom_complet_html'],
-      nomVern: json['nom_vern'],
-      nomValide: json['nom_valide'],
-      nomVernEng: json['nom_vern_eng'],
-      group1Inpn: json['group1_inpn'],
-      group2Inpn: json['group2_inpn'],
-      group3Inpn: json['group3_inpn'],
-      url: json['url'],
-    );
-  }
-
-  @override
-  Future<List<Taxon>> searchTaxons(String token, String searchTerm,
-      {int? idListe}) async {
-    try {
-      // Paramètres de recherche
-      final queryParams = <String, dynamic>{
-        'search': searchTerm,
-        'limit': 50,
-      };
-
-      if (idListe != null) {
-        queryParams['id_liste'] = idListe.toString();
-      }
-
-      // Appel API
-      final response = await dio.get(
-        '/taxonomie/taxref/search',
-        queryParameters: queryParams,
-        options: Options(
-          headers: {'Authorization': 'Bearer $token'},
-        ),
-      );
-
-      if (response.statusCode != 200) {
-        throw ApiException(
-          'Erreur lors de la recherche de taxons',
-          statusCode: response.statusCode,
-        );
-      }
-
-      final List<dynamic> data = response.data;
-      return data.map((json) => _parseTaxon(json)).toList();
-    } on DioException catch (e) {
-      throw NetworkException(
-        'Erreur réseau lors de la recherche de taxons: ${e.message}',
-        originalDioException: e,
-      );
-    } catch (e) {
-      throw ApiException('Erreur lors de la recherche de taxons: $e');
     }
   }
 }

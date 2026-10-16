@@ -6,11 +6,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/data_module.dart';
+import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
 import 'package:gn_mobile_monitoring/presentation/view/home_page/home_page.dart';
 import 'package:gn_mobile_monitoring/presentation/view/login_page.dart';
 import 'package:go_router/go_router.dart';
+import 'package:latlong2/latlong.dart';
 
+import 'helpers/fake_get_user_location.dart';
 import 'helpers/in_memory_local_storage.dart';
 
 /// Configuration chargee depuis .env.test ou --dart-define
@@ -121,17 +124,20 @@ class RealE2EConfig {
 /// Differences avec [E2ETestApp] (version mockee) :
 /// - Dio reel (pas de MockApiInterceptor) → appels reseau reels
 /// - DatabaseService reel → initialisation SQLite sur l'appareil
-/// - Seul override : localStorage (pour controler l'etat entre tests)
+/// - Override de localStorage (pour controler l'etat entre tests)
+/// - Position GPS fixe si [fakeLocation] est fourni (géométries vérifiables)
 class RealE2ETestApp {
   final RealE2EConfig config;
   final InMemoryLocalStorage localStorage;
+  final LatLng? fakeLocation;
 
   RealE2ETestApp._({
     required this.config,
     required this.localStorage,
+    this.fakeLocation,
   });
 
-  factory RealE2ETestApp({RealE2EConfig? config}) {
+  factory RealE2ETestApp({RealE2EConfig? config, LatLng? fakeLocation}) {
     final effectiveConfig = config ?? RealE2EConfig.load();
     final localStorage = InMemoryLocalStorage();
 
@@ -141,6 +147,7 @@ class RealE2ETestApp {
     return RealE2ETestApp._(
       config: effectiveConfig,
       localStorage: localStorage,
+      fakeLocation: fakeLocation,
     );
   }
 
@@ -153,6 +160,9 @@ class RealE2ETestApp {
         // On override uniquement localStorage pour pouvoir reset entre tests
         // et eviter la dependance a SharedPreferences.init()
         localStorageProvider.overrideWithValue(localStorage),
+        if (fakeLocation != null)
+          getUserLocationUseCaseProvider
+              .overrideWithValue(FakeGetUserLocation(position: fakeLocation!)),
       ],
       child: child ?? const _RealE2EMainApp(),
     );

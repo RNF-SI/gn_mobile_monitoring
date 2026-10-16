@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/domain/model/module.dart';
 part 'module_liste.freezed.dart';
 
 @freezed
-class ModuleListe with _$ModuleListe {
+abstract class ModuleListe with _$ModuleListe {
   const factory ModuleListe({required List<Module> values}) = _ModuleListe;
 
   const ModuleListe._();

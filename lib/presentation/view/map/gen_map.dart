@@ -155,7 +155,7 @@ class _GeometriesMapWidgetState extends ConsumerState<GeometriesMapWidget> {
                       if (mapState.selectedLayer != null)
                         TileLayer(
                           urlTemplate: mapState.selectedLayer!.urlTemplate,
-                          userAgentPackageName: 'com.example.gn_mobile_monitoring',
+                          userAgentPackageName: 'org.reserves_naturelles.monitoring',
                         ),
                       if (accuracyCircle != null)
                         CircleLayer(circles: [accuracyCircle]),

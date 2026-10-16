@@ -194,9 +194,15 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
 
   // Delete a single site group
   Future<void> deleteSiteGroup(int siteGroupId) async {
-    await (delete(tSitesGroups)
-          ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
-        .go();
+    await transaction(() async {
+      // Sans quoi l'association reste et pointe vers un groupe disparu.
+      await (delete(corSitesGroupModuleTable)
+            ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
+          .go();
+      await (delete(tSitesGroups)
+            ..where((tbl) => tbl.idSitesGroup.equals(siteGroupId)))
+          .go();
+    });
   }
 
   // Clear all site groups
@@ -257,9 +263,39 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
     }
   }
 
+  /// IDs des modules ayant au moins un site ou un groupe de sites créé sur
+  /// l'appareil et pas encore téléversé (isLocal sans ID serveur).
+  /// Complète `getModuleIdsWithUnsyncedVisits` : un site ou un groupe créé
+  /// sans visite doit aussi rendre son module « à téléverser » (#204).
+  Future<Set<int>> getModuleIdsWithUnsyncedSitesOrGroups() async {
+    final sitesQuery = selectOnly(corSiteModuleTable, distinct: true).join([
+      innerJoin(tBaseSites,
+          tBaseSites.idBaseSite.equalsExp(corSiteModuleTable.idBaseSite)),
+    ])
+      ..addColumns([corSiteModuleTable.idModule])
+      ..where(tBaseSites.isLocal.equals(true) & tBaseSites.serverSiteId.isNull());
+    final groupsQuery =
+        selectOnly(corSitesGroupModuleTable, distinct: true).join([
+      innerJoin(
+          tSitesGroups,
+          tSitesGroups.idSitesGroup
+              .equalsExp(corSitesGroupModuleTable.idSitesGroup)),
+    ])
+          ..addColumns([corSitesGroupModuleTable.idModule])
+          ..where(tSitesGroups.isLocal.equals(true) &
+              tSitesGroups.serverSiteGroupId.isNull());
+
+    final siteModules = (await sitesQuery.get())
+        .map((r) => r.read(corSiteModuleTable.idModule));
+    final groupModules = (await groupsQuery.get())
+        .map((r) => r.read(corSitesGroupModuleTable.idModule));
+    return {...siteModules, ...groupModules}.whereType<int>().toSet();
+  }
+
   Future<List<SiteGroup>> getGroupsByModuleId(int moduleId) async {
+    // Jointure interne : une association vers un groupe absent est ignorée.
     final query = select(corSitesGroupModuleTable).join([
-      leftOuterJoin(
+      innerJoin(
           tSitesGroups,
           tSitesGroups.idSitesGroup
               .equalsExp(corSitesGroupModuleTable.idSitesGroup))
@@ -282,8 +318,9 @@ class SitesDao extends DatabaseAccessor<AppDatabase> with _$SitesDaoMixin {
   }
 
   Future<List<BaseSite>> getSitesByModuleId(int moduleId) async {
+    // Jointure interne : une association vers un site absent est ignorée.
     final query = select(corSiteModuleTable).join([
-      leftOuterJoin(tBaseSites,
+      innerJoin(tBaseSites,
           tBaseSites.idBaseSite.equalsExp(corSiteModuleTable.idBaseSite))
     ]);
     query.where(corSiteModuleTable.idModule.equals(moduleId));

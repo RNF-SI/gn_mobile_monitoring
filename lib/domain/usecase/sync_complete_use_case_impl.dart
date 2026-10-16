@@ -63,7 +63,7 @@ class SyncCompleteUseCaseImpl implements SyncCompleteUseCase {
           totalItemsAdded += sitesResult.itemsAdded;
           totalItemsUpdated += sitesResult.itemsUpdated;
           totalItemsSkipped += sitesResult.itemsSkipped;
-          totalItemsDeleted += sitesResult.itemsDeleted ?? 0;
+          totalItemsDeleted += sitesResult.itemsDeleted;
 
           if (sitesResult.success) {
             hasAnySuccess = true;
@@ -101,7 +101,7 @@ class SyncCompleteUseCaseImpl implements SyncCompleteUseCase {
           totalItemsAdded += result.itemsAdded;
           totalItemsUpdated += result.itemsUpdated;
           totalItemsSkipped += result.itemsSkipped;
-          totalItemsDeleted += result.itemsDeleted ?? 0;
+          totalItemsDeleted += result.itemsDeleted;
 
           if (result.success) {
             hasAnySuccess = true;

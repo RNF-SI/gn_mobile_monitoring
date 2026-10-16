@@ -540,7 +540,7 @@ Les 289 expressions `hidden`/`required` (28 modules) de [PnX-SI/protocoles_suivi
 ## 🔧 Architecture Technique
 
 ### Stack Technologique
-- **Framework** : Flutter 3.38.4 (Dart 3.10.3)
+- **Framework** : Flutter 3.47.7 (Dart 3.13.5)
 - **Architecture** : Clean Architecture (Domain/Data/Presentation)
 - **State Management** : Riverpod
 - **Base de données locale** : Drift (SQLite, schéma version 29)
@@ -664,7 +664,7 @@ Pour mettre à jour le tableau après avoir testé un module :
 ---
 
 **Dernière mise à jour** : septembre 2026 (`v1.1.1+3` + commits post-release, dont les correctifs de l'audit des formulaires)
-**Version de l'application** : Flutter 3.38.4 / Dart 3.10.3
+**Version de l'application** : Flutter 3.47.7 / Dart 3.13.5
 **Architecture** : Clean Architecture avec Riverpod
 
 ## 📋 Historique des Changements

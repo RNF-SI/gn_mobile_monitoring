@@ -348,6 +348,26 @@ class MockSitesDatabase implements SitesDatabase {
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId) async =>
       _groups;
 
+  @override
+  Future<Set<int>> getModuleIdsWithUnsyncedSitesOrGroups() async {
+    bool unsynced(bool? isLocal, int? serverId) =>
+        isLocal == true && serverId == null;
+    final siteIds = {
+      for (final s in _sites)
+        if (unsynced(s.isLocal, s.serverSiteId)) s.idBaseSite
+    };
+    final groupIds = {
+      for (final g in _groups)
+        if (unsynced(g.isLocal, g.serverSiteGroupId)) g.idSitesGroup
+    };
+    return {
+      for (final sm in _siteModules)
+        if (siteIds.contains(sm.idSite)) sm.idModule,
+      for (final gm in _groupModules)
+        if (groupIds.contains(gm.idSitesGroup)) gm.idModule,
+    };
+  }
+
   // Group-module associations
   @override
   Future<void> clearAllSiteGroupModules() async => _groupModules.clear();

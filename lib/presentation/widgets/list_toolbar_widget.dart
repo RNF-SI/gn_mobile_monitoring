@@ -42,38 +42,47 @@ class ListToolbarWidget extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
           child: Row(
             children: [
-              // Label (si fourni)
-              if (label != null) ...[
-                Text(
-                  label!,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
+              // Label + boutons dans l'espace restant : un libellé long
+              // (ex. « Groupes de blaireautières ») est raccourci au lieu de
+              // faire déborder la ligne, et le tri reste calé à droite.
+              Expanded(
+                child: Row(
+                  children: [
+                    // Label (si fourni)
+                    if (label != null) ...[
+                      Flexible(
+                        child: Text(
+                          label!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                    // Bouton de recherche
+                    IconButton(
+                      icon: Icon(
+                        showSearch ? Icons.search : Icons.search_outlined,
+                        color: showSearch
+                            ? Colors.white
+                            : Theme.of(context).colorScheme.primary,
+                      ),
+                      tooltip: 'Rechercher',
+                      style: IconButton.styleFrom(
+                        backgroundColor: showSearch
+                            ? Theme.of(context).colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      onPressed: onToggleSearch,
+                    ),
+                    // Bouton d'ajout (si fourni)
+                    if (addButton != null) addButton!,
+                  ],
                 ),
-                // const SizedBox(width: 8),
-              ],
-              // Bouton de recherche
-              IconButton(
-                icon: Icon(
-                  showSearch ? Icons.search : Icons.search_outlined,
-                  color: showSearch
-                      ? Colors.white
-                      : Theme.of(context).colorScheme.primary,
-                ),
-                tooltip: 'Rechercher',
-                style: IconButton.styleFrom(
-                  backgroundColor: showSearch
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.transparent,
-                ),
-                onPressed: onToggleSearch,
               ),
-              // Bouton d'ajout (si fourni)
-              if (addButton != null) ...[
-                // const SizedBox(width: 0),
-                addButton!,
-              ],
-              // Espace flexible pour pousser le bouton de tri à droite
-              const Spacer(),
               // Bouton pour basculer entre tri par distance et alphabétique
               if (userPosition != null)
                 ActionChip(

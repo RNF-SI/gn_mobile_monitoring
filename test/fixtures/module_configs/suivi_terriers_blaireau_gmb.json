@@ -1,0 +1,1096 @@
+{
+ "custom": {
+  "CODE_OBSERVERS_LIST": "obsocctax",
+  "__MODULE.B_DRAW_SITES_GROUP": null,
+  "__MODULE.B_SYNTHESE": null,
+  "__MODULE.CD_NOM": null,
+  "__MODULE.IDS_TYPE_SITE": [
+   {
+    "id_nomenclature_type_site": 997
+   }
+  ],
+  "__MODULE.ID_LIST_OBSERVER": 1,
+  "__MODULE.ID_LIST_TAXONOMY": 102,
+  "__MODULE.ID_MODULE": 19,
+  "__MODULE.MODULE_CODE": "suivi_terriers_blaireau_gmb",
+  "__MODULE.TAXONOMY_DISPLAY_FIELD_NAME": null,
+  "__MODULE.TYPES_SITE": [
+   {
+    "config": null,
+    "id_nomenclature_type_site": 997
+   }
+  ],
+  "__MONITORINGS_PATH": "monitorings"
+ },
+ "data": {
+  "nomenclature": [
+   "TYPE_MEDIA",
+   "TECHNIQUE_OBS",
+   "INDICES_BLAIREAU",
+   "PERTURB_BLAIREAU",
+   "DEPRED_BLAIREAU",
+   "METH_OBS",
+   "ETA_BIO",
+   "STATUT_OBS",
+   "STATUT_SOURCE",
+   "METH_DETERMIN",
+   "STADE_VIE",
+   "SEXE"
+  ]
+ },
+ "module": {
+  "b_draw_sites_group": null,
+  "b_synthese": null,
+  "cd_nom": null,
+  "children_types": [
+   "sites_group",
+   "site"
+  ],
+  "description_field_name": "module_label",
+  "display_form": [],
+  "display_list": [
+   "module_label",
+   "module_desc",
+   "datasets"
+  ],
+  "display_properties": [
+   "module_label",
+   "module_desc",
+   "datasets"
+  ],
+  "export_csv": [
+   {
+    "label": "Télécharger le CSV",
+    "method": "telecharger_csv",
+    "type": "csv"
+   }
+  ],
+  "filters": {},
+  "generic": {
+   "active_frontend": {
+    "attribut_label": "Afficher dans le menu ?",
+    "definition": "Afficher le module dans le menu de GeoNature. (Recharger la page pour voir les modifications).",
+    "type_widget": "bool_checkbox"
+   },
+   "b_draw_sites_group": {
+    "attribut_label": "Dessiner les groupes de sites",
+    "definition": "Affichage des groupes de site en dessinant l'enveloppe des sites du groupe et en affichant l'aire du groupe de sites",
+    "hidden": true,
+    "type_widget": "bool_checkbox"
+   },
+   "b_synthese": {
+    "attribut_label": "Activer la synthèse ?",
+    "definition": "Insertion automatique des nouvelles données dans la synthèse.",
+    "type_widget": "bool_checkbox"
+   },
+   "cd_nom": {
+    "attribut_label": "Espèce",
+    "hidden": true,
+    "required": false,
+    "type_util": "taxonomy",
+    "type_widget": "taxonomy"
+   },
+   "datasets": {
+    "attribut_label": "Jeu de données",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_list_observer": {
+    "api": "users/listes",
+    "application": "GeoNature",
+    "attribut_label": "Liste des observateurs",
+    "definition": "Liste des observateurs. À gérer dans UsersHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "observer_list",
+    "type_widget": "datalist"
+   },
+   "id_list_taxonomy": {
+    "api": "biblistes/",
+    "application": "TaxHub",
+    "attribut_label": "Liste des taxons",
+    "data_path": "data",
+    "definition": "Liste des taxons. À gérer dans TaxHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "taxonomy_list",
+    "type_widget": "datalist"
+   },
+   "id_module": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_module_complements",
+    "type_widget": "medias"
+   },
+   "module_code": {
+    "attribut_label": "Code",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_desc": {
+    "attribut_label": "Description",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_label": {
+    "attribut_label": "Nom",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_path": {
+    "attribut_label": "Path",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_picto": {
+    "attribut_label": "Icone dans le menu",
+    "required": true,
+    "type_widget": "text"
+   },
+   "taxonomy_display_field_name": {
+    "attribut_label": "Affichage des taxons",
+    "designStyle": "bootstrap",
+    "required": true,
+    "type_widget": "datalist",
+    "values": [
+     {
+      "label": "Nom vernaculaire ou nom latin",
+      "value": "nom_vern,lb_nom"
+     },
+     {
+      "label": "Nom latin",
+      "value": "lb_nom"
+     }
+    ]
+   },
+   "types_site": {
+    "api": "monitorings/sites/types",
+    "application": "GeoNature",
+    "attribut_label": "Types de sites",
+    "data_path": "items",
+    "definition": "Permet de paramétrer la compatibilité de ce module avec les types de sites",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_module_complement": {
+    "attribut_label": "uuid"
+   }
+  },
+  "genre": "M",
+  "id_field_name": "id_module",
+  "id_list_observer": 1,
+  "id_list_taxonomy": 102,
+  "id_module": 19,
+  "id_table_location": 14,
+  "label": "Module",
+  "module_code": "suivi_terriers_blaireau_gmb",
+  "module_desc": "Description et suivi des terriers de Blaireau européen",
+  "module_label": "Blaireautières",
+  "parent_types": [],
+  "properties_keys": [
+   "id_module",
+   "module_code",
+   "module_label",
+   "module_path",
+   "module_desc",
+   "module_picto",
+   "uuid_module_complement",
+   "datasets",
+   "id_list_observer",
+   "id_list_taxonomy",
+   "b_synthese",
+   "b_draw_sites_group",
+   "taxonomy_display_field_name",
+   "cd_nom",
+   "active_frontend",
+   "types_site",
+   "medias"
+  ],
+  "root_object": true,
+  "specific": {},
+  "taxonomy_display_field_name": null,
+  "types_site": {
+   "997": {
+    "name": "Site suivi blaireautière"
+   }
+  },
+  "uuid_field_name": "uuid_module_complement"
+ },
+ "observation": {
+  "chained": true,
+  "children_types": [],
+  "description_field_name": "id_observation",
+  "display_form": [],
+  "display_list": [
+   "uuid_observation",
+   "cd_nom",
+   "etat_biologique",
+   "statut_observation"
+  ],
+  "display_properties": [
+   "uuid_observation",
+   "cd_nom",
+   "technique_observation",
+   "etat_biologique",
+   "statut_observation",
+   "methode_deter",
+   "nombre_individus",
+   "stade_de_vie",
+   "sexe",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "cd_nom": {
+    "attribut_label": "Taxon",
+    "id_list": 102,
+    "required": true,
+    "type_util": "taxonomy",
+    "type_widget": "taxonomy"
+   },
+   "comments": {
+    "attribut_label": "Commentaires",
+    "required": false,
+    "type_widget": "textarea"
+   },
+   "id_base_visit": {
+    "attribut_label": "Id visite",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Numérisateur",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_individual": {
+    "attribut_label": "Id individu",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "id_observation": {
+    "attribut_label": "Id observation",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_observations",
+    "type_widget": "medias"
+   },
+   "uuid_observation": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "F",
+  "id_field_name": "id_observation",
+  "id_table_location": 5,
+  "keep": [
+   "statut_source"
+  ],
+  "label": "Observation",
+  "label_list": "Observations",
+  "parent_types": [
+   "visit"
+  ],
+  "properties_keys": [
+   "id_observation",
+   "id_base_visit",
+   "id_digitiser",
+   "id_individual",
+   "cd_nom",
+   "comments",
+   "uuid_observation",
+   "medias",
+   "technique_observation",
+   "etat_biologique",
+   "statut_observation",
+   "statut_source",
+   "methode_deter",
+   "stade_de_vie",
+   "nombre_individus",
+   "sexe"
+  ],
+  "specific": {
+   "etat_biologique": {
+    "api": "nomenclatures/nomenclature/ETA_BIO",
+    "application": "GeoNature",
+    "attribut_label": "Etat biologique de l'observation",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "2"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "0",
+      "2",
+      "3",
+      "9001"
+     ]
+    },
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "methode_deter": {
+    "api": "nomenclatures/nomenclature/METH_DETERMIN",
+    "application": "GeoNature",
+    "attribut_label": "Méthode de détermination",
+    "data_path": "values",
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "9",
+      "16",
+      "17",
+      "18",
+      "22"
+     ]
+    },
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "nombre_individus": {
+    "attribut_label": "Nombre d'individus",
+    "hidden": "({value, meta}) => (meta.nomenclatures[value.technique_observation] || {}).cd_nomenclature !== '0'",
+    "required": "({value, meta}) => (meta.nomenclatures[value.technique_observation] || {}).cd_nomenclature === '0'",
+    "type_widget": "number"
+   },
+   "sexe": {
+    "api": "nomenclatures/nomenclature/SEXE",
+    "application": "GeoNature",
+    "attribut_label": "Sexe",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "0"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "2",
+      "0",
+      "3"
+     ]
+    },
+    "hidden": "({value, meta}) => (meta.nomenclatures[value.technique_observation] || {}).cd_nomenclature !== '0'",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": "({value, meta}) => (meta.nomenclatures[value.technique_observation] || {}).cd_nomenclature === '0'",
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "stade_de_vie": {
+    "api": "nomenclatures/nomenclature/STADE_VIE",
+    "application": "GeoNature",
+    "attribut_label": "Stade de vie",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "1"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "2",
+      "1",
+      "3",
+      "5"
+     ]
+    },
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "statut_observation": {
+    "api": "nomenclatures/nomenclature/STATUT_OBS",
+    "application": "GeoNature",
+    "attribut_label": "Statut d'observation",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "Pr"
+    },
+    "designStyle": "bootstrap",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "statut_source": {
+    "api": "nomenclatures/nomenclature/STATUT_SOURCE",
+    "application": "GeoNature",
+    "attribut_label": "Statut de la source",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "Te"
+    },
+    "designStyle": "bootstrap",
+    "hidden": true,
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "technique_observation": {
+    "api": "nomenclatures/nomenclature/METH_OBS",
+    "application": "GeoNature",
+    "attribut_label": "Méthode d'observation",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "23"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "9008",
+      "20",
+      "4",
+      "27",
+      "1",
+      "6",
+      "21",
+      "9008",
+      "12",
+      "23",
+      "3",
+      "0"
+     ]
+    },
+    "group2inpn": "Mammifères",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   }
+  },
+  "uuid_field_name": "uuid_observation"
+ },
+ "site": {
+  "chained": true,
+  "children_types": [
+   "visit"
+  ],
+  "description_field_name": "base_site_name",
+  "display_form": [],
+  "display_list": [
+   "id_sites_group",
+   "base_site_name",
+   "env_site",
+   "nb_visits"
+  ],
+  "display_properties": [
+   "id_sites_group",
+   "base_site_name",
+   "base_site_description",
+   "id_nomenclature_type_site",
+   "env_site",
+   "comments",
+   "nb_visits"
+  ],
+  "filters": {},
+  "generic": {
+   "altitude_max": {
+    "attribut_label": "Altitude (max)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "altitude_min": {
+    "attribut_label": "Altitude (min)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "base_site_code": {
+    "attribut_label": "N° de la Blaireautière",
+    "hidden": true,
+    "required": false,
+    "title": "Le numéro doit contenir le n° de département",
+    "type_widget": "text"
+   },
+   "base_site_description": {
+    "attribut_label": "Remarques",
+    "type_widget": "textarea"
+   },
+   "base_site_name": {
+    "attribut_label": "Nom de la blaireautière (Doit commencer par le nom du groupe... suivi d'une indication géographique)",
+    "required": true,
+    "title": "Nom unique associé à chaque blaireautière. Doit commencer par 'Blaireautière de... suivie du nom de lieu-dit'. Si plusieurs blaireautières sont sur un même lieu-dit, détailler en rajoutant nord, sud, est ou ouest, ou autre.",
+    "type_widget": "text",
+    "value": "Blaireautière de "
+   },
+   "first_use_date": {
+    "attribut_label": "Date description",
+    "required": true,
+    "type_widget": "date"
+   },
+   "id_base_site": {
+    "attribut_label": "Id site",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_inventor": {
+    "attribut_label": "Observateur",
+    "code_list": "obsocctax",
+    "multi_select": false,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "id_sites_group": {
+    "api": "monitorings/list/suivi_terriers_blaireau_gmb/sites_group?id_module=19",
+    "application": "GeoNature",
+    "attribut_label": "Secteur",
+    "designStyle": "bootstrap",
+    "hidden": false,
+    "keyLabel": "sites_group_name",
+    "keyValue": "id_sites_group",
+    "required": false,
+    "type_util": "sites_group",
+    "type_widget": "datalist"
+   },
+   "last_visit": {
+    "attribut_label": "Dernière visite",
+    "hidden": true,
+    "type_widget": "date"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_sites",
+    "type_widget": "medias"
+   },
+   "nb_individuals": {
+    "attribut_label": "Nb. individus",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "nb_visits": {
+    "attribut_label": "Nb. visites",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "types_site": {
+    "api": "monitorings/modules/suivi_terriers_blaireau_gmb/types_sites",
+    "application": "GeoNature",
+    "attribut_label": "Type(s) de site",
+    "definition": "Permet de n'avoir que les types de site lié au module",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "nullDefault": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_base_site": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "M",
+  "geom_field_name": "geom",
+  "geometry_type": "Point",
+  "id_field_name": "id_base_site",
+  "id_table_location": 2,
+  "keep": [
+   "id_nomenclature_type_site"
+  ],
+  "label": "Site blaireautière",
+  "label_list": "Sites blaireautières",
+  "parent_types": [
+   "sites_group",
+   "module"
+  ],
+  "properties_keys": [
+   "id_base_site",
+   "base_site_code",
+   "base_site_name",
+   "base_site_description",
+   "id_inventor",
+   "id_digitiser",
+   "first_use_date",
+   "last_visit",
+   "nb_visits",
+   "nb_individuals",
+   "uuid_base_site",
+   "medias",
+   "altitude_min",
+   "altitude_max",
+   "types_site",
+   "id_sites_group",
+   "env_site",
+   "comments",
+   "id_nomenclature_type_site"
+  ],
+  "sorts": [
+   {
+    "dir": "desc",
+    "prop": "last_visit"
+   }
+  ],
+  "specific": {
+   "comments": {
+    "attribut_label": "Remarques",
+    "hidden": true,
+    "type_widget": "textarea"
+   },
+   "env_site": {
+    "attribut_label": "Milieu de la blaireautière",
+    "required": true,
+    "type_widget": "select",
+    "values": [
+     "Bois de feuillus",
+     "Bois de résineux",
+     "Bois mixte",
+     "Bocage",
+     "Littoral",
+     "Cultures intensives",
+     "Lande",
+     "Friche",
+     "Jardin et parc périurbain",
+     "Zone urbaine",
+     "Rivière",
+     "Autre"
+    ]
+   },
+   "id_nomenclature_type_site": {
+    "default": {
+     "cd_nomenclature": "BLAIREAUTIERE"
+    },
+    "hidden": true
+   }
+  },
+  "types_site": {
+   "997": {
+    "name": "Site suivi blaireautière"
+   }
+  },
+  "uuid_field_name": "uuid_base_site"
+ },
+ "sites_group": {
+  "chained": false,
+  "children_types": [
+   "site"
+  ],
+  "description_field_name": "sites_group_name",
+  "display_form": [],
+  "display_list": [
+   "sites_group_name",
+   "nb_sites",
+   "nb_visits"
+  ],
+  "display_properties": [
+   "sites_group_name",
+   "sites_group_description",
+   "nb_sites",
+   "nb_visits"
+  ],
+  "filters": {},
+  "generic": {
+   "altitude_max": {
+    "attribut_label": "Altitude (max)",
+    "type_widget": "integer"
+   },
+   "altitude_min": {
+    "attribut_label": "Altitude (min)",
+    "type_widget": "integer"
+   },
+   "comments": {
+    "attribut_label": "Remarques",
+    "hidden": true,
+    "type_widget": "textarea"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_sites_group": {
+    "attribut_label": "Id site",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_sites_groups",
+    "type_widget": "medias"
+   },
+   "modules": {
+    "api": "monitorings/modules",
+    "application": "GeoNature",
+    "attribut_label": "Modules",
+    "default": [
+     {
+      "id_module": 19
+     }
+    ],
+    "definition": "Permet de contrôler dans quel(s) module(s) les groupes de site remonteront",
+    "designStyle": "bootstrap",
+    "keyLabel": "module_label",
+    "keyValue": "id_module",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "module",
+    "type_widget": "datalist"
+   },
+   "nb_sites": {
+    "attribut_label": "Nombre de sites",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "nb_visits": {
+    "attribut_label": "Nombre de visites",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "sites_group_code": {
+    "attribut_label": "Code du groupe de site",
+    "hidden": true,
+    "required": false,
+    "type_widget": "text"
+   },
+   "sites_group_description": {
+    "attribut_label": "Commentaires",
+    "hidden": false,
+    "required": false,
+    "type_widget": "textarea"
+   },
+   "sites_group_name": {
+    "attribut_label": "Nom du groupe de blaireautières ('Blaireautières de... suivie du nom de lieu-dit')",
+    "hidden": false,
+    "required": true,
+    "title": "Nom unique associé à chaque blaireautière. Doit commencer par 'Blaireautière de... suivie du nom de lieu-dit'.",
+    "type_widget": "text",
+    "value": "Blaireautières de "
+   },
+   "uuid_sites_group": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "M",
+  "geom_field_name": "geom",
+  "geometry_type": "Polygon",
+  "id_field_name": "id_sites_group",
+  "id_table_location": null,
+  "label": "Groupe de blaireautière",
+  "label_list": "Groupes de blaireautières",
+  "map_label_field_name": "base_site_code",
+  "parent_types": [
+   "module"
+  ],
+  "properties_keys": [
+   "id_sites_group",
+   "sites_group_name",
+   "sites_group_code",
+   "sites_group_description",
+   "comments",
+   "uuid_sites_group",
+   "nb_sites",
+   "nb_visits",
+   "medias",
+   "altitude_min",
+   "altitude_max",
+   "id_digitiser",
+   "modules"
+  ],
+  "sorts": [
+   {
+    "prop": "sites_group_name"
+   }
+  ],
+  "specific": {},
+  "uuid_field_name": "uuid_sites_group"
+ },
+ "tree": {
+  "module": {
+   "site": null,
+   "sites_group": {
+    "site": {
+     "visit": {
+      "observation": null
+     }
+    }
+   }
+  }
+ },
+ "visit": {
+  "chained": true,
+  "children_types": [
+   "observation"
+  ],
+  "description_field_name": "visit_date_min",
+  "display_form": [],
+  "display_list": [
+   "uuid_observation",
+   "visit_date_min",
+   "observers",
+   "indices_blai",
+   "nb_gueule_tot",
+   "nb_gueule_act",
+   "nb_observations"
+  ],
+  "display_properties": [
+   "uuid_base_visit",
+   "id_dataset",
+   "id_nomenclature_tech_collect_campanule",
+   "visit_date_min",
+   "observers",
+   "indices_blai",
+   "nb_gueule_tot",
+   "nb_gueule_act",
+   "perturb",
+   "depredation",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "comments": {
+    "attribut_label": "Remarques",
+    "type_widget": "textarea"
+   },
+   "id_base_site": {
+    "attribut_label": "ID SITE",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_base_visit": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_dataset": {
+    "attribut_label": "Jeu de données",
+    "creatable_in_module": "suivi_terriers_blaireau_gmb.MONITORINGS_VISITES",
+    "module_code": "suivi_terriers_blaireau_gmb",
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_module": {
+    "attribut_label": "ID Module",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_visits",
+    "type_widget": "medias"
+   },
+   "nb_observations": {
+    "attribut_label": "Nombre d'observations",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "observers": {
+    "attribut_label": "Observateurs",
+    "code_list": "obsocctax",
+    "hidden": false,
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "observers_txt": {
+    "attribut_label": "Observateur(s) (extérieur)",
+    "hidden": true,
+    "required": false,
+    "type_widget": "observers-text"
+   },
+   "uuid_base_visit": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   },
+   "visit_date_max": {
+    "attribut_label": "Date (max)",
+    "hidden": true,
+    "type_widget": "date"
+   },
+   "visit_date_min": {
+    "attribut_label": "Date",
+    "required": true,
+    "type_widget": "date"
+   }
+  },
+  "genre": "F",
+  "id_field_name": "id_base_visit",
+  "id_table_location": 3,
+  "keep": [
+   "id_dataset",
+   "observers"
+  ],
+  "label": "Visite",
+  "label_list": "Visites",
+  "parent_types": [
+   "site"
+  ],
+  "properties_keys": [
+   "id_base_visit",
+   "id_base_site",
+   "id_module",
+   "observers",
+   "observers_txt",
+   "id_digitiser",
+   "visit_date_min",
+   "visit_date_max",
+   "comments",
+   "uuid_base_visit",
+   "id_dataset",
+   "nb_observations",
+   "medias",
+   "id_nomenclature_tech_collect_campanule",
+   "indices_blai",
+   "nb_gueule_tot",
+   "nb_gueule_act",
+   "perturb",
+   "depredation"
+  ],
+  "sorts": [
+   {
+    "dir": "desc",
+    "prop": "visit_date_min"
+   }
+  ],
+  "specific": {
+   "depredation": {
+    "api": "nomenclatures/nomenclature/DEPRED_BLAIREAU",
+    "application": "GeoNature",
+    "attribut_label": "Déprédations engendrées par la présence de Blaireaux",
+    "data_path": "values",
+    "designStyle": "bootstrap",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "multi_select": true,
+    "multiple": true,
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "id_nomenclature_tech_collect_campanule": {
+    "api": "nomenclatures/nomenclature/TECHNIQUE_OBS",
+    "application": "GeoNature",
+    "attribut_label": "Technique de collecte (Campanule)",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "57"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "57",
+      "67",
+      "125",
+      "133"
+     ]
+    },
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "indices_blai": {
+    "api": "nomenclatures/nomenclature/INDICES_BLAIREAU",
+    "application": "GeoNature",
+    "attribut_label": "Indices de présence de Blaireau observés à proximité du terrier",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "DEB_FRAIS"
+    },
+    "designStyle": "bootstrap",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "nb_gueule_act": {
+    "attribut_label": "Nombre de gueules actives sur la blaireautière",
+    "required": true,
+    "type_widget": "number"
+   },
+   "nb_gueule_tot": {
+    "attribut_label": "Nombre total de gueules sur la blaireautière",
+    "required": false,
+    "type_widget": "number"
+   },
+   "perturb": {
+    "api": "nomenclatures/nomenclature/PERTURB_BLAIREAU",
+    "application": "GeoNature",
+    "attribut_label": "Perturbations ou destructions sur les blaireaux ou la blaireautière",
+    "data_path": "values",
+    "designStyle": "bootstrap",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "multi_select": true,
+    "multiple": true,
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   }
+  },
+  "uuid_field_name": "uuid_base_visit"
+ }
+}

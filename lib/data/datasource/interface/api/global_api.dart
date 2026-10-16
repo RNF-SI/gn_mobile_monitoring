@@ -37,13 +37,6 @@ abstract class GlobalApi {
   /// Renvoie un type de site par son label
   Future<Map<String, dynamic>> getSiteTypeByLabel(String label);
 
-  /// Récupère les types de nomenclatures
-  Future<List<Map<String, dynamic>>> getNomenclatureTypes();
-
-  /// Récupère un type de nomenclature par son mnémonique
-  Future<Map<String, dynamic>> getNomenclatureTypeByMnemonique(
-      String mnemonique);
-
   // Methods added for synchronization
 
   /// Vérifie la connectivité avec le serveur

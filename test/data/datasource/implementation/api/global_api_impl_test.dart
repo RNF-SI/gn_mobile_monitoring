@@ -167,6 +167,68 @@ void main() {
         expect(result.configuration, equals(configData));
       });
 
+      test(
+          'utilise les datasets de /module/<id> sans appeler la route legacy '
+          'object/module (refonte monitoring #513)', () async {
+        const moduleId = 1;
+        const moduleCode = 'TEST_MODULE';
+
+        final mockModuleResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockModuleResponse.data).thenReturn({
+          'id_module': moduleId,
+          'module_code': moduleCode,
+          'datasets': [1],
+        });
+        when(() => mockModuleResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/module/$moduleId',
+              queryParameters: {'depth': 0},
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockModuleResponse);
+
+        // JDD GeoNature 2.18 : sans id_nomenclature_dataset_objectif (#4103)
+        final mockDatasetResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockDatasetResponse.data).thenReturn({
+          'id_dataset': 1,
+          'unique_dataset_id': 'UUID-TEST-001',
+          'id_acquisition_framework': 1,
+          'dataset_name': 'Test Dataset',
+          'dataset_shortname': 'TD',
+          'dataset_desc': 'Test Description',
+          'id_nomenclature_data_type': 1,
+          'marine_domain': false,
+          'terrestrial_domain': true,
+          'id_nomenclature_collecting_method': 1,
+          'id_nomenclature_data_origin': 1,
+          'id_nomenclature_source_status': 1,
+          'id_nomenclature_resource_type': 1,
+          'active': true,
+          'meta_create_date': '2023-01-01T00:00:00.000Z',
+        });
+        when(() => mockDatasetResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/util/dataset/1',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockDatasetResponse);
+
+        final mockConfigResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockConfigResponse.data).thenReturn({'data': {}});
+        when(() => mockConfigResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/config/$moduleCode',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockConfigResponse);
+
+        final result = await globalApi.getNomenclaturesAndDatasets(moduleId);
+
+        expect(result.datasets.map((d) => d.idDataset), [1]);
+        verifyNever(() => mockDio.get(
+              '/monitorings/object/$moduleCode/module',
+              queryParameters: any(named: 'queryParameters'),
+              options: any(named: 'options'),
+            ));
+      });
+
       test('should throw exception on API error', () async {
         const moduleId = 1;
 

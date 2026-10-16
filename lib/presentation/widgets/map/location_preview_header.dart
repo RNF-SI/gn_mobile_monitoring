@@ -122,7 +122,7 @@ class LocationPreviewHeader extends StatelessWidget {
         children: [
           TileLayer(
             urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-            userAgentPackageName: 'com.example.gn_mobile_monitoring',
+            userAgentPackageName: 'org.reserves_naturelles.monitoring',
           ),
           if (_isPolygon && vertices.length >= 3)
             PolygonLayer(

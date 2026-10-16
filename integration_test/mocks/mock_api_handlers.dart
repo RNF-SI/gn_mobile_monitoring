@@ -167,29 +167,6 @@ class MockApiHandlers {
     });
   }
 
-  /// Configure handlers for taxons
-  static Future<void> setupTaxons(MockApiInterceptor interceptor) async {
-    final taxonList = await FixtureLoader.load('taxons/taxon_list.json');
-
-    interceptor.onGet(r'/taxonomie/taxref', (options) async {
-      return Response(
-        requestOptions: options,
-        statusCode: 200,
-        data: taxonList,
-      );
-    });
-
-    final taxonSearch = await FixtureLoader.load('taxons/taxon_search.json');
-
-    interceptor.onGet(r'/taxonomie/taxref/search', (options) async {
-      return Response(
-        requestOptions: options,
-        statusCode: 200,
-        data: taxonSearch,
-      );
-    });
-  }
-
   /// Configure handlers pour l'endpoint /gn_commons/modules avec une version monitoring
   static void setupGnCommonsModules(MockApiInterceptor interceptor,
       {String version = '1.2.0'}) {
@@ -229,7 +206,6 @@ class MockApiHandlers {
     await setupSites(interceptor);
     await setupVisits(interceptor);
     await setupObservations(interceptor);
-    await setupTaxons(interceptor);
     setupGnCommonsModules(interceptor);
   }
 }

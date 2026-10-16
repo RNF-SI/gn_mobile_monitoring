@@ -64,7 +64,7 @@ flutter run
 
 ## 🛠️ Développement
 
-L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
+L'application utilise Flutter 3.47.7 (Dart 3.13.5) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
 
 ### Documentation
 - [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
@@ -111,12 +111,16 @@ configuration, la procédure après reboot et le troubleshooting.
 
 ## 🔄 CI/CD
 
-Le projet utilise GitHub Actions pour l'intégration continue :
-- Tests unitaires sur chaque push
-- Tests d'intégration sur les pull requests vers `develop` et `main`
-- Analyse statique du code avec `flutter analyze`
+Le projet utilise GitHub Actions pour l'intégration continue, sur chaque push
+et chaque pull request vers `develop` et `main` :
+- `flutter_tests.yml` : analyse statique (`flutter analyze`) et tests unitaires
+  et de widgets, avec la couverture envoyée à Codecov
+- `e2e_tests.yml` : scénarios E2E simulés (`integration_test/scenarios/`) sur
+  un émulateur Android
 
-Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+Les tests contre un vrai serveur GeoNature (`test/integration/`,
+`integration_test/scenarios_real/`) ne tournent pas en CI : ils se lancent en
+local (voir plus haut).
 
 ## 🧾 SBOM et Dependency-Track
 

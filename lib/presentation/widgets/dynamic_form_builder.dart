@@ -2541,12 +2541,21 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                 ),
+                // Les noms de JDD sont souvent longs : sans isExpanded, ils
+                // débordent sur les téléphones étroits.
+                isExpanded: true,
                 initialValue: validInitialValue,
-                hint: Text('Sélectionner un jeu de données'),
+                hint: const Text(
+                  'Sélectionner un jeu de données',
+                  overflow: TextOverflow.ellipsis,
+                ),
                 items: datasets.map((dataset) {
                   return DropdownMenuItem<int>(
                     value: dataset.id,
-                    child: Text(dataset.datasetName),
+                    child: Text(
+                      dataset.datasetName,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                   );
                 }).toList(),
                 validator: (value) {

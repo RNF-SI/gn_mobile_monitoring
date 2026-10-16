@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
 
 import '../../e2e_test_app_real.dart';
 import '../../robots/login_robot.dart';
@@ -976,39 +978,18 @@ class RealTestHelpers {
     await tester.tap(sendButton);
     await pumpFor(tester, const Duration(seconds: 2));
 
-    // Module selector multi-modules : tout cocher si la UI le permet,
-    // sinon choisir le premier item.
-    if (find.text('Sélectionner un module').evaluate().isNotEmpty) {
-      // Essayer de tout cocher via un bouton "Tout selectionner" s'il existe
-      final selectAll = find.text('Tout sélectionner');
-      if (selectAll.evaluate().isNotEmpty) {
-        await tester.tap(selectAll.first);
-        await pumpFor(tester, const Duration(seconds: 1));
-      } else {
-        // Fallback : cocher chaque checkbox visible
-        final checkboxes = find.byType(Checkbox);
-        for (var i = 0; i < checkboxes.evaluate().length; i++) {
-          await tester.tap(checkboxes.at(i));
-          await pumpFor(tester, const Duration(milliseconds: 300));
-        }
-        if (checkboxes.evaluate().isEmpty) {
-          // Pas de checkbox → fallback premier ListTile
-          final listTiles = find.byType(ListTile);
-          if (listTiles.evaluate().isNotEmpty) {
-            await tester.tap(listTiles.first);
-            await pumpFor(tester, const Duration(seconds: 1));
-          }
-        }
+    // Plusieurs modules : l'app demande lequel téléverser (un à la fois).
+    // On prend le premier module qui a des saisies en attente.
+    if (find.text('Choisir un module à téléverser').evaluate().isNotEmpty) {
+      final pending = find.ancestor(
+        of: find.text('Saisies à téléverser'),
+        matching: find.byType(ListTile),
+      );
+      if (pending.evaluate().isEmpty) {
+        fail('Choix du module : aucun module avec des saisies à téléverser');
       }
-      // Valider la selection
-      for (final btnText in ['Envoyer', 'Valider', 'OK']) {
-        final btn = find.widgetWithText(ElevatedButton, btnText);
-        if (btn.evaluate().isNotEmpty) {
-          await tester.tap(btn.first);
-          await pumpFor(tester, const Duration(seconds: 2));
-          break;
-        }
-      }
+      await tester.tap(pending.first);
+      await pumpFor(tester, const Duration(seconds: 2));
     }
 
     await waitForSyncToFinish(
@@ -1095,5 +1076,65 @@ class RealTestHelpers {
     }
     await tester.tap(tab);
     await pumpFor(tester, const Duration(seconds: 1));
+  }
+
+  /// Client HTTP authentifié sur le serveur de test, pour vérifier côté
+  /// serveur ce que l'app a envoyé ou téléchargé.
+  static Future<Dio> serverClient(RealE2EConfig config) async {
+    final dio = Dio(BaseOptions(baseUrl: Config.apiBase));
+    final login = await dio.post('/auth/login',
+        data: {'login': config.username, 'password': config.password});
+    dio.options.headers['Authorization'] = 'Bearer ${login.data['token']}';
+    return dio;
+  }
+
+  /// Remplit les champs obligatoires propres au protocole dans le formulaire
+  /// de groupe de sites (POPAmphibien / POPReptile).
+  static Future<void> fillSiteGroupSpecificFields(
+      WidgetTester tester, String moduleCode) async {
+    if (moduleCode == 'POPReptile') {
+      await selectFirstSelectOption(tester, 'habitat_principal');
+    } else {
+      await selectFirstNomenclature(tester, 'CATEGORIE_PAYSAGERE');
+    }
+  }
+
+  /// Remplit les champs obligatoires propres au protocole dans le formulaire
+  /// de site (POPAmphibien / POPReptile).
+  static Future<void> fillSiteSpecificFields(
+      WidgetTester tester, String moduleCode) async {
+    if (moduleCode == 'POPReptile') {
+      await tapRadioOption(tester, 'Milieux bordiers');
+    } else {
+      await selectFirstNomenclature(tester, 'MILIEU_AQUATIQUE');
+    }
+  }
+
+  /// Ouvre la page de détail d'un groupe ou d'un site d'après son nom dans la
+  /// liste affichée (tuile contenant le nom → icône « voir »).
+  static Future<void> openListItemByName(
+      WidgetTester tester, String name) async {
+    final label = find.text(name);
+    if (label.evaluate().isEmpty) {
+      final scrollable = find.byType(Scrollable);
+      if (scrollable.evaluate().isNotEmpty) {
+        await tester.scrollUntilVisible(label, 300,
+            scrollable: scrollable.last, maxScrolls: 50);
+      }
+    }
+    await waitForWidget(tester, label,
+        timeout: const Duration(seconds: 10), description: 'élément "$name"');
+    await tester.ensureVisible(label.first);
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    final tile = find.ancestor(
+        of: label.first,
+        matching: find.byWidgetPredicate(
+            (w) => w is ExpansionTile || w is ListTile || w is Card));
+    final eye = find.descendant(of: tile.first, matching: find.byIcon(Icons.visibility));
+    if (eye.evaluate().isEmpty) {
+      fail('Icône « voir » introuvable pour "$name"');
+    }
+    await tester.tap(eye.first);
+    await pumpFor(tester, const Duration(seconds: 4));
   }
 }

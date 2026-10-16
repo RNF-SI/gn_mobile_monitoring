@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'observation.freezed.dart';
 
 @freezed
-class Observation with _$Observation {
+abstract class Observation with _$Observation {
   const factory Observation({
     required int idObservation,
     int? idBaseVisit,

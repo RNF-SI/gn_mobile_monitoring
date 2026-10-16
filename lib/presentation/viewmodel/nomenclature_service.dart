@@ -168,7 +168,7 @@ class NomenclatureService extends StateNotifier<
         );
         
         if (found.id != -1) {
-          return found.labelFr ?? found.labelDefault ?? found.cdNomenclature ?? 'Nomenclature $id';
+          return found.labelFr ?? found.labelDefault ?? found.cdNomenclature;
         }
       }
     }
@@ -177,7 +177,7 @@ class NomenclatureService extends StateNotifier<
     try {
       final nomenclature = await _getNomenclatureByIdUseCase.execute(id);
       if (nomenclature != null) {
-        return nomenclature.labelFr ?? nomenclature.labelDefault ?? nomenclature.cdNomenclature ?? 'Nomenclature $id';
+        return nomenclature.labelFr ?? nomenclature.labelDefault ?? nomenclature.cdNomenclature;
       }
     } catch (e) {
       // Ignorer l'erreur et retourner le fallback

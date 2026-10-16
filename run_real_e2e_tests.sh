@@ -237,7 +237,7 @@ fi
 #   1. Tente un grant immediat (au cas ou l'APK est deja installee d'un run precedent)
 #   2. Detecte le lancement du process (pidof - tres rapide ~50ms)
 #   3. Grant en boucle pendant 30s pour couvrir la fenetre demande permission
-APP_PACKAGE="com.example.gn_mobile_monitoring"
+APP_PACKAGE="org.reserves_naturelles.monitoring"
 PERMISSIONS=(
   "android.permission.ACCESS_FINE_LOCATION"
   "android.permission.ACCESS_COARSE_LOCATION"

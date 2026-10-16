@@ -1,0 +1,6 @@
+# Copier en android/key.properties (jamais commité) et compléter.
+# La clé de publication et ses mots de passe sont sauvegardés hors du dépôt.
+storeFile=/home/<utilisateur>/keys/gn-mobile-monitoring-release.jks
+storePassword=
+keyAlias=monitoring
+keyPassword=

@@ -111,10 +111,16 @@ void main() {
       await RealTestHelpers.pickFormDate(tester, 'first_use_date',
           isRequired: true);
 
-      // Champ 3 : Milieu aquatique (NomenclatureSelector → dropdown)
-      // La key du dropdown est 'nomenclature_MILIEU_AQUATIQUE_<value>'
-      await RealTestHelpers.selectFirstNomenclature(
-          tester, 'MILIEU_AQUATIQUE');
+      // Champ 3 : milieu, propre à chaque protocole
+      if (config.moduleCode == 'POPReptile') {
+        // Milieu du transect (radio)
+        await RealTestHelpers.tapRadioOption(tester, 'Milieux bordiers');
+      } else {
+        // Milieu aquatique (NomenclatureSelector → dropdown)
+        // La key du dropdown est 'nomenclature_MILIEU_AQUATIQUE_<value>'
+        await RealTestHelpers.selectFirstNomenclature(
+            tester, 'MILIEU_AQUATIQUE');
+      }
 
       // Tapper le bouton Enregistrer.
       // tapFormSave fait un polling actif jusqu'a la fermeture du form

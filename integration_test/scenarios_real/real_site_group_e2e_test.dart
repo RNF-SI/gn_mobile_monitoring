@@ -104,9 +104,16 @@ void main() {
           tester, 'sites_group_name', groupName,
           isRequired: true);
 
-      // Champ 2 : Habitat principal (NomenclatureSelector CATEGORIE_PAYSAGERE, requis)
-      await RealTestHelpers.selectFirstNomenclature(
-          tester, 'CATEGORIE_PAYSAGERE');
+      // Champ 2 : propre à chaque protocole (requis)
+      if (config.moduleCode == 'POPReptile') {
+        // Habitat principal (select)
+        await RealTestHelpers.selectFirstSelectOption(
+            tester, 'habitat_principal');
+      } else {
+        // Catégories paysagères (NomenclatureSelector CATEGORIE_PAYSAGERE)
+        await RealTestHelpers.selectFirstNomenclature(
+            tester, 'CATEGORIE_PAYSAGERE');
+      }
 
       // Tapper le bouton Enregistrer
       await RealTestHelpers.tapFormSave(tester);

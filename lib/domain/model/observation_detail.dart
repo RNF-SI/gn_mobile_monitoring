@@ -4,7 +4,7 @@ part 'observation_detail.freezed.dart';
 
 /// Représente un détail d'observation dans le domaine métier
 @freezed
-class ObservationDetail with _$ObservationDetail {
+abstract class ObservationDetail with _$ObservationDetail {
   const factory ObservationDetail({
     /// Identifiant unique du détail d'observation
     int? idObservationDetail,

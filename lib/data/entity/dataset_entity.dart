@@ -9,7 +9,8 @@ class DatasetEntity {
   final String? keywords;
   final bool marineDomain;
   final bool terrestrialDomain;
-  final int idNomenclatureDatasetObjectif;
+  // Absent depuis GeoNature 2.18 (plusieurs objectifs par JDD, #4103)
+  final int? idNomenclatureDatasetObjectif;
   final double? bboxWest;
   final double? bboxEast;
   final double? bboxSouth;
@@ -36,7 +37,7 @@ class DatasetEntity {
     this.keywords,
     required this.marineDomain,
     required this.terrestrialDomain,
-    required this.idNomenclatureDatasetObjectif,
+    this.idNomenclatureDatasetObjectif,
     this.bboxWest,
     this.bboxEast,
     this.bboxSouth,
@@ -66,7 +67,7 @@ class DatasetEntity {
       marineDomain: json['marine_domain'] as bool,
       terrestrialDomain: json['terrestrial_domain'] as bool,
       idNomenclatureDatasetObjectif:
-          json['id_nomenclature_dataset_objectif'] as int,
+          json['id_nomenclature_dataset_objectif'] as int?,
       bboxWest: (json['bbox_west'] as num?)?.toDouble(),
       bboxEast: (json['bbox_east'] as num?)?.toDouble(),
       bboxSouth: (json['bbox_south'] as num?)?.toDouble(),
