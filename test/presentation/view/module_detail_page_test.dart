@@ -100,6 +100,38 @@ void main() {
     expect(find.textContaining('Test Module'), findsWidgets);
   });
 
+  testWidgets('module non configuré (#752) : carte à la place des sites',
+      (WidgetTester tester) async {
+    final notConfigured = mockModuleInfo.module.copyWith(
+      complement: mockModuleInfo.module.complement!.copyWith(
+        configuration: mockModuleInfo.module.complement!.configuration!
+            .copyWith(configured: false),
+      ),
+    );
+    when(() => mockGetCompleteModuleUseCase.execute(any()))
+        .thenAnswer((_) async => notConfigured);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          getCompleteModuleUseCaseProvider
+              .overrideWithValue(mockGetCompleteModuleUseCase),
+        ],
+        child: MaterialApp(
+          home: ModuleDetailPage(
+              moduleInfo: mockModuleInfo.copyWith(module: notConfigured)),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pump();
+
+    expect(find.byKey(const Key('module-not-configured-card')), findsOneWidget);
+    expect(find.text('Site 0'), findsNothing);
+    expect(find.byType(FloatingActionButton), findsNothing);
+  });
+
   testWidgets('ModuleDetailPage shows sites list', (WidgetTester tester) async {
     await tester.pumpWidget(
       ProviderScope(

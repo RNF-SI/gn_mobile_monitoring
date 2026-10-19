@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/core/errors/exceptions/module_not_configured_exception.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -868,6 +869,8 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
                 ),
               ),
             )
+          else if (_isNotConfigured)
+            Expanded(child: _buildNotConfiguredCard())
           else if (isMixedMode)
             Expanded(
               child: Column(
@@ -901,9 +904,57 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
       ),
       // Bouton carte : groupes si dispo (priorité), sinon sites pour les
       // modules sans groupes (endpoint serveur en 403 ou simplement vide).
-      floatingActionButton: hasSiteGroups
-          ? _buildGroupsMapButton()
-          : (hasSite ? _buildSitesMapButton() : null),
+      floatingActionButton: _isNotConfigured
+          ? null
+          : hasSiteGroups
+              ? _buildGroupsMapButton()
+              : (hasSite ? _buildSitesMapButton() : null),
+    );
+  }
+
+  /// Module signalé non configuré par le serveur : comme le module web, on
+  /// masque ses sites et groupes (gn_module_monitoring#752).
+  bool get _isNotConfigured =>
+      (_updatedModule ?? widget.moduleInfo.module)
+          .complement
+          ?.configuration
+          ?.configured ==
+      false;
+
+  Widget _buildNotConfiguredCard() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Card(
+        key: const Key('module-not-configured-card'),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.settings_outlined, color: AppColors.dark),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      "Ce module n'est pas encore configuré",
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(ModuleNotConfiguredException.explanation),
+              const SizedBox(height: 12),
+              const Text(
+                'Synchronisez à nouveau une fois le module configuré pour '
+                'accéder aux sites, visites et observations.',
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

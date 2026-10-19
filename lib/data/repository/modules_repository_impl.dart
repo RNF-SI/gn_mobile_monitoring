@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:gn_mobile_monitoring/core/errors/exceptions/module_not_configured_exception.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/version_incompatible_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/global_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/modules_api.dart';
@@ -219,6 +220,15 @@ class ModulesRepositoryImpl implements ModulesRepository {
       onProgressUpdate?.call(0.15);
       // Passer le token pour les requêtes authentifiées
       final data = await globalApi.getNomenclaturesAndDatasets(moduleId, token: token);
+
+      // Même règle que le module web : un module non configuré n'est pas
+      // accessible (gn_module_monitoring#752). Vérifié avant toute écriture.
+      if (data.configuration['configured'] == false) {
+        final module = data.configuration['module'];
+        throw ModuleNotConfiguredException(
+            (module is Map ? module['module_label'] as String? : null) ??
+                moduleCode);
+      }
 
       // Convert nomenclature entities to domain models
       final nomenclatures =

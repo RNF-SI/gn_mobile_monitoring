@@ -14,7 +14,11 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$ModuleConfiguration {
 
- CustomConfig? get custom; DataConfig? get data; Map<String, String?>? get defaultDisplayFieldNames; Map<String, String?>? get displayFieldNames; ModuleConfig? get module; ObjectConfig? get observation; ObjectConfig? get observationDetail;// Nouvelle propriété pour les détails d'observation
+/// `false` si le module n'est pas configuré sur le serveur (observateurs,
+/// JDD, liste de taxons, affichage des taxons) : le module web bloque
+/// alors l'accès à ses objets (gn_module_monitoring#752). Absent (`null`)
+/// avant la refonte de monitoring.
+ bool? get configured; CustomConfig? get custom; DataConfig? get data; Map<String, String?>? get defaultDisplayFieldNames; Map<String, String?>? get displayFieldNames; ModuleConfig? get module; ObjectConfig? get observation; ObjectConfig? get observationDetail;// Nouvelle propriété pour les détails d'observation
  ObjectConfig? get site; ObjectConfig? get sitesGroup; dynamic get synthese; TreeConfig? get tree; ObjectConfig? get visit;
 /// Create a copy of ModuleConfiguration
 /// with the given fields replaced by the non-null parameter values.
@@ -26,16 +30,16 @@ $ModuleConfigurationCopyWith<ModuleConfiguration> get copyWith => _$ModuleConfig
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModuleConfiguration&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.data, data) || other.data == data)&&const DeepCollectionEquality().equals(other.defaultDisplayFieldNames, defaultDisplayFieldNames)&&const DeepCollectionEquality().equals(other.displayFieldNames, displayFieldNames)&&(identical(other.module, module) || other.module == module)&&(identical(other.observation, observation) || other.observation == observation)&&(identical(other.observationDetail, observationDetail) || other.observationDetail == observationDetail)&&(identical(other.site, site) || other.site == site)&&(identical(other.sitesGroup, sitesGroup) || other.sitesGroup == sitesGroup)&&const DeepCollectionEquality().equals(other.synthese, synthese)&&(identical(other.tree, tree) || other.tree == tree)&&(identical(other.visit, visit) || other.visit == visit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is ModuleConfiguration&&(identical(other.configured, configured) || other.configured == configured)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.data, data) || other.data == data)&&const DeepCollectionEquality().equals(other.defaultDisplayFieldNames, defaultDisplayFieldNames)&&const DeepCollectionEquality().equals(other.displayFieldNames, displayFieldNames)&&(identical(other.module, module) || other.module == module)&&(identical(other.observation, observation) || other.observation == observation)&&(identical(other.observationDetail, observationDetail) || other.observationDetail == observationDetail)&&(identical(other.site, site) || other.site == site)&&(identical(other.sitesGroup, sitesGroup) || other.sitesGroup == sitesGroup)&&const DeepCollectionEquality().equals(other.synthese, synthese)&&(identical(other.tree, tree) || other.tree == tree)&&(identical(other.visit, visit) || other.visit == visit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,custom,data,const DeepCollectionEquality().hash(defaultDisplayFieldNames),const DeepCollectionEquality().hash(displayFieldNames),module,observation,observationDetail,site,sitesGroup,const DeepCollectionEquality().hash(synthese),tree,visit);
+int get hashCode => Object.hash(runtimeType,configured,custom,data,const DeepCollectionEquality().hash(defaultDisplayFieldNames),const DeepCollectionEquality().hash(displayFieldNames),module,observation,observationDetail,site,sitesGroup,const DeepCollectionEquality().hash(synthese),tree,visit);
 
 @override
 String toString() {
-  return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
+  return 'ModuleConfiguration(configured: $configured, custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
 }
 
 
@@ -46,7 +50,7 @@ abstract mixin class $ModuleConfigurationCopyWith<$Res>  {
   factory $ModuleConfigurationCopyWith(ModuleConfiguration value, $Res Function(ModuleConfiguration) _then) = _$ModuleConfigurationCopyWithImpl;
 @useResult
 $Res call({
- CustomConfig? custom, DataConfig? data, Map<String, String?>? defaultDisplayFieldNames, Map<String, String?>? displayFieldNames, ModuleConfig? module, ObjectConfig? observation, ObjectConfig? observationDetail, ObjectConfig? site, ObjectConfig? sitesGroup, dynamic synthese, TreeConfig? tree, ObjectConfig? visit
+ bool? configured, CustomConfig? custom, DataConfig? data, Map<String, String?>? defaultDisplayFieldNames, Map<String, String?>? displayFieldNames, ModuleConfig? module, ObjectConfig? observation, ObjectConfig? observationDetail, ObjectConfig? site, ObjectConfig? sitesGroup, dynamic synthese, TreeConfig? tree, ObjectConfig? visit
 });
 
 
@@ -63,9 +67,10 @@ class _$ModuleConfigurationCopyWithImpl<$Res>
 
 /// Create a copy of ModuleConfiguration
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? custom = freezed,Object? data = freezed,Object? defaultDisplayFieldNames = freezed,Object? displayFieldNames = freezed,Object? module = freezed,Object? observation = freezed,Object? observationDetail = freezed,Object? site = freezed,Object? sitesGroup = freezed,Object? synthese = freezed,Object? tree = freezed,Object? visit = freezed,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? configured = freezed,Object? custom = freezed,Object? data = freezed,Object? defaultDisplayFieldNames = freezed,Object? displayFieldNames = freezed,Object? module = freezed,Object? observation = freezed,Object? observationDetail = freezed,Object? site = freezed,Object? sitesGroup = freezed,Object? synthese = freezed,Object? tree = freezed,Object? visit = freezed,}) {
   return _then(_self.copyWith(
-custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable
+configured: freezed == configured ? _self.configured : configured // ignore: cast_nullable_to_non_nullable
+as bool?,custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable
 as CustomConfig?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as DataConfig?,defaultDisplayFieldNames: freezed == defaultDisplayFieldNames ? _self.defaultDisplayFieldNames : defaultDisplayFieldNames // ignore: cast_nullable_to_non_nullable
 as Map<String, String?>?,displayFieldNames: freezed == displayFieldNames ? _self.displayFieldNames : displayFieldNames // ignore: cast_nullable_to_non_nullable
@@ -270,10 +275,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( bool? configured,  CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _ModuleConfiguration() when $default != null:
-return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
+return $default(_that.configured,_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
   return orElse();
 
 }
@@ -291,10 +296,10 @@ return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.dis
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( bool? configured,  CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)  $default,) {final _that = this;
 switch (_that) {
 case _ModuleConfiguration():
-return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
+return $default(_that.configured,_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -311,10 +316,10 @@ return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.dis
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( bool? configured,  CustomConfig? custom,  DataConfig? data,  Map<String, String?>? defaultDisplayFieldNames,  Map<String, String?>? displayFieldNames,  ModuleConfig? module,  ObjectConfig? observation,  ObjectConfig? observationDetail,  ObjectConfig? site,  ObjectConfig? sitesGroup,  dynamic synthese,  TreeConfig? tree,  ObjectConfig? visit)?  $default,) {final _that = this;
 switch (_that) {
 case _ModuleConfiguration() when $default != null:
-return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
+return $default(_that.configured,_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.displayFieldNames,_that.module,_that.observation,_that.observationDetail,_that.site,_that.sitesGroup,_that.synthese,_that.tree,_that.visit);case _:
   return null;
 
 }
@@ -326,9 +331,14 @@ return $default(_that.custom,_that.data,_that.defaultDisplayFieldNames,_that.dis
 
 
 class _ModuleConfiguration implements ModuleConfiguration {
-  const _ModuleConfiguration({this.custom, this.data, final  Map<String, String?>? defaultDisplayFieldNames, final  Map<String, String?>? displayFieldNames, this.module, this.observation, this.observationDetail, this.site, this.sitesGroup, this.synthese, this.tree, this.visit}): _defaultDisplayFieldNames = defaultDisplayFieldNames,_displayFieldNames = displayFieldNames;
+  const _ModuleConfiguration({this.configured, this.custom, this.data, final  Map<String, String?>? defaultDisplayFieldNames, final  Map<String, String?>? displayFieldNames, this.module, this.observation, this.observationDetail, this.site, this.sitesGroup, this.synthese, this.tree, this.visit}): _defaultDisplayFieldNames = defaultDisplayFieldNames,_displayFieldNames = displayFieldNames;
   
 
+/// `false` si le module n'est pas configuré sur le serveur (observateurs,
+/// JDD, liste de taxons, affichage des taxons) : le module web bloque
+/// alors l'accès à ses objets (gn_module_monitoring#752). Absent (`null`)
+/// avant la refonte de monitoring.
+@override final  bool? configured;
 @override final  CustomConfig? custom;
 @override final  DataConfig? data;
  final  Map<String, String?>? _defaultDisplayFieldNames;
@@ -369,16 +379,16 @@ _$ModuleConfigurationCopyWith<_ModuleConfiguration> get copyWith => __$ModuleCon
 
 @override
 bool operator ==(Object other) {
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ModuleConfiguration&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.data, data) || other.data == data)&&const DeepCollectionEquality().equals(other._defaultDisplayFieldNames, _defaultDisplayFieldNames)&&const DeepCollectionEquality().equals(other._displayFieldNames, _displayFieldNames)&&(identical(other.module, module) || other.module == module)&&(identical(other.observation, observation) || other.observation == observation)&&(identical(other.observationDetail, observationDetail) || other.observationDetail == observationDetail)&&(identical(other.site, site) || other.site == site)&&(identical(other.sitesGroup, sitesGroup) || other.sitesGroup == sitesGroup)&&const DeepCollectionEquality().equals(other.synthese, synthese)&&(identical(other.tree, tree) || other.tree == tree)&&(identical(other.visit, visit) || other.visit == visit));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _ModuleConfiguration&&(identical(other.configured, configured) || other.configured == configured)&&(identical(other.custom, custom) || other.custom == custom)&&(identical(other.data, data) || other.data == data)&&const DeepCollectionEquality().equals(other._defaultDisplayFieldNames, _defaultDisplayFieldNames)&&const DeepCollectionEquality().equals(other._displayFieldNames, _displayFieldNames)&&(identical(other.module, module) || other.module == module)&&(identical(other.observation, observation) || other.observation == observation)&&(identical(other.observationDetail, observationDetail) || other.observationDetail == observationDetail)&&(identical(other.site, site) || other.site == site)&&(identical(other.sitesGroup, sitesGroup) || other.sitesGroup == sitesGroup)&&const DeepCollectionEquality().equals(other.synthese, synthese)&&(identical(other.tree, tree) || other.tree == tree)&&(identical(other.visit, visit) || other.visit == visit));
 }
 
 
 @override
-int get hashCode => Object.hash(runtimeType,custom,data,const DeepCollectionEquality().hash(_defaultDisplayFieldNames),const DeepCollectionEquality().hash(_displayFieldNames),module,observation,observationDetail,site,sitesGroup,const DeepCollectionEquality().hash(synthese),tree,visit);
+int get hashCode => Object.hash(runtimeType,configured,custom,data,const DeepCollectionEquality().hash(_defaultDisplayFieldNames),const DeepCollectionEquality().hash(_displayFieldNames),module,observation,observationDetail,site,sitesGroup,const DeepCollectionEquality().hash(synthese),tree,visit);
 
 @override
 String toString() {
-  return 'ModuleConfiguration(custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
+  return 'ModuleConfiguration(configured: $configured, custom: $custom, data: $data, defaultDisplayFieldNames: $defaultDisplayFieldNames, displayFieldNames: $displayFieldNames, module: $module, observation: $observation, observationDetail: $observationDetail, site: $site, sitesGroup: $sitesGroup, synthese: $synthese, tree: $tree, visit: $visit)';
 }
 
 
@@ -389,7 +399,7 @@ abstract mixin class _$ModuleConfigurationCopyWith<$Res> implements $ModuleConfi
   factory _$ModuleConfigurationCopyWith(_ModuleConfiguration value, $Res Function(_ModuleConfiguration) _then) = __$ModuleConfigurationCopyWithImpl;
 @override @useResult
 $Res call({
- CustomConfig? custom, DataConfig? data, Map<String, String?>? defaultDisplayFieldNames, Map<String, String?>? displayFieldNames, ModuleConfig? module, ObjectConfig? observation, ObjectConfig? observationDetail, ObjectConfig? site, ObjectConfig? sitesGroup, dynamic synthese, TreeConfig? tree, ObjectConfig? visit
+ bool? configured, CustomConfig? custom, DataConfig? data, Map<String, String?>? defaultDisplayFieldNames, Map<String, String?>? displayFieldNames, ModuleConfig? module, ObjectConfig? observation, ObjectConfig? observationDetail, ObjectConfig? site, ObjectConfig? sitesGroup, dynamic synthese, TreeConfig? tree, ObjectConfig? visit
 });
 
 
@@ -406,9 +416,10 @@ class __$ModuleConfigurationCopyWithImpl<$Res>
 
 /// Create a copy of ModuleConfiguration
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? custom = freezed,Object? data = freezed,Object? defaultDisplayFieldNames = freezed,Object? displayFieldNames = freezed,Object? module = freezed,Object? observation = freezed,Object? observationDetail = freezed,Object? site = freezed,Object? sitesGroup = freezed,Object? synthese = freezed,Object? tree = freezed,Object? visit = freezed,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? configured = freezed,Object? custom = freezed,Object? data = freezed,Object? defaultDisplayFieldNames = freezed,Object? displayFieldNames = freezed,Object? module = freezed,Object? observation = freezed,Object? observationDetail = freezed,Object? site = freezed,Object? sitesGroup = freezed,Object? synthese = freezed,Object? tree = freezed,Object? visit = freezed,}) {
   return _then(_ModuleConfiguration(
-custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable
+configured: freezed == configured ? _self.configured : configured // ignore: cast_nullable_to_non_nullable
+as bool?,custom: freezed == custom ? _self.custom : custom // ignore: cast_nullable_to_non_nullable
 as CustomConfig?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
 as DataConfig?,defaultDisplayFieldNames: freezed == defaultDisplayFieldNames ? _self._defaultDisplayFieldNames : defaultDisplayFieldNames // ignore: cast_nullable_to_non_nullable
 as Map<String, String?>?,displayFieldNames: freezed == displayFieldNames ? _self._displayFieldNames : displayFieldNames // ignore: cast_nullable_to_non_nullable
