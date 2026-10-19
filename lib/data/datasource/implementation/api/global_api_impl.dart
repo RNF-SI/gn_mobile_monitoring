@@ -1,10 +1,12 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gn_mobile_monitoring/core/helpers/module_config_normalizer.dart';
 import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
@@ -29,6 +31,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
   final SitesApi _sitesApi;
+  final MonitoringApiModeResolver _modeResolver;
 
   GlobalApiImpl({
     super.dio,
@@ -37,7 +40,9 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     ObservationsApi? observationsApi,
     ObservationDetailsApi? observationDetailsApi,
     SitesApi? sitesApi,
-  })  : _connectivity = connectivity ?? Connectivity(),
+    MonitoringApiModeResolver modeResolver = const MonitoringApiModeResolver(),
+  })  : _modeResolver = modeResolver,
+        _connectivity = connectivity ?? Connectivity(),
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
@@ -85,10 +90,8 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         Map<String, dynamic> config = {};
         if (moduleCode != null) {
           try {
-            final configResponse = await dio.get(
-              '/monitorings/config/$moduleCode',
-              options: headers != null ? Options(headers: headers) : null,
-            );
+            final configResponse =
+                await _getModuleConfig(moduleCode, token: token);
             if (configResponse.statusCode == 200) {
               config = configResponse.data as Map<String, dynamic>;
             }
@@ -189,10 +192,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
 
       // Étape 2 : Récupérer la configuration du module pour obtenir les types de nomenclatures
       // Cette configuration sera également retournée pour éviter un appel redondant
-      final configResponse = await dio.get(
-        '/monitorings/config/$moduleCode',
-        options: headers != null ? Options(headers: headers) : null,
-      );
+      final configResponse = await _getModuleConfig(moduleCode, token: token);
       
       final Map<String, dynamic> config;
       if (configResponse.statusCode == 200) {
@@ -327,8 +327,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   @override
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode) async {
     try {
-      final response =
-          await dio.get('/monitorings/config/$moduleCode');
+      final response = await _getModuleConfig(moduleCode);
 
       // 204 (No Content) signifie qu'il n'y a pas de configuration disponible,
       // mais c'est un cas valide - retourner une configuration minimale valide
@@ -365,6 +364,27 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     } catch (e) {
       throw Exception(
           'Error fetching configuration for module $moduleCode: $e');
+    }
+  }
+
+  /// Configuration d'un module : nouvelle API si le serveur l'expose (format
+  /// `fields`, gn_module_monitoring#748), sinon route legacy `/config/<module>`.
+  /// Le corps est ramené au format historique ([normalizeModuleConfig]).
+  Future<Response<dynamic>> _getModuleConfig(String moduleCode,
+      {String? token}) async {
+    final routes = await _modeResolver.resolve(dio, token, moduleCode);
+    final paths = routes.configPaths(moduleCode);
+    for (var i = 0;; i++) {
+      try {
+        final response = await dio.get(paths[i], options: _authOptions(token));
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          response.data = normalizeModuleConfig(data);
+        }
+        return response;
+      } on DioException catch (e) {
+        if (i == paths.length - 1 || e.response?.statusCode != 404) rethrow;
+      }
     }
   }
 
@@ -602,12 +622,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       for (final moduleCode in moduleCodes) {
         debugPrint('Synchronisation configuration du module: $moduleCode');
         try {
-          final response = await dio.get(
-            '/monitorings/config/$moduleCode',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-            ),
-          );
+          final response = await _getModuleConfig(moduleCode, token: token);
 
           if (response.statusCode == 200) {
             itemsProcessed++;

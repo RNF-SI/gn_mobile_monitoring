@@ -52,6 +52,15 @@ class MonitoringApiRoutes {
 
   /// Monitoring ≤ 1.3.x : écritures `/object/...`, lectures sous `/refacto`.
   static const legacy = MonitoringApiRoutes(mode: MonitoringApiMode.legacy);
+
+  /// Routes de la configuration d'un module, à essayer dans l'ordre : la
+  /// nouvelle API (format `fields`), puis la route legacy `/config/<module>`
+  /// (dépréciée, absente du develop d'avant gn_module_monitoring#748 sous la
+  /// forme `<base>/<module>/config`).
+  List<String> configPaths(String moduleCode) => [
+        if (mode == MonitoringApiMode.current) '$writeBase/$moduleCode/config',
+        '/monitorings/config/$moduleCode',
+      ];
 }
 
 /// Détecte, une fois par serveur, où se trouvent les routes de la nouvelle
@@ -83,7 +92,7 @@ class MonitoringApiModeResolver {
   const MonitoringApiModeResolver();
 
   Future<MonitoringApiRoutes> resolve(
-      Dio dio, String token, String moduleCode) async {
+      Dio dio, String? token, String moduleCode) async {
     final key = Config.apiBase;
     final cached = _cache[key];
     if (cached != null) return cached;
@@ -125,13 +134,13 @@ class MonitoringApiModeResolver {
   /// Méthodes acceptées par [path] : ensemble vide si la route n'existe pas
   /// (404/405), `null` si la réponse ne permet pas de conclure.
   Future<Set<String>?> _allowedMethods(
-      Dio dio, String token, String path) async {
+      Dio dio, String? token, String path) async {
     try {
       final response = await dio.request(
         path,
         options: Options(
           method: 'OPTIONS',
-          headers: {'Authorization': 'Bearer $token'},
+          headers: {if (token != null) 'Authorization': 'Bearer $token'},
         ),
       );
       final allow = response.headers.value('allow');
