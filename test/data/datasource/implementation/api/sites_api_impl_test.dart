@@ -438,6 +438,8 @@ void main() {
                   'nb_sites': 1,
                   'nb_visits': 1,
                   'is_geom_from_child': true,
+                  // Refonte : liste des propriétés hors config du module
+                  'additional_data_keys': ['habitat_autre_module'],
                 },
                 {
                   'id_sites_group': 30,
@@ -466,6 +468,7 @@ void main() {
       // Les clés standards ne doivent PAS fuiter dans data
       expect(group1.data!.containsKey('sites_group_name'), isFalse);
       expect(group1.data!.containsKey('id_sites_group'), isFalse);
+      expect(group1.data!.containsKey('additional_data_keys'), isFalse);
 
       final group2 = result[1].siteGroup;
       expect(group2.idSitesGroup, 30);

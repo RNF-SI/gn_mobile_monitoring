@@ -236,5 +236,100 @@ void main() {
       expect(updatedComplement.idSitesGroup, equals(newSiteGroupId), 
         reason: 'id_sites_group should be updated to new value from API');
     });
+    test('met à jour les propriétés modifiées côté serveur, même groupe (#211)', () async {
+      // Arrange
+      const testToken = 'test-token';
+      const testModuleCode = 'TEST_MODULE';
+      const testModuleId = 1;
+      const testSiteId = 100;
+      const oldSiteGroupId = 5;
+      const newSiteGroupId = oldSiteGroupId;
+      
+      final testModule = Module(
+        id: testModuleId,
+        moduleCode: testModuleCode,
+        moduleLabel: 'Test Module',
+        activeFrontend: true,
+      );
+
+      // Mock module database
+      when(() => mockModulesDatabase.getDownloadedModules())
+          .thenAnswer((_) async => [testModule]);
+
+      // Mock existing site module relationship
+      when(() => mockSitesDatabase.getSiteModulesByModuleId(testModuleId))
+          .thenAnswer((_) async => [
+            SiteModule(idSite: testSiteId, idModule: testModuleId)
+          ]);
+
+      // Mock existing site
+      when(() => mockSitesDatabase.getSiteById(testSiteId))
+          .thenAnswer((_) async => BaseSite(
+            idBaseSite: testSiteId,
+            baseSiteName: 'Test Site',
+            baseSiteCode: 'TS001',
+            firstUseDate: DateTime.now(),
+          ));
+
+      // Mock API response with updated site group
+      final apiResponse = {
+        'enriched_sites': [
+          {
+            'id_base_site': testSiteId,
+            'base_site_name': 'Test Site',
+            'base_site_code': 'TS001',
+            'base_site_description': 'Test description',
+            'altitude_min': 100,
+            'altitude_max': 200,
+            'first_use_date': '2024-01-01',
+            'uuid_base_site': 'uuid-test',
+          }
+        ],
+        'site_complements': [
+          SiteComplement(
+            idBaseSite: testSiteId,
+            idSitesGroup: newSiteGroupId,
+            data: '{"id_nomenclature_type_site": 123, "milieu_transect": "Milieux bordiers"}',
+          )
+        ]
+      };
+
+      when(() => mockSitesApi.fetchEnrichedSitesForModule(testModuleCode, testToken))
+          .thenAnswer((_) async => apiResponse);
+
+      // Mock existing complement with old group ID
+      when(() => mockSitesDatabase.getSiteComplementsByModuleId(testModuleId))
+          .thenAnswer((_) async => [
+            SiteComplement(
+              idBaseSite: testSiteId,
+              idSitesGroup: oldSiteGroupId,
+              data: '{"id_nomenclature_type_site": 123}',
+            )
+          ]);
+
+      // Mock update operations
+      when(() => mockSitesDatabase.updateSite(any()))
+          .thenAnswer((_) async => {});
+      
+      // Capture the site complements being inserted/updated
+      List<SiteComplement>? capturedComplements;
+      when(() => mockSitesDatabase.insertSiteComplements(any()))
+          .thenAnswer((invocation) async {
+            capturedComplements = invocation.positionalArguments[0] as List<SiteComplement>;
+          });
+
+      // Act
+      final result = await repository.incrementalSyncSitesWithConflictHandling(testToken);
+
+      // Assert
+      expect(result.itemsUpdated, equals(1));
+      expect(capturedComplements, isNotNull);
+      expect(capturedComplements!.length, equals(1));
+      
+      final updatedComplement = capturedComplements!.first;
+      expect(updatedComplement.idBaseSite, equals(testSiteId));
+      expect(updatedComplement.data, contains('milieu_transect'),
+        reason: 'les propriétés serveur doivent remplacer la copie locale');
+    });
   });
 }

@@ -242,7 +242,13 @@ class SitesRepositoryImpl implements SitesRepository {
               hasChanges = true;
             }
 
-            // Ajouter d'autres vérifications si nécessaire pour d'autres champs du complément
+            // Propriétés modifiées côté serveur (web, autre module) : le site
+            // n'étant pas modifiable sur le téléphone, la version serveur
+            // fait foi.
+            if (existing.data != complement.data) {
+              changes.add('propriétés');
+              hasChanges = true;
+            }
 
             if (hasChanges) {
               await database.insertSiteComplements([complement]);

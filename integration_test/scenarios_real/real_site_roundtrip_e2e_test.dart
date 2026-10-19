@@ -143,11 +143,22 @@ void main() {
     expect(localSite.serverSiteId ?? localSite.idBaseSite, idSite,
         reason: 'le site local doit connaître son identifiant serveur');
 
-    // ----- 7. Nettoyage du serveur -----
-    // La modification après envoi (re-téléversement, sans doublon) sera
-    // ajoutée ici avec #205 : elle n'est pas encore suivie par l'app.
-    await _deleteQuietly(dio, '/monitorings/sites/$idSite');
-    await _deleteQuietly(dio, '/monitorings/sites_groups/$idGroup');
+    // ----- 7. Plus modifiables une fois envoyés -----
+    // Choix assumé (#205) : un site ou un groupe envoyé n'est plus modifiable
+    // sur le téléphone, et n'est donc jamais renvoyé (#211).
+    expect(localSite.serverSiteId, isNotNull);
+    expect(localGroup.serverSiteGroupId, isNotNull);
+
+    // ----- 8. Nettoyage du serveur -----
+    // Route de la nouvelle API, puis route d'avant la refonte (1.3.x).
+    await _deleteQuietly(dio, [
+      '/monitorings/refacto/$moduleCode/sites/$idSite',
+      '/monitorings/sites/$idSite',
+    ]);
+    await _deleteQuietly(dio, [
+      '/monitorings/refacto/$moduleCode/sites_groups/$idGroup',
+      '/monitorings/sites_groups/$idGroup',
+    ]);
   });
 }
 
@@ -190,10 +201,14 @@ Map<String, dynamic> _geometry(Object? raw) {
 Object? _field(Map<String, dynamic> obj, String key) =>
     obj[key] ?? (obj['data'] as Map?)?[key];
 
-Future<void> _deleteQuietly(Dio dio, String path) async {
-  try {
-    await dio.delete(path);
-  } on DioException catch (e) {
-    debugPrint('Nettoyage $path : ${e.response?.statusCode}');
+/// Supprime via la première route de [paths] qui existe sur le serveur.
+Future<void> _deleteQuietly(Dio dio, List<String> paths) async {
+  for (final path in paths) {
+    try {
+      await dio.delete(path);
+      return;
+    } on DioException catch (e) {
+      debugPrint('Nettoyage $path : ${e.response?.statusCode}');
+    }
   }
 }
