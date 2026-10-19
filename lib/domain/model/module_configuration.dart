@@ -7,6 +7,11 @@ part 'module_configuration.freezed.dart';
 @freezed
 abstract class ModuleConfiguration with _$ModuleConfiguration {
   const factory ModuleConfiguration({
+    /// `false` si le module n'est pas configuré sur le serveur (observateurs,
+    /// JDD, liste de taxons, affichage des taxons) : le module web bloque
+    /// alors l'accès à ses objets (gn_module_monitoring#752). Absent (`null`)
+    /// avant la refonte de monitoring.
+    bool? configured,
     CustomConfig? custom,
     DataConfig? data,
     Map<String, String?>? defaultDisplayFieldNames,
@@ -43,6 +48,7 @@ abstract class ModuleConfiguration with _$ModuleConfiguration {
     }
 
     return ModuleConfiguration(
+      configured: json['configured'] is bool ? json['configured'] as bool : null,
       custom: json['custom'] != null && json['custom'] is Map
           ? CustomConfig.fromJson(toSafeMap(json['custom'])!)
           : null,

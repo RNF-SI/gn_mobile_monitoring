@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/global_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
@@ -19,6 +20,16 @@ class MockVisitsApi extends Mock implements VisitsApi {}
 class MockObservationsApi extends Mock implements ObservationsApi {}
 class MockObservationDetailsApi extends Mock implements ObservationDetailsApi {}
 class MockResponse<T> extends Mock implements Response<T> {}
+
+class _FixedModeResolver extends MonitoringApiModeResolver {
+  const _FixedModeResolver(this.routes);
+  final MonitoringApiRoutes routes;
+
+  @override
+  Future<MonitoringApiRoutes> resolve(
+          Dio dio, String? token, String moduleCode) async =>
+      routes;
+}
 
 void main() {
   late GlobalApiImpl globalApi;
@@ -401,6 +412,61 @@ void main() {
         final result = await globalApi.getModuleConfiguration(moduleCode);
 
         expect(result, equals(configData));
+      });
+    });
+
+    group('configuration via la nouvelle API (#210)', () {
+      GlobalApiImpl api() => GlobalApiImpl(
+            dio: mockDio,
+            connectivity: mockConnectivity,
+            modeResolver: const _FixedModeResolver(
+                MonitoringApiRoutes(mode: MonitoringApiMode.current)),
+          );
+
+      test('lit <base>/<module>/config et la ramène au format historique',
+          () async {
+        when(() => mockDio.get('/monitorings/refacto/M/config',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => Response(
+                  requestOptions: RequestOptions(),
+                  statusCode: 200,
+                  data: {
+                    'visit': {
+                      'fields': {
+                        'visit_date_min': {'type_widget': 'date'},
+                        'meteo': {'type_widget': 'text'},
+                      },
+                    },
+                  },
+                ));
+
+        final config = await api().getModuleConfiguration('M');
+
+        expect(config['visit']['generic'].keys, ['visit_date_min']);
+        expect(config['visit']['specific'].keys, ['meteo']);
+      });
+
+      test('404 sur la nouvelle route → route legacy', () async {
+        when(() => mockDio.get('/monitorings/refacto/M/config',
+            options: any(named: 'options'))).thenThrow(DioException(
+          requestOptions: RequestOptions(),
+          response:
+              Response(requestOptions: RequestOptions(), statusCode: 404),
+          type: DioExceptionType.badResponse,
+        ));
+        when(() => mockDio.get('/monitorings/config/M',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => Response(
+                  requestOptions: RequestOptions(),
+                  statusCode: 200,
+                  data: {
+                    'visit': {'generic': {}, 'specific': {}},
+                  },
+                ));
+
+        final config = await api().getModuleConfiguration('M');
+
+        expect(config['visit'], {'generic': {}, 'specific': {}});
       });
     });
 

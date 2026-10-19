@@ -19,7 +19,7 @@ class _FixedModeResolver extends MonitoringApiModeResolver {
 
   @override
   Future<MonitoringApiRoutes> resolve(
-          Dio dio, String token, String moduleCode) async =>
+          Dio dio, String? token, String moduleCode) async =>
       routes;
 }
 

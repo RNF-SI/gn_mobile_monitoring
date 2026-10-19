@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/core/navigation/app_navigator_key.dart';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -177,6 +178,9 @@ class RealE2ETestApp {
 
 /// GoRouter frais pour chaque test (evite l'etat partage)
 GoRouter _createRouter() => GoRouter(
+      // Comme l'app (main.dart) : sans cette clé, les dialogues affichés via
+      // le Navigator racine (ex. échec de téléchargement) n'apparaissent pas.
+      navigatorKey: appRootNavigatorKey,
       routes: [
         GoRoute(
           path: '/',

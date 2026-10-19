@@ -6,6 +6,7 @@ import 'real_auth_e2e_test.dart' as auth;
 import 'real_download_fidelity_e2e_test.dart' as download_fidelity;
 import 'real_many_taxa_e2e_test.dart' as many_taxa;
 import 'real_module_browsing_e2e_test.dart' as module_browsing;
+import 'real_module_not_configured_e2e_test.dart' as module_not_configured;
 import 'real_multi_module_stress_e2e_test.dart' as multi_module_stress;
 import 'real_observation_workflow_e2e_test.dart' as observation_workflow;
 import 'real_protocol_roundtrip_e2e_test.dart' as protocol_roundtrip;
@@ -32,6 +33,7 @@ void main() {
   group('download_fidelity', download_fidelity.main);
   group('many_taxa', many_taxa.main);
   group('module_browsing', module_browsing.main);
+  group('module_not_configured', module_not_configured.main);
   if (multiModule) group('multi_module_stress', multi_module_stress.main);
   group('observation_workflow', observation_workflow.main);
   group('protocol_roundtrip', protocol_roundtrip.main);

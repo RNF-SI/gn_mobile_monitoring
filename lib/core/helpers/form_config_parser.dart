@@ -582,8 +582,10 @@ class FormConfigParser {
         }
         // Datalist mono-utilisateur : aligné sur ObserverField (auto-rempli avec
         // l'utilisateur connecté, en attendant le câblage de l'API users/menu).
+        // Le serveur de la refonte doublonne `multiple` et `multi_select`.
         if (fieldConfig['type_util'] == 'user' &&
-            fieldConfig['multiple'] != true) {
+            fieldConfig['multiple'] != true &&
+            fieldConfig['multi_select'] != true) {
           return 'CurrentUserField';
         }
         // Sinon utiliser le widget datalist générique
