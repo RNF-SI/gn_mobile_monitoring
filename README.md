@@ -103,7 +103,9 @@ Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNatu
 (login, navigation module, CRUD sites/visites/observations).
 
 ```bash
-./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
+.github/geonature-e2e/up.sh                  # GeoNature de test en Docker, port 5000
+.github/geonature-e2e/run_scenarios.sh POPAmphibien,POPReptile POPReptile
+./run_real_e2e_tests.sh --device=<id> auth   # ou un seul scénario : auth | module | sites | visits | …
 ```
 
 Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
