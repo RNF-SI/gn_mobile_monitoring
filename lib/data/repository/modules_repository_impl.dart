@@ -405,6 +405,8 @@ class ModulesRepositoryImpl implements ModulesRepository {
         // Fallback gracieux : si les groupes de sites échouent, continuer sans
         print('Warning: Could not fetch site groups for module $moduleCode: $e');
       }
+    } on ModuleNotConfiguredException {
+      rethrow; // Message destiné à l'utilisateur, affiché tel quel.
     } catch (e) {
       throw Exception('Failed to download module data: $e');
     }

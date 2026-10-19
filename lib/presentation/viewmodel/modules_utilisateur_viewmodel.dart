@@ -1,3 +1,4 @@
+import 'package:gn_mobile_monitoring/core/errors/exceptions/module_not_configured_exception.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -227,7 +228,9 @@ class UserModulesViewModel
       showDialog<void>(
         context: dialogContextParent,
         builder: (dialogContext) => AlertDialog(
-          title: Text('Échec du téléchargement de $moduleLabel'),
+          title: Text(error is ModuleNotConfiguredException
+              ? 'Module non configuré'
+              : 'Échec du téléchargement de $moduleLabel'),
           content: ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 400),
             child: SingleChildScrollView(
