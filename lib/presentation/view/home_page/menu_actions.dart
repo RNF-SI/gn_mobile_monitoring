@@ -454,6 +454,7 @@ class MenuActions extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
+                const Text('📤 Vos sites et groupes de sites créés'),
                 const Text('📤 Vos visites saisies'),
                 const Text('📤 Vos observations et détails'),
                 const SizedBox(height: 16),
@@ -473,6 +474,35 @@ class MenuActions extends ConsumerWidget {
                           'Les données seront supprimées localement après confirmation de réception par le serveur.',
                           style: TextStyle(
                             color: Colors.blue,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  key: const Key('upload-sites-frozen-notice'),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_outline,
+                          color: Colors.orange.shade800, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Une fois envoyés, les sites et groupes de sites ne '
+                          'sont plus modifiables sur le téléphone : vérifiez-les '
+                          'avant l\'envoi. Ensuite, ils se modifient depuis '
+                          'GeoNature (web).',
+                          style: TextStyle(
+                            color: Colors.orange.shade900,
                             fontSize: 13,
                           ),
                         ),

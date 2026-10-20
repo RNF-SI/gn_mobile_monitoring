@@ -378,17 +378,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: isSynced
-                ? 'Ce site a été synchronisé et ne peut plus être modifié'
-                : 'Ce site ne peut pas être modifié (créé depuis le serveur)',
+                ? 'Ce site n\'est pas modifiable sur le téléphone'
+                : 'Ce site n\'est pas modifiable sur le téléphone',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     isSynced
-                        ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié'
-                        : 'Seuls les sites créés localement peuvent être modifiés',
+                        ? 'Ce site a été envoyé au serveur : il se modifie désormais depuis GeoNature (web), pour rester cohérent avec le serveur.'
+                        : 'Ce site vient du serveur : il se modifie depuis GeoNature (web). Seuls les sites créés sur le téléphone et pas encore envoyés sont modifiables ici.',
                   ),
-                  duration: const Duration(seconds: 2),
+                  duration: const Duration(seconds: 6),
                 ),
               );
             },

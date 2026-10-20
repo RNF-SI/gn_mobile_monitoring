@@ -317,8 +317,8 @@ class _SiteFormWrapperState extends ConsumerState<SiteFormWrapper> {
 
     if (isLocked) {
       final String message = isSynced
-          ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié.'
-          : 'Seuls les sites créés localement peuvent être modifiés.';
+          ? 'Ce site a été envoyé au serveur : il se modifie désormais depuis GeoNature (web).'
+          : 'Ce site vient du serveur : il se modifie depuis GeoNature (web).';
 
       return Scaffold(
         appBar: AppBar(
