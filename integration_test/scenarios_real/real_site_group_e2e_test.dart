@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Tests E2E de gestion de groupes de sites contre un vrai serveur GeoNature.
@@ -39,6 +40,10 @@ void main() {
       // ----- 1. Login + ouverture du module -----
       await RealTestHelpers.loginAndReachHome(tester, testApp, config);
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
+      if (!RealTestHelpers.moduleHasSiteGroups()) {
+        markTestSkipped('${config.moduleCode} ne gère pas de groupes de sites');
+        return;
+      }
 
       // Genere un nom unique pour ce test
       final groupName = RealTestHelpers.uniqueName('E2E_Group');
@@ -104,16 +109,9 @@ void main() {
           tester, 'sites_group_name', groupName,
           isRequired: true);
 
-      // Champ 2 : propre à chaque protocole (requis)
-      if (config.moduleCode == 'POPReptile') {
-        // Habitat principal (select)
-        await RealTestHelpers.selectFirstSelectOption(
-            tester, 'habitat_principal');
-      } else {
-        // Catégories paysagères (NomenclatureSelector CATEGORIE_PAYSAGERE)
-        await RealTestHelpers.selectFirstNomenclature(
-            tester, 'CATEGORIE_PAYSAGERE');
-      }
+      // Autres champs obligatoires du protocole, quel qu'il soit.
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
 
       // Tapper le bouton Enregistrer
       await RealTestHelpers.tapFormSave(tester);

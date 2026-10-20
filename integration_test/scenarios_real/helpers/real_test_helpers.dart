@@ -1088,27 +1088,30 @@ class RealTestHelpers {
     return dio;
   }
 
-  /// Remplit les champs obligatoires propres au protocole dans le formulaire
-  /// de groupe de sites (POPAmphibien / POPReptile).
-  static Future<void> fillSiteGroupSpecificFields(
-      WidgetTester tester, String moduleCode) async {
-    if (moduleCode == 'POPReptile') {
-      await selectFirstSelectOption(tester, 'habitat_principal');
-    } else {
-      await selectFirstNomenclature(tester, 'CATEGORIE_PAYSAGERE');
+  /// Ouvre le premier site du module affiché : par son premier groupe si le
+  /// module gère des groupes de sites, sinon directement dans la liste.
+  static Future<void> openFirstSite(WidgetTester tester) async {
+    // Avec groupes : icône « voir » du groupe puis du site ; sans groupes :
+    // carte du site dans la liste du module.
+    final steps = moduleHasSiteGroups()
+        ? {
+            'groupes': find.byIcon(Icons.visibility),
+            'sites du groupe': find.byIcon(Icons.visibility),
+          }
+        : {'sites': find.byKey(const Key('module-site-card'))};
+    for (final MapEntry(key: description, value: target) in steps.entries) {
+      await waitForWidget(tester, target,
+          timeout: const Duration(seconds: 10), description: description);
+      await tester.tap(target.first);
+      await pumpFor(tester, const Duration(seconds: 4));
     }
   }
 
-  /// Remplit les champs obligatoires propres au protocole dans le formulaire
-  /// de site (POPAmphibien / POPReptile).
-  static Future<void> fillSiteSpecificFields(
-      WidgetTester tester, String moduleCode) async {
-    if (moduleCode == 'POPReptile') {
-      await tapRadioOption(tester, 'Milieux bordiers');
-    } else {
-      await selectFirstNomenclature(tester, 'MILIEU_AQUATIQUE');
-    }
-  }
+  /// Vrai si le module affiché gère des groupes de sites.
+  static bool moduleHasSiteGroups() => find
+      .byKey(const Key('create-site-group-button'))
+      .evaluate()
+      .isNotEmpty;
 
   /// Ouvre la page de détail d'un groupe ou d'un site d'après son nom dans la
   /// liste affichée (tuile contenant le nom → icône « voir »).

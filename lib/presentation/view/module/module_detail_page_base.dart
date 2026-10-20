@@ -2769,6 +2769,7 @@ class ModuleDetailPageBaseState extends DetailPageState<ModuleDetailPageBase>
     }
 
     return Card(
+      key: const Key('module-site-card'),
       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       child: InkWell(
         onTap: () async {

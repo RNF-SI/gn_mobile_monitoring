@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Tests E2E de gestion de sites contre un vrai serveur GeoNature.
@@ -96,10 +97,8 @@ void main() {
       await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
 
       // ----- 3. Remplir le formulaire -----
-      // POPAmphibien a 3 champs requis :
-      //   - base_site_name (texte) → nom du site
-      //   - first_use_date (date) → "Date description *"
-      //   - milieu_aquatique (texte) → "Description du milieu aquatique *"
+      // Nom du site (identifiable), puis les autres champs obligatoires du
+      // protocole, quel qu'il soit.
       debugPrint('===== REGARDE l\'ecran : remplissage du formulaire =====');
 
       // Champ 1 : Nom de site
@@ -107,20 +106,8 @@ void main() {
           tester, 'base_site_name', siteName,
           isRequired: true);
 
-      // Champ 2 : Date (first_use_date) — tap pour ouvrir DatePicker, puis OK
-      await RealTestHelpers.pickFormDate(tester, 'first_use_date',
-          isRequired: true);
-
-      // Champ 3 : milieu, propre à chaque protocole
-      if (config.moduleCode == 'POPReptile') {
-        // Milieu du transect (radio)
-        await RealTestHelpers.tapRadioOption(tester, 'Milieux bordiers');
-      } else {
-        // Milieu aquatique (NomenclatureSelector → dropdown)
-        // La key du dropdown est 'nomenclature_MILIEU_AQUATIQUE_<value>'
-        await RealTestHelpers.selectFirstNomenclature(
-            tester, 'MILIEU_AQUATIQUE');
-      }
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
 
       // Tapper le bouton Enregistrer.
       // tapFormSave fait un polling actif jusqu'a la fermeture du form
