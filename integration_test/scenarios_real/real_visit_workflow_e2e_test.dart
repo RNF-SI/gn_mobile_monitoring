@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Tests E2E de gestion de visites contre un vrai serveur GeoNature.
@@ -40,37 +41,10 @@ void main() {
       await RealTestHelpers.loginAndReachHome(tester, testApp, config);
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
 
-      // ----- 2. Naviguer dans un groupe (POPAmphibien utilise des groupes) -----
-      // Sur la page module, taper sur l'icone visibility (l'oeil) du
-      // premier groupe pour ouvrir SiteGroupDetailPage.
-      debugPrint(
-          '===== REGARDE l\'ecran : navigation vers un groupe =====');
-      final visibilityIconsModule = find.byIcon(Icons.visibility);
-      await RealTestHelpers.waitForWidget(
-        tester,
-        visibilityIconsModule,
-        timeout: const Duration(seconds: 10),
-        description: 'icones visibility des groupes',
-      );
-      await tester.tap(visibilityIconsModule.first);
-      await RealTestHelpers.pumpFor(
-          tester, const Duration(seconds: 4));
-
-      // ----- 3. Sur SiteGroupDetailPage, ouvrir un site existant -----
-      // Les sites sont dans des ExpansionTile avec une icone visibility
-      // (leading) qui ouvre SiteDetailPage.
+      // ----- 2-3. Ouvrir un site existant (par son groupe s'il y en a) -----
       debugPrint(
           '===== REGARDE l\'ecran : ouverture d\'un site existant =====');
-      final visibilityIconsGroup = find.byIcon(Icons.visibility);
-      await RealTestHelpers.waitForWidget(
-        tester,
-        visibilityIconsGroup,
-        timeout: const Duration(seconds: 10),
-        description: 'icones visibility des sites du groupe',
-      );
-      await tester.tap(visibilityIconsGroup.first);
-      await RealTestHelpers.pumpFor(
-          tester, const Duration(seconds: 4));
+      await RealTestHelpers.openFirstSite(tester);
 
       // ----- 4. On est sur SiteDetailPage. Aller a l'onglet "Visites" -----
       // SiteDetailPage a des onglets "Proprietes du site" et "Visites".
@@ -104,26 +78,11 @@ void main() {
       debugPrint(
           '===== REGARDE l\'ecran : remplissage du formulaire de visite =====');
 
-      // 1. Tap sur le radio "Non" de l'accessibilite (par defaut "Oui")
-      //    → masque Heure_debut, Heure_fin, methode_de_prospection, etat_site
-      await RealTestHelpers.tapRadioOption(tester, 'Non');
+      // 1. Champs obligatoires du protocole, quel qu'il soit.
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
 
-      // 2. Selectionner expertise (DropdownButtonFormField select_expertise_*)
-      await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
-
-      // 3. N° de passage : depuis #180 (commit 4d8ab29), seul `value` (et plus
-      // `default`) pre-remplit un champ. POPAmphibien a `default: 1` mais pas
-      // de `value`, donc le champ arrive vide → on le saisit explicitement.
-      // Sur le serveur réel, le champ est rendu comme un NumberField
-      // (TextFormField numérique avec key `num_passage_true`).
-      await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
-          isRequired: true);
-
-      // 4. Date de visite (champ requis)
-      await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
-          isRequired: true);
-
-      // 4. Commentaire identifiable pour le test
+      // 2. Commentaire identifiable pour le test
       final commentText = RealTestHelpers.uniqueName('E2E_Visit');
       await _enterCommentIfPresent(tester, commentText);
 

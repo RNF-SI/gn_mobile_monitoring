@@ -8,6 +8,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Test E2E aller-retour des groupes de sites et des sites : création dans
@@ -55,6 +56,11 @@ void main() {
     // ----- 1. Login + module -----
     await RealTestHelpers.loginAndReachHome(tester, testApp, config);
     await RealTestHelpers.downloadAndOpenModule(tester, moduleCode);
+    if (!RealTestHelpers.moduleHasSiteGroups()) {
+      // Site seul : couvert par protocol_roundtrip.
+      markTestSkipped('$moduleCode ne gère pas de groupes de sites');
+      return;
+    }
 
     // ----- 2. Groupe de sites -----
     final createGroup = find.byKey(const Key('create-site-group-button'));
@@ -65,7 +71,8 @@ void main() {
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
     await RealTestHelpers.enterFormField(tester, 'sites_group_name', groupName,
         isRequired: true);
-    await RealTestHelpers.fillSiteGroupSpecificFields(tester, moduleCode);
+    await GenericFormFiller.fillRequiredFields(tester,
+        moduleCode: moduleCode);
     await RealTestHelpers.tapFormSave(tester);
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 5));
     RealTestHelpers.expectFormClosed(tester);
@@ -83,9 +90,8 @@ void main() {
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
     await RealTestHelpers.enterFormField(tester, 'base_site_name', siteName,
         isRequired: true);
-    await RealTestHelpers.pickFormDate(tester, 'first_use_date',
-        isRequired: true);
-    await RealTestHelpers.fillSiteSpecificFields(tester, moduleCode);
+    await GenericFormFiller.fillRequiredFields(tester,
+        moduleCode: moduleCode);
     await RealTestHelpers.tapFormSave(tester);
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 5));
     RealTestHelpers.expectFormClosed(tester);
@@ -113,7 +119,6 @@ void main() {
     final idSite = serverSite['id_base_site'] as int;
     expect(serverSite['id_sites_group'], idGroup,
         reason: 'le site doit être rattaché au groupe créé');
-    expect(serverSite['first_use_date'], isNotNull);
     expect((serverSite['types_site'] as List?)?.isNotEmpty, isTrue,
         reason: 'le site doit avoir au moins un type de site');
 
@@ -126,10 +131,6 @@ void main() {
     expect(coords[1], closeTo(position.latitude, 1e-5),
         reason: 'latitude du site');
 
-    final specificKey =
-        moduleCode == 'POPReptile' ? 'milieu_bordier' : 'milieu_aquatique';
-    debugPrint('Champ propre au protocole ($specificKey) : '
-        '${_field(serverSite, specificKey)}');
     debugPrint('Serveur : groupe $idGroup, site $idSite');
 
     // ----- 6. Identifiants serveur enregistrés côté app -----

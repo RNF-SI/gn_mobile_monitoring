@@ -5,6 +5,7 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Test E2E aller-retour : saisie dans l'app → téléversement → vérification
@@ -47,18 +48,8 @@ void main() {
     await RealTestHelpers.loginAndReachHome(tester, testApp, config);
     await RealTestHelpers.downloadAndOpenModule(tester, moduleCode);
 
-    // ----- 2. Groupe → site → nouvelle visite -----
-    final groups = find.byIcon(Icons.visibility);
-    await RealTestHelpers.waitForWidget(tester, groups,
-        timeout: const Duration(seconds: 10), description: 'groupes');
-    await tester.tap(groups.first);
-    await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
-
-    final sites = find.byIcon(Icons.visibility);
-    await RealTestHelpers.waitForWidget(tester, sites,
-        timeout: const Duration(seconds: 10), description: 'sites du groupe');
-    await tester.tap(sites.first);
-    await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
+    // ----- 2. (Groupe →) site → nouvelle visite -----
+    await RealTestHelpers.openFirstSite(tester);
 
     await RealTestHelpers.tapTab(tester, 'Visites');
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 2));
@@ -69,12 +60,8 @@ void main() {
     await tester.tap(createVisit);
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
 
-    await RealTestHelpers.tapRadioOption(tester, 'Non');
-    await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
-    await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
-        isRequired: true);
-    await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
-        isRequired: true);
+    await GenericFormFiller.fillRequiredFields(tester,
+        moduleCode: moduleCode);
     await RealTestHelpers.enterFormField(tester, 'comments', marker,
         isRequired: false);
     await RealTestHelpers.tapFormSave(tester);
@@ -92,7 +79,8 @@ void main() {
     await tester.tap(addObs);
     await RealTestHelpers.pumpFor(tester, const Duration(seconds: 4));
 
-    await RealTestHelpers.tapRadioOption(tester, 'Non');
+    await GenericFormFiller.fillRequiredFields(tester,
+        moduleCode: moduleCode);
     await RealTestHelpers.enterFormField(tester, 'comments', '$marker obs',
         isRequired: false);
     await RealTestHelpers.tapFormSave(tester);
@@ -156,8 +144,6 @@ void main() {
         reason: 'la visite doit être rattachée à un jeu de données');
     expect((props['observers'] as List?)?.isNotEmpty, isTrue,
         reason: 'la visite doit avoir au moins un observateur');
-    expect(field(props, 'num_passage'), 1);
-    expect(field(props, 'accessibility'), 'Non');
 
     final obs = observations
         .map((o) => Map<String, dynamic>.from(
@@ -166,7 +152,6 @@ void main() {
         .toList();
     expect(obs, hasLength(1),
         reason: 'l\'observation doit être sur le serveur, rattachée à la visite');
-    expect(field(obs.single, 'presence'), 'Non');
     debugPrint('Aller-retour vérifié : visite $idVisit + observation '
         '${obs.single['id_observation']}');
   });
