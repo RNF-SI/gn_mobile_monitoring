@@ -190,6 +190,8 @@ class SitesApiImpl extends BaseApi implements SitesApi {
     'modules',
     'nb_sites',
     'nb_visits',
+    // Liste des propriétés hors config du module (refonte), pas une propriété.
+    'additional_data_keys',
   };
 
   @override

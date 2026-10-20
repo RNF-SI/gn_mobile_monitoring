@@ -399,6 +399,32 @@ void main() {
     });
   });
 
+  test('syncSitesToServer : un site déjà envoyé n\'est jamais renvoyé (#211)',
+      () async {
+    when(() => mockGlobalApi.checkConnectivity()).thenAnswer((_) async => true);
+    when(() => mockModulesDatabase.getModuleByCode('MOD_TEST')).thenAnswer(
+        (_) async =>
+            const Module(id: 1, moduleLabel: 'Test', moduleCode: 'MOD_TEST'));
+    when(() => mockGlobalDatabase.updateLastSyncDate('sitesToServer', any()))
+        .thenAnswer((_) async {});
+    when(() => mockSitesRepository.getLocalSitesByModuleCode('MOD_TEST'))
+        .thenAnswer((_) async => [
+              const BaseSite(
+                  idBaseSite: 7,
+                  baseSiteName: 'Déjà envoyé',
+                  isLocal: true,
+                  serverSiteId: 501),
+            ]);
+
+    final result = await suppressOutput(
+        () => repository.syncSitesToServer('token', 'MOD_TEST'));
+
+    expect(result.success, true);
+    verifyNever(() => mockGlobalApi.updateSite(any(), any(), any(), any()));
+    verifyNever(() => mockGlobalApi.sendSite(any(), any(), any(),
+        moduleId: any(named: 'moduleId')));
+  });
+
   group('syncSiteGroupsToServer', () {
     test('returns failure when not connected', () async {
       when(() => mockGlobalApi.checkConnectivity())
