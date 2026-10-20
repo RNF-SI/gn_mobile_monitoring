@@ -875,6 +875,9 @@ class FormConfigParser {
             'multi_select': fieldConfig['multi_select'],
           // Ajouter la configuration des règles de changement automatique
           if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
+          // Champ propre à des types de site (config des types, #215)
+          if (fieldConfig['id_types_site'] != null)
+            'id_types_site': fieldConfig['id_types_site'],
         };
       }
     });
@@ -938,6 +941,8 @@ class FormConfigParser {
                 'multi_select': fieldConfig['multi_select'],
               // Ajouter la configuration des règles de changement automatique
               if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
+              if (fieldConfig['id_types_site'] != null)
+                'id_types_site': fieldConfig['id_types_site'],
             };
           }
         }

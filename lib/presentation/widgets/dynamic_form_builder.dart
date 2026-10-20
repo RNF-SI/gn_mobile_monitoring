@@ -559,6 +559,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
         return;
       }
       
+      // Champ d'un type de site non sélectionné : non envoyé, même s'il est
+      // obligatoire (le web supprime les champs des types retirés).
+      if (_isHiddenBySiteType(fieldConfig)) return;
+
       // Déterminer si le champ est caché
       final isHidden = formDataProcessor.isFieldHidden(
         fieldName,
@@ -1014,12 +1018,26 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     final isHidden = formDataProcessor.isFieldHidden(fieldName, evaluationContext,
         fieldConfig: fieldConfig, allFieldsConfig: _unifiedSchema);
 
-    if (isHidden) {
+    if (isHidden || _isHiddenBySiteType(fieldConfig)) {
       return const SizedBox.shrink(); // Ne pas afficher ce champ
     }
 
     // Si le champ n'est pas masqué, construire le widget approprié
     return _buildFieldWidget(fieldName, fieldConfig);
+  }
+
+  /// Champ propre à des types de site (`id_types_site`, ajouté par le serveur
+  /// depuis la config des types) : affiché seulement si l'un de ces types est
+  /// sélectionné sur le site, comme dans le formulaire web (#215).
+  bool _isHiddenBySiteType(Map<String, dynamic> fieldConfig) {
+    final types = fieldConfig['id_types_site'];
+    if (types is! List || types.isEmpty) return false;
+    final selected = _formValues['types_site'];
+    final selectedIds = (selected is List ? selected : [selected])
+        .where((t) => t != null)
+        .map((t) => t.toString())
+        .toSet();
+    return !types.any((t) => selectedIds.contains(t.toString()));
   }
 
   // Méthode qui construit le widget approprié pour le champ
