@@ -2,7 +2,7 @@
 
 Ce document liste les versions de l'app mobile publiées officiellement, avec les informations nécessaires au déploiement côté serveur GeoNature.
 
-> 💡 **Tu cherches juste la valeur à saisir dans le champ « Code de version » de l'admin GeoNature ?** Elle est publiée pour chaque release dans la section [Versions](#versions) ci-dessous (colonne **Code de version**). Pour la dernière release `v1.1.1`, c'est `3`.
+> 💡 **Tu cherches juste la valeur à saisir dans le champ « Code de version » de l'admin GeoNature ?** Elle est publiée pour chaque release dans la section [Versions](#versions) ci-dessous (colonne **Code de version**). Pour la dernière release `v1.2.0`, c'est `4`.
 
 ## Comment utiliser ce document
 
@@ -15,6 +15,18 @@ Chaque entrée décrit une release :
 - **Module `gn_module_monitoring`** : version minimale du module serveur. Vérifiée automatiquement par l'app avant chaque téléchargement de module.
 
 ## Versions
+
+### v1.2.0
+
+- **Date** : 2026-10-21
+- **Code de version** : `4`
+- **GeoNature core** : 2.17.x et refonte du module monitoring (GeoNature 2.18)
+- **Module `gn_module_monitoring`** : ≥ 1.2.6 (validé sur 1.3.1 et sur la refonte)
+- **Tag Git** : [`v1.2.0-geonature-2.17-2.18`](https://github.com/RNF-SI/gn_mobile_monitoring/releases/tag/v1.2.0-geonature-2.17-2.18)
+- **APK** : `monitoring-v1.2.0-geonature-2.17-2.18.apk`
+- **Nom du paquet** : `org.reserves_naturelles.monitoring` (nouveau)
+
+**Nouvelle installation, pas une mise à jour** : nouvel identifiant et nouvelle clé de signature, l'app s'installe à côté de l'ancienne (envoyer toutes les données avec l'ancienne version avant de la désinstaller). Côté admin GeoNature, mettre à jour le **Nom du paquet**. Compatibilité avec la refonte du module monitoring, champs propres aux types de site, envoi des sites sans écraser les données d'autres modules, formulaires alignés sur le web. Voir les [notes de release complètes](https://github.com/RNF-SI/gn_mobile_monitoring/releases/tag/v1.2.0-geonature-2.17-2.18).
 
 ### v1.1.1
 
