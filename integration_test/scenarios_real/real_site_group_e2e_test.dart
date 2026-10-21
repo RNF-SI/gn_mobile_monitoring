@@ -161,6 +161,18 @@ void main() {
       if (editButton2.evaluate().isEmpty) {
         // On est probablement remonte d'un cran (page module)
         debugPrint('Edit button absent, re-navigation dans le groupe...');
+        // La liste des groupes peut être longue : faire défiler jusqu'au
+        // groupe modifié (sinon il n'est pas construit).
+        await tester.scrollUntilVisible(
+          find.text(groupNameUpdated),
+          300,
+          scrollable: find
+              .byWidgetPredicate((w) =>
+                  w is Scrollable && w.axisDirection == AxisDirection.down)
+              .last,
+          maxScrolls: 100,
+        );
+        await RealTestHelpers.pumpFor(tester, const Duration(seconds: 1));
         final updatedTile = find.ancestor(
           of: find.text(groupNameUpdated),
           matching: find.byType(ExpansionTile),
