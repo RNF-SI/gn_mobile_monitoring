@@ -1705,7 +1705,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       _formValues[fieldName] = selectedValues;
     }
 
-    return Container(
+    // FormField : un champ obligatoire sans sélection bloque l'enregistrement
+    // (le message seul ne suffisait pas, ex. types_site, #215).
+    return FormField<List<String>>(
+      validator: (_) =>
+          required && selectedValues.isEmpty ? 'Ce champ est requis' : null,
+      builder: (_) => Container(
       decoration: BoxDecoration(
         border: Border.all(color: Colors.grey),
         borderRadius: BorderRadius.circular(4),
@@ -1769,6 +1774,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               ),
             ),
         ],
+      ),
       ),
     );
   }

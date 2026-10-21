@@ -773,7 +773,11 @@ class FormConfigParser {
       final bool hasNoWidget = fieldConfig['type_widget'] == null || 
                                fieldConfig['type_widget'] == '';
       
-      if (isInSpecific) {
+      if (objectType == 'site' && fieldName == 'types_site' && !hasNoWidget) {
+        // Le formulaire web de site affiche toujours le choix des types (#215) :
+        // sans lui, un module à plusieurs types n'en laisse choisir aucun.
+        isInDisplayProperties = true;
+      } else if (isInSpecific) {
         // Les champs dans specific sont toujours inclus (sauf s'ils sont cachés/exclus)
         // Même s'ils n'ont pas de type_widget, ils sont explicitement configurés
         isInDisplayProperties = true;

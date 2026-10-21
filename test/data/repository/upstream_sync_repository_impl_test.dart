@@ -6,6 +6,8 @@ import 'package:gn_mobile_monitoring/data/repository/upstream_sync_repository_im
 import 'package:gn_mobile_monitoring/domain/model/base_site.dart';
 import 'package:gn_mobile_monitoring/domain/model/base_visit.dart';
 import 'package:gn_mobile_monitoring/domain/model/module.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_complement.dart';
+import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation.dart';
 import 'package:gn_mobile_monitoring/domain/model/observation_detail.dart';
 import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
@@ -423,6 +425,42 @@ void main() {
     verifyNever(() => mockGlobalApi.updateSite(any(), any(), any(), any()));
     verifyNever(() => mockGlobalApi.sendSite(any(), any(), any(),
         moduleId: any(named: 'moduleId')));
+  });
+
+  test(
+      'syncSitesToServer : un site sans type n\'hérite pas de tous les types '
+      'd\'un module qui en a plusieurs (#215)', () async {
+    when(() => mockGlobalApi.checkConnectivity()).thenAnswer((_) async => true);
+    when(() => mockModulesDatabase.getModuleByCode('MOD_TEST')).thenAnswer(
+        (_) async =>
+            const Module(id: 1, moduleLabel: 'Test', moduleCode: 'MOD_TEST'));
+    when(() => mockGlobalDatabase.updateLastSyncDate('sitesToServer', any()))
+        .thenAnswer((_) async {});
+    when(() => mockSitesRepository.getLocalSitesByModuleCode('MOD_TEST'))
+        .thenAnswer((_) async => [
+              const BaseSite(
+                  idBaseSite: 8, baseSiteName: 'Sans type', isLocal: true),
+            ]);
+    when(() => mockSitesRepository.getSiteComplementBySiteId(8))
+        .thenAnswer((_) async => null);
+    when(() => mockModulesDatabase.getModuleComplementByModuleCode('MOD_TEST'))
+        .thenAnswer((_) async => const ModuleComplement(
+              idModule: 1,
+              configuration: ModuleConfiguration(
+                custom: CustomConfig(typesSite: [
+                  TypeSite(idNomenclatureTypeSite: 941),
+                  TypeSite(idNomenclatureTypeSite: 975),
+                ]),
+              ),
+            ));
+
+    final result = await suppressOutput(
+        () => repository.syncSitesToServer('token', 'MOD_TEST'));
+
+    verifyNever(() => mockGlobalApi.sendSite(any(), any(), any(),
+        moduleId: any(named: 'moduleId')));
+    expect(result.errorMessage ?? result.toString(),
+        contains('aucun type de site choisi'));
   });
 
   group('syncSiteGroupsToServer', () {

@@ -1421,10 +1421,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                   .toList();
             }
 
-            // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
+            // FALLBACK: Si types_site est toujours absent, le récupérer depuis
+            // la config du module, seulement s'il n'a qu'un type : avec
+            // plusieurs types, les attribuer tous serait faux (chacun peut
+            // avoir ses propres champs obligatoires, #215).
             if (!mergedData.containsKey('types_site')) {
               final typesSiteFromConfig = await _getTypesSiteFromModuleConfig(moduleCode);
-              if (typesSiteFromConfig != null && typesSiteFromConfig.isNotEmpty) {
+              if (typesSiteFromConfig != null && typesSiteFromConfig.length == 1) {
                 mergedData['types_site'] = typesSiteFromConfig;
                 _logger.i('Fallback types_site depuis config module: $typesSiteFromConfig', tag: 'sync');
               } else {
@@ -1434,7 +1437,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que types_site est présent
             if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
-              errors.add('Site ${site.idBaseSite}: types_site manquant. Veuillez vérifier la configuration du module.');
+              errors.add('Site ${site.idBaseSite}: aucun type de site choisi. Ouvrez le site pour choisir son type avant l\'envoi.');
               itemsSkipped++;
               itemsProcessed++;
               continue;

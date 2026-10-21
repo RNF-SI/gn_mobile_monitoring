@@ -62,6 +62,32 @@ void main() {
     expect(schema['base_site_name'].containsKey('id_types_site'), isFalse);
   });
 
+  test(
+      'le choix des types est dans le formulaire de site même hors '
+      'display_properties, comme sur le web', () {
+    final schema = FormConfigParser.generateUnifiedSchema(
+        ObjectConfig(
+          label: 'Site',
+          displayProperties: const ['base_site_name'],
+          generic: {
+            'base_site_name': GenericFieldConfig(
+                attributLabel: 'Nom', typeWidget: 'text'),
+            'types_site': GenericFieldConfig(
+                attributLabel: 'Type(s) de site',
+                typeWidget: 'datalist',
+                multiple: true,
+                required: true),
+            'base_site_code': GenericFieldConfig(
+                attributLabel: 'Code', typeWidget: 'text'),
+          },
+        ),
+        null,
+        objectType: 'site');
+    expect(schema.containsKey('types_site'), isTrue);
+    expect(schema.containsKey('base_site_code'), isFalse,
+        reason: 'les autres champs suivent toujours display_properties');
+  });
+
   testWidgets('seuls les champs des types sélectionnés sont affichés',
       (tester) async {
     await pumpForm(tester, initialValues: {
@@ -111,5 +137,45 @@ void main() {
     final values = form.getFormValues();
     expect(values['e2e_eau_permanente'], 'Oui');
     expect(values.containsKey('e2e_longueur_transect'), isFalse);
+  });
+
+  testWidgets('un type de site obligatoire non choisi bloque l\'enregistrement',
+      (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: DynamicFormBuilder(
+                objectConfig: ObjectConfig(
+                  label: 'Site',
+                  specific: {
+                    'types_site': {
+                      'type_widget': 'datalist',
+                      'attribut_label': 'Type(s) de site',
+                      'multiple': true,
+                      'required': true,
+                      'values': [
+                        {'value': '941', 'label': 'Site POPAmphibien'},
+                        {'value': '975', 'label': 'Transect POPReptile'},
+                      ],
+                    },
+                  },
+                ),
+                objectType: 'site',
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    final form =
+        tester.state<DynamicFormBuilderState>(find.byType(DynamicFormBuilder));
+
+    expect(form.validate(), isFalse);
+    await tester.tap(find.text('Transect POPReptile'));
+    await tester.pumpAndSettle();
+    expect(form.validate(), isTrue);
   });
 }
