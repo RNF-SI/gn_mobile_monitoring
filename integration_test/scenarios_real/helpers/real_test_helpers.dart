@@ -541,11 +541,19 @@ class RealTestHelpers {
         reason:
             'Le bouton Ouvrir devrait etre visible dans la card de $moduleCode');
     debugPrint('===== REGARDE l\'ecran : tap sur "Ouvrir" =====');
-    await tester.tap(openBtn.first);
-
-    // Attendre la navigation hors de la HomePage
+    // Après le téléchargement, le bouton peut être sous l'en-tête de la
+    // liste (le tap tombe alors à côté) : le ramener à l'écran et retaper
+    // tant que la page du module ne s'ouvre pas.
     final stopwatch = Stopwatch()..start();
+    var nextTap = Duration.zero;
     while (stopwatch.elapsed < const Duration(seconds: 30)) {
+      if (stopwatch.elapsed >= nextTap &&
+          openButtonInCard().evaluate().isNotEmpty) {
+        await tester.ensureVisible(openButtonInCard().first);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(openButtonInCard().first, warnIfMissed: false);
+        nextTap = stopwatch.elapsed + const Duration(seconds: 5);
+      }
       await tester.pump(const Duration(milliseconds: 300));
       if (find.text('Mes Modules').evaluate().isEmpty) {
         debugPrint('===== Page de detail du module ouverte =====');

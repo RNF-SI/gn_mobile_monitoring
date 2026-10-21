@@ -65,17 +65,24 @@ TOKEN=$(curl -sf -X POST "$API/auth/login" -H 'Content-Type: application/json' \
 ID_ADMIN=$(psql_q "SELECT id_role FROM utilisateurs.t_roles WHERE identifiant = 'admin'")
 for code in "${MODULES[@]}"; do
   id_module=$(psql_q "SELECT id_module FROM gn_commons.t_modules WHERE module_code = '$code'")
-  if [ -n "$(psql_q "SELECT 1 FROM gn_monitoring.cor_sites_group_module WHERE id_module = $id_module LIMIT 1")" ]; then
+  # Déjà amorcé : un groupe ou un site rattaché au module.
+  if [ -n "$(psql_q "SELECT 1 FROM gn_monitoring.cor_sites_group_module WHERE id_module = $id_module
+      UNION SELECT 1 FROM gn_monitoring.cor_site_module WHERE id_module = $id_module LIMIT 1")" ]; then
     continue
   fi
   id_type=$(psql_q "SELECT id_type_site FROM gn_monitoring.cor_module_type WHERE id_module = $id_module LIMIT 1")
-  id_group=$(curl -sf -X POST "$API/monitorings/object/$code/sites_group" \
-    -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @- <<JSON | jq -r .id
+  # Groupe seulement si le protocole en gère (pas nidif_gypa, ecrevisses…).
+  id_group=null
+  if jq -e '.tree.module.sites_group' "$PROTOCOLES_DIR/$code/config.json" >/dev/null 2>&1 \
+      || ! jq -e '.tree' "$PROTOCOLES_DIR/$code/config.json" >/dev/null 2>&1; then
+    id_group=$(curl -sf -X POST "$API/monitorings/object/$code/sites_group" \
+      -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @- <<JSON | jq -r .id
 {"type": "Feature", "module_code": "$code", "geometry": null,
  "properties": {"sites_group_name": "Groupe test $code", "sites_group_code": "GT",
                 "modules": [$id_module]}}
 JSON
-)
+) || id_group=null
+  fi
   curl -sf -o /dev/null -X POST "$API/monitorings/object/$code/site" \
     -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' -d @- <<JSON
 {"type": "Feature", "module_code": "$code",
@@ -85,6 +92,6 @@ JSON
                 "id_sites_group": $id_group, "types_site": [$id_type],
                 "modules": [$id_module]}}
 JSON
-  echo "$code : groupe $id_group et un site créés"
+  echo "$code : site créé (groupe : $id_group)"
 done
 echo "GeoNature prêt sur $API (admin/admin)"
