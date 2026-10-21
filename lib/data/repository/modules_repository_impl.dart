@@ -315,16 +315,24 @@ class ModulesRepositoryImpl implements ModulesRepository {
             // Find if this nomenclature already exists in the database
             final existingNomenclatures =
                 await nomenclaturesDatabase.getAllNomenclatures();
+            // La route renvoie {id_nomenclature_type_site, label, config} ;
+            // l'ancien format portait id_nomenclature et un objet nomenclature.
+            final nomenclatureId = (siteTypeData['id_nomenclature'] ??
+                siteTypeData['id_nomenclature_type_site']) as int;
             bool nomenclatureExists = existingNomenclatures.any((n) =>
-                n.id == siteTypeData['id_nomenclature'] ||
+                n.id == nomenclatureId ||
                 (n.idType == 116 &&
                     n.cdNomenclature == siteTypeData['cd_nomenclature']));
 
             if (!nomenclatureExists) {
               // Create and add the nomenclature if it doesn't exist
-              final nomenclatureInfo = siteTypeData['nomenclature'];
+              final nomenclatureInfo = siteTypeData['nomenclature'] ??
+                  {
+                    'label_default': siteTypeData['label'],
+                    'label_fr': siteTypeData['label'],
+                  };
               final nomenclature = Nomenclature(
-                id: siteTypeData['id_nomenclature'],
+                id: nomenclatureId,
                 idType: 116, // TYPE_SITE
                 cdNomenclature:
                     nomenclatureInfo['cd_nomenclature'] as String? ?? '',
