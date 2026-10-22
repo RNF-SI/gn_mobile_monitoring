@@ -197,13 +197,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += observationsResult.itemsAdded;
             itemsUpdated += observationsResult.itemsUpdated;
             itemsSkipped += observationsResult.itemsSkipped;
-            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            itemsDeleted += observationsResult.itemsDeleted;
             
             // Accumuler les statistiques détaillées pour les observations
             totalObservationsAdded += observationsResult.itemsAdded;
-            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            totalObservationsDeleted += observationsResult.itemsDeleted;
             
-            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted} supprimées', tag: 'sync');
             
             // Vérifier si les observations ont réussi
             if (!observationsResult.success) {
@@ -468,13 +468,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += observationsResult.itemsAdded;
             itemsUpdated += observationsResult.itemsUpdated;
             itemsSkipped += observationsResult.itemsSkipped;
-            itemsDeleted += observationsResult.itemsDeleted ?? 0;
+            itemsDeleted += observationsResult.itemsDeleted;
             
             // Accumuler les statistiques détaillées pour les observations
             totalObservationsAdded += observationsResult.itemsAdded;
-            totalObservationsDeleted += observationsResult.itemsDeleted ?? 0;
+            totalObservationsDeleted += observationsResult.itemsDeleted;
             
-            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted ?? 0} supprimées', tag: 'sync');
+            _logger.i('Stats observations: +${observationsResult.itemsAdded} ajoutées, +${observationsResult.itemsUpdated} mises à jour, +${observationsResult.itemsSkipped} ignorées, +${observationsResult.itemsDeleted} supprimées', tag: 'sync');
             
             if (observationsResult.success) {
               // Si les observations ont réussi, supprimer la visite localement
@@ -778,9 +778,9 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
             itemsAdded += detailsResult.itemsAdded;
             itemsUpdated += detailsResult.itemsUpdated;
             itemsSkipped += detailsResult.itemsSkipped;
-            itemsDeleted += detailsResult.itemsDeleted ?? 0;
+            itemsDeleted += detailsResult.itemsDeleted;
             
-            _logger.i('Stats détails: +${detailsResult.itemsAdded} ajoutés, +${detailsResult.itemsUpdated} mis à jour, +${detailsResult.itemsSkipped} ignorés, +${detailsResult.itemsDeleted ?? 0} supprimés', tag: 'sync');
+            _logger.i('Stats détails: +${detailsResult.itemsAdded} ajoutés, +${detailsResult.itemsUpdated} mis à jour, +${detailsResult.itemsSkipped} ignorés, +${detailsResult.itemsDeleted} supprimés', tag: 'sync');
 
             // En cas d'erreur avec les détails, l'ajouter à la liste d'erreurs
             if (!detailsResult.success && detailsResult.errorMessage != null) {
@@ -1337,19 +1337,19 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           );
         }
 
-        // Séparer les sites en deux groupes : nouveaux (POST) et existants (PATCH)
+        // Seuls les sites pas encore envoyés partent (POST). Un site déjà
+        // envoyé ne peut plus être modifié sur le téléphone : le renvoyer
+        // (PATCH) n'apporterait rien et écraserait côté serveur data et
+        // types_site, saisis depuis d'autres modules ou le web (#211).
         final newSites = localSites
             .where((site) => site.serverSiteId == null)
             .toList();
-        final existingSites = localSites
-            .where((site) => site.serverSiteId != null)
-            .toList();
 
         _logger.i(
-            'Répartition des sites: ${newSites.length} nouveaux, ${existingSites.length} existants',
+            'Sites à envoyer: ${newSites.length} sur ${localSites.length} sites locaux',
             tag: 'sync');
 
-        // PARTIE 1: Traiter les nouveaux sites (POST)
+        // Envoi des nouveaux sites (POST)
         for (final site in newSites) {
           try {
             _logger.i(
@@ -1421,10 +1421,13 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
                   .toList();
             }
 
-            // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
+            // FALLBACK: Si types_site est toujours absent, le récupérer depuis
+            // la config du module, seulement s'il n'a qu'un type : avec
+            // plusieurs types, les attribuer tous serait faux (chacun peut
+            // avoir ses propres champs obligatoires, #215).
             if (!mergedData.containsKey('types_site')) {
               final typesSiteFromConfig = await _getTypesSiteFromModuleConfig(moduleCode);
-              if (typesSiteFromConfig != null && typesSiteFromConfig.isNotEmpty) {
+              if (typesSiteFromConfig != null && typesSiteFromConfig.length == 1) {
                 mergedData['types_site'] = typesSiteFromConfig;
                 _logger.i('Fallback types_site depuis config module: $typesSiteFromConfig', tag: 'sync');
               } else {
@@ -1434,7 +1437,7 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
 
             // Validation pré-sync : vérifier que types_site est présent
             if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
-              errors.add('Site ${site.idBaseSite}: types_site manquant. Veuillez vérifier la configuration du module.');
+              errors.add('Site ${site.idBaseSite}: aucun type de site choisi. Ouvrez le site pour choisir son type avant l\'envoi.');
               itemsSkipped++;
               itemsProcessed++;
               continue;
@@ -1469,114 +1472,6 @@ class UpstreamSyncRepositoryImpl implements UpstreamSyncRepository {
           } catch (e) {
             _logger.e(
                 'Erreur lors de l\'envoi du site ${site.idBaseSite}: $e',
-                tag: 'sync',
-                error: e);
-            errors.add('Site ${site.idBaseSite}: $e');
-            itemsSkipped++;
-          }
-        }
-
-        // PARTIE 2: Traiter les sites existants (PATCH)
-        for (final site in existingSites) {
-          try {
-            _logger.i(
-                'Mise à jour du site ID: ${site.idBaseSite} (serverId: ${site.serverSiteId})',
-                tag: 'sync');
-
-            // Récupérer le complément du site pour obtenir types_site et autres données
-            final siteComplement = await _sitesRepository.getSiteComplementBySiteId(site.idBaseSite);
-
-            // Fusionner les données du site avec celles du complément
-            Map<String, dynamic> mergedData = Map<String, dynamic>.from(site.data ?? {});
-
-            if (siteComplement != null && siteComplement.data != null) {
-              try {
-                final complementData = jsonDecode(siteComplement.data!) as Map<String, dynamic>;
-                mergedData.addAll(complementData);
-              } catch (e) {
-                _logger.w('Erreur lors du parsing des données du complément pour site ${site.idBaseSite}: $e', tag: 'sync');
-              }
-            }
-
-            // Même traitement id_sites_group que pour le POST (cf. commentaire
-            // au-dessus) : la colonne DB remappée prime sur le JSON périmé,
-            // et on remappe à la volée si le complément pointe encore sur un
-            // ID local alors que le groupe correspondant est synchronisé.
-            if (siteComplement != null && siteComplement.idSitesGroup != null) {
-              final localGroupId = siteComplement.idSitesGroup!;
-              final serverGroupId = await _resolveServerGroupId(localGroupId);
-              mergedData['id_sites_group'] = serverGroupId ?? localGroupId;
-              if (serverGroupId != null && serverGroupId != localGroupId) {
-                _logger.i(
-                    '[SYNC_GROUP] PATCH site ${site.idBaseSite} : remapping '
-                    'id_sites_group $localGroupId → $serverGroupId',
-                    tag: 'sync');
-              }
-            } else if (mergedData.containsKey('id_sites_group')) {
-              _logger.w(
-                  '[SYNC_GROUP] PATCH site ${site.idBaseSite} : FK '
-                  'id_sites_group orphelin (${mergedData['id_sites_group']}) '
-                  'retiré du payload',
-                  tag: 'sync');
-              mergedData.remove('id_sites_group');
-            }
-
-            // IMPORTANT: Convertir id_nomenclature_type_site en types_site (liste)
-            // Le serveur attend types_site comme une liste d'entiers
-            // Rétro-compatibilité avec les sites créés avant le multi-select types_site
-            if (mergedData.containsKey('id_nomenclature_type_site') && !mergedData.containsKey('types_site')) {
-              final typeId = mergedData['id_nomenclature_type_site'];
-              if (typeId != null) {
-                mergedData['types_site'] = [typeId];
-                _logger.i('Conversion id_nomenclature_type_site=$typeId en types_site=[$typeId]', tag: 'sync');
-              }
-              // Supprimer l'ancien champ pour éviter la confusion
-              mergedData.remove('id_nomenclature_type_site');
-            }
-
-            // Normaliser types_site : s'assurer que tous les éléments sont des entiers
-            if (mergedData.containsKey('types_site') && mergedData['types_site'] is List) {
-              mergedData['types_site'] = (mergedData['types_site'] as List)
-                  .map((e) => e is int ? e : int.tryParse(e.toString()))
-                  .where((e) => e != null)
-                  .toList();
-            }
-
-            // FALLBACK: Si types_site est toujours absent, le récupérer depuis la config du module
-            if (!mergedData.containsKey('types_site')) {
-              final typesSiteFromConfig = await _getTypesSiteFromModuleConfig(moduleCode);
-              if (typesSiteFromConfig != null && typesSiteFromConfig.isNotEmpty) {
-                mergedData['types_site'] = typesSiteFromConfig;
-                _logger.i('Fallback types_site depuis config module: $typesSiteFromConfig', tag: 'sync');
-              } else {
-                _logger.w('ATTENTION: types_site absent pour site ${site.idBaseSite} et non trouvé dans la config module', tag: 'sync');
-              }
-            }
-
-            // Validation pré-sync : vérifier que types_site est présent
-            if (!mergedData.containsKey('types_site') || (mergedData['types_site'] is List && (mergedData['types_site'] as List).isEmpty)) {
-              errors.add('Site ${site.idBaseSite}: types_site manquant. Veuillez vérifier la configuration du module.');
-              itemsSkipped++;
-              itemsProcessed++;
-              continue;
-            }
-
-            // Créer un site modifié avec les données fusionnées
-            final siteWithComplementData = site.copyWith(data: mergedData);
-
-            // PATCH - Mettre à jour un site existant
-            await _globalApi.updateSite(
-                token, moduleCode, site.serverSiteId!, siteWithComplementData);
-
-            _logger.i(
-                'Site mis à jour avec succès, ID serveur: ${site.serverSiteId}',
-                tag: 'sync');
-            itemsUpdated++;
-
-            itemsProcessed++;
-          } catch (e) {
-            _logger.e(
-                'Erreur lors de la mise à jour du site ${site.idBaseSite}: $e',
                 tag: 'sync',
                 error: e);
             errors.add('Site ${site.idBaseSite}: $e');

@@ -18,6 +18,7 @@ Monitoring-mobile est une application mobile du module Monitoring de GeoNature. 
 
 | Version app mobile | GeoNature core | Monitoring serveur (min) | Code de version (à saisir côté admin GeoNature) |
 |---|---|---|---|
+| `v1.2.0-geonature-2.17-2.18` | 2.17.x et refonte monitoring (2.18) | ≥ 1.2.6 | `4` |
 | `v1.1.1-geonature-2.17` | 2.17.x | ≥ 1.2.6 | `3` |
 | `v1.1.0-geonature-2.17` | 2.17.x | ≥ 1.2.6 | `2` |
 | `v1.0.0-geonature-2.17` | 2.17.x | 1.2.6 | `1` |
@@ -64,10 +65,11 @@ flutter run
 
 ## 🛠️ Développement
 
-L'application utilise Flutter 3.38.4 (Dart 3.10.3) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
+L'application utilise Flutter 3.47.7 (Dart 3.13.5) et suit une architecture Clean Architecture. Voir [CURSORRULES.md](./CURSORRULES.md) pour les conventions de code.
 
 ### Documentation
 - [Vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md) — types de widgets, compatibilité des modules et limitations
+- [Compatibilité des modules](./docs/MODULES_COMPATIBILITY.md) — état de chaque protocole de suivi (configuration, tests automatisés, retours terrain)
 - [Expressions JavaScript supportées](./docs/JAVASCRIPT_EXPRESSIONS.md) — documentation technique des expressions JS
 - [Tâches](./TASKS.md)
 - [Snippets](./SNIPPETS.md)
@@ -102,7 +104,9 @@ Tests qui pilotent l'app sur un téléphone Android contre une vraie API GeoNatu
 (login, navigation module, CRUD sites/visites/observations).
 
 ```bash
-./run_real_e2e_tests.sh --device=<id> auth   # auth | module | sites | visits | observations | all
+.github/geonature-e2e/up.sh                  # GeoNature de test en Docker, port 5000
+.github/geonature-e2e/run_scenarios.sh POPAmphibien,POPReptile POPReptile
+./run_real_e2e_tests.sh --device=<id> auth   # ou un seul scénario : auth | module | sites | visits | …
 ```
 
 Voir [la documentation des tests E2E réels](./docs/E2E_REAL_API_TESTS.md) pour la
@@ -110,12 +114,16 @@ configuration, la procédure après reboot et le troubleshooting.
 
 ## 🔄 CI/CD
 
-Le projet utilise GitHub Actions pour l'intégration continue :
-- Tests unitaires sur chaque push
-- Tests d'intégration sur les pull requests vers `develop` et `main`
-- Analyse statique du code avec `flutter analyze`
+Le projet utilise GitHub Actions pour l'intégration continue, sur chaque push
+et chaque pull request vers `develop` et `main` :
+- `flutter_tests.yml` : analyse statique (`flutter analyze`) et tests unitaires
+  et de widgets, avec la couverture envoyée à Codecov
+- `e2e_tests.yml` : scénarios E2E simulés (`integration_test/scenarios/`) sur
+  un émulateur Android
 
-Voir [.github/workflows/integration_tests.yml](.github/workflows/integration_tests.yml) pour la configuration.
+Les tests contre un vrai serveur GeoNature (`test/integration/`,
+`integration_test/scenarios_real/`) ne tournent pas en CI : ils se lancent en
+local (voir plus haut).
 
 ## 🧾 SBOM et Dependency-Track
 
@@ -188,8 +196,8 @@ Pour que les utilisateurs soient notifiés des mises à jour, l'administrateur d
    |-------|--------|
    | Code application | `MONITORING` |
    | Chemin relatif de l'APK | `monitoring/monitoring.apk` |
-   | Nom du paquet | `fr.geonature.monitoring` |
-   | Code de version | Valeur publiée avec chaque release — voir le tableau [Compatibilité des versions](#compatibilité-des-versions) ou [`docs/VERSIONS.md`](./docs/VERSIONS.md). Pour la release `v1.1.1`, c'est `3`. |
+   | Nom du paquet | `org.reserves_naturelles.monitoring` (depuis la v1.2.0) |
+   | Code de version | Valeur publiée avec chaque release — voir le tableau [Compatibilité des versions](#compatibilité-des-versions) ou [`docs/VERSIONS.md`](./docs/VERSIONS.md). Pour la release `v1.2.0`, c'est `4`. |
 
    > ⚠️ **Code de version** : ne pas confondre avec le nom de version (`1.0.0`). C'est un entier strictement croissant, fixé à la compilation (buildNumber de `pubspec.yaml`), que l'admin doit saisir tel quel. L'app ne propose une mise à jour que si la valeur admin est **strictement supérieure** à celle de l'APK installé.
 
@@ -204,3 +212,16 @@ Les contributions sont bienvenues ! N'hésitez pas à ouvrir une issue ou propos
 ## 🐛 Support
 
 Pour tout problème ou question, ouvrir une issue sur ce repository.
+
+---
+
+## 🇪🇺 Financement
+
+<img src="assets/logos/bloc_marque_ue_life_biodiv.jpg" alt="Cofinancé par l’Union européenne — programme LIFE — BIODIV’FRANCE" width="600">
+
+> **Cofinancé par l’Union européenne. Les points de vue et les opinions exprimés sont toutefois ceux des auteurs et ne reflètent pas nécessairement ceux de l’Union européenne ou de CINEA. Ni l’Union européenne ni l’autorité chargée de l’octroi de la subvention ne peuvent en être tenues pour responsables.**
+
+Réalisé dans le cadre du projet LIFE BIODIV’FRANCE<br>
+Coordonné par l’Office Français de la Biodiversité, ce projet rassemble un consortium de 31 participants. Il accompagne la mise en œuvre de la stratégie nationale pour la biodiversité en travaillant sur 5 cibles : les territoires, aires protégées, filières, citoyens et acteurs de la formation.
+
+---

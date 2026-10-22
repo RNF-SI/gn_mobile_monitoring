@@ -147,7 +147,7 @@ void main() {
       expect(find.text('Ce site ne peut pas être modifié'), findsOneWidget);
       expect(
         find.text(
-            'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié.'),
+            'Ce site a été envoyé au serveur : il se modifie désormais depuis GeoNature (web).'),
         findsOneWidget,
       );
 
@@ -177,7 +177,7 @@ void main() {
 
       expect(find.text('Ce site ne peut pas être modifié'), findsOneWidget);
       expect(
-        find.text('Seuls les sites créés localement peuvent être modifiés.'),
+        find.text('Ce site vient du serveur : il se modifie depuis GeoNature (web).'),
         findsOneWidget,
       );
     });

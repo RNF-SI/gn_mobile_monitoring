@@ -15,7 +15,7 @@ abstract class BaseApi {
   Dio createDio({Duration? connectTimeout, Duration? receiveTimeout, Duration? sendTimeout}) {
     // Use injected Dio if available (for testing)
     if (_injectedDio != null) {
-      return _injectedDio!;
+      return _injectedDio;
     }
 
     return Dio(BaseOptions(

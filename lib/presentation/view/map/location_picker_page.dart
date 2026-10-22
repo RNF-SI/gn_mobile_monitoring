@@ -259,7 +259,7 @@ class _LocationPickerPageState extends ConsumerState<LocationPickerPage> {
               TileLayer(
                 urlTemplate: _selectedLayer?.urlTemplate ??
                     'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.example.gn_mobile_monitoring',
+                userAgentPackageName: 'org.reserves_naturelles.monitoring',
               ),
               if (_isPolygon && _vertices.length >= 3)
                 PolygonLayer(

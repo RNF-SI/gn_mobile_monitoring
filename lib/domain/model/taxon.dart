@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'taxon.freezed.dart';
 
 @freezed
-class Taxon with _$Taxon {
+abstract class Taxon with _$Taxon {
   const factory Taxon({
     required int cdNom,
     int? cdRef,

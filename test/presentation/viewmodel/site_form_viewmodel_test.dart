@@ -428,6 +428,46 @@ void main() {
   });
 
   group('_prepareComplementData (testé via createSiteFromFormData)', () {
+    // Régression 09/2026 (petite_chouette_montagne) : site créé depuis
+    // l'onglet Sites du module, groupe choisi dans le formulaire.
+    test('groupe choisi dans le formulaire (sans groupe de navigation)',
+        () async {
+      final vm = SiteFormViewModel(
+        mockCreateSiteWithRelationsUseCase,
+        mockUpdateSiteUseCase,
+        mockDeleteSiteUseCase,
+        mockGetUserIdUseCase,
+        mockGetSiteByIdUseCase,
+        mockGetUserLocationUseCase,
+        mockFormDataProcessor,
+        mockSitesDatabase,
+        testModuleId,
+        0, // pas de groupe de navigation
+      );
+      final formData = {'base_site_name': 'Site Test', 'id_sites_group': '12'};
+      when(() => mockFormDataProcessor.processFormData(any()))
+          .thenAnswer((_) async => formData);
+      when(() => mockGetUserIdUseCase.execute()).thenAnswer((_) async => 1);
+      when(() => mockGetUserLocationUseCase.execute())
+          .thenAnswer((_) async => null);
+      when(() => mockCreateSiteWithRelationsUseCase.execute(
+            site: any(named: 'site'),
+            moduleId: any(named: 'moduleId'),
+            complement: any(named: 'complement'),
+          )).thenAnswer((_) async => 1);
+
+      await vm.createSiteFromFormData(formData);
+
+      final complement = verify(() => mockCreateSiteWithRelationsUseCase.execute(
+            site: any(named: 'site'),
+            moduleId: any(named: 'moduleId'),
+            complement: captureAny(named: 'complement'),
+          )).captured.first as SiteComplement;
+      expect(complement.idSitesGroup, 12);
+      expect(jsonDecode(complement.data!)['id_sites_group'], 12);
+    });
+
+
     test('convertit types_site de List<String> en List<int>', () async {
       // Arrange
       final formData = {

@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:gn_mobile_monitoring/config/config.dart';
 
 import '../../e2e_test_app_real.dart';
 import '../../robots/login_robot.dart';
@@ -539,11 +541,19 @@ class RealTestHelpers {
         reason:
             'Le bouton Ouvrir devrait etre visible dans la card de $moduleCode');
     debugPrint('===== REGARDE l\'ecran : tap sur "Ouvrir" =====');
-    await tester.tap(openBtn.first);
-
-    // Attendre la navigation hors de la HomePage
+    // Après le téléchargement, le bouton peut être sous l'en-tête de la
+    // liste (le tap tombe alors à côté) : le ramener à l'écran et retaper
+    // tant que la page du module ne s'ouvre pas.
     final stopwatch = Stopwatch()..start();
+    var nextTap = Duration.zero;
     while (stopwatch.elapsed < const Duration(seconds: 30)) {
+      if (stopwatch.elapsed >= nextTap &&
+          openButtonInCard().evaluate().isNotEmpty) {
+        await tester.ensureVisible(openButtonInCard().first);
+        await tester.pump(const Duration(milliseconds: 300));
+        await tester.tap(openButtonInCard().first, warnIfMissed: false);
+        nextTap = stopwatch.elapsed + const Duration(seconds: 5);
+      }
       await tester.pump(const Duration(milliseconds: 300));
       if (find.text('Mes Modules').evaluate().isEmpty) {
         debugPrint('===== Page de detail du module ouverte =====');
@@ -976,39 +986,18 @@ class RealTestHelpers {
     await tester.tap(sendButton);
     await pumpFor(tester, const Duration(seconds: 2));
 
-    // Module selector multi-modules : tout cocher si la UI le permet,
-    // sinon choisir le premier item.
-    if (find.text('Sélectionner un module').evaluate().isNotEmpty) {
-      // Essayer de tout cocher via un bouton "Tout selectionner" s'il existe
-      final selectAll = find.text('Tout sélectionner');
-      if (selectAll.evaluate().isNotEmpty) {
-        await tester.tap(selectAll.first);
-        await pumpFor(tester, const Duration(seconds: 1));
-      } else {
-        // Fallback : cocher chaque checkbox visible
-        final checkboxes = find.byType(Checkbox);
-        for (var i = 0; i < checkboxes.evaluate().length; i++) {
-          await tester.tap(checkboxes.at(i));
-          await pumpFor(tester, const Duration(milliseconds: 300));
-        }
-        if (checkboxes.evaluate().isEmpty) {
-          // Pas de checkbox → fallback premier ListTile
-          final listTiles = find.byType(ListTile);
-          if (listTiles.evaluate().isNotEmpty) {
-            await tester.tap(listTiles.first);
-            await pumpFor(tester, const Duration(seconds: 1));
-          }
-        }
+    // Plusieurs modules : l'app demande lequel téléverser (un à la fois).
+    // On prend le premier module qui a des saisies en attente.
+    if (find.text('Choisir un module à téléverser').evaluate().isNotEmpty) {
+      final pending = find.ancestor(
+        of: find.text('Saisies à téléverser'),
+        matching: find.byType(ListTile),
+      );
+      if (pending.evaluate().isEmpty) {
+        fail('Choix du module : aucun module avec des saisies à téléverser');
       }
-      // Valider la selection
-      for (final btnText in ['Envoyer', 'Valider', 'OK']) {
-        final btn = find.widgetWithText(ElevatedButton, btnText);
-        if (btn.evaluate().isNotEmpty) {
-          await tester.tap(btn.first);
-          await pumpFor(tester, const Duration(seconds: 2));
-          break;
-        }
-      }
+      await tester.tap(pending.first);
+      await pumpFor(tester, const Duration(seconds: 2));
     }
 
     await waitForSyncToFinish(
@@ -1095,5 +1084,68 @@ class RealTestHelpers {
     }
     await tester.tap(tab);
     await pumpFor(tester, const Duration(seconds: 1));
+  }
+
+  /// Client HTTP authentifié sur le serveur de test, pour vérifier côté
+  /// serveur ce que l'app a envoyé ou téléchargé.
+  static Future<Dio> serverClient(RealE2EConfig config) async {
+    final dio = Dio(BaseOptions(baseUrl: Config.apiBase));
+    final login = await dio.post('/auth/login',
+        data: {'login': config.username, 'password': config.password});
+    dio.options.headers['Authorization'] = 'Bearer ${login.data['token']}';
+    return dio;
+  }
+
+  /// Ouvre le premier site du module affiché : par son premier groupe si le
+  /// module gère des groupes de sites, sinon directement dans la liste.
+  static Future<void> openFirstSite(WidgetTester tester) async {
+    // Avec groupes : icône « voir » du groupe puis du site ; sans groupes :
+    // carte du site dans la liste du module.
+    final steps = moduleHasSiteGroups()
+        ? {
+            'groupes': find.byIcon(Icons.visibility),
+            'sites du groupe': find.byIcon(Icons.visibility),
+          }
+        : {'sites': find.byKey(const Key('module-site-card'))};
+    for (final MapEntry(key: description, value: target) in steps.entries) {
+      await waitForWidget(tester, target,
+          timeout: const Duration(seconds: 10), description: description);
+      await tester.tap(target.first);
+      await pumpFor(tester, const Duration(seconds: 4));
+    }
+  }
+
+  /// Vrai si le module affiché gère des groupes de sites.
+  static bool moduleHasSiteGroups() => find
+      .byKey(const Key('create-site-group-button'))
+      .evaluate()
+      .isNotEmpty;
+
+  /// Ouvre la page de détail d'un groupe ou d'un site d'après son nom dans la
+  /// liste affichée (tuile contenant le nom → icône « voir »).
+  static Future<void> openListItemByName(
+      WidgetTester tester, String name) async {
+    final label = find.text(name);
+    if (label.evaluate().isEmpty) {
+      final scrollable = find.byType(Scrollable);
+      if (scrollable.evaluate().isNotEmpty) {
+        await tester.scrollUntilVisible(label, 300,
+            scrollable: scrollable.last, maxScrolls: 50);
+      }
+    }
+    await waitForWidget(tester, label,
+        timeout: const Duration(seconds: 10), description: 'élément "$name"');
+    await tester.ensureVisible(label.first);
+    await pumpFor(tester, const Duration(milliseconds: 500));
+    final tile = find.ancestor(
+        of: label.first,
+        matching: find.byWidgetPredicate(
+            (w) => w is ExpansionTile || w is ListTile || w is Card));
+    final eye = find.descendant(of: tile.first, matching: find.byIcon(Icons.visibility));
+    if (eye.evaluate().isEmpty) {
+      fail('Icône « voir » introuvable pour "$name"');
+    }
+    await tester.tap(eye.first);
+    await pumpFor(tester, const Duration(seconds: 4));
   }
 }

@@ -5,35 +5,83 @@ une **vraie** API GeoNature, avec une vraie base SQLite. À l'opposé des tests
 mock-based de `integration_test/scenarios/`.
 
 - **Fichiers** : `integration_test/scenarios_real/`
-- **Script de lancement** : `run_real_e2e_tests.sh`
-- **Module cible par défaut** : **POPAmphibien** (module de suivi du protocole
-  POPAmphibien de la **SHF - Société Herpétologique de France**). Le module a
-  la particularité d'utiliser des **groupes de sites** (pas de sites directement
-  rattachés au module), ce qui influence le flow de navigation des tests.
+- **Serveur de test** : GeoNature + monitoring en Docker,
+  `.github/geonature-e2e/` (le même que la CI)
+- **Scripts de lancement** : `.github/geonature-e2e/run_scenarios.sh` (tous
+  les scénarios d'un coup) ou `run_real_e2e_tests.sh` (un scénario à la fois,
+  serveur au choix)
+- **Modules testés** : **POPAmphibien** et **POPReptile** (protocoles de la
+  **SHF - Société Herpétologique de France**). POPAmphibien utilise des
+  **groupes de sites** (pas de sites directement rattachés au module), ce qui
+  influence le flow de navigation des tests.
 
 ## Pré-requis (une seule fois)
 
-- Un serveur GeoNature accessible (par défaut : local sur port 8001)
-- Le fichier `.env.test` à la racine du projet (gitignored), copié depuis
-  `.env.test.example` et adapté
-- Un téléphone Android avec **débogage USB activé** (ou un émulateur)
+- Docker avec le plugin `compose`, `git`, `curl` et `jq`
+- Flutter et un JDK 17 (comme pour un build normal de l'app)
+- Un téléphone Android avec **débogage USB activé**, ou un émulateur
 - La config `network_security_config.xml` pour HTTP en clair en debug
   (déjà présente : `android/app/src/debug/res/xml/network_security_config.xml`)
-- Le module POPAmphibien doit exister côté serveur avec au moins un groupe de
-  sites (sinon adapter `TEST_MODULE_CODE` dans `.env.test`)
 
-## Démarrage rapide
+Aucune base GeoNature n'est à récupérer : le serveur de test et ses données
+se construisent depuis le dépôt.
+
+## Démarrage rapide (GeoNature en Docker)
 
 ```bash
-adb devices                                                    # vérif téléphone
-./run_real_e2e_tests.sh --device=<device_id> auth
+# 1. Monter GeoNature sur http://127.0.0.1:5000 (admin/admin).
+#    Premier lancement ~10 min (installation de la base avec TAXREF),
+#    quelques secondes ensuite.
+.github/geonature-e2e/up.sh
+
+# 2. Brancher le téléphone (ou lancer un émulateur) et vérifier qu'il est vu
+adb devices
+
+# 3. Lancer tous les scénarios : une passe POPAmphibien (avec le scénario
+#    multi-modules), une passe POPReptile
+.github/geonature-e2e/run_scenarios.sh POPAmphibien,POPReptile POPReptile
+
+# 4. Arrêter le serveur en gardant la base…
+docker compose -p gne2e -f .github/geonature-e2e/docker-compose.yml stop
+#    … ou tout effacer
+docker compose -p gne2e -f .github/geonature-e2e/docker-compose.yml down -v
 ```
 
-Le script configure automatiquement `adb reverse` pour mapper le port du
-serveur GeoNature local vers le téléphone, et pré-accorde les permissions
-Android (notamment la localisation) en boucle pendant toute la durée du test.
+`run_scenarios.sh` configure `adb reverse` pour que le téléphone atteigne le
+serveur sur `localhost:5000`, et accorde la localisation en boucle pendant le
+test. `DEVICE=<id>` choisit l'appareil si plusieurs sont branchés.
+
+Le serveur n'utilise que des conteneurs et des volumes Docker du projet
+`gne2e` : il ne touche à aucune install GeoNature existante. Si le port 5000
+est pris, `GEONATURE_PORT=4000` (pour `up.sh` et `run_scenarios.sh`) ; le
+détail est dans [`.github/geonature-e2e/README.md`](../.github/geonature-e2e/README.md).
+
+## Avec son propre serveur GeoNature
+
+`run_real_e2e_tests.sh` lance un scénario à la fois contre le serveur décrit
+dans `.env.test` (gitignored, copié depuis `.env.test.example`) :
+
+```bash
+cp .env.test.example .env.test       # puis adapter, cf. « Configuration .env.test »
+./run_real_e2e_tests.sh --device=<device_id> auth
+./run_real_e2e_tests.sh --env-file=.env.test.remote all   # autre serveur
+```
+
+Pour la base Docker ci-dessus, `.env.test` contient
+`TEST_SERVER_URL=http://127.0.0.1:5000`, `admin`/`admin` et
+`TEST_MODULE_CODES=POPAmphibien,POPReptile`.
+
+Avec un autre serveur, les modules de `TEST_MODULE_CODES` doivent y être
+installés, avec au moins un groupe de sites ou un site, et l'utilisateur doit
+avoir les droits de saisie dessus. Les tests y laissent leurs données
+(préfixe `E2E_`).
+
+Le script configure `adb reverse` pour le port de l'URL et accorde les
+permissions Android (notamment la localisation) en boucle pendant le test.
 
 ## Scénarios disponibles
+
+Commandes de `run_real_e2e_tests.sh` :
 
 | Commande | Tests | Couverture |
 |---|---|---|
@@ -45,12 +93,34 @@ Android (notamment la localisation) en boucle pendant toute la durée du test.
 | `observations` | 1 | CRUD observation avec recherche taxon |
 | `sync-download` | 1 | Menu « Mettre à jour les données » → confirmation → sync OK |
 | `sync-upload` | 1 | Menu « Téléversement » → confirmation → upload OK |
-| `all` | 12 | Enchaîne tous les scénarios ci-dessus |
+| `many-taxa` | — | Saisies en série sur un module à gros référentiel taxonomique |
+| `cross-module` | — | Saisies sur plusieurs modules en une session, puis upload |
+| `all` | — | Tous les fichiers de `scenarios_real/` |
 
-### Ce que couvre `all`
+Les autres fichiers de `scenarios_real/` ne passent que par `all` (ou
+`all_scenarios_test.dart`) :
 
-L'exécution `all` lance les **12 tests** à la suite (~18-22 min au total) pour
-valider l'intégration bout-en-bout :
+- `real_download_fidelity` : après téléchargement, groupes et sites en base
+  locale identiques à ceux de l'API
+- `real_site_roundtrip` : groupe et site créés sans visite → téléversement →
+  vérification sur le serveur (rattachements, géométrie, types de site)
+- `real_upload_roundtrip` : visite + observation marquées → téléversement →
+  vérification sur le serveur
+- `real_protocol_roundtrip` : aller-retour complet sur n'importe quel
+  protocole, formulaires remplis par `GenericFormFiller`
+- `real_site_group_module_filtering` : filtrage par module des sites d'un
+  groupe (#169) ; dépend d'un jeu de données de recette (`plaquesreptiles`)
+  absent de la base Docker, donc ignoré sans
+  `TEST_MODULE_CODES=plaquesreptiles,POPReptile`
+
+`all_scenarios_test.dart` regroupe tous les scénarios dans un seul binaire,
+ce qui évite de recompiler l'app pour chaque fichier ; c'est lui que lancent
+`run_scenarios.sh` et la CI. Le module testé est le premier de
+`TEST_MODULE_CODES`, d'où un run par module.
+
+### Les scénarios de base
+
+Les huit scénarios de base :
 
 1. **auth** : login valide → HomePage, login invalide → reste sur LoginPage,
    logout → retour LoginPage (nettoie la DB locale)
@@ -73,13 +143,23 @@ valider l'intégration bout-en-bout :
 Chaque test crée ses propres données avec un timestamp pour éviter les
 collisions, et les laisse sur le serveur (préfixe `E2E_` pour identifier).
 
+## En CI
+
+Le workflow `.github/workflows/e2e_real_tests.yml` lance tous les scénarios
+réels chaque lundi, et à la main (onglet Actions) avant une release. Il monte
+le même GeoNature Docker (`up.sh`) puis lance `run_scenarios.sh` sur un
+émulateur. L'image GeoNature (par défaut
+`ghcr.io/pnx-si/geonature-backend-extra:2.17.4`) se choisit au lancement
+manuel ; en local, c'est la variable `GEONATURE_IMAGE` d'`up.sh`.
+
 ## Procédure après reboot du PC
 
 `adb reverse` et le mode "stayon" sont **non persistants** — ils sautent à
 chaque reboot, débranchement USB ou redémarrage du serveur ADB.
 
 ```bash
-# 1. Démarrer le serveur GeoNature local (cf. votre install GeoNature)
+# 1. Redémarrer le serveur GeoNature (base conservée, quelques secondes)
+.github/geonature-e2e/up.sh
 
 # 2. Brancher le téléphone et vérifier qu'il est détecté
 adb devices
@@ -87,7 +167,8 @@ adb devices
 # 3. (Optionnel) Garder l'écran allumé pendant les tests
 adb -s <device_id> shell svc power stayon usb
 
-# 4. Lancer le test (le script s'occupe de adb reverse automatiquement)
+# 4. Lancer les tests (les scripts refont adb reverse)
+.github/geonature-e2e/run_scenarios.sh POPAmphibien
 ./run_real_e2e_tests.sh --device=<device_id> auth
 ```
 
@@ -99,17 +180,23 @@ Si le téléphone n'est pas détecté par `adb devices` :
 ## Configuration `.env.test`
 
 ```bash
-# URL du serveur (utilise 127.0.0.1 + adb reverse pour appareil physique,
-# ou 10.0.2.2 pour émulateur)
-TEST_SERVER_URL=http://127.0.0.1:8001
+# URL du serveur : 127.0.0.1 + adb reverse (fait par le script) pour un
+# téléphone, 10.0.2.2 pour un émulateur
+TEST_SERVER_URL=http://127.0.0.1:5000
 
 # Compte utilisateur sur le serveur
 TEST_USERNAME=admin
 TEST_PASSWORD=admin
 
-# Module à tester (doit exister sur le serveur)
-TEST_MODULE_CODE=POPAmphibien
+# Modules à tester (doivent exister sur le serveur)
+TEST_MODULE_CODES=POPAmphibien,POPReptile
 ```
+
+L'app n'ajoute pas `/api` aux routes pour `localhost`, `127.0.0.1` et les
+ports 3000, 4000, 5000, 8000 et 8001 (`lib/config/config.dart`) : un serveur
+local doit répondre sans `/api`, comme `geonature dev-back` ou le conteneur
+Docker. Avec `10.0.2.2`, choisir un de ces ports. Un serveur distant derrière
+Apache (`https://…/geonature`) prend `/api` automatiquement.
 
 ## Helpers disponibles (`real_test_helpers.dart`)
 
@@ -232,7 +319,7 @@ certaines opérations).
 
 | Symptôme | Cause probable | Solution |
 |---|---|---|
-| `Connection refused` | `adb reverse` perdu ou serveur GeoNature pas démarré | `curl http://127.0.0.1:8001/` pour vérif + relancer le script (reconfigure `adb reverse`) |
+| `Connection refused` | `adb reverse` perdu ou serveur GeoNature pas démarré | `curl http://127.0.0.1:5000/gn_commons/config` pour vérif + relancer le script (reconfigure `adb reverse`) |
 | `Widget non trouve apres N min : bouton Ouvrir` | Téléchargement trop long ou serveur lent | Vérifier les logs `downloadTaxons` + augmenter le timeout |
 | `Some possible finders for the widgets at Offset` | Toucher écran pendant test | Ne pas interagir, relancer |
 | `Champ "X" introuvable` | Widget custom avec key différente | Le helper dumpe les ValueKeys présentes pour debug — adapter le test en conséquence |
@@ -246,17 +333,16 @@ certaines opérations).
 integration_test/
 ├── e2e_test_app_real.dart          # RealE2ETestApp + chargement .env.test
 ├── scenarios_real/
-│   ├── helpers/
-│   │   └── real_test_helpers.dart  # Helpers partagés (login, sync, dialogs,
-│   │                                 formulaires, dropdowns, radio, etc.)
-│   ├── real_auth_e2e_test.dart
-│   ├── real_module_browsing_e2e_test.dart
-│   ├── real_site_management_e2e_test.dart
-│   ├── real_site_group_e2e_test.dart
-│   ├── real_visit_workflow_e2e_test.dart
-│   ├── real_observation_workflow_e2e_test.dart
-│   ├── real_sync_download_e2e_test.dart
-│   └── real_sync_upload_e2e_test.dart
+│   ├── helpers/                    # Helpers partagés (login, sync, dialogs,
+│   │                                 formulaires, GenericFormFiller, etc.)
+│   ├── all_scenarios_test.dart     # Tous les scénarios en un binaire
+│   └── real_*_e2e_test.dart        # Un fichier par scénario
 └── robots/                         # Robots réutilisés depuis les tests mock
     ├── login_robot.dart, home_robot.dart, etc.
+
+.github/geonature-e2e/
+├── docker-compose.yml              # PostGIS + backend GeoNature
+├── up.sh                           # Monte le serveur et ses données de test
+├── run_scenarios.sh                # Lance all_scenarios_test.dart par module
+└── seed/                           # Droits, liste taxo, groupes et sites
 ```

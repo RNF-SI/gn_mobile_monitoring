@@ -5,7 +5,7 @@ import 'package:gn_mobile_monitoring/presentation/state/module_download_status.d
 part 'module_info.freezed.dart';
 
 @freezed
-class ModuleInfo with _$ModuleInfo {
+abstract class ModuleInfo with _$ModuleInfo {
   const factory ModuleInfo({
     required Module module,
     required ModuleDownloadStatus downloadStatus,

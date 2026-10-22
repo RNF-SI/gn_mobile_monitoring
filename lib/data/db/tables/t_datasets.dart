@@ -12,7 +12,7 @@ class TDatasets extends Table {
   TextColumn get keywords => text().nullable()();
   BoolColumn get marineDomain => boolean()();
   BoolColumn get terrestrialDomain => boolean()();
-  IntColumn get idNomenclatureDatasetObjectif => integer()();
+  IntColumn get idNomenclatureDatasetObjectif => integer().nullable()();
   RealColumn get bboxWest => real().nullable()();
   RealColumn get bboxEast => real().nullable()();
   RealColumn get bboxSouth => real().nullable()();

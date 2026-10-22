@@ -8,7 +8,7 @@ part 'map_state.freezed.dart';
 
 /// État de la carte, géré par le MapViewModel.
 @freezed
-class MapState with _$MapState {
+sealed class MapState with _$MapState {
   const MapState._();
 
   const factory MapState({

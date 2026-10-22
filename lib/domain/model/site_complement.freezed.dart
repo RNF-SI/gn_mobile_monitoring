@@ -1,5 +1,5 @@
-// coverage:ignore-file
 // GENERATED CODE - DO NOT MODIFY BY HAND
+// coverage:ignore-file
 // ignore_for_file: type=lint
 // ignore_for_file: unused_element, deprecated_member_use, deprecated_member_use_from_same_package, use_function_type_syntax_for_parameters, unnecessary_const, avoid_init_to_null, invalid_override_different_default_values_named, prefer_expression_function_bodies, annotate_overrides, invalid_annotation_target, unnecessary_question_mark
 
@@ -9,163 +9,269 @@ part of 'site_complement.dart';
 // FreezedGenerator
 // **************************************************************************
 
+// dart format off
 T _$identity<T>(T value) => value;
-
-final _privateConstructorUsedError = UnsupportedError(
-    'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
-
 /// @nodoc
 mixin _$SiteComplement {
-  int get idBaseSite => throw _privateConstructorUsedError;
-  int? get idSitesGroup => throw _privateConstructorUsedError;
-  String? get data => throw _privateConstructorUsedError;
 
-  @JsonKey(ignore: true)
-  $SiteComplementCopyWith<SiteComplement> get copyWith =>
-      throw _privateConstructorUsedError;
+ int get idBaseSite; int? get idSitesGroup; String? get data;
+/// Create a copy of SiteComplement
+/// with the given fields replaced by the non-null parameter values.
+@JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+$SiteComplementCopyWith<SiteComplement> get copyWith => _$SiteComplementCopyWithImpl<SiteComplement>(this as SiteComplement, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is SiteComplement&&(identical(other.idBaseSite, idBaseSite) || other.idBaseSite == idBaseSite)&&(identical(other.idSitesGroup, idSitesGroup) || other.idSitesGroup == idSitesGroup)&&(identical(other.data, data) || other.data == data));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,idBaseSite,idSitesGroup,data);
+
+@override
+String toString() {
+  return 'SiteComplement(idBaseSite: $idBaseSite, idSitesGroup: $idSitesGroup, data: $data)';
+}
+
+
 }
 
 /// @nodoc
-abstract class $SiteComplementCopyWith<$Res> {
-  factory $SiteComplementCopyWith(
-          SiteComplement value, $Res Function(SiteComplement) then) =
-      _$SiteComplementCopyWithImpl<$Res, SiteComplement>;
-  @useResult
-  $Res call({int idBaseSite, int? idSitesGroup, String? data});
-}
+abstract mixin class $SiteComplementCopyWith<$Res>  {
+  factory $SiteComplementCopyWith(SiteComplement value, $Res Function(SiteComplement) _then) = _$SiteComplementCopyWithImpl;
+@useResult
+$Res call({
+ int idBaseSite, int? idSitesGroup, String? data
+});
 
+
+
+
+}
 /// @nodoc
-class _$SiteComplementCopyWithImpl<$Res, $Val extends SiteComplement>
+class _$SiteComplementCopyWithImpl<$Res>
     implements $SiteComplementCopyWith<$Res> {
-  _$SiteComplementCopyWithImpl(this._value, this._then);
+  _$SiteComplementCopyWithImpl(this._self, this._then);
 
-  // ignore: unused_field
-  final $Val _value;
-  // ignore: unused_field
-  final $Res Function($Val) _then;
+  final SiteComplement _self;
+  final $Res Function(SiteComplement) _then;
 
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? idBaseSite = null,
-    Object? idSitesGroup = freezed,
-    Object? data = freezed,
-  }) {
-    return _then(_value.copyWith(
-      idBaseSite: null == idBaseSite
-          ? _value.idBaseSite
-          : idBaseSite // ignore: cast_nullable_to_non_nullable
-              as int,
-      idSitesGroup: freezed == idSitesGroup
-          ? _value.idSitesGroup
-          : idSitesGroup // ignore: cast_nullable_to_non_nullable
-              as int?,
-      data: freezed == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ) as $Val);
-  }
+/// Create a copy of SiteComplement
+/// with the given fields replaced by the non-null parameter values.
+@pragma('vm:prefer-inline') @override $Res call({Object? idBaseSite = null,Object? idSitesGroup = freezed,Object? data = freezed,}) {
+  return _then(_self.copyWith(
+idBaseSite: null == idBaseSite ? _self.idBaseSite : idBaseSite // ignore: cast_nullable_to_non_nullable
+as int,idSitesGroup: freezed == idSitesGroup ? _self.idSitesGroup : idSitesGroup // ignore: cast_nullable_to_non_nullable
+as int?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
+}
+
+}
+
+
+/// Adds pattern-matching-related methods to [SiteComplement].
+extension SiteComplementPatterns on SiteComplement {
+/// A variant of `map` that fallback to returning `orElse`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeMap<TResult extends Object?>(TResult Function( _SiteComplement value)?  $default,{required TResult orElse(),}){
+final _that = this;
+switch (_that) {
+case _SiteComplement() when $default != null:
+return $default(_that);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// Callbacks receives the raw object, upcasted.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case final Subclass2 value:
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult map<TResult extends Object?>(TResult Function( _SiteComplement value)  $default,){
+final _that = this;
+switch (_that) {
+case _SiteComplement():
+return $default(_that);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `map` that fallback to returning `null`.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case final Subclass value:
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? mapOrNull<TResult extends Object?>(TResult? Function( _SiteComplement value)?  $default,){
+final _that = this;
+switch (_that) {
+case _SiteComplement() when $default != null:
+return $default(_that);case _:
+  return null;
+
+}
+}
+/// A variant of `when` that fallback to an `orElse` callback.
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return orElse();
+/// }
+/// ```
+
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( int idBaseSite,  int? idSitesGroup,  String? data)?  $default,{required TResult orElse(),}) {final _that = this;
+switch (_that) {
+case _SiteComplement() when $default != null:
+return $default(_that.idBaseSite,_that.idSitesGroup,_that.data);case _:
+  return orElse();
+
+}
+}
+/// A `switch`-like method, using callbacks.
+///
+/// As opposed to `map`, this offers destructuring.
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case Subclass2(:final field2):
+///     return ...;
+/// }
+/// ```
+
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( int idBaseSite,  int? idSitesGroup,  String? data)  $default,) {final _that = this;
+switch (_that) {
+case _SiteComplement():
+return $default(_that.idBaseSite,_that.idSitesGroup,_that.data);case _:
+  throw StateError('Unexpected subclass');
+
+}
+}
+/// A variant of `when` that fallback to returning `null`
+///
+/// It is equivalent to doing:
+/// ```dart
+/// switch (sealedClass) {
+///   case Subclass(:final field):
+///     return ...;
+///   case _:
+///     return null;
+/// }
+/// ```
+
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( int idBaseSite,  int? idSitesGroup,  String? data)?  $default,) {final _that = this;
+switch (_that) {
+case _SiteComplement() when $default != null:
+return $default(_that.idBaseSite,_that.idSitesGroup,_that.data);case _:
+  return null;
+
+}
+}
+
 }
 
 /// @nodoc
-abstract class _$$SiteComplementImplCopyWith<$Res>
-    implements $SiteComplementCopyWith<$Res> {
-  factory _$$SiteComplementImplCopyWith(_$SiteComplementImpl value,
-          $Res Function(_$SiteComplementImpl) then) =
-      __$$SiteComplementImplCopyWithImpl<$Res>;
-  @override
-  @useResult
-  $Res call({int idBaseSite, int? idSitesGroup, String? data});
+
+
+class _SiteComplement implements SiteComplement {
+  const _SiteComplement({required this.idBaseSite, this.idSitesGroup, this.data});
+  
+
+@override final  int idBaseSite;
+@override final  int? idSitesGroup;
+@override final  String? data;
+
+/// Create a copy of SiteComplement
+/// with the given fields replaced by the non-null parameter values.
+@override @JsonKey(includeFromJson: false, includeToJson: false)
+@pragma('vm:prefer-inline')
+_$SiteComplementCopyWith<_SiteComplement> get copyWith => __$SiteComplementCopyWithImpl<_SiteComplement>(this, _$identity);
+
+
+
+@override
+bool operator ==(Object other) {
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is _SiteComplement&&(identical(other.idBaseSite, idBaseSite) || other.idBaseSite == idBaseSite)&&(identical(other.idSitesGroup, idSitesGroup) || other.idSitesGroup == idSitesGroup)&&(identical(other.data, data) || other.data == data));
+}
+
+
+@override
+int get hashCode => Object.hash(runtimeType,idBaseSite,idSitesGroup,data);
+
+@override
+String toString() {
+  return 'SiteComplement(idBaseSite: $idBaseSite, idSitesGroup: $idSitesGroup, data: $data)';
+}
+
+
 }
 
 /// @nodoc
-class __$$SiteComplementImplCopyWithImpl<$Res>
-    extends _$SiteComplementCopyWithImpl<$Res, _$SiteComplementImpl>
-    implements _$$SiteComplementImplCopyWith<$Res> {
-  __$$SiteComplementImplCopyWithImpl(
-      _$SiteComplementImpl _value, $Res Function(_$SiteComplementImpl) _then)
-      : super(_value, _then);
+abstract mixin class _$SiteComplementCopyWith<$Res> implements $SiteComplementCopyWith<$Res> {
+  factory _$SiteComplementCopyWith(_SiteComplement value, $Res Function(_SiteComplement) _then) = __$SiteComplementCopyWithImpl;
+@override @useResult
+$Res call({
+ int idBaseSite, int? idSitesGroup, String? data
+});
 
-  @pragma('vm:prefer-inline')
-  @override
-  $Res call({
-    Object? idBaseSite = null,
-    Object? idSitesGroup = freezed,
-    Object? data = freezed,
-  }) {
-    return _then(_$SiteComplementImpl(
-      idBaseSite: null == idBaseSite
-          ? _value.idBaseSite
-          : idBaseSite // ignore: cast_nullable_to_non_nullable
-              as int,
-      idSitesGroup: freezed == idSitesGroup
-          ? _value.idSitesGroup
-          : idSitesGroup // ignore: cast_nullable_to_non_nullable
-              as int?,
-      data: freezed == data
-          ? _value.data
-          : data // ignore: cast_nullable_to_non_nullable
-              as String?,
-    ));
-  }
+
+
+
 }
-
 /// @nodoc
+class __$SiteComplementCopyWithImpl<$Res>
+    implements _$SiteComplementCopyWith<$Res> {
+  __$SiteComplementCopyWithImpl(this._self, this._then);
 
-class _$SiteComplementImpl implements _SiteComplement {
-  const _$SiteComplementImpl(
-      {required this.idBaseSite, this.idSitesGroup, this.data});
+  final _SiteComplement _self;
+  final $Res Function(_SiteComplement) _then;
 
-  @override
-  final int idBaseSite;
-  @override
-  final int? idSitesGroup;
-  @override
-  final String? data;
-
-  @override
-  String toString() {
-    return 'SiteComplement(idBaseSite: $idBaseSite, idSitesGroup: $idSitesGroup, data: $data)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    return identical(this, other) ||
-        (other.runtimeType == runtimeType &&
-            other is _$SiteComplementImpl &&
-            (identical(other.idBaseSite, idBaseSite) ||
-                other.idBaseSite == idBaseSite) &&
-            (identical(other.idSitesGroup, idSitesGroup) ||
-                other.idSitesGroup == idSitesGroup) &&
-            (identical(other.data, data) || other.data == data));
-  }
-
-  @override
-  int get hashCode => Object.hash(runtimeType, idBaseSite, idSitesGroup, data);
-
-  @JsonKey(ignore: true)
-  @override
-  @pragma('vm:prefer-inline')
-  _$$SiteComplementImplCopyWith<_$SiteComplementImpl> get copyWith =>
-      __$$SiteComplementImplCopyWithImpl<_$SiteComplementImpl>(
-          this, _$identity);
+/// Create a copy of SiteComplement
+/// with the given fields replaced by the non-null parameter values.
+@override @pragma('vm:prefer-inline') $Res call({Object? idBaseSite = null,Object? idSitesGroup = freezed,Object? data = freezed,}) {
+  return _then(_SiteComplement(
+idBaseSite: null == idBaseSite ? _self.idBaseSite : idBaseSite // ignore: cast_nullable_to_non_nullable
+as int,idSitesGroup: freezed == idSitesGroup ? _self.idSitesGroup : idSitesGroup // ignore: cast_nullable_to_non_nullable
+as int?,data: freezed == data ? _self.data : data // ignore: cast_nullable_to_non_nullable
+as String?,
+  ));
 }
 
-abstract class _SiteComplement implements SiteComplement {
-  const factory _SiteComplement(
-      {required final int idBaseSite,
-      final int? idSitesGroup,
-      final String? data}) = _$SiteComplementImpl;
 
-  @override
-  int get idBaseSite;
-  @override
-  int? get idSitesGroup;
-  @override
-  String? get data;
-  @override
-  @JsonKey(ignore: true)
-  _$$SiteComplementImplCopyWith<_$SiteComplementImpl> get copyWith =>
-      throw _privateConstructorUsedError;
 }
+
+// dart format on

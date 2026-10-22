@@ -84,9 +84,35 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
     // les a pas mises dans `display_properties`. Le formulaire les exclut
     // (champ calculé), mais le détail mérite de les montrer.
     final result = List<String>.from(base);
+    // Champs propres aux types de site (#215) : ceux des types du site sont
+    // ajoutés, comme l'onglet « Propriétés spécifiques » du web ; ceux des
+    // autres types ne sont pas affichés.
+    final typeFields = _siteTypeFields();
+    result.removeWhere(
+        (name) => typeFields.containsKey(name) && !typeFields[name]!);
+    for (final entry in typeFields.entries) {
+      if (entry.value && !result.contains(entry.key)) result.add(entry.key);
+    }
     if (!result.contains('nb_visits')) result.add('nb_visits');
     if (!result.contains('last_visit')) result.add('last_visit');
     return result;
+  }
+
+  /// Champs propres à des types de site (`id_types_site`), associés à vrai
+  /// si l'un de ces types est celui du site.
+  Map<String, bool> _siteTypeFields() {
+    final types = objectData['types_site'];
+    final siteTypes = (types is List ? types : const [])
+        .map((t) => t.toString())
+        .toSet();
+    return {
+      for (final entry in (objectConfig?.specific ?? const {}).entries)
+        if (entry.value is Map &&
+            entry.value['id_types_site'] is List &&
+            entry.value['type_widget'] != 'html')
+          entry.key: (entry.value['id_types_site'] as List)
+              .any((t) => siteTypes.contains(t.toString())),
+    };
   }
 
   // Site complement data pour le site courant
@@ -378,17 +404,17 @@ class SiteDetailPageBaseState extends DetailPageState<SiteDetailPageBase>
           IconButton(
             icon: const Icon(Icons.lock_outline),
             tooltip: isSynced
-                ? 'Ce site a été synchronisé et ne peut plus être modifié'
-                : 'Ce site ne peut pas être modifié (créé depuis le serveur)',
+                ? 'Ce site n\'est pas modifiable sur le téléphone'
+                : 'Ce site n\'est pas modifiable sur le téléphone',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     isSynced
-                        ? 'Ce site a déjà été synchronisé avec le serveur et ne peut plus être modifié'
-                        : 'Seuls les sites créés localement peuvent être modifiés',
+                        ? 'Ce site a été envoyé au serveur : il se modifie désormais depuis GeoNature (web), pour rester cohérent avec le serveur.'
+                        : 'Ce site vient du serveur : il se modifie depuis GeoNature (web). Seuls les sites créés sur le téléphone et pas encore envoyés sont modifiables ici.',
                   ),
-                  duration: const Duration(seconds: 2),
+                  duration: const Duration(seconds: 6),
                 ),
               );
             },

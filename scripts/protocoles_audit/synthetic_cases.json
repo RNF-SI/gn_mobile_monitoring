@@ -1,0 +1,1722 @@
+[
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || value.b",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || value.b",
+  "context": {
+   "value": {
+    "a": "x"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || value.b",
+  "context": {
+   "value": {
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || value.b",
+  "context": {
+   "value": {
+    "a": 0,
+    "b": ""
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.presence === 'Oui' && value.count > 0",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.presence === 'Oui' && value.count > 0",
+  "context": {
+   "value": {
+    "presence": "Oui"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.presence === 'Oui' && value.count > 0",
+  "context": {
+   "value": {
+    "presence": "Oui",
+    "count": 3
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.presence === 'Oui' && value.count > 0",
+  "context": {
+   "value": {
+    "presence": "Oui",
+    "count": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.presence === 'Oui' && value.count > 0",
+  "context": {
+   "value": {
+    "presence": "Non",
+    "count": 3
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !value.a && value.b",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !value.a && value.b",
+  "context": {
+   "value": {
+    "a": true,
+    "b": true
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !value.a && value.b",
+  "context": {
+   "value": {
+    "b": true
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !value.a && value.b",
+  "context": {
+   "value": {
+    "a": false,
+    "b": false
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {
+    "nombre": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {
+    "nombre": 3
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {
+    "nombre": 6
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {
+    "nombre": "7"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre > 5",
+  "context": {
+   "value": {
+    "nombre": "abc"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre >= 0",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre >= 0",
+  "context": {
+   "value": {
+    "nombre": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre >= 0",
+  "context": {
+   "value": {
+    "nombre": -1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.nombre >= 0",
+  "context": {
+   "value": {
+    "nombre": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a - value.b > 10",
+  "context": {
+   "value": {
+    "a": 3,
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a - value.b > 10",
+  "context": {
+   "value": {
+    "a": 30,
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a - value.b > 10",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a - value.b > 10",
+  "context": {
+   "value": {
+    "a": "30",
+    "b": "1"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.q * value.p > 100",
+  "context": {
+   "value": {
+    "q": 3,
+    "p": 10
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.q * value.p > 100",
+  "context": {
+   "value": {
+    "q": 30,
+    "p": 10
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.q * value.p > 100",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n % 2 === 0",
+  "context": {
+   "value": {
+    "n": 4
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n % 2 === 0",
+  "context": {
+   "value": {
+    "n": 3
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n % 2 === 0",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n / 2 > 1",
+  "context": {
+   "value": {
+    "n": 4
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n / 2 > 1",
+  "context": {
+   "value": {
+    "n": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n / 2 > 1",
+  "context": {
+   "value": {
+    "n": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t > 19.99",
+  "context": {
+   "value": {
+    "t": 20
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t > 19.99",
+  "context": {
+   "value": {
+    "t": 19.5
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t > 19.99",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t < -5",
+  "context": {
+   "value": {
+    "t": -6
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t < -5",
+  "context": {
+   "value": {
+    "t": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.t < -5",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a + value.b > 10",
+  "context": {
+   "value": {
+    "a": 5,
+    "b": 6
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a + value.b > 10",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a + value.b > 10",
+  "context": {
+   "value": {
+    "a": "5",
+    "b": 6
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a + value.b > 10",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.a + value.b) > 10",
+  "context": {
+   "value": {
+    "a": 5,
+    "b": 6
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.a + value.b) > 10",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.a && value.b)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.a && value.b)",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.a && value.b)",
+  "context": {
+   "value": {
+    "a": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || (value.b && value.c)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || (value.b && value.c)",
+  "context": {
+   "value": {
+    "a": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || (value.b && value.c)",
+  "context": {
+   "value": {
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a || (value.b && value.c)",
+  "context": {
+   "value": {
+    "b": 1,
+    "c": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b || value.c",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b || value.c",
+  "context": {
+   "value": {
+    "c": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b || value.c",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b || value.c",
+  "context": {
+   "value": {
+    "a": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.num_passage == 2)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.num_passage == 2)",
+  "context": {
+   "value": {
+    "num_passage": "2"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.num_passage == 2)",
+  "context": {
+   "value": {
+    "num_passage": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.num_passage == 2)",
+  "context": {
+   "value": {
+    "num_passage": "1"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.accessibility === 'Non' || (value.num_passage !== 1)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.accessibility === 'Non' || (value.num_passage !== 1)",
+  "context": {
+   "value": {
+    "accessibility": "Oui",
+    "num_passage": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.accessibility === 'Non' || (value.num_passage !== 1)",
+  "context": {
+   "value": {
+    "accessibility": "Oui",
+    "num_passage": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.accessibility === 'Non' || (value.num_passage !== 1)",
+  "context": {
+   "value": {
+    "accessibility": "Non",
+    "num_passage": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {
+    "n": "10"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {
+    "n": 10
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {
+    "n": 10.0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {
+    "n": "abc"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {
+    "n": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == 10",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === 1",
+  "context": {
+   "value": {
+    "n": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === 1",
+  "context": {
+   "value": {
+    "n": 1.0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === 1",
+  "context": {
+   "value": {
+    "n": "1"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == null",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == null",
+  "context": {
+   "value": {
+    "n": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == null",
+  "context": {
+   "value": {
+    "n": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n == null",
+  "context": {
+   "value": {
+    "n": ""
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === undefined",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === undefined",
+  "context": {
+   "value": {
+    "n": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === null",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n === null",
+  "context": {
+   "value": {
+    "n": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n != (null || undefined)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n != (null || undefined)",
+  "context": {
+   "value": {
+    "n": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.n != (null || undefined)",
+  "context": {
+   "value": {
+    "n": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.b == true",
+  "context": {
+   "value": {
+    "b": true
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.b == true",
+  "context": {
+   "value": {
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.b == true",
+  "context": {
+   "value": {
+    "b": "1"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.b == true",
+  "context": {
+   "value": {
+    "b": "true"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s > 5",
+  "context": {
+   "value": {
+    "s": "10"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s > 5",
+  "context": {
+   "value": {
+    "s": "3"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s > '5'",
+  "context": {
+   "value": {
+    "s": "10"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s > '5'",
+  "context": {
+   "value": {
+    "s": "6"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": ""
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": "0"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": []
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": {}
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {
+    "x": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.x",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !!value.x",
+  "context": {
+   "value": {
+    "x": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !!value.x",
+  "context": {
+   "value": {
+    "x": " "
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !!value.x",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['Visuel', null].includes(value.t)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['Visuel', null].includes(value.t)",
+  "context": {
+   "value": {
+    "t": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['Visuel', null].includes(value.t)",
+  "context": {
+   "value": {
+    "t": "Visuel"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['Visuel', null].includes(value.t)",
+  "context": {
+   "value": {
+    "t": "Auditif"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['A', 'B'].includes(value.t)",
+  "context": {
+   "value": {
+    "t": "A"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => ['A', 'B'].includes(value.t)",
+  "context": {
+   "value": {
+    "t": "C"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s || '').includes('clé')",
+  "context": {
+   "value": {
+    "s": "une clé"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s || '').includes('clé')",
+  "context": {
+   "value": {
+    "s": "rien"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s || '').includes('clé')",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.length > 0",
+  "context": {
+   "value": {
+    "l": []
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.length > 0",
+  "context": {
+   "value": {
+    "l": [
+     1
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.length > 0",
+  "context": {
+   "value": {
+    "l": "ab"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.some(x => x > 2)",
+  "context": {
+   "value": {
+    "l": [
+     1,
+     2
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.some(x => x > 2)",
+  "context": {
+   "value": {
+    "l": [
+     1,
+     5
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.filter(x => x.ok).length > 0",
+  "context": {
+   "value": {
+    "l": [
+     {
+      "ok": false
+     }
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.filter(x => x.ok).length > 0",
+  "context": {
+   "value": {
+    "l": [
+     {
+      "ok": true
+     }
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.indexOf(3) !== -1",
+  "context": {
+   "value": {
+    "l": [
+     1,
+     3
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.l.indexOf(3) !== -1",
+  "context": {
+   "value": {
+    "l": [
+     1
+    ]
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseInt(value.s) > 10",
+  "context": {
+   "value": {
+    "s": "12abc"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseInt(value.s) > 10",
+  "context": {
+   "value": {
+    "s": "9"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseInt(value.s) > 10",
+  "context": {
+   "value": {
+    "s": "x"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseInt(value.s) > 10",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseFloat(value.s) < 2.5",
+  "context": {
+   "value": {
+    "s": "2.4"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => parseFloat(value.s) < 2.5",
+  "context": {
+   "value": {
+    "s": "3"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => Math.max(value.a, value.b) > 100",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 200
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => Math.max(value.a, value.b) > 100",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => Math.max(value.a, value.b) > 100",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => isNaN(value.s)",
+  "context": {
+   "value": {
+    "s": "abc"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => isNaN(value.s)",
+  "context": {
+   "value": {
+    "s": "12"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => isNaN(value.s)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => typeof value.s === 'string'",
+  "context": {
+   "value": {
+    "s": "a"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => typeof value.s === 'string'",
+  "context": {
+   "value": {
+    "s": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => typeof value.s === 'string'",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s ?? 'def') === 'def'",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s ?? 'def') === 'def'",
+  "context": {
+   "value": {
+    "s": null
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.s ?? 'def') === 'def'",
+  "context": {
+   "value": {
+    "s": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.o?.p === 1",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.o?.p === 1",
+  "context": {
+   "value": {
+    "o": {
+     "p": 1
+    }
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s.toLowerCase() === 'oui'",
+  "context": {
+   "value": {
+    "s": "OUI"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.s.toLowerCase() === 'oui'",
+  "context": {
+   "value": {
+    "s": "non"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a ? value.b > 1 : value.c",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a ? value.b > 1 : value.c",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 0
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a ? value.b > 1 : value.c",
+  "context": {
+   "value": {
+    "c": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a ? value.b > 1 : value.c",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a === 'A' ? true : value.a === 'B' ? false : value.c",
+  "context": {
+   "value": {
+    "a": "A"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a === 'A' ? true : value.a === 'B' ? false : value.c",
+  "context": {
+   "value": {
+    "a": "B"
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a === 'A' ? true : value.a === 'B' ? false : value.c",
+  "context": {
+   "value": {
+    "a": "C",
+    "c": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b ? 1 : 0",
+  "context": {
+   "value": {
+    "a": 1,
+    "b": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.a && value.b ? 1 : 0",
+  "context": {
+   "value": {
+    "a": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.cd_nom != (null || undefined) ? value.cd_nom != 3507 : true)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.cd_nom != (null || undefined) ? value.cd_nom != 3507 : true)",
+  "context": {
+   "value": {
+    "cd_nom": 3507
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => (value.cd_nom != (null || undefined) ? value.cd_nom != 3507 : true)",
+  "context": {
+   "value": {
+    "cd_nom": {
+     "cd_nom": 3507
+    }
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.cd_nom && value.cd_nom.cd_nom == 61258)",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.cd_nom && value.cd_nom.cd_nom == 61258)",
+  "context": {
+   "value": {
+    "cd_nom": {
+     "cd_nom": 61258
+    }
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => !(value.cd_nom && value.cd_nom.cd_nom == 61258)",
+  "context": {
+   "value": {
+    "cd_nom": {
+     "cd_nom": 1
+    }
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({meta}) => meta.dataset && Object.keys(meta.dataset).length == 1",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({meta}) => meta.dataset && Object.keys(meta.dataset).length == 1",
+  "context": {
+   "value": {},
+   "meta": {
+    "dataset": {
+     "1": {}
+    }
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({meta}) => meta.dataset && Object.keys(meta.dataset).length == 1",
+  "context": {
+   "value": {},
+   "meta": {
+    "dataset": {
+     "1": {},
+     "2": {}
+    }
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value, meta}) => (meta.nomenclatures[value.t] || {}).cd_nomenclature === '0'",
+  "context": {
+   "value": {
+    "t": 1
+   },
+   "meta": {
+    "nomenclatures": {
+     "1": {
+      "cd_nomenclature": "0"
+     }
+    }
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value, meta}) => (meta.nomenclatures[value.t] || {}).cd_nomenclature === '0'",
+  "context": {
+   "value": {
+    "t": 2
+   },
+   "meta": {
+    "nomenclatures": {
+     "1": {
+      "cd_nomenclature": "0"
+     }
+    }
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value, meta}) => (meta.nomenclatures[value.t] || {}).cd_nomenclature === '0'",
+  "context": {
+   "value": {},
+   "meta": {
+    "nomenclatures": {}
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({meta}) => meta.bChainInput",
+  "context": {
+   "value": {},
+   "meta": {
+    "bChainInput": true
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({meta}) => meta.bChainInput",
+  "context": {
+   "value": {},
+   "meta": {
+    "bChainInput": false
+   }
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => { return value.a === 1; }",
+  "context": {
+   "value": {
+    "a": 1
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => { return value.a === 1; }",
+  "context": {
+   "value": {
+    "a": 2
+   },
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => value.o.p === 1",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ },
+ {
+  "source": "synthetic",
+  "expr": "({value}) => inconnu === 1",
+  "context": {
+   "value": {},
+   "meta": {}
+  }
+ }
+]

@@ -6,7 +6,7 @@ import 'package:gn_mobile_monitoring/domain/model/site_group.dart';
 part 'module.freezed.dart';
 
 @freezed
-class Module with _$Module {
+abstract class Module with _$Module {
   const factory Module({
     required int id,
     String? moduleCode,

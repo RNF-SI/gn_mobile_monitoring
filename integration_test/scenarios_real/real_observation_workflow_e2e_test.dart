@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Tests E2E de gestion d'observations contre un vrai serveur GeoNature.
@@ -41,36 +42,10 @@ void main() {
       await RealTestHelpers.loginAndReachHome(tester, testApp, config);
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
 
-      // ----- 2. Naviguer dans un groupe → site → visite -----
-      // Navigation : page module → tap visibility (groupe)
-      //                 → SiteGroupDetailPage → tap visibility (site)
-      //                   → SiteDetailPage → onglet Visites → tap visibility (visite)
-      //                     → VisitDetailPage → onglet Observations
-      debugPrint(
-          '===== REGARDE l\'ecran : navigation vers un groupe =====');
-      final visibilityIconsModule = find.byIcon(Icons.visibility);
-      await RealTestHelpers.waitForWidget(
-        tester,
-        visibilityIconsModule,
-        timeout: const Duration(seconds: 10),
-        description: 'icones visibility des groupes',
-      );
-      await tester.tap(visibilityIconsModule.first);
-      await RealTestHelpers.pumpFor(
-          tester, const Duration(seconds: 4));
-
+      // ----- 2. Ouvrir un site existant (par son groupe s'il y en a) -----
       debugPrint(
           '===== REGARDE l\'ecran : ouverture d\'un site existant =====');
-      final visibilityIconsGroup = find.byIcon(Icons.visibility);
-      await RealTestHelpers.waitForWidget(
-        tester,
-        visibilityIconsGroup,
-        timeout: const Duration(seconds: 10),
-        description: 'icones visibility des sites du groupe',
-      );
-      await tester.tap(visibilityIconsGroup.first);
-      await RealTestHelpers.pumpFor(
-          tester, const Duration(seconds: 4));
+      await RealTestHelpers.openFirstSite(tester);
 
       // ----- 3. SiteDetailPage → onglet Visites → CREER une nouvelle visite -----
       // Plutot que de chercher une visite existante (qui peut ne pas exister
@@ -94,17 +69,9 @@ void main() {
       await RealTestHelpers.pumpFor(
           tester, const Duration(seconds: 4));
 
-      // Remplir la visite avec strategie minimaliste (accessibility=Non
-      // masque la plupart des champs requis)
-      await RealTestHelpers.tapRadioOption(tester, 'Non');
-      await RealTestHelpers.selectFirstSelectOption(tester, 'expertise');
-      // N° de passage requis : depuis #180 (commit 4d8ab29), seul `value`
-      // pre-remplit un champ ; POPAmphibien n'a que `default: 1`. Le champ est
-      // un NumberField sur le serveur réel.
-      await RealTestHelpers.enterFormField(tester, 'num_passage', '1',
-          isRequired: true);
-      await RealTestHelpers.pickFormDate(tester, 'visit_date_min',
-          isRequired: true);
+      // Champs obligatoires du protocole, quel qu'il soit.
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
       await RealTestHelpers.tapFormSave(tester);
       await RealTestHelpers.pumpFor(
           tester, const Duration(seconds: 5));
@@ -134,23 +101,11 @@ void main() {
           tester, const Duration(seconds: 4));
 
       // ----- 7. Remplir le formulaire d'observation -----
-      // Le formulaire POPAmphibien observation a beaucoup de champs requis :
-      //   - cd_nom (taxon, requis)
-      //   - id_nomenclature_typ_denbr (requis)
-      //   - id_nomenclature_sex (requis)
-      //   - id_nomenclature_stade (requis)
-      //   - count_min, count_max (requis)
-      //
-      // MAIS toutes ces champs sont caches/non requis si presence === 'Non'
-      // (cf. hidden function dans la config du module).
-      //
-      // Strategie : tapper "Non" pour presence → tous les champs deviennent
-      // optionnels. On peut sauver directement.
+      // Champs obligatoires du protocole (taxon, nomenclatures, effectifs…).
       debugPrint(
           '===== REGARDE l\'ecran : remplissage du formulaire d\'observation =====');
-
-      // Tap sur le radio "Non" pour presence (par defaut "Oui")
-      await RealTestHelpers.tapRadioOption(tester, 'Non');
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
 
       // ----- 8. Save -----
       await RealTestHelpers.tapFormSave(tester);

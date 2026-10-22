@@ -5,8 +5,13 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'module_configuration.freezed.dart';
 
 @freezed
-class ModuleConfiguration with _$ModuleConfiguration {
+abstract class ModuleConfiguration with _$ModuleConfiguration {
   const factory ModuleConfiguration({
+    /// `false` si le module n'est pas configuré sur le serveur (observateurs,
+    /// JDD, liste de taxons, affichage des taxons) : le module web bloque
+    /// alors l'accès à ses objets (gn_module_monitoring#752). Absent (`null`)
+    /// avant la refonte de monitoring.
+    bool? configured,
     CustomConfig? custom,
     DataConfig? data,
     Map<String, String?>? defaultDisplayFieldNames,
@@ -43,6 +48,7 @@ class ModuleConfiguration with _$ModuleConfiguration {
     }
 
     return ModuleConfiguration(
+      configured: json['configured'] is bool ? json['configured'] as bool : null,
       custom: json['custom'] != null && json['custom'] is Map
           ? CustomConfig.fromJson(toSafeMap(json['custom'])!)
           : null,
@@ -104,7 +110,7 @@ extension ModuleConfigurationX on ModuleConfiguration {
 }
 
 @freezed
-class CustomConfig with _$CustomConfig {
+abstract class CustomConfig with _$CustomConfig {
   const factory CustomConfig({
     @JsonKey(name: '__MODULE.B_DRAW_SITES_GROUP') bool? drawSitesGroup,
     @JsonKey(name: '__MODULE.B_SYNTHESE') bool? synthese,
@@ -198,7 +204,7 @@ extension CustomConfigX on CustomConfig {
 }
 
 @freezed
-class TypeSite with _$TypeSite {
+abstract class TypeSite with _$TypeSite {
   const factory TypeSite({
     int? idNomenclatureTypeSite,
     dynamic config,
@@ -221,7 +227,7 @@ extension TypeSiteX on TypeSite {
 }
 
 @freezed
-class DataConfig with _$DataConfig {
+abstract class DataConfig with _$DataConfig {
   const factory DataConfig({
     List<String>? nomenclature,
     int? user,
@@ -245,7 +251,7 @@ extension DataConfigX on DataConfig {
 }
 
 @freezed
-class ModuleConfig with _$ModuleConfig {
+abstract class ModuleConfig with _$ModuleConfig {
   const factory ModuleConfig({
     @JsonKey(name: 'b_draw_sites_group') bool? drawSitesGroup,
     @JsonKey(name: 'b_synthese') bool? synthese,
@@ -381,7 +387,7 @@ extension ModuleConfigX on ModuleConfig {
 }
 
 @freezed
-class CruvedConfig with _$CruvedConfig {
+abstract class CruvedConfig with _$CruvedConfig {
   const factory CruvedConfig({
     int? C,
     int? R,
@@ -415,7 +421,7 @@ extension CruvedConfigX on CruvedConfig {
 }
 
 @freezed
-class ExportConfig with _$ExportConfig {
+abstract class ExportConfig with _$ExportConfig {
   const factory ExportConfig({
     String? label,
     String? method,
@@ -443,6 +449,17 @@ extension ExportConfigX on ExportConfig {
 }
 
 /// Helper function to safely convert a value to bool
+/// Booléen tel quel (« true »/« false » en texte compris), sinon l'expression
+/// conditionnelle telle quelle.
+dynamic _boolOrExpression(dynamic value) {
+  if (value is String) {
+    final lower = value.trim().toLowerCase();
+    if (lower == 'true') return true;
+    if (lower == 'false') return false;
+  }
+  return value;
+}
+
 bool? _toBool(dynamic value) {
   if (value == null) return null;
   if (value is bool) return value;
@@ -453,12 +470,14 @@ bool? _toBool(dynamic value) {
 }
 
 @freezed
-class GenericFieldConfig with _$GenericFieldConfig {
+abstract class GenericFieldConfig with _$GenericFieldConfig {
   const factory GenericFieldConfig({
     @JsonKey(name: 'attribut_label') String? attributLabel,
     String? definition,
     dynamic hidden,
-    bool? required,
+    // Booléen ou expression `({value}) => …` évaluée par le formulaire,
+    // comme `hidden` (#206).
+    dynamic required,
     String? typeWidget,
     String? typeUtil,
     bool? multiSelect,
@@ -483,7 +502,7 @@ class GenericFieldConfig with _$GenericFieldConfig {
       attributLabel: json['attribut_label'] as String?,
       definition: json['definition'] as String?,
       hidden: json['hidden'],
-      required: _toBool(json['required']),
+      required: _boolOrExpression(json['required']),
       typeWidget: json['type_widget'] as String?,
       typeUtil: json['type_util'] as String?,
       multiSelect: _toBool(json['multi_select']),
@@ -527,7 +546,7 @@ extension GenericFieldConfigX on GenericFieldConfig {
 }
 
 @freezed
-class TypeSiteConfig with _$TypeSiteConfig {
+abstract class TypeSiteConfig with _$TypeSiteConfig {
   const factory TypeSiteConfig({
     List<dynamic>? displayProperties,
     String? name,
@@ -549,7 +568,7 @@ extension TypeSiteConfigX on TypeSiteConfig {
 }
 
 @freezed
-class ObjectConfig with _$ObjectConfig {
+abstract class ObjectConfig with _$ObjectConfig {
   const factory ObjectConfig({
     bool? chained,
     /// Configuration des règles de changement automatique (format JS)
@@ -791,7 +810,7 @@ extension ObjectConfigX on ObjectConfig {
 }
 
 @freezed
-class SortConfig with _$SortConfig {
+abstract class SortConfig with _$SortConfig {
   const factory SortConfig({
     String? dir,
     String? prop,
@@ -813,7 +832,7 @@ extension SortConfigX on SortConfig {
 }
 
 @freezed
-class TreeConfig with _$TreeConfig {
+abstract class TreeConfig with _$TreeConfig {
   const factory TreeConfig({
     Map<String, dynamic>? module,
   }) = _TreeConfig;

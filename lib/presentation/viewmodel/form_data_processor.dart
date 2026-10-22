@@ -72,6 +72,20 @@ class FormDataProcessor {
         continue;
       }
 
+      // Cas 1 bis: Nomenclature à choix multiple (liste d'IDs), envoyée
+      // telle quelle comme sur le web. Chaque élément est normalisé en int
+      // (int, chaîne numérique ou Map avec 'id'), les éléments invalides
+      // sont écartés.
+      if (fieldValue is List) {
+        processedData[fieldName] = fieldValue
+            .map(_nomenclatureIdOf)
+            .whereType<int>()
+            .toList();
+        debugPrint(
+            '  $fieldName: Liste de nomenclatures (${processedData[fieldName]})');
+        continue;
+      }
+
       // Cas 2: Valeur au format chaîne mais représentant un entier
       if (fieldValue is String) {
         final parsedInt = int.tryParse(fieldValue);
@@ -260,6 +274,14 @@ class FormDataProcessor {
     return processedData;
   }
 
+  /// Extrait l'ID d'un élément de nomenclature multiple (int, chaîne
+  /// numérique ou Map avec 'id'). Retourne null si l'élément est invalide.
+  static int? _nomenclatureIdOf(dynamic item) {
+    final raw = item is Map ? item['id'] : item;
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    return id != null && id != 0 ? id : null;
+  }
+
   /// Vérifie que toutes les valeurs du Map sont sérialisables en JSON
   void _validateJsonData(Map<String, dynamic> data) {
     try {
@@ -422,7 +444,8 @@ class FormDataProcessor {
   /// - fieldId: L'identifiant du champ à évaluer
   /// - context: Les données contextuelles (valeurs du formulaire, métadonnées, etc.)
   /// - fieldConfig: La configuration du champ contenant potentiellement une règle 'hidden'
-  /// - allFieldsConfig: Configuration de tous les champs pour évaluer les cascades (optionnel)
+  /// - allFieldsConfig: conservé pour compatibilité, non utilisé (les cascades
+  ///   découlent directement de l'évaluation de chaque champ)
   ///
   /// Returns:
   /// - true si le champ doit être masqué, false sinon
@@ -441,348 +464,12 @@ class FormDataProcessor {
       return hiddenValue;
     }
 
-    // Si la valeur est une chaîne commençant par (, c'est une expression à évaluer
-    // Note: La syntaxe peut être soit JS `({value}) => ...` ou Dart `(value) => ...`
-    if (hiddenValue is String &&
-        (hiddenValue.trim().startsWith('({') ||
-            hiddenValue.trim().startsWith('('))) {
-      try {
-        // ÉTAPE 1: Évaluer d'abord avec le contexte original pour gérer les auto-références
-        final originalResult = _expressionEvaluator.evaluateExpression(hiddenValue, context);
-        
-        // Si c'est une auto-référence (le champ se référence lui-même), utiliser le résultat original
-        if (_isSelfreferencingExpression(hiddenValue, fieldId)) {
-          return originalResult ?? false;
-        }
-
-        // ÉTAPE 2: Pour les autres cas, utiliser le contexte cascade-aware
-        final cascadeContext = _buildCascadeAwareContext(context, allFieldsConfig);
-
-        // Détecter les expressions complexes qui pourraient causer des problèmes
-        // plutôt que d'avoir des cas spéciaux codés en dur
-        final String normalizedExpression =
-            _normalizeHiddenExpression(hiddenValue, cascadeContext);
-
-        // Si l'expression a été normalisée, l'évaluer directement
-        if (normalizedExpression != hiddenValue) {
-          final result = _evaluateNormalizedExpression(normalizedExpression, cascadeContext);
-          return result;
-        }
-
-        // Évaluation normale de l'expression avec le contexte en cascade
-        final result =
-            _expressionEvaluator.evaluateExpression(hiddenValue, cascadeContext);
-
-        // Si l'évaluation échoue, ne pas masquer le champ par défaut
-        return result ?? false;
-      } catch (e) {
-        return false;
-      }
-    }
-
-    // Par défaut, ne pas masquer le champ
-    return false;
-  }
-
-  /// Détermine si une expression fait référence au champ lui-même
-  /// 
-  /// Parameters:
-  /// - expression: L'expression à analyser
-  /// - fieldId: L'ID du champ en cours d'évaluation
-  /// 
-  /// Returns:
-  /// - true si l'expression fait référence au champ lui-même
-  bool _isSelfreferencingExpression(String expression, String fieldId) {
-    // Rechercher les références au champ dans l'expression
-    final patterns = [
-      RegExp("value\\['$fieldId'\\]"), // value['fieldName']
-      RegExp("value\\.$fieldId"), // value.fieldName
-    ];
-    
-    for (final pattern in patterns) {
-      if (pattern.hasMatch(expression)) {
-        return true;
-      }
-    }
-    
-    return false;
-  }
-
-  /// Construit un contexte d'évaluation conscient des cascades
-  /// 
-  /// Cette méthode filtre les valeurs des champs qui sont eux-mêmes cachés
-  /// pour permettre la propagation en cascade des conditions de masquage.
-  /// 
-  /// Parameters:
-  /// - context: Le contexte d'évaluation original
-  /// - allFieldsConfig: Configuration de tous les champs (pour détecter les champs cachés)
-  /// 
-  /// Returns:
-  /// - Un contexte modifié où les champs cachés ont leurs valeurs supprimées
-  Map<String, dynamic> _buildCascadeAwareContext(
-      Map<String, dynamic> context, Map<String, dynamic>? allFieldsConfig) {
-    // Si aucune configuration n'est fournie, retourner le contexte original
-    if (allFieldsConfig == null) {
-      return context;
-    }
-
-    // Copier le contexte pour ne pas modifier l'original
-    final cascadeContext = Map<String, dynamic>.from(context);
-    final originalValues = context['value'] as Map<String, dynamic>? ?? {};
-    final filteredValues = Map<String, dynamic>.from(originalValues);
-
-    // Détecter récursivement les champs qui doivent être cachés
-    final hiddenFields = <String>{};
-    bool foundNewHiddenField = true;
-    int maxIterations = 10; // Sécurité pour éviter les boucles infinies
-    int iteration = 0;
-
-    while (foundNewHiddenField && iteration < maxIterations) {
-      foundNewHiddenField = false;
-      iteration++;
-
-      for (final entry in allFieldsConfig.entries) {
-        final fieldName = entry.key;
-        final fieldConfig = entry.value;
-
-        // Si ce champ est déjà marqué comme caché, continuer
-        if (hiddenFields.contains(fieldName)) {
-          continue;
-        }
-
-        // S'assurer que fieldConfig est bien un Map<String, dynamic>
-        if (fieldConfig is! Map<String, dynamic>) {
-          continue;
-        }
-
-        // Évaluer si ce champ doit être caché avec le contexte filtré actuel
-        final hiddenValue = fieldConfig['hidden'];
-        if (hiddenValue != null && hiddenValue != false) {
-          // Créer un contexte temporaire avec les valeurs filtrées actuelles
-          final tempContext = {
-            ...cascadeContext,
-            'value': filteredValues,
-          };
-
-          bool shouldHide = false;
-          try {
-            if (hiddenValue is bool) {
-              shouldHide = hiddenValue;
-            } else if (hiddenValue is String &&
-                (hiddenValue.trim().startsWith('({') ||
-                    hiddenValue.trim().startsWith('('))) {
-              final result = _expressionEvaluator.evaluateExpression(hiddenValue, tempContext);
-              shouldHide = result ?? false;
-            }
-          } catch (e) {
-            shouldHide = false;
-          }
-
-          if (shouldHide) {
-            hiddenFields.add(fieldName);
-            // IMPORTANT: Ne pas supprimer la valeur du champ caché
-            // Les champs cachés conservent leurs valeurs pour la sauvegarde
-            // filteredValues.remove(fieldName); // ❌ SUPPRIMÉ
-            foundNewHiddenField = true;
-          }
-        }
-      }
-    }
-
-    // Retourner le contexte avec les valeurs filtrées
-    cascadeContext['value'] = filteredValues;
-    
-    return cascadeContext;
-  }
-
-  /// Analyse et prétraite les expressions de masquage pour éviter les boucles infinies et
-  /// améliorer les performances d'évaluation
-  ///
-  /// Parameters:
-  /// - expression: L'expression de masquage à analyser
-  /// - context: Le contexte d'évaluation
-  ///
-  /// Returns:
-  /// - L'expression originale, ou une version normalisée permettant une évaluation plus directe
-  String _normalizeHiddenExpression(
-      String expression, Map<String, dynamic> context) {
-    // Préparation de l'expression (supprimer les espaces superflus)
-    final String cleanExpr = expression.trim();
-
-    // Récupérer la map des valeurs
-    final valueMap = context['value'] as Map<String, dynamic>;
-
-    // Cas 1: Expression simple en fonction d'un seul champ
-    // Format: (value) => value['champ']
-    // IMPORTANT: Ne pas normaliser si l'expression contient des opérateurs de comparaison
-    if (cleanExpr.startsWith('(value)') &&
-        cleanExpr.contains("value['") &&
-        !cleanExpr.contains('&&') &&
-        !cleanExpr.contains('||') &&
-        !cleanExpr.contains('!') &&
-        !cleanExpr.contains('===') &&
-        !cleanExpr.contains('!==') &&
-        !cleanExpr.contains('==') &&
-        !cleanExpr.contains('!=') &&
-        !cleanExpr.contains('>=') &&
-        !cleanExpr.contains('<=') &&
-        !cleanExpr.contains('>') &&
-        !cleanExpr.contains('<')) {
-      // Extraire le nom du champ entre guillemets simples
-      final startIndex = cleanExpr.indexOf("['") + 2;
-      final endIndex = cleanExpr.indexOf("']", startIndex);
-
-      if (startIndex >= 2 && endIndex > startIndex) {
-        final fieldName = cleanExpr.substring(startIndex, endIndex);
-        return "NORMALIZED:SIMPLE:$fieldName";
-      }
-    }
-
-    // Cas 2: Négation d'un champ
-    // Format: (value) => !value['champ']
-    if (cleanExpr.startsWith('(value)') &&
-        cleanExpr.contains("!value['") &&
-        !cleanExpr.contains('&&') &&
-        !cleanExpr.contains('||')) {
-      // Extraire le nom du champ entre guillemets simples
-      final startIndex = cleanExpr.indexOf("['", cleanExpr.indexOf('!')) + 2;
-      final endIndex = cleanExpr.indexOf("']", startIndex);
-
-      if (startIndex >= 2 && endIndex > startIndex) {
-        final fieldName = cleanExpr.substring(startIndex, endIndex);
-        return "NORMALIZED:NOT:$fieldName";
-      }
-    }
-
-    // Cas 3: Condition avec deux champs et opérateur AND
-    // Format: (value) => value['champ1'] && value['champ2']
-    if (cleanExpr.startsWith('(value)') &&
-        cleanExpr.contains('&&') &&
-        cleanExpr.contains("value['") &&
-        cleanExpr.indexOf("value['", cleanExpr.indexOf('&&')) > 0) {
-      // Extraire le nom du premier champ
-      final startIndex1 = cleanExpr.indexOf("['") + 2;
-      final endIndex1 = cleanExpr.indexOf("']", startIndex1);
-
-      // Extraire le nom du deuxième champ
-      final startIndex2 = cleanExpr.indexOf("['", endIndex1) + 2;
-      final endIndex2 = cleanExpr.indexOf("']", startIndex2);
-
-      if (startIndex1 >= 2 &&
-          endIndex1 > startIndex1 &&
-          startIndex2 >= 2 &&
-          endIndex2 > startIndex2) {
-        final field1 = cleanExpr.substring(startIndex1, endIndex1);
-        final field2 = cleanExpr.substring(startIndex2, endIndex2);
-
-        // Vérifier s'il y a une négation sur l'un des champs
-        if (cleanExpr.contains('!${cleanExpr.substring(cleanExpr.indexOf("value"), startIndex1 - 2)}')) {
-          // Premier champ nié
-          return "NORMALIZED:NOTAND:$field1:$field2";
-        } else if (cleanExpr.contains('!${cleanExpr.substring(
-                cleanExpr.indexOf("value", endIndex1), startIndex2 - 2)}')) {
-          // Deuxième champ nié
-          return "NORMALIZED:ANDNOT:$field1:$field2";
-        } else {
-          // Pas de négation
-          return "NORMALIZED:AND:$field1:$field2";
-        }
-      }
-    }
-
-    // Cas 4: Condition spéciale pour test_detectabilite et presence_tgb_hors_placette
-    // Cette partie est généralisée et ne contient pas de noms spécifiques
-    if (cleanExpr.contains("!value['") &&
-        cleanExpr.contains("&&") &&
-        cleanExpr.contains("value['")) {
-      // Parcourir tous les champs du formulaire à la recherche d'une correspondance de motif
-      for (final key1 in valueMap.keys) {
-        for (final key2 in valueMap.keys) {
-          if (key1 != key2 &&
-              cleanExpr.contains("!value['$key1']") &&
-              cleanExpr.contains("value['$key2']")) {
-            return "NORMALIZED:NOTAND:$key1:$key2";
-          } else if (key1 != key2 &&
-              cleanExpr.contains("value['$key1']") &&
-              cleanExpr.contains("!value['$key2']")) {
-            return "NORMALIZED:ANDNOT:$key1:$key2";
-          }
-        }
-      }
-    }
-
-    // Aucun motif connu n'a été trouvé, renvoyer l'expression originale
-    return expression;
-  }
-
-  /// Évalue une expression normalisée pour produire un résultat booléen
-  ///
-  /// Parameters:
-  /// - normalizedExpression: L'expression normalisée à évaluer
-  /// - context: Le contexte d'évaluation contenant les valeurs du formulaire
-  ///
-  /// Returns:
-  /// - true si le champ doit être masqué, false sinon
-  bool _evaluateNormalizedExpression(
-      String normalizedExpression, Map<String, dynamic> context) {
-    // Récupérer la map des valeurs du formulaire
-    final Map<String, dynamic> valueMap =
-        context['value'] as Map<String, dynamic>;
-
-    // Vérifier le type d'expression normalisée
-    if (normalizedExpression.startsWith("NORMALIZED:SIMPLE:")) {
-      // Cas simple: le champ doit être masqué si la valeur du champ référencé est true
-      final String fieldName =
-          normalizedExpression.substring("NORMALIZED:SIMPLE:".length);
-      return valueMap[fieldName] == true;
-    }
-
-    if (normalizedExpression.startsWith("NORMALIZED:NOT:")) {
-      // Négation: le champ doit être masqué si la valeur du champ référencé est false
-      final String fieldName =
-          normalizedExpression.substring("NORMALIZED:NOT:".length);
-      return valueMap[fieldName] != true;
-    }
-
-    if (normalizedExpression.startsWith("NORMALIZED:AND:")) {
-      // Condition ET: le champ doit être masqué si les deux valeurs sont true
-      final String fieldsStr =
-          normalizedExpression.substring("NORMALIZED:AND:".length);
-      final List<String> fields = fieldsStr.split(':');
-
-      if (fields.length == 2) {
-        final bool field1Value = valueMap[fields[0]] == true;
-        final bool field2Value = valueMap[fields[1]] == true;
-        return field1Value && field2Value;
-      }
-    }
-
-    if (normalizedExpression.startsWith("NORMALIZED:NOTAND:")) {
-      // Condition NON-ET: le champ doit être masqué si !field1 && field2
-      final String fieldsStr =
-          normalizedExpression.substring("NORMALIZED:NOTAND:".length);
-      final List<String> fields = fieldsStr.split(':');
-
-      if (fields.length == 2) {
-        final bool field1Value =
-            valueMap[fields[0]] != true; // Négation de field1
-        final bool field2Value = valueMap[fields[1]] == true;
-        return field1Value && field2Value;
-      }
-    }
-
-    if (normalizedExpression.startsWith("NORMALIZED:ANDNOT:")) {
-      // Condition ET-NON: le champ doit être masqué si field1 && !field2
-      final String fieldsStr =
-          normalizedExpression.substring("NORMALIZED:ANDNOT:".length);
-      final List<String> fields = fieldsStr.split(':');
-
-      if (fields.length == 2) {
-        final bool field1Value = valueMap[fields[0]] == true;
-        final bool field2Value =
-            valueMap[fields[1]] != true; // Négation de field2
-        return field1Value && field2Value;
-      }
+    // Expression JavaScript `({value, meta}) => …` (ou forme convertie
+    // `(value) => …` des modules installés avant 09/2026). Une expression
+    // invalide ou qui lève une erreur n'entraîne pas le masquage.
+    if (hiddenValue is String) {
+      return _expressionEvaluator.evaluateExpression(hiddenValue, context) ??
+          false;
     }
 
     // Par défaut, ne pas masquer le champ

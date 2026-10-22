@@ -2,6 +2,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/global_api_impl.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/visits_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observations_api.dart';
 import 'package:gn_mobile_monitoring/data/datasource/interface/api/observation_details_api.dart';
@@ -19,6 +20,16 @@ class MockVisitsApi extends Mock implements VisitsApi {}
 class MockObservationsApi extends Mock implements ObservationsApi {}
 class MockObservationDetailsApi extends Mock implements ObservationDetailsApi {}
 class MockResponse<T> extends Mock implements Response<T> {}
+
+class _FixedModeResolver extends MonitoringApiModeResolver {
+  const _FixedModeResolver(this.routes);
+  final MonitoringApiRoutes routes;
+
+  @override
+  Future<MonitoringApiRoutes> resolve(
+          Dio dio, String? token, String moduleCode) async =>
+      routes;
+}
 
 void main() {
   late GlobalApiImpl globalApi;
@@ -167,6 +178,68 @@ void main() {
         expect(result.configuration, equals(configData));
       });
 
+      test(
+          'utilise les datasets de /module/<id> sans appeler la route legacy '
+          'object/module (refonte monitoring #513)', () async {
+        const moduleId = 1;
+        const moduleCode = 'TEST_MODULE';
+
+        final mockModuleResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockModuleResponse.data).thenReturn({
+          'id_module': moduleId,
+          'module_code': moduleCode,
+          'datasets': [1],
+        });
+        when(() => mockModuleResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/module/$moduleId',
+              queryParameters: {'depth': 0},
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockModuleResponse);
+
+        // JDD GeoNature 2.18 : sans id_nomenclature_dataset_objectif (#4103)
+        final mockDatasetResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockDatasetResponse.data).thenReturn({
+          'id_dataset': 1,
+          'unique_dataset_id': 'UUID-TEST-001',
+          'id_acquisition_framework': 1,
+          'dataset_name': 'Test Dataset',
+          'dataset_shortname': 'TD',
+          'dataset_desc': 'Test Description',
+          'id_nomenclature_data_type': 1,
+          'marine_domain': false,
+          'terrestrial_domain': true,
+          'id_nomenclature_collecting_method': 1,
+          'id_nomenclature_data_origin': 1,
+          'id_nomenclature_source_status': 1,
+          'id_nomenclature_resource_type': 1,
+          'active': true,
+          'meta_create_date': '2023-01-01T00:00:00.000Z',
+        });
+        when(() => mockDatasetResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/util/dataset/1',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockDatasetResponse);
+
+        final mockConfigResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockConfigResponse.data).thenReturn({'data': {}});
+        when(() => mockConfigResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get(
+              '/monitorings/config/$moduleCode',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockConfigResponse);
+
+        final result = await globalApi.getNomenclaturesAndDatasets(moduleId);
+
+        expect(result.datasets.map((d) => d.idDataset), [1]);
+        verifyNever(() => mockDio.get(
+              '/monitorings/object/$moduleCode/module',
+              queryParameters: any(named: 'queryParameters'),
+              options: any(named: 'options'),
+            ));
+      });
+
       test('should throw exception on API error', () async {
         const moduleId = 1;
 
@@ -210,6 +283,32 @@ void main() {
         final result = await globalApi.checkConnectivity();
 
         expect(result, true);
+      });
+
+      test('401 (routes authentifiées, #209) → serveur joignable', () async {
+        when(() => mockConnectivity.checkConnectivity())
+            .thenAnswer((_) async => [ConnectivityResult.wifi]);
+        final mockResponse = MockResponse<dynamic>();
+        when(() => mockResponse.statusCode).thenReturn(401);
+        when(() => mockDio.get(
+              '/monitorings/sites/types',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockResponse);
+
+        expect(await globalApi.checkConnectivity(), true);
+      });
+
+      test('500 → serveur non joignable', () async {
+        when(() => mockConnectivity.checkConnectivity())
+            .thenAnswer((_) async => [ConnectivityResult.wifi]);
+        final mockResponse = MockResponse<dynamic>();
+        when(() => mockResponse.statusCode).thenReturn(500);
+        when(() => mockDio.get(
+              '/monitorings/sites/types',
+              options: any(named: 'options'),
+            )).thenAnswer((_) async => mockResponse);
+
+        expect(await globalApi.checkConnectivity(), false);
       });
 
       test('should return false when server is not accessible', () async {
@@ -316,7 +415,79 @@ void main() {
       });
     });
 
+    group('configuration via la nouvelle API (#210)', () {
+      GlobalApiImpl api() => GlobalApiImpl(
+            dio: mockDio,
+            connectivity: mockConnectivity,
+            modeResolver: const _FixedModeResolver(
+                MonitoringApiRoutes(mode: MonitoringApiMode.current)),
+          );
+
+      test('lit <base>/<module>/config et la ramène au format historique',
+          () async {
+        when(() => mockDio.get('/monitorings/refacto/M/config',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => Response(
+                  requestOptions: RequestOptions(),
+                  statusCode: 200,
+                  data: {
+                    'visit': {
+                      'fields': {
+                        'visit_date_min': {'type_widget': 'date'},
+                        'meteo': {'type_widget': 'text'},
+                      },
+                    },
+                  },
+                ));
+
+        final config = await api().getModuleConfiguration('M');
+
+        expect(config['visit']['generic'].keys, ['visit_date_min']);
+        expect(config['visit']['specific'].keys, ['meteo']);
+      });
+
+      test('404 sur la nouvelle route → route legacy', () async {
+        when(() => mockDio.get('/monitorings/refacto/M/config',
+            options: any(named: 'options'))).thenThrow(DioException(
+          requestOptions: RequestOptions(),
+          response:
+              Response(requestOptions: RequestOptions(), statusCode: 404),
+          type: DioExceptionType.badResponse,
+        ));
+        when(() => mockDio.get('/monitorings/config/M',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => Response(
+                  requestOptions: RequestOptions(),
+                  statusCode: 200,
+                  data: {
+                    'visit': {'generic': {}, 'specific': {}},
+                  },
+                ));
+
+        final config = await api().getModuleConfiguration('M');
+
+        expect(config['visit'], {'generic': {}, 'specific': {}});
+      });
+    });
+
     group('getSiteTypes', () {
+      test('envoie le jeton quand il est fourni (#209)', () async {
+        final mockResponse = MockResponse<Map<String, dynamic>>();
+        when(() => mockResponse.data).thenReturn({'items': []});
+        when(() => mockResponse.statusCode).thenReturn(200);
+        when(() => mockDio.get('/monitorings/sites/types',
+                options: any(named: 'options')))
+            .thenAnswer((_) async => mockResponse);
+
+        await globalApi.getSiteTypes(token: 'jeton');
+
+        final options = verify(() => mockDio.get('/monitorings/sites/types',
+                options: captureAny(named: 'options')))
+            .captured
+            .single as Options;
+        expect(options.headers?['Authorization'], 'Bearer jeton');
+      });
+
       test('should return site types successfully', () async {
         final mockResponse = MockResponse<Map<String, dynamic>>();
         final responseData = {

@@ -4,7 +4,7 @@ import 'package:gn_mobile_monitoring/domain/model/sync_conflict.dart';
 part 'sync_result.freezed.dart';
 
 @freezed
-class SyncResult with _$SyncResult {
+sealed class SyncResult with _$SyncResult {
   const factory SyncResult({
     required bool success,
     required int itemsProcessed,

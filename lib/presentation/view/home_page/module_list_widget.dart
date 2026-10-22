@@ -5,6 +5,8 @@ import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/presentation/model/module_info_list.dart';
 import 'package:gn_mobile_monitoring/presentation/state/module_download_status.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/modules_utilisateur_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/state/state.dart'
+    show StatePatterns;
 
 import 'module_item_card_widget.dart' show ModuleItemCardWidget, unsyncedModuleIdsProvider;
 

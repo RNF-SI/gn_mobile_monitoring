@@ -3,7 +3,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'dataset.freezed.dart';
 
 @freezed
-class Dataset with _$Dataset {
+abstract class Dataset with _$Dataset {
   const factory Dataset({
     required int id, // idDataset
     required String uniqueDatasetId, // UUID
@@ -15,7 +15,7 @@ class Dataset with _$Dataset {
     String? keywords,
     required bool marineDomain,
     required bool terrestrialDomain,
-    required int idNomenclatureDatasetObjectif,
+    int? idNomenclatureDatasetObjectif, // absent depuis GeoNature 2.18 (#4103)
     double? bboxWest,
     double? bboxEast,
     double? bboxSouth,

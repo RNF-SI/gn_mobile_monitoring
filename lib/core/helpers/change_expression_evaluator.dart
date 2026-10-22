@@ -1,4 +1,5 @@
 import 'package:gn_mobile_monitoring/core/helpers/hidden_expression_evaluator.dart';
+import 'package:gn_mobile_monitoring/core/helpers/js_expression_interpreter.dart';
 import 'package:gn_mobile_monitoring/domain/model/nomenclature.dart';
 
 /// Représente une règle de changement parsée depuis le format JavaScript
@@ -32,6 +33,8 @@ class ParsedChangeRule {
 /// ]
 /// ```
 class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
+  final JsExpressionInterpreter _runtimeInterpreter = JsExpressionInterpreter();
+
   /// Cache des nomenclatures indexé par ID
   final Map<int, Nomenclature> nomenclatureCache;
 
@@ -233,7 +236,8 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
 
   /// Parses a const expression RHS into a storable value
   ///
-  /// Supports: literals, objForm.value.xxx, fallback ||, ternary, arithmetic
+  /// Littéraux et références simples `objForm.value.x` ; le reste est
+  /// stocké en `@expr:` et évalué à l'exécution.
   dynamic _parseConstExpression(String expr) {
     final trimmed = expr.trim();
 
@@ -259,21 +263,8 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
       return '@value.${unwrapped.substring('objForm.value.'.length)}';
     }
 
-    // For complex expressions (ternary, arithmetic, fallback ||), store as @expr:
-    // Check if it contains operators that indicate a complex expression
-    if (_containsOperatorAtDepth0(unwrapped, '?') ||
-        _containsOperatorAtDepth0(unwrapped, '+') ||
-        _containsOperatorAtDepth0(unwrapped, '||')) {
-      return '@expr:$unwrapped';
-    }
-
-    // Simple objForm.value.xxx with fallback — already caught by || above
-    // Any remaining objForm.value references
-    if (unwrapped.startsWith('objForm.value.')) {
-      return '@value.${unwrapped.substring('objForm.value.'.length)}';
-    }
-
-    // Unknown expression — store as @expr: for runtime evaluation
+    // Toute autre expression (ternaire, arithmétique, repli ||, appels…)
+    // est évaluée à l'exécution par JsExpressionInterpreter
     return '@expr:$unwrapped';
   }
 
@@ -302,40 +293,6 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
       }
     }
     return s;
-  }
-
-  /// Checks if an operator appears at depth 0 (not inside parens/braces/strings)
-  bool _containsOperatorAtDepth0(String expr, String op) {
-    bool inString = false;
-    String? stringChar;
-    int depth = 0;
-
-    for (int i = 0; i <= expr.length - op.length; i++) {
-      final char = expr[i];
-
-      if (!inString && (char == "'" || char == '"')) {
-        inString = true;
-        stringChar = char;
-      } else if (inString && char == stringChar) {
-        inString = false;
-        stringChar = null;
-      } else if (!inString) {
-        if (char == '(' || char == '{') {
-          depth++;
-        } else if (char == ')' || char == '}') {
-          depth--;
-        } else if (depth == 0 && expr.substring(i).startsWith(op)) {
-          // For '||', make sure we don't match inside other operators
-          // For '?', make sure it's not part of '?.' optional chaining
-          if (op == '?' && i + 1 < expr.length && expr[i + 1] == '.') {
-            continue;
-          }
-          return true;
-        }
-      }
-    }
-
-    return false;
   }
 
   /// Pass 2: Extract all patchValue calls from statements
@@ -701,10 +658,9 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
   /// Convertit les références objForm.value.xxx en value.xxx
   /// et utilise HiddenExpressionEvaluator pour l'évaluation
   bool? evaluateJsCondition(String condition, Map<String, dynamic> context) {
-    // Normaliser (null || undefined) → null
-    String normalizedCondition = condition
-        .replaceAll('(null || undefined)', 'null')
-        .replaceAll('(undefined || null)', 'null');
+    // `!!`, `(null || undefined)`, etc. sont évalués avec la sémantique
+    // JavaScript par JsExpressionInterpreter (via evaluateExpression).
+    String normalizedCondition = condition;
 
     // Convertir objForm.controls.xxx.dirty en accès au context dirtyFields
     normalizedCondition = normalizedCondition.replaceAllMapped(
@@ -716,14 +672,6 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
     normalizedCondition = normalizedCondition
         .replaceAll('objForm.value.', 'value.')
         .replaceAll('objForm.value', 'value');
-
-    // Gérer le cas !!value.xxx (double négation = vérifier existence)
-    if (normalizedCondition.contains('!!')) {
-      normalizedCondition = normalizedCondition.replaceAllMapped(
-        RegExp(r'!!\s*(value\.\w+)'),
-        (match) => '${match.group(1)} != null',
-      );
-    }
 
     // Gérer l'accès aux nomenclatures: meta.nomenclatures[value.id_xxx].cd_nomenclature
     final nomenclaturePattern = RegExp(
@@ -831,102 +779,27 @@ class ChangeExpressionEvaluator extends HiddenExpressionEvaluator {
     return resolved;
   }
 
-  /// Evaluates a runtime expression with current form values
-  ///
-  /// Supports:
-  /// - objForm.value.xxx → form field lookup
-  /// - Arithmetic: a + b
-  /// - Ternary: condition ? trueVal : falseVal
-  /// - Fallback: objForm.value.xxx || defaultValue
-  /// - Literals: null, true, false, numbers, strings
+  /// Évalue une expression de `const` ou de `patchValue` avec les valeurs
+  /// courantes du formulaire (`objForm.value.x`, `objForm.controls.x.dirty`,
+  /// ternaires, arithmétique, repli `||`…), avec la sémantique JavaScript de
+  /// [JsExpressionInterpreter]. Une expression invalide vaut `null`.
   dynamic _evaluateRuntimeExpression(
     String expr,
     Map<String, dynamic> formValues, {
     Set<String>? dirtyFields,
   }) {
-    final trimmed = _unwrapParens(expr.trim());
-
-    // Normalize (null || undefined) → null
-    final normalized = trimmed
-        .replaceAll('(null || undefined)', 'null')
-        .replaceAll('(undefined || null)', 'null');
-
-    // Check for ternary at depth 0
-    final qIdx = _findOperatorAtDepth0(normalized, '?');
-    if (qIdx != -1) {
-      final condition = normalized.substring(0, qIdx).trim();
-      final rest = normalized.substring(qIdx + 1);
-      final colonIdx = _findOperatorAtDepth0(rest, ':');
-      if (colonIdx != -1) {
-        final trueExpr = rest.substring(0, colonIdx).trim();
-        final falseExpr = rest.substring(colonIdx + 1).trim();
-
-        // Evaluate condition as boolean
-        final context = {'value': formValues};
-        final condResult = evaluateJsCondition(condition, context);
-
-        if (condResult == true) {
-          return _evaluateRuntimeExpression(trueExpr, formValues, dirtyFields: dirtyFields);
-        } else {
-          return _evaluateRuntimeExpression(falseExpr, formValues, dirtyFields: dirtyFields);
-        }
-      }
+    try {
+      final result = _runtimeInterpreter.evaluate(expr, {
+        'objForm': {
+          'value': formValues,
+          'controls': JsFormControls(dirtyFields ?? <String>{}),
+        },
+        'value': formValues,
+        'dirtyFields': dirtyFields ?? <String>{},
+      });
+      return result is JsUndefined ? null : result;
+    } catch (_) {
+      return null;
     }
-
-    // Check for arithmetic '+' at depth 0
-    final plusIdx = _findOperatorAtDepth0(normalized, '+');
-    if (plusIdx != -1) {
-      final left = normalized.substring(0, plusIdx).trim();
-      final right = normalized.substring(plusIdx + 1).trim();
-
-      final leftVal = _evaluateRuntimeExpression(left, formValues, dirtyFields: dirtyFields);
-      final rightVal = _evaluateRuntimeExpression(right, formValues, dirtyFields: dirtyFields);
-
-      if (leftVal is num && rightVal is num) {
-        return leftVal + rightVal;
-      }
-      // String concatenation
-      return '${leftVal ?? ''}${rightVal ?? ''}';
-    }
-
-    // Check for fallback '||' at depth 0
-    final orIdx = _findOperatorAtDepth0(normalized, '||');
-    if (orIdx != -1) {
-      final left = normalized.substring(0, orIdx).trim();
-      final right = normalized.substring(orIdx + 2).trim();
-
-      final leftVal = _evaluateRuntimeExpression(left, formValues, dirtyFields: dirtyFields);
-      // JS-like falsy check: null, false, 0, '' are falsy
-      if (leftVal == null || leftVal == false || leftVal == 0 || leftVal == '') {
-        return _evaluateRuntimeExpression(right, formValues, dirtyFields: dirtyFields);
-      }
-      return leftVal;
-    }
-
-    // Simple references and literals
-    if (normalized.startsWith('objForm.value.')) {
-      final fieldName = normalized.substring('objForm.value.'.length);
-      return formValues[fieldName];
-    }
-
-    // objForm.controls.xxx.dirty
-    final dirtyMatch = RegExp(r'^objForm\.controls\.(\w+)\.dirty$').firstMatch(normalized);
-    if (dirtyMatch != null) {
-      final fieldName = dirtyMatch.group(1)!;
-      return dirtyFields?.contains(fieldName) ?? false;
-    }
-
-    // Literals
-    if (normalized == 'null' || normalized == 'undefined') return null;
-    if (normalized == 'true') return true;
-    if (normalized == 'false') return false;
-    final numVal = num.tryParse(normalized);
-    if (numVal != null) return numVal;
-    if ((normalized.startsWith("'") && normalized.endsWith("'")) ||
-        (normalized.startsWith('"') && normalized.endsWith('"'))) {
-      return normalized.substring(1, normalized.length - 1);
-    }
-
-    return null;
   }
 }

@@ -6,6 +6,7 @@ import 'package:gn_mobile_monitoring/config/config.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_error_reporter.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/error_handler.dart';
+import 'package:gn_mobile_monitoring/core/network/trusted_roots.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
 import 'package:gn_mobile_monitoring/data/repository/local_storage_repository_impl.dart';
 import 'package:gn_mobile_monitoring/presentation/view/auth_checker.dart';
@@ -72,6 +73,9 @@ void main() async {
   final errorHandler = ErrorHandler();
   await errorHandler.initialize();
   await AppErrorReporter().initialize();
+
+  // Racines Let's Encrypt pour les anciens Android (issue #200)
+  await installBundledRootCertificates();
 
   try {
     // Initialize local storage

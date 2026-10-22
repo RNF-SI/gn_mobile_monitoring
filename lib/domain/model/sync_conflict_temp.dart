@@ -10,7 +10,7 @@ enum ConflictType {
 }
 
 @freezed
-class SyncConflict with _$SyncConflict {
+abstract class SyncConflict with _$SyncConflict {
   const factory SyncConflict({
     required String entityId,
     required String entityType,

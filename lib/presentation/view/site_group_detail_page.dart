@@ -669,17 +669,17 @@ class _SiteGroupDetailPageState extends ConsumerState<SiteGroupDetailPage> {
             IconButton(
               icon: const Icon(Icons.lock_outline),
               tooltip: isSynced
-                  ? 'Ce groupe a été synchronisé et ne peut plus être modifié'
-                  : 'Ce groupe ne peut pas être modifié (créé depuis le serveur)',
+                  ? 'Ce groupe n\'est pas modifiable sur le téléphone'
+                  : 'Ce groupe n\'est pas modifiable sur le téléphone',
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
                       isSynced
-                          ? 'Ce groupe a déjà été synchronisé avec le serveur et ne peut plus être modifié'
-                          : 'Seuls les groupes créés localement peuvent être modifiés',
+                          ? 'Ce groupe a été envoyé au serveur : il se modifie désormais depuis GeoNature (web), pour rester cohérent avec le serveur.'
+                          : 'Ce groupe vient du serveur : il se modifie depuis GeoNature (web). Seuls les groupes créés sur le téléphone et pas encore envoyés sont modifiables ici.',
                     ),
-                    duration: const Duration(seconds: 2),
+                    duration: const Duration(seconds: 6),
                   ),
                 );
               },

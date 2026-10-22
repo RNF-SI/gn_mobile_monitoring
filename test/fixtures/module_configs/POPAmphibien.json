@@ -1,0 +1,1055 @@
+{
+ "custom": {
+  "CODE_OBSERVERS_LIST": "obsocctax",
+  "__MODULE.B_DRAW_SITES_GROUP": true,
+  "__MODULE.B_SYNTHESE": false,
+  "__MODULE.CD_NOM": null,
+  "__MODULE.IDS_TYPE_SITE": [
+   {
+    "id_nomenclature_type_site": 941
+   }
+  ],
+  "__MODULE.ID_LIST_OBSERVER": 1,
+  "__MODULE.ID_LIST_TAXONOMY": 101,
+  "__MODULE.ID_MODULE": 15,
+  "__MODULE.MODULE_CODE": "POPAmphibien",
+  "__MODULE.TAXONOMY_DISPLAY_FIELD_NAME": null,
+  "__MODULE.TYPES_SITE": [
+   {
+    "config": null,
+    "id_nomenclature_type_site": 941
+   }
+  ],
+  "__MONITORINGS_PATH": "monitorings"
+ },
+ "data": {
+  "nomenclature": [
+   "TYPE_MEDIA",
+   "CATEGORIE_PAYSAGERE",
+   "TYPE_SITE",
+   "MILIEU_AQUATIQUE",
+   "METHODE_PROSPECTION",
+   "STADE_VIE",
+   "SEXE",
+   "TYP_DENBR"
+  ]
+ },
+ "module": {
+  "b_draw_sites_group": true,
+  "b_synthese": false,
+  "cd_nom": null,
+  "children_types": [
+   "sites_group"
+  ],
+  "color": "#e1fffe",
+  "description_field_name": "module_label",
+  "display_form": [],
+  "display_list": [
+   "module_label",
+   "module_desc"
+  ],
+  "display_properties": [
+   "module_label",
+   "module_desc"
+  ],
+  "export_csv": [
+   {
+    "label": "Format observations CSV",
+    "method": "standard",
+    "type": "csv"
+   },
+   {
+    "label": "Format analyses CSV",
+    "method": "analyses",
+    "type": "csv"
+   }
+  ],
+  "filters": {},
+  "generic": {
+   "active_frontend": {
+    "attribut_label": "Afficher dans le menu ?",
+    "definition": "Afficher le module dans le menu de GeoNature. (Recharger la page pour voir les modifications).",
+    "type_widget": "bool_checkbox"
+   },
+   "b_draw_sites_group": {
+    "attribut_label": "Dessiner les groupes de sites",
+    "definition": "Affichage des groupes de site en dessinant l'enveloppe des sites du groupe et en affichant l'aire du groupe de sites",
+    "hidden": true,
+    "type_widget": "bool_checkbox"
+   },
+   "b_synthese": {
+    "attribut_label": "Activer la synthèse ?",
+    "definition": "Insertion automatique des nouvelles données dans la synthèse.",
+    "type_widget": "bool_checkbox"
+   },
+   "cd_nom": {
+    "attribut_label": "Espèce",
+    "hidden": true,
+    "required": false,
+    "type_util": "taxonomy",
+    "type_widget": "taxonomy"
+   },
+   "datasets": {
+    "attribut_label": "Jeu de données",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_list_observer": {
+    "api": "users/listes",
+    "application": "GeoNature",
+    "attribut_label": "Liste des observateurs",
+    "definition": "Liste des observateurs. À gérer dans UsersHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "observer_list",
+    "type_widget": "datalist"
+   },
+   "id_list_taxonomy": {
+    "api": "biblistes/",
+    "application": "TaxHub",
+    "attribut_label": "Liste des taxons",
+    "data_path": "data",
+    "definition": "Liste des taxons. À gérer dans TaxHub.",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_liste",
+    "keyValue": "id_liste",
+    "multiple": false,
+    "required": true,
+    "type_util": "taxonomy_list",
+    "type_widget": "datalist"
+   },
+   "id_module": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_module_complements",
+    "type_widget": "medias"
+   },
+   "module_code": {
+    "attribut_label": "Code",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_desc": {
+    "attribut_label": "Description",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_label": {
+    "attribut_label": "Nom",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_path": {
+    "attribut_label": "Path",
+    "hidden": true,
+    "required": true,
+    "type_widget": "text"
+   },
+   "module_picto": {
+    "attribut_label": "Icone dans le menu",
+    "required": true,
+    "type_widget": "text"
+   },
+   "taxonomy_display_field_name": {
+    "attribut_label": "Affichage des taxons",
+    "designStyle": "bootstrap",
+    "required": true,
+    "type_widget": "datalist",
+    "values": [
+     {
+      "label": "Nom vernaculaire ou nom latin",
+      "value": "nom_vern,lb_nom"
+     },
+     {
+      "label": "Nom latin",
+      "value": "lb_nom"
+     }
+    ]
+   },
+   "types_site": {
+    "api": "monitorings/sites/types",
+    "application": "GeoNature",
+    "attribut_label": "Types de sites",
+    "data_path": "items",
+    "definition": "Permet de paramétrer la compatibilité de ce module avec les types de sites",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_module_complement": {
+    "attribut_label": "uuid"
+   }
+  },
+  "genre": "M",
+  "id_field_name": "id_module",
+  "id_list_observer": 1,
+  "id_list_taxonomy": 101,
+  "id_module": 15,
+  "id_table_location": 14,
+  "label": "Module",
+  "module_code": "POPAmphibien",
+  "module_desc": "Module de suivi du Protocole POPAmphibien",
+  "module_label": "POPAmphibien",
+  "parent_types": [],
+  "properties_keys": [
+   "id_module",
+   "module_code",
+   "module_label",
+   "module_path",
+   "module_desc",
+   "module_picto",
+   "uuid_module_complement",
+   "datasets",
+   "id_list_observer",
+   "id_list_taxonomy",
+   "b_synthese",
+   "b_draw_sites_group",
+   "taxonomy_display_field_name",
+   "cd_nom",
+   "active_frontend",
+   "types_site",
+   "medias"
+  ],
+  "root_object": true,
+  "specific": {},
+  "taxonomy_display_field_name": null,
+  "types_site": {
+   "941": {
+    "name": "Site POPAmphibien"
+   }
+  },
+  "uuid_field_name": "uuid_module_complement"
+ },
+ "observation": {
+  "chained": true,
+  "change": [
+   "({objForm, meta}) => {",
+   "if (objForm.value.presence === 'Non') {",
+   "objForm.patchValue({id_nomenclature_typ_denbr : null, count_min : 0, count_max : 0, id_nomenclature_sex : null, id_nomenclature_stade: null, cd_nom : {'cd_nom': 914450, 'lb_nom': 'Amphibia', 'nom_valide': 'Amphibia', 'nom_vern' : 'Amphibiens, batraciens'}}, {emitEvent : false})",
+   "}",
+   "if (objForm.value.presence === 'Oui' && objForm.value.count_min === 0) {",
+   "objForm.patchValue({count_min : null, count_max : null}, {emitEvent : false})",
+   "}",
+   "if (!!objForm.value.count_min && objForm.value.count_max < objForm.value.count_min) {",
+   "objForm.patchValue({count_max : objForm.value.count_min}, {emitEvent : false})",
+   "}",
+   "if (!!objForm.value.count_min && meta.nomenclatures[objForm.value.id_nomenclature_typ_denbr].cd_nomenclature === 'Co' && objForm.value.count_max !== objForm.value.count_min) {",
+   "objForm.patchValue({count_max : objForm.value.count_min}, {emitEvent : false})",
+   "}",
+   "}",
+   ""
+  ],
+  "children_types": [],
+  "description_field_name": "cd_nom",
+  "display_form": [],
+  "display_list": [
+   "cd_nom",
+   "id_nomenclature_typ_denbr",
+   "count_min",
+   "count_max"
+  ],
+  "display_properties": [
+   "presence",
+   "cd_nom",
+   "id_nomenclature_typ_denbr",
+   "count_min",
+   "count_max",
+   "id_nomenclature_stade",
+   "id_nomenclature_sex",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "cd_nom": {
+    "api": "taxref/allnamebylist/101",
+    "application": "TaxHub",
+    "attribut_label": "Espèce observée",
+    "hidden": "({value}) => value.presence === 'Non'",
+    "id_list": 101,
+    "keyLabel": null,
+    "keyValue": "cd_nom",
+    "multiple": false,
+    "required": "({value}) => value.presence === 'Oui'",
+    "type_util": "taxonomy",
+    "type_widget": "taxonomy"
+   },
+   "comments": {
+    "attribut_label": "Commentaire",
+    "type_widget": "textarea"
+   },
+   "id_base_visit": {
+    "attribut_label": "Id visite",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Numérisateur",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_individual": {
+    "attribut_label": "Id individu",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "id_observation": {
+    "attribut_label": "Id observation",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_observations",
+    "type_widget": "medias"
+   },
+   "uuid_observation": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "F",
+  "id_field_name": "id_observation",
+  "id_table_location": 5,
+  "label": "observation ou une absence",
+  "label_list": "Observations ou absences",
+  "parent_types": [
+   "visit"
+  ],
+  "properties_keys": [
+   "id_observation",
+   "id_base_visit",
+   "id_digitiser",
+   "id_individual",
+   "cd_nom",
+   "comments",
+   "uuid_observation",
+   "medias",
+   "presence",
+   "id_nomenclature_stade",
+   "id_nomenclature_sex",
+   "id_nomenclature_typ_denbr",
+   "count_min",
+   "count_max"
+  ],
+  "specific": {
+   "count_max": {
+    "attribut_label": "Nombre maximum",
+    "hidden": "({value}) => value.presence === 'Non'",
+    "min": 0,
+    "required": "({value}) => value.count_min > 0",
+    "type_widget": "number"
+   },
+   "count_min": {
+    "attribut_label": "Nombre minimum",
+    "hidden": "({value}) => value.presence === 'Non'",
+    "min": 0,
+    "required": "({value}) => value.presence === 'Oui'",
+    "type_widget": "number"
+   },
+   "id_nomenclature_sex": {
+    "api": "nomenclatures/nomenclature/SEXE",
+    "application": "GeoNature",
+    "attribut_label": "Sexe (Cette information optionnelle ne sera pas analysée dans le cadre des suivis POP)",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "1"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "1",
+      "2",
+      "3",
+      "5"
+     ]
+    },
+    "hidden": "({value}) => value.presence === 'Non'",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "id_nomenclature_stade": {
+    "api": "nomenclatures/nomenclature/STADE_VIE",
+    "application": "GeoNature",
+    "attribut_label": "Stade de vie (Cette information optionnelle ne sera pas analysée dans le cadre des suivis POP)",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "1"
+    },
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "1",
+      "2",
+      "3",
+      "5",
+      "8",
+      "9"
+     ]
+    },
+    "hidden": "({value}) => value.presence === 'Non'",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": false,
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "id_nomenclature_typ_denbr": {
+    "api": "nomenclatures/nomenclature/TYP_DENBR",
+    "application": "GeoNature",
+    "attribut_label": "Type de dénombrement",
+    "data_path": "values",
+    "designStyle": "bootstrap",
+    "filters": {
+     "cd_nomenclature": [
+      "Co",
+      "Es"
+     ]
+    },
+    "hidden": "({value}) => value.presence === 'Non'",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "required": "({value}) => value.presence === 'Oui'",
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "presence": {
+    "attribut_label": "Avez-vous observé des amphibiens lors de la prospection",
+    "required": true,
+    "type_widget": "radio",
+    "value": "Oui",
+    "values": [
+     "Oui",
+     "Non"
+    ]
+   }
+  },
+  "uuid_field_name": "uuid_observation"
+ },
+ "site": {
+  "chained": true,
+  "children_types": [
+   "visit"
+  ],
+  "description_field_name": "base_site_name",
+  "display_form": [],
+  "display_list": [
+   "base_site_name",
+   "last_visit",
+   "nb_visits"
+  ],
+  "display_properties": [
+   "base_site_name",
+   "id_sites_group",
+   "first_use_date",
+   "milieu_aquatique",
+   "base_site_description"
+  ],
+  "filters": {},
+  "generic": {
+   "altitude_max": {
+    "attribut_label": "Altitude (max)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "altitude_min": {
+    "attribut_label": "Altitude (min)",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "base_site_code": {
+    "attribut_label": "Code du site",
+    "hidden": true,
+    "required": false,
+    "type_widget": "text"
+   },
+   "base_site_description": {
+    "attribut_label": "Commentaire",
+    "type_widget": "textarea"
+   },
+   "base_site_name": {
+    "attribut_label": "Nom de site",
+    "definition": "Si des données étaient transmises antérieurement via un fichier Excel, veuillez noter exactement le même nom de site OU informer la SHF (geomaticien@lashf.org) si vous souhaitez modifier le nom",
+    "required": true,
+    "type_widget": "text"
+   },
+   "first_use_date": {
+    "attribut_label": "Date description",
+    "required": true,
+    "type_widget": "date"
+   },
+   "id_base_site": {
+    "attribut_label": "Id site",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_inventor": {
+    "attribut_label": "Observateur",
+    "code_list": "obsocctax",
+    "hidden": true,
+    "multi_select": false,
+    "required": false,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "id_sites_group": {
+    "api": "monitorings/list/POPAmphibien/sites_group?id_module=15",
+    "application": "GeoNature",
+    "attribut_label": "Aire",
+    "designStyle": "bootstrap",
+    "hidden": true,
+    "keyLabel": "sites_group_name",
+    "keyValue": "id_sites_group",
+    "required": false,
+    "type_util": "sites_group",
+    "type_widget": "datalist"
+   },
+   "last_visit": {
+    "attribut_label": "Dernier passage",
+    "hidden": true,
+    "type_util": "date",
+    "type_widget": "date"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_sites",
+    "type_widget": "medias"
+   },
+   "nb_individuals": {
+    "attribut_label": "Nb. individus",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "nb_visits": {
+    "attribut_label": "Nb. de passages",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "types_site": {
+    "api": "monitorings/modules/POPAmphibien/types_sites",
+    "application": "GeoNature",
+    "attribut_label": "Type(s) de site",
+    "definition": "Permet de n'avoir que les types de site lié au module",
+    "designStyle": "bootstrap",
+    "keyLabel": "label",
+    "keyValue": "id_nomenclature_type_site",
+    "multi_select": true,
+    "multiple": true,
+    "nullDefault": true,
+    "required": true,
+    "type_util": "types_site",
+    "type_widget": "datalist"
+   },
+   "uuid_base_site": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "M",
+  "geom_field_name": "geom",
+  "geometry_type": "Point",
+  "id_field_name": "id_base_site",
+  "id_table_location": 2,
+  "label": "Site",
+  "label_list": "Sites",
+  "map_label_field_name": "base_site_name",
+  "parent_types": [
+   "sites_group"
+  ],
+  "properties_keys": [
+   "id_base_site",
+   "base_site_code",
+   "base_site_name",
+   "base_site_description",
+   "id_inventor",
+   "id_digitiser",
+   "first_use_date",
+   "last_visit",
+   "nb_visits",
+   "nb_individuals",
+   "uuid_base_site",
+   "medias",
+   "altitude_min",
+   "altitude_max",
+   "types_site",
+   "id_sites_group",
+   "id_nomenclature_type_site",
+   "milieu_aquatique"
+  ],
+  "sorts": [
+   {
+    "dir": "desc",
+    "prop": "last_visit"
+   }
+  ],
+  "specific": {
+   "id_nomenclature_type_site": {
+    "attribut_label": "Type site",
+    "hidden": true,
+    "type_util": "nomenclature",
+    "type_widget": "text",
+    "value": {
+     "cd_nomenclature": "POPA",
+     "code_nomenclature_type": "TYPE_SITE"
+    }
+   },
+   "milieu_aquatique": {
+    "attribut_label": "Description du milieu aquatique",
+    "code_nomenclature_type": "MILIEU_AQUATIQUE",
+    "required": true,
+    "title": "Indiquer le milieu aquatique majoritaire",
+    "type_util": "nomenclature",
+    "type_widget": "nomenclature"
+   }
+  },
+  "types_site": {
+   "941": {
+    "name": "Site POPAmphibien"
+   }
+  },
+  "uuid_field_name": "uuid_base_site"
+ },
+ "sites_group": {
+  "chained": true,
+  "children_types": [
+   "site"
+  ],
+  "description_field_name": "sites_group_name",
+  "display_form": [],
+  "display_list": [
+   "sites_group_name",
+   "nb_sites"
+  ],
+  "display_properties": [
+   "id_inventor",
+   "sites_group_name",
+   "categories_paysageres",
+   "comments"
+  ],
+  "export_pdf": [
+   {
+    "label": "Export PDF",
+    "template": "fiche_aire.html"
+   }
+  ],
+  "filters": {},
+  "generic": {
+   "altitude_max": {
+    "attribut_label": "Altitude (max)",
+    "type_widget": "integer"
+   },
+   "altitude_min": {
+    "attribut_label": "Altitude (min)",
+    "type_widget": "integer"
+   },
+   "comments": {
+    "attribut_label": "Commentaire",
+    "required": false,
+    "type_widget": "textarea"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_sites_group": {
+    "attribut_label": "Id site",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_sites_groups",
+    "type_widget": "medias"
+   },
+   "modules": {
+    "api": "monitorings/modules",
+    "application": "GeoNature",
+    "attribut_label": "Modules",
+    "default": [
+     {
+      "id_module": 15
+     }
+    ],
+    "definition": "Permet de contrôler dans quel(s) module(s) les groupes de site remonteront",
+    "designStyle": "bootstrap",
+    "keyLabel": "module_label",
+    "keyValue": "id_module",
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "module",
+    "type_widget": "datalist"
+   },
+   "nb_sites": {
+    "attribut_label": "Nombre de sites",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "nb_visits": {
+    "attribut_label": "Nombre de passages",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "sites_group_code": {
+    "attribut_label": "Code",
+    "hidden": true,
+    "required": false,
+    "type_widget": "text"
+   },
+   "sites_group_description": {
+    "attribut_label": "Description",
+    "hidden": true,
+    "type_widget": "textarea"
+   },
+   "sites_group_name": {
+    "attribut_label": "Nom de l'aire",
+    "definition": "Si des données étaient transmises antérieurement via un fichier Excel, veuillez noter exactement le même nom d'aire OU informer la SHF (geomaticien@lashf.org) si vous souhaitez modifier le nom",
+    "required": true,
+    "type_widget": "text"
+   },
+   "uuid_sites_group": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   }
+  },
+  "genre": "F",
+  "geom_field_name": "geom",
+  "geometry_type": "Polygon",
+  "id_field_name": "id_sites_group",
+  "id_table_location": null,
+  "label": "Aire",
+  "label_list": "Aires",
+  "map_label_field_name": "base_site_name",
+  "parent_types": [
+   "module"
+  ],
+  "properties_keys": [
+   "id_sites_group",
+   "sites_group_name",
+   "sites_group_code",
+   "sites_group_description",
+   "comments",
+   "uuid_sites_group",
+   "nb_sites",
+   "nb_visits",
+   "medias",
+   "altitude_min",
+   "altitude_max",
+   "id_digitiser",
+   "modules",
+   "id_inventor",
+   "categories_paysageres"
+  ],
+  "sorts": [
+   {
+    "prop": "sites_group_code"
+   }
+  ],
+  "specific": {
+   "categories_paysageres": {
+    "attribut_label": "Habitat principal",
+    "code_nomenclature_type": "CATEGORIE_PAYSAGERE",
+    "required": true,
+    "title": "Indiquer l'habitat majoritaire",
+    "type_util": "nomenclature",
+    "type_widget": "nomenclature"
+   },
+   "id_inventor": {
+    "api": "users/menu/1",
+    "application": "GeoNature",
+    "attribut_label": "Observateur principal",
+    "designStyle": "bootstrap",
+    "keyLabel": "nom_complet",
+    "keyValue": "id_role",
+    "required": true,
+    "type_util": "user",
+    "type_widget": "datalist"
+   }
+  },
+  "uuid_field_name": "uuid_sites_group"
+ },
+ "tree": {
+  "module": {
+   "sites_group": {
+    "site": {
+     "visit": {
+      "observation": null
+     }
+    }
+   }
+  }
+ },
+ "visit": {
+  "chained": true,
+  "children_types": [
+   "observation"
+  ],
+  "description_field_name": "visit_date_min",
+  "display_form": [],
+  "display_list": [
+   "num_passage",
+   "visit_date_min",
+   "observers",
+   "nb_observations"
+  ],
+  "display_properties": [
+   "id_dataset",
+   "observers",
+   "expertise",
+   "visit_date_min",
+   "num_passage",
+   "etat_site",
+   "date_changement_etat_site",
+   "accessibility",
+   "methode_de_prospection",
+   "Heure_debut",
+   "Heure_fin",
+   "comments"
+  ],
+  "filters": {},
+  "generic": {
+   "comments": {
+    "attribut_label": "Commentaire",
+    "type_widget": "textarea"
+   },
+   "id_base_site": {
+    "attribut_label": "Site",
+    "hidden": true,
+    "required": true,
+    "type_widget": "site"
+   },
+   "id_base_visit": {
+    "attribut_label": "ID",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "id_dataset": {
+    "attribut_label": "Jeu de données",
+    "creatable_in_module": "POPAmphibien.MONITORINGS_VISITES",
+    "module_code": "POPAmphibien",
+    "required": true,
+    "type_util": "dataset",
+    "type_widget": "dataset"
+   },
+   "id_digitiser": {
+    "attribut_label": "Digitiser",
+    "hidden": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "text"
+   },
+   "id_module": {
+    "attribut_label": "ID Module",
+    "hidden": true,
+    "type_widget": "text"
+   },
+   "medias": {
+    "attribut_label": "Médias",
+    "schema_dot_table": "gn_monitoring.t_base_visits",
+    "type_widget": "medias"
+   },
+   "nb_observations": {
+    "attribut_label": "Nb. d'observations",
+    "hidden": true,
+    "type_widget": "number"
+   },
+   "observers": {
+    "attribut_label": "Observateurs",
+    "code_list": "obsocctax",
+    "hidden": false,
+    "multi_select": true,
+    "multiple": true,
+    "required": true,
+    "type_util": "user",
+    "type_widget": "observers"
+   },
+   "observers_txt": {
+    "attribut_label": "Observateur(s) (extérieur)",
+    "hidden": true,
+    "required": false,
+    "type_widget": "observers-text"
+   },
+   "uuid_base_visit": {
+    "attribut_label": "uuid",
+    "hidden": true,
+    "type_util": "uuid",
+    "type_widget": "text"
+   },
+   "visit_date_max": {
+    "attribut_label": "Date (max)",
+    "hidden": true,
+    "type_widget": "date"
+   },
+   "visit_date_min": {
+    "attribut_label": "Date du passage",
+    "required": true,
+    "type_widget": "date"
+   }
+  },
+  "genre": "M",
+  "id_field_name": "id_base_visit",
+  "id_table_location": 3,
+  "keep": [
+   "id_dataset",
+   "observers",
+   "expertise"
+  ],
+  "label": "Passage",
+  "label_list": "Passages",
+  "parent_types": [
+   "site"
+  ],
+  "properties_keys": [
+   "id_base_visit",
+   "id_base_site",
+   "id_module",
+   "observers",
+   "observers_txt",
+   "id_digitiser",
+   "visit_date_min",
+   "visit_date_max",
+   "comments",
+   "uuid_base_visit",
+   "id_dataset",
+   "nb_observations",
+   "medias",
+   "num_passage",
+   "expertise",
+   "accessibility",
+   "etat_site",
+   "date_changement_etat_site",
+   "methode_de_prospection",
+   "Heure_debut",
+   "Heure_fin"
+  ],
+  "sorts": [
+   {
+    "dir": "desc",
+    "prop": "visit_date_min"
+   }
+  ],
+  "specific": {
+   "Heure_debut": {
+    "attribut_label": "Heure de début",
+    "hidden": "({value}) => value.accessibility === 'Non'",
+    "required": "({value}) => value.accessibility === 'Oui'",
+    "type_widget": "time"
+   },
+   "Heure_fin": {
+    "attribut_label": "Heure de fin",
+    "hidden": "({value}) => value.accessibility === 'Non'",
+    "required": "({value}) => value.accessibility === 'Oui'",
+    "type_widget": "time"
+   },
+   "accessibility": {
+    "attribut_label": "Accessibilité",
+    "default": "Oui",
+    "definition": "Le site est accessible ?",
+    "required": true,
+    "type_widget": "radio",
+    "value": "Oui",
+    "values": [
+     "Oui",
+     "Non"
+    ]
+   },
+   "date_changement_etat_site": {
+    "attribut_label": "Date des travaux sur le site",
+    "definition": "À ne renseigner que pour le premier passage de l'année.",
+    "hidden": "({value}) => value.etat_site === 'Site existant' || (value.num_passage !== 1)",
+    "required": false,
+    "type_widget": "date"
+   },
+   "etat_site": {
+    "attribut_label": "Etat du site",
+    "definition": "Le site a-t-il fait l'objet de dégradation ou de création / restauration pour le rendre favorable aux amphibiens ? Sinon, cochez site existant. Cette information n'est à renseigner que pour le premier passage de l'année.",
+    "hidden": "({value}) => value.accessibility === 'Non' || (value.num_passage !== 1)",
+    "required": "({value}) => value.accessibility === 'Oui' && (value.num_passage === 1)",
+    "type_widget": "radio",
+    "values": [
+     "Site existant",
+     "Site nouvellement créé (travaux, etc.)",
+     "Site restauré (travaux, assainissement de l'eau, etc.)",
+     "Site détruit (travaux, pollution de l'eau, etc.)"
+    ]
+   },
+   "expertise": {
+    "attribut_label": "Expertise",
+    "definition": "Expertise de l'observateur principal.",
+    "required": true,
+    "type_widget": "select",
+    "values": [
+     "Débutant",
+     "Assez expérimenté",
+     "Chevronné"
+    ]
+   },
+   "methode_de_prospection": {
+    "api": "nomenclatures/nomenclature/METHODE_PROSPECTION",
+    "application": "GeoNature",
+    "attribut_label": "Méthode(s) de prospection",
+    "data_path": "values",
+    "default": {
+     "cd_nomenclature": "1"
+    },
+    "designStyle": "bootstrap",
+    "hidden": "({value}) => value.accessibility === 'Non'",
+    "keyLabel": "label_fr",
+    "keyValue": "id_nomenclature",
+    "multi_select": true,
+    "multiple": true,
+    "required": "({value}) => value.accessibility === 'Oui'",
+    "type_util": "nomenclature",
+    "type_widget": "datalist"
+   },
+   "num_passage": {
+    "attribut_label": "Numéro de passage",
+    "default": 1,
+    "definition": "Usuellement entre 1 et 3. Si plus de passages sont renseignés, une sélection sera opérée.",
+    "max": 10,
+    "min": 1,
+    "required": true,
+    "type_widget": "number"
+   }
+  },
+  "uuid_field_name": "uuid_base_visit"
+ }
+}

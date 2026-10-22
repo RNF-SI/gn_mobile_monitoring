@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
 import '../e2e_test_app_real.dart';
+import 'helpers/generic_form_filler.dart';
 import 'helpers/real_test_helpers.dart';
 
 /// Tests E2E de gestion de groupes de sites contre un vrai serveur GeoNature.
@@ -39,6 +40,10 @@ void main() {
       // ----- 1. Login + ouverture du module -----
       await RealTestHelpers.loginAndReachHome(tester, testApp, config);
       await RealTestHelpers.downloadAndOpenModule(tester, config.moduleCode);
+      if (!RealTestHelpers.moduleHasSiteGroups()) {
+        markTestSkipped('${config.moduleCode} ne gère pas de groupes de sites');
+        return;
+      }
 
       // Genere un nom unique pour ce test
       final groupName = RealTestHelpers.uniqueName('E2E_Group');
@@ -104,9 +109,9 @@ void main() {
           tester, 'sites_group_name', groupName,
           isRequired: true);
 
-      // Champ 2 : Habitat principal (NomenclatureSelector CATEGORIE_PAYSAGERE, requis)
-      await RealTestHelpers.selectFirstNomenclature(
-          tester, 'CATEGORIE_PAYSAGERE');
+      // Autres champs obligatoires du protocole, quel qu'il soit.
+      await GenericFormFiller.fillRequiredFields(tester,
+          moduleCode: config.moduleCode);
 
       // Tapper le bouton Enregistrer
       await RealTestHelpers.tapFormSave(tester);
@@ -156,6 +161,18 @@ void main() {
       if (editButton2.evaluate().isEmpty) {
         // On est probablement remonte d'un cran (page module)
         debugPrint('Edit button absent, re-navigation dans le groupe...');
+        // La liste des groupes peut être longue : faire défiler jusqu'au
+        // groupe modifié (sinon il n'est pas construit).
+        await tester.scrollUntilVisible(
+          find.text(groupNameUpdated),
+          300,
+          scrollable: find
+              .byWidgetPredicate((w) =>
+                  w is Scrollable && w.axisDirection == AxisDirection.down)
+              .last,
+          maxScrolls: 100,
+        );
+        await RealTestHelpers.pumpFor(tester, const Duration(seconds: 1));
         final updatedTile = find.ancestor(
           of: find.text(groupNameUpdated),
           matching: find.byType(ExpansionTile),

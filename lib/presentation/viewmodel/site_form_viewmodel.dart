@@ -14,6 +14,8 @@ import 'package:gn_mobile_monitoring/domain/usecase/get_user_id_from_local_stora
 import 'package:gn_mobile_monitoring/domain/usecase/get_user_location_use_case.dart';
 import 'package:gn_mobile_monitoring/domain/usecase/update_site_use_case.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/form_data_processor.dart';
+import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart'
+    show localVisitsCounterProvider;
 
 final siteFormViewModelProvider = StateNotifierProvider.family<
     SiteFormViewModel,
@@ -41,6 +43,8 @@ final siteFormViewModelProvider = StateNotifierProvider.family<
     sitesDatabase,
     moduleId,
     siteGroupId ?? 0,
+    onLocalSitesChanged: () =>
+        ref.read(localVisitsCounterProvider.notifier).update((s) => s + 1),
   );
 });
 
@@ -56,6 +60,10 @@ class SiteFormViewModel extends StateNotifier<void> {
   final int _moduleId;
   final int _siteGroupId;
 
+  /// Prévient la home qu'un site local a été créé ou supprimé, pour
+  /// rafraîchir le badge « saisies non téléversées » (#204).
+  final void Function()? _onLocalSitesChanged;
+
   SiteFormViewModel(
     this._createSiteWithRelationsUseCase,
     this._updateSiteUseCase,
@@ -66,8 +74,10 @@ class SiteFormViewModel extends StateNotifier<void> {
     this._formDataProcessor,
     this._sitesDatabase,
     this._moduleId,
-    this._siteGroupId,
-  ) : super(null);
+    this._siteGroupId, {
+    void Function()? onLocalSitesChanged,
+  })  : _onLocalSitesChanged = onLocalSitesChanged,
+        super(null);
 
   /// Crée un nouveau site à partir des données du formulaire
   /// Retourne l'ID du site créé
@@ -118,7 +128,7 @@ class SiteFormViewModel extends StateNotifier<void> {
       if (complementData.isNotEmpty) {
         complement = SiteComplement(
           idBaseSite: 0, // Sera mis à jour par le use case
-          idSitesGroup: _siteGroupId,
+          idSitesGroup: _siteGroupIdFor(processedData),
           data: jsonEncode(complementData),
         );
       }
@@ -130,11 +140,23 @@ class SiteFormViewModel extends StateNotifier<void> {
         complement: complement,
       );
 
+      _onLocalSitesChanged?.call();
       return siteId;
     } catch (e) {
       debugPrint('Erreur lors de la création du site: $e');
       rethrow;
     }
+  }
+
+  /// Groupe de sites du site : celui d'où l'on vient (navigation) en priorité,
+  /// sinon la valeur du champ `id_sites_group` du formulaire (sites créés
+  /// depuis l'onglet Sites d'un module dont les sites peuvent être rattachés
+  /// à un groupe, ex. petite_chouette_montagne).
+  int? _siteGroupIdFor(Map<String, dynamic> processedData) {
+    if (_siteGroupId > 0) return _siteGroupId;
+    final raw = processedData['id_sites_group'];
+    final id = raw is int ? raw : int.tryParse(raw?.toString() ?? '');
+    return id != null && id > 0 ? id : null;
   }
 
   /// Prépare les données du complément de site
@@ -143,9 +165,11 @@ class SiteFormViewModel extends StateNotifier<void> {
   ) {
     final complementData = <String, dynamic>{};
 
-    // Ajouter le groupe de sites si spécifié
-    if (_siteGroupId > 0) {
-      complementData['id_sites_group'] = _siteGroupId;
+    // Groupe de sites : celui de la navigation, sinon celui choisi dans le
+    // formulaire (datalist → chaîne, convertie en entier)
+    final siteGroupId = _siteGroupIdFor(processedData);
+    if (siteGroupId != null) {
+      complementData['id_sites_group'] = siteGroupId;
     }
 
     // Ajouter les autres champs spécifiques du formulaire qui ne sont pas dans BaseSite
@@ -229,7 +253,7 @@ class SiteFormViewModel extends StateNotifier<void> {
         if (complementData.isNotEmpty) {
           final complement = SiteComplement(
             idBaseSite: existingSite.idBaseSite,
-            idSitesGroup: _siteGroupId > 0 ? _siteGroupId : null,
+            idSitesGroup: _siteGroupIdFor(processedData),
             data: jsonEncode(complementData),
           );
           await _sitesDatabase.insertSiteComplements([complement]);
@@ -246,7 +270,9 @@ class SiteFormViewModel extends StateNotifier<void> {
   /// Supprime un site
   Future<bool> deleteSite(int siteId) async {
     try {
-      return await _deleteSiteUseCase.execute(siteId);
+      final deleted = await _deleteSiteUseCase.execute(siteId);
+      if (deleted) _onLocalSitesChanged?.call();
+      return deleted;
     } catch (e) {
       debugPrint('Erreur lors de la suppression du site: $e');
       return false;

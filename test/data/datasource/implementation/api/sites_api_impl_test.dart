@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
@@ -275,6 +276,90 @@ void main() {
       ) as dynamic;
       expect(site2Complement.idSitesGroup, isNull);
     });
+
+    test(
+        'monitoring >= 1.3.2 : lit `geom` (objet) et normalise types_site (ids)',
+        () async {
+      // Format renvoyé par monitoring develop (GeoNature 2.18) : `geometry`
+      // (chaîne) remplacé par `geom` (objet), types_site = liste d'ids.
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites',
+            queryParameters: {'limit': 100000},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'count': 2,
+              'limit': 100000,
+              'page': 1,
+              'items': [
+                {
+                  'id_base_site': 1,
+                  'base_site_name': 'Site 1',
+                  'uuid_base_site': 'uuid-1',
+                  'geom': {
+                    'type': 'Point',
+                    'coordinates': [-1.15, 46.15],
+                  },
+                  'types_site': [940],
+                  'id_sites_group': 42,
+                },
+                {
+                  // Format monitoring <= 1.3.0 : objets dans types_site
+                  'id_base_site': 2,
+                  'base_site_name': 'Site 2',
+                  'uuid_base_site': 'uuid-2',
+                  'geometry': '{"type": "Point", "coordinates": [1.0, 2.0]}',
+                  'types_site': [
+                    {
+                      'config': null,
+                      'id_nomenclature_type_site': 941,
+                      'label': 'Site POPAmphibien',
+                    }
+                  ],
+                },
+              ],
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchEnrichedSitesForModule('MOD_TEST', 'token'));
+
+      final sites = (result['enriched_sites'] as List)
+          .cast<Map<String, dynamic>>();
+      final site1 = sites.firstWhere((s) => s['id_base_site'] == 1);
+      expect(site1['geometry'], {
+        'type': 'Point',
+        'coordinates': [-1.15, 46.15],
+      });
+
+      final complements = (result['site_complements'] as List).cast<dynamic>();
+      Map<String, dynamic> dataOf(int id) => jsonDecode(
+              complements.firstWhere((c) => c.idBaseSite == id).data as String)
+          as Map<String, dynamic>;
+
+      final data1 = dataOf(1);
+      // La géométrie n'est pas une donnée spécifique du site
+      expect(data1.containsKey('geom'), isFalse);
+      expect(data1['types_site'], [940]);
+      expect(dataOf(2)['types_site'], [941]);
+    });
+  });
+
+  group('normalizeTypesSite', () {
+    test('accepte ids, chaînes et objets', () {
+      expect(
+        normalizeTypesSite([
+          940,
+          '941',
+          {'id_nomenclature_type_site': 975, 'label': 'Transect'},
+          null,
+          'abc',
+        ]),
+        [940, 941, 975],
+      );
+    });
   });
 
   group('fetchSiteGroupsForModule', () {
@@ -353,6 +438,8 @@ void main() {
                   'nb_sites': 1,
                   'nb_visits': 1,
                   'is_geom_from_child': true,
+                  // Refonte : liste des propriétés hors config du module
+                  'additional_data_keys': ['habitat_autre_module'],
                 },
                 {
                   'id_sites_group': 30,
@@ -381,12 +468,51 @@ void main() {
       // Les clés standards ne doivent PAS fuiter dans data
       expect(group1.data!.containsKey('sites_group_name'), isFalse);
       expect(group1.data!.containsKey('id_sites_group'), isFalse);
+      expect(group1.data!.containsKey('additional_data_keys'), isFalse);
 
       final group2 = result[1].siteGroup;
       expect(group2.idSitesGroup, 30);
       // Pas d'attributs spécifiques → data est un Map vide
       expect(group2.data, isNotNull);
       expect(group2.data, isEmpty);
+    });
+
+    test('monitoring >= 1.3.2 : lit `geom` (objet) au lieu de `geometry`',
+        () async {
+      when(() => mockDio.get(
+            '/monitorings/refacto/MOD_TEST/sites_groups',
+            queryParameters: {'limit': 100, 'page': 1},
+            options: any(named: 'options'),
+          )).thenAnswer((_) async => Response(
+            data: {
+              'count': 1,
+              'limit': 100,
+              'page': 1,
+              'items': [
+                {
+                  'id_sites_group': 29,
+                  'sites_group_name': 'frec',
+                  'uuid_sites_group': '8d3c4dad-c11a-4f0b-8893-3b7447af3dd6',
+                  'geom': {
+                    'type': 'Point',
+                    'coordinates': [5.04, 47.33],
+                  },
+                  'habitat_principal': 'Forêt',
+                },
+              ],
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: '/test'),
+          ));
+
+      final result = await suppressOutput(
+          () => sitesApi.fetchSiteGroupsForModule('MOD_TEST', 'token'));
+
+      final group = result.single.siteGroup;
+      expect(group.geom, isNotNull);
+      expect(jsonDecode(group.geom!)['coordinates'], [5.04, 47.33]);
+      expect(group.data!.containsKey('geom'), isFalse);
+      expect(group.data!['habitat_principal'], 'Forêt');
     });
 
     test('paginate si count > pageSize', () async {

@@ -4,7 +4,7 @@ import 'package:gn_mobile_monitoring/domain/model/module_configuration.dart';
 part 'module_complement.freezed.dart';
 
 @freezed
-class ModuleComplement with _$ModuleComplement {
+abstract class ModuleComplement with _$ModuleComplement {
   const factory ModuleComplement({
     required int idModule,
     String? uuidModuleComplement,

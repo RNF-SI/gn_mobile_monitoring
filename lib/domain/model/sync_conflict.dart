@@ -36,7 +36,7 @@ enum ConflictSeverity {
 }
 
 @freezed
-class SyncConflict with _$SyncConflict {
+abstract class SyncConflict with _$SyncConflict {
   const SyncConflict._();
 
   const factory SyncConflict({

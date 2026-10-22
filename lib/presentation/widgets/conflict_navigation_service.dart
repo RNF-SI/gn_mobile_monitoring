@@ -17,6 +17,8 @@ import 'package:gn_mobile_monitoring/presentation/viewmodel/observation_detail_v
 import 'package:gn_mobile_monitoring/presentation/viewmodel/observations_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_group_utilisateur_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/site_visits_viewmodel.dart';
+import 'package:gn_mobile_monitoring/presentation/state/state.dart'
+    show StatePatterns;
 
 /// Service gérant la navigation vers les éléments en conflit
 class ConflictNavigationService {

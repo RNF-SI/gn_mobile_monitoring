@@ -1,10 +1,12 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:gn_mobile_monitoring/core/helpers/module_config_normalizer.dart';
 import 'package:gn_mobile_monitoring/core/utils/error_message_helper.dart';
 import 'package:gn_mobile_monitoring/core/errors/app_logger.dart';
 import 'package:gn_mobile_monitoring/core/errors/exceptions/network_exception.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/base_api.dart';
+import 'package:gn_mobile_monitoring/data/datasource/implementation/api/monitoring_routes.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observation_details_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/observations_api_impl.dart';
 import 'package:gn_mobile_monitoring/data/datasource/implementation/api/sites_api_impl.dart';
@@ -29,6 +31,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   final ObservationsApi _observationsApi;
   final ObservationDetailsApi _observationDetailsApi;
   final SitesApi _sitesApi;
+  final MonitoringApiModeResolver _modeResolver;
 
   GlobalApiImpl({
     super.dio,
@@ -37,7 +40,9 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     ObservationsApi? observationsApi,
     ObservationDetailsApi? observationDetailsApi,
     SitesApi? sitesApi,
-  })  : _connectivity = connectivity ?? Connectivity(),
+    MonitoringApiModeResolver modeResolver = const MonitoringApiModeResolver(),
+  })  : _modeResolver = modeResolver,
+        _connectivity = connectivity ?? Connectivity(),
         _visitsApi = visitsApi ?? VisitsApiImpl(),
         _observationsApi = observationsApi ?? ObservationsApiImpl(),
         _observationDetailsApi =
@@ -85,10 +90,8 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         Map<String, dynamic> config = {};
         if (moduleCode != null) {
           try {
-            final configResponse = await dio.get(
-              '/monitorings/config/$moduleCode',
-              options: headers != null ? Options(headers: headers) : null,
-            );
+            final configResponse =
+                await _getModuleConfig(moduleCode, token: token);
             if (configResponse.statusCode == 200) {
               config = configResponse.data as Map<String, dynamic>;
             }
@@ -116,32 +119,40 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
         throw Exception('Module code not found in module data for module $moduleId');
       }
 
-      // Étape 1b : récupérer la liste d'IDs des datasets via l'endpoint "object"
-      // (pattern utilisé par l'UI web GeoNature, scalable sur backend à sérialisation lente
-      // car `field_name=module_code` empêche l'expansion des relations côté SQLAlchemy)
+      // Étape 1b : récupérer la liste d'IDs des datasets. Depuis la refonte
+      // monitoring (#513), `/module/<id>` les renvoie directement ; sinon on
+      // passe par l'endpoint "object" legacy (pattern de l'UI web ≤ 1.3.x,
+      // scalable sur backend à sérialisation lente car `field_name=module_code`
+      // empêche l'expansion des relations côté SQLAlchemy)
       final List<int> datasetIds = [];
+      void addDatasetIds(Object? rawIds) {
+        if (rawIds is! List) return;
+        for (final id in rawIds) {
+          if (id is int) {
+            datasetIds.add(id);
+          } else if (id is String) {
+            final parsed = int.tryParse(id);
+            if (parsed != null) datasetIds.add(parsed);
+          }
+        }
+      }
+
       try {
-        final objectResponse = await dioInstance.get(
-          '/monitorings/object/$moduleCode/module',
-          queryParameters: {'depth': 0, 'field_name': 'module_code'},
-          options: headers != null ? Options(headers: headers) : null,
-        );
-        if (objectResponse.statusCode == 200 && objectResponse.data != null) {
-          final data = objectResponse.data as Map<String, dynamic>;
-          // Les IDs sont sous `properties.datasets` (fallback racine par précaution)
-          final props = (data['properties'] is Map<String, dynamic>)
-              ? data['properties'] as Map<String, dynamic>
-              : data;
-          final rawIds = props['datasets'];
-          if (rawIds is List) {
-            for (final id in rawIds) {
-              if (id is int) {
-                datasetIds.add(id);
-              } else if (id is String) {
-                final parsed = int.tryParse(id);
-                if (parsed != null) datasetIds.add(parsed);
-              }
-            }
+        if (moduleData['datasets'] is List) {
+          addDatasetIds(moduleData['datasets']);
+        } else {
+          final objectResponse = await dioInstance.get(
+            '/monitorings/object/$moduleCode/module',
+            queryParameters: {'depth': 0, 'field_name': 'module_code'},
+            options: headers != null ? Options(headers: headers) : null,
+          );
+          if (objectResponse.statusCode == 200 && objectResponse.data != null) {
+            final data = objectResponse.data as Map<String, dynamic>;
+            // Les IDs sont sous `properties.datasets` (fallback racine par précaution)
+            final props = (data['properties'] is Map<String, dynamic>)
+                ? data['properties'] as Map<String, dynamic>
+                : data;
+            addDatasetIds(props['datasets']);
           }
         }
       } catch (e) {
@@ -181,10 +192,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
 
       // Étape 2 : Récupérer la configuration du module pour obtenir les types de nomenclatures
       // Cette configuration sera également retournée pour éviter un appel redondant
-      final configResponse = await dio.get(
-        '/monitorings/config/$moduleCode',
-        options: headers != null ? Options(headers: headers) : null,
-      );
+      final configResponse = await _getModuleConfig(moduleCode, token: token);
       
       final Map<String, dynamic> config;
       if (configResponse.statusCode == 200) {
@@ -319,8 +327,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   @override
   Future<Map<String, dynamic>> getModuleConfiguration(String moduleCode) async {
     try {
-      final response =
-          await dio.get('/monitorings/config/$moduleCode');
+      final response = await _getModuleConfig(moduleCode);
 
       // 204 (No Content) signifie qu'il n'y a pas de configuration disponible,
       // mais c'est un cas valide - retourner une configuration minimale valide
@@ -360,10 +367,37 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
     }
   }
 
+  /// Configuration d'un module : nouvelle API si le serveur l'expose (format
+  /// `fields`, gn_module_monitoring#748), sinon route legacy `/config/<module>`.
+  /// Le corps est ramené au format historique ([normalizeModuleConfig]).
+  Future<Response<dynamic>> _getModuleConfig(String moduleCode,
+      {String? token}) async {
+    final routes = await _modeResolver.resolve(dio, token, moduleCode);
+    final paths = routes.configPaths(moduleCode);
+    for (var i = 0;; i++) {
+      try {
+        final response = await dio.get(paths[i], options: _authOptions(token));
+        final data = response.data;
+        if (data is Map<String, dynamic>) {
+          response.data = normalizeModuleConfig(data);
+        }
+        return response;
+      } on DioException catch (e) {
+        if (i == paths.length - 1 || e.response?.statusCode != 404) rethrow;
+      }
+    }
+  }
+
+  /// En-tête d'authentification, ou `null` (options par défaut) sans jeton.
+  Options? _authOptions(String? token) => token == null
+      ? null
+      : Options(headers: {'Authorization': 'Bearer $token'});
+
   @override
-  Future<List<Map<String, dynamic>>> getSiteTypes() async {
+  Future<List<Map<String, dynamic>>> getSiteTypes({String? token}) async {
     try {
-      final response = await dio.get('/monitorings/sites/types');
+      final response = await dio.get('/monitorings/sites/types',
+          options: _authOptions(token));
 
       if (response.statusCode == 200) {
         final data = response.data as Map<String, dynamic>;
@@ -379,11 +413,12 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   }
 
   @override
-  Future<Map<String, dynamic>> getSiteTypeById(
-      int idNomenclatureTypeSite) async {
+  Future<Map<String, dynamic>> getSiteTypeById(int idNomenclatureTypeSite,
+      {String? token}) async {
     try {
-      final response = await dio
-          .get('/monitorings/sites/types/$idNomenclatureTypeSite');
+      final response = await dio.get(
+          '/monitorings/sites/types/$idNomenclatureTypeSite',
+          options: _authOptions(token));
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -398,10 +433,11 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
   }
 
   @override
-  Future<Map<String, dynamic>> getSiteTypeByLabel(String label) async {
+  Future<Map<String, dynamic>> getSiteTypeByLabel(String label,
+      {String? token}) async {
     try {
       final response = await dio.get('/monitorings/sites/types/label',
-          queryParameters: {'label_fr': label});
+          queryParameters: {'label_fr': label}, options: _authOptions(token));
 
       if (response.statusCode == 200) {
         return response.data as Map<String, dynamic>;
@@ -411,43 +447,6 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       }
     } catch (e) {
       throw Exception('Error fetching site type with label $label: $e');
-    }
-  }
-
-  @override
-  Future<List<Map<String, dynamic>>> getNomenclatureTypes() async {
-    try {
-      final response =
-          await dio.get('/nomenclatures/nomenclature_types');
-
-      if (response.statusCode == 200) {
-        final items = response.data as List<dynamic>;
-        return items.map((item) => item as Map<String, dynamic>).toList();
-      } else {
-        throw Exception(
-            'Failed to fetch nomenclature types. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception('Error fetching nomenclature types: $e');
-    }
-  }
-
-  @override
-  Future<Map<String, dynamic>> getNomenclatureTypeByMnemonique(
-      String mnemonique) async {
-    try {
-      final response = await dio
-          .get('/nomenclatures/nomenclature_types/$mnemonique');
-
-      if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
-      } else {
-        throw Exception(
-            'Failed to fetch nomenclature type with mnemonique $mnemonique. Status code: ${response.statusCode}');
-      }
-    } catch (e) {
-      throw Exception(
-          'Error fetching nomenclature type with mnemonique $mnemonique: $e');
     }
   }
 
@@ -465,13 +464,19 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       final response = await dio.get(
         '/monitorings/sites/types',
         options: Options(
+          // Sans cet en-tête, une route `login_required` redirige (302) vers
+          // la page de connexion du frontend au lieu de répondre 401.
+          headers: {'Accept': 'application/json'},
           validateStatus: (status) => true,
           sendTimeout: const Duration(seconds: 5),
           receiveTimeout: const Duration(seconds: 5),
         ),
       );
 
-      return response.statusCode == 200;
+      // 401/403 : serveur joignable, la route exige une session
+      // (refonte de monitoring, gn_module_monitoring#748).
+      final status = response.statusCode;
+      return status == 200 || status == 401 || status == 403;
     } catch (e) {
       // En cas d'erreur, on considère que le serveur n'est pas accessible
       return false;
@@ -617,12 +622,7 @@ class GlobalApiImpl extends BaseApi implements GlobalApi {
       for (final moduleCode in moduleCodes) {
         debugPrint('Synchronisation configuration du module: $moduleCode');
         try {
-          final response = await dio.get(
-            '/monitorings/config/$moduleCode',
-            options: Options(
-              headers: {'Authorization': 'Bearer $token'},
-            ),
-          );
+          final response = await _getModuleConfig(moduleCode, token: token);
 
           if (response.statusCode == 200) {
             itemsProcessed++;

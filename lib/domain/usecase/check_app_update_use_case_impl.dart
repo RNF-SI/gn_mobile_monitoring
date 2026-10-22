@@ -23,7 +23,7 @@ class CheckAppUpdateUseCaseImpl implements CheckAppUpdateUseCase {
 
     // Récupérer le buildNumber local
     final localBuildNumber = _localBuildNumberProvider != null
-        ? await _localBuildNumberProvider!()
+        ? await _localBuildNumberProvider()
         : (await PackageInfo.fromPlatform()).buildNumber;
 
     final localCode = int.tryParse(localBuildNumber) ?? 0;

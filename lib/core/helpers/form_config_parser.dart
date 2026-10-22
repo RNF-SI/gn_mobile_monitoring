@@ -582,14 +582,20 @@ class FormConfigParser {
         }
         // Datalist mono-utilisateur : aligné sur ObserverField (auto-rempli avec
         // l'utilisateur connecté, en attendant le câblage de l'API users/menu).
+        // Le serveur de la refonte doublonne `multiple` et `multi_select`.
         if (fieldConfig['type_util'] == 'user' &&
-            fieldConfig['multiple'] != true) {
+            fieldConfig['multiple'] != true &&
+            fieldConfig['multi_select'] != true) {
           return 'CurrentUserField';
         }
         // Sinon utiliser le widget datalist générique
         return 'DatalistField';
       case 'nomenclature':
         return 'NomenclatureSelector';
+      case 'multiselect':
+        // Widget web pnx-multiselect : `values` {value, label}, la valeur est
+        // la liste des `value` cochées → datalist à choix multiple
+        return 'DatalistField';
       case 'taxonomy':
         return 'TaxonSelector';
       case 'bool_checkbox':
@@ -767,7 +773,11 @@ class FormConfigParser {
       final bool hasNoWidget = fieldConfig['type_widget'] == null || 
                                fieldConfig['type_widget'] == '';
       
-      if (isInSpecific) {
+      if (objectType == 'site' && fieldName == 'types_site' && !hasNoWidget) {
+        // Le formulaire web de site affiche toujours le choix des types (#215) :
+        // sans lui, un module à plusieurs types n'en laisse choisir aucun.
+        isInDisplayProperties = true;
+      } else if (isInSpecific) {
         // Les champs dans specific sont toujours inclus (sauf s'ils sont cachés/exclus)
         // Même s'ils n'ont pas de type_widget, ils sont explicitement configurés
         isInDisplayProperties = true;
@@ -863,8 +873,15 @@ class FormConfigParser {
             'type_util': fieldConfig['type_util'],
           // Ajouter la propriété multiple pour les sélections multiples
           if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+          // Widget nomenclature web : la sélection multiple se déclare avec
+          // `multi_select` (datalist : `multiple`)
+          if (fieldConfig['multi_select'] != null)
+            'multi_select': fieldConfig['multi_select'],
           // Ajouter la configuration des règles de changement automatique
           if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
+          // Champ propre à des types de site (config des types, #215)
+          if (fieldConfig['id_types_site'] != null)
+            'id_types_site': fieldConfig['id_types_site'],
         };
       }
     });
@@ -924,8 +941,12 @@ class FormConfigParser {
               if (fieldConfig['type_util'] != null)
                 'type_util': fieldConfig['type_util'],
               if (fieldConfig['multiple'] != null) 'multiple': fieldConfig['multiple'],
+              if (fieldConfig['multi_select'] != null)
+                'multi_select': fieldConfig['multi_select'],
               // Ajouter la configuration des règles de changement automatique
               if (fieldConfig['change'] != null) 'change': fieldConfig['change'],
+              if (fieldConfig['id_types_site'] != null)
+                'id_types_site': fieldConfig['id_types_site'],
             };
           }
         }

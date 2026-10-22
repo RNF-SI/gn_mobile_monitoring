@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gn_mobile_monitoring/core/theme/app_colors.dart';
-import 'package:gn_mobile_monitoring/data/data_module.dart';
 import 'package:gn_mobile_monitoring/domain/domain_module.dart';
 import 'package:gn_mobile_monitoring/presentation/state/sync_status.dart';
 import 'package:gn_mobile_monitoring/presentation/view/funders_page.dart';
@@ -11,6 +10,7 @@ import 'package:gn_mobile_monitoring/presentation/view/home_page/module_item_car
 import 'package:gn_mobile_monitoring/presentation/viewmodel/app_update_service.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/auth/auth_viewmodel.dart';
 import 'package:gn_mobile_monitoring/presentation/viewmodel/sync_service.dart';
+import 'package:gn_mobile_monitoring/presentation/widgets/app_version_text.dart';
 import 'package:gn_mobile_monitoring/presentation/widgets/log_export_widget.dart';
 
 class MenuActions extends ConsumerWidget {
@@ -238,8 +238,16 @@ class MenuActions extends ConsumerWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text('Informations sur la version'),
-          content: const Text(
-              "Cette application est conçue pour la version minimal 1.0.0 de monitoring."),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppVersionText(style: TextStyle(fontWeight: FontWeight.bold)),
+              SizedBox(height: 8),
+              Text(
+                  "Cette application est conçue pour la version minimale 1.0.0 du module monitoring de GeoNature."),
+            ],
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
@@ -446,6 +454,7 @@ class MenuActions extends ConsumerWidget {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 12),
+                const Text('📤 Vos sites et groupes de sites créés'),
                 const Text('📤 Vos visites saisies'),
                 const Text('📤 Vos observations et détails'),
                 const SizedBox(height: 16),
@@ -465,6 +474,35 @@ class MenuActions extends ConsumerWidget {
                           'Les données seront supprimées localement après confirmation de réception par le serveur.',
                           style: TextStyle(
                             color: Colors.blue,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  key: const Key('upload-sites-frozen-notice'),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock_outline,
+                          color: Colors.orange.shade800, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Une fois envoyés, les sites et groupes de sites ne '
+                          'sont plus modifiables sur le téléphone : vérifiez-les '
+                          'avant l\'envoi. Ensuite, ils se modifient depuis '
+                          'GeoNature (web).',
+                          style: TextStyle(
+                            color: Colors.orange.shade900,
                             fontSize: 13,
                           ),
                         ),
@@ -515,11 +553,12 @@ class MenuActions extends ConsumerWidget {
           return;
         }
 
-        // Modules ayant au moins une visite locale non téléversée. Permet de
-        // mettre en avant les modules réellement concernés et de couper court
-        // si tout est déjà à jour (cf. #179).
+        // Modules ayant des saisies locales à téléverser (visites, sites ou
+        // groupes créés sur l'appareil). Permet de mettre en avant les modules
+        // réellement concernés et de couper court si tout est déjà à jour
+        // (cf. #179, #204). Même critère que le badge des cartes de module.
         final unsyncedModuleIds =
-            await ref.read(visitDatabaseProvider).getModuleIdsWithUnsyncedVisits();
+            await ref.refresh(unsyncedModuleIdsProvider.future);
         final modulesWithData = availableModules
             .where((m) => unsyncedModuleIds.contains(m.id))
             .toList();

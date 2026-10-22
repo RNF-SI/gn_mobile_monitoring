@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 
 /// Convertit n'importe quelle exception remontée pendant la connexion en un
@@ -31,6 +33,9 @@ class LoginErrorMessage {
     final details = <String, Object?>{
       'type': e.type.name,
       if (e.message != null) 'message': e.message,
+      // Pour les erreurs `unknown`, Dio laisse `message` à null et range la
+      // cause réelle (HandshakeException, SocketException…) dans `error`.
+      if (e.error != null) 'error': e.error.toString(),
       if (e.response?.statusCode != null) 'statusCode': e.response!.statusCode,
       if (e.response?.data != null) 'data': e.response!.data,
       if (e.requestOptions.uri.toString().isNotEmpty)
@@ -88,7 +93,13 @@ class LoginErrorMessage {
   }
 
   static String _formatUnknown(DioException e) {
-    final raw = e.message ?? '';
+    final cause = e.error;
+    if (cause is HandshakeException || cause is TlsException) {
+      return "Échec de la connexion sécurisée (HTTPS) : le certificat du "
+          "serveur n'a pas pu être vérifié par cet appareil. Vérifiez la date "
+          "et l'heure du téléphone, ou contactez l'administrateur du serveur.";
+    }
+    final raw = '${e.message ?? ''} ${cause ?? ''}';
     // Erreur DNS la plus fréquente quand l'URL est mal saisie.
     if (raw.contains('Failed host lookup')) {
       return "Impossible de joindre le serveur : le nom de domaine n'a pas pu "

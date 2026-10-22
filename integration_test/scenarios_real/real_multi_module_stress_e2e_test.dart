@@ -126,8 +126,24 @@ void main() {
         if (config.withUpload) {
           debugPrint('');
           debugPrint('===== Upload final =====');
+          // Un module par téléversement : autant d'envois que de modules.
+          for (var i = 0; i < modules.length; i++) {
+            await RealTestHelpers.navigateBackToHome(tester);
+            await RealTestHelpers.triggerSyncUploadFromHome(tester,
+                skipIfDownloadRequired: false);
+          }
+
+          // Tout est parti : l'app n'a plus rien à téléverser.
           await RealTestHelpers.navigateBackToHome(tester);
-          await RealTestHelpers.triggerSyncUploadFromHome(tester);
+          await tester.tap(find.byIcon(Icons.menu));
+          await RealTestHelpers.pumpFor(tester, const Duration(seconds: 2));
+          await tester.tap(find.byKey(const Key('menu-sync_upload')));
+          await RealTestHelpers.pumpFor(tester, const Duration(seconds: 3));
+          await tester.tap(find.widgetWithText(ElevatedButton, 'Envoyer'));
+          await RealTestHelpers.pumpFor(tester, const Duration(seconds: 2));
+          expect(find.textContaining('Aucune donnée à téléverser'),
+              findsOneWidget,
+              reason: 'des saisies restent en attente après téléversement');
         }
 
         debugPrint('===== Test cross-module termine =====');
@@ -238,10 +254,29 @@ Future<void> _exerciseModule(
     await RealTestHelpers.tapFormSave(tester);
     await RealTestHelpers.pumpFor(
         tester, const Duration(seconds: 2));
+
+    // Après enregistrement, l'app ouvre le détail de l'observation :
+    // revenir à la visite pour en ajouter une autre.
+    if (i < observationsCount - 1) {
+      await _backUntilFound(
+          tester, find.byKey(const Key('add-observation-button')));
+    }
   }
 
   debugPrint(
       '$observationsCount observations creees sur $moduleCode');
+}
+
+/// Revient en arrière (bouton retour de l'AppBar) jusqu'à voir [target].
+Future<void> _backUntilFound(WidgetTester tester, Finder target,
+    {int maxPops = 3}) async {
+  for (var i = 0; i < maxPops && target.evaluate().isEmpty; i++) {
+    final back = find.byTooltip('Back');
+    final backBtn = back.evaluate().isNotEmpty ? back : find.byType(BackButton);
+    if (backBtn.evaluate().isEmpty) break;
+    await tester.tap(backBtn.first);
+    await RealTestHelpers.pumpFor(tester, const Duration(seconds: 2));
+  }
 }
 
 class _ModuleResult {

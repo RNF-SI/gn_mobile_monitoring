@@ -64,7 +64,7 @@ void main() {
       expect(AuthHelper.currentToken, equals(token));
 
       print('✅ Token reçu: ${token.substring(0, 30)}...');
-      print('✅ Utilisateur: ${AuthHelper.currentUser!.nomRole} ${AuthHelper.currentUser!.prenomRole ?? ""}');
+      print('✅ Utilisateur: ${AuthHelper.currentUser!.nomRole} ${AuthHelper.currentUser!.prenomRole}');
     });
 
     test('Vérification des informations utilisateur retournées', () async {
@@ -86,7 +86,7 @@ void main() {
 
       print('✅ User ID: ${user.idRole}');
       print('✅ Nom: ${user.nomRole}');
-      print('✅ Prénom: ${user.prenomRole ?? "N/A"}');
+      print('✅ Prénom: ${user.prenomRole}');
       print('✅ Email: ${user.email ?? "N/A"}');
     });
 

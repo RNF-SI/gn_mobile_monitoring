@@ -41,6 +41,10 @@ abstract class SitesDatabase {
   Future<void> deleteSiteGroupModule(int siteGroupId, int moduleId);
   Future<List<SitesGroupModule>> getAllSiteGroupModules();
   Future<List<SiteGroup>> getSiteGroupsByModuleId(int moduleId);
+
+  /// IDs des modules ayant des sites ou groupes créés localement et pas
+  /// encore téléversés.
+  Future<Set<int>> getModuleIdsWithUnsyncedSitesOrGroups();
   Future<List<SitesGroupModule>> getSiteGroupModulesBySiteGroupId(int siteGroupId);
 
   /// Methods for handling CorSitesModules
