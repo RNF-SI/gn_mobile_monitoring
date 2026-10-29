@@ -121,17 +121,56 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseFormLayout(
-      title: widget.title,
-      appBarActions: widget.appBarActions,
-      breadcrumbItems: widget.breadcrumbItems,
-      formContent: _buildFormContent(),
-      isLoading: _isLoading,
-      onCancel: widget.onCancel ?? () => Navigator.of(context).pop(),
-      onSave: _handleSave,
-      saveButtonText: widget.saveButtonText,
-      isSaving: _isLoading,
+    // Retour système et flèche de l'AppBar passent par la garde de sortie.
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _leave(() => Navigator.of(context).pop());
+      },
+      child: BaseFormLayout(
+        title: widget.title,
+        appBarActions: widget.appBarActions,
+        breadcrumbItems: widget.breadcrumbItems,
+        formContent: _buildFormContent(),
+        isLoading: _isLoading,
+        onCancel: () =>
+            _leave(widget.onCancel ?? () => Navigator.of(context).pop()),
+        onSave: _handleSave,
+        saveButtonText: widget.saveButtonText,
+        isSaving: _isLoading,
+      ),
     );
+  }
+
+  /// Quitte le formulaire, après confirmation s'il a été modifié.
+  Future<void> _leave(VoidCallback leave) async {
+    if (_isLoading) return;
+    final hasChanges =
+        _formBuilderKey.currentState?.hasUnsavedChanges ?? false;
+    if (hasChanges && !await _confirmDiscard()) return;
+    if (mounted) leave();
+  }
+
+  Future<bool> _confirmDiscard() async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Quitter sans enregistrer ?'),
+            content: const Text(
+                'Les modifications de ce formulaire seront perdues.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Continuer la saisie'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('Quitter'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
   }
 
   /// Construit le contenu du formulaire
@@ -222,7 +261,7 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
             );
           } else {
             // Sinon, fermer le formulaire
-            Navigator.of(context).pop(true); // JULES DECONNE PO C LA
+            Navigator.of(context).pop(true);
           }
         }
       }

@@ -92,6 +92,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   /// Utilisé pour résoudre objForm.controls.xxx.dirty dans les règles de changement
   final Set<String> _dirtyFields = <String>{};
 
+  /// Valeurs à l'ouverture (ou après `resetForm`), présélections comprises :
+  /// sert à savoir si l'utilisateur a modifié le formulaire.
+  Map<String, dynamic> _baselineValues = {};
+
   /// Returns the onSubmit callback from the widget
   Function(Map<String, dynamic>)? get onSubmit => widget.onSubmit;
 
@@ -133,6 +137,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     _criticalFields = _getAllCriticalFields();
 
     _initControllers();
+    _baselineValues = _copyValues(_formValues);
 
     // Précharger les nomenclatures nécessaires pour ce formulaire
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -162,6 +167,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
       final current = _formValues[fieldName];
       if (current == null || current == 0) {
         _formValues[fieldName] = userId;
+        _baselineValues[fieldName] = userId;
         changed = true;
       }
     }
@@ -468,6 +474,44 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
   }
 
+  /// Vrai si une valeur diffère de celles de l'ouverture : la page demande
+  /// alors confirmation avant de quitter sans enregistrer.
+  bool get hasUnsavedChanges {
+    final keys = {..._formValues.keys, ..._baselineValues.keys};
+    return keys.any(
+        (key) => !_sameValue(_formValues[key], _baselineValues[key]));
+  }
+
+  static Map<String, dynamic> _copyValues(Map<String, dynamic> values) =>
+      values.map((key, value) => MapEntry(key, _copyValue(value)));
+
+  static dynamic _copyValue(dynamic value) {
+    if (value is Map) {
+      return value.map((k, v) => MapEntry(k, _copyValue(v)));
+    }
+    if (value is List) return value.map(_copyValue).toList();
+    return value;
+  }
+
+  /// Égalité de valeurs de formulaire : vide, `null` et liste vide se valent.
+  static bool _sameValue(dynamic a, dynamic b) {
+    bool isEmpty(dynamic v) =>
+        v == null || (v is String && v.isEmpty) || (v is Iterable && v.isEmpty);
+    if (isEmpty(a) || isEmpty(b)) return isEmpty(a) && isEmpty(b);
+    if (a is Map && b is Map) {
+      final keys = {...a.keys, ...b.keys};
+      return keys.every((k) => _sameValue(a[k], b[k]));
+    }
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (!_sameValue(a[i], b[i])) return false;
+      }
+      return true;
+    }
+    return a.toString() == b.toString();
+  }
+
   /// Prépare la saisie suivante en mode enchaînement, comme `resetObjForm`
   /// du module web : seuls les champs `keep` de la config sont repris, puis
   /// les présélections de l'ouverture sont reposées (valeurs fixes des champs
@@ -493,6 +537,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     _textControllers = {};
     _initControllers();
     _committedKeyValues = Map<String, dynamic>.from(_formValues);
+    _baselineValues = _copyValues(_formValues);
     setState(() {});
     WidgetsBinding.instance.addPostFrameCallback((_) {
       for (final controller in oldControllers) {
@@ -2580,6 +2625,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                   if (mounted) {
                     setState(() {
                       _formValues[fieldName] = datasets.first.id;
+                      _baselineValues[fieldName] = datasets.first.id;
                     });
                   }
                 });
