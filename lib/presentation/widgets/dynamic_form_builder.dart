@@ -468,14 +468,38 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     }
   }
 
+  /// Prépare la saisie suivante en mode enchaînement, comme `resetObjForm`
+  /// du module web : seuls les champs `keep` de la config sont repris, puis
+  /// les présélections de l'ouverture sont reposées (valeurs fixes des champs
+  /// cachés, `value`, utilisateur connecté, jeu de données unique).
   void resetForm() {
+    final kept = <String, dynamic>{
+      for (final name in widget.objectConfig.keep ?? const <String>[])
+        if (_formValues[name] != null) name: _formValues[name],
+    };
+
     _formKey.currentState?.reset();
-    _formValues.clear();
-    _committedKeyValues.clear();
-    _textControllers.forEach((key, controller) {
-      controller.clear();
-    });
+    _formValues
+      ..clear()
+      ..addAll(kept);
+    _userClearedFields.clear();
+    _dirtyFields.clear();
+    _fieldsSetByChangeRules.clear();
+    _initializeFixedHiddenValues();
+
+    // Les anciens contrôleurs sont encore attachés aux champs affichés :
+    // ils ne sont libérés qu'après la reconstruction.
+    final oldControllers = _textControllers.values.toList();
+    _textControllers = {};
+    _initControllers();
+    _committedKeyValues = Map<String, dynamic>.from(_formValues);
     setState(() {});
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      for (final controller in oldControllers) {
+        controller.dispose();
+      }
+    });
+    _initializeCurrentUserFields();
 
     // Remonter en haut du formulaire après réinitialisation
     WidgetsBinding.instance.addPostFrameCallback((_) {

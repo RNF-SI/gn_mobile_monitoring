@@ -588,6 +588,9 @@ abstract class ObjectConfig with _$ObjectConfig {
     String? idFieldName,
     int? idTableLocation,
     @JsonKey(name: 'is_editable_on_field') bool? isEditableOnField,
+    /// Champs dont la valeur est reprise d'une saisie à la suivante en mode
+    /// enchaînement (`keep`, comme `resetObjForm` du module web)
+    List<String>? keep,
     String? label,
     String? labelList,
     String? mapLabelFieldName,
@@ -750,6 +753,7 @@ abstract class ObjectConfig with _$ObjectConfig {
       genre: toString(json['genre']),
       geomFieldName: toString(json['geom_field_name']),
       isEditableOnField: toBool(json['is_editable_on_field']),
+      keep: toStringList(json['keep']),
       geometryType: toGeometryTypeList(json['geometry_type']),
       idFieldName: toString(json['id_field_name']),
       idTableLocation: toInt(json['id_table_location']),
@@ -795,6 +799,7 @@ extension ObjectConfigX on ObjectConfig {
         if (geometryType != null) 'geometry_type': geometryType,
         if (idFieldName != null) 'id_field_name': idFieldName,
         if (idTableLocation != null) 'id_table_location': idTableLocation,
+        if (keep != null) 'keep': keep,
         if (label != null) 'label': label,
         if (labelList != null) 'label_list': labelList,
         if (mapLabelFieldName != null)
