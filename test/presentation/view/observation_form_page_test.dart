@@ -192,8 +192,7 @@ void main() {
     // Vérifier qu'un message d'erreur de validation est affiché
     expect(find.text('Ce champ est requis'), findsOneWidget);
 
-    // Vérifier que le SnackBar avec le message d'erreur est affiché
-    expect(find.text('Veuillez corriger les erreurs du formulaire'),
-        findsOneWidget);
+    // Le SnackBar nomme le champ à corriger (#229)
+    expect(find.text('À corriger : Cd Nom'), findsOneWidget);
   });
 }

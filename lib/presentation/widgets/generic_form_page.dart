@@ -221,10 +221,15 @@ class GenericFormPageState extends ConsumerState<GenericFormPage> {
   /// Gère la sauvegarde du formulaire
   Future<void> _handleSave() async {
     // Validation du formulaire
-    if (_formBuilderKey.currentState?.validate() != true) {
+    final formState = _formBuilderKey.currentState;
+    if (formState?.validate() != true) {
+      final invalid = formState?.revealInvalidFields() ?? const <String>[];
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Veuillez corriger les erreurs du formulaire'),
+        SnackBar(
+          content: Text(invalid.isEmpty
+              ? 'Veuillez corriger les erreurs du formulaire'
+              : 'À corriger : ${invalid.take(3).join(', ')}'
+                  '${invalid.length > 3 ? '…' : ''}'),
         ),
       );
       return;

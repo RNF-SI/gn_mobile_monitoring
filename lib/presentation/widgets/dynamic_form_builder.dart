@@ -600,6 +600,42 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
     return _formKey.currentState?.validate() ?? false;
   }
 
+  /// Après un échec de [validate] : fait défiler jusqu'au premier champ en
+  /// erreur et rend les libellés des champs en erreur, dans l'ordre affiché.
+  List<String> revealInvalidFields() {
+    final labels = <String>[];
+    Element? first;
+    void visit(Element element) {
+      if (element is StatefulElement) {
+        final state = element.state;
+        if (state is FormFieldState && state.hasError) {
+          first ??= element;
+          final fieldName = element
+              .findAncestorWidgetOfExactType<_FieldAnchor>()
+              ?.fieldName;
+          if (fieldName != null) {
+            final label =
+                (_unifiedSchema[fieldName]?['attribut_label'] ?? fieldName)
+                    .toString();
+            if (!labels.contains(label)) labels.add(label);
+          }
+        }
+      }
+      element.visitChildren(visit);
+    }
+
+    (context as Element).visitChildren(visit);
+    if (first != null) {
+      Scrollable.ensureVisible(
+        first!,
+        alignment: 0.2,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+    }
+    return labels;
+  }
+
   Map<String, dynamic> getFormValues() {
     // LOGIQUE DE FILTRAGE DES CHAMPS CACHÉS :
     // - Champs required + cachés → CONSERVER (nécessaires pour la BDD)
@@ -1058,8 +1094,10 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ...allFields
-                    .map((field) => _buildField(field.key, field.value)),
+                ...allFields.map((field) => _FieldAnchor(
+                      fieldName: field.key,
+                      child: _buildField(field.key, field.value),
+                    )),
                 // Note: Pour utiliser la version asynchrone, il faudrait utiliser un FutureBuilder par champ,
                 // ce qui complexifierait le code. Nous gardons la version synchrone pour le moment.
                 // À terme, on pourrait envisager de retravailler cette partie pour utiliser la version asynchrone.
@@ -2852,4 +2890,16 @@ class _AutocompleteFieldState extends State<_AutocompleteField> {
       onSelected: widget.onSelected,
     );
   }
+}
+
+/// Repère le nom du champ autour de son widget, pour retrouver le libellé
+/// d'un champ en erreur ([DynamicFormBuilderState.revealInvalidFields]).
+class _FieldAnchor extends StatelessWidget {
+  final String fieldName;
+  final Widget child;
+
+  const _FieldAnchor({required this.fieldName, required this.child});
+
+  @override
+  Widget build(BuildContext context) => child;
 }
