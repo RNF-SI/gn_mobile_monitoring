@@ -114,7 +114,8 @@ L'application supporte les **validations conditionnelles dynamiques** avec éval
 ```
 
 - ✅ `min` / `max` : nombre, chaîne numérique (`"5"`) ou référence à un autre champ (`"({value}) => value.count_min"`). Toute autre expression est ignorée (la borne est désactivée).
-- ⚠️ **Entiers uniquement** : la saisie est validée par `int.tryParse` — une valeur décimale (`12.5`) est refusée (« Veuillez entrer un nombre valide »).
+- ✅ **Décimaux et négatifs** acceptés, comme sur le web : `12.5`, `12,5` (virgule) et `-3.5`. Une valeur entière est enregistrée en entier, une valeur décimale en décimal. Clavier numérique avec signe moins et séparateur décimal.
+- ✅ `step` (PnX-SI/GeoNature#4478) : la valeur doit vérifier `(valeur - min) % step == 0` (base 0 sans `min`). `step: 1` impose des entiers et retire le séparateur décimal du clavier.
 
 ### 🎯 Champs de Sélection
 
@@ -368,7 +369,7 @@ Comportement réel (tout champ nommé `observers`, quel que soit son `type_widge
 |-------------------|----------------|----------------|
 | `"type_widget": "text"` | TextField | Validation `required` |
 | `"type_widget": "textarea"` | TextField_multiline | 3 lignes |
-| `"type_widget": "number"` | NumberField | Entiers uniquement, `min`/`max` (valeur ou référence à un champ) |
+| `"type_widget": "number"` | NumberField | Décimaux et négatifs, `min`/`max` (valeur ou référence à un champ), `step` |
 | `"type_widget": "date"` ou `"type_util": "date"` | DatePicker | Stockage ISO `YYYY-MM-DD`, affichage `jj/MM/aaaa` |
 | `"type_widget": "time"` | TimePicker | Format `HH:MM` |
 | `"type_widget": "select"` | DropdownButton | `values` chaînes ou `{value, label}` |

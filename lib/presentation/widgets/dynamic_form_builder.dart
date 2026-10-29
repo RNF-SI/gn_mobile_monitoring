@@ -1440,6 +1440,24 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   /// Retourne `null` si la borne ne peut être résolue, ce qui désactive la
   /// contrainte côté validator au lieu de lever une exception runtime
   /// (problème observé : le bouton "Valider" ne réagissait plus).
+  /// Lit la saisie d'un champ nombre (#225) : virgule acceptée, entier
+  /// gardé en `int`, décimal en `double` ; `null` si illisible.
+  @visibleForTesting
+  static num? parseNumberInput(String raw) {
+    final number = num.tryParse(raw.trim().replaceAll(',', '.'));
+    if (number == null || !number.isFinite) return null;
+    if (number is int || number.abs() >= 1e15) return number;
+    return number == number.truncateToDouble() ? number.toInt() : number;
+  }
+
+  /// Règle `step` du web (PnX-SI/GeoNature#4478) : `(valeur - min) % step`
+  /// nul à une tolérance près, base 0 sans `min`.
+  @visibleForTesting
+  static bool isMultipleOfStep(num value, num step, num? min) {
+    final remainder = ((value - (min ?? 0)) % step).abs();
+    return remainder < 1e-9 || step - remainder < 1e-9;
+  }
+
   num? _resolveNumericBound(dynamic raw) {
     if (raw == null) return null;
     if (raw is num) return raw;
@@ -1465,6 +1483,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
   Widget _buildNumberField(String fieldName, String label, bool required,
       Map<String, dynamic> validations,
       {String? description}) {
+    final num? step = validations['step'] as num?;
     _textControllers[fieldName] ??= TextEditingController(
       text: _formValues[fieldName]?.toString() ??
           (validations['default'] != null
@@ -1505,7 +1524,12 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
             decoration: const InputDecoration(
               border: OutlineInputBorder(),
             ),
-            keyboardType: TextInputType.number,
+            // Signe moins pour les températures ; séparateur décimal sauf
+            // si `step` impose des entiers.
+            keyboardType: TextInputType.numberWithOptions(
+              decimal: step == null || step is! int,
+              signed: true,
+            ),
             validator: (value) {
               // Ne pas valider les champs cachés
               if (_isFieldCurrentlyHidden(fieldName)) {
@@ -1515,9 +1539,16 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
                 return 'Ce champ est requis';
               }
               if (value != null && value.isNotEmpty) {
-                final number = int.tryParse(value);
+                final number = parseNumberInput(value);
                 if (number == null) {
                   return 'Veuillez entrer un nombre valide';
+                }
+                if (step != null &&
+                    !isMultipleOfStep(number, step,
+                        _resolveNumericBound(validations['min']))) {
+                  return step == 1
+                      ? 'Veuillez entrer un nombre entier'
+                      : 'La valeur doit être un multiple de $step';
                 }
                 final minVal = _resolveNumericBound(validations['min']);
                 if (minVal != null && number < minVal) {
@@ -1531,7 +1562,7 @@ class DynamicFormBuilderState extends ConsumerState<DynamicFormBuilder> {
               return null;
             },
             onChanged: (value) {
-              final parsedValue = int.tryParse(value);
+              final parsedValue = parseNumberInput(value);
               updateFormValue(fieldName, parsedValue ?? (value.isEmpty ? null : value));
             },
             onEditingComplete: () => _commitTextFieldKey(fieldName),

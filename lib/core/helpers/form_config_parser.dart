@@ -629,6 +629,10 @@ class FormConfigParser {
     if (fieldConfig['max'] != null) {
       validations['max'] = fieldConfig['max'];
     }
+    // Pas du widget number (PnX-SI/GeoNature#4478) : `step: 1` = entiers
+    if (fieldConfig['step'] is num && (fieldConfig['step'] as num) > 0) {
+      validations['step'] = fieldConfig['step'];
+    }
 
     return validations;
   }

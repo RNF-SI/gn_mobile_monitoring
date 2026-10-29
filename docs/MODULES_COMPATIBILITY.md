@@ -62,7 +62,6 @@ Ce tableau indique, pour chaque protocole GeoNature Monitoring connu, si l'appli
 - **Médias** (`medias`) : pas d'ajout de photo ou de document ; le champ s'affiche comme un champ texte.
 - **Listes chargées depuis une API** autres que nomenclatures, taxons, jeux de données et groupes de sites (habitats `habref`, listes d'utilisateurs) : liste vide.
 - **Observateurs** : l'utilisateur connecté est ajouté automatiquement ; on ne peut pas en choisir d'autres.
-- **Nombres décimaux** : refusés dans les champs numériques.
 
 Le détail des limites et le fonctionnement des champs sont décrits dans [FEATURES_OVERVIEW.md](FEATURES_OVERVIEW.md).
 
