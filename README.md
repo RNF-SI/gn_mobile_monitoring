@@ -2,7 +2,14 @@
 
 **Vos protocoles de suivi GeoNature, sur le terrain, même sans réseau.**
 
-Monitoring Mobile est l'application Android du module Monitoring de GeoNature. On télécharge son protocole au bureau, on saisit sites, visites et observations sur le terrain sans connexion, puis on envoie les données à GeoNature au retour du réseau.
+Monitoring Mobile est l'application Android du module Monitoring de GeoNature.
+
+- **Hors connexion** : modules, listes, taxons et sites sont téléchargés sur le téléphone ; toute la saisie se fait sans réseau
+- **Envoi différé** : on saisit sur le terrain, on envoie plus tard, au retour du réseau, avec un bilan par type d'objet (sites, visites, observations)
+- **Mêmes protocoles que le web** : les formulaires sont construits depuis la configuration du module Monitoring, sans développement par protocole
+- **Carte et GPS** : retrouver ses sites, tracer points, lignes et polygones
+- **Saisie enchaînée** : plusieurs observations à la suite, sans revenir en arrière
+- **Mises à jour automatiques** : l'appli propose la nouvelle version déposée sur votre serveur GeoNature
 
 [**Télécharger la dernière version (APK)**](../../releases/latest)
 
@@ -10,23 +17,28 @@ Monitoring Mobile est l'application Android du module Monitoring de GeoNature. O
 
 ## 🔁 Une configuration, deux outils
 
-L'application construit ses formulaires à partir des fichiers de configuration du module Monitoring web : rien à redévelopper pour chaque protocole. Les règles du protocole (champs masqués, valeurs calculées) s'appliquent aussi hors ligne.
+Le même fichier de configuration donne le formulaire web et le formulaire mobile. Les règles du protocole (champs masqués selon les réponses, valeurs recopiées d'un champ à l'autre) s'appliquent aussi hors ligne.
 
 ![À gauche, le formulaire de création d'un passage POPAmphibien dans Monitoring web ; à droite, le même formulaire dans Monitoring Mobile](docs/images/readme/config_web_mobile.png)
 
-## ✨ Fonctionnalités
-
-- **Mode hors ligne** : modules, listes, taxons et sites sont téléchargés sur le téléphone ; la saisie se fait sans connexion
-- **Envoi au retour** : un bilan par type d'objet (sites, visites, observations) après chaque envoi vers GeoNature
-- **Carte et GPS** : retrouver ses sites, tracer points, lignes et polygones
-- **Formulaires dynamiques** : construits depuis la configuration de chaque protocole
-- **Protocoles multiples** : 31 des 37 protocoles de [protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi) fonctionnent sans limite détectée (voir [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md))
-
-### Les types de champs
+## 🧩 Les types de champs
 
 ![Les 11 types de champs gérés, vus dans POPAmphibien : pré-rempli, texte court, liste, date, heure, choix unique, choix multiple, texte libre, espèce, nombres, géométrie](docs/images/readme/types_de_champs.png)
 
 Le détail des widgets et des limites est dans la [vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md).
+
+## ✅ Fiabilité : tests et protocoles
+
+**Les règles des protocoles se comportent comme sur le web.** Les 104 expressions des protocoles de [protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi) (champs masqués ou rendus obligatoires selon les réponses) sont rejouées sur 1 330 cas et comparées au résultat du moteur JavaScript du module web ([`test/fixtures/js_expressions_corpus.json`](./test/fixtures/js_expressions_corpus.json)).
+
+| Niveau | Quand | Ce qui est vérifié |
+|---|---|---|
+| 1 700 tests unitaires et de widgets | à chaque push et pull request vers `develop` et `main` | formulaires, règles, stockage local, synchronisation |
+| 54 scénarios E2E sur émulateur Android, serveur simulé | idem (50 scénarios, sans ceux de la carte) | parcours complets avec des extraits réels de 7 protocoles |
+| 17 scénarios E2E contre un vrai GeoNature (Docker) | chaque lundi et avant une release | connexion, téléchargement, saisie, envoi, sur POPAmphibien et POPReptile |
+| Aller-retour complet sur 6 protocoles | à chaque version | téléchargement, saisie, envoi, puis contrôle des données sur le serveur : POPAmphibien, POPReptile, STOM, Nidification du Gypaète barbu, Écrevisses à pattes blanches, Blaireautières |
+
+**Couverture des protocoles.** Sur les 37 protocoles analysés, 27 se saisissent entièrement, 9 avec réserves (le plus souvent : pas de photos, liste d'habitats vide ou un seul observateur) et 1 n'est pas supporté (CMR Cistude). Le détail, protocole par protocole, est dans [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md).
 
 ## Compatibilité des versions
 
@@ -135,9 +147,10 @@ et chaque pull request vers `develop` et `main` :
 - `e2e_tests.yml` : scénarios E2E simulés (`integration_test/scenarios/`) sur
   un émulateur Android
 
-Les tests contre un vrai serveur GeoNature (`test/integration/`,
-`integration_test/scenarios_real/`) ne tournent pas en CI : ils se lancent en
-local (voir plus haut).
+Les scénarios contre un vrai serveur GeoNature (`integration_test/scenarios_real/`)
+tournent dans `e2e_real_tests.yml` chaque lundi, ou à la main avant une release,
+contre un GeoNature monté en Docker. Les tests d'intégration HTTP
+(`test/integration/`) se lancent en local (voir plus haut).
 
 ## 🧾 SBOM et Dependency-Track
 
