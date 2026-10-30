@@ -1,18 +1,32 @@
-# Mobile-monitoring
+# Monitoring Mobile
 
-Application mobile du module Monitoring de GeoNature, pour la saisie de données de protocoles de suivi sur smartphone.
+**Vos protocoles de suivi GeoNature, sur le terrain, même sans réseau.**
 
-## 📱 Description
+Monitoring Mobile est l'application Android du module Monitoring de GeoNature. On télécharge son protocole au bureau, on saisit sites, visites et observations sur le terrain sans connexion, puis on envoie les données à GeoNature au retour du réseau.
 
-Monitoring-mobile est une application mobile du module Monitoring de GeoNature. Elle permet la saisie de données de protocoles de suivi directement depuis un smartphone et leur envoi vers votre instance GeoNature.
+[**Télécharger la dernière version (APK)**](../../releases/latest)
+
+![Le parcours en 5 étapes : 1. télécharger son protocole avec réseau, 2. retrouver son site sur la carte avec le GPS, 3. saisir visites et observations hors ligne, 4. envoyer au retour du réseau, 5. retrouver ses données dans GeoNature](docs/images/readme/parcours.png)
+
+## 🔁 Une configuration, deux outils
+
+L'application construit ses formulaires à partir des fichiers de configuration du module Monitoring web : rien à redévelopper pour chaque protocole. Les règles du protocole (champs masqués, valeurs calculées) s'appliquent aussi hors ligne.
+
+![À gauche, le formulaire de création d'un passage POPAmphibien dans Monitoring web ; à droite, le même formulaire dans Monitoring Mobile](docs/images/readme/config_web_mobile.png)
 
 ## ✨ Fonctionnalités
 
-- **Saisie terrain** : interface optimisée pour smartphone
-- **Synchronisation** : envoi automatique des données vers GeoNature
-- **Mode hors ligne** : saisie sans connexion, synchronisation ultérieure
-- **Protocoles multiples** : support des protocoles configurés dans GeoNature
-- **Formulaires dynamiques** : adaptation automatique selon le protocole
+- **Mode hors ligne** : modules, listes, taxons et sites sont téléchargés sur le téléphone ; la saisie se fait sans connexion
+- **Envoi au retour** : un bilan par type d'objet (sites, visites, observations) après chaque envoi vers GeoNature
+- **Carte et GPS** : retrouver ses sites, tracer points, lignes et polygones
+- **Formulaires dynamiques** : construits depuis la configuration de chaque protocole
+- **Protocoles multiples** : 31 des 37 protocoles de [protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi) fonctionnent sans limite détectée (voir [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md))
+
+### Les types de champs
+
+![Les 11 types de champs gérés, vus dans POPAmphibien : pré-rempli, texte court, liste, date, heure, choix unique, choix multiple, texte libre, espèce, nombres, géométrie](docs/images/readme/types_de_champs.png)
+
+Le détail des widgets et des limites est dans la [vue d'ensemble des fonctionnalités](./docs/FEATURES_OVERVIEW.md).
 
 ## Compatibilité des versions
 
