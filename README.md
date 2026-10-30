@@ -38,7 +38,7 @@ Le détail des widgets et des limites est dans la [vue d'ensemble des fonctionna
 | 17 scénarios E2E contre un vrai GeoNature (Docker) | chaque lundi et avant une release | connexion, téléchargement, saisie, envoi, sur POPAmphibien et POPReptile |
 | Aller-retour complet sur 6 protocoles | à chaque version | téléchargement, saisie, envoi, puis contrôle des données sur le serveur : POPAmphibien, POPReptile, STOM, Nidification du Gypaète barbu, Écrevisses à pattes blanches, Blaireautières |
 
-**Couverture des protocoles.** Sur les 37 protocoles analysés, 30 se saisissent entièrement, 5 avec réserves (liste d'habitats vide, déterminateur imposé) et 2 ne peuvent pas encore être saisis (CMR Cistude, Pelotes de réjection). Deux limites touchent presque tous les protocoles : pas d'ajout de photos (#232) et un seul observateur, l'utilisateur connecté (#230). Le détail, protocole par protocole, est dans [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md).
+**Couverture des protocoles.** Sur les 35 protocoles du dépôt [PnX-SI/protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi), 29 se saisissent entièrement (83 %), 5 avec réserves (liste d'habitats vide, déterminateur imposé) et 1 ne peut pas encore être saisi (Pelotes de réjection). Deux limites touchent presque tous les protocoles : pas d'ajout de photos (#232) et un seul observateur, l'utilisateur connecté (#230). Le détail, protocole par protocole, est dans [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md).
 
 ## Compatibilité des versions
 

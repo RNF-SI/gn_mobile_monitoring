@@ -51,17 +51,24 @@ Ce tableau indique, pour chaque protocole GeoNature Monitoring connu, si l'appli
 | suivi_nardaie | Suivi nardaie | ✅ | 🔬 | — | — |
 | suivi_phytosocio | Suivi phytosociologique | ✅ | — | — | — |
 | suivi_terriers_blaireau_gmb | Blaireautières | ✅ | 🧪 🔬 | ❌ en v1.1.1 : erreur à l'enregistrement d'une visite (corrigée en 09/2026, à retester) | — |
-| cmr_cistude *(fork)* | CMR Cistude | ❌ | — | — | Formulaires « Individus » et « Marquage », widget `individuals` ; habitat du site ; opérateur du marquage |
-| popanomaloglossus *(fork)* | POPAnomaloglossus | ✅ | 🧪 🔬 | — | — |
 
-**Bilan** : hors limites communes (photos, observateurs multiples), 30 protocoles se saisissent entièrement, 5 avec réserves (habitats, déterminateur imposé), 2 ne peuvent pas être saisis (CMR Cistude, Pelotes de réjection). Seuls POPAmphibien et POPReptile ont un retour terrain positif.
+**Bilan** : sur les 35 protocoles de [PnX-SI/protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi), hors limites communes (photos, observateurs multiples), 29 se saisissent entièrement (83 %), 5 avec réserves (habitats, déterminateur imposé) et 1 ne peut pas encore être saisi (Pelotes de réjection). Seuls POPAmphibien et POPReptile ont un retour terrain positif.
+
+### Hors dépôt PnX-SI : fork Geomaticien-shf
+
+Ces deux protocoles ne sont pas comptés dans le bilan ci-dessus.
+
+| Module | Libellé | Configuration | Tests automatisés | Retour terrain | Limites connues |
+|---|---|---|---|---|---|
+| popanomaloglossus | POPAnomaloglossus | ✅ | 🧪 🔬 | — | — |
+| cmr_cistude | CMR Cistude | ❌ | — | — | Formulaires « Individus » et « Marquage », widget `individuals` ; habitat du site ; opérateur du marquage |
 
 ## Limites communes
 
 Elles touchent tous les protocoles, ou presque, et ne sont pas reprises dans le tableau :
 
-- **Photos** (`medias`) : le formulaire web propose un champ Médias sur chaque objet ; 35 protocoles sur 37 l'affichent (pas Pyrales du buis ni Suivi nardaie). L'app ne permet pas d'ajouter de photo ou de document (#232).
-- **Observateurs** : sur le web, la visite accepte plusieurs observateurs (37 protocoles). L'app enregistre l'utilisateur connecté, sans en ajouter d'autres (#230).
+- **Photos** (`medias`) : le formulaire web propose un champ Médias sur chaque objet ; 33 protocoles sur 35 l'affichent (pas Pyrales du buis ni Suivi nardaie). L'app ne permet pas d'ajouter de photo ou de document (#232).
+- **Observateurs** : sur le web, la visite accepte plusieurs observateurs (les 35 protocoles). L'app enregistre l'utilisateur connecté, sans en ajouter d'autres (#230).
 - **Fond de carte** : la saisie fonctionne hors ligne, mais le fond de carte OpenStreetMap nécessite une connexion.
 - **Listes chargées depuis une API** autres que nomenclatures, taxons, jeux de données et groupes de sites (habitats `habref`, listes d'utilisateurs `users/menu`) : liste vide (#202).
 
