@@ -8,6 +8,7 @@ Outils qui comparent l'évaluation des expressions `hidden` / `required` de l'ap
 | `synthetic_cases.json` | Cas ciblés (opérateurs, égalités JS, champs vides, méthodes, `meta`…) |
 | `eval_js.js` | Évalue chaque cas avec Node.js (référence) |
 | `generate_corpus.sh` | Enchaîne les étapes et écrit `test/fixtures/js_expressions_corpus.json` |
+| `analyse_configs.py` | Classe chaque protocole selon les champs que l'app ne gère pas encore (photos, observateurs multiples, habitats, listes d'utilisateurs, individus) ; sert à tenir à jour [`docs/MODULES_COMPATIBILITY.md`](../../docs/MODULES_COMPATIBILITY.md) |
 
 ## Utilisation
 
@@ -15,6 +16,10 @@ Outils qui comparent l'évaluation des expressions `hidden` / `required` de l'ap
 # Protocoles à jour (clone de https://github.com/PnX-SI/protocoles_suivi, et forks éventuels)
 scripts/protocoles_audit/generate_corpus.sh ~/protocoles_suivi [autre_dossier…]
 flutter test test/core/helpers/js_expression_interpreter_test.dart
+
+# Champs non gérés par l'app, protocole par protocole
+scripts/protocoles_audit/analyse_configs.py \
+  ~/GeoNature/contrib/gn_module_monitoring/backend/gn_module_monitoring/config/generic ~/protocoles_suivi
 ```
 
 Un test en échec indique une expression dont le résultat diffère du web : corriger l'interpréteur, ou signaler la configuration si elle est fautive côté web.

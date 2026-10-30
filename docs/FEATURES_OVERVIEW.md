@@ -520,9 +520,8 @@ Les 289 expressions `hidden`/`required` (28 modules) de [PnX-SI/protocoles_suivi
 
 ### Types de Widgets Manquants
 - ❌ **Champs de fichiers/médias** : `medias` rendu en champ texte, pas d'upload d'images ou documents
-- ❌ **Datalist alimentées par API** (hors nomenclatures et utilisateur unique) : liste vide
+- ❌ **Datalist alimentées par API** (hors nomenclatures et utilisateur unique) : liste vide ; bloquant quand le champ est obligatoire (« Déterminateurs » de la visite dans micromam_analyse_pelotes_rejection_gmb)
 - ❌ **Sélection multiple de taxons** et **sélection libre d'observateurs**
-- ❌ **Nombres décimaux** dans `NumberField`
 - ❌ **Champs avancés** : Couleurs, sliders, ranges
 - ❌ **Composants complexes** : Tables dynamiques, formulaires imbriqués
 
@@ -629,7 +628,7 @@ ViewModels (visite / observation / site) → base locale Drift → synchronisati
 1. **Analyse des fichiers de configuration**
    - `module.json`, `site.json`, `visit.json`, `observation.json`
    - Vérification des expressions JavaScript et des règles `change`
-   - Repérage des types non supportés (`medias`, datalist sur `api`, taxons multiples, nombres décimaux…)
+   - Repérage des champs non gérés (`medias`, datalist sur `api`, taxons multiples…) avec `scripts/protocoles_audit/analyse_configs.py`
 
 2. **Test des composants**
    - Types de champs utilisés
