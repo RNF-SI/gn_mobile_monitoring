@@ -145,8 +145,10 @@ collisions, et les laisse sur le serveur (préfixe `E2E_` pour identifier).
 
 ## En CI
 
-Le workflow `.github/workflows/e2e_real_tests.yml` lance tous les scénarios
-réels chaque lundi, et à la main (onglet Actions) avant une release. Il monte
+Le workflow `.github/workflows/e2e_real_tests.yml` est programmé chaque lundi,
+et se lance aussi à la main (onglet Actions). Il n'est pas encore fiable : son
+premier lancement planifié (26/10/2026) a dépassé le délai de 2 h. En attendant,
+les scénarios réels se lancent en local. Il monte
 le même GeoNature Docker (`up.sh`) puis lance `run_scenarios.sh` sur un
 émulateur. L'image GeoNature (par défaut
 `ghcr.io/pnx-si/geonature-backend-extra:2.17.4`) se choisit au lancement

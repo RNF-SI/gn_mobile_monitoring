@@ -15,11 +15,41 @@ Monitoring Mobile est l'application Android du module Monitoring de GeoNature.
 
 ![Le parcours en 5 étapes : 1. télécharger son protocole avec réseau, 2. retrouver son site sur la carte avec le GPS, 3. saisir visites et observations hors ligne, 4. envoyer au retour du réseau, 5. retrouver ses données dans GeoNature](docs/images/readme/parcours.png)
 
+## ⚙️ Comment ça marche
+
+Tout part de GeoNature et tout y revient. Le protocole est configuré dans le module Monitoring ; l'appli le télécharge au bureau, la saisie se fait sur le terrain sans réseau, puis les données sont téléversées au retour du réseau.
+
+![Le cycle des données : GeoNature, où le protocole est configuré et où les données reviennent ; Télécharger, au bureau avec réseau ; Saisir, sur le terrain sans réseau ; Téléverser, au retour du réseau, avec les erreurs détectées à l'envoi et expliquées](docs/images/readme/cycle.png)
+
+### Ce qui circule entre GeoNature et le téléphone
+
+- **Téléchargement** (à l'installation du module, puis « Mettre à jour les données ») : configuration du module, nomenclatures, jeux de données, taxons, types de sites, groupes de sites et sites. L'appli rappelle la mise à jour au bout de 7 jours.
+- **Saisie**, sur le téléphone, sans réseau : groupes de sites, sites et géométries, visites, observations et détails d'observation. Les sites venus du serveur se consultent mais ne se modifient pas.
+- **Téléversement**, au retour du réseau, module par module et dans l'ordre (groupes de sites, sites, visites, observations). Les visites et observations ne sont supprimées du téléphone qu'après confirmation du serveur ; les groupes de sites et sites envoyés sont ensuite verrouillés.
+
+![Les trois temps : téléchargement de GeoNature vers le téléphone, saisie sur le téléphone sans réseau, téléversement du téléphone vers GeoNature, avec ce qui circule à chaque étape](docs/images/readme/ce_qui_circule.png)
+
+### Carte et GPS
+
+La position GPS pré-remplit le point d'un nouveau site, qu'on ajuste sur la carte. Les lignes et polygones se tracent sommet par sommet (les polygones qui se croisent sont refusés avant l'envoi). La carte des sites montre tous les sites du groupe sur fond OpenStreetMap.
+
+![Placer un site et ajuster sa position, tracer un transect, carte des sites d'un groupe](docs/images/readme/carte_gps.png)
+
+### Après l'envoi
+
+Avant l'envoi, l'appli prévient de ce qui va partir et de ce qui ne sera plus modifiable. Une fois reçues par le serveur, les saisies quittent le téléphone. Les sites et groupes envoyés sont verrouillés : un cadenas explique qu'ils se modifient désormais depuis GeoNature web.
+
+![L'avertissement avant l'envoi, un site avant et après l'envoi, le cadenas qui explique le verrouillage](docs/images/readme/apres_envoi.png)
+
 ## 🔁 Une configuration, deux outils
 
 Le même fichier de configuration donne le formulaire web et le formulaire mobile. Les règles du protocole (champs masqués selon les réponses, valeurs recopiées d'un champ à l'autre) s'appliquent aussi hors ligne.
 
 ![À gauche, le formulaire de création d'un passage POPAmphibien dans Monitoring web ; à droite, le même formulaire dans Monitoring Mobile](docs/images/readme/config_web_mobile.png)
+
+Les règles « change » écrites en JavaScript dans la configuration sont rejouées en Dart, sans moteur JavaScript : masquer ou exiger un champ, remplir un champ à partir d'un autre. La plupart passent, pas toutes.
+
+![POPAmphibien : « Non » masque des champs ; « Compté » : le maximum recopie le minimum ; trois exemples de règles tirées de vraies configurations](docs/images/readme/formulaires_dynamiques.png)
 
 ## 🧩 Les types de champs
 
@@ -35,7 +65,7 @@ Le détail des widgets et des limites est dans la [vue d'ensemble des fonctionna
 |---|---|---|
 | 1 700 tests unitaires et de widgets | à chaque push et pull request vers `develop` et `main` | formulaires, règles, stockage local, synchronisation |
 | 54 scénarios E2E sur émulateur Android, serveur simulé | idem (50 scénarios, sans ceux de la carte) | parcours complets avec des extraits réels de 7 protocoles |
-| 17 scénarios E2E contre un vrai GeoNature (Docker) | chaque lundi et avant une release | connexion, téléchargement, saisie, envoi, sur POPAmphibien et POPReptile |
+| 17 scénarios E2E contre un vrai GeoNature | en local, avant une release | connexion, téléchargement, saisie, envoi, sur plusieurs protocoles |
 | Aller-retour complet sur 6 protocoles | à chaque version | téléchargement, saisie, envoi, puis contrôle des données sur le serveur : POPAmphibien, POPReptile, STOM, Nidification du Gypaète barbu, Écrevisses à pattes blanches, Blaireautières |
 
 **Couverture des protocoles.** Sur les 35 protocoles du dépôt [PnX-SI/protocoles_suivi](https://github.com/PnX-SI/protocoles_suivi), 29 se saisissent entièrement (83 %), 5 avec réserves (liste d'habitats vide, déterminateur imposé) et 1 ne peut pas encore être saisi (Pelotes de réjection). Deux limites touchent presque tous les protocoles : pas d'ajout de photos (#232) et un seul observateur, l'utilisateur connecté (#230). Le détail, protocole par protocole, est dans [la compatibilité des modules](./docs/MODULES_COMPATIBILITY.md).
@@ -148,8 +178,9 @@ et chaque pull request vers `develop` et `main` :
   un émulateur Android
 
 Les scénarios contre un vrai serveur GeoNature (`integration_test/scenarios_real/`)
-tournent dans `e2e_real_tests.yml` chaque lundi, ou à la main avant une release,
-contre un GeoNature monté en Docker. Les tests d'intégration HTTP
+se lancent en local, sur un téléphone et un GeoNature local. Le workflow
+`e2e_real_tests.yml` (GeoNature en Docker, programmé le lundi) n'est pas encore
+fiable : son premier lancement a dépassé le délai de 2 h. Les tests d'intégration HTTP
 (`test/integration/`) se lancent en local (voir plus haut).
 
 ## 🧾 SBOM et Dependency-Track
